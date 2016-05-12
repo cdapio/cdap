@@ -1,0 +1,2124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Creating Custom ETL Plugins &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.4.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+   
+    <!-- Google Tag Manager start -->
+    <script>dataLayer = [];</script>
+    <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-PBZ3JL"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
+    <!-- Google Tag Manager end -->
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
+    <link rel="up" title="Cask Hydrator and ETL Pipelines" href="index.html" />
+    <link rel="next" title="ETL Plugins" href="hydrator-plugins/index.html" />
+    <link rel="prev" title="Creating an ETL Application" href="creating.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="hydrator-plugins/index.html" title="ETL Plugins"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="creating.html" title="Creating an ETL Application"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.4.1');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP CDAP Applications</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cask Hydrator and ETL Pipelines</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="creating-custom-etl-plugins">
+<span id="cdap-apps-custom-etl-plugins"></span><h1>Creating Custom ETL Plugins<a class="headerlink" href="#creating-custom-etl-plugins" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This section is intended for developers writing custom ETL plugins. Users of these should
+refer to the <a class="reference internal" href="../index.html#cdap-apps-index"><span>Included Applications</span></a>.</p>
+<p>CDAP provides for the creation of custom ETL plugins to extend the existing <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code>,
+<code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code>, and <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> system artifacts.</p>
+</div>
+<div class="section" id="plugin-types-and-maven-archetypes">
+<h2>Plugin Types and Maven Archetypes<a class="headerlink" href="#plugin-types-and-maven-archetypes" title="Permalink to this headline">¶</a></h2>
+<p>In Cask Hydrator, there are eight plugin types:</p>
+<ul class="simple">
+<li>Batch Source (<em>batchsource</em>)</li>
+<li>Batch Sink (<em>batchsink</em>)</li>
+<li>Real-time Source (<em>realtimesource</em>)</li>
+<li>Real-time Sink (<em>realtimesink</em>)</li>
+<li>Transformation (<em>transform</em>)</li>
+<li>Batch Aggregator (<em>batchaggregator</em>)</li>
+<li>Spark Compute (<em>sparkcompute</em>)</li>
+<li>Spark Sink (<em>sparksink</em>)</li>
+</ul>
+<p>To get started, you can use one of the Maven archetypes to create your project:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">cdap-data-pipeline-plugins-archetype</span></code> (contains all batch plugin types)</li>
+<li><code class="docutils literal"><span class="pre">cdap-etl-realtime-source-archetype</span></code> (contains a realtime source)</li>
+<li><code class="docutils literal"><span class="pre">cdap-etl-realtime-sink-archetype</span></code> (contains a realtime sink)</li>
+<li><code class="docutils literal"><span class="pre">cdap-etl-transform-archetype</span></code> (contains a transform)</li>
+</ul>
+<p>This command will create a project from an archetype:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> mvn archetype:generate \
+      -DarchetypeGroupId=co.cask.cdap \
+      -DarchetypeArtifactId=&lt;archetype&gt; \
+      -DarchetypeVersion=3.4.1 \
+      -DgroupId=org.example.plugin
+</pre>
+</div>
+<p>where <code class="docutils literal"><span class="pre">&lt;archetype&gt;</span></code> is one of the archetypes listed above.</p>
+<p>You can replace the groupId with your own organization, but it must not be <code class="docutils literal"><span class="pre">co.cask.cdap</span></code>.</p>
+</div>
+<div class="section" id="plugin-basics">
+<h2>Plugin Basics<a class="headerlink" href="#plugin-basics" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="plugin-class-annotations">
+<h3>Plugin Class Annotations<a class="headerlink" href="#plugin-class-annotations" title="Permalink to this headline">¶</a></h3>
+<p>These annotations are used for plugin classes:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">&#64;Plugin</span></code>: The class to be exposed as a plugin needs to be annotated with the <code class="docutils literal"><span class="pre">&#64;Plugin</span></code>
+annotation and the type of the plugin must be specified.</li>
+<li><code class="docutils literal"><span class="pre">&#64;Name</span></code>: Annotation used to name the plugin.</li>
+<li><code class="docutils literal"><span class="pre">&#64;Description</span></code>: Annotation used to add a description of the plugin.</li>
+</ul>
+</div>
+<div class="section" id="plugin-config">
+<h3>Plugin Config<a class="headerlink" href="#plugin-config" title="Permalink to this headline">¶</a></h3>
+<p>Each plugin can define a plugin config that specifies what properties the plugin requires.
+When a user creates a pipeline, they will need to provide these properties in order to
+use the plugin. This is done by extending the <code class="docutils literal"><span class="pre">PluginConfig</span></code> class, and populating that
+class with the fields your plugin requires. Each field can be annotated to provide more
+information to users:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">&#64;Name</span></code>: The name of the field. Defaults to the Java field name. You may want to use this
+if you want the user-facing name to use syntax that is not legal Java syntax.</li>
+<li><code class="docutils literal"><span class="pre">&#64;Description</span></code>: A description for the field.</li>
+<li><code class="docutils literal"><span class="pre">&#64;Nullable</span></code>: Indicates that the specific configuration property is
+optional. Such a plugin class can be used without that property being specified.</li>
+</ul>
+<p>At this time, fields in a <code class="docutils literal"><span class="pre">PluginConfig</span></code> must be primitive Java types (boxed or unboxed).</p>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">BatchSource</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;MyBatchSource&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;This is my Batch Source.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyBatchSource</span> <span class="kd">extends</span> <span class="n">BatchSource</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">conf</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">MyBatchSource</span><span class="o">(</span><span class="n">Conf</span> <span class="n">conf</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">conf</span> <span class="o">=</span> <span class="n">conf</span><span class="o">;</span>
+  <span class="o">)</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;input-path&quot;</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Input path for the source.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">inputPath</span><span class="o">;</span>
+
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Whether to clean up the previous run&#39;s output. Defaults to false.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">Boolean</span> <span class="n">cleanOutput</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">Conf</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">cleanOutput</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In this example, we have a plugin of type <code class="docutils literal"><span class="pre">batchsource</span></code>, named <code class="docutils literal"><span class="pre">MyBatchSource</span></code>.
+This plugin takes two configuration properties. The first is named <code class="docutils literal"><span class="pre">input-path</span></code> and is required.
+The second is named <code class="docutils literal"><span class="pre">cleanOutput</span></code> and is optional. Note that optional configuration fields should
+have their default values set in the no-argument constructor.</p>
+</div>
+</div>
+<div class="section" id="creating-a-batch-source">
+<h2>Creating a Batch Source<a class="headerlink" href="#creating-a-batch-source" title="Permalink to this headline">¶</a></h2>
+<p>In order to implement a Batch Source (to be used in either the ETL Batch or Data Pipeline artifacts), you extend the
+<code class="docutils literal"><span class="pre">BatchSource</span></code> class. You need to define the types of the KEY and VALUE that the Batch
+Source will receive and the type of object that the Batch Source will emit to the
+subsequent stage (which could be either a Transformation or a Batch Sink). After defining
+the types, only one method is required to be implemented:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">prepareRun</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">prepareRun()</span></code>: Used to configure the input for each run of the pipeline. This is called by
+the client that will submit the job for the pipeline run.</li>
+<li><code class="docutils literal"><span class="pre">onRunFinish()</span></code>: Used to run any required logic at the end of a pipeline run. This is called
+by the client that submitted the job for the pipeline run.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any streams or datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the Batch Source. Guaranteed to be executed before any call
+to the plugin’s <code class="docutils literal"><span class="pre">transform</span></code> method. This is called by each executor of the job. For example,
+if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Destroy any resources created by <code class="docutils literal"><span class="pre">initialize</span></code>. Guaranteed to be executed after all calls
+to the plugin’s <code class="docutils literal"><span class="pre">transform</span></code> method have been made. This is called by each executor of the job.
+For example, if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">transform()</span></code>: This method will be called for every input key-value pair generated by
+the batch job. By default, the value is emitted to the subsequent stage.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Batch Source that reads from a FileSet that has its data formatted as text.</span>
+<span class="cm"> *</span>
+<span class="cm"> * LongWritable is the first parameter because that is the key used by Hadoop&#39;s {@link TextInputFormat}.</span>
+<span class="cm"> * Similarly, Text is the second parameter because that is the value used by Hadoop&#39;s {@link TextInputFormat}.</span>
+<span class="cm"> * {@link StructuredRecord} is the third parameter because that is what the source will output.</span>
+<span class="cm"> * All the plugins included with Hydrator operate on StructuredRecords.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">BatchSource</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">TextFileSetSource</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Reads from a FileSet that has its data formatted as text.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TextFileSetSource</span> <span class="kd">extends</span> <span class="n">BatchSource</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;TextFileSet&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schema</span> <span class="n">OUTPUT_SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+    <span class="s">&quot;textRecord&quot;</span><span class="o">,</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;position&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">))</span>
+  <span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">FILESET_NAME</span> <span class="o">=</span> <span class="s">&quot;fileSetName&quot;</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CREATE_IF_NOT_EXISTS</span> <span class="o">=</span> <span class="s">&quot;createIfNotExists&quot;</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">DELETE_INPUT_ON_SUCCESS</span> <span class="o">=</span> <span class="s">&quot;deleteInputOnSuccess&quot;</span><span class="o">;</span>
+
+    <span class="c1">// The name annotation tells CDAP what the property name is. It is optional, and defaults to the variable name.</span>
+    <span class="c1">// Note: only primitives (including boxed types) and string are the types that are supported.</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">FILESET_NAME</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The name of the FileSet to read from.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">fileSetName</span><span class="o">;</span>
+
+    <span class="c1">// A nullable fields tells CDAP that this is an optional field.</span>
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">CREATE_IF_NOT_EXISTS</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Whether to create the FileSet if it doesn&#39;t already exist. Defaults to false.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">Boolean</span> <span class="n">createIfNotExists</span><span class="o">;</span>
+
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">DELETE_INPUT_ON_SUCCESS</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Whether to delete the data read by the source after the run succeeds. Defaults to false.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">Boolean</span> <span class="n">deleteInputOnSuccess</span><span class="o">;</span>
+
+    <span class="c1">// Use a no-args constructor to set field defaults.</span>
+    <span class="kd">public</span> <span class="nf">Conf</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">fileSetName</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="o">;</span>
+      <span class="n">createIfNotExists</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+      <span class="n">deleteInputOnSuccess</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="c1">// CDAP will pass in a config with its fields populated based on the configuration given when creating the pipeline.</span>
+  <span class="kd">public</span> <span class="nf">TextFileSetSource</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="c1">// configurePipeline is called exactly once when the pipeline is being created.</span>
+  <span class="c1">// Any static configuration should be performed here.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// if the user has set createIfNotExists to true, create the FileSet here.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">createIfNotExists</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">createDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">,</span>
+                                       <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                                       <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                                         <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;text string&quot;</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+      <span class="o">);</span>
+    <span class="o">}</span>
+    <span class="c1">// Set the output schema of this stage so that stages further down the pipeline will know their input schema.</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">setOutputSchema</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="c1">// prepareRun is called before every pipeline run, and is used to configure what the input should be,</span>
+  <span class="c1">// as well as any arguments the input should use. It is called by the client that is submitting the batch job.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">prepareRun</span><span class="o">(</span><span class="n">BatchSourceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">setInput</span><span class="o">(</span><span class="n">Input</span><span class="o">.</span><span class="na">ofDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">));</span>
+  <span class="o">}</span>
+
+  <span class="c1">// onRunFinish is called at the end of the pipeline run by the client that submitted the batch job.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onRunFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">BatchSourceContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// perform any actions that should happen at the end of the run.</span>
+    <span class="c1">// in our case, we want to delete the data read during this run if the run succeeded.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">succeeded</span> <span class="o">&amp;&amp;</span> <span class="n">config</span><span class="o">.</span><span class="na">deleteInputOnSuccess</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">FileSet</span> <span class="n">fileSet</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">);</span>
+      <span class="k">for</span> <span class="o">(</span><span class="n">Location</span> <span class="n">inputLocation</span> <span class="o">:</span> <span class="n">fileSet</span><span class="o">.</span><span class="na">getInputLocations</span><span class="o">())</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+          <span class="n">inputLocation</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+          <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="c1">// transform is used to transform the key-value pair output by the input into objects output by this source.</span>
+  <span class="c1">// The output should be a StructuredRecord if you want the source to be compatible with the plugins included</span>
+  <span class="c1">// with Hydrator.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">KeyValue</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">StructuredRecord</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;position&quot;</span><span class="o">,</span> <span class="n">input</span><span class="o">.</span><span class="na">getKey</span><span class="o">().</span><span class="na">get</span><span class="o">())</span>
+                   <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">,</span> <span class="n">input</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">toString</span><span class="o">())</span>
+                   <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+    <span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-batch-sink">
+<h2>Creating a Batch Sink<a class="headerlink" href="#creating-a-batch-sink" title="Permalink to this headline">¶</a></h2>
+<p>In order to implement a Batch Sink (to be used in either the ETL Batch or Data Pipeline artifacts), you extend the
+<code class="docutils literal"><span class="pre">BatchSink</span></code> class. Similar to a Batch Source, you need to define the types of the KEY and
+VALUE that the Batch Sink will write in the Batch job and the type of object that it will
+accept from the previous stage (which could be either a Transformation or a Batch Source).</p>
+<p>After defining the types, only one method is required to be implemented:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">prepareRun</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">prepareRun()</span></code>: Used to configure the output for each run of the pipeline. This is called by
+the client that will submit the job for the pipeline run.</li>
+<li><code class="docutils literal"><span class="pre">onRunFinish()</span></code>: Used to run any required logic at the end of a pipeline run. This is called
+by the client that submitted the job for the pipeline run.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any streams or datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the Batch Sink. Guaranteed to be executed before any call
+to the plugin’s <code class="docutils literal"><span class="pre">transform</span></code> method. This is called by each executor of the job. For example,
+if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Destroy any resources created by <code class="docutils literal"><span class="pre">initialize</span></code>. Guaranteed to be executed after all calls
+to the plugin’s <code class="docutils literal"><span class="pre">transform</span></code> method have been made. This is called by each executor of the job.
+For example, if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">transform()</span></code>: This method will be called for every object that is received from the
+previous stage. The logic inside the method will transform the object to the key-value
+pair expected by the Batch Sink&#8217;s output format. If you don&#8217;t override this method, the
+incoming object is set as the key and the value is set to null.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Batch Sink that writes to a FileSet in text format.</span>
+<span class="cm"> * Each record will be written as a single line, with record fields separated by a configurable separator.</span>
+<span class="cm"> *</span>
+<span class="cm"> * StructuredRecord is the first parameter because that is the input to the sink.</span>
+<span class="cm"> * The second and third parameters are the key and value expected by Hadoop&#39;s {@link TextOutputFormat}.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">BatchSink</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">TextFileSetSink</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Writes to a FileSet in text format.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TextFileSetSink</span> <span class="kd">extends</span> <span class="n">BatchSink</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">,</span> <span class="n">NullWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;TextFileSet&quot;</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">FILESET_NAME</span> <span class="o">=</span> <span class="s">&quot;fileSetName&quot;</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">FIELD_SEPARATOR</span> <span class="o">=</span> <span class="s">&quot;fieldSeparator&quot;</span><span class="o">;</span>
+
+    <span class="c1">// The name annotation tells CDAP what the property name is. It is optional, and defaults to the variable name.</span>
+    <span class="c1">// Note: only primitives (including boxed types) and string are the types that are supported.</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">FILESET_NAME</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The name of the FileSet to read from.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">fileSetName</span><span class="o">;</span>
+
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">FIELD_SEPARATOR</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The separator to use to join input record fields together. Defaults to &#39;,&#39;.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">fieldSeparator</span><span class="o">;</span>
+
+    <span class="c1">// Use a no-args constructor to set field defaults.</span>
+    <span class="kd">public</span> <span class="nf">Conf</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">fileSetName</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="o">;</span>
+      <span class="n">fieldSeparator</span> <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="c1">// CDAP will pass in a config with its fields populated based on the configuration given when creating the pipeline.</span>
+  <span class="kd">public</span> <span class="nf">TextFileSetSink</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="c1">// configurePipeline is called exactly once when the pipeline is being created.</span>
+  <span class="c1">// Any static configuration should be performed here.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// create the FileSet here.</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">createDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">,</span>
+                                     <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                                     <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                                       <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;text string&quot;</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+    <span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="c1">// prepareRun is called before every pipeline run, and is used to configure what the input should be,</span>
+  <span class="c1">// as well as any arguments the input should use. It is called by the client that is submitting the batch job.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">prepareRun</span><span class="o">(</span><span class="n">BatchSinkContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">addOutput</span><span class="o">(</span><span class="n">Output</span><span class="o">.</span><span class="na">ofDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">));</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">StructuredRecord</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">KeyValue</span><span class="o">&lt;</span><span class="n">NullWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">StringBuilder</span> <span class="n">joinedFields</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StringBuilder</span><span class="o">();</span>
+    <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">&gt;</span> <span class="n">fieldIter</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">getSchema</span><span class="o">().</span><span class="na">getFields</span><span class="o">().</span><span class="na">iterator</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">fieldIter</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+      <span class="c1">// shouldn&#39;t happen</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="n">Object</span> <span class="n">val</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">fieldIter</span><span class="o">.</span><span class="na">next</span><span class="o">().</span><span class="na">getName</span><span class="o">());</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">joinedFields</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">val</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">fieldIter</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">String</span> <span class="n">fieldName</span> <span class="o">=</span> <span class="n">fieldIter</span><span class="o">.</span><span class="na">next</span><span class="o">().</span><span class="na">getName</span><span class="o">();</span>
+      <span class="n">joinedFields</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fieldSeparator</span><span class="o">);</span>
+      <span class="n">val</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">fieldName</span><span class="o">);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">joinedFields</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">val</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="k">new</span> <span class="n">KeyValue</span><span class="o">&lt;&gt;(</span><span class="n">NullWritable</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="k">new</span> <span class="n">Text</span><span class="o">(</span><span class="n">joinedFields</span><span class="o">.</span><span class="na">toString</span><span class="o">())));</span>
+  <span class="o">}</span>
+
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-real-time-source">
+<h2>Creating a Real-Time Source<a class="headerlink" href="#creating-a-real-time-source" title="Permalink to this headline">¶</a></h2>
+<p>The only method that needs to be implemented is:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">poll</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the real-time source runtime. Guaranteed to be executed
+before any call to the poll method. Usually used to setup the connection to external
+sources.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any streams or datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">poll()</span></code>: Poll method will be invoked during the run of the plugin and in each call,
+the source is expected to emit zero or more objects for the next stage to process.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Cleanup method executed during the shutdown of the Source. Could be used
+to tear down any external connections made during the initialize method.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Real-Time Source to poll data from external sources.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;realtimesource&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Source&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Real-Time Source&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Source</span> <span class="kd">extends</span> <span class="n">RealtimeSource</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">SourceConfig</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">Source</span><span class="o">(</span><span class="n">SourceConfig</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config class for Source.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">SourceConfig</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+
+    <span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;param&quot;</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Source Param&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">param</span><span class="o">;</span>
+    <span class="c1">// Note: only primitives (included boxed types) and string are the types that are supported.</span>
+
+  <span class="o">}</span>
+
+  <span class="nd">@Nullable</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">SourceState</span> <span class="nf">poll</span><span class="o">(</span><span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">writer</span><span class="o">,</span> <span class="n">SourceState</span> <span class="n">currentState</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Poll for new data</span>
+    <span class="c1">// Write structured record to the writer</span>
+    <span class="c1">// writer.emit(writeDefaultRecords(writer);</span>
+    <span class="k">return</span> <span class="n">currentState</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">RealtimeContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+    <span class="c1">// Get Config param and use to initialize</span>
+    <span class="c1">// String param = config.param</span>
+    <span class="c1">// Perform init operations, external operations etc.</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">.</span><span class="na">destroy</span><span class="o">();</span>
+    <span class="c1">// Handle destroy lifecycle</span>
+  <span class="o">}</span>
+
+  <span class="kd">private</span> <span class="kt">void</span> <span class="nf">writeDefaultRecords</span><span class="o">(</span><span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">writer</span><span class="o">){</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span> <span class="n">bodyField</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;body&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">));</span>
+    <span class="n">StructuredRecord</span><span class="o">.</span><span class="na">Builder</span> <span class="n">recordBuilder</span> <span class="o">=</span> <span class="n">StructuredRecord</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span><span class="s">&quot;defaultRecord&quot;</span><span class="o">,</span> <span class="n">bodyField</span><span class="o">));</span>
+    <span class="n">recordBuilder</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;body&quot;</span><span class="o">,</span> <span class="s">&quot;Hello&quot;</span><span class="o">);</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">recordBuilder</span><span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-real-time-sink">
+<h2>Creating a Real-Time Sink<a class="headerlink" href="#creating-a-real-time-sink" title="Permalink to this headline">¶</a></h2>
+<p>The only method that needs to be implemented is:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">write</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the real-time sink runtime. Guaranteed to be executed before
+any call to the <code class="docutils literal"><span class="pre">write</span></code> method.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">write()</span></code>: The write method will be invoked for a set of objects that needs to be
+persisted. A <code class="docutils literal"><span class="pre">DataWriter</span></code> object can be used to write data to CDAP streams and/or datasets.
+The method is expected to return the number of objects written; this is used for collecting
+metrics.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Cleanup method executed during the shutdown of the Sink.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;realtimesink&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Demo&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Demo Real-Time Sink&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DemoSink</span> <span class="kd">extends</span> <span class="n">RealtimeSink</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">write</span><span class="o">(</span><span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">objects</span><span class="o">,</span> <span class="n">DataWriter</span> <span class="n">dataWriter</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">written</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">object</span> <span class="o">:</span> <span class="n">objects</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">written</span> <span class="o">+=</span> <span class="mi">1</span><span class="o">;</span>
+      <span class="o">.</span> <span class="o">.</span> <span class="o">.</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">written</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-transformation">
+<h2>Creating a Transformation<a class="headerlink" href="#creating-a-transformation" title="Permalink to this headline">¶</a></h2>
+<p>The only method that needs to be implemented is:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">transform</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Used to perform any initialization step that might be required during
+the runtime of the <code class="docutils literal"><span class="pre">Transform</span></code>. It is guaranteed that this method will be invoked
+before the <code class="docutils literal"><span class="pre">transform</span></code> method.</li>
+<li><code class="docutils literal"><span class="pre">transform()</span></code>: This method contains the logic that will be applied on each
+incoming data object. An emitter can be used to pass the results to the subsequent stage
+(which could be either another Transformation or a Sink).</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Used to perform any cleanup before the plugin shuts down.</li>
+</ul>
+<p>Below is an example of a <code class="docutils literal"><span class="pre">DuplicateTransform</span></code> that emits copies of the incoming record
+based on the value in the record. In addition, a user metric indicating the number of
+copies in each transform is emitted. The user metrics can be queried by using the CDAP
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Metrics HTTP RESTful API</span></a>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;transform&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Duplicator&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Transformation example that makes copies.&quot;</span><span class="o">)</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DuplicateTransform</span> <span class="kd">extends</span> <span class="n">Transform</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+
+<span class="kd">private</span> <span class="kd">final</span> <span class="n">Config</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">Config</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+
+    <span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Field that indicates number of copies to make.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">fieldName</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">StructuredRecord</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">copies</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fieldName</span><span class="o">);</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">copies</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+      <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">input</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">getMetrics</span><span class="o">().</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;copies&quot;</span><span class="o">,</span> <span class="n">copies</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
+
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="script-transformations">
+<h3>Script Transformations<a class="headerlink" href="#script-transformations" title="Permalink to this headline">¶</a></h3>
+<p>In the script transformations (<em>JavaScriptTransform</em>, <em>PythonEvaluator</em>, <em>ScriptFilterTransform</em>, and the <em>ValidatorTransform</em>), a
+<code class="docutils literal"><span class="pre">ScriptContext</span></code> object is passed to the <code class="docutils literal"><span class="pre">transform()</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">function</span> <span class="nf">transform</span><span class="o">(</span><span class="n">input</span><span class="o">,</span> <span class="n">context</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The different Transforms that are passed this context object have similar signatures:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Transform</th>
+<th class="head">Signature</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">JavaScriptTransform</span></code></td>
+<td><code class="docutils literal"><span class="pre">{{function</span> <span class="pre">transform(input,</span> <span class="pre">emitter,</span> <span class="pre">context)}}</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">PythonEvaluator</span></code></td>
+<td><code class="docutils literal"><span class="pre">{{function</span> <span class="pre">transform(input,</span> <span class="pre">emitter,</span> <span class="pre">context)}}</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">ScriptFilterTransform</span></code></td>
+<td><code class="docutils literal"><span class="pre">{{function</span> <span class="pre">shouldFilter(input,</span> <span class="pre">context)}}</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">ValidatorTransform</span></code></td>
+<td><code class="docutils literal"><span class="pre">{{function</span> <span class="pre">isValid(input,</span> <span class="pre">context)}}</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal"><span class="pre">ScriptContext</span></code> has these methods:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="n">Logger</span> <span class="nf">getLogger</span><span class="o">();</span>
+<span class="kd">public</span> <span class="n">StageMetrics</span> <span class="nf">getMetrics</span><span class="o">();</span>
+<span class="kd">public</span> <span class="n">ScriptLookup</span> <span class="nf">getLookup</span><span class="o">(</span><span class="n">String</span> <span class="n">table</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The context passed by the <em>ValidatorTransform</em> has an additional method that returns a validator:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="n">Object</span> <span class="nf">getValidator</span><span class="o">(</span><span class="n">String</span> <span class="n">validatorName</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>These methods allow access within the script to CDAP loggers, metrics, lookup tables, and the validator object.</p>
+<p><strong>Logger</strong></p>
+<p><code class="docutils literal"><span class="pre">Logger</span></code> is an <a class="reference external" href="http://www.slf4j.org/api/org/slf4j/Logger.html">org.slf4j.Logger</a>.</p>
+<p><strong>StageMetrics</strong></p>
+<p><code class="docutils literal"><span class="pre">StageMetrics</span></code> has these methods:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">count(String</span> <span class="pre">metricName,</span> <span class="pre">int</span> <span class="pre">delta)</span></code>: Increases the value of the specific metric by delta. Metrics name will be prefixed by the
+stage ID, hence it will be aggregated for the current stage.</li>
+<li><code class="docutils literal"><span class="pre">gauge(String</span> <span class="pre">metricName,</span> <span class="pre">long</span> <span class="pre">value)</span></code>: Sets the specific metric to the provided value. Metrics name will be prefixed by the
+stage ID, hence it will be aggregated for the current stage.</li>
+<li><code class="docutils literal"><span class="pre">pipelineCount(String</span> <span class="pre">metricName,</span> <span class="pre">int</span> <span class="pre">delta)</span></code>: Increases the value of the specific metric by delta. Metrics emitted will be aggregated
+for the entire pipeline.</li>
+<li><code class="docutils literal"><span class="pre">pipelineGauge(String</span> <span class="pre">metricName,</span> <span class="pre">long</span> <span class="pre">value)</span></code>: Sets the specific metric to the provided value. Metrics emitted will be aggregated
+for the entire pipeline.</li>
+</ul>
+<p><strong>ScriptLookup</strong></p>
+<p>Currently, <code class="docutils literal"><span class="pre">ScriptContext.getLookup(String</span> <span class="pre">table)</span></code> only supports <a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">key-value tables</span></a>.</p>
+<p>For example, if a lookup table <em>purchases</em> is configured, then you will be able to perform
+operations with that lookup table in your script: <code class="docutils literal"><span class="pre">context.getLookup('purchases').lookup('key')</span></code></p>
+<p><strong>Validator Object</strong></p>
+<p>For example, in a validator transform, you can retrieve the validator object and call its
+functions as part of your JavaScript:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="kd">var</span> <span class="nx">coreValidator</span> <span class="o">=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">getValidator</span><span class="p">(</span><span class="s2">&quot;coreValidator&quot;</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">coreValidator</span><span class="p">.</span><span class="nx">isDate</span><span class="p">(</span><span class="nx">input</span><span class="p">.</span><span class="nx">date</span><span class="p">))</span> <span class="p">{</span>
+<span class="p">.</span> <span class="p">.</span> <span class="p">.</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="creating-a-batch-aggregator">
+<h2>Creating a Batch Aggregator<a class="headerlink" href="#creating-a-batch-aggregator" title="Permalink to this headline">¶</a></h2>
+<p>In order to implement a Batch Aggregator (to be used in the Data Pipeline artifact), you extend the
+<code class="docutils literal"><span class="pre">BatchAggregator</span></code> class. Unlike a <code class="docutils literal"><span class="pre">Transform</span></code>, which operates on a single record at a time, a
+<code class="docutils literal"><span class="pre">BatchAggregator</span></code> operates on a collection of records. An aggregation takes place in two steps:
+<em>groupBy</em> and then <em>aggregate</em>. In the <em>groupBy</em> step, the aggregator creates zero or more group keys for each
+input record. Before the <em>aggregate step occurs, Hydrator will take all records that have the same
+group key, and collect them into a group. If a record does not have any of the group keys, it is filtered out.
+If a record has multiple group keys, it will belong to multiple groups. The *aggregate</em> step is then
+called. In this step, the plugin receives group keys and all records that had that group key.
+It is then left to the plugin to decide what to do with each of the groups.</p>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any streams or datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the Batch Aggregator. Guaranteed to be executed before any call
+to the plugin’s <code class="docutils literal"><span class="pre">groupBy</span></code> or <code class="docutils literal"><span class="pre">aggregate</span></code> methods. This is called by each executor of the job.
+For example, if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Destroy any resources created by <code class="docutils literal"><span class="pre">initialize</span></code>. Guaranteed to be executed after all calls
+to the plugin’s <code class="docutils literal"><span class="pre">groupBy</span></code> or <code class="docutils literal"><span class="pre">aggregate</span></code> methods have been made. This is called by each executor of the job.
+For example, if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">groupBy()</span></code>: This method will be called for every object that is received from the
+previous stage. This method returns zero or more group keys for each object it recieves.
+Objects with the same group key will be grouped together for the <code class="docutils literal"><span class="pre">aggregate</span></code> method.</li>
+<li><code class="docutils literal"><span class="pre">aggregate()</span></code>: The method is called after every object has been assigned their group keys.
+This method is called once for each group key emitted by the <code class="docutils literal"><span class="pre">groupBy</span></code> method.
+The method recieves a group key as well as an iterator over all objects that had that group key.
+Objects emitted in this method are the output for this stage.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Aggregator that counts how many times each word appears in records input to the aggregator.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">BatchAggregator</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">WordCountAggregator</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Counts how many times each word appears in all records input to the aggregator.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountAggregator</span> <span class="kd">extends</span> <span class="n">BatchAggregator</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;WordCount&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schema</span> <span class="n">OUTPUT_SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+    <span class="s">&quot;wordCount&quot;</span><span class="o">,</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">))</span>
+  <span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Pattern</span> <span class="n">WHITESPACE</span> <span class="o">=</span> <span class="n">Pattern</span><span class="o">.</span><span class="na">compile</span><span class="o">(</span><span class="s">&quot;\\s&quot;</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The field from the input records containing the words to count.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">field</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">WordCountAggregator</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Any static configuration validation should happen here.</span>
+    <span class="c1">// We will check that the field is in the input schema and is of type string.</span>
+    <span class="n">Schema</span> <span class="n">inputSchema</span> <span class="o">=</span> <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">getInputSchema</span><span class="o">();</span>
+    <span class="c1">// A null input schema means it is unknown until runtime, or it is not constant.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">inputSchema</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// If the input schema is constant and known at configure time, check that the input field exists and is a string.</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span> <span class="n">inputField</span> <span class="o">=</span> <span class="n">inputSchema</span><span class="o">.</span><span class="na">getField</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">inputField</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span>
+          <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Field &#39;%s&#39; does not exist in input schema %s.&quot;</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">,</span> <span class="n">inputSchema</span><span class="o">));</span>
+      <span class="o">}</span>
+      <span class="n">Schema</span> <span class="n">fieldSchema</span> <span class="o">=</span> <span class="n">inputField</span><span class="o">.</span><span class="na">getSchema</span><span class="o">();</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Type</span> <span class="n">fieldType</span> <span class="o">=</span> <span class="n">fieldSchema</span><span class="o">.</span><span class="na">isNullable</span><span class="o">()</span> <span class="o">?</span> <span class="n">fieldSchema</span><span class="o">.</span><span class="na">getNonNullable</span><span class="o">().</span><span class="na">getType</span><span class="o">()</span> <span class="o">:</span> <span class="n">fieldSchema</span><span class="o">.</span><span class="na">getType</span><span class="o">();</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">fieldType</span> <span class="o">!=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span>
+          <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Field &#39;%s&#39; is of illegal type %s. Must be of type %s.&quot;</span><span class="o">,</span>
+                        <span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">,</span> <span class="n">fieldType</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">));</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="c1">// Set the output schema so downstream stages will know their input schema.</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">setOutputSchema</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">groupBy</span><span class="o">(</span><span class="n">StructuredRecord</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">groupKeyEmitter</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">val</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">word</span> <span class="o">:</span> <span class="n">WHITESPACE</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="n">val</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">groupKeyEmitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">word</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">aggregate</span><span class="o">(</span><span class="n">String</span> <span class="n">groupKey</span><span class="o">,</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">groupValues</span><span class="o">,</span>
+                        <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kt">long</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">groupValues</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">groupValues</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+      <span class="n">count</span><span class="o">++;</span>
+    <span class="o">}</span>
+    <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">StructuredRecord</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">).</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span> <span class="n">groupKey</span><span class="o">).</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">count</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-sparkcompute-plugin">
+<h2>Creating a SparkCompute Plugin<a class="headerlink" href="#creating-a-sparkcompute-plugin" title="Permalink to this headline">¶</a></h2>
+<p>In order to implement a SparkCompute Plugin (to be used in the Data Pipeline artifact), you extend the
+<code class="docutils literal"><span class="pre">SparkCompute</span></code> class. A <code class="docutils literal"><span class="pre">SparkCompute</span></code> plugin is similar to a <code class="docutils literal"><span class="pre">Transform</span></code>, except instead of
+transforming its input record by record, it transforms an entire collection of records into another
+collection of records. In a <code class="docutils literal"><span class="pre">SparkCompute</span></code> plugin, you are given access to anything you would be
+able to do in a Spark program.</p>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any streams or datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">transform()</span></code>: This method is given a Spark RDD (Resilient Distributed Dataset) containing
+every object that is received from the previous stage. This method then performs Spark operations
+on the input to transform it into an output RDD that will be sent to the next stage.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * SparkCompute plugin that counts how many times each word appears in records input to the compute stage.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">SparkCompute</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">WordCountCompute</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Counts how many times each word appears in all records input to the aggregator.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountCompute</span> <span class="kd">extends</span> <span class="n">SparkCompute</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;WordCount&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schema</span> <span class="n">OUTPUT_SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+    <span class="s">&quot;wordCount&quot;</span><span class="o">,</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">))</span>
+  <span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The field from the input records containing the words to count.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">field</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">WordCountCompute</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Any static configuration validation should happen here.</span>
+    <span class="c1">// We will check that the field is in the input schema and is of type string.</span>
+    <span class="n">Schema</span> <span class="n">inputSchema</span> <span class="o">=</span> <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">getInputSchema</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">inputSchema</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">WordCount</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WordCount</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+      <span class="n">wordCount</span><span class="o">.</span><span class="na">validateSchema</span><span class="o">(</span><span class="n">inputSchema</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="c1">// Set the output schema so downstream stages will know their input schema.</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">setOutputSchema</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="nf">transform</span><span class="o">(</span><span class="n">SparkExecutionPluginContext</span> <span class="n">sparkExecutionPluginContext</span><span class="o">,</span>
+                                             <span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">javaRDD</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">WordCount</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WordCount</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">wordCount</span><span class="o">.</span><span class="na">countWords</span><span class="o">(</span><span class="n">javaRDD</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">flatMap</span><span class="o">(</span><span class="k">new</span> <span class="n">FlatMapFunction</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;,</span> <span class="n">StructuredRecord</span><span class="o">&gt;()</span> <span class="o">{</span>
+        <span class="nd">@Override</span>
+        <span class="kd">public</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;</span> <span class="n">stringLongTuple2</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+          <span class="n">List</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">output</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;();</span>
+          <span class="n">output</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">StructuredRecord</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">)</span>
+                       <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span> <span class="n">stringLongTuple2</span><span class="o">.</span><span class="na">_1</span><span class="o">())</span>
+                       <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">stringLongTuple2</span><span class="o">.</span><span class="na">_2</span><span class="o">())</span>
+                       <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+          <span class="k">return</span> <span class="n">output</span><span class="o">;</span>
+        <span class="o">}</span>
+      <span class="o">});</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-spark-sink">
+<h2>Creating a Spark Sink<a class="headerlink" href="#creating-a-spark-sink" title="Permalink to this headline">¶</a></h2>
+<p>In order to implement a SparkSink Plugin (to be used in the Data Pipeline artifact), you extend the
+<code class="docutils literal"><span class="pre">SparkSink</span></code> class. A <code class="docutils literal"><span class="pre">SparkSink</span></code> is like a <code class="docutils literal"><span class="pre">SparkCompute</span></code> plugin except that it has no
+output. This means other plugins cannot be connected to it. In this way, it is similar to a
+<code class="docutils literal"><span class="pre">BatchSink</span></code>. In a <code class="docutils literal"><span class="pre">SparkSink</span></code>, you are given access to anything you would be able to do in a Spark program.
+For example, one common use case is to train a machine-learning model in this plugin.</p>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any streams or datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">run()</span></code>: This method is given a Spark RDD (Resilient Distributed Dataset) containing every
+object that is received from the previous stage. This method then performs Spark operations
+on the input, and usually saves the result to a dataset.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * SparkSink plugin that counts how many times each word appears in records input to it</span>
+<span class="cm"> * and stores the result in a KeyValueTable.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">SparkSink</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">WordCountSink</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Counts how many times each word appears in all records input to the aggregator.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountSink</span> <span class="kd">extends</span> <span class="n">SparkSink</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;WordCount&quot;</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The field from the input records containing the words to count.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">field</span><span class="o">;</span>
+
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The name of the KeyValueTable to write to.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">tableName</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">WordCountSink</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Any static configuration validation should happen here.</span>
+    <span class="c1">// We will check that the field is in the input schema and is of type string.</span>
+    <span class="n">Schema</span> <span class="n">inputSchema</span> <span class="o">=</span> <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">getInputSchema</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">inputSchema</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">WordCount</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WordCount</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+      <span class="n">wordCount</span><span class="o">.</span><span class="na">validateSchema</span><span class="o">(</span><span class="n">inputSchema</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">createDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">tableName</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">EMPTY</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">SparkExecutionPluginContext</span> <span class="n">sparkExecutionPluginContext</span><span class="o">,</span>
+                  <span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">javaRDD</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">WordCount</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WordCount</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+    <span class="n">JavaPairRDD</span> <span class="n">outputRDD</span> <span class="o">=</span> <span class="n">wordCount</span><span class="o">.</span><span class="na">countWords</span><span class="o">(</span><span class="n">javaRDD</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">mapToPair</span><span class="o">(</span><span class="k">new</span> <span class="n">PairFunction</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;,</span> <span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[]&gt;()</span> <span class="o">{</span>
+        <span class="nd">@Override</span>
+        <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[]&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;</span> <span class="n">stringLongTuple2</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+          <span class="k">return</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;&gt;(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">stringLongTuple2</span><span class="o">.</span><span class="na">_1</span><span class="o">()),</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">stringLongTuple2</span><span class="o">.</span><span class="na">_2</span><span class="o">()));</span>
+        <span class="o">}</span>
+      <span class="o">});</span>
+    <span class="n">sparkExecutionPluginContext</span><span class="o">.</span><span class="na">saveAsDataset</span><span class="o">(</span><span class="n">outputRDD</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">tableName</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="test-framework-for-plugins">
+<h2>Test Framework for Plugins<a class="headerlink" href="#test-framework-for-plugins" title="Permalink to this headline">¶</a></h2>
+<p>The Test Framework provides methods to create and deploy JAR files as artifacts. This lets you
+test the creation of multiple applications from the same artifact, as well as the use of plugin artifacts.</p>
+<p>To add an artifact containing an application class:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// add the artifact for etl batch app</span>
+<span class="n">addAppArtifact</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Artifact</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;etlbatch&quot;</span><span class="o">,</span> <span class="s">&quot;3.2.0&quot;</span><span class="o">),</span> <span class="n">ETLBatchApplication</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+  <span class="n">BatchSource</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getPackage</span><span class="o">().</span><span class="na">getName</span><span class="o">(),</span>
+  <span class="n">PipelineConfigurable</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getPackage</span><span class="o">().</span><span class="na">getName</span><span class="o">(),</span>
+  <span class="s">&quot;org.apache.avro.mapred&quot;</span><span class="o">,</span> <span class="s">&quot;org.apache.avro&quot;</span><span class="o">,</span> <span class="s">&quot;org.apache.avro.generic&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The first argument is the id of the artifact; the second is the application class; and the remainder
+of the arguments are packages
+that should be included in the <code class="docutils literal"><span class="pre">Export-Packages</span></code> manifest attribute bundled in the JAR. The framework will
+trace the dependencies of the specified application class to create a JAR with those dependencies. This will
+mimic what happens when you actually build your application JAR.</p>
+<p>An application can then be deployed using that artifact:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// create application create request</span>
+<span class="n">ETLBatchConfig</span> <span class="n">etlConfig</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ETLBatchConfig</span><span class="o">(</span><span class="s">&quot;* * * * *&quot;</span><span class="o">,</span> <span class="n">source</span><span class="o">,</span> <span class="n">sink</span><span class="o">,</span> <span class="n">transformList</span><span class="o">);</span>
+<span class="n">AppRequest</span><span class="o">&lt;</span><span class="n">ETLBatchConfig</span><span class="o">&gt;</span> <span class="n">appRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AppRequest</span><span class="o">&lt;&gt;(</span><span class="k">new</span> <span class="n">ArtifactSummary</span><span class="o">(</span><span class="s">&quot;etlbatch&quot;</span><span class="o">,</span> <span class="s">&quot;3.2.0&quot;</span><span class="o">),</span> <span class="n">etlConfig</span><span class="o">);</span>
+<span class="n">Id</span><span class="o">.</span><span class="na">Application</span> <span class="n">appId</span> <span class="o">=</span> <span class="n">Id</span><span class="o">.</span><span class="na">Application</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;KVToKV&quot;</span><span class="o">);</span>
+
+<span class="c1">// deploy the application</span>
+<span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">appId</span><span class="o">,</span> <span class="n">appRequest</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Plugins extending the artifact can also be added:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// add artifact for transforms</span>
+<span class="n">addPluginArtifact</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Artifact</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;transforms&quot;</span><span class="o">,</span> <span class="s">&quot;1.0.0&quot;</span><span class="o">),</span> <span class="n">APP_ARTIFACT_ID</span><span class="o">,</span>
+  <span class="n">ProjectionTransform</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">ScriptFilterTransform</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">ValidatorTransform</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">CoreValidator</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+  <span class="n">StructuredRecordToGenericRecordTransform</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The first argument is the id of the plugin artifact; the second is the parent artifact it is extending; and the
+remainder of the arguments are classes that should be bundled in the JAR.
+The packages of all these classes are included in the
+<code class="docutils literal"><span class="pre">Export-Packages</span></code> manifest attribute bundled in the JAR. When adding a plugin artifact this way, it is
+important to include all classes in your plugin packages, even if they are not used in your test case. This is
+to ensure that the JAR can trace all required dependencies to correctly build the JAR.</p>
+<p>The examples are taken directly from the <code class="docutils literal"><span class="pre">BaseETLBatchTest</span></code> in the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> artifact
+included with CDAP.</p>
+<p>Additional information on unit testing with CDAP is in the Developers’ Manual section
+on <a class="reference external" href="../source/../../developers-manual/testing/testing.html#test-framework" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Testing a CDAP Application</span></a>.</p>
+<p>In addition, CDAP provides a <code class="docutils literal"><span class="pre">hydrator-test</span></code> module that contains several mock plugins
+for you to use in tests with your custom plugins. To use the module, add a dependency to
+your <code class="docutils literal"><span class="pre">pom.xml</span></code>:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>co.cask.cdap<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>hydrator-test<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>${cdap.version}<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;scope&gt;</span>test<span class="nt">&lt;/scope&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</pre></div>
+</div>
+<p>Then extend the <code class="docutils literal"><span class="pre">HydratorTestBase</span></code> class, and create a method that will setup up the
+application artifact and mock plugins, as well as the artifact containing your custom plugins:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Unit tests for our plugins.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">PipelineTest</span> <span class="kd">extends</span> <span class="n">HydratorTestBase</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">ArtifactSummary</span> <span class="n">APP_ARTIFACT</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArtifactSummary</span><span class="o">(</span><span class="s">&quot;data-pipeline&quot;</span><span class="o">,</span> <span class="s">&quot;1.0.0&quot;</span><span class="o">);</span>
+  <span class="nd">@ClassRule</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">TestConfiguration</span> <span class="n">CONFIG</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TestConfiguration</span><span class="o">(</span><span class="s">&quot;explore.enabled&quot;</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+
+  <span class="nd">@BeforeClass</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">setupTestClass</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">ArtifactId</span> <span class="n">parentArtifact</span> <span class="o">=</span> <span class="n">NamespaceId</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">.</span><span class="na">artifact</span><span class="o">(</span><span class="n">APP_ARTIFACT</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">APP_ARTIFACT</span><span class="o">.</span><span class="na">getVersion</span><span class="o">());</span>
+
+    <span class="c1">// Add the data pipeline artifact and mock plugins.</span>
+    <span class="n">setupBatchArtifacts</span><span class="o">(</span><span class="n">parentArtifact</span><span class="o">,</span> <span class="n">DataPipelineApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="c1">// Add our plugins artifact with the data pipeline artifact as its parent.</span>
+    <span class="c1">// This will make our plugins available to the data pipeline.</span>
+    <span class="n">addPluginArtifact</span><span class="o">(</span><span class="n">NamespaceId</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">.</span><span class="na">artifact</span><span class="o">(</span><span class="s">&quot;example-plugins&quot;</span><span class="o">,</span> <span class="s">&quot;1.0.0&quot;</span><span class="o">),</span>
+                      <span class="n">parentArtifact</span><span class="o">,</span>
+                      <span class="n">TextFileSetSource</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                      <span class="n">TextFileSetSink</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                      <span class="n">WordCountAggregator</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                      <span class="n">WordCountCompute</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                      <span class="n">WordCountSink</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>You can then add test cases as you see fit. The <code class="docutils literal"><span class="pre">cdap-data-pipeline-plugins-archetype</span></code>
+includes an example of this unit test.</p>
+</div>
+<div class="section" id="source-state-in-a-real-time-source">
+<h2>Source State in a Real-Time Source<a class="headerlink" href="#source-state-in-a-real-time-source" title="Permalink to this headline">¶</a></h2>
+<p>Real-time plugins are executed in workers. During failure, there is the possibility that
+the data that is emitted from the Source will not be processed by subsequent stages. In
+order to avoid such data loss, SourceState can be used to persist the information about
+the external source (for example, offset) if supported by the Source.</p>
+<p>In case of failure, when the poll method is invoked, the offset last persisted is passed
+to the poll method, which can be used to fetch the data from the last processed point. The
+updated Source State information is returned by the poll method. After the data is
+processed by any Transformations and then finally persisted by the Sink, the new Source
+State information is also persisted. This ensures that there will be no data loss in case
+of failures.</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;realtimesource&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Demo&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Demo Real-Time Source&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DemoSource</span> <span class="kd">extends</span> <span class="n">RealtimeSource</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">TestSource</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">COUNT</span> <span class="o">=</span> <span class="s">&quot;count&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Nullable</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">SourceState</span> <span class="nf">poll</span><span class="o">(</span><span class="n">Emitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">writer</span><span class="o">,</span> <span class="n">SourceState</span> <span class="n">currentState</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">100</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Some Error in Source&quot;</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kt">int</span> <span class="n">prevCount</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">currentState</span><span class="o">.</span><span class="na">getState</span><span class="o">(</span><span class="n">COUNT</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">prevCount</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toInt</span><span class="o">(</span><span class="n">currentState</span><span class="o">.</span><span class="na">getState</span><span class="o">(</span><span class="n">COUNT</span><span class="o">));</span>
+      <span class="n">prevCount</span><span class="o">++;</span>
+      <span class="n">currentState</span><span class="o">.</span><span class="na">setState</span><span class="o">(</span><span class="n">COUNT</span><span class="o">,</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">prevCount</span><span class="o">));</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+      <span class="n">prevCount</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+      <span class="n">currentState</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SourceState</span><span class="o">();</span>
+      <span class="n">currentState</span><span class="o">.</span><span class="na">setState</span><span class="o">(</span><span class="n">COUNT</span><span class="o">,</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">prevCount</span><span class="o">));</span>
+    <span class="o">}</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Emitting data! {}&quot;</span><span class="o">,</span> <span class="n">prevCount</span><span class="o">);</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="s">&quot;Hello World!&quot;</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">currentState</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="plugin-packaging-and-deployment">
+<span id="cdap-apps-custom-etl-plugins-plugin-packaging"></span><h2>Plugin Packaging and Deployment<a class="headerlink" href="#plugin-packaging-and-deployment" title="Permalink to this headline">¶</a></h2>
+<p>To package and deploy your plugin, follow these instructions on <a class="reference external" href="#plugin-packaging">plugin packaging</a>,
+<a class="reference external" href="#deploying-a-system-artifact">deployment</a> and <a class="reference external" href="#deployment-verification">verification</a>.</p>
+<p>To control how your plugin appears in the CDAP UI, include an appropriate <a class="reference internal" href="#cdap-apps-custom-widget-json"><span>plugin
+widget JSON file</span></a>, as described below.</p>
+<p>By using one of the <code class="docutils literal"><span class="pre">etl-plugin</span></code> Maven archetypes, your project will be set up to generate
+the required JAR manifest. If you move the plugin class to a different Java package after
+the project is created, you will need to modify the configuration of the
+<code class="docutils literal"><span class="pre">maven-bundle-plugin</span></code> in the <code class="docutils literal"><span class="pre">pom.xml</span></code> file to reflect the package name changes.</p>
+<p>If you are developing plugins for the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> artifact, be aware that for
+classes inside the plugin JAR that you have added to the Hadoop Job configuration directly
+(for example, your custom <code class="docutils literal"><span class="pre">InputFormat</span></code> class), you will need to add the Java packages
+of those classes to the &#8220;Export-Package&#8221; as well. This is to ensure those classes are
+visible to the Hadoop MapReduce framework during the plugin execution. Otherwise, the
+execution will typically fail with a <code class="docutils literal"><span class="pre">ClassNotFoundException</span></code>.</p>
+<div class="section" id="plugin-deployment">
+<h3>Plugin Deployment<a class="headerlink" href="#plugin-deployment" title="Permalink to this headline">¶</a></h3>
+<p>To make plugins available to another artifact (and thus available to any application
+created from one of the artifacts), the plugins must first be packaged in a JAR file.
+After that, the JAR file must be deployed either as a <a class="reference internal" href="#plugins-deployment-system"><span>system artifact</span></a> or a <a class="reference internal" href="#plugins-deployment-user"><span>user artifact</span></a>.</p>
+<p>A system artifact is available to users across any namespace. A user artifact is available
+only to users in the namespace to which it is deployed. By design, deploying as a user
+artifact just requires access to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful API</span></a>,
+while deploying as a system artifact requires access to the filesystem of the CDAP Master.
+This then requires administrator access and permission.</p>
+</div>
+<div class="section" id="plugin-packaging">
+<span id="plugins-deployment-packaging"></span><h3>Plugin Packaging<a class="headerlink" href="#plugin-packaging" title="Permalink to this headline">¶</a></h3>
+<p>A <em>Plugin</em> is packaged as a JAR file, which contains inside the plugin classes and their dependencies.
+CDAP uses the &#8220;Export-Package&#8221; attribute in the JAR file manifest to determine
+which classes are <em>visible</em>. A <em>visible</em> class is one that can be used by another class
+that is not from the plugin JAR itself. This means the Java package which the plugin class
+is in must be listed in &#8220;Export-Package&#8221;, otherwise the plugin class will not be visible,
+and hence no one will be able to use it. This can be done in Maven by editing your pom.xml.
+For example, if your plugins are in the <code class="docutils literal"><span class="pre">com.example.runnable</span></code> and <code class="docutils literal"><span class="pre">com.example.callable</span></code>
+packages, you would edit the bundler plugin in your pom.xml:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;plugin&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>maven-bundle-plugin<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>2.3.7<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;extensions&gt;</span>true<span class="nt">&lt;/extensions&gt;</span>
+  <span class="nt">&lt;configuration&gt;</span>
+    <span class="nt">&lt;instructions&gt;</span>
+      <span class="nt">&lt;Embed-Dependency&gt;</span>*;inline=false;scope=compile<span class="nt">&lt;/Embed-Dependency&gt;</span>
+      <span class="nt">&lt;Embed-Transitive&gt;</span>true<span class="nt">&lt;/Embed-Transitive&gt;</span>
+      <span class="nt">&lt;Embed-Directory&gt;</span>lib<span class="nt">&lt;/Embed-Directory&gt;</span>
+      <span class="nt">&lt;Export-Package&gt;</span>com.example.runnable;com.example.callable<span class="nt">&lt;/Export-Package&gt;</span>
+    <span class="nt">&lt;/instructions&gt;</span>
+  <span class="nt">&lt;/configuration&gt;</span>
+  ...
+<span class="nt">&lt;/plugin&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="deploying-as-a-system-artifact">
+<span id="plugins-deployment-system"></span><h3>Deploying as a System Artifact<a class="headerlink" href="#deploying-as-a-system-artifact" title="Permalink to this headline">¶</a></h3>
+<p>To deploy the artifact as a system artifact, both the JAR file and a matching configuration file
+must be placed in the appropriate directory.</p>
+<ul class="simple">
+<li><strong>Standalone mode:</strong> <code class="docutils literal"><span class="pre">$CDAP_INSTALL_DIR/artifacts</span></code></li>
+<li><strong>Distributed mode:</strong> The plugin JARs should be placed in the local file system and the path
+can be provided to CDAP by setting the property <code class="docutils literal"><span class="pre">app.artifact.dir</span></code> in
+<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">cdap-site.xml</span></a>. Multiple directories can be defined by separating
+them with a semicolon.The default path is <code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>.</li>
+</ul>
+<p>For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
+can use the plugins. The file name must match the name of the JAR, except it must have the <code class="docutils literal"><span class="pre">.json</span></code>
+extension instead of the <code class="docutils literal"><span class="pre">.jar</span></code> extension. For example, if your JAR file is named
+<code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code>, there must be a corresponding <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> file.
+If your <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> contains transforms that can be used by both the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code>
+and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts, <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> would contain:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;cdap-etl-batch[3.4.1,3.4.1]&quot;, &quot;cdap-etl-realtime[3.4.1,3.4.1]&quot; ]
+}
+</pre>
+</div>
+<p>This file specifies that the plugins in <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> can be used by version 3.4.1 of
+the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts. You can also specify a wider range of versions
+that can use the plugins, with square brackets <code class="docutils literal"><span class="pre">[</span> <span class="pre">]</span></code> indicating an inclusive version and parentheses <code class="docutils literal"><span class="pre">(</span> <span class="pre">)</span></code> indicating
+an exclusive version. For example:</p>
+<div class="highlight container">
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-etl-batch[3.2.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-etl-realtime[3.2.0,4.0.0)&quot;</span> <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>specifies that these plugins can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive) of the
+<code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts.</p>
+<p>If the artifact contains third-party plugins, you can explicitly list them in the config file.
+For example, you may want to deploy a JDBC driver contained in a third-party JAR. In these cases,
+you have no control over the code to annotate the classes that should be plugins, so you need to
+list them in the configuration:</p>
+<div class="highlight container">
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-etl-batch[3.2.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-etl-realtime[3.2.0,4.0.0)&quot;</span> <span class="p">],</span>
+  <span class="nt">&quot;plugins&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mysql&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;jdbc&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;className&quot;</span><span class="p">:</span> <span class="s2">&quot;com.mysql.jdbc.Driver&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Once your JARs and matching configuration files are in place, a CDAP CLI command (<code class="docutils literal"><span class="pre">load</span> <span class="pre">artifact</span></code>) or
+a RESTful API call to <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">load system artifacts</span></a>
+can be made to load the artifacts. As described in the documentation on <a class="reference external" href="../source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.4.1)"><span>Artifacts</span></a>, only
+snapshot artifacts can be re-deployed without requiring that they first be deleted.</p>
+<p>Alternatively, the CDAP Standalone should be restarted for this change to take effect in Standalone
+mode, and <code class="docutils literal"><span class="pre">cdap-master</span></code> services should be restarted in the Distributed mode.</p>
+</div>
+<div class="section" id="deploying-as-a-user-artifact">
+<span id="plugins-deployment-user"></span><h3>Deploying as a User Artifact<a class="headerlink" href="#deploying-as-a-user-artifact" title="Permalink to this headline">¶</a></h3>
+<p>To deploy the artifact as a user artifact, use the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful Add Artifact API</span></a> or the CLI.</p>
+<p>When using the RESTful API, you will need to specify the <code class="docutils literal"><span class="pre">Artifact-Extends</span></code> header.
+Unless the artifact&#8217;s version is defined in the manifest file of the JAR file you upload,
+you will also need to specify the <code class="docutils literal"><span class="pre">Artifact-Version</span></code> header.</p>
+<p>When using the CLI, a configuration file exactly like the one described in the
+<a class="reference internal" href="#plugins-deployment-system"><span>Deploying as a System Artifact</span></a> must be used.</p>
+<p>For example, to deploy <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> using the RESTful API:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral1() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral1 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral1", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral1" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot;</span> <span class="se">\</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.1, 3.4.1]/system:cdap-etl-realtime[3.4.1, 3.4.1]&quot; \</span>
+<span class="go">--data-binary @/path/to/custom-transforms-1.0.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.1, 3.4.1]\system:cdap-etl-realtime[3.4.1, 3.4.1]&quot; ^</span>
+<span class="go">--data-binary @\path\to\custom-transforms-1.0.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral2_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral2 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral2 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral2 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral2 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral2 .example-tab-" + tab).click(change_tabbedparsedliteral2_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral2" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load artifact /path/to/custom-transforms-1.0.0.jar config-file /path/to/config.json</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <code class="docutils literal"><span class="pre">config.json</span></code> contains:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;system:cdap-etl-batch[3.4.1,3.4.1]&quot;, &quot;system:cdap-etl-realtime[3.4.1,3.4.1]&quot; ]
+}
+</pre>
+</div>
+<p>Note that when deploying a user artifact that extends a system artifact,
+you must prefix the parent artifact name with <code class="docutils literal"><span class="pre">'system:'</span></code>.
+This is in the event there is a user artifact with the same name as the system artifact.
+If you are extending a user artifact, no prefix is required.</p>
+<p>You can deploy third-party JARs in the same way except the plugin information needs
+<a class="reference external" href="../source/../../developers-manual/building-blocks/plugins.html#plugins-third-party" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">to be explicitly listed</span></a>. As described in the documentation on
+<a class="reference external" href="../source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.4.1)"><span>Artifacts</span></a>, only snapshot artifacts can be re-deployed without requiring that they
+first be deleted.</p>
+<p>Using the RESTful API (note that if the artifact version is not in the JAR manifest file,
+it needs to be set explicitly, as the JAR contents are uploaded without the filename):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral3() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral3 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral3", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral3" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot;</span> <span class="se">\</span>
+<span class="go">-H &quot;Artifact-Plugins: [ { &#39;name&#39;: &#39;mysql&#39;, &#39;type&#39;: &#39;jdbc&#39;, &#39;className&#39;: &#39;com.mysql.jdbc.Driver&#39; } ]&quot; \</span>
+<span class="go">-H &quot;Artifact-Version: 5.1.35&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.1, 3.4.1]/system:cdap-etl-realtime[3.4.1, 3.4.1]&quot; \</span>
+<span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot; ^</span>
+<span class="go">-H &quot;Artifact-Plugins: [ { &#39;name&#39;: &#39;mysql&#39;, &#39;type&#39;: &#39;jdbc&#39;, &#39;className&#39;: &#39;com.mysql.jdbc.Driver&#39; } ]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Version: 5.1.35&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.1, 3.4.1]\system:cdap-etl-realtime[3.4.1, 3.4.1]&quot; ^</span>
+<span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI (note that the artifact version, if not explicitly set, is derived from the JAR filename):</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral4_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral4 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral4 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral4 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral4 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral4 .example-tab-" + tab).click(change_tabbedparsedliteral4_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral4" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load artifact /path/to/mysql-connector-java-5.1.35.jar config-file /path/to/config.json</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <code class="docutils literal"><span class="pre">config.json</span></code> contains:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;system:cdap-etl-batch[3.4.1,3.4.1]&quot;, &quot;system:cdap-etl-realtime[3.4.1,3.4.1]&quot; ],
+  &quot;plugins&quot;: [
+    {
+      &quot;name&quot;: &quot;mysql&quot;,
+      &quot;type&quot;: &quot;jdbc&quot;,
+      &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot;
+    }
+  ]
+}
+</pre>
+</div>
+</div>
+<div class="section" id="deployment-verification">
+<span id="plugins-deployment-verification"></span><h3>Deployment Verification<a class="headerlink" href="#deployment-verification" title="Permalink to this headline">¶</a></h3>
+<p>You can verify that a plugin artifact was added successfully by using the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-detail" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful Artifact API</span></a> to retrieve artifact details.
+For example, to retrieve detail about our <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral5() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral5 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral5", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral5" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>If you deployed the <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact as a system artifact, the scope is <code class="docutils literal"><span class="pre">system</span></code>.
+If you deployed the <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact as a user artifact, the scope is <code class="docutils literal"><span class="pre">user</span></code>.</p>
+<p>You can verify that the plugins in your newly-added artifact are available to its parent by using the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-available-plugins" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful Artifact API</span></a> to list plugins of a
+specific type. For example, to check if <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> can access the plugins in the
+<code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral6() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral6 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral6", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral6" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/3.4.1/extensions/transform?scope=system&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/3.4.1/extensions/transform?scope=system&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>You can then check the list returned to see if your transforms are in the list. Note that
+the scope here refers to the scope of the parent artifact. In this example it is the <code class="docutils literal"><span class="pre">system</span></code>
+scope because <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> is a system artifact. This is true even if you deployed
+<code class="docutils literal"><span class="pre">custom-transforms</span></code> as a user artifact because the parent is still a system artifact.</p>
+</div>
+<div class="section" id="plugin-widget-json">
+<span id="cdap-apps-custom-widget-json"></span><h3>Plugin Widget JSON<a class="headerlink" href="#plugin-widget-json" title="Permalink to this headline">¶</a></h3>
+<p>When a plugin is displayed in the CDAP UI, its properties are represented
+by widgets in the <a class="reference internal" href="index.html#cdap-apps-cask-hydrator"><span>Cask Hydrator</span></a>. Each property of a
+plugin is represented, by default, as a textbox in the user interface.</p>
+<p>To customize the plugin display, a plugin can include a widget JSON file that
+specifies the particular widgets and sets of widget attributes used to display the plugin
+properties in the CDAP UI.</p>
+<p>The widget JSON is composed of two lists:</p>
+<ul class="simple">
+<li>a list of property configuration groups and</li>
+<li>a list of output properties.</li>
+</ul>
+<p>For example:</p>
+<div class="highlight-xml"><div class="highlight"><pre>{
+  &quot;configuration-groups&quot;: [
+    {&quot;group-1&quot;},
+    {&quot;group-2&quot;},
+    ...
+  ],
+  &quot;outputs&quot;: [
+    {&quot;ouput-property-1&quot;},
+    {&quot;ouput-property-2&quot;},
+    ...
+  ]
+}
+</pre></div>
+</div>
+<div class="section" id="configuration-groups">
+<h4>Configuration Groups<a class="headerlink" href="#configuration-groups" title="Permalink to this headline">¶</a></h4>
+<p>Configuration groups are a simple grouping of properties of a plugin. A configuration
+group is represented as a JSON object with a label and a list of plugin properties for that
+group.</p>
+<p>For example, in a <em>Batch Source</em> plugin, properties such as <em>Dataset Name</em>, <em>Dataset Base
+Path</em>, <em>Duration</em>, and <em>Delay</em> can be grouped as the <em>Batch Source Configuration</em>.</p>
+<p>In the case of the <em>Batch Source</em> plugin, it could look like this:</p>
+<div class="highlight-xml"><div class="highlight"><pre>{
+  &quot;configuration-groups&quot;: [
+    {
+      &quot;label&quot;: &quot;Batch Source Configuration&quot;,
+      &quot;properties&quot;: [
+        {&quot;field1&quot;},
+        {&quot;field2&quot;},
+        {&quot;field3&quot;}
+      ]
+    }
+  ],
+  outputs: [
+    {output-property1},
+    {output-property2},
+    ..
+  ]
+}
+</pre></div>
+</div>
+<p>Once a group is established, we can configure how each of the properties inside the group is
+represented in the CDAP UI.</p>
+<p>The configuration of each property of the plugin is composed of:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#custom-widgets"><span>widget-type:</span></a> The type of widget needed to represent this property.</li>
+<li><strong>label:</strong> Label to be used in the CDAP UI for the property.</li>
+<li><strong>name:</strong> Name of the field (as supplied by the CDAP UI backend).</li>
+<li><strong>widget-attributes:</strong> A map of attributes that the widget type requires be defined in
+order to render the property in the CDAP UI. The attributes vary depending on the
+widget type.</li>
+<li><a class="reference internal" href="#custom-plugin-function"><span>plugin-function:</span></a> An optional map of plugin method and its widget attributes that can be
+applied to a particular plugin property.</li>
+</ul>
+<p>Note that with the exception of the value of the <em>label</em>, all property values are case-sensitive.</p>
+<p>To find the available field names, you can use the Artifact HTTP RESTful API to <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-plugin-detail" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">retrieve plugin details</span></a> for an artifact, which
+will include all the available names. (If the artifact is your own, you will already know the
+available field names.)</p>
+<p>In the case of our <em>Batch Source</em> plugin example, the <code class="docutils literal"><span class="pre">configuration-groups</span></code> can be represented by:</p>
+<div class="highlight-xml"><div class="highlight"><pre>&quot;configuration-groups&quot;: [
+  {
+    &quot;label&quot;: &quot;Batch Source&quot;,
+    &quot;properties&quot;: [
+      {
+        &quot;widget-type&quot;: &quot;dataset-selector&quot;,
+        &quot;label&quot;: &quot;Dataset Name&quot;,
+        &quot;name&quot;: &quot;name&quot;
+      },
+      {
+        &quot;widget-type&quot;: &quot;textbox&quot;,
+        &quot;label&quot;: &quot;Dataset Base Path&quot;,
+        &quot;name&quot;: &quot;basePath&quot;
+      },
+      {
+        &quot;widget-type&quot;: &quot;textbox&quot;,
+        &quot;label&quot;: &quot;Group By Fields&quot;,
+        &quot;name&quot;: &quot;groupByFields&quot;,
+        &quot;plugin-function&quot;: {
+          &quot;method&quot;: &quot;POST&quot;,
+          &quot;widget&quot;: &quot;outputSchema&quot;,
+          &quot;output-property&quot;: &quot;schema&quot;,
+          &quot;plugin-method&quot;: &quot;outputSchema&quot;,
+          &quot;required-fields&quot;: [&quot;groupByFields&quot;, &quot;aggregates&quot;],
+          &quot;missing-required-fields-message&quot;:
+            &quot;&#39;Group By Fields&#39; &amp; &#39;Aggregates&#39; properties are required to fetch schema.&quot;
+        }
+      },
+      {
+        &quot;widget-type&quot;: &quot;textbox&quot;,
+        &quot;label&quot;: &quot;Delay&quot;,
+        &quot;name&quot;: &quot;delay&quot;
+      }
+    ]
+</pre></div>
+</div>
+</div>
+<div class="section" id="widgets">
+<span id="custom-widgets"></span><h4>Widgets<a class="headerlink" href="#widgets" title="Permalink to this headline">¶</a></h4>
+<p>A widget in the CDAP UI represents a component that will be rendered and used to set a
+value of a property of a plugin. These are the different widgets—their type, a
+description, their attributes (if any), and their output data type—that we support in
+Cask Hydrator as of version 3.4.1:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="26%" />
+<col width="26%" />
+<col width="26%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Widget Type</th>
+<th class="head">Description</th>
+<th class="head">Attributes</th>
+<th class="head">Output Data Type</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">textbox</span></code></td>
+<td>Default HTML textbox, used to enter any string</td>
+<td><code class="docutils literal"><span class="pre">default</span></code>: default value for the widget</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">number</span></code></td>
+<td>Default HTML number textbox that only accepts valid numbers</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">default</span></code>: default value for the widget</div>
+<div class="line"><code class="docutils literal"><span class="pre">min</span></code>: minimum value for the number box</div>
+<div class="line"><code class="docutils literal"><span class="pre">max</span></code>: maximum value for the number box</div>
+</div>
+</td>
+<td>string</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">passwordbox</span></code></td>
+<td>Default HTML password entry box</td>
+<td>No attributes</td>
+<td>string</td>
+</tr>
+<tr class="row-odd"><td>csv</td>
+<td>Comma-separated values; each value is entered in a separate box</td>
+<td>No attributes</td>
+<td>comma-separated string</td>
+</tr>
+<tr class="row-even"><td>dsv</td>
+<td>Delimiter-separated values; each value is entered in a separate box</td>
+<td><code class="docutils literal"><span class="pre">delimiter</span></code>: delimiter used to separate the values</td>
+<td>delimiter-separated string</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">json-editor</span></code></td>
+<td>JSON editor that pretty-prints and auto-formats JSON while it is being entered</td>
+<td><code class="docutils literal"><span class="pre">default</span></code>: default serialized JSON value for the widget</td>
+<td>string</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">javascript-editor</span></code>, <code class="docutils literal"><span class="pre">python-editor</span></code></td>
+<td>An editor to write JavaScript (<code class="docutils literal"><span class="pre">javascript-editor</span></code>) or Python (<code class="docutils literal"><span class="pre">python-editor</span></code>)
+code as a value for a property</td>
+<td><code class="docutils literal"><span class="pre">default</span></code>: default string value for the widget</td>
+<td>string</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">keyvalue</span></code></td>
+<td>A key-value editor for constructing maps of key-value pairs</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">delimiter</span></code>: delimiter for the key-value pairs</div>
+<div class="line"><code class="docutils literal"><span class="pre">kv-delimiter</span></code>: delimiter between key and value</div>
+</div>
+</td>
+<td>string</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">keyvalue-dropdown</span></code></td>
+<td>Similar to <em>keyvalue</em> widget, but with a drop-down value list</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">delimiter</span></code>: delimiter for the key-value pairs</div>
+<div class="line"><code class="docutils literal"><span class="pre">kv-delimiter</span></code>: delimiter between key and value</div>
+<div class="line"><code class="docutils literal"><span class="pre">dropdownOptions</span></code>: list of drop-down options to display</div>
+</div>
+</td>
+<td>string</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">select</span></code></td>
+<td>An HTML drop-down with a list of values; allows one choice from the list</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">values</span></code>: list of values for the drop-down</div>
+<div class="line"><code class="docutils literal"><span class="pre">default</span></code>: default value from the list</div>
+</div>
+</td>
+<td>string</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dataset-selector</span></code>, <code class="docutils literal"><span class="pre">stream-selector</span></code></td>
+<td>A type-ahead textbox with a list of datasets (<code class="docutils literal"><span class="pre">dataset-selector</span></code>) or streams
+(<code class="docutils literal"><span class="pre">stream-selector</span></code>) from the CDAP instance</td>
+<td>No attributes</td>
+<td>string</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">schema</span></code></td>
+<td>A four-column, editable table to represent a schema of a plugin</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">schema-types</span></code>: list of schema types for each field from which the user can chose when setting the schema</div>
+<div class="line"><code class="docutils literal"><span class="pre">schema-default-type</span></code>: default type for each newly-added field in the schema</div>
+</div>
+</td>
+<td>string</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">non-editable-schema-editor</span></code></td>
+<td>A non-editable widget for displaying a schema</td>
+<td><code class="docutils literal"><span class="pre">schema</span></code>: schema that will be used as the output schema for the plugin</td>
+<td>string</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="plugin-function">
+<span id="custom-plugin-function"></span><h4>Plugin Function<a class="headerlink" href="#plugin-function" title="Permalink to this headline">¶</a></h4>
+<p>Plugin functions are methods exposed by a particular plugin that can be used to fetch output schema for a plugin.
+These are the fields that need  to be configured to use the plugin functions in the CDAP UI:</p>
+<ul class="simple">
+<li><strong>method:</strong> Type of request to make when calling the plugin function from the CDAP UI (for instance GET or POST).</li>
+<li><strong>widget:</strong> Type of widget to use to import output schema.</li>
+<li><strong>output-property:</strong> Property to update once the CDAP UI receives the data from the plugin method.</li>
+<li><strong>plugin-method:</strong> Name of the plugin method to call (as exposed by the plugin).</li>
+<li><strong>required-fields:</strong> Fields required to call the plugin method.</li>
+<li><strong>missing-required-fields-message:</strong> A message for the user as to why the action is disabled in the CDAP UI, when the required fields are missing values.</li>
+</ul>
+<p>The last two properties are solely for the the CDAP UI and are not required all the time. However, the first four fields are required fields to use
+a plugin method in the CDAP UI. In the case of a plugin function, if the widget is not supported in the CDAP UI or the plugin function map is not supplied, the user will not see it in the CDAP UI.</p>
+</div>
+<div class="section" id="outputs">
+<h4>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h4>
+<p>The <em>outputs</em> is a list of plugin properties that represent the output schema of a particular plugin.</p>
+<p>The output schema for a plugin can be represented in two different ways, either:</p>
+<ul class="simple">
+<li>via an <em>implicit</em> schema; or</li>
+<li>via an <em>explicit</em> <code class="docutils literal"><span class="pre">Schema</span></code> property.</li>
+</ul>
+<p>An <strong>implicit</strong> schema is a pre-determined output schema for a plugin that the plugin developer
+enforces. The implicit schema is not associated with any properties of the plugin, but
+just enforces the output schema of the plugin, for visual display purposes. An example of
+this is the <a class="reference external" href="https://github.com/caskdata/hydrator-plugins/blob/release/1.2/core-plugins/widgets/Twitter-realtimesource.json">Twitter real-time source plugin</a>.</p>
+<p>An <strong>explicit</strong> <code class="docutils literal"><span class="pre">Schema</span></code> property is one that can be defined as the output schema and can be
+appropriately configured to make it editable through the CDAP UI.</p>
+<p>Output properties are configured in a similar manner as individual properties in configuration
+groups. They are composed of a name and a widget type, one of either <code class="docutils literal"><span class="pre">schema</span></code> or
+<code class="docutils literal"><span class="pre">non-editable-schema-editor</span></code>. With the <code class="docutils literal"><span class="pre">schema</span></code> widget type, a list of widget attributes can be included;
+with <code class="docutils literal"><span class="pre">non-editable-schema-editor</span></code>, a schema is added instead.</p>
+<p>For example:</p>
+<p>The output properties of the Twitter real-time source, with an explicit, non-editable schema property,
+composed of the fields <em>id</em>, <em>time</em>, <em>favCount</em>, <em>rtCount</em>, <em>geoLat</em>, <em>geoLong</em>, and <em>isRetweet</em>:</p>
+<div class="highlight-xml"><div class="highlight"><pre>&quot;outputs&quot;: [
+  {
+    &quot;widget-type&quot;: &quot;non-editable-schema-editor&quot;,
+    &quot;schema&quot;: {
+      &quot;id&quot;: &quot;long&quot;,
+      &quot;message&quot;: &quot;string&quot;,
+      &quot;lang&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;time&quot;: [
+        &quot;long&quot;,
+        &quot;null&quot;
+      ],
+      &quot;favCount&quot;: &quot;int&quot;,
+      &quot;rtCount&quot;: &quot;int&quot;,
+      &quot;source&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;geoLat&quot;: [
+        &quot;double&quot;,
+        &quot;null&quot;
+      ],
+      &quot;geoLong&quot;: [
+        &quot;double&quot;,
+        &quot;null&quot;
+      ],
+      &quot;isRetweet&quot;: &quot;boolean&quot;
+    }
+  }
+]
+</pre></div>
+</div>
+<p>In contrast, our &#8220;Batch Source&#8221; plugin could have a configurable output schema:</p>
+<div class="highlight-xml"><div class="highlight"><pre>&quot;outputs&quot;: [
+  {
+    &quot;name&quot;: &quot;schema&quot;,
+    &quot;widget-type&quot;: &quot;schema&quot;,
+    &quot;widget-attributes&quot;: {
+      &quot;schema-types&quot;: [
+        &quot;boolean&quot;,
+        &quot;int&quot;,
+        &quot;long&quot;,
+        &quot;float&quot;,
+        &quot;double&quot;,
+        &quot;string&quot;,
+        &quot;map&lt;string, string&gt;&quot;
+      ],
+      &quot;schema-default-type&quot;: &quot;string&quot;
+    }
+  }
+]
+</pre></div>
+</div>
+<p>Widget types for output properties are limited to ensure that the schema that is propagated across
+different plugins in the CDAP UI is consistent.</p>
+</div>
+<div class="section" id="example-widget-json">
+<h4>Example Widget JSON<a class="headerlink" href="#example-widget-json" title="Permalink to this headline">¶</a></h4>
+<p>Based on the above definitions, we could write the complete widget JSON for our <em>Batch Source</em> plugin
+(with the properties of <em>name</em>, <em>basePath</em>, <em>duration</em>, <em>delay</em>, and an output <em>schema</em>) as:</p>
+<div class="highlight-xml"><div class="highlight"><pre>{
+  &quot;metadata&quot;: {
+    &quot;spec-version&quot;: &quot;1.0&quot;
+  },
+  &quot;configuration-groups&quot;: [
+    {
+      &quot;label&quot;: &quot;Batch Source&quot;,
+      &quot;properties&quot;: [
+        {
+          &quot;widget-type&quot;: &quot;dataset-selector&quot;,
+          &quot;label&quot;: &quot;Dataset Name&quot;,
+          &quot;name&quot;: &quot;name&quot;
+        },
+        {
+          &quot;widget-type&quot;: &quot;textbox&quot;,
+          &quot;label&quot;: &quot;Dataset Base Path&quot;,
+          &quot;name&quot;: &quot;basePath&quot;
+        },
+        {
+          &quot;widget-type&quot;: &quot;textbox&quot;,
+          &quot;Label&quot;: &quot;Group By Fields&quot;,
+          &quot;name&quot;: &quot;groupByFields&quot;,
+          &quot;plugin-function&quot;: {
+            &quot;method&quot;: &quot;POST&quot;,
+            &quot;widget&quot;: &quot;outputSchema&quot;,
+            &quot;output-property&quot;: &quot;schema&quot;,
+            &quot;plugin-method&quot;: &quot;outputSchema&quot;,
+            &quot;required-fields&quot;: [&quot;groupByFields&quot;, &quot;aggregates&quot;],
+            &quot;missing-required-fields-message&quot;:
+              &quot;&#39;Group By Fields&#39; &amp; &#39;Aggregates&#39; properties are required to fetch schema.&quot;
+          }
+        },
+        {
+          &quot;widget-type&quot;: &quot;textbox&quot;,
+          &quot;label&quot;: &quot;Delay&quot;,
+          &quot;name&quot;: &quot;delay&quot;
+        }
+      ]
+    }
+  ],
+  &quot;outputs&quot;: [
+    {
+      &quot;name&quot;: &quot;schema&quot;,
+      &quot;widget-type&quot;: &quot;schema&quot;,
+      &quot;widget-attributes&quot;: {
+        &quot;schema-types&quot;: [
+          &quot;boolean&quot;,
+          &quot;int&quot;,
+          &quot;long&quot;,
+          &quot;float&quot;,
+          &quot;double&quot;,
+          &quot;string&quot;,
+          &quot;map&lt;string, string&gt;&quot;
+        ],
+        &quot;schema-default-type&quot;: &quot;string&quot;
+      }
+    }
+  ]
+}
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../cdap-apps/index.html" rel="nofollow">CDAP Applications</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+  </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">CDAP Applications: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Cask Hydrator and ETL</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html"> Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating.html"> Creating an ETL Application</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Creating Custom ETL Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-types-and-maven-archetypes">Plugin Types and Maven Archetypes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-basics">Plugin Basics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#plugin-class-annotations">Plugin Class Annotations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#plugin-config">Plugin Config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-batch-source">Creating a Batch Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-batch-sink">Creating a Batch Sink</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-real-time-source">Creating a Real-Time Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-real-time-sink">Creating a Real-Time Sink</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-transformation">Creating a Transformation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#script-transformations">Script Transformations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-batch-aggregator">Creating a Batch Aggregator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-sparkcompute-plugin">Creating a SparkCompute Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-spark-sink">Creating a Spark Sink</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-framework-for-plugins">Test Framework for Plugins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-state-in-a-real-time-source">Source State in a Real-Time Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-packaging-and-deployment">Plugin Packaging and Deployment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#plugin-deployment">Plugin Deployment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#plugin-packaging">Plugin Packaging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploying-as-a-system-artifact">Deploying as a System Artifact</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploying-as-a-user-artifact">Deploying as a User Artifact</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deployment-verification">Deployment Verification</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#plugin-widget-json">Plugin Widget JSON</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hydrator-plugins/index.html"> ETL Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="upgrade.html"> Upgrading ETL Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tracker/index.html"> Cask Tracker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-quality/index.html"> Data Quality Application</a></li>
+</ul>
+ 
+    </nav>
+  <h4>Topics</h4>
+  <ul>
+  <li class="topless"><i>Previous:</i> <a href="creating.html"
+                        title="Previous Topic">Creating an ETL Application</a></li>
+  <li class="topless"><i>Next:</i> <a href="hydrator-plugins/index.html"
+                        title="Next Topic">ETL Plugins</a></li>
+  </ul>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Creating an ETL Application" href="creating.html" />Creating an ETL Application</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="ETL Plugins" href="hydrator-plugins/index.html" />ETL Plugins</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
