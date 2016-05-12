@@ -36,7 +36,7 @@
     <div class="col-xs-10 col-lg-8">
       <form class="form-inline">
         <span ng-repeat="value in property.values track by $index">
-          <input type="text" class="form-control" ng-model="property.values[$index]" placeholder="value" my-focus-watch="$first"/>
+          <input type="text" class="form-control" ng-model="property.values[$index]" placeholder="{{placeholders[$index] || 'value'}}" my-focus-watch="$first"/>
         </span>
       </form>
     </div>
