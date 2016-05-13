@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,13 +30,17 @@ import java.util.UUID;
 public class ConsumablePartitionTest {
 
   @Test
-  public void testSimpleTransition() {
+  public void testSimpleTransitions() {
     // tests simple success case
     ConsumablePartition partition = new DefaultConsumablePartition(generateUniqueKey());
 
     Assert.assertEquals(0, partition.getNumFailures());
     partition.take();
     partition.retry();
+    Assert.assertEquals(1, partition.getNumFailures());
+    partition.take();
+    // test that untake doesn't increment failure count
+    partition.untake();
     Assert.assertEquals(1, partition.getNumFailures());
     partition.take();
     partition.complete();
