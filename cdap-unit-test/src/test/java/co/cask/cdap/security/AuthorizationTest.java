@@ -75,6 +75,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class AuthorizationTest extends TestBase {
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+
   private static final String OLD_USER = SecurityRequestContext.getUserId();
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
