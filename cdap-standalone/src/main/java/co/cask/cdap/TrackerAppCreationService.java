@@ -61,6 +61,7 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
   private final ArtifactRepository artifactRepository;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ProgramLifecycleService programLifecycleService;
+  private volatile boolean stopping = false;
 
   @Inject
   public TrackerAppCreationService(CConfiguration cConf, ArtifactRepository artifactRepository,
@@ -79,6 +80,11 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
       Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
+          // Exit if stop has been triggered
+          if (stopping) {
+            return true;
+          }
+
           List<ArtifactSummary> artifacts = null;
           try {
             artifacts = artifactRepository.getArtifacts(NamespaceId.SYSTEM, "tracker");
@@ -87,9 +93,15 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
           }
           return artifacts != null && !artifacts.isEmpty();
         }
-      }, 5, TimeUnit.MINUTES, 5, TimeUnit.SECONDS, "Waiting for Tracker Artifact to become available.");
+      }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS, "Waiting for Tracker Artifact to become available.");
       // Find the latest tracker artifact based on the version
       List<ArtifactSummary> artifacts = new ArrayList<>(artifactRepository.getArtifacts(NamespaceId.SYSTEM, "tracker"));
+      if (stopping) {
+        LOG.debug("TrackerAppService shutting down.");
+        // Service was stopped, otherwise a TimeoutException would have been thrown
+        return;
+      }
+
       ArtifactSummary artifactSummary = artifacts.remove(0);
       for (ArtifactSummary artifact : artifacts) {
         ArtifactVersion old = new ArtifactVersion(artifactSummary.getVersion());
@@ -103,6 +115,12 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
       // Not able to create Tracker App is not catastrophic, hence don't propagate exception
       LOG.warn("Got an exception while trying to create and start Tracker App. ", ex);
     }
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    stopping = true;
+    super.triggerShutdown();
   }
 
   private void createAndStartTracker(ArtifactSummary artifactSummary) throws Exception {

@@ -85,7 +85,7 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -169,7 +169,7 @@ public class TestBase {
   private static MetricsManager metricsManager;
   private static TestManager testManager;
   private static NamespaceAdmin namespaceAdmin;
-  private static AuthorizerInstantiatorService authorizerInstantiatorService;
+  private static AuthorizerInstantiator authorizerInstantiator;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -274,13 +274,12 @@ public class TestBase {
     streamCoordinatorClient.startAndWait();
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
-    authorizerInstantiatorService = injector.getInstance(AuthorizerInstantiatorService.class);
-    authorizerInstantiatorService.startAndWait();
+    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     // This is needed so the logged-in user can successfully create the default namespace
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(SecurityRequestContext.getUserId(), Principal.PrincipalType.USER);
-      authorizerInstantiatorService.get().grant(instance, principal, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(instance, principal, ImmutableSet.of(Action.ADMIN));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
@@ -395,7 +394,7 @@ public class TestBase {
     }
 
     namespaceAdmin.delete(Id.Namespace.DEFAULT);
-    authorizerInstantiatorService.stopAndWait();
+    authorizerInstantiator.close();
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
@@ -907,7 +906,7 @@ public class TestBase {
    */
   @Beta
   protected static Authorizer getAuthorizer() throws IOException, InvalidAuthorizerException {
-    return authorizerInstantiatorService.get();
+    return authorizerInstantiator.get();
   }
 
   /**

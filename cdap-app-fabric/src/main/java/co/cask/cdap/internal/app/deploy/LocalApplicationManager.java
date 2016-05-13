@@ -42,7 +42,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -72,7 +72,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
   private final MetadataStore metadataStore;
-  private final AuthorizerInstantiatorService authorizerInstantiatorService;
+  private final AuthorizerInstantiator authorizerInstantiator;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -83,7 +83,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           StreamAdmin streamAdmin, Scheduler scheduler,
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                          MetadataStore metadataStore, AuthorizerInstantiatorService authorizerInstantiatorService) {
+                          MetadataStore metadataStore, AuthorizerInstantiator authorizerInstantiator) {
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
@@ -99,7 +99,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
     this.metadataStore = metadataStore;
-    this.authorizerInstantiatorService = authorizerInstantiatorService;
+    this.authorizerInstantiator = authorizerInstantiator;
   }
 
   @Override
@@ -113,9 +113,9 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateStreamsStage(namespace, streamAdmin));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, metricStore, metadataStore,
-                                                    authorizerInstantiatorService.get()));
+                                                    authorizerInstantiator.get()));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory,
-                                                authorizerInstantiatorService.get()));
+                                                authorizerInstantiator.get()));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     pipeline.addLast(new CreateSchedulesStage(scheduler));
     pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
