@@ -123,7 +123,7 @@ public class TransformRunner<KEY, VALUE> {
 
     String sinkOutputsStr = hConf.get(ETLMapReduce.SINK_OUTPUTS_KEY);
 
-    // should never happen, this is set in beforeSubmit
+    // should never happen, this is set in initialize
     Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
     Map<String, SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr, ETLMapReduce.SINK_OUTPUTS_TYPE);
     return hasSingleOutput(pipelinePhase.getStagesOfType(Transform.PLUGIN_TYPE), sinkOutputs) ?

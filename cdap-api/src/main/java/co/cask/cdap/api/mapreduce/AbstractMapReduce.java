@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.mapreduce;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
@@ -31,9 +32,10 @@ import java.util.Map;
  * This abstract class provides a default implementation of {@link MapReduce} methods for easy extension.
  */
 public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapReduceConfigurer>
-  implements MapReduce {
+  implements MapReduce, ProgramLifecycle<MapReduceContext> {
 
   private MapReduceConfigurer configurer;
+  private MapReduceContext context;
 
   @Override
   public final void configure(MapReduceConfigurer configurer) {
@@ -105,7 +107,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * Sets the name of the Dataset used as input for the {@link MapReduce}.
    *
    * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
-   * in {@link #beforeSubmit}, instead.
+   * in {@link #initialize}, instead.
    */
   @Deprecated
   protected final void setInputDataset(String dataset) {
@@ -117,7 +119,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    *
    * @param stream Name of the stream
    * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
-   *             in {@link #beforeSubmit}, instead.
+   *             in {@link #initialize}, instead.
    */
   @Deprecated
   protected final void useStreamInput(String stream) {
@@ -131,7 +133,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * @see StreamBatchReadable
    *
    * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
-   *             in {@link #beforeSubmit}, instead.
+   *             in {@link #initialize}, instead.
    */
   @Deprecated
   protected final void useStreamInput(String stream, long startTime, long endTime) {
@@ -144,7 +146,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * @see StreamBatchReadable
    *
    * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
-   *             in {@link #beforeSubmit}, instead.
+   *             in {@link #initialize}, instead.
    */
   @Deprecated
   protected final void useStreamInput(StreamBatchReadable streamBatchReadable) {
@@ -152,12 +154,31 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   }
 
   @Override
+  @Deprecated
   public void beforeSubmit(MapReduceContext context) throws Exception {
     // Do nothing by default
   }
 
   @Override
+  @Deprecated
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     // Do nothing by default
+  }
+
+  @Override
+  public void initialize(MapReduceContext context) throws Exception {
+    this.context = context;
+  }
+
+  @Override
+  public void destroy() {
+    // Do nothing by default
+  }
+
+  /**
+   * Return an instance of the {@link MapReduceContext}.
+   */
+  protected final MapReduceContext getContext() {
+    return context;
   }
 }

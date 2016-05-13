@@ -57,7 +57,8 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   }
 
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize(MapReduceContext context) throws Exception {
+    super.initialize(context);
     Job job = context.getHadoopJob();
     job.setReducerClass(PerUserReducer.class);
 

@@ -260,7 +260,7 @@ public class WordCountApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(MyMapper.class);
       job.setReducerClass(MyReducer.class);
@@ -307,7 +307,7 @@ public class WordCountApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(StreamMapper.class);
       job.setMapOutputKeyClass(Text.class);

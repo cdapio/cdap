@@ -57,8 +57,8 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("Application to test the put operation on the Workflow in beforeSubmit, " +
-                     "onFinish, map, and reduce methods of the MapReduce program.");
+    setDescription("Application to test the put operation on the Workflow in initialize, " +
+                     "destroy, map, and reduce methods of the MapReduce program.");
     addMapReduce(new RecordCounter());
     addSpark(new SparkTestApp());
     addWorkflow(new WorkflowTokenTestPut());
@@ -87,7 +87,8 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
+      super.initialize(context);
       Job job = context.getHadoopJob();
       job.setMapperClass(MyMapper.class);
       job.setReducerClass(MyReducer.class);
@@ -109,11 +110,11 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
     }
 
     @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      WorkflowToken workflowToken = context.getWorkflowToken();
+    public void destroy() {
+      WorkflowToken workflowToken = getContext().getWorkflowToken();
       workflowToken.put("end.time", Value.of(System.currentTimeMillis()));
 
-      WorkflowInfo workflowInfo = context.getWorkflowInfo();
+      WorkflowInfo workflowInfo = getContext().getWorkflowInfo();
       Preconditions.checkNotNull(workflowInfo);
       Preconditions.checkArgument(workflowInfo.getRunId().getId()
                                     .equals(workflowToken.get("wf.runid").toString()));

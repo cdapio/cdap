@@ -71,7 +71,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
   public static class OneMR extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
 
       Preconditions.checkArgument(args.size() == 18);
@@ -92,7 +92,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
   public static class AnotherMR extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
 
       Preconditions.checkArgument(args.size() == 18);

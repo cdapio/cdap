@@ -52,12 +52,11 @@ public class AppWithTxAware extends AbstractApplication {
   }
 
   /**
-   * This m/r fails if its beforeSubmit() is not run in the same transaction as getSplits().
+   * This m/r fails if its initialize() is not run in the same transaction as getSplits().
    */
   public static class PedanticMapReduce extends AbstractMapReduce {
-
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(DummyMapper.class);
       job.setNumReduceTasks(0);

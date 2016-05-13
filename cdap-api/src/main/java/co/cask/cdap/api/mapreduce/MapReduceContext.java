@@ -17,18 +17,17 @@
 package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.ClientLocalizationContext;
+import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 
@@ -193,4 +192,9 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * @param resources Resources that each reducer should use.
    */
   void setReducerResources(Resources resources);
+
+  /**
+   * Return the state of the MapReduce program.
+   */
+  ProgramState getState();
 }

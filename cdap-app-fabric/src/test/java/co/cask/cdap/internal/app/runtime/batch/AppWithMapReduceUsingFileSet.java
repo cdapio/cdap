@@ -66,7 +66,7 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
   public static final class ComputeSum extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setReducerClass(FileReducer.class);
 

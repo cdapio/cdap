@@ -56,7 +56,8 @@ public class ClicksAndViewsMapReduce extends AbstractMapReduce {
   }
 
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize(MapReduceContext context) throws Exception {
+    super.initialize(context);
     context.addInput(Input.ofStream(ClicksAndViews.CLICKS));
     context.addInput(Input.ofStream(ClicksAndViews.VIEWS));
 

@@ -51,13 +51,10 @@ public class AppWithMapReduceUsingInconsistentMappers extends AbstractApplicatio
    * Performs no data operations, but simply runs to test mapper output type checking.
    */
   private abstract static class BaseMapReduce extends AbstractMapReduce {
-
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       // the inputs will be set in child classes
-
       context.addOutput(Output.ofDataset("output"));
-
       Job job = context.getHadoopJob();
       job.setReducerClass(SomeReducer.class);
     }
@@ -67,12 +64,11 @@ public class AppWithMapReduceUsingInconsistentMappers extends AbstractApplicatio
    * MapReduce job that has two mapper classes, both with the same output types.
    */
   public static final class MapReduceWithConsistentMapperTypes extends BaseMapReduce {
-
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       context.addInput(Input.ofDataset("input1"), OriginalMapper.class);
       context.addInput(Input.ofDataset("input2"), ConsistentMapper.class);
-      super.beforeSubmit(context);
+      super.initialize(context);
     }
   }
 
@@ -80,16 +76,15 @@ public class AppWithMapReduceUsingInconsistentMappers extends AbstractApplicatio
    * MapReduce job that has two mapper classes, each with different output types, both set through the CDAP APIs.
    */
   public static final class MapReduceWithInconsistentMapperTypes extends BaseMapReduce {
-
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       context.addInput(Input.ofDataset("input1"), OriginalMapper.class);
       context.addInput(Input.ofDataset("input2"), InconsistentMapper.class);
 
       Job job = context.getHadoopJob();
       // none of the inputs default to the job-defined mapper, so an inconsistent mapper defined here gives no issue
       job.setMapperClass(InconsistentMapper.class);
-      super.beforeSubmit(context);
+      super.initialize(context);
     }
   }
 
@@ -98,16 +93,14 @@ public class AppWithMapReduceUsingInconsistentMappers extends AbstractApplicatio
    * directly on the job).
    */
   public static final class MapReduceWithInconsistentMapperTypes2 extends BaseMapReduce {
-
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       context.addInput(Input.ofDataset("input1"), OriginalMapper.class);
       context.addInput(Input.ofDataset("input2"));
 
-
       Job job = context.getHadoopJob();
       job.setMapperClass(InconsistentMapper.class);
-      super.beforeSubmit(context);
+      super.initialize(context);
     }
   }
 

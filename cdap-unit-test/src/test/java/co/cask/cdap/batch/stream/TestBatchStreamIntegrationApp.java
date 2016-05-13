@@ -64,7 +64,7 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
   public static class StreamTestBatch extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       setMapperClass(job);
       job.setReducerClass(StreamTestBatchReducer.class);

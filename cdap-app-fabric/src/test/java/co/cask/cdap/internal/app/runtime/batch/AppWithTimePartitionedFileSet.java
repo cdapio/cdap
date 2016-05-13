@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
@@ -77,7 +78,8 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
   public static final class PartitionWriter extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
+      super.initialize(context);
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
       job.setNumReduceTasks(0);
@@ -86,11 +88,12 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
     }
 
     @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+    public void destroy() {
       // here we also test backward compatibility for existing apps that add the partition in the onFinish
       // (this was necessary up to 2.8.0 and fixed in CDAP-1227).
-      if (succeeded && context.getRuntimeArguments().get(COMPAT_ADD_PARTITION) != null) {
-        TimePartitionedFileSet ds = context.getDataset(TIME_PARTITIONED);
+      if (getContext().getState().getStatus() == ProgramStatus.COMPLETED
+        && getContext().getRuntimeArguments().get(COMPAT_ADD_PARTITION) != null) {
+        TimePartitionedFileSet ds = getContext().getDataset(TIME_PARTITIONED);
         String outputPath = FileSetArguments.getOutputPath(ds.getEmbeddedFileSet().getRuntimeArguments());
         Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(ds.getRuntimeArguments());
         Preconditions.checkNotNull(time, "Output partition time is null.");
@@ -115,7 +118,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
   public static final class PartitionReader extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(ReaderMapper.class);
       job.setNumReduceTasks(0);
@@ -124,7 +127,6 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
       context.addInput(Input.ofDataset(TIME_PARTITIONED));
       context.addOutput(Output.ofDataset(OUTPUT));
     }
-
   }
 
   public static class ReaderMapper extends Mapper<LongWritable, Text, byte[], Put> {

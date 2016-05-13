@@ -63,7 +63,7 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
   public static final class BodyTracker extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(TickerMapper.class);
       job.setReducerClass(PriceCounter.class);

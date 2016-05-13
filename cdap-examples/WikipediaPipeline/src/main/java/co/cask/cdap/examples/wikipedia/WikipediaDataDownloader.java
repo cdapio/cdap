@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.wikipedia;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
@@ -52,7 +53,8 @@ public class WikipediaDataDownloader extends AbstractMapReduce {
   }
 
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize(MapReduceContext context) throws Exception {
+    super.initialize(context);
     Job job = context.getHadoopJob();
     job.setMapperClass(WikipediaDataDownloaderMapper.class);
     job.setNumReduceTasks(0);
@@ -61,10 +63,11 @@ public class WikipediaDataDownloader extends AbstractMapReduce {
   }
 
   @Override
-  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    WorkflowToken workflowToken = context.getWorkflowToken();
+  public void destroy() {
+    WorkflowToken workflowToken = getContext().getWorkflowToken();
     if (workflowToken != null) {
-      workflowToken.put("result", Value.of(succeeded));
+      boolean isSuccessful = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
+      workflowToken.put("result", Value.of(isSuccessful));
     }
   }
 

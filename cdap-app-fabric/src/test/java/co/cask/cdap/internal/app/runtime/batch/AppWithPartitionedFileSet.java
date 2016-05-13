@@ -77,7 +77,7 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
   public static final class PartitionWriter extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
       job.setNumReduceTasks(0);
@@ -102,7 +102,7 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
   public static final class PartitionReader extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(ReaderMapper.class);
       job.setNumReduceTasks(0);
@@ -111,7 +111,6 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
       context.addInput(Input.ofDataset(PARTITIONED));
       context.addOutput(Output.ofDataset(OUTPUT));
     }
-
   }
 
   public static class ReaderMapper extends Mapper<LongWritable, Text, byte[], Put> {

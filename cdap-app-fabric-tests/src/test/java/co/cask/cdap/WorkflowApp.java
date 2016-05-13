@@ -84,7 +84,8 @@ public class WorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
+      super.initialize(context);
       Map<String, String> args = context.getRuntimeArguments();
       String inputPath = args.get("inputPath");
       String outputPath = args.get("outputPath");
@@ -92,8 +93,8 @@ public class WorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      context.getWorkflowToken().put("completed", context.getWorkflowInfo().getNodeId());
+    public void destroy() {
+      getContext().getWorkflowToken().put("completed", getContext().getWorkflowInfo().getNodeId());
     }
   }
 
