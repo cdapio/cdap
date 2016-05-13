@@ -1242,12 +1242,13 @@ Cask Hydrator as of version |version|:
      - ``schema``: schema that will be used as the output schema for the plugin
      - string
    * - ``ds-multiplevalues``
-     - A delimiter separated values widget that allows to specify a list of values separated by a delimiter.
-     - | ``numValues``: number of values (number of delimiter separated values)
-       | ``values-delimiter``: delimiter between values
-       | ``delimiter``: delimiter between each set of values
-       | ``placeholders``: array of placeholders for each value textboxes
+     - A delimiter-separated values widget that allows specifying lists of values separated by delimiters
+     - | ``numValues``: number of values (number of delimiter-separated values)
+       | ``values-delimiter``: the delimiter between each value
+       | ``delimiter``: the delimiter between each *set* of values
+       | ``placeholders``: array of placeholders for each value's textbox
      - string
+
 .. _custom-plugin-function:
 
 Plugin Function
