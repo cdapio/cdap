@@ -15,18 +15,26 @@
  */
 
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
-  .controller('PluginTemplatesCreateEditCtrl', function ($scope, PluginTemplatesDirStore, PluginTemplatesDirActions, HydratorPlusPlusPluginActions, $stateParams, myAlertOnValium) {
+  .controller('PluginTemplatesCreateEditCtrl', function ($scope, PluginTemplatesDirStore, PluginTemplatesDirActions, HydratorPlusPlusPluginActions, $stateParams, myAlertOnValium, rTemplateType, HydratorPlusPlusLeftPanelStore) {
       $scope.closeTemplateCreationModal = ()=> {
         PluginTemplatesDirActions.reset();
         $scope.$close();
       };
+
       $scope.pluginTemplateSaveError = null;
+
       PluginTemplatesDirStore.registerOnChangeListener(() => {
         let getIsSaveSuccessfull = PluginTemplatesDirStore.getIsSaveSuccessfull();
         let getIsCloseCommand = PluginTemplatesDirStore.getIsCloseCommand();
         if (getIsSaveSuccessfull) {
           PluginTemplatesDirActions.reset();
-          HydratorPlusPlusPluginActions.fetchTemplates({namespace: $stateParams.namespace});
+          HydratorPlusPlusLeftPanelStore.dispatch(
+            HydratorPlusPlusPluginActions.fetchTemplates(
+              { namespace: $stateParams.namespace },
+              { namespace: $stateParams.namespace, pipelineType: rTemplateType }
+            )
+          );
+
           myAlertOnValium.show({
             type: 'success',
             content: 'Plugin template save successfull'

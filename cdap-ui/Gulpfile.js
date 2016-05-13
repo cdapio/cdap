@@ -145,6 +145,8 @@ gulp.task('js:lib', function() {
       './bower_components/angular-cookies/angular-cookies.min.js',
       // './bower_components/c3/c3.js',
       './app/lib/c3.js',
+      './node_modules/redux/dist/redux.min.js',
+      './node_modules/redux-thunk/dist/redux-thunk.min.js',
       './bower_components/ace-builds/src-min-noconflict/ace.js',
       './bower_components/angular-ui-ace/ui-ace.js',
       './bower_components/jsPlumb/dist/js/jsPlumb-2.0.6-min.js',
@@ -227,7 +229,8 @@ gulp.task('watch:js:app', function() {
     '!./app/lib/c3.js',
     './app/features/*/module.js',
     './app/**/*.js',
-    '!./app/**/*-test.js'
+    '!./app/**/*-test.js',
+    './app/lib/global-lib.js'
   ];
   source = source.concat(getEs6Features(true));
   source = source.concat(getEs6Directives(true));
@@ -280,7 +283,8 @@ gulp.task('js:app', function() {
     '!./app/lib/c3.js',
     './app/features/*/module.js',
     './app/**/*.js',
-    '!./app/**/*-test.js'
+    '!./app/**/*-test.js',
+    './app/lib/global-lib.js'
   ])
     .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
