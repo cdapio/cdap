@@ -25,6 +25,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,6 +37,7 @@ import javax.annotation.Nullable;
  * A {@link InputFormatProvider} that provides {@link InputFormat} for read through Dataset.
  */
 public class DatasetInputFormatProvider implements InputFormatProvider {
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetInputFormatProvider.class);
 
   private final String datasetName;
   private final Map<String, String> datasetArgs;
@@ -62,6 +65,9 @@ public class DatasetInputFormatProvider implements InputFormatProvider {
   @Override
   public Map<String, String> getInputFormatConfiguration() {
     if (dataset instanceof InputFormatProvider) {
+      if (splits != null) {
+        LOG.warn("Ignoring user-specified splits for {} because it is of type InputFormatProvider", datasetName);
+      }
       return ((InputFormatProvider) dataset).getInputFormatConfiguration();
     }
     return createBatchReadableConfiguration();

@@ -92,7 +92,8 @@ public abstract class Input {
    * Returns an Input defined by a dataset.
    *
    * @param datasetName the name of the input dataset
-   * @param splits the data selection splits. If null, will use the splits defined by the dataset.
+   * @param splits the data selection splits. If null, will use the splits defined by the dataset. If the dataset
+   *               type is not {@link co.cask.cdap.api.data.batch.BatchReadable}, splits will be ignored
    */
   public static Input ofDataset(String datasetName, @Nullable Iterable<? extends Split> splits) {
     return ofDataset(datasetName, RuntimeArguments.NO_ARGUMENTS, splits);
@@ -103,7 +104,8 @@ public abstract class Input {
    *
    * @param datasetName the name of the input dataset
    * @param arguments the arguments to use when instantiating the dataset
-   * @param splits the data selection splits. If null, will use the splits defined by the dataset.
+   * @param splits the data selection splits. If null, will use the splits defined by the dataset. If the dataset
+   *               type is not {@link co.cask.cdap.api.data.batch.BatchReadable}, splits will be ignored
    */
   public static Input ofDataset(String datasetName, Map<String, String> arguments,
                                 @Nullable Iterable<? extends Split> splits) {
