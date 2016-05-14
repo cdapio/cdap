@@ -19,6 +19,7 @@ package co.cask.cdap.examples.wordcount;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -47,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 public class WordCountTest extends TestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type OBJECT_MAP_TYPE = new TypeToken<Map<String, Object>>() { }.getType();

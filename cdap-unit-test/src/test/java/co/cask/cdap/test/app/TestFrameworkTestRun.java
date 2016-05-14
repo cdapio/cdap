@@ -1476,34 +1476,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
   }
 
-  @Test(timeout = 90000L)
-  public void testSQLQuery() throws Exception {
-    // Deploying app makes sure that the default namespace is available.
-    deployApplication(testSpace, DummyApp.class);
-    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    deployApplication(testSpace, AppsWithDataset.AppWithAutoCreate.class);
-    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
-      getDataset(testSpace, "myTable");
-    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
-    kvTable.put("a", "1");
-    kvTable.put("b", "2");
-    kvTable.put("c", "1");
-    myTableManager.flush();
-
-    try (
-      Connection connection = getQueryClient(testSpace);
-      ResultSet results = connection.prepareStatement("select first from dataset_mytable where second = '1'")
-                                    .executeQuery()
-    ) {
-      // run a query over the dataset
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("a", results.getString(1));
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("c", results.getString(1));
-      Assert.assertFalse(results.next());
-    }
-  }
-
   @Category(XSlowTests.class)
   @Test
   public void testByteCodeClassLoader() throws Exception {

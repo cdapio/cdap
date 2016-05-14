@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -44,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 public class UserProfilesTest extends TestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void testUserProfiles() throws Exception {

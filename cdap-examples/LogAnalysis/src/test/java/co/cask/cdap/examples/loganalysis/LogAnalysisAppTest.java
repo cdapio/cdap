@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.loganalysis;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -55,7 +56,7 @@ public class LogAnalysisAppTest extends TestBase {
   private static final Map<String, Integer> TPFS_RESULT = ImmutableMap.of("127.0.1.1", 1, "127.0.0.1", 2);
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void test() throws Exception {

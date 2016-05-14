@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -46,7 +47,7 @@ public class ETLBatchTestBase extends HydratorTestBase {
   private static int startCount = 0;
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @BeforeClass
   public static void setupTest() throws Exception {

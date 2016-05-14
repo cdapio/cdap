@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -57,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 public class AdminAppTestRun extends TestFrameworkTestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Gson GSON = new Gson();
 

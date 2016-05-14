@@ -20,6 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
@@ -51,7 +52,7 @@ import javax.annotation.Nullable;
 public class WikipediaPipelineAppTest extends TestBase {
   private static final Gson GSON = new Gson();
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Id.Artifact ARTIFACT_ID =
     Id.Artifact.from(Id.Namespace.DEFAULT, "WikipediaPipelineArtifact", new ArtifactVersion("1.0"));

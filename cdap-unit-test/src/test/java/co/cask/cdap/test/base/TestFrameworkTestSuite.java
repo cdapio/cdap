@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,10 @@ package co.cask.cdap.test.base;
 
 import co.cask.cdap.admin.AdminAppTestRun;
 import co.cask.cdap.batch.stream.BatchStreamIntegrationTestRun;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.flow.stream.FlowStreamIntegrationTestRun;
 import co.cask.cdap.mapreduce.MapReduceStreamInputTestRun;
 import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
-import co.cask.cdap.partitioned.PartitionConsumingTestRun;
 import co.cask.cdap.service.FileUploadServiceTestRun;
 import co.cask.cdap.spark.SparkFileSetTestRun;
 import co.cask.cdap.spark.SparkStreamingTestRun;
@@ -29,30 +29,28 @@ import co.cask.cdap.spark.SparkTestRun;
 import co.cask.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
 import co.cask.cdap.spark.service.SparkServiceIntegrationTestRun;
 import co.cask.cdap.spark.stream.SparkStreamIntegrationTestRun;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.app.DummyBaseCloneTestRun;
-import co.cask.cdap.test.app.DummyBaseTestRun;
 import co.cask.cdap.test.app.ServiceLifeCycleTestRun;
 import co.cask.cdap.test.app.TestFrameworkTestRun;
+import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 /**
- * This is a test suite that runs all tests in the cdap-unit-test. This avoid starting/stopping app-fabric per test.
+ * This is a test suite that runs all tests in the cdap-unit-test module that don't require explore to be enabled.
+ * This avoid starting/stopping app-fabric per test.
  */
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   AdminAppTestRun.class,
   BatchStreamIntegrationTestRun.class,
-  DummyBaseTestRun.class,
-  DummyBaseCloneTestRun.class,
   FileUploadServiceTestRun.class,
   FlowStreamIntegrationTestRun.class,
   MapReduceStreamInputTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
-  PartitionConsumingTestRun.class,
   ServiceLifeCycleTestRun.class,
   SparkFileSetTestRun.class,
   SparkMetricsIntegrationTestRun.class,
@@ -63,4 +61,9 @@ import org.junit.runners.Suite;
   TestFrameworkTestRun.class
 })
 public class TestFrameworkTestSuite extends TestFrameworkTestBase {
+  // Note that setting the following configuration in any of the above Test classes is ignored, since
+  // they are run as part of this TestSuite.
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+
 }
