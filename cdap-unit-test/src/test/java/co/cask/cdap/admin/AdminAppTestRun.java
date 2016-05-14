@@ -45,9 +45,12 @@ import com.google.gson.Gson;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -61,12 +64,18 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Gson GSON = new Gson();
+  private static File artifactJar;
 
   private ApplicationManager appManager;
 
+  @BeforeClass
+  public static void init() throws IOException {
+    artifactJar = createArtifactJar(AdminApp.class);
+  }
+
   @Before
-  public void deploy() {
-    appManager = deployApplication(AdminApp.class);
+  public void deploy() throws Exception {
+    appManager = deployWithArtifact(AdminApp.class, artifactJar);
   }
 
   @Test

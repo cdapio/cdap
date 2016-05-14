@@ -485,7 +485,9 @@ public class TestBase {
    */
   protected static ApplicationManager deployApplication(Id.Application appId,
                                                         AppRequest appRequest) throws Exception {
-    return getTestManager().deployApplication(appId, appRequest);
+    ApplicationManager appManager = getTestManager().deployApplication(appId, appRequest);
+    applicationManagers.add(appManager);
+    return appManager;
   }
 
   /**
