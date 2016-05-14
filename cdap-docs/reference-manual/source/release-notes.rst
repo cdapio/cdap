@@ -23,6 +23,23 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.3.4 <http://docs.cask.co/cdap/3.3.4/index.html>`__
+=============================================================
+
+Bug Fix
+-------
+
+- `CDAP-5793 <https://issues.cask.co/browse/CDAP-5793>`__ - Explore jobs properly use the
+  latest/updated delegation tokens.
+
+- `CDAP-5844 <https://issues.cask.co/browse/CDAP-5844>`__ - Update HDFS delegation token
+  properly for HA mode.
+
+- `CDAP-5855 <https://issues.cask.co/browse/CDAP-5855>`__ - Avoid the cancellation of delegation
+  tokens upon completion of Explore-launched MapReduce and Spark jobs, as these delegation tokens
+  are shared by CDAP system services.
+
+
 `Release 3.3.3 <http://docs.cask.co/cdap/3.3.3/index.html>`__
 =============================================================
 
