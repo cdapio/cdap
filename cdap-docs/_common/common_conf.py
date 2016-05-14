@@ -728,15 +728,15 @@ def source_read_handler(app, docname, source):
             app.env.config.highlight_language_cache = app.env.config.highlight_language
             app.env.config.highlight_language = 'none'
     else:
-        if not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and 
-                app.env.config.rst_epilog_cache:
+        if (not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and 
+                app.env.config.rst_epilog_cache):
             app.env.config.rst_epilog = app.env.config.rst_epilog_cache
-        if not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and 
-                app.env.config.rst_prolog_cache:
+        if (not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and 
+                app.env.config.rst_prolog_cache):
             app.env.config.rst_prolog = app.env.config.rst_prolog_cache
-        if app.env.config.highlight_language == 'none' and 
+        if (app.env.config.highlight_language == 'none' and 
                 hasattr(app.env.config, 'highlight_language_cache') and 
-                app.env.config.highlight_language_cache:
+                app.env.config.highlight_language_cache):
             app.env.config.highlight_language = app.env.config.highlight_language_cache
             
 
