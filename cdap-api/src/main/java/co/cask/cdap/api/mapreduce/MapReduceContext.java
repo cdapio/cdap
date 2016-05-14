@@ -93,7 +93,8 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * selection splits, as teh single input
    *
    * @param datasetName the name of the input dataset
-   * @param splits the data selection splits
+   * @param splits the data selection splits. If the dataset type is
+   *               not {@link co.cask.cdap.api.data.batch.BatchReadable}, splits will be ignored.
    * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)} instead.
    */
   @Deprecated
@@ -105,7 +106,8 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    *
    * @param datasetName the name of the input dataset
    * @param arguments the arguments to use when instantiating the dataset
-   * @param splits the data selection splits
+   * @param splits the data selection splits. If dataset type is
+   *               not {@link co.cask.cdap.api.data.batch.BatchReadable}, splits will be ignored.
    * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)} instead.
    */
   @Deprecated
