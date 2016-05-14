@@ -140,7 +140,8 @@
 
       if (angular.isArray(config.stages)) {
         config.stages.forEach( node => {
-          if (myHelpers.objectQuery( node, 'plugin', 'properties', 'length') > 0) {
+          if (angular.isObject(myHelpers.objectQuery( node, 'plugin', 'properties')) &&
+              Object.keys(node.plugin.properties).length > 0) {
             node.plugin.properties = propertiesIterator(node.plugin.properties, node.plugin._backendProperties);
           }
         });
