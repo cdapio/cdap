@@ -87,7 +87,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     Preconditions.checkNotNull(input);
 
     ApplicationSpecification specification = input.getSpecification();
-    Id.Application appId = input.getId();
+    Id.Application appId = input.getApplicationId().toId();
 
     verifySpec(appId, specification);
     verifyData(appId, specification);

@@ -84,17 +84,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.plugins = ImmutableMap.copyOf(plugins);
   }
 
-  public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
-    return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
-                                               spec.getConfiguration(), spec.getArtifactId(),
-                                               spec.getStreams(),
-                                               spec.getDatasetModules(), spec.getDatasets(),
-                                               spec.getFlows(),
-                                               spec.getMapReduce(), spec.getSpark(), spec.getWorkflows(),
-                                               spec.getServices(), spec.getSchedules(), spec.getWorkers(),
-                                               spec.getPlugins());
-  }
-
   @Override
   public String getName() {
     return name;

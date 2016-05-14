@@ -69,6 +69,7 @@ public final class InMemoryConfigurator implements Configurator {
    */
   private final Location artifact;
   private final CConfiguration cConf;
+  private final String applicationName;
   private final String configString;
   private final File baseUnpackDir;
   // this is the namespace that the app will be in, which may be different than the namespace of the artifact.
@@ -84,14 +85,16 @@ public final class InMemoryConfigurator implements Configurator {
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
                               String appClassName, Location artifact,
-                              @Nullable String configString, ArtifactRepository artifactRepository) {
+                              @Nullable String applicationName, @Nullable String configString,
+                              ArtifactRepository artifactRepository) {
     Preconditions.checkNotNull(artifact);
     this.cConf = cConf;
     this.appNamespace = appNamespace;
     this.artifactId = artifactId;
     this.appClassName = appClassName;
     this.artifact = artifact;
-    this.configString = configString;
+    this.applicationName = applicationName;
+    this.configString = configString == null ? "" : configString;
     this.artifactRepository = artifactRepository;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -148,13 +151,12 @@ public final class InMemoryConfigurator implements Configurator {
 
   private ConfigResponse createResponse(Application app)
     throws InstantiationException, IllegalAccessException, IOException {
-    String specJson = getSpecJson(app, configString);
+    String specJson = getSpecJson(app);
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private <T extends Config> String getSpecJson(Application<T> app, final String configString)
-    throws IllegalAccessException, InstantiationException, IOException {
-
+  private <T extends Config> String getSpecJson(Application<T> app) throws IllegalAccessException,
+                                                                           InstantiationException, IOException {
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
     // This Gson cannot be static since it is used to deserialize user class.
     // Gson will keep a static map to class, hence will leak the classloader
@@ -168,7 +170,7 @@ public final class InMemoryConfigurator implements Configurator {
                                             configString, artifactRepository, pluginInstantiator);
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
-      if (Strings.isNullOrEmpty(configString)) {
+      if (configString.isEmpty()) {
         //noinspection unchecked
         appConfig = ((Class<T>) configType).newInstance();
       } else {
@@ -187,7 +189,7 @@ public final class InMemoryConfigurator implements Configurator {
         LOG.warn("Exception raised when deleting directory {}", tempDir, e);
       }
     }
-    ApplicationSpecification specification = configurer.createSpecification();
+    ApplicationSpecification specification = configurer.createSpecification(applicationName);
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

@@ -27,7 +27,7 @@ import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import org.junit.Assert;

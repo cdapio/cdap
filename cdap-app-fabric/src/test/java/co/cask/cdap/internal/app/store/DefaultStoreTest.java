@@ -48,16 +48,14 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.app.DefaultAppConfigurer;
-import co.cask.cdap.app.DefaultApplicationContext;
-import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
-import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
@@ -82,8 +80,6 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
 import org.apache.twill.api.RunId;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -149,9 +145,9 @@ public class DefaultStoreTest {
   @Test
   public void testLoadingProgram() throws Exception {
     AppFabricTestHelper.deployApplicationWithManager(ToyApp.class, TEMP_FOLDER_SUPPLIER);
-    Program program = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp",
-                                                        ProgramType.FLOW, "ToyFlow"));
-    Assert.assertNotNull(program);
+    ProgramDescriptor descriptor = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp",
+                                                                     ProgramType.FLOW, "ToyFlow"));
+    Assert.assertNotNull(descriptor);
   }
 
   @Test(expected = RuntimeException.class)
@@ -428,40 +424,19 @@ public class DefaultStoreTest {
   public void testAddApplication() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Application id = new Id.Application(new Id.Namespace("account1"), "application1");
-    store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1.jar"));
+    store.addApplication(id, spec);
 
     ApplicationSpecification stored = store.getApplication(id);
     assertWordCountAppSpecAndInMetadataStore(stored);
-
-    Location archiveLocation = store.getApplicationArchiveLocation(id);
-    Assert.assertNotNull(archiveLocation);
-    Assert.assertEquals("/foo/path/application1.jar", archiveLocation.toURI().getPath());
-  }
-
-  @Test
-  public void testUpdateSameApplication() throws Exception {
-    ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Application id = new Id.Application(new Id.Namespace("account1"), "application1");
-    store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1.jar"));
-    // update
-    store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1_modified.jar"));
-
-    ApplicationSpecification stored = store.getApplication(id);
-    assertWordCountAppSpecAndInMetadataStore(stored);
-
-    Location archiveLocation = store.getApplicationArchiveLocation(id);
-    Assert.assertNotNull(archiveLocation);
-    Assert.assertEquals("/foo/path/application1_modified.jar",
-                        archiveLocation.toURI().getPath());
   }
 
   @Test
   public void testUpdateChangedApplication() throws Exception {
     Id.Application id = new Id.Application(new Id.Namespace("account1"), "application1");
 
-    store.addApplication(id, Specifications.from(new FooApp()), new LocalLocationFactory().create("/foo"));
+    store.addApplication(id, Specifications.from(new FooApp()));
     // update
-    store.addApplication(id, Specifications.from(new ChangedFooApp()), new LocalLocationFactory().create("/foo"));
+    store.addApplication(id, Specifications.from(new ChangedFooApp()));
 
     ApplicationSpecification stored = store.getApplication(id);
     assertChangedFooAppSpecAndInMetadataStore(stored);
@@ -583,7 +558,7 @@ public class DefaultStoreTest {
 
     ApplicationSpecification appSpec = Specifications.from(app);
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), appSpec.getName());
-    store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservicestestdelete"));
+    store.addApplication(appId, appSpec);
 
     AbstractApplication newApp = new AppWithNoServices();
 
@@ -599,12 +574,9 @@ public class DefaultStoreTest {
   public void testServiceInstances() throws Exception {
     AppFabricTestHelper.deployApplicationWithManager(AppWithServices.class, TEMP_FOLDER_SUPPLIER);
     AbstractApplication app = new AppWithServices();
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
-    app.configure(appConfigurer, new DefaultApplicationContext());
-
-    ApplicationSpecification appSpec = appConfigurer.createSpecification();
+    ApplicationSpecification appSpec = Specifications.from(app);
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), appSpec.getName());
-    store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservices"));
+    store.addApplication(appId, appSpec);
 
     // Test setting of service instances
     Id.Program programId = Id.Program.from(appId, ProgramType.SERVICE, "NoOpService");
@@ -631,7 +603,7 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
-    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
+    store.addApplication(appId, spec);
 
     Id.Program programId = new Id.Program(appId, ProgramType.FLOW, "WordCountFlow");
     store.setFlowletInstances(programId, "StreamSource",
@@ -643,10 +615,10 @@ public class DefaultStoreTest {
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
 
     // checking that program spec in program jar was adjsuted
-    Program program = store.loadProgram(programId);
-    Assert.assertNotNull(program);
+    ProgramDescriptor descriptor = store.loadProgram(programId);
+    Assert.assertNotNull(descriptor);
     Assert.assertEquals(initialInstances + 5,
-                        program.getApplicationSpecification().
+                        descriptor.getApplicationSpecification().
                           getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
   }
 
@@ -673,7 +645,7 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Namespace namespaceId = new Id.Namespace("account1");
     Id.Application appId = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
+    store.addApplication(appId, spec);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -688,7 +660,7 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Namespace namespaceId = new Id.Namespace("account1");
     Id.Application appId = new Id.Application(namespaceId, "application1");
-    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
+    store.addApplication(appId, spec);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -703,7 +675,7 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Namespace namespaceId = new Id.Namespace("account1");
     Id.Application appId = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
+    store.addApplication(appId, spec);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -718,7 +690,7 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     Id.Namespace namespaceId = new Id.Namespace("testDeleteRuntimeArgs");
     Id.Application appId = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
+    store.addApplication(appId, spec);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -776,11 +748,11 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     Id.Namespace namespaceId = new Id.Namespace("testDeleteAll");
     Id.Application appId1 = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId1, spec, new LocalLocationFactory().create("/allPrograms"));
+    store.addApplication(appId1, spec);
 
     spec = Specifications.from(new WordCountApp());
     Id.Application appId2 = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId2, spec, new LocalLocationFactory().create("/wordCount"));
+    store.addApplication(appId2, spec);
 
     Id.Program flowProgramId1 = new Id.Program(appId1, ProgramType.FLOW, "NoOpFlow");
     Id.Program mapreduceProgramId1 = new Id.Program(appId1, ProgramType.MAPREDUCE, "NoOpMR");
@@ -840,7 +812,7 @@ public class DefaultStoreTest {
   public void testRunsLimit() throws Exception {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     Id.Application appId = Id.Application.from("testRunsLimit", spec.getName());
-    store.addApplication(appId, spec, new LocalLocationFactory().create("/allPrograms"));
+    store.addApplication(appId, spec);
 
     Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, "NoOpFlow");
 

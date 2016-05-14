@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.workflow.NodeStatus;
@@ -24,6 +24,7 @@ import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -34,12 +35,13 @@ import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
-import co.cask.cdap.internal.app.program.ForwardingProgram;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -56,17 +58,10 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /**
- * An Abstract class implementing {@link ProgramWorkflowRunner}, providing a {@link Runnable} of
- * the programs to run in a workflow.
- * <p>
- * Programs that extend this class (such as {@link MapReduceProgramWorkflowRunner} or
- * {@link SparkProgramWorkflowRunner}) can execute their associated programs through the
- * {@link AbstractProgramWorkflowRunner#blockForCompletion} by providing the {@link ProgramController} and
- * {@link RuntimeContext} that they obtained through the {@link ProgramRunner}.
- * </p>
- * The {@link RuntimeContext} is blocked until completion of the associated program.
+ * A class implementing {@link ProgramWorkflowRunner}, providing a {@link Runnable} of
+ * the program to run in a workflow.
  */
-abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
+final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
   private static final Gson GSON = new Gson();
 
@@ -76,13 +71,15 @@ abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
   private final Program workflowProgram;
   private final String nodeId;
   private final Map<String, WorkflowNodeState> nodeStates;
-  protected final WorkflowSpecification workflowSpec;
-  protected final ProgramRunnerFactory programRunnerFactory;
-  protected final WorkflowToken token;
+  private final WorkflowSpecification workflowSpec;
+  private final ProgramRunnerFactory programRunnerFactory;
+  private final WorkflowToken token;
+  private final ProgramType programType;
 
-  AbstractProgramWorkflowRunner(CConfiguration cConf, Program workflowProgram, ProgramOptions workflowProgramOptions,
-                                ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
-                                WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates) {
+  DefaultProgramWorkflowRunner(CConfiguration cConf, Program workflowProgram, ProgramOptions workflowProgramOptions,
+                               ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
+                               WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates,
+                               ProgramType programType) {
     this.cConf = cConf;
     this.userArguments = workflowProgramOptions.getUserArguments();
     this.workflowProgram = workflowProgram;
@@ -92,24 +89,14 @@ abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
     this.token = token;
     this.nodeId = nodeId;
     this.nodeStates = nodeStates;
+    this.programType = programType;
   }
 
-  /**
-   * Returns the {@link ProgramType} supported by this runner.
-   */
-  protected abstract ProgramType getProgramType();
-
-  /**
-   * Rewrites the given {@link Program} to a {@link Program} that represents the {@link ProgramType} as
-   * returned by {@link #getProgramType()}.
-   */
-  protected abstract Program rewriteProgram(String name, Program program);
-
   @Override
-  public final Runnable create(String name) {
-    ProgramRunner programRunner = programRunnerFactory.create(getProgramType());
+  public Runnable create(String name) {
+    ProgramRunner programRunner = programRunnerFactory.create(programType);
     try {
-      Program program = rewriteProgram(name, createProgram(programRunner, workflowProgram));
+      Program program = createProgram(programRunner, name);
       return getProgramRunnable(name, programRunner, program);
     } catch (Exception e) {
       closeProgramRunner(programRunner);
@@ -158,23 +145,20 @@ abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
   }
 
   /**
-   * Creates a new {@link Program} instance for the execution by the given {@link ProgramRunner}.
+   * Creates a new {@link Program} instance for the execution by the given {@link ProgramRunner} and
+   * the program name.
    */
-  private Program createProgram(ProgramRunner programRunner, Program originalProgram) throws IOException {
-    ClassLoader classLoader = originalProgram.getClassLoader();
-    if (!(classLoader instanceof ProgramClassLoader)) {
-      // If for some reason that the ClassLoader of the original program is not ProgramClassLoader,
-      // we don't own the program, hence don't close it when execution of the program completed.
-      return new ForwardingProgram(originalProgram) {
-        @Override
-        public void close() throws IOException {
-          // no-op
-        }
-      };
-    }
+  private Program createProgram(ProgramRunner programRunner, String programName) throws IOException {
+    ClassLoader classLoader = workflowProgram.getClassLoader();
+    // The classloader should be ProgramClassLoader
+    Preconditions.checkArgument(classLoader instanceof ProgramClassLoader,
+                                "Program %s doesn't use ProgramClassLoader", workflowProgram);
 
-    return Programs.create(cConf, programRunner, originalProgram.getJarLocation(),
-                           ((ProgramClassLoader) classLoader).getDir());
+    ProgramId programId = new ProgramId(workflowProgram.getNamespaceId(), workflowProgram.getApplicationId(),
+                                        programType, programName);
+    ApplicationSpecification appSpec = workflowProgram.getApplicationSpecification();
+    return Programs.create(cConf, programRunner, new ProgramDescriptor(programId, appSpec),
+                    workflowProgram.getJarLocation(), ((ProgramClassLoader) classLoader).getDir());
   }
 
   private void runAndWait(ProgramRunner programRunner, Program program, ProgramOptions options) throws Exception {

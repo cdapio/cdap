@@ -27,7 +27,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.Id;
@@ -119,13 +118,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
   }
 
-  public void writeApplication(String namespaceId, String appId, ApplicationSpecification spec,
-                               String archiveLocation) {
-    // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
-    //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
-    spec = DefaultApplicationSpecification.from(spec);
-    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
-          new ApplicationMeta(appId, spec, archiveLocation));
+  public void writeApplication(String namespaceId, String appId, ApplicationSpecification spec) {
+    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), new ApplicationMeta(appId, spec));
   }
 
   public void deleteApplication(String namespaceId, String appId) {
@@ -138,9 +132,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   // todo: do we need appId? may be use from appSpec?
   public void updateAppSpec(String namespaceId, String appId, ApplicationSpecification spec) {
-    // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
-    //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
-    spec = DefaultApplicationSpecification.from(spec);
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     MDSKey key = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
     ApplicationMeta existing = getFirst(key, ApplicationMeta.class);
@@ -675,7 +666,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     private int numProcessed = 0;
     private MDSKey lastKey;
 
-    public ScanFunction(Predicate<RunRecordMeta> filter, Ticker ticker, long maxScanTimeMillis) {
+    ScanFunction(Predicate<RunRecordMeta> filter, Ticker ticker, long maxScanTimeMillis) {
       this.filter = filter;
       this.maxScanTimeMillis = maxScanTimeMillis;
       this.stopwatch = new Stopwatch(ticker);

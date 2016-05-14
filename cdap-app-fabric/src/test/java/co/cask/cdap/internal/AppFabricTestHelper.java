@@ -16,13 +16,19 @@
 
 package co.cask.cdap.internal;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
@@ -33,6 +39,9 @@ import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -41,11 +50,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.tephra.TransactionManager;
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -59,7 +64,6 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -142,45 +146,72 @@ public class AppFabricTestHelper {
 
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
-                                                                     final Supplier<File> folderSupplier)
-    throws Exception {
+                                                                     Supplier<File> folderSupplier) throws Exception {
     return deployApplicationWithManager(Id.Namespace.DEFAULT, appClass, folderSupplier);
   }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
-                                                                     final Supplier<File> folderSupplier)
-    throws Exception {
+                                                                     Supplier<File> folderSupplier) throws Exception {
     ensureNamespaceExists(namespace);
-    Location deployedJar = createAppJar(appClass);
-    Id.Artifact artifactId = Id.Artifact.from(namespace, appClass.getSimpleName(),
-                                              String.format("1.0.%d", System.currentTimeMillis()));
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appClass.getName(), deployedJar, null);
-    ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(namespace, null, info).get();
-    // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
+    Location deployedJar = createAppJar(appClass, folderSupplier);
+    ArtifactVersion artifactVersion = new ArtifactVersion(String.format("1.0.%d", System.currentTimeMillis()));
+    ArtifactId artifactId = new ArtifactId(appClass.getSimpleName(), artifactVersion, ArtifactScope.USER);
+    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
+    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    artifactRepository.addArtifact(Artifacts.toArtifactId(namespace.toEntityId(), artifactId).toId(),
+                                   new File(deployedJar.toURI()));
 
-    final List<Program> programs = ImmutableList.copyOf(Iterables.transform(
-      appWithPrograms.getPrograms(),
-      new Function<Program, Program>() {
-        @Override
-        public Program apply(Program program) {
-          try {
-            return Programs.createWithUnpack(configuration, program.getJarLocation(), folderSupplier.get());
-          } catch (IOException e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      }
-    ));
-    return new ApplicationWithPrograms(appWithPrograms) {
-      @Override
-      public Iterable<Program> getPrograms() {
-        return programs;
-      }
-    };
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, namespace.toEntityId(),
+                                                   appClass.getName(), null, null);
+    return getLocalManager().deploy(info).get();
   }
 
-  private static Location createAppJar(Class<?> appClass) throws IOException {
-    LocationFactory lf = new LocalLocationFactory(DirUtils.createTempDir(TEMP_FOLDER.getRoot()));
+  /**
+   * Creates a {@link Program} by searching for a program name inside the given {@link ApplicationWithPrograms}.
+   */
+  @Nullable
+  public static Program createProgram(ApplicationWithPrograms app, Class<?> programClass,
+                                      Supplier<File> folderSupplier) throws Exception {
+    return createProgram(app, programClass, null, folderSupplier);
+  }
+
+  /**
+   * Creates a {@link Program} by searching for a program name inside the given {@link ApplicationWithPrograms}.
+   * If {@link ProgramRunner} is not {@code null}, it will be used to create the program classloader.
+   */
+  @Nullable
+  public static Program createProgram(ApplicationWithPrograms app, Class<?> programClass,
+                                      @Nullable ProgramRunner programRunner,
+                                      Supplier<File> folderSupplier) throws Exception {
+    for (ProgramDescriptor programDescriptor : app.getPrograms()) {
+      if (programClass.getName().equals(programDescriptor.getSpecification().getClassName())) {
+        return createProgram(programDescriptor, app.getArtifactLocation(), programRunner, folderSupplier);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Creates a {@link Program}.
+   *
+   * @param programDescriptor contains information about the program to be created
+   * @param artifactLocation location of the artifact jar
+   * @param programRunner an optional program runner that will be used to run the program
+   * @param folderSupplier a {@link Supplier} to provide a folder that the artifact jar will be expanded to.
+   */
+  public static Program createProgram(ProgramDescriptor programDescriptor,
+                                      Location artifactLocation,
+                                      @Nullable ProgramRunner programRunner,
+                                      Supplier<File> folderSupplier) throws Exception {
+    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
+    return Programs.create(cConf, programRunner, programDescriptor, artifactLocation,
+                           BundleJarUtil.unJar(artifactLocation, folderSupplier.get()));
+
+  }
+
+
+  private static Location createAppJar(Class<?> appClass, Supplier<File> folderSupplier) throws IOException {
+    LocationFactory lf = new LocalLocationFactory(DirUtils.createTempDir(folderSupplier.get()));
     return AppJarHelper.createDeploymentJar(lf, appClass);
   }
 }

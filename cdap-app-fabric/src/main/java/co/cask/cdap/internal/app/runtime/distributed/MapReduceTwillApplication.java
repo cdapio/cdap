@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,7 +49,7 @@ public final class MapReduceTwillApplication extends AbstractProgramTwillApplica
   protected void addRunnables(Map<String, RunnableResource> runnables) {
     // These resources are for the container that runs the mapred client that will launch the actual mapred job.
     runnables.put(spec.getName(), new RunnableResource(
-      new MapReduceTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+      new MapReduceTwillRunnable(spec.getName()),
       createResourceSpec(Objects.firstNonNull(spec.getDriverResources(), new Resources()), 1)
     ));
   }

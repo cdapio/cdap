@@ -275,12 +275,11 @@ public class WorkerProgramRunnerTest {
     }
   }
 
-  private ProgramController submit(ApplicationWithPrograms app,
-                                   Class<?> programClass,
-                                   Map<String, String> userArgs) throws ClassNotFoundException {
+  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass,
+                                   Map<String, String> userArgs) throws Exception {
 
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    Program program = getProgram(app, programClass);
+    Program program = AppFabricTestHelper.createProgram(app, programClass, TEMP_FOLDER_SUPPLIER);
     Assert.assertNotNull(program);
     ProgramRunner runner = runnerFactory.create(program.getType());
 
@@ -288,15 +287,4 @@ public class WorkerProgramRunnerTest {
                                                                    RunIds.generate().getId()));
     return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments(userArgs)));
   }
-
-  private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
-    for (Program p : app.getPrograms()) {
-      if (programClass.getCanonicalName().equals(p.getMainClass().getCanonicalName())) {
-        return p;
-      }
-    }
-    return null;
-  }
-
-
 }

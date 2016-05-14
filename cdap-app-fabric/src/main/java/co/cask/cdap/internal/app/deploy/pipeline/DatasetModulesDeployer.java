@@ -26,7 +26,9 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,20 +40,18 @@ import java.util.Map;
 /**
  * Deploys Dataset Modules.
  */
-public class DatasetModulesDeployer {
+final class DatasetModulesDeployer {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetModulesDeployer.class);
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
   // An instance of InMemoryDatasetFramework is used to check if a dataset is a system dataset
   private final DatasetFramework systemDatasetFramework;
-  private final Id.Namespace namespace;
   private final boolean allowDatasetUncheckedUpgrade;
 
-  public DatasetModulesDeployer(DatasetFramework datasetFramework, DatasetFramework inMemoryDatasetFramework,
-                                Id.Namespace namespace, CConfiguration cConf) {
+  DatasetModulesDeployer(DatasetFramework datasetFramework,
+                         DatasetFramework inMemoryDatasetFramework, CConfiguration cConf) {
     this.datasetFramework = datasetFramework;
     this.systemDatasetFramework = inMemoryDatasetFramework;
-    this.namespace = namespace;
     this.cConf = cConf;
     this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
@@ -59,11 +59,12 @@ public class DatasetModulesDeployer {
   /**
    * Deploy the given dataset modules.
    *
+   * @param namespaceId namespace to deploy to
    * @param modules the dataset modules to deploy
    * @param jarLocation the location of the jar file containing the modules
    * @throws Exception if there was a problem deploying a module
    */
-  public void deployModules(Map<String, String> modules, Location jarLocation) throws Exception {
+  void deployModules(NamespaceId namespaceId, Map<String, String> modules, Location jarLocation) throws Exception {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     File unpackDir = DirUtils.createTempDir(tmpDir);
@@ -78,17 +79,17 @@ public class DatasetModulesDeployer {
           // note: we can deploy module or create module from Dataset class
           // note: it seems dangerous to instantiate dataset module here, but this will be fine when we move deploy into
           //       isolated user's environment (e.g. separate yarn container)
-          Id.DatasetModule moduleId = Id.DatasetModule.from(namespace, moduleName);
+          DatasetModuleId moduleId = namespaceId.datasetModule(moduleName);
           if (DatasetModule.class.isAssignableFrom(clazz)) {
             LOG.info("Adding module: {}", clazz.getName());
-            datasetFramework.addModule(moduleId, (DatasetModule) clazz.newInstance(), jarLocation);
+            datasetFramework.addModule(moduleId.toId(), (DatasetModule) clazz.newInstance(), jarLocation);
           } else if (Dataset.class.isAssignableFrom(clazz)) {
             if (!systemDatasetFramework.hasSystemType(clazz.getName())) {
               // checking if type is in already or force upgrade is allowed
-              Id.DatasetType typeId = Id.DatasetType.from(namespace, clazz.getName());
-              if (!datasetFramework.hasType(typeId) || allowDatasetUncheckedUpgrade) {
+              DatasetTypeId typeId = namespaceId.datasetType(clazz.getName());
+              if (!datasetFramework.hasType(typeId.toId()) || allowDatasetUncheckedUpgrade) {
                 LOG.info("Adding module: {}", clazz.getName());
-                datasetFramework.addModule(moduleId, new SingleTypeModule(clazz), jarLocation);
+                datasetFramework.addModule(moduleId.toId(), new SingleTypeModule(clazz), jarLocation);
               }
             }
           } else {

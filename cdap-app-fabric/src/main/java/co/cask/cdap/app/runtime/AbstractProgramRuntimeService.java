@@ -18,6 +18,7 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
@@ -36,6 +37,8 @@ import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -94,35 +97,42 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public final RuntimeInfo run(Program program, ProgramOptions options) {
-    ProgramRunner runner = programRunnerFactory.create(program.getType());
-    Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
+  public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options) {
+    ProgramId programId = programDescriptor.getProgramId();
+
+    ProgramRunner runner = programRunnerFactory.create(programId.getType());
+    Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + programId.getType());
     RunId runId = RunIds.generate();
     ProgramOptions optionsWithRunId = updateProgramOptions(options, runId);
-    File tempDir = createTempDirectory(program.getId(), runId);
+    File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {
-      ProgramOptions optionsWithPlugins = createPluginSnapshot(optionsWithRunId, program.getId(), tempDir,
-                                                               program.getApplicationSpecification());
+      ProgramOptions optionsWithPlugins = createPluginSnapshot(optionsWithRunId, programId, tempDir,
+                                                               programDescriptor.getApplicationSpecification());
       // The Jar Location will be null for some unit-test. It won't be for production.
-      Location jarLocation = program.getJarLocation();
-      Program executableProgram = jarLocation == null ? program : createProgram(cConf, runner, jarLocation, tempDir);
+      Location jarLocation = getArtifactLocation(programDescriptor);
+      Program executableProgram = createProgram(cConf, runner, programDescriptor, jarLocation, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
-      RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), program);
+      RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId);
       monitorProgram(runtimeInfo, cleanUpTask);
       return runtimeInfo;
-    } catch (IOException e) {
+    } catch (Exception e) {
       cleanUpTask.run();
       LOG.error("Exception while trying to createPluginSnapshot", e);
       throw Throwables.propagate(e);
     }
   }
 
+  protected Location getArtifactLocation(ProgramDescriptor descriptor) throws IOException, ArtifactNotFoundException {
+    return artifactRepository.getArtifact(descriptor.getArtifactId().toId()).getDescriptor().getLocation();
+  }
+
   /**
    * Creates a {@link Program} for the given {@link ProgramRunner} from the given program jar {@link Location}.
    */
-  private Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                Location programJarLocation, File tempDir) throws IOException {
+  protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
+                                  ProgramDescriptor programDescriptor,
+                                  Location programJarLocation, File tempDir) throws IOException {
     // Take a snapshot of the JAR file to avoid program mutation
     File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
 
@@ -131,7 +141,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     unpackedDir.mkdirs();
     BundleJarUtil.unJar(Files.newInputStreamSupplier(programJar), unpackedDir);
 
-    return Programs.create(cConf, programRunner, Locations.toLocation(programJar), unpackedDir);
+    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, unpackedDir);
   }
 
   private Runnable createCleanupTask(final Object... resources) {
@@ -169,13 +179,13 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   /**
    * Creates a local temporary directory for this program run.
    */
-  private File createTempDirectory(Id.Program programId, RunId runId) {
+  private File createTempDirectory(ProgramId programId, RunId runId) {
     File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     File dir = new File(tempDir, String.format("%s.%s.%s.%s.%s",
                                                programId.getType().name().toLowerCase(),
-                                               programId.getNamespaceId(), programId.getApplicationId(),
-                                               programId.getId(), runId.getId()));
+                                               programId.getNamespaceId(), programId.getApplication(),
+                                               programId.getProgram(), runId.getId()));
     dir.mkdirs();
     return dir;
   }
@@ -188,7 +198,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * @param appSpec program's Application Specification
    * @return the copy of the program options with locations of plugin artifacts included in them
    */
-  private ProgramOptions createPluginSnapshot(ProgramOptions options, Id.Program programId, File tempDir,
+  private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId, File tempDir,
                                               @Nullable ApplicationSpecification appSpec) throws IOException {
     // appSpec is null in an unit test
     if (appSpec == null || appSpec.getPlugins().isEmpty()) {
@@ -207,9 +217,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       }
 
       try {
-        ArtifactDetail detail = artifactRepository.getArtifact(Id.Artifact.from(programId.getNamespace(),
-                                                                                plugin.getArtifactId()));
-        Files.copy(Locations.newInputSupplier(detail.getDescriptor().getLocation()), destFile);
+        ArtifactId artifactId = Artifacts.toArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
+        ArtifactDetail detail = artifactRepository.getArtifact(artifactId.toId());
+        Locations.linkOrCopy(detail.getDescriptor().getLocation(), destFile);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
@@ -243,8 +253,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                     options.isDebug());
   }
 
-  protected RuntimeInfo createRuntimeInfo(ProgramController controller, Program program) {
-    return new SimpleRuntimeInfo(controller, program);
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId) {
+    return new SimpleRuntimeInfo(controller, programId);
   }
 
   protected List<RuntimeInfo> getRuntimeInfos() {

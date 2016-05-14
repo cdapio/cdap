@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,7 +55,7 @@ public final class WebappTwillApplication extends AbstractProgramTwillApplicatio
     try {
       String serviceName = WebappProgramRunner.getServiceName(ProgramType.WEBAPP, program);
       runnables.put(serviceName, new RunnableResource(
-        new WebappTwillRunnable(serviceName, "hConf.xml", "cConf.xml"),
+        new WebappTwillRunnable(serviceName),
         resourceSpec
       ));
     } catch (Exception e) {

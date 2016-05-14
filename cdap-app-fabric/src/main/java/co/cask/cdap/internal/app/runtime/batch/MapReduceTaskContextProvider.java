@@ -19,17 +19,15 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
-import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -47,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -127,22 +124,10 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
       // In distributed mode, the program jar is localized to the container
       programLocation = locationFactory.create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
     }
-    try {
-      Program program = Programs.create(programLocation, programClassLoader);
-      WorkflowProgramInfo workflowProgramInfo = contextConfig.getWorkflowProgramInfo();
 
-      // See if it was launched from Workflow; if it was, change the Program.
-      if (workflowProgramInfo != null) {
-        String mapReduceName = workflowProgramInfo.getProgramNameInWorkflow();
-        MapReduceSpecification mapReduceSpec = program.getApplicationSpecification().getMapReduce().get(mapReduceName);
-        Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s in %s.",
-                                    mapReduceName, program.getId());
-        program = new WorkflowMapReduceProgram(program, mapReduceSpec);
-      }
-      return program;
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    return new DefaultProgram(new ProgramDescriptor(contextConfig.getProgramId(),
+                                                    contextConfig.getApplicationSpecification()),
+                              programLocation, programClassLoader);
   }
 
   /**
@@ -163,7 +148,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         Program program = programRef.get();
         if (program == null) {
           // Creation of program is relatively cheap, so just create and do compare and set.
-          programRef.compareAndSet(null, createProgram(contextConfig, classLoader));
+          programRef.compareAndSet(null, createProgram(contextConfig, classLoader.getProgramClassLoader()));
           program = programRef.get();
         }
 

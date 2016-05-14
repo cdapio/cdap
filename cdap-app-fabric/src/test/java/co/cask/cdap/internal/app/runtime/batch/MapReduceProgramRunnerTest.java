@@ -340,7 +340,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
     final String inputPath = createInput();
-    final java.io.File outputDir = new java.io.File(tmpFolder.newFolder(), "output");
+    final java.io.File outputDir = new java.io.File(TEMP_FOLDER.newFolder(), "output");
 
     final KeyValueTable jobConfigTable = datasetCache.getDataset("jobConfig");
 
@@ -492,7 +492,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
   }
 
   private URI createStopWordsFile() throws IOException {
-    File file = tmpFolder.newFile("stopWords.txt");
+    File file = TEMP_FOLDER.newFile("stopWords.txt");
     try (OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(file))) {
       out.write("the\n");
       out.write("a\n");
@@ -596,7 +596,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
   }
 
   private String createInput() throws IOException {
-    File inputDir = tmpFolder.newFolder();
+    File inputDir = TEMP_FOLDER.newFolder();
 
     File inputFile = new File(inputDir.getPath() + "/words.txt");
     inputFile.deleteOnExit();

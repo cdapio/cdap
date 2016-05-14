@@ -75,8 +75,8 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     TwillController controller = launcher.launch(new ServiceTwillApplication(program, serviceSpec,
                                                                              localizeResources, eventHandler));
 
-    DistributedServiceRunnableInstanceUpdater instanceUpdater = new DistributedServiceRunnableInstanceUpdater(
-      program, controller);
+    DistributedServiceRunnableInstanceUpdater instanceUpdater =
+      new DistributedServiceRunnableInstanceUpdater(controller);
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new ServiceTwillProgramController(program.getId(), controller, instanceUpdater, runId).startListen();
   }

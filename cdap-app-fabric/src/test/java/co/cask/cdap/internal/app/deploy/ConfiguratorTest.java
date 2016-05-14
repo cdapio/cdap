@@ -72,7 +72,7 @@ public class ConfiguratorTest {
 
     // Create a configurator that is testable. Provide it a application.
     Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
-                                                         WordCountApp.class.getName(), appJar, "", artifactRepo);
+                                                         WordCountApp.class.getName(), appJar, null, "", artifactRepo);
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();
@@ -97,7 +97,7 @@ public class ConfiguratorTest {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     Configurator configuratorWithConfig =
       new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(), appJar,
-                               new Gson().toJson(config), artifactRepo);
+                               null, new Gson().toJson(config), artifactRepo);
 
     ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -112,7 +112,7 @@ public class ConfiguratorTest {
     Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
 
     Configurator configuratorWithoutConfig = new InMemoryConfigurator(
-      conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(), appJar, null, artifactRepo);
+      conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(), appJar, null, null, artifactRepo);
     result = configuratorWithoutConfig.config();
     response = result.get(10, TimeUnit.SECONDS);
     Assert.assertNotNull(response);

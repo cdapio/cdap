@@ -16,11 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Objects;
 import org.apache.twill.api.RunId;
 
@@ -32,20 +32,14 @@ import javax.annotation.Nullable;
 public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo {
 
   private final ProgramController controller;
-  private final Id.Program programId;
+  private final ProgramId programId;
   private final RunId twillRunId;
 
-  public SimpleRuntimeInfo(ProgramController controller, Program program) {
-    this(controller, program, null);
+  public SimpleRuntimeInfo(ProgramController controller, ProgramId programId) {
+    this(controller, programId, null);
   }
 
-  public SimpleRuntimeInfo(ProgramController controller, Program program, @Nullable RunId twillRunId) {
-    this(controller, Id.Program.from(program.getNamespaceId(), program.getApplicationId(),
-                                     program.getType(), program.getName()), twillRunId);
-
-  }
-
-  public SimpleRuntimeInfo(ProgramController controller, Id.Program programId, @Nullable RunId twillRunId) {
+  public SimpleRuntimeInfo(ProgramController controller, ProgramId programId, @Nullable RunId twillRunId) {
     this.controller = controller;
     this.programId = programId;
     this.twillRunId = twillRunId;
@@ -63,7 +57,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
 
   @Override
   public Id.Program getProgramId() {
-    return programId;
+    return programId.toId();
   }
 
   @Nullable
@@ -75,9 +69,8 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   @Override
   public String toString() {
     return Objects.toStringHelper(ProgramRuntimeService.RuntimeInfo.class)
-      .add("type", programId.getType())
-      .add("appId", programId.getApplicationId())
-      .add("programId", programId.getId())
+      .add("programId", programId)
+      .add("twillRunId", twillRunId)
       .toString();
   }
 }

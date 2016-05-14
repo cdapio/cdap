@@ -30,20 +30,18 @@ public class ApplicationMeta {
 
   private final String id;
   private final ApplicationSpecification spec;
-  private final String archiveLocation;
   // NOTE: we need lastDeployTs since not all (e.g. persisting app jar) covered with tx,
   //       and currently we use it resolve some races :(
   private final long lastUpdateTs;
 
-  public ApplicationMeta(String id, ApplicationSpecification spec, String archiveLocation) {
+  public ApplicationMeta(String id, ApplicationSpecification spec) {
     this.id = id;
     this.spec = spec;
-    this.archiveLocation = archiveLocation;
     this.lastUpdateTs = System.currentTimeMillis();
   }
 
   public static ApplicationMeta updateSpec(ApplicationMeta original, ApplicationSpecification newSpec) {
-    return new ApplicationMeta(original.id, newSpec, original.archiveLocation);
+    return new ApplicationMeta(original.id, newSpec);
   }
 
   public String getId() {
@@ -52,10 +50,6 @@ public class ApplicationMeta {
 
   public ApplicationSpecification getSpec() {
     return spec;
-  }
-
-  public String getArchiveLocation() {
-    return archiveLocation;
   }
 
   public long getLastUpdateTs() {
@@ -67,7 +61,6 @@ public class ApplicationMeta {
     return Objects.toStringHelper(this)
       .add("id", id)
       .add("spec", ADAPTER.toJson(spec))
-      .add("archiveLocation", archiveLocation)
       .add("lastUpdateTs", lastUpdateTs)
       .toString();
   }

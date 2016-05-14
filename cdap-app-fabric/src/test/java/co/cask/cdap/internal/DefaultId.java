@@ -17,6 +17,7 @@
 package co.cask.cdap.internal;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
 
 /**
  * Default Ids to use in test if you do not want to construct your own.
@@ -26,4 +27,5 @@ public class DefaultId {
 
   public static final Id.Namespace NAMESPACE = Id.Namespace.DEFAULT;
   public static final Id.Application APPLICATION = Id.Application.from(NAMESPACE, DEFAULT_APPLICATION_ID);
+  public static final ArtifactId ARTIFACT = new ArtifactId(NAMESPACE.getId(), "test-artifact", "0.0.0");
 }

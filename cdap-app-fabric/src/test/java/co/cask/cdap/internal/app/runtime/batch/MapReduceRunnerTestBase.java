@@ -34,6 +34,7 @@ import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.MockResponder;
@@ -47,7 +48,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
@@ -79,7 +79,6 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nullable;
 
 @Category(XSlowTests.class)
 /**
@@ -96,14 +95,15 @@ public class MapReduceRunnerTestBase {
   protected static DynamicDatasetCache datasetCache;
   protected static MetricStore metricStore;
 
+
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   protected static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
     @Override
     public File get() {
       try {
-        return tmpFolder.newFolder();
+        return TEMP_FOLDER.newFolder();
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -211,25 +211,15 @@ public class MapReduceRunnerTestBase {
     return success.get();
   }
 
-  protected ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, Arguments userArgs)
-    throws ClassNotFoundException {
+  protected ProgramController submit(ApplicationWithPrograms app,
+                                     Class<?> programClass, Arguments userArgs) throws Exception {
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    final Program program = getProgram(app, programClass);
+    final Program program = AppFabricTestHelper.createProgram(app, programClass, TEMP_FOLDER_SUPPLIER);
     Assert.assertNotNull(program);
     ProgramRunner runner = runnerFactory.create(program.getType());
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                    RunIds.generate().getId()));
 
     return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs));
-  }
-
-  @Nullable
-  private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
-    for (Program p : app.getPrograms()) {
-      if (programClass.getCanonicalName().equals(p.getMainClass().getCanonicalName())) {
-        return p;
-      }
-    }
-    return null;
   }
 }

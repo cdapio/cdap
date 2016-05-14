@@ -23,6 +23,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -45,17 +46,17 @@ final class DistributedFlowletInstanceUpdater {
   private static final int MAX_WAIT_SECONDS = 30;
   private static final int SECONDS_PER_WAIT = 1;
 
-  private final Program program;
+  private final ProgramId programId;
   private final TwillController twillController;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
   private final Multimap<String, QueueName> consumerQueues;
   private final TransactionExecutorFactory txExecutorFactory;
 
-  DistributedFlowletInstanceUpdater(Program program, TwillController twillController, QueueAdmin queueAdmin,
+  DistributedFlowletInstanceUpdater(ProgramId programId, TwillController twillController, QueueAdmin queueAdmin,
                                     StreamAdmin streamAdmin, Multimap<String, QueueName> consumerQueues,
                                     TransactionExecutorFactory txExecutorFactory) {
-    this.program = program;
+    this.programId = programId;
     this.twillController = twillController;
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
@@ -75,7 +76,7 @@ final class DistributedFlowletInstanceUpdater {
       twillController.sendCommand(id, ProgramCommands.SUSPEND).get();
     }
     FlowUtils.reconfigure(consumerQueues.get(flowletId),
-                          FlowUtils.generateConsumerGroupId(program, flowletId), newInstanceCount,
+                          FlowUtils.generateConsumerGroupId(programId, flowletId), newInstanceCount,
                           streamAdmin, queueAdmin, txExecutorFactory);
     twillController.changeInstances(flowletId, newInstanceCount).get();
     for (String id : flowlets) {

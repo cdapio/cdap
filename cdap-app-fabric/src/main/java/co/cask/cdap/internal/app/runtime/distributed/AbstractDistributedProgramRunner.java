@@ -29,6 +29,7 @@ import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -60,6 +61,7 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,10 +86,13 @@ import javax.annotation.Nullable;
 public abstract class AbstractDistributedProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedProgramRunner.class);
-  private static final Gson GSON = new GsonBuilder()
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
+  private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
+  private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
+  private static final String APP_SPEC_FILE_NAME = "appSpec.json";
 
   private final TwillRunner twillRunner;
   protected final YarnConfiguration hConf;
@@ -167,13 +172,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
                                                             DirUtils.createTempDir(tempDir));
 
-      // Copy config files and program jar to local temp, and ask Twill to localize it to container.
+      // Copy config files to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
-      localizeResources.put("hConf.xml",
+      localizeResources.put(HADOOP_CONF_FILE_NAME,
                             new LocalizeResource(saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir))));
-      localizeResources.put("cConf.xml",
+      localizeResources.put(CDAP_CONF_FILE_NAME,
                             new LocalizeResource(saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir))));
+
+      // Localize the program jar
+      Location programJarLocation = program.getJarLocation();
+      final String programJarName = programJarLocation.getName();
+      localizeResources.put(programJarName, new LocalizeResource(program.getJarLocation().toURI(), false));
+
+      // Localize the app spec
+      localizeResources.put(APP_SPEC_FILE_NAME,
+                            new LocalizeResource(saveAppSpec(program,
+                                                             File.createTempFile("appSpec", ".json", tempDir))));
 
       final URI logbackURI = getLogBackURI(program, tempDir);
       final String programOptions = GSON.toJson(options);
@@ -248,8 +263,12 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               }
             })
             .withApplicationArguments(
-              String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName(),
-              String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
+              "--" + RunnableOptions.JAR, programJarName,
+              "--" + RunnableOptions.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME,
+              "--" + RunnableOptions.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
+              "--" + RunnableOptions.APP_SPEC_FILE, APP_SPEC_FILE_NAME,
+              "--" + RunnableOptions.PROGRAM_OPTIONS, programOptions,
+              "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId().toEntityId())
             );
 
           TwillController twillController;
@@ -349,6 +368,13 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     copied.unset(Constants.AppFabric.RUNTIME_EXT_DIR);
     try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
       copied.writeXml(writer);
+    }
+    return file;
+  }
+
+  private File saveAppSpec(Program program, File file) throws IOException {
+    try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
+      GSON.toJson(program.getApplicationSpecification(), writer);
     }
     return file;
   }

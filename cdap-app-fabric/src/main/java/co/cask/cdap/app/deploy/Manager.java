@@ -16,10 +16,7 @@
 
 package co.cask.cdap.app.deploy;
 
-import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
-
-import javax.annotation.Nullable;
 
 /**
  * Interface to represent deployment manager.
@@ -32,10 +29,8 @@ public interface Manager<I, O> {
   /**
    * Executes a pipeline for deploying an input.
    *
-   * @param namespace the namespace to which the input is deployed.
-   * @param id the id of the input to deploy. If null, a default is used
    * @param input the input to the deployment pipeline
    * @return A future of the output of the deployment pipeline
    */
-  ListenableFuture<O> deploy(Id.Namespace namespace, @Nullable String id, I input) throws Exception;
+  ListenableFuture<O> deploy(I input) throws Exception;
 }

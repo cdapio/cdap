@@ -97,7 +97,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       TwillController controller = launcher.launch(new FlowTwillApplication(program, flowSpec,
                                                                             localizeResources, eventHandler));
       DistributedFlowletInstanceUpdater instanceUpdater =
-        new DistributedFlowletInstanceUpdater(program, controller, queueAdmin,
+        new DistributedFlowletInstanceUpdater(program.getId().toEntityId(), controller, queueAdmin,
                                               streamAdmin, flowletQueues, txExecutorFactory);
       RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
       return new FlowTwillProgramController(program.getId(), controller, instanceUpdater, runId).startListen();
