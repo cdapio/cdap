@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.examples.sparkstreaming;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.test.ApplicationManager;
@@ -57,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 public class SpamClassifierTest extends TestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final String KAFKA_TOPIC = "someTopic";
   private static final String KAFKA_BROKER_ID = "1";

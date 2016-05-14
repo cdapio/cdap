@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.dq.AggregationTypeValue;
 import co.cask.cdap.dq.DataQualityApp;
 import co.cask.cdap.dq.DataQualityService;
@@ -80,7 +81,7 @@ public class DataQualityAppTest extends TestBase {
   private static final Integer WORKFLOW_SCHEDULE_MINUTES = 5;
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static Id.Artifact appArtifact;
   private static boolean sentData = false;

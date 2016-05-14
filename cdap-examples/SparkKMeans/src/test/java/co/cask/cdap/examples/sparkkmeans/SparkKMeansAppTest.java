@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.sparkkmeans;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class SparkKMeansAppTest extends TestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void test() throws Exception {
