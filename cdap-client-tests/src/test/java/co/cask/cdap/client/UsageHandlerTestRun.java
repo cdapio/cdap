@@ -129,8 +129,8 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
     try {
       startProgram(program);
+      // Wait for the worker to run and then stop.
       waitState(program, ProgramStatus.RUNNING);
-      stopProgram(program);
       waitState(program, ProgramStatus.STOPPED);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
