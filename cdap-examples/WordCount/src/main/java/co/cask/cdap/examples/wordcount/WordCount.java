@@ -94,7 +94,7 @@ public class WordCount extends AbstractApplication<WordCount.WordCountConfig> {
     // Ingest data into the Application via Streams
     addStream(new Stream(config.getStream()));
 
-    // Store processed data in Datasetss
+    // Store processed data in Datasets
     createDataset(config.getWordStatsTable(), Table.class,
                   DatasetProperties.builder().setDescription("Stats of total counts and lengths of words").build());
     createDataset(config.getWordCountTable(), KeyValueTable.class,

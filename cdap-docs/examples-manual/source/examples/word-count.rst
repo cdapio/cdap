@@ -47,10 +47,10 @@ Data Storage
 ------------
 The application uses these datasets by default:
 
-- ``wordStats`` stores the global statistics of total count of words and the total length of words received.
-- ``wordCounts`` stores the word and the corresponding count in a key value table.
-- ``uniqueCount`` is a custom dataset that stores the total count of unique words received so far.
-- ``wordAssocs`` is a custom dataset that stores the count for word associations.
+- ``wordStatsTable`` stores the global statistics of total count of words and the total length of words received.
+- ``wordCountTable`` stores the word and the corresponding count in a key value table.
+- ``uniqueCountTable`` is a custom dataset that stores the total count of unique words received so far.
+- ``wordAssocTable`` is a custom dataset that stores the count for word associations.
 
 However, the names of these datasets can be configured to be different from their defaults by providing a
 configuration at application deployment time. All programs rely on this configuration to instantiate their
@@ -139,6 +139,8 @@ To query the ``RetrieveCounts`` service, either:
 
     $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP"
 
+.. highlight:: json
+
 The word count and top-10 associations words for that word will be displayed in JSON
 format (example reformatted to fit; results will depend on what you have submitted)::
 
@@ -151,6 +153,8 @@ format (example reformatted to fit; results will depend on what you have submitt
     "count":6,
     "word":"CDAP"
   }
+
+.. highlight:: console
 
 You can also make requests to the other endpoints available in this service, as 
 :ref:`described above <word-count-service-requests>`.

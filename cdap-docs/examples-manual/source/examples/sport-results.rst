@@ -94,7 +94,7 @@ Let's take a closer look at the upload method:
 MapReduce over File Partitions
 ==============================
 ``ScoreCounter`` is a simple MapReduce that reads from the *results* PartitionedFileSet and writes to
-the *totals* PartitionedFileSet. The ``beforeSubmit`` method prepares the MapReduce program for this:
+the *totals* PartitionedFileSet. The ``initialize`` method prepares the MapReduce program for this:
 
 - It reads the league that it is supposed to process from the runtime arguments.
 - It constructs a partition filter for the input using the league as the only condition, and instantiates
@@ -104,8 +104,8 @@ the *totals* PartitionedFileSet. The ``beforeSubmit`` method prepares the MapRed
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
-    :lines: 58-84
-    :dedent: 2
+    :lines: 48-86
+    :append: ...
 
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.
 Instead of *results* and *totals*, it could use any other dataset as long as the key and value types match.
