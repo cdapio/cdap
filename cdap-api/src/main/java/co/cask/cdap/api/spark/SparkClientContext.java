@@ -17,6 +17,8 @@
 package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.ClientLocalizationContext;
+import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
@@ -28,8 +30,7 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 
 /**
  * A context for a {@link Spark} program to interact with CDAP. This context object will be provided to
- * {@link Spark} program in the {@link Spark#beforeSubmit(SparkClientContext)} and
- * {@link Spark#onFinish(boolean, SparkClientContext)} call.
+ * {@link Spark} program in the {@link ProgramLifecycle#initialize} call.
  */
 @Beta
 public interface SparkClientContext extends RuntimeContext, DatasetContext, ClientLocalizationContext,
@@ -73,9 +74,14 @@ public interface SparkClientContext extends RuntimeContext, DatasetContext, Clie
    * Sets a
    * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkConf">SparkConf</a>
    * to be used for the Spark execution. Only configurations set inside the
-   * {@link Spark#beforeSubmit(SparkClientContext)} call will affect the Spark execution.
+   * {@link ProgramLifecycle#initialize} call will affect the Spark execution.
    *
    * @param <T> the SparkConf type
    */
   <T> void setSparkConf(T sparkConf);
+
+  /**
+   * Return the state of the MapReduce program.
+   */
+  ProgramState getState();
 }

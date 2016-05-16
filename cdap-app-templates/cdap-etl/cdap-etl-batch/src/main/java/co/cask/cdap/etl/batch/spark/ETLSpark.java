@@ -91,7 +91,7 @@ public class ETLSpark extends AbstractSpark {
   }
 
   @Override
-  public void beforeSubmit(SparkClientContext context) throws Exception {
+  public void initialize(SparkClientContext context) throws Exception {
     cleanupFiles = new ArrayList<>();
     CompositeFinisher.Builder finishers = CompositeFinisher.builder();
 

@@ -45,7 +45,7 @@ public class CharCountProgram extends AbstractSpark implements JavaSparkMain {
   }
 
   @Override
-  public void beforeSubmit(SparkClientContext context) throws Exception {
+  public void initialize(SparkClientContext context) throws Exception {
     context.setSparkConf(new SparkConf().set("spark.io.compression.codec",
                                              "org.apache.spark.io.LZFCompressionCodec"));
 

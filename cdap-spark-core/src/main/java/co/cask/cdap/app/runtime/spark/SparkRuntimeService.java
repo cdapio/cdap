@@ -16,6 +16,9 @@
 
 package co.cask.cdap.app.runtime.spark;
 
+import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkExecutionContext;
@@ -41,6 +44,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -89,10 +93,10 @@ import javax.annotation.Nullable;
 /**
  * Performs the actual execution of Spark job.
  * <p/>
- * Service start -> Performs job setup, and beforeSubmit call.
+ * Service start -> Performs job setup, and initialize call.
  * Service run -> Submits the spark job through {@link SparkSubmit}
  * Service triggerStop -> kill job
- * Service stop -> Commit/invalidate transaction, onFinish, cleanup
+ * Service stop -> Commit/invalidate transaction, destroy, cleanup
  */
 final class SparkRuntimeService extends AbstractExecutionThreadService {
 
@@ -110,6 +114,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final String hostname;
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
+  private volatile boolean stopRequested;
 
   SparkRuntimeService(CConfiguration cConf, Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
@@ -258,15 +263,22 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   protected void shutDown() throws Exception {
     // Try to get from the submission future to see if the job completed successfully.
     ListenableFuture<RunId> jobCompletion = completion.get();
+    String failureInfo = null;
     boolean succeeded = true;
     try {
       jobCompletion.get();
     } catch (Exception e) {
       succeeded = false;
+      failureInfo = Throwables.getRootCause(e).getMessage();
     }
 
     try {
-      onFinish(succeeded, new BasicSparkClientContext(runtimeContext));
+      BasicSparkClientContext basicSparkClientContext = new BasicSparkClientContext(runtimeContext);
+      if (spark instanceof ProgramLifecycle) {
+        destroy(succeeded, basicSparkClientContext, failureInfo);
+      } else {
+        onFinish(succeeded, basicSparkClientContext);
+      }
     } finally {
       cleanupTask.run();
       LOG.debug("Spark program completed: {}", runtimeContext);
@@ -275,6 +287,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
+    stopRequested = true;
     LOG.debug("Stop requested for Spark Program {}", runtimeContext);
     // Replace the completion future with a cancelled one.
     // Also, try to cancel the current completion future if it exists.
@@ -308,9 +321,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Calls the {@link Spark#beforeSubmit(SparkClientContext)} method.
+   * Calls the {@link Spark#beforeSubmit(SparkClientContext)} method for the pre 3.5 Spark programs, calls
+   * the {@link ProgramLifecycle#initialize} otherwise.
    */
-  private void beforeSubmit(final SparkClientContext context) throws TransactionFailureException, InterruptedException {
+  @SuppressWarnings("unchecked")
+  private void beforeSubmit(final BasicSparkClientContext context) throws TransactionFailureException,
+    InterruptedException {
     DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
     TransactionContext txContext = datasetCache.newTransactionContext();
     Transactions.execute(txContext, spark.getClass().getName() + ".beforeSubmit()", new Callable<Void>() {
@@ -318,7 +334,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       public Void call() throws Exception {
         Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
         try {
-          spark.beforeSubmit(context);
+          context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+          if (spark instanceof ProgramLifecycle) {
+            ((ProgramLifecycle) spark).initialize(context);
+          } else {
+            spark.beforeSubmit(context);
+          }
           return null;
         } finally {
           cancellable.cancel();
@@ -348,6 +369,47 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
     });
   }
+
+  private ProgramState getProgramState(boolean success, String failureInfo) {
+    if (stopRequested) {
+      // Program explicitly stopped, return KILLED state
+      return new ProgramState(ProgramStatus.KILLED, null);
+    }
+    if (!success) {
+      // Program is unsuccessful, return FAILED state
+      return new ProgramState(ProgramStatus.FAILED, failureInfo);
+    }
+    // Program is successfully completed, return COMPLETE state
+    return new ProgramState(ProgramStatus.COMPLETED, null);
+  }
+
+  /**
+   * Calls the destroy method of {@link ProgramLifecycle}.
+   */
+  private void destroy(final boolean succeeded, final BasicSparkClientContext context,
+                       @Nullable final String failureInfo) {
+    DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
+    TransactionContext txContext = datasetCache.newTransactionContext();
+    try {
+      Transactions.execute(txContext, spark.getClass().getName() + ".destroy()", new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
+          try {
+            context.setState(getProgramState(succeeded, failureInfo));
+            ((ProgramLifecycle) spark).destroy();
+            return null;
+          } finally {
+            cancellable.cancel();
+          }
+        }
+      });
+    } catch (Throwable e) {
+      LOG.warn("Error executing the destroy method of the Spark program {}",
+               context.getApplicationSpecification().getName(), e);
+    }
+  }
+
 
   /**
    * Creates a JAR file which contains generate Spark YARN container main classes. Those classes
