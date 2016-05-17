@@ -72,7 +72,10 @@ Network Requirements
 CDAP components communicate over your network with *HBase*, *HDFS*, and *YARN*.
 For the best performance, CDAP components should be located on the same LAN,
 ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
-components as you would *Hadoop datanodes*.  
+components as you would *Hadoop datanodes*.
+
+See the section below (:ref:`admin-manual-cdap-and-firewalls`) for information on
+configuring CDAP with a firewall and the listening ports that are used.
 
 
 .. _admin-manual-software-requirements:
@@ -176,3 +179,27 @@ NTP (Network Time Protocol)
 - If you need to adjust the configuration (add or delete servers, use servers closer to you, etc.)::
 
     $ vi /etc/ntp.conf
+
+
+.. _admin-manual-cdap-and-firewalls:
+
+CDAP and Firewalls
+==================
+In your :ref:`cluster configuration <admin-manual-install-deployment-architectures>`, 
+there cannot be a firewall between the cluster and CDAP. Instead, if a
+firewall is used, the cluster and CDAP need to be together behind the
+firewall. These are the ports which can be opened to provide external
+access:
+
+**Listen Ports for External Access**
+
+.. csv-table:: 
+   :header: "Description", "Governing Configuration", "Default Value in Packages/MapR", "Default Value in Ambari/Cloudera Manager"
+   :widths: 25, 25, 25, 25
+
+   "CDAP Router listen port (HTTP RESTful)", "``router.bind.port``", "10000", "11015"
+   "CDAP Router listen port (HTTP RESTful) (SSL)", "``router.ssl.bind.port``", "10443", "10443"
+   "CDAP UI listen port", "``dashboard.bind.port``", "9999", "9999"
+   "CDAP UI listen port (SSL)", "``dashboard.ssl.bind.port``", "9443", "9443"
+   "CDAP Auth Server listen port", "``security.auth.server.bind.port``", "10009", "10009"
+   "CDAP Auth Server listen port (SSL)", "``security.auth.server.ssl.bind.port``", "10010", "10010"
