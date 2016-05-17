@@ -26,7 +26,7 @@
   <ul class="list-group">
     <li class="list-group-item">
       <h5>
-        <strong>{{ contentData.templateName || contentData.name }}</strong>
+        <strong>{{ contentData.templateName || contentData.label || contentData.name }}</strong>
         <a href="#" ng-if="!contentData.templateName" ng-click="delayClose(1) && popoverContext.onItemClicked($event,  {action: 'createTemplate', contentData: contentData})">
           <span class="fa fa-plus-circle"></span>
           <span>Template</span>
