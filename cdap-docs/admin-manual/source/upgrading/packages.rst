@@ -49,11 +49,11 @@ upgrade instructions for the earlier versions and upgrade first to
 
    - On RPM using Yum::
 
-       $ sudo yum install `rpm -qa --qf "%{NAME}\n" 'cdap*'`
+       $ sudo yum upgrade 'cdap*'
 
    - On Debian using APT::
 
-       $ sudo apt-get install `aptitude search '~ncdap-* ~i' -F '%p'`
+       $ sudo apt-get install --only-upgrade '^cdap.*'
 
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
    as the user that runs CDAP Master (the CDAP user)
