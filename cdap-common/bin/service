@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -78,7 +78,7 @@ logecho() {
 
 # Start a non-Java application with arguments in the background
 _start_bin() {
-  cdap_check_before_start || exit 1 # Error output is done in function
+  cdap_check_before_start || exit 0 # Error output is done in function
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
   logecho "$(date) Starting ${APP} service on ${HOSTNAME}"
   ulimit -a >>${loglog} 2>&1
@@ -90,6 +90,7 @@ _start_bin() {
 
 # Start a Java application from class name with arguments in the background
 _start_java() {
+  cdap_check_before_start || exit 0
   # Check and set classpath if in development environment. 
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
@@ -111,7 +112,6 @@ _start_java() {
       die "Master startup checks failed. Please check ${loglog} to address issues."
     fi
   fi
-  cdap_check_before_start || exit 1
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
   logecho "$(date) Starting Java ${APP} service on ${HOSTNAME}"
   "${JAVA}" -version 2>>${loglog}
