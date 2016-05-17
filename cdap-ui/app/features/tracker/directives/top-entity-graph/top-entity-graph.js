@@ -14,86 +14,116 @@
  * the License.
  */
 
-function EntityGraphLink (scope, element) {
-  'ngInject';
-
-  let margin = {
-    top: 20,
-    right: 30,
-    bottom: 40,
-    left: 150
-  };
-
-  let container = d3.select(element[0].parentNode).node().getBoundingClientRect();
-
-  let width = container.width - margin.left - margin.right;
-  let height = 500 - margin.top - margin.bottom;
-
-  let y = d3.scale.ordinal()
-    .rangeRoundBands([0, height], 0.1);
-
-  let x = d3.scale.linear()
-    .range([0, width]);
-
-  let yAxis = d3.svg.axis()
-    .scale(y)
-    .orient('left')
-    .ticks(5);
-
-  let xAxis = d3.svg.axis()
-    .scale(x)
-    .orient('bottom')
-    .innerTickSize(-height)
-    .outerTickSize(0)
-    .tickPadding(10);
-
-  let svg = d3.select(element[0]).select('.top-entity-container')
-    .append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-    .append('g')
-      .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
-
-
-  /* CREATE GRAPH */
-  y.domain(scope.model.results.map((d) => { return d.label; }));
-  x.domain(d3.extent(scope.model.results, (d) => { return d.value; })).nice();
-
-  /* AXIS */
-  svg.append('g')
-    .attr('class', 'x axis')
-    .attr('transform', 'translate(0, ' + height + ')')
-    .call(xAxis);
-
-  svg.append('g')
-    .attr('class', 'y axis')
-    .call(yAxis);
-
-
-  svg.selectAll('.bar')
-      .data(scope.model.results)
-    .enter().append('rect')
-      .attr('class', 'bar')
-      .attr('y', (d) => { return y(d.label); })
-      .attr('height', y.rangeBand())
-      .attr('x', 0)
-      .attr('width', (d) => {
-        return Math.abs(x(d.value));
-      });
-
-  svg.insert("g", ".bars")
-     .attr("class", "grid vertical")
-     .attr("transform", "translate(0," + (height-margin.top-margin.bottom)  + ")")
-     .call(d3.svg.axis().scale(x)
-         .orient("bottom")
-         .tickSize(-(height-margin.top-margin.bottom), 0, 0)
-         .tickFormat("")
-     );
-
-}
-
 angular.module(PKG.name + '.feature.tracker')
-  .directive('myTopEntityGraph', function (d3) {
+  .directive('myTopEntityGraph', function (d3, $compile) {
+
+    function EntityGraphLink (scope, element) {
+      let margin = {
+        top: 20,
+        right: 30,
+        bottom: 30,
+        left: 130
+      };
+
+      let parentHeight = 300;
+
+      let container = d3.select(element[0].parentNode).node().getBoundingClientRect();
+      let width = container.width - margin.left - margin.right;
+      let height = parentHeight - margin.top - margin.bottom;
+
+      let y = d3.scale.ordinal()
+        .rangeRoundBands([0, height], 0.3);
+
+      let x = d3.scale.linear()
+        .range([0, width]);
+
+      let parentContainer = d3.select(element[0]).select('.top-entity-container')
+        .style({
+          height: parentHeight + 'px'
+        });
+
+      parentContainer.append('div')
+        .attr('class', 'sidebar')
+        .style({
+          width: '130px',
+          height: parentHeight + 'px'
+        });
+
+      let svg = parentContainer.append('svg')
+          .attr('width', width + margin.left + margin.right)
+          .attr('height', parentHeight)
+        .append('g')
+          .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
+
+
+      /* CREATE GRAPH */
+      y.domain(scope.model.results.map((d) => { return d.label; }));
+      x.domain(d3.extent(scope.model.results, (d) => { return d.value; })).nice();
+
+      /* AXES */
+      let xAxis = d3.svg.axis()
+        .scale(x)
+        .orient('bottom')
+        .innerTickSize(-height - margin.top)
+        .outerTickSize(0)
+        .tickPadding(10)
+        .ticks(5);
+
+      svg.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', 'translate(0, ' + height + ')')
+        .call(xAxis);
+
+      // Removing first tick
+      svg.select('.x.axis .tick')
+        .attr('display', 'none');
+
+
+      let yAxis = d3.svg.axis()
+        .scale(y)
+        .orient('left')
+        .ticks(5);
+
+      svg.append('g')
+        .attr('class', 'y axis')
+        .call(yAxis);
+
+      /* BARS */
+      svg.selectAll('.bar')
+          .data(scope.model.results)
+        .enter().append('rect')
+          .attr('class', 'bar')
+          .attr('y', (d) => { return y(d.label); })
+          .attr('x', -5)
+          .attr('rx', 3)
+          .attr('ry', 3)
+          .attr('height', y.rangeBand())
+          .attr('width', (d) => { return Math.abs(x(d.value)) + 5; });
+
+      /* Adding Links */
+      let sidebarElem = angular.element(parentContainer[0]).find('div');
+
+      if (scope.type === 'apps') {
+        angular.forEach(scope.model.results, (result) => {
+          let link = angular.element('<a></a>')
+            .attr('class', 'entity-link')
+            .attr('ui-sref', 'apps.detail.overview.programs({ appId: "' + result.label + '"})')
+            .text(result.label);
+
+            // TODO: Add ellipsis and tooltip
+
+          let elem = $compile(link)(scope);
+          elem.css('top', y(result.label) + margin.top - 1 + (y.rangeBand()/2) + 'px');
+
+          sidebarElem.append(elem);
+        });
+      }
+
+      // TODO: Add type === 'programs'
+
+    }
+
+
     return {
       restrict: 'E',
       scope: {

@@ -14,25 +14,56 @@
  * the License.
  */
 
+@font-color: #333333;
+@tracker-green: #30c23e;
+
 my-top-entity-graph {
   width: 100%;
   height: 100%;
+
+  .graph-container {
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
   .top-entity-container {
+    .sidebar {
+      background-color: white;
+      position: absolute;
+      border-top-left-radius: 3px;
+      border-bottom-left-radius: 3px;
+
+      .entity-link {
+        position: absolute;
+        font-size: 12px;
+        left: 15px;
+        font-weight: 500;
+        color: @font-color;
+        transform: translateY(-50%);
+
+        &:hover {
+          color: @tracker-green;
+          text-decoration: none;
+        }
+      }
+    }
+
     svg {
-      background-color: #464a56;
+      background-color: #e8e8e8;
     }
     .axis {
       path,
       line {
         fill: none;
-        stroke: white;
+        stroke: #cccccc;
         shape-rendering: crispEdges;
       }
 
       text {
         font-weight: 500;
         font-size: 12px;
-        fill: white;
+        fill: @font-color;
       }
 
       &.y {
@@ -43,7 +74,7 @@ my-top-entity-graph {
     }
 
     .bar {
-      fill: #35c853;
+      fill: @tracker-green;
     }
   }
 }
