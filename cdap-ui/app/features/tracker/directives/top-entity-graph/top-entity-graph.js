@@ -58,7 +58,7 @@ angular.module(PKG.name + '.feature.tracker')
 
       /* CREATE GRAPH */
       y.domain(scope.model.results.map((d) => { return d.label; }));
-      x.domain(d3.extent(scope.model.results, (d) => { return d.value; })).nice();
+      x.domain([0, d3.max(scope.model.results, (d) => { return d.value; })]).nice();
 
       /* X AXIS */
       let xAxis = d3.svg.axis()

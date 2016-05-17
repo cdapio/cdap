@@ -43,4 +43,18 @@ angular.module(`${PKG.name}.feature.experimental`)
         }
       ]
     };
+
+    this.topAppsData2 = {
+      'total' : 2,
+      'results' : [
+        {
+          'label' : 'Application1',
+          'value' : 85
+        },
+        {
+          'label' : 'Application3',
+          'value' : 61
+        }
+      ]
+    };
   });
