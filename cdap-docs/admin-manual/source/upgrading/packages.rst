@@ -47,19 +47,13 @@ upgrade instructions for the earlier versions and upgrade first to
 
 #. Update the CDAP packages by running either of these methods:
 
-   - On RPM using Yum (on one line)::
+   - On RPM using Yum::
 
-       $ sudo yum install cdap cdap-gateway \
-             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
-             cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
-             cdap-kafka cdap-master cdap-security cdap-ui
+       $ sudo yum install `rpm -qa --qf "%{NAME}\n" 'cdap*'`
 
-   - On Debian using APT (on one line)::
+   - On Debian using APT::
 
-       $ sudo apt-get install cdap cdap-gateway \
-             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
-             cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
-             cdap-kafka cdap-master cdap-security cdap-ui
+       $ sudo apt-get install `aptitude search '~ncdap ~i' -F '%p'`
 
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
    as the user that runs CDAP Master (the CDAP user)
