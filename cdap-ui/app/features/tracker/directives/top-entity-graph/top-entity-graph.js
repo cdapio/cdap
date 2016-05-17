@@ -60,7 +60,7 @@ angular.module(PKG.name + '.feature.tracker')
       y.domain(scope.model.results.map((d) => { return d.label; }));
       x.domain(d3.extent(scope.model.results, (d) => { return d.value; })).nice();
 
-      /* AXES */
+      /* X AXIS */
       let xAxis = d3.svg.axis()
         .scale(x)
         .orient('bottom')
@@ -79,6 +79,7 @@ angular.module(PKG.name + '.feature.tracker')
         .attr('display', 'none');
 
 
+      /* Y AXIS */
       let yAxis = d3.svg.axis()
         .scale(y)
         .orient('left')
@@ -94,11 +95,11 @@ angular.module(PKG.name + '.feature.tracker')
         .enter().append('rect')
           .attr('class', 'bar')
           .attr('y', (d) => { return y(d.label); })
-          .attr('x', -5)
+          .attr('x', -3)
           .attr('rx', 3)
           .attr('ry', 3)
           .attr('height', y.rangeBand())
-          .attr('width', (d) => { return Math.abs(x(d.value)) + 5; });
+          .attr('width', (d) => { return Math.abs(x(d.value)) + 3; });
 
       /* Adding Links */
       let sidebarElem = angular.element(parentContainer[0]).find('div');
