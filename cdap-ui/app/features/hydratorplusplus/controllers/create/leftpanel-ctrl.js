@@ -76,7 +76,7 @@ class HydratorPlusPlusLeftPanelCtrl {
                   let artifact = plug.artifact;
                   let key = `${artifact.name}-${artifact.version}-${artifact.scope}`;
                   let widgetKey = `widgets.${plug.name}-${plug.type}`;
-                  let pluginWidgetJson = widgetsJSONMap[key][widgetKey];
+                  let pluginWidgetJson = this.myHelpers.objectQuery(widgetsJSONMap, key, widgetKey);
                   let json;
                   if (!pluginWidgetJson && typeof pluginWidgetJson !== 'string') {
                     return;
@@ -87,8 +87,7 @@ class HydratorPlusPlusLeftPanelCtrl {
                     console.warn('ERROR in parsing widget JSON for', key);
                     return;
                   }
-                  console.info('setting ',ext, plugin.name, json.metadata.label);
-                  plug.label = json.metadata.label;
+                  plug.label = json.metadata.label || plug.name;
                   plugin.label = plug.label;
                 });
               });

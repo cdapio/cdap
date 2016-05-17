@@ -14,11 +14,12 @@
  * the License.
  */
 class HydratorPlusPlusPluginConfigFactory {
-  constructor ($q, myHelpers, myPipelineApi, $state) {
+  constructor ($q, myHelpers, myPipelineApi, $state, HydratorPlusPlusPluginWidgetsStore) {
     this.$q = $q;
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
+    this.HydratorPlusPlusPluginWidgetsStore = HydratorPlusPlusPluginWidgetsStore;
     this.data = {};
   }
   fetchWidgetJson(artifactName, artifactVersion, artifactScope, key) {
@@ -26,15 +27,33 @@ class HydratorPlusPlusPluginConfigFactory {
     if (cache) {
       return this.$q.when(cache);
     }
+    const getWidgetJson = (aName, aVersion, aScope, pluginKey) => {
+      let key = `${aName}-${aVersion}-${aScope}`;
+      let localWidgetJson = this.HydratorPlusPlusPluginWidgetsStore.getState().pluginsWidgetMap;
+      if(!localWidgetJson[key]) {
+        return this.myPipelineApi.fetchArtifactProperties({
+          namespace: this.$state.params.namespace || this.$state.params.nsadmin,
+          artifactName: aName,
+          artifactVersion: aVersion,
+          scope: aScope,
+          keys: pluginKey
+        }).$promise;
+      } else {
+        if (!localWidgetJson[key][pluginKey]) {
+          return this.myPipelineApi.fetchArtifactProperties({
+            namespace: this.$state.params.namespace || this.$state.params.nsadmin,
+            artifactName: aName,
+            artifactVersion: aVersion,
+            scope: aScope,
+            keys: pluginKey
+          }).$promise;
+        } else {
+          return this.$q.when(localWidgetJson[key]);
+        }
+      }
+    };
 
-    return this.myPipelineApi.fetchArtifactProperties({
-      namespace: this.$state.params.namespace || this.$state.params.nsadmin,
-      artifactName: artifactName,
-      artifactVersion: artifactVersion,
-      scope: artifactScope,
-      keys: key
-    })
-      .$promise
+    return getWidgetJson(artifactName, artifactVersion, artifactScope, key)
       .then(
         (res) => {
           try {
@@ -64,7 +83,6 @@ class HydratorPlusPlusPluginConfigFactory {
       keys: key
     }).$promise;
   }
-
   generateNodeConfig(backendProperties, nodeConfig) {
     var isNewSpecVersion = this.myHelpers.objectQuery(nodeConfig, 'metadata', 'spec-version');
     if (isNewSpecVersion) {
@@ -246,6 +264,6 @@ class HydratorPlusPlusPluginConfigFactory {
   }
 }
 
-HydratorPlusPlusPluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state'];
+HydratorPlusPlusPluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state', 'HydratorPlusPlusPluginWidgetsStore'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .service('HydratorPlusPlusPluginConfigFactory', HydratorPlusPlusPluginConfigFactory);
