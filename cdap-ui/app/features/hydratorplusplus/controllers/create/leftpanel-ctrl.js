@@ -124,6 +124,7 @@ class HydratorPlusPlusLeftPanelCtrl {
                 };
                 matchedObj.plugins = getPluginTemplateNode(ext);
                 matchedObj.plugins.forEach( plugin => {
+                  if (plugin.pluginTemplate) { return; }
                   plugin.allArtifacts.forEach( plug => {
                     let pluginsWidgetsStore = this.pluginsWidgetsStore.getState();
                     let key = `${plug.artifact.name}-${plug.artifact.version}-${plug.artifact.scope}`;
@@ -424,6 +425,22 @@ class HydratorPlusPlusLeftPanelCtrl {
       }
       return Object.assign({}, plugin, item[0]);
     };
+    const getUniqueLabel = (nodes, node) => {
+      let regExp = RegExp(/\([0-9]*\)/);
+      let returnLabel = node.label || node.name;
+      let labelWithMaxId = 0;
+      if(filteredNodes.length > 0) {
+        let labels = filteredNodes
+          .map( plug => {
+            let label = regExp.exec(plug.plugin.label) || [''];
+            label = label[0].replace(/[\(\)]/g, '');
+            return parseInt(label) || 0;
+          });
+        labelWithMaxId = labels.reduce( (prev, curr) => prev > curr? prev: (curr + 1) , 1) || 0;
+      }
+      return (labelWithMaxId === 0) ? returnLabel : returnLabel + '(' + labelWithMaxId  + ')';
+    };
+
     let item;
     if (node.templateName) {
       item = node;
@@ -435,7 +452,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     }
 
     this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
-    let name = item.name || item.pluginTemplate;
+    let name = item.label || item.name || item.pluginTemplate;
 
     let filteredNodes = this.HydratorPlusPlusConfigStore.getNodes()
         .filter( node => (node.plugin.label ? node.plugin.label.includes(name) : false) );
@@ -443,7 +460,11 @@ class HydratorPlusPlusLeftPanelCtrl {
     if (item.pluginTemplate) {
       config = {
         plugin: {
-          label: (filteredNodes.length > 0 ? item.pluginTemplate + (filteredNodes.length+1): item.pluginTemplate),
+          label: getUniqueLabel(filteredNodes, Object.assign({}, item, {
+            plugin: {
+              label: item.pluginTemplate
+            }
+          })),
           name: item.pluginName,
           artifact: item.artifact,
           properties: item.properties,
@@ -459,7 +480,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     } else {
       config = {
         plugin: {
-          label: item.label || (filteredNodes.length > 0 ? item.name + (filteredNodes.length+1): item.name),
+          label: getUniqueLabel(filteredNodes, item),
           artifact: item.artifact,
           name: item.name,
           properties: {}
