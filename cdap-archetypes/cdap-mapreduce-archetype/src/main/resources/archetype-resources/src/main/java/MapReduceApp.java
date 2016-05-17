@@ -44,7 +44,7 @@ public class MapReduceApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       // Get the Hadoop job context
       Job job = (Job) context.getHadoopJob();
 
@@ -52,7 +52,7 @@ public class MapReduceApp extends AbstractApplication {
     }
 
     @Override
-    public void onFinish(boolean success, MapReduceContext context) throws Exception {
+    public void destroy() {
       // TODO: whatever is necessary after job finishes
     }
   }

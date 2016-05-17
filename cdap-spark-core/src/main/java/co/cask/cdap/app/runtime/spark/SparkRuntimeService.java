@@ -114,7 +114,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final String hostname;
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
-  private volatile boolean stopRequested;
 
   SparkRuntimeService(CConfiguration cConf, Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
@@ -263,19 +262,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   protected void shutDown() throws Exception {
     // Try to get from the submission future to see if the job completed successfully.
     ListenableFuture<RunId> jobCompletion = completion.get();
-    String failureInfo = null;
+    ProgramState state = new ProgramState(ProgramStatus.COMPLETED, null);
     boolean succeeded = true;
     try {
       jobCompletion.get();
     } catch (Exception e) {
       succeeded = false;
-      failureInfo = Throwables.getRootCause(e).getMessage();
+      if (jobCompletion.isCancelled()) {
+        state = new ProgramState(ProgramStatus.KILLED, null);
+      } else {
+        state = new ProgramState(ProgramStatus.FAILED, Throwables.getRootCause(e).getMessage());
+      }
     }
 
     try {
       BasicSparkClientContext basicSparkClientContext = new BasicSparkClientContext(runtimeContext);
       if (spark instanceof ProgramLifecycle) {
-        destroy(succeeded, basicSparkClientContext, failureInfo);
+        destroy(state, basicSparkClientContext);
       } else {
         onFinish(succeeded, basicSparkClientContext);
       }
@@ -287,7 +290,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    stopRequested = true;
     LOG.debug("Stop requested for Spark Program {}", runtimeContext);
     // Replace the completion future with a cancelled one.
     // Also, try to cancel the current completion future if it exists.
@@ -370,24 +372,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     });
   }
 
-  private ProgramState getProgramState(boolean success, String failureInfo) {
-    if (stopRequested) {
-      // Program explicitly stopped, return KILLED state
-      return new ProgramState(ProgramStatus.KILLED, null);
-    }
-    if (!success) {
-      // Program is unsuccessful, return FAILED state
-      return new ProgramState(ProgramStatus.FAILED, failureInfo);
-    }
-    // Program is successfully completed, return COMPLETE state
-    return new ProgramState(ProgramStatus.COMPLETED, null);
-  }
-
   /**
    * Calls the destroy method of {@link ProgramLifecycle}.
    */
-  private void destroy(final boolean succeeded, final BasicSparkClientContext context,
-                       @Nullable final String failureInfo) {
+  private void destroy(final ProgramState state, final BasicSparkClientContext context) {
     DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
     TransactionContext txContext = datasetCache.newTransactionContext();
     try {
@@ -396,7 +384,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         public Void call() throws Exception {
           Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
           try {
-            context.setState(getProgramState(succeeded, failureInfo));
+            context.setState(state);
             ((ProgramLifecycle) spark).destroy();
             return null;
           } finally {

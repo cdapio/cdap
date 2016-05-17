@@ -81,7 +81,7 @@ public interface SparkClientContext extends RuntimeContext, DatasetContext, Clie
   <T> void setSparkConf(T sparkConf);
 
   /**
-   * Return the state of the MapReduce program.
+   * Return the state of the Spark program.
    */
   ProgramState getState();
 }
