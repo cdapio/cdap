@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.examples.sparkstreaming;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.test.ApplicationManager;
@@ -22,6 +23,7 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -35,6 +37,7 @@ import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -53,6 +56,9 @@ import java.util.concurrent.TimeUnit;
  * Test for {@link SpamClassifier}
  */
 public class SpamClassifierTest extends TestBase {
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final String KAFKA_TOPIC = "someTopic";
   private static final String KAFKA_BROKER_ID = "1";

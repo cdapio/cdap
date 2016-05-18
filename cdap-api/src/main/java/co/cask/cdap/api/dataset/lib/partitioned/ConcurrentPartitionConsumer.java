@@ -90,6 +90,16 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
     }
   }
 
+  @Override
+  public void untake(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys) {
+    doExpiry(workingSet);
+    for (PartitionKey key : partitionKeys) {
+      ConsumablePartition consumablePartition = workingSet.lookup(key);
+      // don't need to assertInProgress because untake() already does that
+      consumablePartition.untake();
+    }
+  }
+
   /**
    * Removes the given partition keys from the working set, as they have been successfully processed.
    */

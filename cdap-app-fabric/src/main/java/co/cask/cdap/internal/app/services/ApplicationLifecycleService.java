@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
@@ -30,7 +29,6 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -50,9 +48,9 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
@@ -65,6 +63,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -80,12 +79,10 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -274,9 +271,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : GSON.toJson(requestedConfigObj);
 
-    Id.Artifact artifactId = Id.Artifact.from(
-      newArtifactId.getScope() == ArtifactScope.SYSTEM ? Id.Namespace.SYSTEM : appId.getNamespace(),
-      newArtifactId.getName(), newArtifactId.getVersion());
+    Id.Artifact artifactId = Artifacts.toArtifactId(appId.getNamespace().toEntityId(), newArtifactId).toId();
     return deployApp(appId.getNamespace(), appId.getId(), artifactId, requestedConfigStr, programTerminator);
   }
 
@@ -304,7 +299,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
-      return deployApp(namespace, appName, configStr, programTerminator, artifactDetail);
+      return deployApp(namespace.toEntityId(), appName, configStr, programTerminator, artifactDetail);
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -343,7 +338,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
-    return deployApp(namespace, appName, configStr, programTerminator, artifactDetail);
+    return deployApp(namespace.toEntityId(), appName, configStr, programTerminator, artifactDetail);
   }
 
   /**
@@ -402,78 +397,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     deleteApp(appId, spec);
   }
 
-  /**
-   * Look up the app archive location from the store.  Most of this logic is in case that jar isn't actually
-   * there. In that case we try to find it in the expected place.
-   *
-   * @param appId the id of the application to find
-   * @return the location of the jar for the application
-   * @throws FileNotFoundException if the jar file could not be found
-   * @throws IOException if there was some error reading from the meta store or filesystem
-   */
-  private Location findAppJarLocation(Id.Application appId) throws IOException {
-    Location recordedLocation = store.getApplicationArchiveLocation(appId);
-    if (recordedLocation == null) {
-      throw new FileNotFoundException(String.format(
-        "Could not find the location of jar for app '%s' in namespace '%s' in the metastore.",
-        appId.getId(), appId.getNamespaceId()));
-    }
-
-    if (recordedLocation.exists()) {
-      return recordedLocation;
-    }
-
-    // bad metadata... not sure how it gets into this state but we have seen it
-    // make an educated guess for where it could be
-    Location expectedDirectory =
-      ProgramGenerationStage.getAppArchiveDirLocation(configuration, appId, namespacedLocationFactory);
-    if (expectedDirectory.exists() && expectedDirectory.isDirectory()) {
-      // should be only one file there... expect it to start with the app name and end in .jar
-      for (Location file : expectedDirectory.list()) {
-        if (file.getName().startsWith(appId.getId()) && file.getName().endsWith(".jar")) {
-          return file;
-        }
-      }
-    }
-
-    // if we couldn't find it there either, error out
-    throw new FileNotFoundException(String.format(
-      "Could not find jar for app '%s' in namespace '%s'. Expected it to be at %s.",
-      appId.getId(), appId.getNamespaceId(), recordedLocation));
-  }
-
-  /**
-   * Delete the jar location of the program.
-   *
-   * @param appId applicationId.
-   * @throws IOException if there are errors with location IO
-   */
-  private void deleteProgramLocations(Id.Application appId) throws IOException {
-    Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
-    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
-    for (ProgramSpecification spec : programSpecs) {
-      ProgramType type = ProgramTypes.fromSpecification(spec);
-      Id.Program programId = Id.Program.from(appId, type, spec.getName());
-      try {
-        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId);
-        location.delete();
-      } catch (FileNotFoundException e) {
-        LOG.warn("Program jar for program {} not found.", programId.toString(), e);
-      }
-    }
-
-    // Delete webapp
-    // TODO: this will go away once webapp gets a spec
-    try {
-      Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(),
-                                             ProgramType.WEBAPP, ProgramType.WEBAPP.name().toLowerCase());
-      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId);
-      location.delete();
-    } catch (FileNotFoundException e) {
-      // expected exception when webapp is not present.
-    }
-  }
-
   private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
     ApplicationSpecification appSpec = store.getApplication(appId);
     return Iterables.concat(appSpec.getFlows().values(),
@@ -529,30 +452,29 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespaceId(), appId.getId());
   }
 
-  private ApplicationWithPrograms deployApp(Id.Namespace namespace, @Nullable String appName,
+  private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
                                             @Nullable String configStr,
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail) throws Exception {
     // Enforce that the current principal has write access to the namespace the app is being deployed to
-    authorizerInstantiator.get().enforce(namespace.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.WRITE);
-    Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
-    Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
-    if (appClasses.isEmpty()) {
-      throw new InvalidArtifactException(String.format("No application classes found in artifact '%s'.", artifactId));
+    authorizerInstantiator.get().enforce(namespaceId, SecurityRequestContext.toPrincipal(), Action.WRITE);
+
+    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
+    if (appClass == null) {
+      throw new InvalidArtifactException(String.format("No application class found in artifact '%s' in namespace '%s'.",
+                                                       artifactDetail.getDescriptor().getArtifactId(), namespaceId));
     }
-    String className = appClasses.iterator().next().getClassName();
-    Location location = artifactDetail.getDescriptor().getLocation();
 
     // deploy application with newly added artifact
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, className, location, configStr);
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
+                                                             appClass.getClassName(), appName, configStr);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
-    ApplicationWithPrograms applicationWithPrograms = manager.deploy(namespace, appName, deploymentInfo).get();
+    ApplicationWithPrograms applicationWithPrograms = manager.deploy(deploymentInfo).get();
     // Deployment successful. Grant all privileges on this app to the current principal.
-    authorizerInstantiator.get().grant(namespace.toEntityId().app(applicationWithPrograms.getId().getId()),
-                                              SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+    authorizerInstantiator.get().grant(applicationWithPrograms.getApplicationId(),
+                                       SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
     return applicationWithPrograms;
   }
 
@@ -604,7 +526,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
       queueAdmin.dropAllForFlow(Id.Flow.from(appId, flowSpecification.getName()));
     }
-    deleteProgramLocations(appId);
 
     ApplicationSpecification appSpec = store.getApplication(appId);
     deleteAppMetadata(appId, appSpec);
@@ -682,7 +603,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private static class ArtifactNamesPredicate implements Predicate<ApplicationRecord> {
     private final Set<String> names;
 
-    public ArtifactNamesPredicate(Set<String> names) {
+    ArtifactNamesPredicate(Set<String> names) {
       this.names = names;
     }
 
@@ -698,7 +619,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private static class ArtifactVersionPredicate implements Predicate<ApplicationRecord> {
     private final String version;
 
-    public ArtifactVersionPredicate(String version) {
+    ArtifactVersionPredicate(String version) {
       this.version = version;
     }
 

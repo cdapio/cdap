@@ -16,11 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramId;
@@ -31,6 +33,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.twill.api.RunId;
@@ -55,9 +58,11 @@ import javax.annotation.Nullable;
 public final class MapReduceContextConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextConfig.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() { }.getType();
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
+  private static final String HCONF_ATTR_APP_SPEC = "cdap.spark.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "hconf.program.id";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "hconf.program.workflow.info";
   private static final String HCONF_ATTR_PLUGINS = "hconf.program.plugins.map";
@@ -90,6 +95,7 @@ public final class MapReduceContextConfig {
                   Map<String, String> localizedUserResources) {
     setRunId(context.getRunId().getId());
     setProgramId(context.getProgram().getId().toEntityId());
+    setApplicationSpecification(context.getApplicationSpecification());
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
@@ -121,6 +127,13 @@ public final class MapReduceContextConfig {
   }
 
   /**
+   * Serialize the {@link ApplicationSpecification} to the configuration.
+   */
+  private void setApplicationSpecification(ApplicationSpecification spec) {
+    hConf.set(HCONF_ATTR_APP_SPEC, GSON.toJson(spec, ApplicationSpecification.class));
+  }
+
+  /**
    * Returns the {@link RunId} for the MapReduce program.
    */
   public RunId getRunId() {
@@ -132,6 +145,13 @@ public final class MapReduceContextConfig {
    */
   public ProgramId getProgramId() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_PROGRAM_ID), ProgramId.class);
+  }
+
+  /**
+   * @return the {@link ApplicationSpecification} stored in the configuration.
+   */
+  public ApplicationSpecification getApplicationSpecification() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
   }
 
   private void setWorkflowProgramInfo(@Nullable WorkflowProgramInfo info) {
@@ -155,7 +175,7 @@ public final class MapReduceContextConfig {
   }
 
   private void setPlugins(Map<String, Plugin> plugins) {
-    hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(plugins));
+    hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(plugins, PLUGIN_MAP_TYPE));
   }
 
   /**
@@ -166,8 +186,7 @@ public final class MapReduceContextConfig {
     if (spec == null) {
       return ImmutableMap.of();
     }
-    return GSON.fromJson(spec, new TypeToken<Map<String, Plugin>>() {
-    }.getType());
+    return GSON.fromJson(spec, PLUGIN_MAP_TYPE);
   }
 
   private void setProgramJarURI(URI programJarURI) {

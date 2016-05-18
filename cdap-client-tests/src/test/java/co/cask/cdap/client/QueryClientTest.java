@@ -16,21 +16,24 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
-import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.test.SingletonExternalResource;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -43,14 +46,25 @@ import java.util.concurrent.ExecutionException;
  * Test for {@link QueryClient}.
  */
 @Category(XSlowTests.class)
-public class QueryClientTestRun extends ClientTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(QueryClientTestRun.class);
+public class QueryClientTest extends AbstractClientTest {
+
+  @ClassRule
+  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(
+    new StandaloneTester(Constants.Explore.EXPLORE_ENABLED, true));
+
+  private static final Logger LOG = LoggerFactory.getLogger(QueryClientTest.class);
+
   private ApplicationClient appClient;
   private QueryClient queryClient;
   private NamespaceClient namespaceClient;
   private ProgramClient programClient;
   private StreamClient streamClient;
   private ExploreClient exploreClient;
+
+  @Override
+  protected StandaloneTester getStandaloneTester() {
+    return STANDALONE.get();
+  }
 
   @Before
   public void setUp() throws Throwable {

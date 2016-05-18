@@ -104,9 +104,14 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
 
     Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, RunnableResource> entry : runnables.entrySet()) {
-      runnableSetter = localizeFiles(moreRunnable.add(entry.getKey(),
-                                                      entry.getValue().getRunnable(),
-                                                      entry.getValue().getResources()).withLocalFiles());
+      Builder.RuntimeSpecificationAdder runtimeSpecAdder = moreRunnable.add(entry.getKey(),
+                                                                            entry.getValue().getRunnable(),
+                                                                            entry.getValue().getResources());
+      if (localizeResources.isEmpty()) {
+        runnableSetter = runtimeSpecAdder.noLocalFiles();
+      } else {
+        runnableSetter = localizeFiles(runtimeSpecAdder.withLocalFiles());
+      }
       moreRunnable = runnableSetter;
     }
 
@@ -118,14 +123,14 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
    * Request localization of the program jar and all other files.
    */
   private Builder.RunnableSetter localizeFiles(Builder.LocalFileAdder fileAdder) {
-    Location programLocation = program.getJarLocation();
+    // Shouldn't happen since the caller (configure()) already checked
+    Preconditions.checkState(!localizeResources.isEmpty(), "Nothing to localize");
 
-
-    LOG.debug("Localizing program jar for {}: {}", program.getName(), programLocation);
-    Builder.MoreFile moreFile = fileAdder.add(programLocation.getName(), programLocation.toURI());
+    Builder.MoreFile moreFile = null;
     for (Map.Entry<String, LocalizeResource> entry : localizeResources.entrySet()) {
       LOG.debug("Localizing file for {}: {} {} {}", program.getName(), entry.getKey(), entry.getValue());
-      moreFile.add(entry.getKey(), entry.getValue().getURI(), entry.getValue().isArchive());
+      moreFile = fileAdder.add(entry.getKey(), entry.getValue().getURI(), entry.getValue().isArchive());
+      fileAdder = moreFile;
     }
     return moreFile.apply();
   }

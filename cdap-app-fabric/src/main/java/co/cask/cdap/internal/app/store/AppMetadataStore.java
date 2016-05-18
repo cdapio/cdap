@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
@@ -28,7 +27,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.Id;
@@ -120,13 +118,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
   }
 
-  public void writeApplication(String namespaceId, String appId, ApplicationSpecification spec,
-                               String archiveLocation) {
-    // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
-    //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
-    spec = DefaultApplicationSpecification.from(spec);
-    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
-          new ApplicationMeta(appId, spec, archiveLocation));
+  public void writeApplication(String namespaceId, String appId, ApplicationSpecification spec) {
+    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), new ApplicationMeta(appId, spec));
   }
 
   public void deleteApplication(String namespaceId, String appId) {
@@ -139,9 +132,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   // todo: do we need appId? may be use from appSpec?
   public void updateAppSpec(String namespaceId, String appId, ApplicationSpecification spec) {
-    // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
-    //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
-    spec = DefaultApplicationSpecification.from(spec);
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     MDSKey key = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
     ApplicationMeta existing = getFirst(key, ApplicationMeta.class);
@@ -676,7 +666,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     private int numProcessed = 0;
     private MDSKey lastKey;
 
-    public ScanFunction(Predicate<RunRecordMeta> filter, Ticker ticker, long maxScanTimeMillis) {
+    ScanFunction(Predicate<RunRecordMeta> filter, Ticker ticker, long maxScanTimeMillis) {
       this.filter = filter;
       this.maxScanTimeMillis = maxScanTimeMillis;
       this.stopwatch = new Stopwatch(ticker);
@@ -712,81 +702,5 @@ public class AppMetadataStore extends MetadataStoreDataset {
       }
       return true;
     }
-  }
-
-  /**
-   * Upgrade the Workflow run records. This method iterate over all Workflow run records
-   * and create new records for Workflow token and Workflow node states based on the properties.
-   */
-  public void upgradeWorkflowRunRecords() {
-    final String workflowTokenPropertyName = "workflowToken";
-    String runtimeArgsPropertyName = "runtimeArgs";
-    MDSKey startKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED).build();
-    MDSKey endKey = new MDSKey(Bytes.stopKeyForPrefix(startKey.getKey()));
-    Predicate<RunRecordMeta> predicate = new Predicate<RunRecordMeta>() {
-      @Override
-      public boolean apply(@Nullable RunRecordMeta input) {
-        return input != null && input.getProperties().containsKey(workflowTokenPropertyName);
-      }
-    };
-
-    Map<MDSKey, RunRecordMeta> wfRunRecords = listKV(startKey, endKey, RunRecordMeta.class, Integer.MAX_VALUE,
-                                                     predicate);
-
-    for (Map.Entry<MDSKey, RunRecordMeta> wfRunRecord : wfRunRecords.entrySet()) {
-      String runId = wfRunRecord.getValue().getPid();
-      ProgramRunId workflowRunId = getProgramIdFromRunRecordKey(wfRunRecord.getKey()).run(runId);
-
-      Map<String, String> runRecordProperties = wfRunRecord.getValue().getProperties();
-
-      String workflowToken = runRecordProperties.get(workflowTokenPropertyName);
-      updateWorkflowToken(workflowRunId, GSON.fromJson(workflowToken, BasicWorkflowToken.class));
-
-      for (Map.Entry<String, String> property : runRecordProperties.entrySet()) {
-        if (property.getKey().equals(workflowTokenPropertyName) || property.getKey().equals(runtimeArgsPropertyName)) {
-          // property is for workflow token or runtime argument
-          continue;
-        }
-
-        // Property is of type - <program name, program run id>
-        String programName = property.getKey();
-        String programRunId = property.getValue();
-        ProgramId programId = Ids.namespace(workflowRunId.getNamespace()).app(workflowRunId.getApplication())
-          .mr(programName);
-        // Check if the current property is MapReduce program
-        RunRecordMeta completedRun = getCompletedRun(programId.toId(), programRunId);
-        if (completedRun == null) {
-          // Check if current property is for Spark program
-          programId = Ids.namespace(workflowRunId.getNamespace()).app(workflowRunId.getApplication())
-            .spark(programName);
-          completedRun = getCompletedRun(programId.toId(), programRunId);
-        }
-
-        if (completedRun == null) {
-          continue;
-        }
-
-        NodeStatus nodeStatus = ProgramRunStatus.toNodeStatus(completedRun.getStatus());
-        WorkflowNodeStateDetail nodeStateDetail = new WorkflowNodeStateDetail(programName, nodeStatus, programRunId,
-                                                                              null);
-        addWorkflowNodeState(workflowRunId, nodeStateDetail);
-      }
-    }
-  }
-
-  private ProgramId getProgramIdFromRunRecordKey(MDSKey key) {
-    MDSKey.Splitter splitter = key.split();
-    // Skip the RunRecord type.
-    splitter.skipString();
-    // Namespace id is the next part.
-    String namespaceId = splitter.getString();
-    // Application id is the next part.
-    String applicationId = splitter.getString();
-    // Program type is the next part.
-    String programType = splitter.getString();
-    // Program id is the next part.
-    String programId = splitter.getString();
-
-    return Ids.namespace(namespaceId).app(applicationId).program(ProgramType.valueOf(programType), programId);
   }
 }

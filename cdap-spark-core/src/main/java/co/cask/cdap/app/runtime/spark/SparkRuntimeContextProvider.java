@@ -17,8 +17,9 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -40,7 +41,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.program.ForwardingProgram;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -49,7 +49,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -216,23 +215,9 @@ public final class SparkRuntimeContextProvider {
     File programDir = new File(PROGRAM_JAR_EXPANDED_NAME);
     ProgramClassLoader classLoader = SparkRuntimeUtils.createProgramClassLoader(
       cConf, programDir, SparkRuntimeContextProvider.class.getClassLoader());
-    final Id.Program programId = contextConfig.getProgramId().toId();
-    return new ForwardingProgram(Programs.create(Locations.toLocation(programJar), classLoader)) {
-      @Override
-      public Id.Program getId() {
-        return programId;
-      }
-
-      @Override
-      public String getName() {
-        return getId().getId();
-      }
-
-      @Override
-      public ProgramType getType() {
-        return ProgramType.SPARK;
-      }
-    };
+    return new DefaultProgram(new ProgramDescriptor(contextConfig.getProgramId(),
+                                                    contextConfig.getApplicationSpecification()),
+                              Locations.toLocation(programJar), classLoader);
   }
 
   @Nullable

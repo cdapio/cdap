@@ -30,11 +30,6 @@ var baseDirective = {
   controller: 'c3Controller'
 };
 
-
-ngC3.factory('c3', function ($window) {
-  return $window.c3;
-});
-
 ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
   // We need to bind because the init function is called directly from the directives below
   // and so the function arguments would not otherwise be available to the initC3 and render functions.

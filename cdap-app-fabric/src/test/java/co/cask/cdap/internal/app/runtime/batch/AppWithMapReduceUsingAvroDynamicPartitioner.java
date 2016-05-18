@@ -120,7 +120,7 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
                                                                        "post.-final", "actually.final.value");
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       context.addInput(Input.ofDataset(INPUT_DATASET));
 
       Map<String, String> outputDatasetArgs = new HashMap<>();

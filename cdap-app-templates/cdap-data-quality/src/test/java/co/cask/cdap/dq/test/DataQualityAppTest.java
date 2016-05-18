@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.dq.AggregationTypeValue;
 import co.cask.cdap.dq.DataQualityApp;
 import co.cask.cdap.dq.DataQualityService;
@@ -38,6 +39,7 @@ import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -51,6 +53,7 @@ import org.apache.avro.mapred.AvroKey;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -71,12 +74,14 @@ import javax.annotation.Nullable;
 public class DataQualityAppTest extends TestBase {
   private static final Gson GSON = new Gson();
   private static final Type TOKEN_TYPE_LIST_TIMESTAMP_VALUE = new TypeToken<ArrayList<TimestampValue>>() { }.getType();
-  private static final Type TOKEN_TYPE_DOUBLE = new TypeToken<Double>() { }.getType();
   private static final Type TOKEN_TYPE_MAP_STRING_INTEGER = new TypeToken<Map<String, Integer>>() { }.getType();
   private static final Type TOKEN_TYPE_LIST_AGGREGATION_TYPE_VALUES =
     new TypeToken<List<AggregationTypeValue>>() { }.getType();
   private static final Type TOKEN_TYPE_SET_FIELD_DETAIL = new TypeToken<HashSet<FieldDetail>>() { }.getType();
   private static final Integer WORKFLOW_SCHEDULE_MINUTES = 5;
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static Id.Artifact appArtifact;
   private static boolean sentData = false;
@@ -93,6 +98,12 @@ public class DataQualityAppTest extends TestBase {
 
   @Before
   public void beforeTest() throws Exception {
+    if (sentData) {
+      return;
+    }
+    sentData = true;
+
+    // getStreamManager is not available from a static context (from a beforeClass)
     StreamManager streamManager = getStreamManager("logStream");
     streamManager.createStream();
     String logData1 = "10.10.10.10 - - [01/Feb/2015:06:47:10 +0000] " +
@@ -107,12 +118,9 @@ public class DataQualityAppTest extends TestBase {
       " \"GET /browse/COOP-DBT-JOB1-238/artifact HTTP/1.1\"" +
       " 301 256 \"-\" \"Mozilla/5.0 (compatible; AhrefsBot/5.0; +http://ahrefs.com/robot/)\"";
 
-    if (!sentData) {
-      streamManager.send(logData1);
-      streamManager.send(logData2);
-      streamManager.send(logData3);
-      sentData = true;
-    }
+    streamManager.send(logData1);
+    streamManager.send(logData2);
+    streamManager.send(logData3);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -123,7 +131,7 @@ public class DataQualityAppTest extends TestBase {
     testMap.put("content_length", new HashSet<String>());
 
     DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(
-      50, getStreamSource(), "avg", null);
+      50, getStreamSource(), "avg", testMap);
 
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
       new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
@@ -206,10 +214,7 @@ public class DataQualityAppTest extends TestBase {
 
     List<TimestampValue> tsValueListActual = GSON.fromJson(response, TOKEN_TYPE_LIST_TIMESTAMP_VALUE);
     TimestampValue firstTimestampValue = tsValueListActual.get(0);
-    Object objActual = firstTimestampValue.getValue();
-    String actualJSON = GSON.toJson(objActual);
-    Double actualDouble = GSON.fromJson(actualJSON, TOKEN_TYPE_DOUBLE);
-    Assert.assertEquals(actualDouble, new Double(256.0));
+    Assert.assertEquals(256.0, firstTimestampValue.getValue());
     serviceManager.stop();
     serviceManager.waitForFinish(180, TimeUnit.SECONDS);
   }

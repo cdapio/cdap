@@ -16,18 +16,15 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.app.program.Program;
 import org.apache.twill.api.TwillController;
 
 /**
  * For updating the number of service runnable instances.
  */
 public class DistributedServiceRunnableInstanceUpdater {
-  private final Program program;
   private final TwillController twillController;
 
-  DistributedServiceRunnableInstanceUpdater(Program program, TwillController twillController) {
-    this.program = program;
+  DistributedServiceRunnableInstanceUpdater(TwillController twillController) {
     this.twillController = twillController;
   }
 

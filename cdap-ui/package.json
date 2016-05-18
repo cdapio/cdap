@@ -6,7 +6,9 @@
     "start": "node ./server.js",
     "prebuild": "npm install && ./node_modules/bower/bin/bower update --config.interactive=false",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
-    "distribute": "node ./node_modules/gulp/bin/gulp.js distribute"
+    "distribute": "node ./node_modules/gulp/bin/gulp.js distribute",
+    "test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
+    "test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run"
   },
   "repository": {
     "type": "git",
@@ -38,7 +40,11 @@
     "gulp-util": "3.0.7",
     "gulp-wrapper": "1.0.0",
     "main-bower-files": "2.11.1",
-    "merge-stream": "1.0.0"
+    "merge-stream": "1.0.0",
+    "karma": "0.12.31",
+    "karma-chrome-launcher": "0.1.7",
+    "karma-jasmine": "0.1.6",
+    "karma-mocha-reporter": "1.1.1"
   },
   "dependencies": {
     "body-parser": "1.14.2",
@@ -51,6 +57,8 @@
     "node-uuid": "1.4.7",
     "object-hash": "1.1.0",
     "q": "1.4.1",
+    "redux": "3.5.2",
+    "redux-thunk": "2.0.1",
     "request": "2.69.0",
     "serve-favicon": "2.3.0",
     "sockjs": "0.3.15"

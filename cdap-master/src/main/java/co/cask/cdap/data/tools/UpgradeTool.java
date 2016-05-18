@@ -111,7 +111,6 @@ public class UpgradeTool {
   private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
   private final DatasetServiceManager datasetServiceManager;
   private final NamespaceStore nsStore;
-  private final DefaultStore store;
 
   /**
    * Set of Action available in this tool.
@@ -121,10 +120,9 @@ public class UpgradeTool {
               "  The upgrade tool upgrades the following: \n" +
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
               "  2. Stream State Store\n" +
-              "  3. Workflow run records in Application Metadata Store\n" +
-              "  4. System metadata for all existing entities\n" +
-              "  5. Metadata indexes for all existing metadata\n" +
-              "  6. Any metadata that may have left behind for deleted datasets (This metadata will be removed).\n" +
+              "  3. System metadata for all existing entities\n" +
+              "  4. Metadata indexes for all existing metadata\n" +
+              "  5. Any metadata that may have left behind for deleted datasets (This metadata will be removed).\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -157,7 +155,6 @@ public class UpgradeTool {
     this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.nsStore = injector.getInstance(NamespaceStore.class);
-    this.store = injector.getInstance(DefaultStore.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -389,9 +386,6 @@ public class UpgradeTool {
 
     LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
-
-    LOG.info("Upgrading Workflow run records in application metadata store table...");
-    store.upgrade();
 
     datasetServiceManager.startUp();
     LOG.info("Writing system metadata to existing entities...");

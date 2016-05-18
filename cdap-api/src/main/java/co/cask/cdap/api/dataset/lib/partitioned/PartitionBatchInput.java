@@ -47,7 +47,7 @@ public class PartitionBatchInput {
   }
 
   /**
-   * Used from the beforeSubmit method of the implementing batch job to configure as input a PartitionedFileSet that has
+   * Used from the initialize method of the implementing batch job to configure as input a PartitionedFileSet that has
    * specified a set of {@link Partition}s of a {@link PartitionedFileSet} to be processed by the run of the batch job.
    * It does this by reading back the previous state, determining the new partitions to read, computing the new
    * state, and persisting this new state. It then configures this dataset as input to the mapreduce context that is

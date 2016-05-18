@@ -129,8 +129,8 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
     try {
       startProgram(program);
+      // Wait for the worker to run and then stop.
       waitState(program, ProgramStatus.RUNNING);
-      stopProgram(program);
       waitState(program, ProgramStatus.STOPPED);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
@@ -167,7 +167,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
 
     deployApp(AllProgramsApp.class);
-    // now that we only support dynamic dataset instantiation in beforeSubmit (and not in configure as before),
+    // now that we only support dynamic dataset instantiation in initialize (and not in configure as before),
     // we must run the mapreduce program to register its usage
     startProgram(program);
     waitState(program, ProgramStatus.STOPPED);

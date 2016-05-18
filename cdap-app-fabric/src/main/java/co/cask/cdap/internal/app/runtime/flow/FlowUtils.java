@@ -44,6 +44,7 @@ import co.cask.cdap.internal.lang.MethodVisitor;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -84,27 +85,31 @@ public final class FlowUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowUtils.class);
 
+
   /**
-   * Generates a queue consumer groupId for the given flowlet in the given program.
+   * Generates a queue consumer groupId for the given flowlet in the given program id.
+   *
+   * @deprecated Use {@link #generateConsumerGroupId(ProgramId, String)} instead.
    */
-  public static long generateConsumerGroupId(Program program, String flowletId) {
-    return generateConsumerGroupId(program.getId(), flowletId);
+  @Deprecated
+  public static long generateConsumerGroupId(Id.Program program, String flowletId) {
+    return generateConsumerGroupId(program.toEntityId(), flowletId);
   }
 
   /**
    * Generates a queue consumer groupId for the given flowlet in the given program id.
    */
-  public static long generateConsumerGroupId(Id.Program program, String flowletId) {
+  public static long generateConsumerGroupId(ProgramId programId, String flowletId) {
     // Use 'developer' in place of a program's namespace for programs in the 'default' namespace
     // to support backwards compatibility for queues and streams.
-    String namespace = program.getNamespaceId();
+    String namespace = programId.getNamespace();
     String backwardsCompatibleNamespace =
       Id.Namespace.DEFAULT.getId().equals(namespace) ? Constants.DEVELOPER_ACCOUNT : namespace;
     return Hashing.md5().newHasher()
-                  .putString(backwardsCompatibleNamespace)
-                  .putString(program.getApplicationId())
-                  .putString(program.getId())
-                  .putString(flowletId).hash().asLong();
+      .putString(backwardsCompatibleNamespace)
+      .putString(programId.getApplication())
+      .putString(programId.getProgram())
+      .putString(flowletId).hash().asLong();
   }
 
   /**
@@ -265,7 +270,7 @@ public final class FlowUtils {
           // Inspect the flowlet consumer
           FlowletDefinition flowletDefinition = entry.getValue();
           Class<?> flowletClass = program.getClassLoader().loadClass(flowletDefinition.getFlowletSpec().getClassName());
-          long groupId = generateConsumerGroupId(program, flowletId);
+          long groupId = generateConsumerGroupId(program.getId(), flowletId);
 
           addConsumerGroup(queueSpec, flowletClass, groupId,
                            flowletDefinition.getInstances(), schemaGenerator, groupConfigs);

@@ -36,7 +36,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -58,7 +57,6 @@ import java.util.concurrent.TimeUnit;
 public class SchedulerServiceTest {
   private static SchedulerService schedulerService;
   private static Store store;
-  private static LocationFactory locationFactory;
   private static NamespaceAdmin namespaceAdmin;
   private static final Id.Namespace namespace = new Id.Namespace("notdefault");
   private static final Id.Application appId = new Id.Application(namespace, AppWithWorkflow.NAME);
@@ -113,7 +111,6 @@ public class SchedulerServiceTest {
   public static void set() throws Exception {
     schedulerService = AppFabricTestHelper.getInjector().getInstance(SchedulerService.class);
     store = AppFabricTestHelper.getInjector().getInstance(Store.class);
-    locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
@@ -136,14 +133,14 @@ public class SchedulerServiceTest {
   public void removeSchedules() throws SchedulerException {
     schedulerService.deleteSchedules(program, programType);
     applicationSpecification = deleteSchedulesFromSpec(applicationSpecification);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    store.addApplication(appId, applicationSpecification);
   }
 
   @Test
   public void testSchedulesAcrossNamespace() throws Exception {
     schedulerService.schedule(program, programType, ImmutableList.of(TIME_SCHEDULE_1));
-    store.addApplication(appId, createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_1),
-                         locationFactory.create("app"));
+    store.addApplication(appId, createNewSpecification(applicationSpecification, program,
+                                                       programType, TIME_SCHEDULE_1));
 
     Id.Program programInOtherNamespace =
       Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getId()),
@@ -157,8 +154,7 @@ public class SchedulerServiceTest {
 
     schedulerService.schedule(programInOtherNamespace, programType, ImmutableList.of(TIME_SCHEDULE_2));
     store.addApplication(appId, createNewSpecification(applicationSpecification, programInOtherNamespace, programType,
-                                                       TIME_SCHEDULE_2),
-                         locationFactory.create("app"));
+                                                       TIME_SCHEDULE_2));
 
     scheduleIdsOtherNamespace = schedulerService.getScheduleIds(programInOtherNamespace, programType);
     Assert.assertEquals(1, scheduleIdsOtherNamespace.size());
@@ -170,7 +166,7 @@ public class SchedulerServiceTest {
   public void testSimpleSchedulerLifecycle() throws Exception {
     schedulerService.schedule(program, programType, ImmutableList.of(TIME_SCHEDULE_1));
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_1);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    store.addApplication(appId, applicationSpecification);
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
     checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
@@ -179,7 +175,7 @@ public class SchedulerServiceTest {
 
     schedulerService.schedule(program, programType, TIME_SCHEDULE_2);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_2);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    store.addApplication(appId, applicationSpecification);
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(2, scheduleIds.size());
     schedulerService.resumeSchedule(program, programType, "Schedule2");
@@ -188,7 +184,7 @@ public class SchedulerServiceTest {
     schedulerService.schedule(program, programType, ImmutableList.of(DATA_SCHEDULE_1, DATA_SCHEDULE_2));
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, DATA_SCHEDULE_1);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, DATA_SCHEDULE_2);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    store.addApplication(appId, applicationSpecification);
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(4, scheduleIds.size());
     schedulerService.resumeSchedule(program, programType, "Schedule3");
@@ -218,9 +214,9 @@ public class SchedulerServiceTest {
     schedulerService.schedule(program, programType, ImmutableList.of(TIME_SCHEDULE_1, TIME_SCHEDULE_2));
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_1);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    store.addApplication(appId, applicationSpecification);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_2);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    store.addApplication(appId, applicationSpecification);
     Assert.assertEquals(2, scheduleIds.size());
 
     // both the schedules should be in suspended state
@@ -236,7 +232,7 @@ public class SchedulerServiceTest {
     // add a new schedule and verify its in suspended state
     schedulerService.schedule(program, programType, ImmutableList.of(TIME_SCHEDULE_0));
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_0);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    store.addApplication(appId, applicationSpecification);
     checkState(Scheduler.ScheduleState.SUSPENDED, "Schedule0");
 
     // after adding a new schedule in paused state the resumed schedule should still be in resumed state
@@ -274,7 +270,7 @@ public class SchedulerServiceTest {
     throws Exception {
     schedulerService.schedule(program, programType, ImmutableList.of(oldSchedule));
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, oldSchedule);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    store.addApplication(appId, applicationSpecification);
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
 
     // schedule should be deployed in suspended state

@@ -16,62 +16,30 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import com.google.common.collect.ImmutableList;
-import org.apache.twill.filesystem.Location;
 
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
- *
+ * Represents information of an application and all programs inside it that is undergoing deployment.
  */
-public class ApplicationWithPrograms {
-  private final Id.Application id;
-  private final ApplicationSpecification specification;
-  private final ApplicationSpecification existingAppSpecification;
-  private final Location location;
-  private final ApplicationDeployable applicationDeployable;
-  private final List<Program> programs;
+public class ApplicationWithPrograms extends ApplicationDeployable {
 
-  public ApplicationWithPrograms(ApplicationDeployable applicationDeployable, Iterable<? extends Program> programs) {
-    this.id = applicationDeployable.getId();
-    this.specification = applicationDeployable.getSpecification();
-    this.existingAppSpecification = applicationDeployable.getExistingAppSpec();
-    this.location = applicationDeployable.getLocation();
-    this.applicationDeployable = applicationDeployable;
-    this.programs = ImmutableList.copyOf(programs);
+  private final List<ProgramDescriptor> programDescriptors;
+
+  public ApplicationWithPrograms(ApplicationDeployable applicationDeployable,
+                                 Iterable<? extends ProgramDescriptor> programDescriptors) {
+    super(applicationDeployable.getArtifactId(), applicationDeployable.getArtifactLocation(),
+          applicationDeployable.getApplicationId(), applicationDeployable.getSpecification(),
+          applicationDeployable.getExistingAppSpec(), applicationDeployable.getApplicationDeployScope());
+    this.programDescriptors = ImmutableList.copyOf(programDescriptors);
   }
 
-  public ApplicationWithPrograms(ApplicationWithPrograms other) {
-    this.id = other.id;
-    this.specification = other.specification;
-    this.existingAppSpecification = other.existingAppSpecification;
-    this.location = other.location;
-    this.applicationDeployable = other.applicationDeployable;
-    this.programs = other.programs;
-  }
-
-  public Id.Application getId() {
-    return id;
-  }
-
-  public ApplicationSpecification getSpecification() {
-    return specification;
-  }
-
-  @Nullable
-  public ApplicationSpecification getExistingAppSpecification() {
-    return existingAppSpecification;
-  }
-
-  public Location getLocation() {
-    return location;
-  }
-
-  public Iterable<Program> getPrograms() {
-    return programs;
+  /**
+   * Returns a list of {@link ProgramDescriptor} for programs inside the application being deployed.
+   */
+  public Iterable<ProgramDescriptor> getPrograms() {
+    return programDescriptors;
   }
 }

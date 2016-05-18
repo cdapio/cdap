@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -29,9 +28,9 @@ import com.google.common.reflect.TypeToken;
 public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
   private final StreamCreator streamCreator;
 
-  public CreateStreamsStage(Id.Namespace namespace, StreamAdmin streamAdmin) {
+  public CreateStreamsStage(StreamAdmin streamAdmin) {
     super(TypeToken.of(ApplicationDeployable.class));
-    this.streamCreator = new StreamCreator(namespace, streamAdmin);
+    this.streamCreator = new StreamCreator(streamAdmin);
   }
 
   /**
@@ -44,7 +43,7 @@ public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
   public void process(ApplicationDeployable input) throws Exception {
     // create stream instances
     ApplicationSpecification specification = input.getSpecification();
-    streamCreator.createStreams(specification.getStreams().values());
+    streamCreator.createStreams(input.getApplicationId().getParent(), specification.getStreams().values());
 
     // Emit the input to next stage.
     emit(input);

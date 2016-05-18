@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
+import co.cask.cdap.proto.ProgramType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,11 +75,11 @@ final class ProgramWorkflowRunnerFactory {
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
-          return new MapReduceProgramWorkflowRunner(cConf, workflowSpec, programRunnerFactory, workflowProgram,
-                                                    workflowProgramOptions, token, nodeId, nodeStates);
+          return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
+                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.MAPREDUCE);
         case SPARK:
-          return new SparkProgramWorkflowRunner(cConf, workflowSpec, programRunnerFactory, workflowProgram,
-                                                workflowProgramOptions, token, nodeId, nodeStates);
+          return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
+                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.SPARK);
         default:
           LOG.debug("No workflow program runner found for this program");
       }

@@ -22,15 +22,10 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.DefaultAppConfigurer;
-import co.cask.cdap.app.DefaultApplicationContext;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.Programs;
-import co.cask.cdap.archive.ArchiveBundler;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.program.ProgramBundle;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.pipeline.StageContext;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -61,13 +56,11 @@ public class SystemMetadataWriterStageTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static MetadataStore metadataStore;
-  private static ArtifactRepository artifactRepository;
 
   @BeforeClass
   public static void setup() {
     Injector injector = AppFabricTestHelper.getInjector();
     metadataStore = injector.getInstance(MetadataStore.class);
-    artifactRepository = injector.getInstance(ArtifactRepository.class);
   }
 
   @Test
@@ -95,19 +88,12 @@ public class SystemMetadataWriterStageTest {
                                                         String workflowName) throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     AbstractApplication app = new WorkflowAppWithFork();
-    DefaultAppConfigurer configurer = new DefaultAppConfigurer(NamespaceId.DEFAULT.toId(), artifactId.toId(), app, "",
-                                                               artifactRepository, null);
-    app.configure(configurer, new DefaultApplicationContext());
-    ApplicationSpecification appSpec = configurer.createSpecification();
-
+    ApplicationSpecification appSpec = Specifications.from(app);
     Location workflowJar = AppJarHelper.createDeploymentJar(locationFactory, WorkflowAppWithFork.class);
-    ArchiveBundler bundler = new ArchiveBundler(workflowJar);
-    Location programLocation = ProgramBundle.create(appId.workflow(workflowName).toId(), bundler,
-                                                    locationFactory.create("programs"), workflowName, appSpec);
-    Program workflow = Programs.create(programLocation);
-    ApplicationDeployable appDeployable = new ApplicationDeployable(
-      appId.toId(), appSpec, null, ApplicationDeployScope.USER, locationFactory.create("apps"));
-    return new ApplicationWithPrograms(appDeployable, ImmutableList.of(workflow));
+    ApplicationDeployable appDeployable = new ApplicationDeployable(artifactId, workflowJar,
+                                                                    appId, appSpec, null, ApplicationDeployScope.USER);
+    return new ApplicationWithPrograms(appDeployable,
+                                       ImmutableList.of(new ProgramDescriptor(appId.workflow(workflowName), appSpec)));
   }
 
   private Set<String> getWorkflowForkNodes(WorkflowSpecification workflowSpec) {

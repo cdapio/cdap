@@ -29,7 +29,7 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import org.junit.Assert;

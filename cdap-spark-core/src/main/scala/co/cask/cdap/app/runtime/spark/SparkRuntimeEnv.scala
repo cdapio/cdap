@@ -350,5 +350,8 @@ object SparkRuntimeEnv {
 
     override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved) =
       sparkListeners.foreach(_.onExecutorRemoved(executorRemoved))
+
+    // Adding noop implementation because of CDAP-5768
+    def onOtherEvent(event: SparkListenerEvent) { }
   }
 }

@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -30,10 +29,9 @@ import com.google.common.reflect.TypeToken;
 public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeployable> {
   private final DatasetInstanceCreator datasetInstanceCreator;
 
-  public CreateDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework,
-                                     Id.Namespace namespace) {
+  public CreateDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework) {
     super(TypeToken.of(ApplicationDeployable.class));
-    this.datasetInstanceCreator = new DatasetInstanceCreator(configuration, datasetFramework, namespace);
+    this.datasetInstanceCreator = new DatasetInstanceCreator(configuration, datasetFramework);
   }
 
   /**
@@ -46,7 +44,7 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeploy
   public void process(ApplicationDeployable input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
-    datasetInstanceCreator.createInstances(specification.getDatasets());
+    datasetInstanceCreator.createInstances(input.getApplicationId().getParent(), specification.getDatasets());
 
     // Emit the input to next stage.
     emit(input);

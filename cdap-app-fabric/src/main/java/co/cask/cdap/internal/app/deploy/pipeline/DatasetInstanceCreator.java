@@ -21,7 +21,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,15 +31,12 @@ import java.util.Map;
 /**
  * Creates dataset instances.
  */
-public class DatasetInstanceCreator {
+final class DatasetInstanceCreator {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceCreator.class);
-  private final Id.Namespace namespace;
   private final DatasetFramework datasetFramework;
   private final boolean allowDatasetUncheckedUpgrade;
 
-  public DatasetInstanceCreator(CConfiguration configuration, DatasetFramework datasetFramework,
-                                Id.Namespace namespace) {
-    this.namespace = namespace;
+  DatasetInstanceCreator(CConfiguration configuration, DatasetFramework datasetFramework) {
     this.datasetFramework = datasetFramework;
     this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
@@ -47,18 +45,19 @@ public class DatasetInstanceCreator {
    * Receives an input containing application specification and location
    * and verifies both.
    *
+   * @param namespaceId the namespace to create the dataset instance in
    * @param datasets the datasets to create
    */
-  public void createInstances(Map<String, DatasetCreationSpec> datasets) throws Exception {
+  void createInstances(NamespaceId namespaceId, Map<String, DatasetCreationSpec> datasets) throws Exception {
     // create dataset instances
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : datasets.entrySet()) {
       String instanceName = instanceEntry.getKey();
-      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespace, instanceName);
+      DatasetId instanceId = namespaceId.dataset(instanceName);
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
       try {
-        if (!datasetFramework.hasInstance(instanceId) || allowDatasetUncheckedUpgrade) {
+        if (!datasetFramework.hasInstance(instanceId.toId()) || allowDatasetUncheckedUpgrade) {
           LOG.info("Adding instance: {}", instanceName);
-          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties());
+          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(), instanceSpec.getProperties());
         }
       } catch (InstanceConflictException e) {
         // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app

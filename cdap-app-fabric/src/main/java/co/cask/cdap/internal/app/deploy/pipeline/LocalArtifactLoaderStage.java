@@ -21,12 +21,12 @@ import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.filesystem.Location;
@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.annotation.Nullable;
 
 /**
  * LocalArtifactLoaderStage gets a {@link Location} and emits a {@link ApplicationDeployable}.
@@ -47,21 +46,16 @@ import javax.annotation.Nullable;
 public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final CConfiguration cConf;
   private final Store store;
-  private final Id.Namespace namespace;
-  private final String appName;
   private final ApplicationSpecificationAdapter adapter;
   private final ArtifactRepository artifactRepository;
 
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArtifactLoaderStage(CConfiguration cConf, Store store, Id.Namespace namespace, @Nullable String appName,
-                                  ArtifactRepository artifactRepository) {
+  public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
-    this.namespace = namespace;
-    this.appName = appName;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     this.artifactRepository = artifactRepository;
   }
@@ -76,14 +70,14 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   public void process(AppDeploymentInfo deploymentInfo)
     throws InterruptedException, ExecutionException, TimeoutException, IOException {
 
-    Id.Artifact artifactId = deploymentInfo.getArtifactId();
+    ArtifactId artifactId = deploymentInfo.getArtifactId();
     Location artifactLocation = deploymentInfo.getArtifactLocation();
     String appClassName = deploymentInfo.getAppClassName();
     String configString = deploymentInfo.getConfigString();
 
     InMemoryConfigurator inMemoryConfigurator =
-      new InMemoryConfigurator(cConf, namespace, artifactId, appClassName,
-                               artifactLocation, configString, artifactRepository);
+      new InMemoryConfigurator(cConf, deploymentInfo.getNamespaceId().toId(), artifactId.toId(), appClassName,
+                               artifactLocation, deploymentInfo.getApplicationName(), configString, artifactRepository);
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
@@ -91,17 +85,9 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
     }
     ApplicationSpecification specification = adapter.fromJson(response.get());
-    if (appName != null) {
-      specification = new ForwardingApplicationSpecification(specification) {
-        @Override
-        public String getName() {
-          return appName;
-        }
-      };
-    }
-
-    Id.Application application = Id.Application.from(namespace, specification.getName());
-    emit(new ApplicationDeployable(application, specification, store.getApplication(application),
-      ApplicationDeployScope.USER, artifactLocation));
+    ApplicationId applicationId = deploymentInfo.getNamespaceId().app(specification.getName());
+    emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
+                                   applicationId, specification, store.getApplication(applicationId.toId()),
+                                   ApplicationDeployScope.USER));
   }
 }

@@ -51,7 +51,7 @@ final class SparkTwillApplication extends AbstractProgramTwillApplication {
   @Override
   protected void addRunnables(Map<String, RunnableResource> runnables) {
     runnables.put(spec.getName(), new RunnableResource(
-      new SparkTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+      new SparkTwillRunnable(spec.getName()),
       createResourceSpec(Objects.firstNonNull(spec.getDriverResources(), new Resources()), 1)
     ));
   }

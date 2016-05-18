@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -30,11 +29,10 @@ import com.google.common.reflect.TypeToken;
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployable> {
   private final DatasetModulesDeployer datasetModulesDeployer;
 
-  public DeployDatasetModulesStage(CConfiguration configuration, Id.Namespace namespace,
+  public DeployDatasetModulesStage(CConfiguration configuration,
                                    DatasetFramework datasetFramework, DatasetFramework inMemoryDatasetFramework) {
     super(TypeToken.of(ApplicationDeployable.class));
-    this.datasetModulesDeployer = new DatasetModulesDeployer(datasetFramework, inMemoryDatasetFramework,
-                                                             namespace, configuration);
+    this.datasetModulesDeployer = new DatasetModulesDeployer(datasetFramework, inMemoryDatasetFramework, configuration);
   }
 
   /**
@@ -44,8 +42,8 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {
-
-    datasetModulesDeployer.deployModules(input.getSpecification().getDatasetModules(), input.getLocation());
+    datasetModulesDeployer.deployModules(input.getApplicationId().getParent(),
+                                         input.getSpecification().getDatasetModules(), input.getArtifactLocation());
 
     // Emit the input to next stage.
     emit(input);

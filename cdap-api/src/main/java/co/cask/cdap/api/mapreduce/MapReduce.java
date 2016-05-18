@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.mapreduce;
 
+import co.cask.cdap.api.ProgramLifecycle;
+
 /**
  * Defines an interface for the MapReduce job. Use it for easy integration (re-use) of existing MapReduce jobs
  * that rely on the Hadoop MapReduce APIs.
@@ -36,7 +38,10 @@ public interface MapReduce {
    *
    * @param context job execution context
    * @throws Exception if there's an error during this method invocation
+   * @deprecated Deprecated as of 3.5.0. Please use {@link ProgramLifecycle#initialize} instead, to initialize
+   * the MapReduce program.
    */
+  @Deprecated
   void beforeSubmit(MapReduceContext context) throws Exception;
 
   /**
@@ -52,6 +57,9 @@ public interface MapReduce {
    * @param succeeded defines the result of job execution: true if job succeeded, false otherwise
    * @param context job execution context
    * @throws Exception if there's an error during this method invocation.
+   * @deprecated Deprecated as of 3.5.0. Please use {@link ProgramLifecycle#destroy} instead to execute the code once
+   * MapReduce program is completed either successfully or on failure.
    */
+  @Deprecated
   void onFinish(boolean succeeded, MapReduceContext context) throws Exception;
 }

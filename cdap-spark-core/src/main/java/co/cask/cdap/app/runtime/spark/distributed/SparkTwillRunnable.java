@@ -29,8 +29,8 @@ import org.apache.twill.api.TwillRunnable;
  */
 final class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunner> {
 
-  SparkTwillRunnable(String name, String hConfName, String cConfName) {
-    super(name, hConfName, cConfName);
+  SparkTwillRunnable(String name) {
+    super(name);
   }
 
   @Override

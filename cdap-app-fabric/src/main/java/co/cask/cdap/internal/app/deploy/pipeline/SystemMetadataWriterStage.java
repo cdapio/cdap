@@ -23,8 +23,8 @@ import co.cask.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
 
@@ -43,27 +43,27 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
     // add system metadata for apps
+    ApplicationId appId = input.getApplicationId();
     ApplicationSpecification appSpec = input.getSpecification();
-    SystemMetadataWriter appSystemMetadataWriter = new AppSystemMetadataWriter(metadataStore, input.getId(),
-                                                                                       appSpec);
+    SystemMetadataWriter appSystemMetadataWriter = new AppSystemMetadataWriter(metadataStore, appId.toId(), appSpec);
     appSystemMetadataWriter.write();
 
     // add system metadata for programs
-    writeProgramSystemMetadata(input.getId(), ProgramType.FLOW, appSpec.getFlows().values());
-    writeProgramSystemMetadata(input.getId(), ProgramType.MAPREDUCE, appSpec.getMapReduce().values());
-    writeProgramSystemMetadata(input.getId(), ProgramType.SERVICE, appSpec.getServices().values());
-    writeProgramSystemMetadata(input.getId(), ProgramType.SPARK, appSpec.getSpark().values());
-    writeProgramSystemMetadata(input.getId(), ProgramType.WORKER, appSpec.getWorkers().values());
-    writeProgramSystemMetadata(input.getId(), ProgramType.WORKFLOW, appSpec.getWorkflows().values());
+    writeProgramSystemMetadata(appId, ProgramType.FLOW, appSpec.getFlows().values());
+    writeProgramSystemMetadata(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce().values());
+    writeProgramSystemMetadata(appId, ProgramType.SERVICE, appSpec.getServices().values());
+    writeProgramSystemMetadata(appId, ProgramType.SPARK, appSpec.getSpark().values());
+    writeProgramSystemMetadata(appId, ProgramType.WORKER, appSpec.getWorkers().values());
+    writeProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values());
 
     // Emit input to the next stage
     emit(input);
   }
 
-  private void writeProgramSystemMetadata(Id.Application appId, ProgramType programType,
+  private void writeProgramSystemMetadata(ApplicationId appId, ProgramType programType,
                                           Iterable<? extends ProgramSpecification> specs) {
     for (ProgramSpecification spec : specs) {
-      ProgramId programId = appId.toEntityId().program(programType, spec.getName());
+      ProgramId programId = appId.program(programType, spec.getName());
       ProgramSystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, spec);
       writer.write();
     }

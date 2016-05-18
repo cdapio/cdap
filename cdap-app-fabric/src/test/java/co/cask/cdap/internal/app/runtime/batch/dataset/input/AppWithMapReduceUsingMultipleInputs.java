@@ -77,7 +77,7 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
   public static class ComputeSum extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Map<String, String> inputArgs = new HashMap<>();
       FileSetArguments.setInputPath(inputArgs, "inputFile");
 
@@ -102,8 +102,8 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
    */
   public static final class InvalidMapReduce extends ComputeSum {
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-      super.beforeSubmit(context);
+    public void initialize(MapReduceContext context) throws Exception {
+      super.initialize(context);
       context.addInput(Input.ofDataset(PURCHASES, ImmutableMap.of("key", "value")));
     }
   }

@@ -47,7 +47,8 @@ public class WordCount extends AbstractMapReduce {
   }
 
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize(MapReduceContext context) throws Exception {
+    super.initialize(context);
     Job job = context.getHadoopJob();
     job.setMapperClass(Tokenizer.class);
     job.setReducerClass(Counter.class);

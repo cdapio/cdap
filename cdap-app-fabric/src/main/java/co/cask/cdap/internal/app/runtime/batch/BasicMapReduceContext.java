@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
@@ -90,6 +91,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private Job job;
   private Resources mapperResources;
   private Resources reducerResources;
+  private ProgramState state;
 
   public BasicMapReduceContext(Program program,
                                RunId runId,
@@ -151,7 +153,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public String toString() {
-    return String.format("job=%s,=%s", spec.getName(), super.toString());
+    return String.format("name=%s, jobId=%s, %s", spec.getName(),
+                         job == null ? null : job.getJobID(), super.toString());
   }
 
   @Override
@@ -415,5 +418,17 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
     }
     return service.getContext(tags);
+  }
+
+  /**
+   * Sets the current state of the program.
+   */
+  void setState(ProgramState state) {
+    this.state = state;
+  }
+
+  @Override
+  public ProgramState getState() {
+    return state;
   }
 }

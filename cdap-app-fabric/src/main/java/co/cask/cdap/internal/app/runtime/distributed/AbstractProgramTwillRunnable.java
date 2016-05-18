@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,12 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.DataFabricFacadeModule;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -45,6 +47,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -57,13 +60,13 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
@@ -105,6 +108,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
@@ -123,15 +127,12 @@ import javax.annotation.Nullable;
 public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> implements TwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramTwillRunnable.class);
-  private static final Gson GSON = new GsonBuilder()
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
 
   private String name;
-  private String hConfName;
-  private String cConfName;
-
   private ProgramRunner programRunner;
   private Program program;
   private ProgramOptions programOpts;
@@ -150,13 +151,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    * Constructor.
    *
    * @param name Name of the TwillRunnable
-   * @param hConfName Name of the hConf file as in the container directory
-   * @param cConfName Name of the cConf file as in the container directory
    */
-  protected AbstractProgramTwillRunnable(String name, String hConfName, String cConfName) {
+  protected AbstractProgramTwillRunnable(String name) {
     this.name = name;
-    this.hConfName = hConfName;
-    this.cConfName = cConfName;
   }
 
   /**
@@ -171,11 +168,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public TwillRunnableSpecification configure() {
     return TwillRunnableSpecification.Builder.with()
       .setName(name)
-      .withConfigs(ImmutableMap.<String, String>builder()
-                     .put("hConf", hConfName)
-                     .put("cConf", cConfName)
-                     .putAll(getConfigs())
-                     .build())
+      .withConfigs(getConfigs())
       .build();
   }
 
@@ -185,8 +178,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     runlatch = new CountDownLatch(1);
     name = context.getSpecification().getName();
-    Map<String, String> configs = context.getSpecification().getConfigs();
-
     LOG.info("Initialize runnable: " + name);
     try {
       CommandLine cmdLine = parseArgs(context.getApplicationArguments());
@@ -194,11 +185,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // Loads configurations
       hConf = new Configuration();
       hConf.clear();
-      hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
+      hConf.addResource(new File(cmdLine.getOptionValue(RunnableOptions.HADOOP_CONF_FILE)).toURI().toURL());
 
       UserGroupInformation.setConfiguration(hConf);
 
-      cConf = CConfiguration.create(new File(configs.get("cConf")));
+      cConf = CConfiguration.create(new File(cmdLine.getOptionValue(RunnableOptions.CDAP_CONF_FILE)));
 
       Injector injector = Guice.createInjector(createModule(context));
 
@@ -216,13 +207,16 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       try {
         Location programJarLocation = Locations.toLocation(new File(cmdLine.getOptionValue(RunnableOptions.JAR)));
-        program = Programs.create(cConf, programRunner, programJarLocation,
-                                  BundleJarUtil.unJar(programJarLocation, Files.createTempDir()));
+        ProgramId programId = GSON.fromJson(cmdLine.getOptionValue(RunnableOptions.PROGRAM_ID), ProgramId.class);
+        ApplicationSpecification appSpec = readAppSpec(new File(cmdLine.getOptionValue(RunnableOptions.APP_SPEC_FILE)));
+
+        program = Programs.create(cConf, programRunner, new ProgramDescriptor(programId, appSpec),
+                                  programJarLocation, BundleJarUtil.unJar(programJarLocation, Files.createTempDir()));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
 
-      programOpts = createProgramOptions(cmdLine, context, configs);
+      programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
       resourceReporter = new ProgramRunnableResourceReporter(program.getId().toEntityId(),
                                                              metricsCollectionService, context);
 
@@ -375,7 +369,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private CommandLine parseArgs(String[] args) {
     Options opts = new Options()
       .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
-      .addOption(createOption(RunnableOptions.PROGRAM_OPTIONS, "Program options"));
+      .addOption(createOption(RunnableOptions.HADOOP_CONF_FILE, "Hadoop config file"))
+      .addOption(createOption(RunnableOptions.CDAP_CONF_FILE, "CDAP config file"))
+      .addOption(createOption(RunnableOptions.APP_SPEC_FILE, "Application specification file"))
+      .addOption(createOption(RunnableOptions.PROGRAM_OPTIONS, "Program options"))
+      .addOption(createOption(RunnableOptions.PROGRAM_ID, "Program ID"));
 
     try {
       return new PosixParser().parse(opts, args);
@@ -406,7 +404,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     arguments.put(ProgramOptionConstants.RUN_ID, original.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     arguments.put(ProgramOptionConstants.TWILL_RUN_ID, context.getApplicationRunId().getId());
     arguments.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
-    arguments.putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))));
+    arguments.putAll(configs);
 
     return new SimpleProgramOptions(context.getSpecification().getName(), new BasicArguments(arguments),
                                     original.getUserArguments(), original.isDebug());
@@ -468,6 +466,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         expose(StreamWriterFactory.class);
       }
     };
+  }
+
+  private ApplicationSpecification readAppSpec(File appSpecFile) throws IOException {
+    try (Reader reader = Files.newReader(appSpecFile, Charsets.UTF_8)) {
+      return GSON.fromJson(reader, ApplicationSpecification.class);
+    }
   }
 
   /**

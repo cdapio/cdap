@@ -52,6 +52,15 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
   public abstract void doFinish(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys,
                                 boolean succeeded);
 
+  /**
+   * Returns a list of partition keys to the working set, without increasing the number of retries. They are made
+   * available for future processing.
+   *
+   * @param workingSet the working set of partitions to operate on
+   * @param partitionKeys the list of partition keys to return to the working set
+   */
+  public abstract void untake(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys);
+
 
   /**
    * Creates an instance of PartitionConsumer.
@@ -111,7 +120,31 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
 
   @Override
   public void onFinish(final List<? extends Partition> partitions, boolean succeeded) {
-    List<PartitionKey> partitionKeys = new AbstractList<PartitionKey>() {
+    onFinishWithKeys(toKeys(partitions), succeeded);
+  }
+
+  @Override
+  public void onFinishWithKeys(List<? extends PartitionKey> partitionKeys, boolean succeeded) {
+    ConsumerWorkingSet workingSet = readState();
+
+    doFinish(workingSet, partitionKeys, succeeded);
+    statePersistor.persistState(workingSet.toBytes());
+  }
+
+  @Override
+  public void untake(List<? extends Partition> partitions) {
+    untakeWithKeys(toKeys(partitions));
+  }
+
+  @Override
+  public void untakeWithKeys(List<? extends PartitionKey> partitionKeys) {
+    ConsumerWorkingSet workingSet = readState();
+    untake(workingSet, partitionKeys);
+    statePersistor.persistState(workingSet.toBytes());
+  }
+
+  private List<? extends PartitionKey> toKeys(final List<? extends Partition> partitions) {
+    return new AbstractList<PartitionKey>() {
 
       @Override
       public int size() {
@@ -133,16 +166,6 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
         return partitions.remove(index).getPartitionKey();
       }
     };
-
-    onFinishWithKeys(partitionKeys, succeeded);
-  }
-
-  @Override
-  public void onFinishWithKeys(List<? extends PartitionKey> partitionKeys, boolean succeeded) {
-    ConsumerWorkingSet workingSet = readState();
-
-    doFinish(workingSet, partitionKeys, succeeded);
-    statePersistor.persistState(workingSet.toBytes());
   }
 
   private ConsumerWorkingSet readState() {

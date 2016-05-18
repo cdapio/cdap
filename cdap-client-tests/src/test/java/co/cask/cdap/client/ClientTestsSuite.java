@@ -39,7 +39,6 @@ import org.junit.runners.Suite;
   NamespaceClientTestRun.class,
   PreferencesClientTestRun.class,
   ProgramClientTestRun.class,
-  QueryClientTestRun.class,
   ScheduleClientTestRun.class,
   ServiceClientTestRun.class,
   StreamClientTestRun.class,

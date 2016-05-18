@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
@@ -142,7 +143,8 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize(MapReduceContext context) throws Exception {
+    super.initialize(context);
     if (Boolean.valueOf(context.getSpecification().getProperty(Constants.STAGE_LOGGING_ENABLED))) {
       LogStageInjector.start();
     }
@@ -268,9 +270,10 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   @Override
-  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    finisher.onFinish(succeeded);
-    LOG.info("Batch Run finished : succeeded = {}", succeeded);
+  public void destroy() {
+    boolean isSuccessful = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
+    finisher.onFinish(isSuccessful);
+    LOG.info("Batch Run finished : status = {}", getContext().getState());
   }
 
   /**

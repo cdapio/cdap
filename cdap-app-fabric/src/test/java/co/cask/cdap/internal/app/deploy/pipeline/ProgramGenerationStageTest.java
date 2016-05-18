@@ -25,10 +25,11 @@ import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.pipeline.StageContext;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -64,8 +65,9 @@ public class ProgramGenerationStageTest {
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(cConf, namespacedLocationFactory,
                                                                  new NoOpAuthorizer());
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
-    pgmStage.process(new ApplicationDeployable(DefaultId.APPLICATION, newSpec, null,
-                                               ApplicationDeployScope.USER, appArchive));
+    pgmStage.process(new ApplicationDeployable(NamespaceId.DEFAULT.artifact("ToyApp", "1.0"), appArchive,
+                                               DefaultId.APPLICATION.toEntityId(), newSpec, null,
+                                               ApplicationDeployScope.USER));
     Assert.assertTrue(true);
   }
 

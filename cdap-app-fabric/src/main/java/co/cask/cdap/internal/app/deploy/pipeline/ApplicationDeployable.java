@@ -17,7 +17,8 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import org.apache.twill.filesystem.Location;
 
 import javax.annotation.Nullable;
@@ -25,42 +26,68 @@ import javax.annotation.Nullable;
 /**
  * Represents information of an application that is undergoing deployment.
  */
-public final class ApplicationDeployable {
-  private final Id.Application id;
+public class ApplicationDeployable {
+
+  private final ArtifactId artifactId;
+  private final Location artifactLocation;
+  private final ApplicationId applicationId;
   private final ApplicationSpecification specification;
   private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
-  private final Location location;
 
-  public ApplicationDeployable(Id.Application id, ApplicationSpecification specification,
+  public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
+                               ApplicationId applicationId, ApplicationSpecification specification,
                                @Nullable ApplicationSpecification existingAppSpec,
-                               ApplicationDeployScope applicationDeployScope,
-                               Location location) {
-    this.id = id;
+                               ApplicationDeployScope applicationDeployScope) {
+    this.artifactId = artifactId;
+    this.artifactLocation = artifactLocation;
+    this.applicationId = applicationId;
     this.specification = specification;
     this.existingAppSpec = existingAppSpec;
     this.applicationDeployScope = applicationDeployScope;
-    this.location = location;
   }
 
-  public Id.Application getId() {
-    return id;
+  /**
+   * Returns the {@link ArtifactId} used by the application.
+   */
+  public ArtifactId getArtifactId() {
+    return artifactId;
   }
 
+  /**
+   * Returns the {@link Location} to the artifact that is used by the application.
+   */
+  public Location getArtifactLocation() {
+    return artifactLocation;
+  }
+
+  /**
+   * Returns the {@link ApplicationId} of the application.
+   */
+  public ApplicationId getApplicationId() {
+    return applicationId;
+  }
+
+  /**
+   * Returns the {@link ApplicationSpecification} of the application.
+   */
   public ApplicationSpecification getSpecification() {
     return specification;
   }
 
+  /**
+   * Returns the {@link ApplicationSpecification} of the older version of the application or {@code null} if
+   * it doesn't exist.
+   */
   @Nullable
   public ApplicationSpecification getExistingAppSpec() {
     return existingAppSpec;
   }
 
+  /**
+   * Returns the {@link ApplicationDeployScope} of this application is deploying to.
+   */
   public ApplicationDeployScope getApplicationDeployScope() {
     return applicationDeployScope;
-  }
-
-  public Location getLocation() {
-    return location;
   }
 }

@@ -41,14 +41,11 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
-
-import javax.annotation.Nullable;
 
 /**
  * This class is concrete implementation of {@link Manager} that deploys an Application.
@@ -103,14 +100,14 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   }
 
   @Override
-  public ListenableFuture<O> deploy(Id.Namespace namespace, @Nullable String appId, I input) throws Exception {
+  public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, namespace, appId, artifactRepository));
+    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework));
-    pipeline.addLast(new DeployDatasetModulesStage(configuration, namespace, datasetFramework,
+    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework,
                                                    inMemoryDatasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, namespace));
-    pipeline.addLast(new CreateStreamsStage(namespace, streamAdmin));
+    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
+    pipeline.addLast(new CreateStreamsStage(streamAdmin));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, metricStore, metadataStore,
                                                     authorizerInstantiator.get()));

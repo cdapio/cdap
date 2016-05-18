@@ -20,6 +20,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
@@ -46,9 +47,10 @@ import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
@@ -86,6 +88,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 import static co.cask.cdap.proto.Containers.ContainerInfo;
 import static co.cask.cdap.proto.Containers.ContainerType.FLOWLET;
@@ -127,10 +130,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  protected RuntimeInfo createRuntimeInfo(ProgramController controller, Program program) {
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId) {
     if (controller instanceof AbstractTwillProgramController) {
       RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
-      return new SimpleRuntimeInfo(controller, program, twillRunId);
+      return new SimpleRuntimeInfo(controller, programId, twillRunId);
     }
     return null;
   }
@@ -258,49 +261,49 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return ImmutableMap.copyOf(result);
   }
 
+  @Nullable
   private RuntimeInfo createRuntimeInfo(Id.Program programId, TwillController controller, RunId runId) {
     try {
-      Program program = store.loadProgram(programId);
-      Preconditions.checkNotNull(program, "Program not found");
-
-      ProgramController programController = createController(program, controller, runId);
-      return programController == null ? null : new SimpleRuntimeInfo(programController, programId,
+      ProgramDescriptor programDescriptor = store.loadProgram(programId);
+      ProgramController programController = createController(programDescriptor, controller, runId);
+      return programController == null ? null : new SimpleRuntimeInfo(programController, programId.toEntityId(),
                                                                       controller.getRunId());
     } catch (Exception e) {
-      LOG.error("Got exception: ", e);
       return null;
     }
   }
 
-  private ProgramController createController(Program program, TwillController controller, RunId runId) {
+  private ProgramController createController(ProgramDescriptor programDescriptor,
+                                             TwillController controller, RunId runId) {
     AbstractTwillProgramController programController = null;
-    Id.Program programId = program.getId();
+    ProgramId programId = programDescriptor.getProgramId();
 
-    switch (program.getType()) {
+    switch (programId.getType()) {
       case FLOW: {
-        FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId.getId());
+        FlowSpecification flowSpec = programDescriptor.getSpecification();
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
-          program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec), txExecutorFactory
+          programDescriptor.getProgramId(), controller, queueAdmin, streamAdmin,
+          getFlowletQueues(programDescriptor.getProgramId().getParent(), flowSpec), txExecutorFactory
         );
-        programController = new FlowTwillProgramController(programId, controller, instanceUpdater, runId);
+        programController = new FlowTwillProgramController(programId.toId(), controller, instanceUpdater, runId);
         break;
       }
       case MAPREDUCE:
-        programController = new MapReduceTwillProgramController(programId, controller, runId);
+        programController = new MapReduceTwillProgramController(programId.toId(), controller, runId);
         break;
       case WORKFLOW:
-        programController = new WorkflowTwillProgramController(programId, controller, runId);
+        programController = new WorkflowTwillProgramController(programId.toId(), controller, runId);
         break;
       case WEBAPP:
-        programController = new WebappTwillProgramController(programId, controller, runId);
+        programController = new WebappTwillProgramController(programId.toId(), controller, runId);
         break;
       case SERVICE:
-        DistributedServiceRunnableInstanceUpdater instanceUpdater = new DistributedServiceRunnableInstanceUpdater(
-          program, controller);
-        programController = new ServiceTwillProgramController(programId, controller, instanceUpdater, runId);
+        DistributedServiceRunnableInstanceUpdater instanceUpdater =
+          new DistributedServiceRunnableInstanceUpdater(controller);
+        programController = new ServiceTwillProgramController(programId.toId(), controller, instanceUpdater, runId);
         break;
       case WORKER:
-        programController = new WorkerTwillProgramController(programId, controller, runId);
+        programController = new WorkerTwillProgramController(programId.toId(), controller, runId);
         break;
     }
     return programController == null ? null : programController.startListen();
@@ -316,11 +319,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   // TODO (terence) : This method is part of the hack mentioned above. It should be removed when
   // FlowProgramRunner moved to run in AM.
-  private Multimap<String, QueueName> getFlowletQueues(Program program, FlowSpecification flowSpec) {
+  private Multimap<String, QueueName> getFlowletQueues(ApplicationId appId, FlowSpecification flowSpec) {
     // Generate all queues specifications
-    Id.Application appId = Id.Application.from(program.getNamespaceId(), program.getApplicationId());
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
-      = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
+      = new SimpleQueueSpecificationGenerator(appId.toId()).create(flowSpec);
 
     // For storing result from flowletId to queue.
     ImmutableSetMultimap.Builder<String, QueueName> resultBuilder = ImmutableSetMultimap.builder();
@@ -383,7 +385,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
     private final List<URL> rmUrls;
 
-    public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
+    ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
       super(metricsCollectionService.getContext(ImmutableMap.<String, String>of()));
 
       List<URL> rmUrls = Collections.emptyList();

@@ -29,7 +29,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.reflect.TypeToken;
 
 import java.net.URI;
@@ -50,7 +51,7 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
 
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
-    store.addApplication(input.getId(), input.getSpecification(), input.getLocation());
+    store.addApplication(input.getApplicationId().toId(), input.getSpecification());
     registerDatasets(input);
     emit(input);
   }
@@ -61,43 +62,43 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
   // moving in this direction.
   // Also, SparkSpecifications are the same in that a Spark program's dataset access is completely dynamic.
   private void registerDatasets(ApplicationWithPrograms input) {
-    ApplicationSpecification app = input.getSpecification();
-    Id.Application appId = input.getId();
-    Id.Namespace namespace = appId.getNamespace();
+    ApplicationSpecification appSpec = input.getSpecification();
+    ApplicationId appId = input.getApplicationId();
+    NamespaceId namespaceId = appId.getParent();
 
-    for (FlowSpecification flow : app.getFlows().values()) {
-      Id.Flow programId = Id.Flow.from(appId, flow.getName());
+    for (FlowSpecification flow : appSpec.getFlows().values()) {
+      Id.Program programId = appId.flow(flow.getName()).toId();
       for (FlowletConnection connection : flow.getConnections()) {
         if (connection.getSourceType().equals(FlowletConnection.Type.STREAM)) {
-          usageRegistry.register(programId, Id.Stream.from(namespace, connection.getSourceName()));
+          usageRegistry.register(programId, namespaceId.stream(connection.getSourceName()).toId());
         }
       }
       for (FlowletDefinition flowlet : flow.getFlowlets().values()) {
         for (String dataset : flowlet.getDatasets()) {
-          usageRegistry.register(programId, Id.DatasetInstance.from(namespace, dataset));
+          usageRegistry.register(programId, namespaceId.dataset(dataset).toId());
         }
       }
     }
 
-    for (MapReduceSpecification program : app.getMapReduce().values()) {
-      Id.Program programId = Id.Program.from(appId, ProgramType.MAPREDUCE, program.getName());
+    for (MapReduceSpecification program : appSpec.getMapReduce().values()) {
+      Id.Program programId = appId.mr(program.getName()).toId();
       for (String dataset : program.getDataSets()) {
         if (!dataset.startsWith(Constants.Stream.URL_PREFIX)) {
-          usageRegistry.register(programId, Id.DatasetInstance.from(namespace, dataset));
+          usageRegistry.register(programId, namespaceId.dataset(dataset).toId());
         }
       }
       String inputDatasetName = program.getInputDataSet();
       if (inputDatasetName != null && inputDatasetName.startsWith(Constants.Stream.URL_PREFIX)) {
         StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDatasetName));
-        usageRegistry.register(programId, Id.Stream.from(namespace, stream.getStreamName()));
+        usageRegistry.register(programId, namespaceId.stream(stream.getStreamName()).toId());
       }
     }
 
-    for (ServiceSpecification serviceSpecification : app.getServices().values()) {
-      Id.Service serviceId = Id.Service.from(appId, serviceSpecification.getName());
+    for (ServiceSpecification serviceSpecification : appSpec.getServices().values()) {
+      Id.Program programId = appId.service(serviceSpecification.getName()).toId();
       for (HttpServiceHandlerSpecification handlerSpecification : serviceSpecification.getHandlers().values()) {
         for (String dataset : handlerSpecification.getDatasets()) {
-          usageRegistry.register(serviceId, Id.DatasetInstance.from(namespace, dataset));
+          usageRegistry.register(programId, namespaceId.dataset(dataset).toId());
         }
       }
     }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.sparkpagerank;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -45,7 +46,7 @@ public class SparkPageRankAppTest extends TestBase {
   private static final String TOTAL_PAGES = "1";
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void test() throws Exception {

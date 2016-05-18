@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,7 @@ public final class FlowTwillApplication extends AbstractProgramTwillApplication 
 
       String flowletName = entry.getKey();
       runnables.put(entry.getKey(), new RunnableResource(
-        new FlowletTwillRunnable(flowletName, "hConf.xml", "cConf.xml"),
+        new FlowletTwillRunnable(flowletName),
         createResourceSpec(flowletSpec.getResources(), flowletDefinition.getInstances())
       ));
     }

@@ -35,10 +35,8 @@ import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -50,7 +48,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
-import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -77,14 +74,12 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -192,9 +187,8 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Program loadProgram(final Id.Program id)
-    throws IOException, ApplicationNotFoundException, ProgramNotFoundException {
-
+  public ProgramDescriptor loadProgram(final Id.Program id) throws IOException, ApplicationNotFoundException,
+                                                                   ProgramNotFoundException {
     ApplicationMeta appMeta = appsTx.get().executeUnchecked(
       new TransactionExecutor.Function<AppMetadataStore, ApplicationMeta>() {
         @Override
@@ -211,15 +205,7 @@ public class DefaultStore implements Store {
       throw new ProgramNotFoundException(id);
     }
 
-    Location programLocation = getProgramLocation(id);
-    // I guess this can happen when app is being deployed at the moment...
-    // todo: should be prevented by framework
-    // todo: this should not be checked here but in start()
-    Preconditions.checkArgument(appMeta.getLastUpdateTs() >= programLocation.lastModified(),
-                                "Newer program update time than the specification update time. " +
-                                  "Application must be redeployed");
-
-    return Programs.create(programLocation);
+    return new ProgramDescriptor(id.toEntityId(), appMeta.getSpec());
   }
 
   @Override
@@ -466,13 +452,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addApplication(final Id.Application id,
-                             final ApplicationSpecification spec, final Location appArchiveLocation) {
+  public void addApplication(final Id.Application id, final ApplicationSpecification spec) {
 
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override
       public Void apply(AppMetadataStore mds) throws Exception {
-        mds.writeApplication(id.getNamespaceId(), id.getId(), spec, appArchiveLocation.toURI().toString());
+        mds.writeApplication(id.getNamespaceId(), id.getId(), spec);
         return null;
       }
     }, apps.get());
@@ -568,8 +553,6 @@ public class DefaultStore implements Store {
         public FlowSpecification apply(AppMetadataStore mds) throws Exception {
           ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
           ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
-          replaceAppSpecInProgramJar(id, newAppSpec);
-
           mds.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
           return appSpec.getFlows().get(id.getId());
         }
@@ -612,7 +595,6 @@ public class DefaultStore implements Store {
                                                                          workerSpec.getResources(),
                                                                          instances);
           ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
-          replaceAppSpecInProgramJar(id, newAppSpec);
           mds.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
           return null;
         }
@@ -640,8 +622,6 @@ public class DefaultStore implements Store {
                                                  serviceSpec.getResources(), instances);
 
           ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
-          replaceAppSpecInProgramJar(id, newAppSpec);
-
           mds.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
           return null;
         }
@@ -774,19 +754,6 @@ public class DefaultStore implements Store {
       }, apps.get());
   }
 
-  @Nullable
-  @Override
-  public Location getApplicationArchiveLocation(final Id.Application id) {
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Location>() {
-        @Override
-        public Location apply(AppMetadataStore mds) throws Exception {
-          ApplicationMeta meta = mds.getApplication(id.getNamespaceId(), id.getId());
-          return meta == null ? null : locationFactory.create(URI.create(meta.getArchiveLocation()));
-        }
-      }, apps.get());
-  }
-
   @Override
   public void addSchedule(final Id.Program program, final ScheduleSpecification scheduleSpecification) {
     appsTx.get().executeUnchecked(
@@ -800,7 +767,6 @@ public class DefaultStore implements Store {
             scheduleName + "' already exists.");
           schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
           ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-          replaceAppSpecInProgramJar(program, newAppSpec);
           mds.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
           return null;
         }
@@ -824,7 +790,6 @@ public class DefaultStore implements Store {
           }
 
           ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-          replaceAppSpecInProgramJar(program, newAppSpec);
           mds.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
           return null;
         }
@@ -941,16 +906,6 @@ public class DefaultStore implements Store {
     }
   }
 
-  /**
-   * @return The {@link Location} of the given program.
-   * @throws RuntimeException if program can't be found.
-   */
-  private Location getProgramLocation(Id.Program id) throws IOException {
-    String appFabricOutputDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
-                                                  System.getProperty("java.io.tmpdir"));
-    return Programs.programLocation(namespacedLocationFactory, appFabricOutputDir, id);
-  }
-
   private ApplicationSpecification getApplicationSpec(AppMetadataStore mds, Id.Application id) {
     ApplicationMeta meta = mds.getApplication(id.getNamespaceId(), id.getId());
     return meta == null ? null : meta.getSpec();
@@ -978,34 +933,6 @@ public class DefaultStore implements Store {
       Map<String, ServiceSpecification> services = Maps.newHashMap(super.getServices());
       services.put(serviceName, serviceSpecification);
       return services;
-    }
-  }
-
-  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec) {
-    try {
-      Location programLocation = getProgramLocation(id);
-      ArchiveBundler bundler = new ArchiveBundler(programLocation);
-
-      Program program = Programs.create(programLocation);
-      String className = program.getMainClassName();
-
-      Location tmpProgramLocation = programLocation.getTempFile("");
-      try {
-        ProgramBundle.create(id, bundler, tmpProgramLocation, className, appSpec);
-
-        Location movedTo = tmpProgramLocation.renameTo(programLocation);
-        if (movedTo == null) {
-          throw new RuntimeException("Could not replace program jar with the one with updated app spec, " +
-                                       "original program file: " + programLocation +
-                                       ", was trying to replace with file: " + tmpProgramLocation);
-        }
-      } finally {
-        if (tmpProgramLocation != null && tmpProgramLocation.exists()) {
-          tmpProgramLocation.delete();
-        }
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
     }
   }
 
@@ -1182,17 +1109,6 @@ public class DefaultStore implements Store {
         @Override
         public Set<RunId> apply(AppMetadataStore mds) throws Exception {
           return mds.getRunningInRange(startTimeInSecs, endTimeInSecs);
-        }
-      }, apps.get());
-  }
-
-  public void upgrade() {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.upgradeWorkflowRunRecords();
-          return null;
         }
       }, apps.get());
   }

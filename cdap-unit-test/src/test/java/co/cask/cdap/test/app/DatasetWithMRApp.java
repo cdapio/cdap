@@ -50,7 +50,7 @@ public class DatasetWithMRApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) {
+    public void initialize(MapReduceContext context) {
       context.addInput(Input.ofDataset(context.getRuntimeArguments().get(INPUT_KEY)));
       context.addOutput(Output.ofDataset(context.getRuntimeArguments().get(OUTPUT_KEY)));
       Job hadoopJob = context.getHadoopJob();

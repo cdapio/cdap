@@ -19,8 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
@@ -68,7 +67,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,19 +179,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
         }
         return ProgramStatus.STOPPED;
       }
-
-      // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
-      try {
-        Location webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId.toId());
-        if (webappLoc != null && webappLoc.exists()) {
-          // webapp exists and not running. so return stopped.
-          return ProgramStatus.STOPPED;
-        }
-        // the webappLoc does not exists
-        throw new NotFoundException(programId);
-      } catch (IOException ioe) {
-        throw new NotFoundException(programId.toId(), ioe);
-      }
     }
 
     return runtimeInfo.getController().getState().getProgramStatus();
@@ -282,10 +267,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
   public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug) throws Exception {
     authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
-    Program program = store.loadProgram(programId.toId());
+    ProgramDescriptor programDescriptor = store.loadProgram(programId.toId());
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, new SimpleProgramOptions(
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
       programId.getProgram(), systemArguments, userArguments, debug));
 
     final ProgramController controller = runtimeInfo.getController();

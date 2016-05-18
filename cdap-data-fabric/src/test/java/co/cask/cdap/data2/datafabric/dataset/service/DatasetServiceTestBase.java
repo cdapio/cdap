@@ -93,6 +93,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
@@ -256,8 +257,9 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected URL getUrl(String namespace, String path) throws MalformedURLException {
-    return new URL(String.format("http://localhost:%d/%s/namespaces/%s%s",
-                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, namespace, path));
+    return new URL(
+      URI.create(String.format("http://localhost:%d/%s/namespaces/%s%s",
+                               getPort(), Constants.Gateway.API_VERSION_3_TOKEN, namespace, path)).toASCIIString());
   }
 
   protected URL getStorageProviderNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {

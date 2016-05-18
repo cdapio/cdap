@@ -1377,7 +1377,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // This should succeed. The programs inside the workflow will attempt to write to the workflow token
     // from the Mapper's and Reducer's methods as well as from a Spark closure, and they will throw an exception
     // if that succeeds.
-    // The MapReduce's beforeSubmit will record the workflow run id in the token, and the onFinish as well
+    // The MapReduce's initialize will record the workflow run id in the token, and the destroy as well
     // as the mapper and the reducer will validate that they have the same workflow run id.
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("sixthInput"),

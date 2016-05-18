@@ -56,6 +56,7 @@ public interface PartitionConsumer {
    *
    * @param partitions list of partitions to mark as either succeeded or failed processing
    * @param succeeded whether or not processing of the specified partitions was successful
+   * @throws IllegalStateException if any of the specified partitions are not in the working set as in progress.
    */
   void onFinish(List<? extends Partition> partitions, boolean succeeded);
 
@@ -65,6 +66,25 @@ public interface PartitionConsumer {
    *
    * @param partitionKeys list of partition keys to mark as either succeeded or failed processing
    * @param succeeded whether or not processing of the specified partitions was successful
+   * @throws IllegalStateException if any of the specified partitions are not in the working set as in progress.
    */
   void onFinishWithKeys(List<? extends PartitionKey> partitionKeys, boolean succeeded);
+
+  /**
+   * Returns a list of partitions to the working set, without increasing the number of retries. They are made
+   * available for future processing.
+   *
+   * @param partitions list of partitions to put back
+   * @throws IllegalStateException if any of the specified partitions are not in the working set as in progress.
+   */
+  void untake(List<? extends Partition> partitions);
+
+  /**
+   * Returns a list of partition keys to the working set, without increasing the number of retries. They are made
+   * available for future processing.
+   *
+   * @param partitionKeys list of partition keys to put back
+   * @throws IllegalStateException if any of the specified partitions are not in the working set as in progress.
+   */
+  void untakeWithKeys(List<? extends PartitionKey> partitionKeys);
 }

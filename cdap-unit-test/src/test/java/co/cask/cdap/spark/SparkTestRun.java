@@ -97,7 +97,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkTestRun.class);
 
