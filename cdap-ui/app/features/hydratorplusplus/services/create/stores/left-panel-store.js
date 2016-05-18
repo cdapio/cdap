@@ -58,6 +58,7 @@ const getTemplatesWithAddedInfo = (templates = [], extension = '') => {
       nodeClass: 'plugin-templates',
       name: template.pluginTemplate,
       pluginName: template.pluginName,
+      label: template.pluginTemplate,
       type: extension,
       icon: _DAGPlusPlusFactory.getIcon(template.pluginName),
       template: popoverTemplate
