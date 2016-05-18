@@ -2159,6 +2159,7 @@
                         <directory>${stage.dir}</directory>
                         <includes>
                           <include>opt/**</include>
+                          <include>etc/profile.d/**</include>
                         </includes>
                       </resource>
                     </resources>
