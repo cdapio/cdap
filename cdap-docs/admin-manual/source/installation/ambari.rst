@@ -63,14 +63,13 @@ To install the ``cdap-ambari-service`` package, first add the appropriate CDAP r
 to your system’s package manager by following the steps below. These steps will install a
 Cask repository on your Ambari server.
 
-The **repository version** (shown in the commands below as ``"cdap/``\ |literal-short-version|\ ``"``) 
+The **repository version** (shown in the commands below as |literal-cdap-slash-short-version|) 
 must match the **CDAP series** which you’d like installed on your cluster. To install the
 **latest** version of the *CDAP 3.0 series,* you would install the *CDAP 3.0 repository.*
 The default (in the commands below) is to use **cdap/3.3**, which has the widest
 compatibility with the Ambari-supported Hadoop distributions.
 
-Replace |---| in the commands that follow on this page |---| all references to 
-``"cdap/``\ |literal-short-version|\ ``"`` 
+Replace |---| in the commands that follow on this page |---| all references to |literal-cdap-slash-short-version|
 with the CDAP Repository from the list below that you would like to use:
 
 .. _ambari-compatibility-matrix:
@@ -98,7 +97,7 @@ supplied from Hortonworks.
 
 .. include:: /../target/_includes/ambari-installation.rst
   :start-after: .. _ambari-install-rpm-using-yum:
-  :end-before: .. _ambari-package-installation-title:
+  :end-before: .. end_install-debian-using-apt
 
 
 Installing CDAP Ambari Service

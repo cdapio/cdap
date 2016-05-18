@@ -241,6 +241,7 @@ if short_version:
 .. |short-version| replace:: %(short_version)s
 .. |bold-short-version| replace:: **%(short_version)s**
 .. |literal-short-version| replace:: ``%(short_version)s``
+.. |literal-cdap-slash-short-version| replace:: ``cdap/%(short_version)s``
 .. |previous-short-version| replace:: %(previous_short_version)s
 .. |bold-previous-short-version| replace:: **%(previous_short_version)s**
 .. |literal-previous-short-version| replace:: ``%(previous_short_version)s``
