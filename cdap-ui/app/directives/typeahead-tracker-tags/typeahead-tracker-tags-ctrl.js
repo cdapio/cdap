@@ -1,0 +1,51 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+angular.module(PKG.name + '.commons')
+  .controller('TypeaheadTrackerTagsCtrl', function() {
+    this.list = [ ];
+    this.modelLoading = false;
+    this.isOpen = true;
+    this.template = 'typeahead-tracker-tags/popup.html';
+    this.list = [
+      {
+        name: 'Tag1',
+        count: 10
+      },
+      {
+        name: 'Tag2',
+        count: 130
+      },
+      {
+        name: 'Super Tag',
+        count: 130
+      },
+      {
+        name: 'Preferred Tag 1',
+        count: 130,
+        preferredTag: true
+      },
+      {
+        name: 'Super Preferred Tag 3',
+        count: 130,
+        preferredTag: true
+      },
+      {
+        name: 'Tag4',
+        count: 0
+      }
+    ];
+  });
