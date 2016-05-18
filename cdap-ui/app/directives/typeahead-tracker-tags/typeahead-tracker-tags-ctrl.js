@@ -23,7 +23,7 @@ angular.module(PKG.name + '.commons')
     this.list = [
       {
         name: 'Tag1',
-        count: 10
+        count: 10,
       },
       {
         name: 'Tag2',
@@ -35,12 +35,12 @@ angular.module(PKG.name + '.commons')
       },
       {
         name: 'Preferred Tag 1',
-        count: 130,
+        count: 30,
         preferredTag: true
       },
       {
         name: 'Super Preferred Tag 3',
-        count: 130,
+        count: 10,
         preferredTag: true
       },
       {
@@ -48,4 +48,19 @@ angular.module(PKG.name + '.commons')
         count: 0
       }
     ];
+    this.list = this.list.map(function(tag) {
+      return {
+        name: tag.name,
+        count: tag.count,
+        label: tag.name + ' (' + tag.count + ') ',
+        preferredTag: (tag.preferredTag? tag.count: -1)
+      };
+    });
+    this.list.sort(function(a,b) {
+      return a.preferredTag > b.preferredTag? 1: -1;
+    });
+    this.list = this.list.reverse();
+    this.onTagsSelect = function(item) {
+      this.model = item.name;
+    };
   });

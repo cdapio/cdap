@@ -13,9 +13,6 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<pre>
-  {{TypeaheadTrackerTagsCtrl.model}}
-</pre>
 <input
   type="text"
   ng-model="TypeaheadTrackerTagsCtrl.model"
@@ -25,5 +22,7 @@
   placeholder="Enter new Tag"
   typeahead-show-hint="true"
   data-watch-options="true"
-  uib-typeahead = "data.name as data.name for data in TypeaheadTrackerTagsCtrl.list"
+  typeahead-select-on-exact="true"
+  typeahead-on-select = "TypeaheadTrackerTagsCtrl.onTagsSelect($item, $model, $label, $event)"
+  uib-typeahead = "data.label as data.label for data in TypeaheadTrackerTagsCtrl.list  | filter:{name:$viewValue}"
 />
