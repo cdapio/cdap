@@ -61,6 +61,5 @@ For instance, if you have obtained an access token (as shown in the example in t
     {"access_token":"AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS",
       "token_type":"Bearer","expires_in":86400}
 
-The access token itself
-(``AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS``) would
-be placed in a file and then the file path used in the above command.
+The access token itself (``AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS``) 
+would be placed in a file and then the file's path would be used in the above command.
