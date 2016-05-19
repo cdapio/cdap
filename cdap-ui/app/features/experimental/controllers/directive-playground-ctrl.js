@@ -14,7 +14,47 @@
  * the License.
  */
 
- angular.module(`${PKG.name}.feature.experimental`)
-   .controller('DirectivePlayGround', function() {
-     this.dsMultipleValuesModel = 'value1:value2:value3,newValue1:newValue2:newValue3';
-   });
+angular.module(`${PKG.name}.feature.experimental`)
+  .controller('DirectivePlayGround', function() {
+    this.dsMultipleValuesModel = 'value1:value2:value3,newValue1:newValue2:newValue3';
+
+    this.topAppsData = {
+      'total' : 15,
+      'results' : [
+        {
+          'label' : 'Application1',
+          'value' : 93
+        },
+        {
+          'label' : 'Application3',
+          'value' : 61
+        },
+        {
+          'label' : 'Application2',
+          'value' : 32
+        },
+        {
+          'label' : 'Application5',
+          'value' : 32
+        },
+        {
+          'label' : 'Application4',
+          'value' : 1
+        }
+      ]
+    };
+
+    this.topAppsData2 = {
+      'total' : 2,
+      'results' : [
+        {
+          'label' : 'Application1',
+          'value' : 85
+        },
+        {
+          'label' : 'Application3',
+          'value' : 61
+        }
+      ]
+    };
+  });

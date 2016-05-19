@@ -32,7 +32,7 @@ of the application are tied together by the class ``ClicksAndViews``:
 
 Data Storage
 ------------
-- *views* input``Stream`` contains ad views, representing an advertisement displayed on a viewer's screen.
+- *views* input ``Stream`` contains ad views, representing an advertisement displayed on a viewer's screen.
 - *clicks* input ``Stream`` contains ad clicks, representing when a viewer clicks on an advertisement.
 - *joined* output ``PartitionedFileSetFileSet`` contains the joined ad views, which additionally contains the
   count of clicks each ad view has. This Dataset is partitioned on the logical start time of the MapReduce.
@@ -45,7 +45,8 @@ two streams as input and sets up the ``PartitionedFileSet`` as output, with the 
 
 .. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
    :language: java
-   :lines: 58-73
+   :lines: 58-79
+   :dedent: 2
 
 The Mapper class then keys each of the records based upon the ``viewId``. That results in all clicks and views
 for a particular ``viewId`` going to a single Reducer for joining. In order to do the join properly, the Reducer needs
@@ -54,7 +55,9 @@ to know which source each record came from. This is possible by calling the ``ge
 
 .. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
    :language: java
-   :lines: 85-95
+   :lines: 86-96
+   :dedent: 2
+   :append: ...
 
 
 .. Building and Starting

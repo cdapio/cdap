@@ -300,7 +300,7 @@ Here is an example, taken from the
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
    :language: java
-   :lines: 111-125
+   :lines: 110-128
 
 **Note:** The test of ``workflowToken != null`` is only required because this Reducer could
 be used outside of a workflow. When run from within a workflow, the token is guaranteed to
