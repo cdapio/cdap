@@ -95,8 +95,10 @@ public class ETLSpark extends AbstractSpark {
     cleanupFiles = new ArrayList<>();
     CompositeFinisher.Builder finishers = CompositeFinisher.builder();
 
-    context.setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
-    context.setSparkConf(new SparkConf().set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m"));
+    SparkConf sparkConf = new SparkConf();
+    sparkConf.set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m");
+    sparkConf.set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m");
+    context.setSparkConf(sparkConf);
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePluginInstantiator pluginInstantiator =
