@@ -391,8 +391,7 @@ within your CDAP installation (typically under ``/opt/cdap``).
 The Developers’ Manual :ref:`Custom Authentication <developers-custom-authentication>` section shows
 how to create a Custom Authentication Mechanism.
 
-
-.. _configuring_auth_exemptions:
+.. _configuring-auth-exemptions:
 
 Configuring Exemptions from Authentication
 ..........................................
@@ -419,6 +418,8 @@ posting to all streams in the default namespace::
   </property>
 
 This must be configured on every node that runs the CDAP Router.
+
+.. _testing-security:
 
 Testing Security
 ----------------
