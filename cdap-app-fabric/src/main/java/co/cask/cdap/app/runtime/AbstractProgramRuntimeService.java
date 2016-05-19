@@ -184,7 +184,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     File dir = new File(tempDir, String.format("%s.%s.%s.%s.%s",
                                                programId.getType().name().toLowerCase(),
-                                               programId.getNamespaceId(), programId.getApplication(),
+                                               programId.getNamespace(), programId.getApplication(),
                                                programId.getProgram(), runId.getId()));
     dir.mkdirs();
     return dir;
