@@ -15,12 +15,15 @@
  */
 
 class TrackerMetadataController{
-  constructor($state, myTrackerApi, $scope) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
+    this.myAlertOnValium = myAlertOnValium;
 
     let entitySplit = this.$state.params.entityType.split(':');
+
+    this.entityType = entitySplit;
 
     let params = {
       scope: this.$scope,
@@ -153,9 +156,30 @@ class TrackerMetadataController{
 
     return fieldsArr;
   }
+
+  /* METADATA PROPERTIES CONTROL */
+  deleteProperty(key) {
+    let deleteParams = {
+      namespace: this.$state.params.namespace,
+      entityType: this.$state.params.entityType,
+      entityId: this.$state.params.entityId,
+      key: key,
+      scope: this.$scope
+    };
+    this.myTrackerApi.deleteEntityProperty(deleteParams)
+      .$promise
+      .then(() => {
+        delete this.properties.user[key];
+      }, (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
+  }
 }
 
-TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope'];
+TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerMetadataController', TrackerMetadataController);

@@ -142,6 +142,11 @@
             <tr ng-repeat="(key, value) in MetadataController.properties.user">
               <td>{{ key }}</td>
               <td>{{ value }}</td>
+              <td class="text-center">
+                <span class="fa fa-trash text-danger"
+                      ng-click="MetadataController.deleteProperty(key)">
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>

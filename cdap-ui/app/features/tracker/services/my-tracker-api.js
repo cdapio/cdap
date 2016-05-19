@@ -21,7 +21,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
       auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.programId + '/methods/auditlog/:entityType/:entityId',
       navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId,
-      trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId;
+      trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId,
+      propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -46,7 +47,11 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     getTrackerApp: myHelpers.getConfig('GET', 'REQUEST', trackerApp, false, { suppressErrors: true }),
     deployTrackerApp: myHelpers.getConfig('PUT', 'REQUEST', trackerApp),
     startTrackerProgram: myHelpers.getConfig('POST', 'REQUEST', trackerApp + '/:programType/:programId/start', false, { suppressErrors: true }),
-    trackerProgramStatus: myHelpers.getConfig('GET', 'REQUEST', trackerApp + '/:programType/:programId/status', false, { suppressErrors: true })
+    trackerProgramStatus: myHelpers.getConfig('GET', 'REQUEST', trackerApp + '/:programType/:programId/status', false, { suppressErrors: true }),
+
+
+    // METADATA PROPERTIES CONTROL
+    deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true })
   });
 }
 
