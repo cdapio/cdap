@@ -164,8 +164,6 @@ If the query's status is ``FINISHED`` and it has results, you can obtain the sch
 
    * - Parameter
      - Description
-   * - ``<namespace>``
-     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
@@ -236,8 +234,6 @@ If the batch size is not specified, the default is 20.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
-     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
