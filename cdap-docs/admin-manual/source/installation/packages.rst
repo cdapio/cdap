@@ -116,8 +116,8 @@ Advanced Topics
 
 .. _packages-highly-available:
 
-CDAP HA setup
--------------
+Enabling CDAP HA
+----------------
 Repeat the installation steps on additional boxes. The configuration settings (in
 ``cdap-site.xml``, *property:value*) needed to support high-availability are:
 

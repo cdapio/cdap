@@ -534,3 +534,14 @@ For Kerberos-enabled Hadoop clusters:
     rm -rf /yarn/nm/usercache/cdap
 
   Restart CDAP after removing the usercache(s).
+
+.. _cloudera-configuration-highly-available:
+
+Enabling CDAP HA
+----------------
+
+In addition to having a :ref:`cluster architecture admin-manual-install-deployment-architectures-ha>`
+that supports HA (high availability), these additional configuration steps need to followed and completed:
+
+
+
