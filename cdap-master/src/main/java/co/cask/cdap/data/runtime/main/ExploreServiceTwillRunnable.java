@@ -55,6 +55,7 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -74,6 +75,13 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
   protected void doInit(TwillContext context) {
     CConfiguration cConf = getCConfiguration();
     Configuration hConf = getConfiguration();
+    URL hiveSiteURL = getClass().getClassLoader().getResource("hive-site.xml");
+    if (hiveSiteURL == null) {
+      // should not happen, as its added as a twill resource in MasterServiceMain
+      LOG.warn("hive-site.xml could not be found as a resource.");
+    } else {
+      hConf.addResource(hiveSiteURL);
+    }
 
     // NOTE: twill client will try to load all the classes present here - including hive classes but it
     // will fail since Hive classes are not in master classpath, and ignore those classes silently
