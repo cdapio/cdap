@@ -1,0 +1,67 @@
+/*
+ * cdap-faqs.css_t
+ * ~~~~~~~~~~~~~~~~~
+ *
+ * Sphinx stylesheet -- CDAP theme for FAQs manual.
+ *
+ * :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
+ * :license: BSD, see LICENSE for details.
+ *
+ */
+
+@import url("cdap.css");
+
+div.toctree-wrapper.compound ul {
+  padding-left: 0px;
+  padding-top: 0px;
+}
+
+div.toctree-wrapper.compound li.toctree-l1 a.reference.internal {
+  background-color: #E0E0E0;
+  color: #111;
+  display: block;
+  font-size: 150%;
+  font-weight: bold;
+  margin: 15px 0px 10px -15px;
+  padding: 5px 0px 5px 15px;
+  text-shadow: 0px 1px 0px white;
+}
+
+div.toctree-wrapper.compound li.toctree-l1 + li {
+  padding-top: 0;
+}
+
+div.toctree-wrapper.compound li.toctree-l1 {
+  list-style-type: none;
+}
+
+div.toctree-wrapper.compound li.toctree-l1 ul {
+  padding-left: 30px;
+}
+
+div.toctree-wrapper.compound li.toctree-l2 {
+  color: #ff6600;
+  font-style: italic;
+  list-style-type: decimal;
+}
+
+div.toctree-wrapper.compound li.toctree-l2 a.reference.internal {
+  background-color: white;
+  color: #ff6600;
+  font-size: 100%;
+  font-weight: normal;
+  margin: 0px;
+  padding: 0px;
+}
+
+div.toctree-wrapper.compound li.toctree-l2 a.reference.internal:hover {
+  color: #005B81;
+  font-weight: bold;
+}
+
+p.rubric {
+    margin-left: -15px;
+    background-color: #9d9d9d;
+    color: white;
+    text-shadow: none;
+}
