@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _http-restful-api-query:
 
@@ -40,7 +40,7 @@ To submit a SQL query, post the query string to the ``queries`` URL::
 The body of the request must contain a JSON string of the form::
 
   {
-    "query": "<SQL-query-string>"
+    "query":"<SQL-query-string>"
   }
 
 where ``<SQL-query-string>`` is the actual SQL query.
@@ -50,7 +50,7 @@ Non-reservedKeywordsandReservedKeywords>`__, you must enclose the column name in
 For example::
 
   {
-    "query": "select `date` from stream_events"
+    "query":"select `date` from stream_events"
   }
 
 .. rubric:: HTTP Responses
@@ -279,9 +279,9 @@ been retrieved, then the returned list is empty.
      - ``POST <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next``
    * - HTTP Response
      - | ``[{"columns": [ 10, 5]},``
-       | `` {"columns": [ 20, 27]},``
-       | `` {"columns": [ 50, 6]},``
-       | `` {"columns": [ 90, 30]},``
+       | `` {"columns": [ 20, 27]},``
+       | `` {"columns": [ 50, 6]},``
+       | `` {"columns": [ 90, 30]},``
        | `` {"columns": [ 95, 91]}]``
    * - Description
      - Retrieve the results of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
@@ -305,8 +305,6 @@ This frees all resources that are held by this query.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
-     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
@@ -366,12 +364,12 @@ The results are returned as a JSON array, with each element containing informati
 
   [
     {
-        "timestamp": 1407192465183,
-        "statement": "SHOW TABLES",
-        "status": "FINISHED",
-        "query_handle": "319d9438-903f-49b8-9fff-ac71cf5d173d",
-        "has_results": true,
-        "is_active": false
+        "timestamp":1407192465183,
+        "statement":"SHOW TABLES",
+        "status":"FINISHED",
+        "query_handle":"319d9438-903f-49b8-9fff-ac71cf5d173d",
+        "has_results":true,
+        "is_active":false
     },
     ...
   ]
@@ -384,14 +382,14 @@ The results are returned as a JSON array, with each element containing informati
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/data/explore/queries``
    * - HTTP Response
-     - | ``[{``
+     - | ``[ {``
        | `` "timestamp": 1411266478717,``
        | `` "statement": "SELECT * FROM dataset_mydataset",``
        | `` "status": "FINISHED",``
        | `` "query_handle": "57cf1b01-8dba-423a-a8b4-66cd29dd75e2",``
        | `` "has_results": true,``
        | `` "is_active": false``
-       | ``}]``
+       | ``} ]``
    * - Description
      - Retrieves all queries
 
@@ -400,7 +398,7 @@ The results are returned as a JSON array, with each element containing informati
 
 Count of Active Queries
 -----------------------
-To return the count of active queries, use::
+To return the count of **active** queries, use::
 
    GET <base-url>/namespaces/<namespace>/data/explore/queries/count
 
@@ -424,9 +422,11 @@ Download Query Results
 ----------------------
 To download the results of a query, use::
 
-  POST <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/download
+  POST <base-url>/data/explore/queries/<query-handle>/download
 
 The results of the query are returned in CSV format.
+
+**Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
 
 .. list-table::
    :widths: 20 80
@@ -434,8 +434,6 @@ The results of the query are returned in CSV format.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
-     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted or via a list of queries
 
