@@ -28,20 +28,25 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.spark.app.ScalaFileCountSparkProgram;
 import co.cask.cdap.spark.app.SparkAppUsingFileSet;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -54,11 +59,20 @@ import java.util.concurrent.TimeUnit;
  */
 public class SparkFileSetTestRun extends TestFrameworkTestBase {
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+
+  private static File artifactJar;
   private ApplicationManager applicationManager;
 
+  @BeforeClass
+  public static void init() throws IOException {
+    artifactJar = createArtifactJar(SparkAppUsingFileSet.class);
+  }
+
   @Before
-  public void init() {
-    applicationManager = deployApplication(SparkAppUsingFileSet.class);
+  public void deploy() throws Exception {
+    applicationManager = deployWithArtifact(SparkAppUsingFileSet.class, artifactJar);
   }
 
   @Test

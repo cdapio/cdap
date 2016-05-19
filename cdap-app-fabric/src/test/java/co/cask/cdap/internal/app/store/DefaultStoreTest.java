@@ -38,6 +38,7 @@ import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.AbstractFlow;
+import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -66,11 +67,11 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowNodeThrowable;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -83,12 +84,8 @@ import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,20 +104,6 @@ public class DefaultStoreTest {
   private static DefaultStore store;
   private static DefaultNamespaceStore nsStore;
   private static Scheduler scheduler;
-
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
-  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
-    @Override
-    public File get() {
-      try {
-        return tmpFolder.newFolder();
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  };
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -144,10 +127,14 @@ public class DefaultStoreTest {
 
   @Test
   public void testLoadingProgram() throws Exception {
-    AppFabricTestHelper.deployApplicationWithManager(ToyApp.class, TEMP_FOLDER_SUPPLIER);
+    ApplicationSpecification appSpec = Specifications.from(new ToyApp());
+    store.addApplication(NamespaceId.DEFAULT.app(appSpec.getName()).toId(), appSpec);
+
     ProgramDescriptor descriptor = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp",
                                                                      ProgramType.FLOW, "ToyFlow"));
     Assert.assertNotNull(descriptor);
+    FlowSpecification flowSpec = descriptor.getSpecification();
+    Assert.assertEquals("ToyFlow", flowSpec.getName());
   }
 
   @Test(expected = RuntimeException.class)
@@ -572,9 +559,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testServiceInstances() throws Exception {
-    AppFabricTestHelper.deployApplicationWithManager(AppWithServices.class, TEMP_FOLDER_SUPPLIER);
-    AbstractApplication app = new AppWithServices();
-    ApplicationSpecification appSpec = Specifications.from(app);
+    ApplicationSpecification appSpec = Specifications.from(new AppWithServices());
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), appSpec.getName());
     store.addApplication(appId, appSpec);
 
@@ -598,8 +583,6 @@ public class DefaultStoreTest {
 
   @Test
   public void testSetFlowletInstances() throws Exception {
-    AppFabricTestHelper.deployApplicationWithManager(WordCountApp.class, TEMP_FOLDER_SUPPLIER);
-
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
@@ -624,8 +607,8 @@ public class DefaultStoreTest {
 
   @Test
   public void testWorkerInstances() throws Exception {
-    AppFabricTestHelper.deployApplicationWithManager(AppWithWorker.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AppWithWorker());
+    store.addApplication(NamespaceId.DEFAULT.app(spec.getName()).toId(), spec);
 
     Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
     Id.Program programId = Id.Program.from(appId, ProgramType.WORKER, AppWithWorker.WORKER);
@@ -833,8 +816,9 @@ public class DefaultStoreTest {
   @Test
   public void testCheckDeletedProgramSpecs() throws Exception {
     //Deploy program with all types of programs.
-    AppFabricTestHelper.deployApplicationWithManager(AllProgramsApp.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
+    store.addApplication(appId.toId(), spec);
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getMapReduce().keySet());
@@ -847,16 +831,15 @@ public class DefaultStoreTest {
     //Verify if there are 6 program specs in AllProgramsApp
     Assert.assertEquals(7, specsToBeVerified.size());
 
-    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
     // Check the diff with the same app - re-deployment scenario where programs are not removed.
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId,  spec);
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId.toId(),  spec);
     Assert.assertEquals(0, deletedSpecs.size());
 
     //Get the spec for app that contains no programs.
     spec = Specifications.from(new NoProgramsApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
-    deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    deletedSpecs = store.getDeletedProgramSpecifications(appId.toId(), spec);
     Assert.assertEquals(7, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
@@ -871,21 +854,20 @@ public class DefaultStoreTest {
   @Test
   public void testCheckDeletedWorkflow() throws Exception {
     //Deploy program with all types of programs.
-    AppFabricTestHelper.deployApplicationWithManager(AllProgramsApp.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
+    store.addApplication(appId.toId(), spec);
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
     specsToBeDeleted.addAll(spec.getWorkflows().keySet());
 
     Assert.assertEquals(1, specsToBeDeleted.size());
 
-    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
-
     //Get the spec for app that contains only flow and mapreduce - removing workflows.
     spec = Specifications.from(new FlowMapReduceApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId.toId(), spec);
     Assert.assertEquals(2, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
@@ -925,8 +907,9 @@ public class DefaultStoreTest {
 
   @Test
   public void testDynamicScheduling() throws Exception {
-    AppFabricTestHelper.deployApplicationWithManager(AppWithWorkflow.class, TEMP_FOLDER_SUPPLIER);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
+    ApplicationSpecification spec = Specifications.from(new AppWithWorkflow());
+    ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
+    store.addApplication(appId.toId(), spec);
 
     Map<String, ScheduleSpecification> schedules = getSchedules(appId);
     Assert.assertEquals(0, schedules.size());
@@ -965,8 +948,8 @@ public class DefaultStoreTest {
     Assert.assertEquals(null, schedules.get("Schedule2"));
   }
 
-  private Map<String, ScheduleSpecification> getSchedules(Id.Application appId) {
-    ApplicationSpecification application = store.getApplication(appId);
+  private Map<String, ScheduleSpecification> getSchedules(ApplicationId appId) {
+    ApplicationSpecification application = store.getApplication(appId.toId());
     Assert.assertNotNull(application);
     return application.getSchedules();
   }
