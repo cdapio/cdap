@@ -68,8 +68,9 @@ For example::
 
 .. rubric:: Comments
 
-If the query execution was successfully initiated, the body will contain a handle 
-used to identify the query in subsequent requests::
+If the query execution was successfully initiated, the body of the
+response will contain a handle that can be used to identify the query in
+subsequent requests::
 
   { "handle":"<query-handle>" }
 
@@ -153,7 +154,9 @@ Obtaining the Result Schema
 ---------------------------
 If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
 
-  GET <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/schema
+  GET <base-url>/data/explore/queries/<query-handle>/schema
+
+**Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
 
 .. list-table::
    :widths: 20 80
@@ -215,7 +218,9 @@ Retrieving Query Results
 Query results can be retrieved in batches after the query is finished, optionally specifying the batch
 size in the body of the request::
 
-  POST <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/next
+  POST <base-url>/data/explore/queries/<query-handle>/next
+
+**Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
 
 The body of the request can contain a JSON string specifying the batch size::
 
@@ -288,9 +293,11 @@ Closing a Query
 ---------------
 The query can be closed by issuing an HTTP DELETE against its URL::
 
-  DELETE <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>
+  DELETE <base-url>/data/explore/queries/<query-handle>
 
 This frees all resources that are held by this query.
+
+**Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
 
 .. list-table::
    :widths: 20 80

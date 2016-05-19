@@ -1,0 +1,10 @@
+
+.. To use this include, define these replacements:
+.. example
+.. example-italic
+.. application-overview-page
+
+.. |example-artifact| replace:: |example|
+.. |example-dir|      replace:: |example|
+
+.. include:: _includes/_building-running-base.txt
