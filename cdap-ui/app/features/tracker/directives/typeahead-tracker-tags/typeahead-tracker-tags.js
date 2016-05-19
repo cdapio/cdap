@@ -14,11 +14,11 @@
  * the License.
  */
 
-angular.module(PKG.name + '.commons')
+angular.module(PKG.name + '.feature.tracker')
   .directive('myTypeaheadTrackerTags', function() {
     return {
       restrict: 'EA',
-      templateUrl: 'typeahead-tracker-tags/typeahead-tracker-tags.html',
+      templateUrl: '/assets/features/tracker/directives/typeahead-tracker-tags/typeahead-tracker-tags.html',
       scope: {
         config: '='
       },

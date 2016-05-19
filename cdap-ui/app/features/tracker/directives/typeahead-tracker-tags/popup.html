@@ -13,16 +13,10 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<input
-  type="text"
-  ng-model="TypeaheadTrackerTagsCtrl.model"
-  typeahead-popup-template-url="typeahead-tracker-tags/popup.html"
-  typeahead-min-length="0"
-  class="form-control"
-  placeholder="Enter new Tag"
-  typeahead-show-hint="true"
-  data-watch-options="true"
-  typeahead-select-on-exact="true"
-  typeahead-on-select = "TypeaheadTrackerTagsCtrl.onTagsSelect($item, $model, $label, $event)"
-  uib-typeahead = "data.label as data.label for data in TypeaheadTrackerTagsCtrl.list  | filter:{name:$viewValue}"
-/>
+
+<ul class="dropdown-menu" role="listbox" ng-show="isOpen() && !moveInProgress">
+  <li ng-repeat="match in matches track by $index" ng-class="{active: isActive($index), 'preferred-tag': match.model.preferredTag > 0 }"
+      ng-mouseenter="selectActive($index)" ng-click="selectMatch($index)" role="option" id="{{::match.id}}">
+    <div uib-typeahead-match index="$index" match="match" query="query" template-url="templateUrl"></div>
+  </li>
+</ul>

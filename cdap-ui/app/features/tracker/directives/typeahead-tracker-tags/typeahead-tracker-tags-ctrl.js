@@ -14,12 +14,12 @@
  * the License.
  */
 
-angular.module(PKG.name + '.commons')
+angular.module(PKG.name + '.feature.tracker')
   .controller('TypeaheadTrackerTagsCtrl', function() {
     this.list = [ ];
     this.modelLoading = false;
     this.isOpen = true;
-    this.template = 'typeahead-tracker-tags/popup.html';
+    this.template = '/assets/features/tracker/directives/typeahead-tracker-tags/popup.html';
     this.list = [
       {
         name: 'Tag1',
@@ -52,8 +52,8 @@ angular.module(PKG.name + '.commons')
       return {
         name: tag.name,
         count: tag.count,
-        label: tag.name + ' (' + tag.count + ') ',
-        preferredTag: (tag.preferredTag? tag.count: -1)
+        label: tag.preferredTag ? (tag.name + ' (' + tag.count + ') ') : tag.name,
+        preferredTag: (tag.preferredTag ? tag.count: -1)
       };
     });
     this.list.sort(function(a,b) {
