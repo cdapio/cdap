@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Examples
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -44,6 +44,8 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Hello World <hello-world>`
     - A simple HelloWorld App that's written using CDAP. It introduces how the components stream, flow, dataset,
       and service are used in a CDAP application.
+  * - :doc:`Clicks and Views <clicks-and-views>`
+    - An application that demonstrates a reduce-side join across two streams using a MapReduce program.
   * - :doc:`Count Random <count-random>`
     - An application that demonstrates the ``@Tick`` feature of flows. It uses a tick method to generate random
       numbers which are then counted by downstream flowlets.
