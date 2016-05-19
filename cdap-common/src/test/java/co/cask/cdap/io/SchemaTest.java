@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,13 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.codehaus.jackson.node.IntNode;
+import org.codehaus.jackson.node.TextNode;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,6 +36,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -146,6 +151,48 @@ public class SchemaTest {
       Schema.Field.of("y", Schema.nullableOf(Node5.SCHEMA)));
     private Node4 x;
     private Node5 y;
+  }
+
+  @Test
+  public void testAvroEnumSchema() throws Exception {
+    org.apache.avro.Schema schema = org.apache.avro.Schema.createEnum("UserInterests", "Describes interests of user",
+                                                                        "org.example.schema",
+                                                                        ImmutableList.of("CRICKET", "BASEBALL"));
+
+    Schema parsedSchema = Schema.parseJson(schema.toString());
+    Assert.assertEquals(ImmutableSet.of("CRICKET", "BASEBALL"), parsedSchema.getEnumValues());
+  }
+
+  @Test
+  public void testAvroRecordSchema() throws Exception {
+    org.apache.avro.Schema avroStringSchema = org.apache.avro.Schema.create(org.apache.avro.Schema.Type.STRING);
+    org.apache.avro.Schema avroIntSchema = org.apache.avro.Schema.create(org.apache.avro.Schema.Type.INT);
+
+
+    org.apache.avro.Schema schema = org.apache.avro.Schema.createRecord("UserInfo", "Describes user information",
+                                                                        "org.example.schema", false);
+
+    List<org.apache.avro.Schema.Field> fields = new ArrayList<>();
+
+    org.apache.avro.Schema.Field field = new org.apache.avro.Schema.Field("username", avroStringSchema,
+                                                                          "Field represents username",
+                                                                          new TextNode("unknown"));
+    fields.add(field);
+
+    field = new org.apache.avro.Schema.Field("age", avroIntSchema, "Field represents age of user",
+                                             new IntNode(-1));
+    fields.add(field);
+
+    schema.setFields(fields);
+    Schema parsedSchema = Schema.parseJson(schema.toString());
+    Assert.assertTrue("UserInfo".equals(parsedSchema.getRecordName()));
+    Assert.assertEquals(2, parsedSchema.getFields().size());
+    Schema.Field parsedField = parsedSchema.getFields().get(0);
+    Assert.assertTrue("username".equals(parsedField.getName()));
+    Assert.assertTrue("STRING".equals(parsedField.getSchema().getType().toString()));
+    parsedField = parsedSchema.getFields().get(1);
+    Assert.assertTrue("age".equals(parsedField.getName()));
+    Assert.assertTrue("INT".equals(parsedField.getSchema().getType().toString()));
   }
 
   @Test

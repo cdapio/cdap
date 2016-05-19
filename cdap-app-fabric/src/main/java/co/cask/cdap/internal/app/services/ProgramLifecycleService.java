@@ -51,7 +51,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
@@ -103,13 +103,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final String appFabricDir;
   private final PreferencesStore preferencesStore;
-  private final AuthorizerInstantiatorService authorizerInstantiatorService;
+  private final AuthorizerInstantiator authorizerInstantiator;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           NamespacedLocationFactory namespacedLocationFactory, PreferencesStore preferencesStore,
-                          AuthorizerInstantiatorService authorizerInstantiatorService) {
+                          AuthorizerInstantiator authorizerInstantiator) {
     this.store = store;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
@@ -119,7 +119,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
     this.cConf = cConf;
     this.preferencesStore = preferencesStore;
-    this.authorizerInstantiatorService = authorizerInstantiatorService;
+    this.authorizerInstantiator = authorizerInstantiator;
   }
 
   @Override
@@ -266,7 +266,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug) throws Exception {
-    authorizerInstantiatorService.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
+    authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
     ProgramDescriptor programDescriptor = store.loadProgram(programId.toId());
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -380,7 +380,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
   public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
-    authorizerInstantiatorService.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
+    authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
     if (runtimeInfo == null) {
       if (!store.applicationExists(programId.toId().getApplication())) {
@@ -417,7 +417,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               {@link Action#ADMIN} privileges on the program.
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
-    authorizerInstantiatorService.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
     if (!store.programExists(programId.toId())) {
       throw new NotFoundException(programId.toId());
     }
@@ -486,7 +486,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               To set instances for a program, a user needs {@link Action#ADMIN} on the program.
    */
   public void setInstances(ProgramId programId, int instances, @Nullable String component) throws Exception {
-    authorizerInstantiatorService.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
     if (instances < 1) {
       throw new BadRequestException(String.format("Instance count should be greater than 0. Got %s.", instances));
     }

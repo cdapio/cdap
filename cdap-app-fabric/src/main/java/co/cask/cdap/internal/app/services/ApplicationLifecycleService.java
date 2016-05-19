@@ -66,7 +66,7 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -120,7 +120,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final MetadataStore metadataStore;
-  private final AuthorizerInstantiatorService authorizerInstantiatorService;
+  private final AuthorizerInstantiator authorizerInstantiator;
 
   @Inject
   ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
@@ -131,7 +131,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataStore metadataStore,
-                              AuthorizerInstantiatorService authorizerInstantiatorService) {
+                              AuthorizerInstantiator authorizerInstantiator) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.configuration = configuration;
@@ -145,7 +145,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
     this.metadataStore = metadataStore;
-    this.authorizerInstantiatorService = authorizerInstantiatorService;
+    this.authorizerInstantiator = authorizerInstantiator;
   }
 
   @Override
@@ -237,7 +237,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     // App exists. Check if the current user has admin privileges on it before updating. The user's write privileges on
     // the namespace will get enforced in the deployApp method.
-    authorizerInstantiatorService.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     // if no artifact is given, use the current one.
@@ -457,7 +457,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail) throws Exception {
     // Enforce that the current principal has write access to the namespace the app is being deployed to
-    authorizerInstantiatorService.get().enforce(namespaceId, SecurityRequestContext.toPrincipal(), Action.WRITE);
+    authorizerInstantiator.get().enforce(namespaceId, SecurityRequestContext.toPrincipal(), Action.WRITE);
 
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
@@ -473,8 +473,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
     ApplicationWithPrograms applicationWithPrograms = manager.deploy(deploymentInfo).get();
     // Deployment successful. Grant all privileges on this app to the current principal.
-    authorizerInstantiatorService.get().grant(applicationWithPrograms.getApplicationId(),
-                                              SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+    authorizerInstantiator.get().grant(applicationWithPrograms.getApplicationId(),
+                                       SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
     return applicationWithPrograms;
   }
 
@@ -489,7 +489,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteApp(Id.Application appId, ApplicationSpecification spec) throws Exception {
     // enfore ADMIN privileges on the app
-    authorizerInstantiatorService.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
     // first remove all privileges on the app
     revokePrivileges(appId.toEntityId(), spec);
 
@@ -542,9 +542,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   // TODO: CDAP-5427 - This should be a single operation
   private void revokePrivileges(ApplicationId appId, ApplicationSpecification appSpec) throws Exception {
     for (ProgramId programId : getAllPrograms(appId, appSpec)) {
-      authorizerInstantiatorService.get().revoke(programId);
+      authorizerInstantiator.get().revoke(programId);
     }
-    authorizerInstantiatorService.get().revoke(appId);
+    authorizerInstantiator.get().revoke(appId);
   }
 
   /**

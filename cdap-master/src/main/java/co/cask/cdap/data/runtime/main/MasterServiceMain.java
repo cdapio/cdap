@@ -60,6 +60,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -147,6 +148,7 @@ public class MasterServiceMain extends DaemonMain {
   private final ServiceStore serviceStore;
   private final LeaderElection leaderElection;
   private final TokenSecureStoreUpdater secureStoreUpdater;
+  private final AuthorizerInstantiator authorizerInstantiator;
 
   private volatile boolean stopped;
 
@@ -173,6 +175,7 @@ public class MasterServiceMain extends DaemonMain {
     this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     this.serviceStore = injector.getInstance(ServiceStore.class);
     this.secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
+    this.authorizerInstantiator = baseInjector.getInstance(AuthorizerInstantiator.class);
     this.leaderElection = createLeaderElection();
     // leader election will normally stay running. Will only stop if there was some issue starting up.
     this.leaderElection.addListener(new ServiceListenerAdapter() {
@@ -245,6 +248,8 @@ public class MasterServiceMain extends DaemonMain {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       Closeables.closeQuietly(baseInjector.getInstance(ExploreClient.class));
     }
+
+    Closeables.closeQuietly(authorizerInstantiator);
   }
 
   @Override
