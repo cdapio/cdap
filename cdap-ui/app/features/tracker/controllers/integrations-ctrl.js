@@ -53,7 +53,7 @@ class TrackerIntegrationsController {
         navigatorURL: '',
         metadataParentURI: ''
       },
-      metadataKafkaConfig: {
+      auditKafkaConfig: {
         zookeeperString: '',
         topic: '',
         numPartitions: '',
@@ -105,7 +105,7 @@ class TrackerIntegrationsController {
         let zookeeperKafka = res.filter( (config) => {
           return config.name === 'kafka.zookeeper.namespace';
         });
-        this.navigatorInfo.metadataKafkaConfig.zookeeperString = zookeeperQuorum[0].value + '/' + zookeeperKafka[0].value;
+        this.navigatorInfo.auditKafkaConfig.zookeeperString = zookeeperQuorum[0].value + '/' + zookeeperKafka[0].value;
       });
   }
 
@@ -129,7 +129,7 @@ class TrackerIntegrationsController {
           this.originalConfig = angular.copy(config);
 
           this.navigatorInfo.navigatorConfig = config.navigatorConfig;
-          this.navigatorInfo.metadataKafkaConfig = config.metadataKafkaConfig;
+          this.navigatorInfo.auditKafkaConfig = config.auditKafkaConfig;
 
           this.getNavigatorStatus();
         } catch (e) {
@@ -271,16 +271,16 @@ class TrackerIntegrationsController {
 
     let appConfig = {
       navigatorConfig: {},
-      metadataKafkaConfig: {}
+      auditKafkaConfig: {}
     };
     angular.forEach(this.navigatorInfo.navigatorConfig, (value, key) => {
       if (value.length) {
         appConfig.navigatorConfig[key] = value;
       }
     });
-    angular.forEach(this.navigatorInfo.metadataKafkaConfig, (value, key) => {
+    angular.forEach(this.navigatorInfo.auditKafkaConfig, (value, key) => {
       if (value.length) {
-        appConfig.metadataKafkaConfig[key] = value;
+        appConfig.auditKafkaConfig[key] = value;
       }
     });
 
@@ -306,7 +306,7 @@ class TrackerIntegrationsController {
 
   cancelSetup() {
     this.navigatorInfo.navigatorConfig = angular.copy(this.originalConfig.navigatorConfig);
-    this.navigatorInfo.metadataKafkaConfig = angular.copy(this.originalConfig.metadataKafkaConfig);
+    this.navigatorInfo.auditKafkaConfig = angular.copy(this.originalConfig.auditKafkaConfig);
     this.navigatorSetup.isOpen = false;
   }
 
