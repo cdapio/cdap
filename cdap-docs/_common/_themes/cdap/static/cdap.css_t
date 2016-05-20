@@ -549,3 +549,10 @@ div.tab-contents {
     padding-bottom: 16px;
 }
 
+
+/* -- Styles for Administration manual installation step images ------------- */
+
+div.admin-manual-step-images.container {
+    margin-left: -20px;
+    margin-bottom: -20px;
+}
