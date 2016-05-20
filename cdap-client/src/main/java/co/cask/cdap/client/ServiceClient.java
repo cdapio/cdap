@@ -24,6 +24,7 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
@@ -98,6 +99,34 @@ public class ServiceClient {
       builder.addAll(handlerSpecification.getEndpoints());
     }
     return builder.build();
+  }
+
+  /**
+   * Checks whether the {@link Service} is active.
+   *
+   * @param service ID of the service
+   * @return 'Active' message when service is active
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found
+   * @throws ServiceUnavailableException if the service has started but is not available right now
+   */
+  public String getAvailability(Id.Service service) throws IOException, UnauthenticatedException, NotFoundException,
+    ServiceUnavailableException {
+    URL url = config.resolveNamespacedURLV3(service.getNamespace(),
+                                            String.format("apps/%s/services/%s/available",
+                                                          service.getApplicationId(), service.getId()));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST,
+                                               HttpURLConnection.HTTP_UNAVAILABLE);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(service);
+    }
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
+      throw new ServiceUnavailableException(service.getId());
+    }
+    return response.getResponseBodyAsString();
   }
 
   public URL getServiceURL(Id.Service service)

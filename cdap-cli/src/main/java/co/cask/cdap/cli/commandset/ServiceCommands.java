@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.commandset;
 
 import co.cask.cdap.cli.command.CallServiceCommand;
+import co.cask.cdap.cli.command.CheckServiceAvailabilityCommand;
 import co.cask.cdap.cli.command.GetServiceEndpointsCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -35,6 +36,7 @@ public class ServiceCommands extends CommandSet<Command> {
       ImmutableList.<Command>builder()
         .add(injector.getInstance(CallServiceCommand.class))
         .add(injector.getInstance(GetServiceEndpointsCommand.class))
+        .add(injector.getInstance(CheckServiceAvailabilityCommand.class))
         .build());
   }
 }
