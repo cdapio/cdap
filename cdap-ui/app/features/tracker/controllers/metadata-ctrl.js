@@ -15,11 +15,12 @@
  */
 
 class TrackerMetadataController{
-  constructor($state, myTrackerApi, $scope, myAlertOnValium) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
+    this.$timeout = $timeout;
 
     let entitySplit = this.$state.params.entityType.split(':');
 
@@ -177,9 +178,58 @@ class TrackerMetadataController{
         });
       });
   }
+
+  addProperty() {
+    if (!this.propertyInput.key && !this.propertyInput.value) { return; }
+
+    let addParams = {
+      namespace: this.$state.params.namespace,
+      entityType: this.$state.params.entityType,
+      entityId: this.$state.params.entityId,
+      scope: this.$scope
+    };
+
+    let obj = {};
+    obj[this.propertyInput.key] = this.propertyInput.value;
+
+    this.myTrackerApi.addEntityProperty(addParams, obj)
+      .$promise
+      .then(() => {
+        this.properties.user[this.propertyInput.key] = this.propertyInput.value;
+
+        this.propertyInput.key = '';
+        this.propertyInput.value = '';
+        // this.addPropertyEnable = false;
+        this.propertyFocus();
+
+
+      }, (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
+  }
+
+  propertyKeypress(event) {
+    switch (event.keyCode) {
+      case 13:
+        this.addProperty();
+        break;
+      case 27:
+        this.addPropertyEnable = false;
+    }
+  }
+
+  propertyFocus() {
+    this.$timeout( () => {
+      let elem = document.getElementById('property-key-input');
+      angular.element(elem)[0].focus();
+    });
+  }
 }
 
-TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium'];
+TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerMetadataController', TrackerMetadataController);
