@@ -70,8 +70,7 @@ to know which source each record came from. This is possible by calling the ``ge
 
 - Once the application has been deployed, `run the example <#running-the-example>`__.
 
-- When finished, you can :ref:`stop <cdap-building-running-stopping>`
-  and :ref:`remove the application <cdap-building-running-removing>`.
+- When finished, you can `remove the application <#removing-the-application>`__.
   
 Running the Example
 ===================
@@ -160,6 +159,7 @@ With our sample data, the click through rate is ``0.5``::
   +=============+
   Fetched 1 rows
 
-.. Stopping and Removing the Application
-.. =====================================
-.. include:: _includes/_stopping-removing-application.txt
+Removing the Application
+========================
+.. include:: _includes/_removing-application.txt
+  :start-after: **Removing the Application**
