@@ -159,6 +159,11 @@ class TrackerMetadataController{
   }
 
   /* METADATA PROPERTIES CONTROL */
+  /*
+    TODO:
+      - Add support for Stream Views
+      - What to do with externalDataset type
+  */
   enableAddProperty() {
     this.addPropertyEnable = true;
     this.propertyFocus();
@@ -204,10 +209,7 @@ class TrackerMetadataController{
 
         this.propertyInput.key = '';
         this.propertyInput.value = '';
-        // this.addPropertyEnable = false;
         this.propertyFocus();
-
-
       }, (err) => {
         this.myAlertOnValium.show({
           type: 'danger',
