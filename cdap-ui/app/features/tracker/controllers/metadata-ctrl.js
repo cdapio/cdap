@@ -14,7 +14,11 @@
  * the License.
  */
 
-class TrackerMetadataController{
+/**
+ * This class is responsible for controlling the Metadata View in Tracker
+ * entity detai page.
+ **/
+class TrackerMetadataController {
   constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
@@ -220,10 +224,10 @@ class TrackerMetadataController{
 
   propertyKeypress(event) {
     switch (event.keyCode) {
-      case 13:
+      case 13: // Enter Key
         this.addProperty();
         break;
-      case 27:
+      case 27: // Esc key
         this.addPropertyEnable = false;
     }
   }
