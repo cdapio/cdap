@@ -539,7 +539,7 @@ For Kerberos-enabled Hadoop clusters:
 
 Enabling CDAP HA
 ----------------
-In addition to having a :ref:`cluster architecture admin-manual-install-deployment-architectures-ha>`
+In addition to having a :ref:`cluster architecture <admin-manual-install-deployment-architectures-ha>`
 that supports HA (high availability), these additional configuration steps need to followed and completed:
 
 CDAP Master
