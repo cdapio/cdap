@@ -1,0 +1,41 @@
+Enabling CDAP HA
+----------------
+In addition to having a :ref:`cluster architecture <admin-manual-install-deployment-architectures-ha>`
+that supports HA (high availability), these additional configuration steps need to followed and completed:
+
+CDAP Master
+...........
+- Install multiple instances of the CDAP Master on different nodes.
+- The instances coordinate amongst themselves, setting a leader and followers.
+
+CDAP Router
+...........
+- Install multiple instances of the CDAP Router on different nodes.
+- Sync the configuration files (``cdap-site.xml``, ``cdap-security.xml``) on the nodes.
+- Place a load balancer, if desired, in front of these nodes.
+- The CDAP Router is stateless, and simply routes requests to the appropriate service.
+
+CDAP Kafka
+..........
+- Two properties need to be set in the ``cdap-site.xml`` files on each node.
+- The **Kafka brokers list** is comma-separated and followed by ``/${root.namespace}``:
+
+    ``kafka.seed.brokers``: ``127.0.0.1:9092,.../${root.namespace}`` 
+  
+- The **replication factor** is used to replicate Kafka messages across multiple
+  machines to prevent data loss in the event of a hardware failure:
+  
+    ``kafka.default.replication.factor``: 2
+
+- The recommended setting is to run at least two Kafka servers; set this property
+  to the number of Kafka servers.
+
+CDAP UI
+.......
+- Install multiple instances of the CDAP UI on different nodes.
+
+CDAP Authentication Server
+..........................
+- Install multiple instances of the CDAP Authentication Server on different nodes.
+- When an initial request is made to the Authentication Server, instead
+  of returning a single VIP (virtual IP), it will return a list of routes.

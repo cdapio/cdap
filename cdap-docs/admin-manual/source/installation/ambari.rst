@@ -324,6 +324,7 @@ the address of the node running the CDAP UI service at port 9999.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
+.. _ambari-installation-advanced-topics:
 
 Advanced Topics
 ===============

@@ -490,6 +490,7 @@ port ``9999`` of the host where the UI role instance is running.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
+.. _cloudera-installation-advanced-topics:
 
 Advanced Topics
 ===============
@@ -544,37 +545,36 @@ that supports HA (high availability), these additional configuration steps need 
 
 CDAP Master
 ...........
-- Install and start multiple instances of the CDAP Master on different nodes.
+- Install multiple instances of the CDAP Master on different nodes.
 - The instances coordinate amongst themselves, setting a leader and followers.
 
 CDAP Router
 ...........
-- Install and start multiple instances of the CDAP Router on different nodes.
+- Install multiple instances of the CDAP Router on different nodes.
 - Sync the configuration files (``cdap-site.xml``, ``cdap-security.xml``) on the nodes.
 - Place a load balancer, if desired, in front of these nodes.
 - The CDAP Router is stateless, and simply routes requests to the appropriate service.
 
 CDAP Kafka
 ..........
-- The seed brokers are used to replicate Kafka messages across multiple machines to prevent data loss in 
-  the event of a hardware failure.
-- The list of Kafka seed brokers is generated automatically, but the
+- Two properties govern the Kafka setting in the cluster.
+- The **list of Kafka seed brokers** is generated automatically, but the
   replication factor (``kafka.default.replication.factor``) is not set
   automatically. Instead, it needs to be set manually.
+- The **replication factor** is used to replicate Kafka messages across
+  multiple machines to prevent data loss in the event of a hardware
+  failure.
 - The recommended setting is to run at least two Kafka servers; set this
-  to the number of Kafka servers.
+  property to the number of Kafka servers.
 
 CDAP UI
 .......
-- Install and start multiple instances of the CDAP UI on different nodes.
+- Install multiple instances of the CDAP UI on different nodes.
 - For Cloudera Manager, the CDAP UI and the CDAP Router need to be on
   the same node so that the UI talks to the correct (the same) Router.
 
 CDAP Authentication Server
 ..........................
-- Install and start multiple instances of the CDAP Authentication Server on different nodes.
+- Install multiple instances of the CDAP Authentication Server on different nodes.
 - When an initial request is made to the Authentication Server, instead
   of returning a single VIP (virtual IP), it will return a list of routes.
-
-
-
