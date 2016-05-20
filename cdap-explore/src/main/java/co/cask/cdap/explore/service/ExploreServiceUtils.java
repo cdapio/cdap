@@ -135,7 +135,9 @@ public class ExploreServiceUtils {
   public static boolean shouldEscapeColumns(Configuration hConf) {
     // backtick support was added in Hive13.
     ExploreServiceUtils.HiveSupport hiveSupport = ExploreServiceUtils.checkHiveSupport(hConf.getClassLoader());
-    if (hiveSupport == ExploreServiceUtils.HiveSupport.HIVE_12) {
+    if (hiveSupport == HiveSupport.HIVE_12
+      || hiveSupport == HiveSupport.HIVE_CDH5_0
+      || hiveSupport == HiveSupport.HIVE_CDH5_1) {
       return false;
     }
 
