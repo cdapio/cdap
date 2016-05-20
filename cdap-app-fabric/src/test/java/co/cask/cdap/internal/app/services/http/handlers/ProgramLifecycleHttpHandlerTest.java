@@ -298,7 +298,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testFlowHistory() throws Exception {
     testHistory(WordCountApp.class,
-                Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), null);
+                Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
   }
 
   /**
@@ -308,16 +308,38 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMapreduceHistory() throws Exception {
     testHistory(DummyAppWithTrackingTable.class,
-                Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME), null);
+                Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME));
   }
 
-
+  /**
+   * Tests history of a non existing program
+   */
   @Test
-  public void testNonExisitingProgramHistory() throws Exception {
-    int[] a = new int[]{3};
-    testHistory(DummyAppWithTrackingTable.class,
-                Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, "NonExisiting"),
-                new ArrayList<Integer>(Arrays.asList(404)));
+  public void testNonExistingProgramHistory() throws Exception {
+
+    Id.Program program = Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+    String namespace = program.getNamespaceId();
+    try {
+      deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+      // first run
+      startProgram(program);
+      waitState(program, ProgramRunStatus.RUNNING.toString());
+      final String statusUrl = getVersionedAPIPath("apps/" + program.getApplicationId() +
+                                                     ProgramType.MAPREDUCE + "/NonExisting",
+                                                   Constants.Gateway.API_VERSION_3_TOKEN,
+                                                   program.getNamespaceId());
+      Assert.assertEquals(404, doPost(statusUrl).getStatusLine().getStatusCode());
+      stopProgram(program);
+      waitState(program, STOPPED);
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+    } finally {
+      HttpResponse httpResponse = doDelete(getVersionedAPIPath("apps/" + program.getApplicationId(),
+                                                               Constants.Gateway.API_VERSION_3_TOKEN,
+                                                               program.getNamespaceId()));
+      Assert.assertEquals(EntityUtils.toString(httpResponse.getEntity()),
+                          200, httpResponse.getStatusLine().getStatusCode());
+    }
   }
 
 
@@ -1094,7 +1116,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     }
   }
 
-  private void testHistory(Class<?> app, Id.Program program, List<Integer> expectedHttpErrorCodes) throws Exception {
+  private void testHistory(Class<?> app, Id.Program program) throws Exception {
     try {
       String namespace = program.getNamespaceId();
       deploy(app, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
@@ -1123,13 +1145,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
 
     } catch (Exception e) {
-      if (e instanceof HttpErrorStatusProvider) {
-        // expected
-        Assert.assertTrue(expectedHttpErrorCodes.contains(((HttpErrorStatusProvider) e).getStatusCode()));
-      } else {
-        // Log exception before finally block is called
         LOG.error("Got exception: ", e);
-      }
     } finally {
       HttpResponse httpResponse = doDelete(getVersionedAPIPath("apps/" + program.getApplicationId(),
                                                                Constants.Gateway.API_VERSION_3_TOKEN,
