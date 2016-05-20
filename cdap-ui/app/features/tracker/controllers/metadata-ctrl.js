@@ -159,6 +159,11 @@ class TrackerMetadataController{
   }
 
   /* METADATA PROPERTIES CONTROL */
+  enableAddProperty() {
+    this.addPropertyEnable = true;
+    this.propertyFocus();
+  }
+
   deleteProperty(key) {
     let deleteParams = {
       namespace: this.$state.params.namespace,

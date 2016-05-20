@@ -551,12 +551,44 @@ body.state-tracker-detail-entity {
           font-weight: 500;
           width: 30%;
         }
+        &:last-child {
+          width: 50px;
+        }
         pre {
           background: none;
           border: none;
           margin: 0;
           padding: 0;
           width: 70%;
+        }
+      }
+
+      .empty-row { height: 39px; }
+      .input-row {
+        @row-height: 39px;
+
+        height: @row-height;
+
+        td {
+          padding: 0;
+        }
+
+        .btn {
+          width: 100%;
+          height: @row-height;
+          border: none;
+          border-radius: 0;
+        }
+
+        .form-control {
+          height: @row-height;
+          width: 100%;
+          border: none;
+          border-radius: 0;
+
+          &:focus {
+            border: 1px solid @tracker-green;
+          }
         }
       }
     }
