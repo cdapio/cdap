@@ -403,12 +403,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
 
-    ProgramId id = (new NamespaceId(namespaceId)).app(appId).program(type, programId);
-    ProgramSpecification specification = lifecycleService.getProgramSpecification(id);
+    ProgramId program = (new NamespaceId(namespaceId)).app(appId).program(type, programId);
+    ProgramSpecification specification = lifecycleService.getProgramSpecification(program);
     if (specification == null) {
-      throw new NotFoundException(id);
+      throw new NotFoundException(program);
     }
-    getRuns(responder, Id.Program.from(namespaceId, appId, type, programId), status, start, end, resultLimit);
+    getRuns(responder, program.toId(), status, start, end, resultLimit);
   }
 
   /**

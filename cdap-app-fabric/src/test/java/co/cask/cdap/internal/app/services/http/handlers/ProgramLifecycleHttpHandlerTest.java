@@ -23,6 +23,7 @@ import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -78,6 +79,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -295,7 +298,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testFlowHistory() throws Exception {
     testHistory(WordCountApp.class,
-                Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
+                Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), null);
   }
 
   /**
@@ -305,8 +308,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMapreduceHistory() throws Exception {
     testHistory(DummyAppWithTrackingTable.class,
-                Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME));
+                Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME), null);
   }
+
+
+  @Test
+  public void testNonExisitingProgramHistory() throws Exception {
+    int[] a = new int[]{3};
+    testHistory(DummyAppWithTrackingTable.class,
+                Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, "NonExisiting"),
+                new ArrayList<Integer>(Arrays.asList(404)));
+  }
+
 
   /**
    * Tests history of a workflow.
@@ -1081,7 +1094,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     }
   }
 
-  private void testHistory(Class<?> app, Id.Program program) throws Exception {
+  private void testHistory(Class<?> app, Id.Program program, List<Integer> expectedHttpErrorCodes) throws Exception {
     try {
       String namespace = program.getNamespaceId();
       deploy(app, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
@@ -1110,8 +1123,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
 
     } catch (Exception e) {
-      // Log exception before finally block is called
-      LOG.error("Got exception: ", e);
+      if (e instanceof HttpErrorStatusProvider) {
+        // expected
+        Assert.assertTrue(expectedHttpErrorCodes.contains(((HttpErrorStatusProvider) e).getStatusCode()));
+      } else {
+        // Log exception before finally block is called
+        LOG.error("Got exception: ", e);
+      }
     } finally {
       HttpResponse httpResponse = doDelete(getVersionedAPIPath("apps/" + program.getApplicationId(),
                                                                Constants.Gateway.API_VERSION_3_TOKEN,
