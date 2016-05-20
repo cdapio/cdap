@@ -52,6 +52,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -316,29 +317,26 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testNonExistingProgramHistory() throws Exception {
-
-    Id.Program program = Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
-    String namespace = program.getNamespaceId();
+    ProgramId program = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+    String namespace = program.getNamespace();
     try {
       deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
       // first run
-      startProgram(program);
-      waitState(program, ProgramRunStatus.RUNNING.toString());
-      final String statusUrl = getVersionedAPIPath("apps/" + program.getApplicationId() +
+      startProgram(program.toId());
+      waitState(program.toId(), ProgramRunStatus.RUNNING.toString());
+      final String statusUrl = getVersionedAPIPath("apps/" + program.toId().getApplicationId() +
                                                      ProgramType.MAPREDUCE + "/NonExisting",
                                                    Constants.Gateway.API_VERSION_3_TOKEN,
-                                                   program.getNamespaceId());
+                                                   program.toId().getNamespaceId());
       Assert.assertEquals(404, doPost(statusUrl).getStatusLine().getStatusCode());
-      stopProgram(program);
-      waitState(program, STOPPED);
+      stopProgram(program.toId());
+      waitState(program.toId(), STOPPED);
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
     } finally {
-      HttpResponse httpResponse = doDelete(getVersionedAPIPath("apps/" + program.getApplicationId(),
+      doDelete(getVersionedAPIPath("apps/" + program.toId().getApplicationId(),
                                                                Constants.Gateway.API_VERSION_3_TOKEN,
-                                                               program.getNamespaceId()));
-      Assert.assertEquals(EntityUtils.toString(httpResponse.getEntity()),
-                          200, httpResponse.getStatusLine().getStatusCode());
+                                                               program.toId().getNamespaceId()));
     }
   }
 
