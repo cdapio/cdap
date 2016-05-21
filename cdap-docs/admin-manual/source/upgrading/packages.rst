@@ -27,9 +27,9 @@ upgrade instructions for the earlier versions and upgrade first to
 
 1. Stop all flows, services, and other programs in all your applications.
 
-#. Stop all CDAP processes::
+#. Stop all CDAP processes (as the user that runs CDAP Master, the CDAP user, indicated by ``<cdap-user>``)::
 
-     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
+     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo -u <cdap-user> service $i stop ; done
 
 #. Update the CDAP repository definition by running either of these methods:
  
@@ -61,9 +61,9 @@ upgrade instructions for the earlier versions and upgrade first to
 
      $ kinit -kt <keytab> <principal>
 
-#. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user)::
+#. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user, indicated by ``<cdap-user>``)::
 
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+     $ sudo -u <cdap-user> /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
      
    Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
    to a previous version are not possible.
@@ -91,11 +91,11 @@ upgrade instructions for the earlier versions and upgrade first to
    You can run the tool in a non-interactive fashion by using the ``force`` flag, in which case
    it will run unattended and not prompt for continuing::
    
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
+     $ sudo -u <cdap-user> /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
      
 #. Restart the CDAP processes::
 
-     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo -u <cdap-user> service $i start ; done
 
 #. To upgrade existing ETL applications created using the |previous-short-version|\.x versions of ``cdap-etl-batch``
    or ``cdap-etl-realtime``, there are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
@@ -153,9 +153,10 @@ get upgraded correctly and HBase regionservers may crash.**
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
-#. Stop all CDAP applications and services::
+#. Stop all CDAP applications and services (as the user that runs CDAP Master, the CDAP user, 
+   indicated by ``<cdap-user>``)::
    
-    $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
+    $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo -u <cdap-user> service $i stop ; done
 
 #. Disable all CDAP tables; from an HBase shell, run the command::
 
@@ -164,9 +165,9 @@ get upgraded correctly and HBase regionservers may crash.**
 #. Upgrade to the new version of Hadoop.
 
 #. Run the *Post-Hadoop Upgrade Tasks* |---| to upgrade CDAP for the new version of Hadoop |---| by running
-   the *CDAP Upgrade Tool*, as the user that runs CDAP Master (the CDAP user)::
+   the *CDAP Upgrade Tool*, as the user that runs CDAP Master (the CDAP user, indicated by ``<cdap-user>``)::
 
-    $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
+    $ sudo -u <cdap-user> /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
 
 #. Enable all CDAP tables; from an HBase shell, run this command::
 
@@ -174,5 +175,5 @@ get upgraded correctly and HBase regionservers may crash.**
     
 #. Restart CDAP::
 
-    $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+    $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo -u <cdap-user> service $i start ; done
 
