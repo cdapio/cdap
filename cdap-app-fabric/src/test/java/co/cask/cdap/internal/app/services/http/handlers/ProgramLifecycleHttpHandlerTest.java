@@ -322,15 +322,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     try {
       deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
       // first run
-      startProgram(program.toId());
-      waitState(program.toId(), ProgramRunStatus.RUNNING.toString());
       final String statusUrl = getVersionedAPIPath("apps/" + program.toId().getApplicationId() +
                                                      ProgramType.MAPREDUCE + "/NonExisting",
                                                    Constants.Gateway.API_VERSION_3_TOKEN,
                                                    program.toId().getNamespaceId());
       Assert.assertEquals(404, doPost(statusUrl).getStatusLine().getStatusCode());
-      stopProgram(program.toId());
-      waitState(program.toId(), STOPPED);
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
     } finally {
