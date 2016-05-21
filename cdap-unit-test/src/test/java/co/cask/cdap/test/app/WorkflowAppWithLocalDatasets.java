@@ -148,7 +148,8 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
    */
   public static class WordCount extends AbstractMapReduce {
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       String inputPath = context.getRuntimeArguments().get("output.path");
       Map<String, String> fileSetArgs = new HashMap<>();
       FileSetArguments.addInputPath(fileSetArgs, inputPath);

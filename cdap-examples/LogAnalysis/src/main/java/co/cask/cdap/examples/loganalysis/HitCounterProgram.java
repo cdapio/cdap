@@ -19,7 +19,6 @@ package co.cask.cdap.examples.loganalysis;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import org.apache.hadoop.io.IntWritable;
@@ -37,8 +36,8 @@ import java.io.IOException;
 public class HitCounterProgram extends AbstractMapReduce {
 
   @Override
-  public void initialize(MapReduceContext context) throws Exception {
-    super.initialize(context);
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     Job job = context.getHadoopJob();
     job.setMapperClass(Emitter.class);
     job.setReducerClass(Counter.class);

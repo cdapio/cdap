@@ -212,8 +212,8 @@ public class AppWithPartitionConsumers extends AbstractApplication {
     }
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
-      super.initialize(context);
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       batchPartitionCommitter =
         PartitionBatchInput.setInput(context, "lines", new KVTableStatePersistor("consumingState", "state.key"));
 

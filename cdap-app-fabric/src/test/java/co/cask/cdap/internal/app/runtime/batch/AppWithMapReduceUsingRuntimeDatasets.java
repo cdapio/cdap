@@ -75,7 +75,8 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
     }
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Job job = context.getHadoopJob();
       job.setMapperClass(FileMapper.class);
       job.setReducerClass(FileReducer.class);

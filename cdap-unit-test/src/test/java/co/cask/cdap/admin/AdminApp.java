@@ -334,8 +334,8 @@ public class AdminApp extends AbstractApplication {
     }
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
-
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Job job = context.getHadoopJob();
       job.setMapperClass(Tokenizer.class);
       job.setReducerClass(Counter.class);

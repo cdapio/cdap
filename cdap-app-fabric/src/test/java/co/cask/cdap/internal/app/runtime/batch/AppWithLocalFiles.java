@@ -66,7 +66,8 @@ public class AppWithLocalFiles extends AbstractApplication {
   public static class MapReduceWithLocalFiles extends AbstractMapReduce {
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Map<String, String> args = context.getRuntimeArguments();
       if (args.containsKey(STOPWORDS_FILE_ARG)) {
         context.localize(STOPWORDS_FILE_ALIAS, URI.create(args.get(STOPWORDS_FILE_ARG)));

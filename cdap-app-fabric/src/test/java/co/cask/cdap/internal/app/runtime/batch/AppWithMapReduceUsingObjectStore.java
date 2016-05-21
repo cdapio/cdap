@@ -55,7 +55,8 @@ public class AppWithMapReduceUsingObjectStore extends AbstractApplication {
   public static final class ComputeCounts extends AbstractMapReduce {
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Job job = context.getHadoopJob();
       job.setMapperClass(ObjectStoreMapper.class);
       job.setReducerClass(KeyValueStoreReducer.class);

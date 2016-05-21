@@ -78,8 +78,8 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
   public static final class PartitionWriter extends AbstractMapReduce {
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
-      super.initialize(context);
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
       job.setNumReduceTasks(0);
@@ -118,7 +118,8 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
   public static final class PartitionReader extends AbstractMapReduce {
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Job job = context.getHadoopJob();
       job.setMapperClass(ReaderMapper.class);
       job.setNumReduceTasks(0);

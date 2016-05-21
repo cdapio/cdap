@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -357,9 +358,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         if (mapReduce instanceof ProgramLifecycle) {
           destroy(success, failureInfo);
-        } else {
-          onFinish(success);
         }
+        onFinish(success);
       } finally {
         context.close();
         cleanupTask.run();
@@ -482,10 +482,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
           if (mapReduce instanceof ProgramLifecycle) {
             ((ProgramLifecycle) mapReduce).initialize(context);
+            ((AbstractMapReduce) mapReduce).initialize();
           } else {
             mapReduce.beforeSubmit(context);
           }
-
           // once the initialize method is executed, set the status of the MapReduce to RUNNING
           context.setState(new ProgramState(ProgramStatus.RUNNING, null));
 

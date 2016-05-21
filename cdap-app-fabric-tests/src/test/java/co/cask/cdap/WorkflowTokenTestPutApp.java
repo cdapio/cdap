@@ -87,8 +87,8 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
     }
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
-      super.initialize(context);
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Job job = context.getHadoopJob();
       job.setMapperClass(MyMapper.class);
       job.setReducerClass(MyReducer.class);

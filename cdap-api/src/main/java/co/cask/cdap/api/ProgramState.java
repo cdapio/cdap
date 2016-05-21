@@ -48,4 +48,13 @@ public class ProgramState {
   public String getFailureInfo() {
     return failureInfo;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("ProgramState{");
+    sb.append("status=").append(status);
+    sb.append(", failureInfo='").append(failureInfo).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }

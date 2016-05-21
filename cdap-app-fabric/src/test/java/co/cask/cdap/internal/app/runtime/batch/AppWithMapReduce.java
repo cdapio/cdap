@@ -63,11 +63,10 @@ public class AppWithMapReduce extends AbstractApplication {
     }
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
-      super.initialize(context);
+    public void initialize() throws Exception {
       String inputPath = Bytes.toString(table.read(Bytes.toBytes("inputPath")));
       String outputPath = Bytes.toString(table.read(Bytes.toBytes("outputPath")));
-      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
+      WordCount.configureJob((Job) getContext().getHadoopJob(), inputPath, outputPath);
     }
   }
 
@@ -85,8 +84,8 @@ public class AppWithMapReduce extends AbstractApplication {
     private Metrics metrics;
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
-      super.initialize(context);
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       metrics.count("beforeSubmit", 1);
       Job hadoopJob = context.getHadoopJob();
       AggregateMetricsByTag.configureJob(hadoopJob);
