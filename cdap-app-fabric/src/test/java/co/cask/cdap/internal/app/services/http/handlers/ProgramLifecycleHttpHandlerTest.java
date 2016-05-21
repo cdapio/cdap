@@ -23,7 +23,6 @@ import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -80,7 +79,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -318,21 +316,16 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testNonExistingProgramHistory() throws Exception {
     ProgramId program = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
-    String namespace = program.getNamespace();
     try {
-      deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+      deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
       // first run
-      final String statusUrl = getVersionedAPIPath("apps/" + program.toId().getApplicationId() +
-                                                     ProgramType.MAPREDUCE + "/NonExisting",
-                                                   Constants.Gateway.API_VERSION_3_TOKEN,
-                                                   program.toId().getNamespaceId());
+      final String statusUrl = getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
+                                                   Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
       Assert.assertEquals(404, doPost(statusUrl).getStatusLine().getStatusCode());
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
     } finally {
-      doDelete(getVersionedAPIPath("apps/" + program.toId().getApplicationId(),
-                                                               Constants.Gateway.API_VERSION_3_TOKEN,
-                                                               program.toId().getNamespaceId()));
+      doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     }
   }
 
