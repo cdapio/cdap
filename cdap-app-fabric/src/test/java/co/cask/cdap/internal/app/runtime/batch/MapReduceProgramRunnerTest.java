@@ -158,6 +158,10 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       .build());
     // build runtime args for app
     Map<String, String> runtimeArguments = Maps.newHashMap();
+
+    // Make sure there is only one mapper running at a time since this test has the Mapper writing
+    // to a dataset using increment and the in-memory table doesn't really support concurrent increment
+    runtimeArguments.put("mr.job.conf.mapreduce.local.map.tasks.maximum", "1");
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_NAME, "rtInput1");
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_PATHS, "abc, xyz");
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_NAME, "rtOutput1");

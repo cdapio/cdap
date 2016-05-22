@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -78,6 +79,17 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(FileMapper.class);
       job.setReducerClass(FileReducer.class);
+
+      // Copies all runtime arguments that start with "mr.job.conf." to the Job conf.
+      Map<String, String> mrJobConf = Maps.filterKeys(context.getRuntimeArguments(), new Predicate<String>() {
+        @Override
+        public boolean apply(String input) {
+          return input.startsWith("mr.job.conf.");
+        }
+      });
+      for (Map.Entry<String, String> entry : mrJobConf.entrySet()) {
+        job.getConfiguration().set(entry.getKey().substring("mr.job.conf.".length()), entry.getValue());
+      }
 
       Map<String, String> runtimeArgs = context.getRuntimeArguments();
       String inputName = runtimeArgs.get(INPUT_NAME);
