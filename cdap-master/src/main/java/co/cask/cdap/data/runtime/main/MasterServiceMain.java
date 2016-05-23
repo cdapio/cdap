@@ -792,9 +792,13 @@ public class MasterServiceMain extends DaemonMain {
     return preparer;
   }
 
-  private Path saveCConf(CConfiguration conf, Path file) throws IOException {
+  private Path saveCConf(CConfiguration cConf, Path file) throws IOException {
+    CConfiguration copied = CConfiguration.copy(cConf);
+    // Set the CFG_LOCAL_DATA_DIR to a relative path as the data directory for the container should be relative to the
+    // container directory
+    copied.set(Constants.CFG_LOCAL_DATA_DIR, "data");
     try (Writer writer = Files.newBufferedWriter(file, Charsets.UTF_8)) {
-      conf.writeXml(writer);
+      copied.writeXml(writer);
     }
     return file;
   }
