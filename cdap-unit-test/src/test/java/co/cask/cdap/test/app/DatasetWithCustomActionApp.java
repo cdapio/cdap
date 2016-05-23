@@ -26,7 +26,9 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import com.google.common.base.Throwables;
+import com.google.common.io.CharStreams;
 import org.junit.Assert;
 
 import java.io.BufferedReader;
@@ -63,6 +65,20 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
       addAction(new TestAction());
     }
 
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      super.initialize(context);
+
+      try {
+        // Try to load this workflow class from the context classloader
+        // This is for validating CDAP-6035 that the context classloader is being set correctly
+        Class<?> cls = Thread.currentThread().getContextClassLoader().loadClass(getClass().getName());
+        Assert.assertSame(cls, getClass());
+      } catch (ClassNotFoundException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
     private static class TestAction extends AbstractWorkflowAction {
       @UseDataSet(CUSTOM_TABLE)
       private KeyValueTable table;
@@ -75,35 +91,20 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
         try (OutputStream out = fs.getLocation("test").getOutputStream()) {
           out.write(42);
         } catch (IOException e) {
-          Throwables.propagate(e);
+          throw Throwables.propagate(e);
         }
 
         URL serviceURL = getContext().getServiceURL(CUSTOM_SERVICE);
         if (serviceURL != null) {
-          BufferedReader in = null;
           try {
-            HttpURLConnection con =
-              (HttpURLConnection) new URL(serviceURL, "service").openConnection();
-            con.setRequestMethod("GET");
-
-            in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = in.readLine()) != null) {
-              response.append(line);
+            HttpURLConnection con = (HttpURLConnection) new URL(serviceURL, "service").openConnection();
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
+              Assert.assertEquals("service", CharStreams.toString(in));
+            } finally {
+              con.disconnect();
             }
-            Assert.assertEquals("service", response.toString());
-
           } catch (IOException e) {
-            e.printStackTrace();
-          } finally {
-            if (in != null) {
-              try {
-                in.close();
-              } catch (IOException e) {
-                e.printStackTrace();
-              }
-            }
+            throw Throwables.propagate(e);
           }
         }
       }
