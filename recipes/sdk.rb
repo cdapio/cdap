@@ -66,6 +66,16 @@ template '/etc/init.d/cdap-sdk' do
   variables node['cdap']['sdk']
 end
 
+# COOK-98
+template '/etc/profile.d/cdap-sdk.sh' do
+  source 'generic-env.sh.erb'
+  mode 0644
+  owner 'root'
+  group 'root'
+  action :create
+  variables :options => { 'path' => "${PATH}:#{node['cdap']['sdk']['install_path']}/sdk/bin" }
+end
+
 service 'cdap-sdk' do
   action node['cdap']['sdk']['init_actions']
 end
