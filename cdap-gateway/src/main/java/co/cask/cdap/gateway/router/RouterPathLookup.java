@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.http.AbstractHttpHandler;
 import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -69,8 +70,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-      //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
-      return String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
+      return ServiceDiscoverable.getName(uriParts[2], uriParts[4], uriParts[6]);
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return Constants.Service.METRICS;

@@ -21,6 +21,8 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -28,6 +30,7 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -62,8 +65,20 @@ public class ServiceClientTestRun extends ClientTestBase {
     appClient = new ApplicationClient(clientConfig);
     serviceClient = new ServiceClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
+    try {
+      serviceClient.getAvailability(service);
+      Assert.fail();
+    } catch (NotFoundException ex) {
+      // Expected since the app has not been deployed yet
+    }
 
     appClient.deploy(namespace, createAppJarFile(FakeApp.class));
+    try {
+      serviceClient.getAvailability(service);
+      Assert.fail();
+    } catch (ServiceUnavailableException ex) {
+      // Expected since the service has not been started
+    }
     programClient.start(service);
     assertProgramRunning(programClient, service);
   }
@@ -93,6 +108,12 @@ public class ServiceClientTestRun extends ClientTestBase {
     ServiceHttpEndpoint endpoint = endpoints.get(0);
     assertEquals("GET", endpoint.getMethod());
     assertEquals("/ping", endpoint.getPath());
+  }
+
+  @Test
+  public void testActiveStatus() throws Exception {
+    String responseBody = serviceClient.getAvailability(service);
+    Assert.assertTrue(responseBody.contains("Service is available"));
   }
 
   @Test

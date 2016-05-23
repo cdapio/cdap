@@ -69,6 +69,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -790,12 +791,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Id.Service service1 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE1), APP_WITH_SERVICES_APP_ID,
                                           APP_WITH_SERVICES_SERVICE_NAME);
-    Id.Service service2 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE2), APP_WITH_SERVICES_APP_ID,
-                                          APP_WITH_SERVICES_SERVICE_NAME);
+    final Id.Service service2 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE2), APP_WITH_SERVICES_APP_ID,
+                                                APP_WITH_SERVICES_SERVICE_NAME);
+    HttpResponse activeResponse = getServiceAvailability(service1);
+    // Service is not valid, so it should return 404
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), activeResponse.getStatusLine().getStatusCode());
+
+    activeResponse = getServiceAvailability(service2);
+    // Service has not been started, so it should return 503
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(),
+                        activeResponse.getStatusLine().getStatusCode());
 
     // start service in wrong namespace
     startProgram(service1, 404);
     startProgram(service2);
+
+    Tasks.waitFor(200, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getServiceAvailability(service2).getStatusLine().getStatusCode();
+      }
+    }, 2, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     // verify instances
     try {
@@ -831,6 +847,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // stop service
     stopProgram(service1, 404);
     stopProgram(service2);
+
+    activeResponse = getServiceAvailability(service2);
+    // Service has been stopped, so it should return 503
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(),
+                        activeResponse.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -900,6 +921,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
           return !consumer.dequeue(1).isEmpty();
         }
       });
+  }
+
+  private HttpResponse getServiceAvailability(Id.Service serviceId) throws Exception {
+    String activeUrl = String.format("apps/%s/services/%s/available", serviceId.getApplicationId(), serviceId.getId());
+    String versionedActiveUrl = getVersionedAPIPath(activeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                    serviceId.getNamespaceId());
+    return doGet(versionedActiveUrl);
   }
 
   private ServiceInstances getServiceInstances(Id.Service serviceId) throws Exception {

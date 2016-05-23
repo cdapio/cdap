@@ -68,6 +68,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -111,9 +112,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
                       QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
-                      MetricStore metricStore, DatasetFramework datasetFramework) {
-    super(store, runtimeService, lifecycleService, queueAdmin, scheduler, preferencesStore, mrJobInfoFetcher,
-          metricStore);
+                      MetricStore metricStore, DatasetFramework datasetFramework,
+                      DiscoveryServiceClient discoveryServiceClient) {
+    super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin, scheduler, preferencesStore,
+          mrJobInfoFetcher, metricStore);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
   }
