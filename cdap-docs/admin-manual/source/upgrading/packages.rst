@@ -27,9 +27,9 @@ upgrade instructions for the earlier versions and upgrade first to
 
 1. Stop all flows, services, and other programs in all your applications.
 
-#. Stop all CDAP processes (as the user that runs CDAP Master, the CDAP user, indicated by ``<cdap-user>``)::
+#. Stop all CDAP processes::
 
-     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo -u <cdap-user> service $i stop ; done
+     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
 #. Update the CDAP repository definition by running either of these methods:
  
@@ -95,7 +95,7 @@ upgrade instructions for the earlier versions and upgrade first to
      
 #. Restart the CDAP processes::
 
-     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo -u <cdap-user> service $i start ; done
+     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 #. To upgrade existing ETL applications created using the |previous-short-version|\.x versions of ``cdap-etl-batch``
    or ``cdap-etl-realtime``, there are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
@@ -153,10 +153,9 @@ get upgraded correctly and HBase regionservers may crash.**
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
-#. Stop all CDAP applications and services (as the user that runs CDAP Master, the CDAP user, 
-   indicated by ``<cdap-user>``)::
+#. Stop all CDAP applications and services::
    
-    $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo -u <cdap-user> service $i stop ; done
+    $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
 #. Disable all CDAP tables; from an HBase shell, run the command::
 
@@ -175,5 +174,5 @@ get upgraded correctly and HBase regionservers may crash.**
     
 #. Restart CDAP::
 
-    $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo -u <cdap-user> service $i start ; done
+    $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
