@@ -319,13 +319,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     try {
       deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
       // first run
-      final String statusUrl = getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
-                                                   Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-      Assert.assertEquals(404, doPost(statusUrl).getStatusLine().getStatusCode());
+      int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
+                                                     Constants.Gateway.API_VERSION_3_TOKEN,
+                                                     TEST_NAMESPACE2)).getStatusLine().getStatusCode();
+      int deleteStatus = doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                      TEST_NAMESPACE2)).getStatusLine().getStatusCode();
+      Assert.assertEquals(200, deleteStatus);
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
-    } finally {
-      doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     }
   }
 
