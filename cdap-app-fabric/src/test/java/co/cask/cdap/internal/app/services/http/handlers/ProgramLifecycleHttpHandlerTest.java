@@ -324,7 +324,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                      TEST_NAMESPACE2)).getStatusLine().getStatusCode();
       int deleteStatus = doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN,
                                                       TEST_NAMESPACE2)).getStatusLine().getStatusCode();
-      Assert.assertEquals(200, deleteStatus);
+      Assert.assertTrue(200 == deleteStatus && 404 == historyStatus);
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
     }
