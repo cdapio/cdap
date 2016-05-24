@@ -301,13 +301,13 @@ p.admonition-title:after {
 }
 
 p.rubric {
-    background-color: #E0E0E0;
-    font-size: 120%;
-    font-weight: normal;
+    background-color: #EDEDED; 
     color: #111;
+    font-size: 110%; 
+    font-weight:normal;
     margin: 30px 0px 10px 0px;
-    padding: 5px 0 5px 15px;
-    text-shadow: 0px 1px 0 white
+    padding: 5px 0px  5px  15px;
+    text-shadow: 0px 1px 0px white;
 }
 
 .sidebar20.sidebar {
