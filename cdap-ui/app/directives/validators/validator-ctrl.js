@@ -40,11 +40,18 @@ angular.module(PKG.name + '.commons')
      **/
 
     return $window.js_beautify;
+  })
+  .factory('esprima', function ($window) {
+    /**
+     * esprima is being used to parse JS code to a JSON tree
+     **/
+
+    return $window.esprima;
   });
 
 
 angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, HydratorPlusPlusConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorPlusPlusHydratorService) {
+  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, HydratorPlusPlusConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorPlusPlusHydratorService, esprima) {
     var vm = this;
 
     vm.validators = [];
@@ -58,7 +65,6 @@ angular.module(PKG.name + '.commons')
 
     // We just need to set the input schema as the output schema
     $scope.outputSchema = HydratorPlusPlusHydratorService.formatOutputSchema($scope.inputSchema);
-
 
     myHydratorValidatorsApi.get()
       .$promise
@@ -81,9 +87,15 @@ angular.module(PKG.name + '.commons')
           vm.validators = vm.validators.concat(value.functions);
         });
 
-        $scope.$watch(function () {
-          return vm.validationFields;
-        }, formatValidationRules, true);
+        if (!$scope.model.validationFields) {
+          initValidationFields();
+        }
+
+        if (!$scope.isDisabled) {
+          $scope.$watch(function () {
+            return vm.validationFields;
+          }, formatValidationRules, true);
+        }
 
       });
 
@@ -112,7 +124,7 @@ angular.module(PKG.name + '.commons')
 
     function formatValidationRules() {
       if (Object.keys(vm.validationFields).length === 0) { return; }
-
+console.log('validationFields', vm.validationFields);
       var conditions = '';
       var flattenRulesArrays = [];
 
@@ -255,6 +267,71 @@ angular.module(PKG.name + '.commons')
           vm.nodeLabelError = '';
         }
       });
+    }
+
+    function initValidationFields() {
+      if (!$scope.model.properties.validationScript) { return; }
+
+      var jsonTree = esprima.parse($scope.model.properties.validationScript);
+
+      /**
+       *  Algorithm:
+       *    1. Find the first if-else block statement
+       **/
+
+      var block = jsonTree.body[0].body.body;
+      var initialValidation;
+      for (var i = 0; i < block.length; i++) {
+        if (block[i].type === 'IfStatement') {
+          initialValidation = block[i];
+          break;
+        }
+      }
+
+      console.log('validate', initialValidation);
+
+      var fieldGroup = {};
+
+      // Find validation rule argument
+      var arg;
+      for (var j = 0; j < initialValidation.test.arguments.length; j++) {
+        console.log('asdf', initialValidation.test.arguments[j].type);
+        if (initialValidation.test.arguments[j].type === 'MemberExpression') {
+          arg = initialValidation.test.arguments[j];
+
+          break;
+        }
+      }
+
+      var fieldName = arg.property.name;
+      var validationKey = initialValidation.test.callee.object.name + '.' + initialValidation.test.callee.property.name;
+
+      fieldGroup[fieldName] = [];
+
+      var argsValidationRule = vm.functionMap[validationKey].arguments;
+
+      console.log('arguments', vm.functionMap[validationKey]);
+
+      var obj = {
+        fieldName: fieldName,
+        operator: true,
+        validation: validationKey
+      };
+
+      if (argsValidationRule.length > 1) {
+        obj.arguments = {};
+        angular.forEach(argsValidationRule, function (val, index) {
+          if (!val.startsWith('<field:')) {
+            var argValue = initialValidation.test.arguments[index];
+            obj.arguments[val] = argValue.value;
+          }
+        });
+      }
+
+      fieldGroup[fieldName].push(obj);
+
+      vm.validationFields = fieldGroup;
+
     }
 
     $scope.$watch('model.label', validateNodesLabels);

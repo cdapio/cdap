@@ -160,7 +160,8 @@ gulp.task('js:lib', function() {
       './bower_components/angular-file-saver/dist/angular-file-saver.bundle.js',
       './bower_components/ngInfiniteScroll/build/ng-infinite-scroll.min.js',
 
-      './bower_components/d3-tip/index.js'
+      './bower_components/d3-tip/index.js',
+      './bower_components/esprima/esprima.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({
