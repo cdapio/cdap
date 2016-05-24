@@ -66,10 +66,10 @@ class CustomHTMLTranslator(HTMLTranslator):
             
             if close_tag.startswith('</h'):
                 self.body.append(u'<a class="headerlink" href="#%s" ' % aname +
-                                 u'title="%s">%s</a>' % (_('Permalink to this heading 1'), self.permalink_text))
+                                 u'title="%s">%s</a>' % (_('Perma-link to this heading'), self.permalink_text))
             elif close_tag.startswith('</a></h'):
                 self.body.append(u'</a><a class="headerlink" href="#%s" ' % aname +
-                                 u'title="%s">%s' % (_('Permalink to this heading 2'), self.permalink_text))
+                                 u'title="%s">%s' % (_('Perma-link to this heading'), self.permalink_text))
             self.body = self.body + tags            
 
         BaseTranslator.depart_title(self, node)
