@@ -51,7 +51,6 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -80,7 +79,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -310,23 +308,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     testHistory(DummyAppWithTrackingTable.class,
                 Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME));
   }
-
-  /**
-   * Tests history of a non existing program
-   */
-  @Test
-  public void testNonExistingProgramHistory() throws Exception {
-    ProgramId program = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
-    deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
-                                                   Constants.Gateway.API_VERSION_3_TOKEN,
-                                                   TEST_NAMESPACE2)).getStatusLine().getStatusCode();
-    int deleteStatus = doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                    TEST_NAMESPACE2)).getStatusLine().getStatusCode();
-    Assert.assertTrue("Unexpected history status " + historyStatus + " and/or deleteStatus " + deleteStatus,
-                      historyStatus == 404 && deleteStatus == 200);
-  }
-
 
   /**
    * Tests history of a workflow.
@@ -1157,7 +1138,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
 
     } catch (Exception e) {
-        LOG.error("Got exception: ", e);
+      // Log exception before finally block is called
+      LOG.error("Got exception: ", e);
     } finally {
       HttpResponse httpResponse = doDelete(getVersionedAPIPath("apps/" + program.getApplicationId(),
                                                                Constants.Gateway.API_VERSION_3_TOKEN,
