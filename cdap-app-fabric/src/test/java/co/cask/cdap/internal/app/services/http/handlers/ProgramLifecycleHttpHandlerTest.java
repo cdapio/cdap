@@ -316,18 +316,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testNonExistingProgramHistory() throws Exception {
     ProgramId program = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
-    try {
-      deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-      int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
-                                                     Constants.Gateway.API_VERSION_3_TOKEN,
-                                                     TEST_NAMESPACE2)).getStatusLine().getStatusCode();
-      int deleteStatus = doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                      TEST_NAMESPACE2)).getStatusLine().getStatusCode();
-      Assert.assertTrue("Unexpected history status " + historyStatus + " and/or deleteStatus " + deleteStatus,
-                        historyStatus == 404 && deleteStatus == 200);
-    } catch (Exception e) {
-      LOG.error("Got exception: ", e);
-    }
+    deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
+                                                   Constants.Gateway.API_VERSION_3_TOKEN,
+                                                   TEST_NAMESPACE2)).getStatusLine().getStatusCode();
+    int deleteStatus = doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                    TEST_NAMESPACE2)).getStatusLine().getStatusCode();
+    Assert.assertTrue("Unexpected history status " + historyStatus + " and/or deleteStatus " + deleteStatus,
+                      historyStatus == 404 && deleteStatus == 200);
   }
 
 
