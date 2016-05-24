@@ -138,6 +138,14 @@ for the 2012 season of the NFL (National Football League):
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file examples/SportResults/resources/nfl-2012.csv
+  
+Using a ``curl``  command:
+
+.. tabbed-parsed-literal::
+ 
+  $ curl -w"\n" -X PUT localhost:10000/v3/namespaces/default/apps/SportResults/services/UploadService/methods/leagues/nfl/seasons/2012 \
+  --data-binary @examples/SportResults/resources/nfl-2012.csv
+
 
 Feel free to add more seasons |---| and sport leagues:
 
@@ -149,6 +157,7 @@ Feel free to add more seasons |---| and sport leagues:
 
   $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2013 body:file examples/SportResults/resources/nba-2013.csv
   
+Note that the files can only be uploaded once for each season and league. A subsequent upload would fail because the file partition already exists.
 
 Starting the MapReduce
 ----------------------
