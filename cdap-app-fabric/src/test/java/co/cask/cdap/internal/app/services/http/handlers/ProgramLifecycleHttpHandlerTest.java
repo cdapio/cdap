@@ -318,7 +318,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ProgramId program = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
     try {
       deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-      // first run
       int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
                                                      Constants.Gateway.API_VERSION_3_TOKEN,
                                                      TEST_NAMESPACE2)).getStatusLine().getStatusCode();
