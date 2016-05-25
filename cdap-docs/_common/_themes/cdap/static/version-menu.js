@@ -4,7 +4,7 @@
  *
  * JavaScript for generating 
  *
- * :copyright: © Copyright 2015 Cask Data, Inc.
+ * :copyright: © Copyright 2015-2016 Cask Data, Inc.
  * :license: Apache License, Version 2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -21,11 +21,11 @@
  * 
  * Requires a JSONP file at http://docs.cask.co/cdap/json-versions.js in the format:
  * 
- *  versionscallback({ "development":[["2.7.0-SNAPSHOT", "2.7.0"], ["2.6.0-SNAPSHOT","2.6.0"],], "older": ["2.5.2", "2.5.2"], "versions": [["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"],] });
+ * versionscallback({'development': [['3.5.0-SNAPSHOT', '3.5.0']], 'current': ['3.4.1', '3.4.1', '2016-05-12'], 'timeline': [['0', '3.4.0', '2016-04-29', ' (100 days)'], ['1', '3.4.1', '2016-05-12', ' (13 days)'], ['0', '3.3.0', '2016-01-20', ' (119 days)'], ['1', '3.3.1', '2016-02-19', ' (30 days)'], ['1', '3.3.2', '2016-03-07', ' (17 days)'], ['1', '3.3.3', '2016-04-15', ' (39 days)'], ['1', '3.3.4', '2016-05-19', ' (34 days)'], ['0', '3.2.0', '2015-09-23', ' (51 days)'], ['1', '3.2.1', '2015-10-21', ' (28 days)'], ... ['2.6.0', '2.6.0', '2015-01-10', '']]});
  * 
  * list of development versions; one current version; list of additional versions
  *
- * version 0.2
+ * version 0.3
  * 
  */
 
@@ -35,8 +35,11 @@
   var buildURL = (function(dir){
     return versionsURL + dir + '/en/';
   });
-  var writelink = (function(dir, label){
-    document.write('<option value="' + buildURL(dir) + '">Version ' + label + '</option>');
+  var writeLink = (function(dir, label){
+    document.write('<option value="' + buildURL(dir) + '">' + label + '</option>');
+  });
+  var writeVersionLink = (function(dir, label){
+    writeLink(dir, 'Version ' + label);
   });
   window.versionscallback = (function(data){
     if (data) {
@@ -49,17 +52,25 @@
         ess = "";
       }
       document.write('<optgroup label="Development Release' + ess +'">');          
-      var i;
-      for (i in data.development) {
-        writelink(data.development[i][0], data.development[i][1]);
+      if (data.development && data.development.length > 0) {
+        var i;
+        for (i in data.development) {
+          writeLink(data.development[i][0], 'Develop (' + data.development[i][1] + ')');
+          writeVersionLink(data.development[i][0], data.development[i][1]);
+        }
+      } else {
+        writeLink('develop', 'Develop');
       }
       document.write('</optgroup>');
     }
-      document.write('<optgroup label="Current Release">');
+    document.write('<optgroup label="Current Release">');
     if (data.current && data.current.length > 0) {
-      writelink(data.current[0], data.current[1]);
-      document.write('</optgroup>');
+      writeLink('current', 'Current (' + data.current[1] + ')')
+      writeVersionLink(data.current[0], data.current[1]);
+    } else {
+      writeLink('current', 'Current');
     }
+    document.write('</optgroup>');
     if (data.older && data.older.length > 0) {
       ess = "s";
       if (data.older.length == 1) {
@@ -68,8 +79,11 @@
       document.write('<optgroup label="Older Release' + ess + '">');
       var j;
       for (j in data.older) {
-        writelink(data.older[j][0], data.older[j][1]);
+        if (parseInt(data.older[j][3]) === 1) {
+          writeVersionLink(data.older[j][0], data.older[j][1]);
+        }
       }
+      document.write('<option value="' + versionsURL + '">All Releases</option>');
       document.write('</optgroup>');
     }
     if (data) {
