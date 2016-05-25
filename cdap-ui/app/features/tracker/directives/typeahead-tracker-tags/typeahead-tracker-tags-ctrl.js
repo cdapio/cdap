@@ -57,9 +57,8 @@ angular.module(PKG.name + '.feature.tracker')
       };
     });
     this.list.sort(function(a,b) {
-      return a.preferredTag > b.preferredTag? 1: -1;
+      return a.preferredTag < b.preferredTag ? 1 : -1;
     });
-    this.list = this.list.reverse();
     this.onTagsSelect = function(item) {
       this.model = item.name;
     };
