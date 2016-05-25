@@ -105,11 +105,10 @@ public class DataQualityService extends AbstractService {
       AggregationsRowKey aggregationsRowKeyStart = new AggregationsRowKey(startTimestamp, sourceID);
       // scan rows inclusive of endTimestamp
       AggregationsRowKey aggregationsRowKeyEnd = new AggregationsRowKey(endTimestamp + 1, sourceID);
-      Scanner scanner = dataStore.scan(aggregationsRowKeyStart.getTableRowKey(),
-                                       aggregationsRowKeyEnd.getTableRowKey());
       Row row;
       Map<String, FieldDetail> fieldDetailMap = new HashMap<>();
-      try {
+      try (Scanner scanner = dataStore.scan(aggregationsRowKeyStart.getTableRowKey(),
+                                            aggregationsRowKeyEnd.getTableRowKey())) {
         while ((row = scanner.next()) != null) {
           Map<byte[], byte[]> columnsMapBytes = row.getColumns();
           List<FieldDetail> timestampSpecificFieldDetailList = new ArrayList<>();
@@ -132,8 +131,6 @@ public class DataQualityService extends AbstractService {
             }
           }
         }
-      } finally {
-        scanner.close();
       }
       if (fieldDetailMap.isEmpty()) {
         responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,
@@ -157,12 +154,11 @@ public class DataQualityService extends AbstractService {
       AggregationsRowKey aggregationsRowKeyStart = new AggregationsRowKey(startTimestamp, sourceID);
       // scan rows inclusive of endTimestamp
       AggregationsRowKey aggregationsRowKeyEnd = new AggregationsRowKey(endTimestamp + 1, sourceID);
-      Scanner scanner = dataStore.scan(aggregationsRowKeyStart.getTableRowKey(),
-                                       aggregationsRowKeyEnd.getTableRowKey());
       Row row;
       byte[] fieldNameBytes = Bytes.toBytes(fieldName);
       Set<AggregationTypeValue> commonAggregationTypeValues = new HashSet<>();
-      try {
+      try (Scanner scanner = dataStore.scan(aggregationsRowKeyStart.getTableRowKey(),
+                                            aggregationsRowKeyEnd.getTableRowKey())) {
         while ((row = scanner.next()) != null) {
           Map<byte[], byte[]> columnsMapBytes = row.getColumns();
           byte[] output = columnsMapBytes.get(fieldNameBytes);
@@ -171,8 +167,6 @@ public class DataQualityService extends AbstractService {
             GSON.fromJson(outputString, TOKEN_TYPE_SET_AGGREGATION_TYPE_VALUES);
           commonAggregationTypeValues.addAll(aggregationTypeValuesSet);
         }
-      } finally {
-        scanner.close();
       }
       if (commonAggregationTypeValues.isEmpty()) {
         responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,
@@ -202,11 +196,10 @@ public class DataQualityService extends AbstractService {
         Class<?> aggregationClass = Class.forName("co.cask.cdap.dq.functions." + aggregationType);
         CombinableAggregationFunction aggregationClassInstance =
           (CombinableAggregationFunction) aggregationClass.newInstance();
-        Scanner scanner = dataStore.scan(valuesRowKeyStart.getTableRowKey(),
-                                         valuesRowKeyEnd.getTableRowKey());
         Row row;
         byte[] aggregationTypeBytes = Bytes.toBytes(aggregationType);
-        try {
+        try (Scanner scanner = dataStore.scan(valuesRowKeyStart.getTableRowKey(),
+                                              valuesRowKeyEnd.getTableRowKey())) {
           while ((row = scanner.next()) != null) {
             Map<byte[], byte[]> columnsMapBytes = row.getColumns();
             byte[] output = columnsMapBytes.get(aggregationTypeBytes);
@@ -214,8 +207,6 @@ public class DataQualityService extends AbstractService {
               aggregationClassInstance.combine(output);
             }
           }
-        } finally {
-          scanner.close();
         }
         Object output = aggregationClassInstance.retrieveAggregation();
         if (output == null) {
@@ -254,11 +245,10 @@ public class DataQualityService extends AbstractService {
         Class<?> aggregationClass = Class.forName("co.cask.cdap.dq.functions." + aggregationType);
         BasicAggregationFunction aggregationClassInstance =
           (BasicAggregationFunction) aggregationClass.newInstance();
-        Scanner scanner = dataStore.scan(valuesRowKeyStart.getTableRowKey(),
-                                         valuesRowKeyEnd.getTableRowKey());
         Row row;
         byte[] aggregationTypeBytes = Bytes.toBytes(aggregationType);
-        try {
+        try (Scanner scanner = dataStore.scan(valuesRowKeyStart.getTableRowKey(),
+                                              valuesRowKeyEnd.getTableRowKey())) {
           while ((row = scanner.next()) != null) {
             byte[] rowBytes = row.getRow();
             Long timestamp = Bytes.toLong(rowBytes, rowBytes.length - Bytes.SIZEOF_LONG);
@@ -270,8 +260,6 @@ public class DataQualityService extends AbstractService {
               timestampValueList.add(tsValue);
             }
           }
-        } finally {
-          scanner.close();
         }
         if (timestampValueList.isEmpty()) {
           responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,

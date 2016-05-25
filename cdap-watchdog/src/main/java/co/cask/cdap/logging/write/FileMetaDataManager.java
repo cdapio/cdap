@@ -141,8 +141,7 @@ public final class FileMetaDataManager {
         byte[] tillTimeBytes = Bytes.toBytes(tillTime);
 
         int deletedColumns = 0;
-        Scanner scanner = table.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
-        try {
+        try (Scanner scanner = table.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END)) {
           Row row;
           while ((row = scanner.next()) != null) {
             byte[] rowKey = row.getRow();
@@ -163,8 +162,6 @@ public final class FileMetaDataManager {
               }
             }
           }
-        } finally {
-          scanner.close();
         }
 
         return deletedColumns;

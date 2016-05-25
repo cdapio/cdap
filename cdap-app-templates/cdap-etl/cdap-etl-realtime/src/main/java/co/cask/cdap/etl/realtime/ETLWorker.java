@@ -199,16 +199,14 @@ public class ETLWorker extends AbstractWorker {
         KeyValueTable stateTable = dsContext.getDataset(ETLRealtimeApplication.STATE_TABLE);
         byte[] startKey = Bytes.toBytes(String.format("%s%s", appName, SEPARATOR));
         // Scan the table for appname: prefixes and remove rows which doesn't match the unique id of this application.
-        CloseableIterator<KeyValue<byte[], byte[]>> rows = stateTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
-        try {
+        try (CloseableIterator<KeyValue<byte[], byte[]>> rows = stateTable.scan(startKey,
+                                                                                Bytes.stopKeyForPrefix(startKey))) {
           while (rows.hasNext()) {
             KeyValue<byte[], byte[]> row = rows.next();
             if (Bytes.compareTo(stateStoreKeyBytes, row.getKey()) != 0) {
               stateTable.delete(row.getKey());
             }
           }
-        } finally {
-          rows.close();
         }
       }
     });

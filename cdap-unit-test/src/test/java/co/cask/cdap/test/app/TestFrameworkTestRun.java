@@ -375,8 +375,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Verify the Spark result.
     DataSetManager<Table> dataSetManager = getDataset(AppWithPlugin.SPARK_TABLE);
     Table table = dataSetManager.get();
-    Scanner scanner = table.scan(null, null);
-    try {
+    try (Scanner scanner = table.scan(null, null)) {
       for (int i = 0; i < 5; i++) {
         Row row = scanner.next();
         Assert.assertNotNull(row);
@@ -386,9 +385,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
       // There shouldn't be any more rows in the table.
       Assert.assertNull(scanner.next());
-
-    } finally {
-      scanner.close();
     }
   }
 

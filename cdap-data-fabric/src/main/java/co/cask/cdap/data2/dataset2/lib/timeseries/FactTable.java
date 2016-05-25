@@ -183,8 +183,7 @@ public final class FactTable implements Closeable {
    * @param scan specifies deletion criteria
    */
   public void delete(FactScan scan) {
-    Scanner scanner = getScanner(scan);
-    try {
+    try (Scanner scanner = getScanner(scan)) {
       Row row;
       while ((row = scanner.next()) != null) {
         List<byte[]> columns = Lists.newArrayList();
@@ -211,8 +210,6 @@ public final class FactTable implements Closeable {
           break;
         }
       }
-    } finally {
-      scanner.close();
     }
   }
 
@@ -356,8 +353,8 @@ public final class FactTable implements Closeable {
     Set<String> measureNames = Sets.newHashSet();
     int scannedRecords = 0;
     // todo: make configurable
-    Scanner scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
-    try {
+
+    try (Scanner scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter)) {
       Row rowResult;
       while ((rowResult = scanner.next()) != null) {
         scannedRecords++;
@@ -375,8 +372,6 @@ public final class FactTable implements Closeable {
         }
         measureNames.add(codec.getMeasureName(rowResult.getRow()));
       }
-    } finally {
-      scanner.close();
     }
 
     LOG.trace("search for metrics completed, scanned records: {}", scannedRecords);
