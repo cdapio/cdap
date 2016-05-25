@@ -100,7 +100,7 @@ fi
 
 # java version check
 JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
-if [ $JAVA_VERSION -ne 7 ] && [ $JAVA_VERSION -ne 8 ]; then
+if [ ! -z $JAVA_VERSION ] && [ $JAVA_VERSION -ne 7 ] && [ $JAVA_VERSION -ne 8 ]; then
   die "ERROR: Java version not supported
 Please install Java 7 or 8 - other versions of Java are not supported."
 fi
@@ -208,6 +208,7 @@ rotate_log () {
 }
 
 start() {
+    foreground=$1; shift
     debug=$1; shift
     port=$1; shift
 
@@ -218,37 +219,52 @@ start() {
     rotate_log "$APP_HOME/logs/cdap-debug.log"
 
     if test -e /proc/1/cgroup && grep docker /proc/1/cgroup 2>&1 >/dev/null; then
-        ROUTER_OPTS="-Drouter.address=`hostname -i`"
+        if $foreground; then
+            echo "Docker detected, running in the foreground with output to STDOUT"
+        else
+            echo "WARN: Docker detected, but running in the background! This may fail!"
+        fi
+        ROUTER_OPTS="-Drouter.address=`hostname -i`" # -i is safe here since we know we're on Linux
     fi
 
-    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain >> \
-        "$APP_HOME/logs/cdap.log" 2>&1 < /dev/null &
-    echo $! > $pid
+    if $foreground; then
+        nice -1 "${JAVACMD}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
+              | tee -a "${APP_HOME}"/logs/cdap.log
+        background_process=$!
+        ret=$?
+        return ${ret}
+    else
+        nohup nice -1 "${JAVACMD}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
+              2>&1 < /dev/null >> "${APP_HOME}"/logs/cdap.log &
+        background_process=$!
+        ret=$?
+        echo $background_process > $pid
 
-    echo -n "Starting Standalone CDAP ..."
+        echo -n "Starting Standalone CDAP ..."
 
-    background_process=$!
-    while kill -0 $background_process >/dev/null 2>/dev/null ; do
-      if grep '..* started successfully' "$APP_HOME/logs/cdap.log" > /dev/null 2>&1; then
-        if $debug ; then
-          echo; echo "Remote debugger agent started on port $port."
-        else
-          echo
+        background_process=$!
+        while kill -0 $background_process >/dev/null 2>/dev/null ; do
+          if grep '..* started successfully' "$APP_HOME/logs/cdap.log" > /dev/null 2>&1; then
+            if $debug ; then
+              echo; echo "Remote debugger agent started on port $port."
+            else
+              echo
+            fi
+            grep -A 1 '..* started successfully' "$APP_HOME/logs/cdap.log"
+            break
+          elif grep 'Failed to start server' "$APP_HOME/logs/cdap.log" > /dev/null 2>&1; then
+            echo; echo "Failed to start server"
+            stop
+            break
+          else
+            echo -n "."
+            sleep 1;
+          fi
+        done
+        echo
+        if ! kill -s 0 $background_process 2>/dev/null >/dev/null; then
+          echo "Failed to start, please check logs for more information."
         fi
-        grep -A 1 '..* started successfully' "$APP_HOME/logs/cdap.log"
-        break
-      elif grep 'Failed to start server' "$APP_HOME/logs/cdap.log" > /dev/null 2>&1; then
-        echo; echo "Failed to start server"
-        stop
-        break
-      else
-        echo -n "."
-        sleep 1;
-      fi
-    done
-    echo
-    if ! kill -s 0 $background_process 2>/dev/null >/dev/null; then
-      echo "Failed to start, please check logs for more information."
     fi
 }
 
@@ -277,7 +293,7 @@ stop() {
 
 restart() {
     stop
-    start $1 $2
+    start $*
 }
 
 status() {
@@ -301,10 +317,12 @@ case "$1" in
   start|restart)
     command=$1; shift
     debug=false
+    foreground=false
     while [ $# -gt 0 ]
     do
       case "$1" in
         --enable-debug) shift; debug=true; port=$1; shift;;
+        --foreground) shift; foreground=true;;
         *) shift; break;;
       esac
     done
@@ -313,13 +331,13 @@ case "$1" in
       if [ -z "$port" ]; then
         port=5005
       elif [ -n "${port##+([0-9])}" ]; then
-        die "port number must be an integer.";
+        die "port number must be an integer."
       elif [ $port -lt 1024 ] || [ $port -gt 65535 ]; then
-        die "port number must be between 1024 and 65535.";
+        die "port number must be between 1024 and 65535."
       fi
       CDAP_OPTS="${CDAP_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
-    $command $debug $port
+    $command $foreground $debug $port
   ;;
 
   stop)
