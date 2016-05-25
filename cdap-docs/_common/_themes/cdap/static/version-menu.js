@@ -78,9 +78,9 @@
           writeVersionLink(data.older[j][0], data.older[j][1]);
         }
       }
+      document.write('<option value="' + versionsURL + '">All Releases</option>');
       document.write('</optgroup>');
     }
-    document.write('<option value="' + versionsURL + '">All Releases</option>');
     if (data) {
       document.write('</select>');
     }
