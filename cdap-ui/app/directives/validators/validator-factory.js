@@ -110,11 +110,4 @@ function ValidatorFactory (esprima) {
 }
 
 angular.module(PKG.name + '.commons')
-  .factory('esprima', function ($window) {
-    /**
-     * esprima is being used to parse JS code to a JSON tree
-     **/
-
-    return $window.esprima;
-  })
   .factory('ValidatorFactory', ValidatorFactory);

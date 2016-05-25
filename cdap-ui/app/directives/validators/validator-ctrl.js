@@ -34,16 +34,6 @@
  * }
  **/
 angular.module(PKG.name + '.commons')
-  .factory('js_beautify', function ($window) {
-    /**
-     * js_beautify is to format the indentation for javascript code
-     **/
-
-    return $window.js_beautify;
-  });
-
-
-angular.module(PKG.name + '.commons')
   .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, HydratorPlusPlusConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorPlusPlusHydratorService, ValidatorFactory) {
     var vm = this;
 
