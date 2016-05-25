@@ -42,18 +42,18 @@
     writeLink(dir, 'Version ' + label);
   });
   window.versionscallback = (function(data){
+    var ess;
     if (data) {
       document.write('<li class="versions">');
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
-    var ess;
+    
     if (data.development && data.development.length > 0 && data.development[0]) {
       ess = (data.development.length == 1) ? "" : "s" ;
       document.write('<optgroup label="Development Release' + ess +'">');          
       if (data.development && data.development.length > 0) {
         var i;
         for (i in data.development) {
-          writeLink(data.development[i][0], 'Develop (' + data.development[i][1] + ')');
           writeVersionLink(data.development[i][0], data.development[i][1]);
         }
       }
@@ -61,26 +61,32 @@
     } else {
       writeLink('develop', 'Develop');
     }
+    
     document.write('<optgroup label="Current Release">');
     if (data.current && data.current.length > 1 && data.current[0]) {
-      writeLink('current', 'Current (' + data.current[1] + ')')
       writeVersionLink(data.current[0], data.current[1]);
     } else {
       writeLink('current', 'Current');
     }
     document.write('</optgroup>');
+    
     if (data.older && data.older.length > 0 && data.older[0]) {
       ess = (data.older.length == 1) ? "" : "s" ;
       document.write('<optgroup label="Older Release' + ess + '">');
       var j;
+      var r;
       for (j in data.older) {
-        if (parseInt(data.older[j][3]) === 1) {
-          writeVersionLink(data.older[j][0], data.older[j][1]);
+        r = data.older[j];
+        if (parseInt(r[3]) === 1) {
+          if (r.length === 4 || (r.length > 4 && !parseInt(r[4]) === 0)) {
+            writeVersionLink(r[0], r[1]);
+          }
         }
       }
       document.write('<option value="' + versionsURL + '">All Releases</option>');
       document.write('</optgroup>');
     }
+    
     if (data) {
       document.write('</select>');
     }
