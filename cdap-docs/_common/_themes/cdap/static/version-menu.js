@@ -46,11 +46,9 @@
       document.write('<li class="versions">');
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
-    var ess = "s";
-    if (data.development && data.development.length > 0) {
-      if (data.development.length == 1) {
-        ess = "";
-      }
+    var ess;
+    if (data.development && data.development.length > 0 && data.development[0]) {
+      ess = (data.development.length == 1) ? "" : "s" ;
       document.write('<optgroup label="Development Release' + ess +'">');          
       if (data.development && data.development.length > 0) {
         var i;
@@ -58,24 +56,21 @@
           writeLink(data.development[i][0], 'Develop (' + data.development[i][1] + ')');
           writeVersionLink(data.development[i][0], data.development[i][1]);
         }
-      } else {
-        writeLink('develop', 'Develop');
       }
       document.write('</optgroup>');
+    } else {
+      writeLink('develop', 'Develop');
     }
     document.write('<optgroup label="Current Release">');
-    if (data.current && data.current.length > 0) {
+    if (data.current && data.current.length > 1 && data.current[0]) {
       writeLink('current', 'Current (' + data.current[1] + ')')
       writeVersionLink(data.current[0], data.current[1]);
     } else {
       writeLink('current', 'Current');
     }
     document.write('</optgroup>');
-    if (data.older && data.older.length > 0) {
-      ess = "s";
-      if (data.older.length == 1) {
-        ess = "";
-      }
+    if (data.older && data.older.length > 0 && data.older[0]) {
+      ess = (data.older.length == 1) ? "" : "s" ;
       document.write('<optgroup label="Older Release' + ess + '">');
       var j;
       for (j in data.older) {
@@ -83,9 +78,9 @@
           writeVersionLink(data.older[j][0], data.older[j][1]);
         }
       }
-      document.write('<option value="' + versionsURL + '">All Releases</option>');
       document.write('</optgroup>');
     }
+    document.write('<option value="' + versionsURL + '">All Releases</option>');
     if (data) {
       document.write('</select>');
     }
