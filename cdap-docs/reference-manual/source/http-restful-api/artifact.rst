@@ -164,7 +164,7 @@ To retrieve detail about a specific version of an artifact, submit an HTTP GET r
 
 This will return a JSON object that contains information about: classes in the artifact;
 the schema of the config object supported by the ``Application`` class; and the artifact name,
-version, and scope. Example output for version |release| of the ``WordCount``
+version, and scope. Example output for version |literal-release| of the ``WordCount``
 artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
@@ -404,14 +404,13 @@ an HTTP GET request::
      - Optional scope filter. If not specified, defaults to 'user'.
   
 This will return a JSON array that lists the extensions (plugin types) available to the artifact.
-Example output for version |release| of the ``cdap-etl-batch``
-artifact (pretty-printed and reformatted to fit):
+Example output for version |literal-release| of the ``cdap-etl-batch`` artifact:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifact/WordCount/versions/|release|/extensions?scope=system
-    [ "transform", "validator", "batchsource", "batchsink" ]{
+    |$| GET <base-url>/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions?scope=system
+    "postaction","transform","batchaggregator","validator","realtimesource","batchsource","realtimesink","batchsink"]
 
 .. _http-restful-api-artifact-available-plugins:
 
@@ -442,7 +441,7 @@ an HTTP GET request::
 This will return a JSON array that lists the plugins of the specified type
 available to the artifact. Each element in the array is a JSON object containing
 the artifact that the plugin originated from, and the plugin's class name, description, 
-name, and type. Example output for plugins of type ``transform`` available to version |release|
+name, and type. Example output for plugins of type ``transform`` available to version |literal-release|
 of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
@@ -451,29 +450,23 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
     |$| GET <base-url>/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform?scope=system
 
     [
-      {
-        "artifact": {
-          "name": "cdap-etl-lib",
-          "scope": "SYSTEM",
-          "version": "|release|-batch"
+        {
+            "name": "LogParser",
+            "type": "transform",
+            "description": "Parses logs from any input source for relevant information such as URI, IP, browser, device, HTTP status code, and timestamp.",
+            "className": "co.cask.hydrator.plugin.transform.LogParserTransform",
+            "artifact": {
+                "name": "core-plugins",
+                "version": "1.4.0-SNAPSHOT",
+                "scope": "SYSTEM"
+            }
         },
-        "className": "co.cask.cdap.etl.transform.LogParserTransform",
-        "description": "Parses logs from any input source for relevant information such as URI, IP, Browser, Device, HTTP status code, and timestamp.",
-        "name": "LogParser",
-        "type": "transform"
-      },
-      {
-        "artifact": {
-            "name": "cdap-etl-lib",
-            "scope": "SYSTEM",
-            "version": "|release|-batch"
+        {
+            "name": "JavaScript",
+            "type": "transform",
+            ...
         },
-        "className": "co.cask.cdap.etl.transform.ProjectionTransform",
-        "description": "Projection transform that lets you drop, rename, and cast fields to a different type.",
-        "name": "Projection",
-        "type": "transform"
-      },
-      ...
+        ...
     ]
 
 .. _http-restful-api-artifact-plugin-detail:
@@ -507,7 +500,7 @@ an HTTP GET request::
 This will return a JSON array that lists the plugins of the specified type and name
 available to the artifact. Each element in the array is a JSON object containing
 the artifact that the plugin originated from, and the plugin's class name, description, name, type, and properties.
-Example output for the ``ScriptFilter`` plugin available to version |release|
+Example output for the ``ScriptFilter`` plugin available to version |literal-release|
 of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
@@ -516,26 +509,36 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
     |$| GET <base-url>/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform/plugins/ScriptFilter?scope=system
 
     [
-      {
-        "artifact": {
-            "name": "cdap-etl-lib",
-            "scope": "SYSTEM",
-            "version": "|release|-batch"
-        },
-        "className": "co.cask.cdap.etl.transform.ScriptFilterTransform",
-        "description": "A transform plugin that filters records using a custom JavaScript provided in the plugin's config.",
-        "name": "ScriptFilter",
-        "properties": {
-            "script": {
-                "description": "JavaScript that must implement a function 'shouldFilter' that takes a JSON object representation of the input record, and returns true if the input record should be filtered and false if not. For example: 'function shouldFilter(input) { return input.count > 100; }' will filter out any records whose 'count' field is greater than 100.",
-                "name": "script",
-                "required": true,
-                "type": "string"
+        {
+            "properties": {
+                "lookup": {
+                    "name": "lookup",
+                    "description": "Lookup tables to use during transform. Currently supports KeyValueTable.",
+                    "type": "string",
+                    "required": false
+                },
+                "script": {
+                    "name": "script",
+                    "description": "JavaScript that must implement a function 'shouldFilter' that takes a JSON object representation of the input record and a context object (which encapsulates CDAP metrics and logger) and returns true if the input record should be filtered and false if not. For example:\n'function shouldFilter(input, context) {\nif (input.count < 0) {\ncontext.getLogger().info(\"Got input record with negative count\");\ncontext.getMetrics().count(\"negative.count\", 1);\n}\nreturn input.count > 100;\n}\n' will filter out any records whose 'count' field is greater than 100.",
+                    "type": "string",
+                    "required": true
+                }
+            },
+            "endpoints": [
+
+            ],
+            "name": "ScriptFilter",
+            "type": "transform",
+            "description": "A transform plugin that filters records using a custom JavaScript provided in the plugin's config.",
+            "className": "co.cask.hydrator.plugin.transform.ScriptFilterTransform",
+            "artifact": {
+                "name": "core-plugins",
+                "version": "1.4.0-SNAPSHOT",
+                "scope": "SYSTEM"
             }
-        },
-        "type": "transform"
-      }
+        }
     ]
+
 
 .. _http-restful-api-artifact-delete:
 
