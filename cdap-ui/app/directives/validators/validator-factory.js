@@ -17,8 +17,11 @@
 function ValidatorFactory (esprima) {
   'ngInject';
 
+  var AND = true,
+      OR = false;
+
   function initValidationFields(properties, functionMap) {
-    if (!properties.validationScript) { return; }
+    if (!properties.validationScript) { return {}; }
 
     var jsonTree = esprima.parse(properties.validationScript);
 
@@ -48,7 +51,7 @@ function ValidatorFactory (esprima) {
     }
 
     var fieldGroup = {};
-    _addRule(fieldGroup, initialValidation, functionMap, true);
+    _addRule(fieldGroup, initialValidation, functionMap, AND);
 
     return fieldGroup;
   }
@@ -97,10 +100,10 @@ function ValidatorFactory (esprima) {
     // Recursive call
     if (rule.consequent.body.length && rule.consequent.body[0].type === 'IfStatement') {
       // Treat next rule as AND
-      _addRule(fieldGroup, rule.consequent.body[0], functionMap, true);
+      _addRule(fieldGroup, rule.consequent.body[0], functionMap, AND);
     } else if (rule.alternate.body.length && rule.alternate.body[0].type === 'IfStatement') {
       // Treat next rule as OR
-      _addRule(fieldGroup, rule.alternate.body[0], functionMap, false);
+      _addRule(fieldGroup, rule.alternate.body[0], functionMap, OR);
     }
   }
 
