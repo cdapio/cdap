@@ -26,6 +26,11 @@ class TrackerMetadataController {
     this.myAlertOnValium = myAlertOnValium;
     this.$timeout = $timeout;
 
+    this.propertyInput = {
+      key: '',
+      value: ''
+    };
+
     let entitySplit = this.$state.params.entityType.split(':');
 
     this.entityType = entitySplit;
@@ -194,7 +199,7 @@ class TrackerMetadataController {
   }
 
   addProperty() {
-    if (!this.propertyInput.key && !this.propertyInput.value) { return; }
+    if (!this.propertyInput.key || !this.propertyInput.value) { return; }
 
     let addParams = {
       namespace: this.$state.params.namespace,
