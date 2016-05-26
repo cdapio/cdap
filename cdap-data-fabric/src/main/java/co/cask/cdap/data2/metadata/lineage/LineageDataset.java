@@ -149,8 +149,7 @@ public class LineageDataset extends AbstractDataset {
   public Set<Id.NamespacedId> getEntitiesForRun(Id.Run run) {
     ImmutableSet.Builder<Id.NamespacedId> recordBuilder = ImmutableSet.builder();
     byte[] startKey = getRunScanStartKey(run);
-    Scanner scanner = accessRegistryTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
-    try {
+    try (Scanner scanner = accessRegistryTable.scan(startKey, Bytes.stopKeyForPrefix(startKey))) {
       Row row;
       while ((row = scanner.next()) != null) {
         if (LOG.isTraceEnabled()) {
@@ -162,8 +161,6 @@ public class LineageDataset extends AbstractDataset {
           recordBuilder.add(rowKey.getData());
         }
       }
-    } finally {
-      scanner.close();
     }
     return recordBuilder.build();
   }
@@ -221,8 +218,7 @@ public class LineageDataset extends AbstractDataset {
   public List<Long> getAccessTimesForRun(Id.Run run) {
     ImmutableList.Builder<Long> recordBuilder = ImmutableList.builder();
     byte[] startKey = getRunScanStartKey(run);
-    Scanner scanner = accessRegistryTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
-    try {
+    try (Scanner scanner = accessRegistryTable.scan(startKey, Bytes.stopKeyForPrefix(startKey))) {
       Row row;
       while ((row = scanner.next()) != null) {
         if (LOG.isTraceEnabled()) {
@@ -233,16 +229,13 @@ public class LineageDataset extends AbstractDataset {
           recordBuilder.add(Bytes.toLong(row.get(ACCESS_TIME_COLS_BYTE)));
         }
       }
-    } finally {
-      scanner.close();
     }
     return recordBuilder.build();
   }
 
   private Set<Relation> scanRelations(byte[] startKey, byte[] endKey, Predicate<Relation> filter) {
     ImmutableSet.Builder<Relation> relationsBuilder = ImmutableSet.builder();
-    Scanner scanner = accessRegistryTable.scan(startKey, endKey);
-    try {
+    try (Scanner scanner = accessRegistryTable.scan(startKey, endKey)) {
       Row row;
       while ((row = scanner.next()) != null) {
         if (LOG.isTraceEnabled()) {
@@ -253,8 +246,6 @@ public class LineageDataset extends AbstractDataset {
           relationsBuilder.add(relation);
         }
       }
-    } finally {
-      scanner.close();
     }
     return relationsBuilder.build();
   }

@@ -105,8 +105,7 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   public static List<StructuredRecord> readOutput(DataSetManager<Table> tableManager) throws Exception {
     Table table = tableManager.get();
 
-    Scanner scanner = table.scan(null, null);
-    try {
+    try (Scanner scanner = table.scan(null, null)) {
       List<StructuredRecord> records = new ArrayList<>();
       Row row;
       while ((row = scanner.next()) != null) {
@@ -115,8 +114,6 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
         records.add(StructuredRecordStringConverter.fromJsonString(recordStr, schema));
       }
       return records;
-    } finally {
-      scanner.close();
     }
   }
 

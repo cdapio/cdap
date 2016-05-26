@@ -77,8 +77,7 @@ public class LevelDBQueueEvictor implements QueueEvictor {
     Row row;
     List<byte[]> rowsToDelete = Lists.newArrayList();
     // the scan must be non-transactional in order to see the state columns (which have latest timestamp)
-    Scanner scanner = core.scan(queueRowPrefix, stopRow, null, null, Transaction.ALL_VISIBLE_LATEST);
-    try {
+    try (Scanner scanner = core.scan(queueRowPrefix, stopRow, null, null, Transaction.ALL_VISIBLE_LATEST)) {
       while ((row = scanner.next()) != null) {
         int processed = 0;
         for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
@@ -95,8 +94,6 @@ public class LevelDBQueueEvictor implements QueueEvictor {
           rowsToDelete.add(row.getRow());
         }
       }
-    } finally {
-      scanner.close();
     }
     if (!rowsToDelete.isEmpty()) {
       core.deleteRows(rowsToDelete);
