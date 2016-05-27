@@ -33,8 +33,8 @@
 
   <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
     <div class="col-xs-10 col-lg-8">
-      <input type="text" class="form-control" ng-model="property.key" placeholder="key" my-focus-watch="property.newField" />
-      <input type="text" class="form-control" ng-model="property.value" placeholder="value" ng-if="!isDropdown" />
+      <input type="text" class="form-control" ng-model="property.key" placeholder="{{ keyPlaceholder }}" my-focus-watch="property.newField" />
+      <input type="text" class="form-control" ng-model="property.value" placeholder="{{ valuePlaceholder }}" ng-if="!isDropdown" />
       <select class="form-control"
         ng-model="property.value"
         ng-if="isDropdown"
