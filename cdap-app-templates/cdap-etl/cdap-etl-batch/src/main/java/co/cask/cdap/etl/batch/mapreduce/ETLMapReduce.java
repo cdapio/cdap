@@ -169,7 +169,14 @@ public class ETLMapReduce extends AbstractMapReduce {
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics,
                                                                   new DatasetContextLookupProvider(context),
                                                                   sourceName, context.getRuntimeArguments());
+
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(batchSource.getClass().getClassLoader());
+
     batchSource.prepareRun(sourceContext);
+
+    Thread.currentThread().setContextClassLoader(oldClassLoader);
+
     runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
     finishers.add(batchSource, sourceContext);
 
@@ -188,7 +195,13 @@ public class ETLMapReduce extends AbstractMapReduce {
       MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics,
                                                                   new DatasetContextLookupProvider(context),
                                                                   sinkName, context.getRuntimeArguments());
+      oldClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(batchSink.getClass().getClassLoader());
+
       batchSink.prepareRun(sinkContext);
+
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+
       runtimeArgs.put(sinkName, sinkContext.getRuntimeArguments());
       finishers.add(batchSink, sinkContext);
 
@@ -219,7 +232,14 @@ public class ETLMapReduce extends AbstractMapReduce {
         new MapReduceAggregatorContext(context, mrMetrics,
                                        new DatasetContextLookupProvider(context),
                                        aggregatorName, context.getRuntimeArguments());
+
+      oldClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(aggregator.getClass().getClassLoader());
+
       aggregator.prepareRun(aggregatorContext);
+
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+
       finishers.add(aggregator, aggregatorContext);
 
       if (aggregatorContext.getNumPartitions() != null) {

@@ -111,7 +111,12 @@ public class ETLSpark extends AbstractSpark {
     SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context,
                                                                         lookProvider,
                                                                         sourceName);
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(batchSource.getClass().getClassLoader());
+
     batchSource.prepareRun(sourceContext);
+
+    Thread.currentThread().setContextClassLoader(oldClassLoader);
 
     SparkBatchSourceFactory sourceFactory = sourceContext.getSourceFactory();
     if (sourceFactory == null) {
@@ -124,6 +129,10 @@ public class ETLSpark extends AbstractSpark {
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     for (String sinkName : phaseSpec.getPhase().getSinks()) {
       BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName);
+
+      oldClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(batchSink.getClass().getClassLoader());
+
       if (batchSink instanceof SparkSink) {
         BasicSparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, sinkName);
         ((SparkSink) batchSink).prepareRun(sparkPluginContext);
@@ -133,6 +142,9 @@ public class ETLSpark extends AbstractSpark {
         batchSink.prepareRun(sinkContext);
         finishers.add(batchSink, sinkContext);
       }
+
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+
     }
 
     Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
@@ -147,7 +159,14 @@ public class ETLSpark extends AbstractSpark {
       BatchAggregator aggregator = pluginInstantiator.newPluginInstance(aggregatorName);
       AbstractAggregatorContext aggregatorContext =
         new SparkAggregatorContext(context, new DatasetContextLookupProvider(context), aggregatorName);
+
+      oldClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(aggregator.getClass().getClassLoader());
+
       aggregator.prepareRun(aggregatorContext);
+
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+
       finishers.add(aggregator, aggregatorContext);
       numPartitions = aggregatorContext.getNumPartitions();
     }

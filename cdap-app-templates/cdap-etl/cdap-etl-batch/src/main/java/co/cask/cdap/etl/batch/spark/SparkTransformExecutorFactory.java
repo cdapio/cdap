@@ -79,7 +79,14 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
+
+      ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(batchAggregator.getClass().getClassLoader());
+
       batchAggregator.initialize(runtimeContext);
+
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+
       if (isFirstHalf) {
         return getTrackedGroupStep(new PreGroupAggregatorTransformation(batchAggregator), stageMetrics);
       } else {
