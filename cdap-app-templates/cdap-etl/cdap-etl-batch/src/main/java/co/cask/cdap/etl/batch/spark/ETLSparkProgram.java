@@ -125,10 +125,10 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
       if (namesOfTypeSparkSink.contains(sinkName)) {
         SparkSink sparkSink = sec.getPluginContext().newPluginInstance(sinkName);
+
         sparkSink.run(new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, sinkName),
                       filteredResultRDD.values());
       } else {
-
         JavaPairRDD<Object, Object> sinkRDD =
           filteredResultRDD.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Object>, Object, Object>() {
             @Override

@@ -231,7 +231,11 @@ public class ETLWorker extends AbstractWorker {
       context, metrics, new TxLookupProvider(context), sourceName);
     sourceStageName = sourceName;
     LOG.debug("Source Class : {}", source.getClass().getName());
+
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(source.getClass().getClassLoader());
     source.initialize(sourceContext);
+    Thread.currentThread().setContextClassLoader(oldClassLoader);
   }
 
   @SuppressWarnings("unchecked")
@@ -247,7 +251,12 @@ public class ETLWorker extends AbstractWorker {
       WorkerRealtimeContext sinkContext = new WorkerRealtimeContext(
         context, metrics, new TxLookupProvider(context), sinkName);
       LOG.debug("Sink Class : {}", sink.getClass().getName());
+
+      ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(sink.getClass().getClassLoader());
       sink.initialize(sinkContext);
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+
       sink = new TrackedRealtimeSink(sink, new DefaultStageMetrics(metrics, sinkName));
 
       Transformation identityTransformation = new Transformation() {

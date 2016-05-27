@@ -88,7 +88,14 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
+
+      ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(batchAggregator.getClass().getClassLoader());
+
       batchAggregator.initialize(runtimeContext);
+
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+
       StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
       if (isMapper) {
         return getTrackedGroupStep(new MapperAggregatorTransformation(batchAggregator,
