@@ -460,7 +460,7 @@ class TabbedParsedLiteral(ParsedLiteral):
             node['languages'] = [DEFAULT_LANGUAGES[0]] * tab_count
         if not node['independent']:
             node['dependent'] = self.cleanup_option('dependent', DEFAULT_TAB_SET)
-        node['mapping'] = self.cleanup_options('mapping', node['tabs'], True)
+        node['mapping'] = self.cleanup_options('mapping', node['tabs'], ascii_only=True, lower=True)
         if tab_count != len(node['mapping']):
             print "Warning: tabs (%s) don't match mapping (%s)" % (node['tabs'], node['mapping'])
             if tab_count > 1:
