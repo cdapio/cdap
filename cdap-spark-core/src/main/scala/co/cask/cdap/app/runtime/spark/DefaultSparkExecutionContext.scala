@@ -32,6 +32,7 @@ import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
+import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
 import co.cask.cdap.common.conf.ConfigurationUtil
 import co.cask.cdap.data.stream.{StreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
@@ -198,7 +199,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
                                                        arguments: Map[String, String]): Unit = {
-    transactional.executeWithActiveOrLongTx(new SparkTxRunnable {
+    transactional.execute(new SparkTxRunnable {
       override def run(context: SparkDatasetContext) = {
         val sc = rdd.sparkContext
         val dataset: Dataset = context.getDataset(datasetName, arguments, AccessType.WRITE)
@@ -237,7 +238,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
             throw t
         }
       }
-    }, false)
+    }, TransactionType.IMPLICIT)
   }
 
   private def configureStreamInput(configuration: Configuration, streamId: StreamId, startTime: Long,
@@ -286,7 +287,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
         // It should either be using the active transaction (explicit transaction), or create a new transaction
         // but leave it open so that it will be used for all stages in same job execution and get committed when
         // the job ended.
-        transactional.executeWithActiveOrLongTx(new SparkTxRunnable {
+        transactional.execute(new SparkTxRunnable {
           override def run(context: SparkDatasetContext) = {
             val dataset: Dataset = context.getDataset(datasetName, arguments, AccessType.READ)
             try {
@@ -295,7 +296,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
               context.releaseDataset(dataset)
             }
           }
-        }, true)
+        }, TransactionType.IMPLICIT_COMMIT_ON_JOB_END)
         result(0)
       }
     }

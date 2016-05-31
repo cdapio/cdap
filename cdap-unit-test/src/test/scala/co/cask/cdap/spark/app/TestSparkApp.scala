@@ -33,6 +33,7 @@ class TestSparkApp extends AbstractApplication {
   override def configure() = {
     addStream(new Stream("SparkStream"))
     addStream(new Stream("PeopleStream"))
+    createDataset("KeyValueTable", classOf[KeyValueTable])
     createDataset("SparkResult", classOf[KeyValueTable])
     createDataset("SparkThresholdResult", classOf[KeyValueTable])
     createDataset("PeopleFileSet", classOf[FileSet], FileSetProperties.builder
@@ -47,7 +48,7 @@ class TestSparkApp extends AbstractApplication {
 
     addSpark(new ClassicSpark)
     addSpark(new ScalaClassicSpark)
-    addSpark(new ExplicitTransactionSpark)
+    addSpark(new TransactionSpark)
     addSpark(new StreamFormatSpecSpark)
     addSpark(new ScalaStreamFormatSpecSpark)
 
