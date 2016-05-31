@@ -54,6 +54,8 @@ var pluginsWidgetMap = (state = {}, action = {}) => {
         let {key} = action.payload;
         return Object.assign({}, state, {[key]: {}});
       }
+    case _PLUGINS_WIDGETS_ACTIONS.RESET:
+      return {};
     default:
       return state;
   }
@@ -81,6 +83,7 @@ HydratorPlusPlusPluginWidgetsStore.$inject = ['PLUGINS_WIDGETS_ACTIONS', 'Redux'
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .constant('PLUGINS_WIDGETS_ACTIONS', {
     'WIDGET_JSON_FETCH_START': 'WIDGET_JSON_FETCH_START',
-    'WIDGET_JSON_FETCH': 'WIDGET_JSON_FETCH'
+    'WIDGET_JSON_FETCH': 'WIDGET_JSON_FETCH',
+    'RESET': 'WIDGET_JSON_RESET'
   })
   .factory('HydratorPlusPlusPluginWidgetsStore', HydratorPlusPlusPluginWidgetsStore);

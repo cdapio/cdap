@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusLeftPanelCtrl {
-  constructor($scope, $stateParams, rVersion, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, $uibModal, myAlertOnValium, $state, $q, rArtifacts, PluginTemplatesDirActions, HydratorPlusPlusOrderingFactory, LEFTPANELSTORE_ACTIONS, myHelpers, $timeout, mySettings, HydratorPlusPlusPluginsWidgetsActions, HydratorPlusPlusPluginWidgetsStore) {
+  constructor($scope, $stateParams, rVersion, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, $uibModal, myAlertOnValium, $state, $q, rArtifacts, PluginTemplatesDirActions, HydratorPlusPlusOrderingFactory, LEFTPANELSTORE_ACTIONS, myHelpers, $timeout, mySettings, HydratorPlusPlusPluginsWidgetsActions, HydratorPlusPlusPluginWidgetsStore, PLUGINS_WIDGETS_ACTIONS) {
     this.$state = $state;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
@@ -34,6 +34,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.myHelpers = myHelpers;
     this.mySettings = mySettings;
     this.pluginsWidgetsActions = HydratorPlusPlusPluginsWidgetsActions;
+    this.widgetActions = PLUGINS_WIDGETS_ACTIONS;
     this.pluginsWidgetsStore = HydratorPlusPlusPluginWidgetsStore;
 
     this.pluginsMap = [];
@@ -157,6 +158,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.$uibModal = $uibModal;
     this.$scope.$on('$destroy', () => {
       this.leftpanelStore.dispatch({ type: this.LEFTPANELSTORE_ACTIONS.RESET});
+      this.pluginsWidgetsStore.dispatch({ type: this.widgetActions.RESET });
       leftpanelStoreSub();
       pluginsWidgetJSONSub();
     });
@@ -433,9 +435,9 @@ class HydratorPlusPlusLeftPanelCtrl {
           .map( plug => {
             let label = regExp.exec(plug.plugin.label) || [''];
             label = label[0].replace(/[\(\)]/g, '');
-            return parseInt(label) || 0;
+            return parseInt(label, 10) || 0;
           });
-        labelWithMaxId = labels.reduce( (prev, curr) => prev > curr? prev: (curr + 1) , 1) || 0;
+        labelWithMaxId = labels.reduce( (prev, curr) => prev > curr ? prev: (curr + 1) , 1) || 0;
       }
       return (labelWithMaxId === 0) ? returnLabel : returnLabel + '(' + labelWithMaxId  + ')';
     };
@@ -507,6 +509,6 @@ class HydratorPlusPlusLeftPanelCtrl {
   }
 }
 
-HydratorPlusPlusLeftPanelCtrl.$inject = ['$scope', '$stateParams', 'rVersion', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusPluginActions', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesActionsFactory', 'NonStorePipelineErrorFactory',  '$uibModal', 'myAlertOnValium', '$state', '$q', 'rArtifacts', 'PluginTemplatesDirActions', 'HydratorPlusPlusOrderingFactory', 'LEFTPANELSTORE_ACTIONS', 'myHelpers', '$timeout', 'mySettings', 'HydratorPlusPlusPluginsWidgetsActions', 'HydratorPlusPlusPluginWidgetsStore'];
+HydratorPlusPlusLeftPanelCtrl.$inject = ['$scope', '$stateParams', 'rVersion', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusPluginActions', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesActionsFactory', 'NonStorePipelineErrorFactory',  '$uibModal', 'myAlertOnValium', '$state', '$q', 'rArtifacts', 'PluginTemplatesDirActions', 'HydratorPlusPlusOrderingFactory', 'LEFTPANELSTORE_ACTIONS', 'myHelpers', '$timeout', 'mySettings', 'HydratorPlusPlusPluginsWidgetsActions', 'HydratorPlusPlusPluginWidgetsStore', 'PLUGINS_WIDGETS_ACTIONS'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusLeftPanelCtrl', HydratorPlusPlusLeftPanelCtrl);
