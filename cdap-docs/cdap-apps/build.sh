@@ -133,8 +133,8 @@ function download_includes() {
   echo_red_bold "Using $hydrator_source"
   get_hydrator_version $base_target $hydrator_source
   
-  # 1:Includes dir 2:GitHub Hydrator source dir 3:Hydrator dir 4:Type 5:Target filename 6:Source Markdown filename
-
+  # Parameter          1            2                3                 4                      5
+  # Definition         base_target  base_source      source_dir        source_file_name       append_file (optional)
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsink.md 
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsource.md 
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-realtimesink.md 

@@ -717,18 +717,32 @@ def set_conf_for_manual():
 def source_read_handler(app, docname, source):
     doc_path = app.env.doc2path(docname)
     if doc_path.endswith(".md"):
-        # Cache the self.env.config.rst_epilog and rst_prolog
+        # Cache the self.env.config.rst_epilog, rst_prolog, highlight_language
         if app.env.config.rst_epilog:
             app.env.config.rst_epilog_cache = app.env.config.rst_epilog
             app.env.config.rst_epilog = None
         if app.env.config.rst_prolog:
             app.env.config.rst_prolog_cache = app.env.config.rst_prolog
             app.env.config.rst_prolog = None
+        if app.env.config.highlight_language:
+            app.env.config.highlight_language_cache = app.env.config.highlight_language
+            app.env.config.highlight_language = 'none'
     else:
-        if not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and app.env.config.rst_epilog_cache:
+        if (not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and 
+                app.env.config.rst_epilog_cache):
             app.env.config.rst_epilog = app.env.config.rst_epilog_cache
-        if not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and app.env.config.rst_prolog_cache:
+        if (not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and 
+                app.env.config.rst_prolog_cache):
             app.env.config.rst_prolog = app.env.config.rst_prolog_cache
+        if (app.env.config.highlight_language == 'none' and 
+                hasattr(app.env.config, 'highlight_language_cache') and 
+                app.env.config.highlight_language_cache):
+            app.env.config.highlight_language = app.env.config.highlight_language_cache
+            
+
+# -- Configure Application --------------------------------------------------
 
 def setup(app):
-    app.connect('source-read', source_read_handler)
+    app.connect('source-read', source_read_handler) # Used for Markdown files
+    from jsonEllipsisLexer import JsonEllipsisLexer # Add JsonEllipsisLexer (json-ellipsis)
+    app.add_lexer("json-ellipsis", JsonEllipsisLexer())

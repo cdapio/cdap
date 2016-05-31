@@ -1061,6 +1061,8 @@ The widget JSON is composed of two lists:
 - a list of property configuration groups and
 - a list of output properties.
 
+.. highlight:: json-ellipsis  
+
 For example::
 
   {
@@ -1072,9 +1074,10 @@ For example::
     "outputs": [
       {"ouput-property-1"},
       {"ouput-property-2"},
-      ...
     ]
   }
+
+.. highlight:: json
 
 Configuration Groups
 ....................
@@ -1098,10 +1101,9 @@ In the case of the *Batch Source* plugin, it could look like this::
         ]
       }
     ],
-    outputs: [
-      {output-property1},
-      {output-property2},
-      ..
+    "outputs": [
+      {"output-property1"},
+      {"output-property2"}
     ]
   }
 
@@ -1127,41 +1129,45 @@ available field names.)
 
 In the case of our *Batch Source* plugin example, the ``configuration-groups`` can be represented by::
 
-  "configuration-groups": [
-    {
-      "label": "Batch Source",
-      "properties": [
-        {
-          "widget-type": "dataset-selector",
-          "label": "Dataset Name",
-          "name": "name"
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Dataset Base Path",
-          "name": "basePath"
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Group By Fields",
-          "name": "groupByFields",
-          "plugin-function": {
-            "method": "POST",
-            "widget": "outputSchema",
-            "output-property": "schema",
-            "plugin-method": "outputSchema",
-            "required-fields": ["groupByFields", "aggregates"],
-            "missing-required-fields-message":
-              "'Group By Fields' & 'Aggregates' properties are required to fetch schema."
+  {
+    "configuration-groups": [
+      {
+        "label": "Batch Source",
+        "properties": [
+          {
+            "widget-type": "dataset-selector",
+            "label": "Dataset Name",
+            "name": "name"
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Dataset Base Path",
+            "name": "basePath"
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Group By Fields",
+            "name": "groupByFields",
+            "plugin-function": {
+              "method": "POST",
+              "widget": "outputSchema",
+              "output-property": "schema",
+              "plugin-method": "outputSchema",
+              "required-fields": ["groupByFields", "aggregates"],
+              "missing-required-fields-message":
+                "'Group By Fields' & 'Aggregates' properties are required to fetch schema."
+            }
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Delay",
+            "name": "delay"
           }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Delay",
-          "name": "delay"
-        }
-      ]
-
+        ]
+      }
+    ]
+  }
+  
 .. _custom-widgets:
 
 Widgets
@@ -1295,60 +1301,63 @@ For example:
 The output properties of the Twitter real-time source, with an explicit, non-editable schema property,
 composed of the fields *id*, *time*, *favCount*, *rtCount*, *geoLat*, *geoLong*, and *isRetweet*::
 
-  "outputs": [
-    {
-      "widget-type": "non-editable-schema-editor",
-      "schema": {
-        "id": "long",
-        "message": "string",
-        "lang": [
-          "string",
-          "null"
-        ],
-        "time": [
-          "long",
-          "null"
-        ],
-        "favCount": "int",
-        "rtCount": "int",
-        "source": [
-          "string",
-          "null"
-        ],
-        "geoLat": [
-          "double",
-          "null"
-        ],
-        "geoLong": [
-          "double",
-          "null"
-        ],
-        "isRetweet": "boolean"
+  {
+    "outputs": [
+      {
+        "widget-type": "non-editable-schema-editor",
+        "schema": {
+          "id": "long",
+          "message": "string",
+          "lang": [
+            "string",
+            "null"
+          ],
+          "time": [
+            "long",
+            "null"
+          ],
+          "favCount": "int",
+          "rtCount": "int",
+          "source": [
+            "string",
+            "null"
+          ],
+          "geoLat": [
+            "double",
+            "null"
+          ],
+          "geoLong": [
+            "double",
+            "null"
+          ],
+          "isRetweet": "boolean"
+        }
       }
-    }
-  ]
+    ]
+  }
 
 In contrast, our "Batch Source" plugin could have a configurable output schema::
 
-  "outputs": [
-    {
-      "name": "schema",
-      "widget-type": "schema",
-      "widget-attributes": {
-        "schema-types": [
-          "boolean",
-          "int",
-          "long",
-          "float",
-          "double",
-          "string",
-          "map<string, string>"
-        ],
-        "schema-default-type": "string"
+  {
+    "outputs": [
+      {
+        "name": "schema",
+        "widget-type": "schema",
+        "widget-attributes": {
+          "schema-types": [
+            "boolean",
+            "int",
+            "long",
+            "float",
+            "double",
+            "string",
+            "map<string, string>"
+          ],
+          "schema-default-type": "string"
+        }
       }
-    }
-  ]
-
+    ]
+  }
 
 Widget types for output properties are limited to ensure that the schema that is propagated across
 different plugins in the CDAP UI is consistent.

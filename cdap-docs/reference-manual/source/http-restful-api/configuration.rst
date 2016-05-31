@@ -59,8 +59,8 @@ format, the output would be similar to (showing the first portion, reformatted t
     "security.token.digest.keylength": "128",
     "metrics.memory.mb": "256",
     "data.tx.server.io.threads": "2",
-    ...
-  }
+
+   }
 
 .. highlight:: console
 
