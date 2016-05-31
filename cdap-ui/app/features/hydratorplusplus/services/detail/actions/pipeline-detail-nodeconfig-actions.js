@@ -15,8 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusNodeConfigActions', function(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusBottomPanelActions) {
-    var dispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
+  .service('HydratorPlusPlusNodeConfigActions', function(HydratorPlusPlusNodeConfigDispatcher, HydratorPlusPlusBottomPanelActions) {
+    var dispatcher = HydratorPlusPlusNodeConfigDispatcher.getDispatcher();
     this.choosePlugin = function(plugin) {
       dispatcher.dispatch('onPluginChange', plugin);
       HydratorPlusPlusBottomPanelActions.expand();
