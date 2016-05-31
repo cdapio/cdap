@@ -21,7 +21,8 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       controller: 'instanceControlController',
       scope: {
-        basePath: '='
+        basePath: '=',
+        isWorker: '@'
       },
       templateUrl: 'instance-control/instance-control.html',
     };
@@ -29,10 +30,18 @@ angular.module(PKG.name + '.commons')
   .controller('instanceControlController', function ($scope, MyCDAPDataSource, myAlertOnValium) {
     var myDataSrc = new MyCDAPDataSource($scope);
 
+
     myDataSrc.request({
       _cdapPath: $scope.basePath + '/instances'
     }).then(function (res) {
-      $scope.instance = res;
+      if (!$scope.isWorker || $scope.isWorker === 'false') {
+        $scope.instance = res;
+      } else {
+        $scope.instance = {
+          provisioned: res.instances,
+          requested: res.instances
+        };
+      }
     });
 
     $scope.handleSet = function () {

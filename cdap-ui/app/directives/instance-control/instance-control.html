@@ -33,7 +33,7 @@
       <span></span>
     </td>
     <td>
-      <button class="btn btn-primary btn-block" ng-click="handleSet()" ng-disabled="instance.requested < 1">Set</button>
+      <button class="btn btn-primary btn-block" ng-click="handleSet()" ng-disabled="instance.requested < 1 || !instance.requested">Set</button>
     </td>
   </tr>
 </table>
