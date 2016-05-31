@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,7 @@ angular.module(PKG.name + '.commons')
       if (!$scope.isWorker || $scope.isWorker === 'false') {
         $scope.instance = res;
       } else {
+        // This is due to https://issues.cask.co/browse/CDAP-6113
         $scope.instance = {
           provisioned: res.instances,
           requested: res.instances
