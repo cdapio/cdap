@@ -215,14 +215,14 @@ a:hover {
 }
 
 a.headerlink {
-    color: #ff6600 !important;
+    color: #ff6600;
     font-size: 0.8em;
     padding-top: .25em;
     width: 1.5ex;
     margin-left: -3ex;
     display: block;
     text-align: center;
-    text-decoration: none !important;
+    text-decoration: none;
     float: left;
 }
 
