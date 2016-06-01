@@ -52,6 +52,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -311,12 +312,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   private boolean checkProgramsRunning(final NamespaceId namespaceId) {
-    return runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
+    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
+      Iterables.filter(runtimeService.listAll(ProgramType.values()),
+                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
-      public boolean apply(Id.Program program) {
-        return program.getNamespaceId().equals(namespaceId.getNamespace());
+      public boolean apply(ProgramRuntimeService.RuntimeInfo info) {
+        return info.getProgramId().getNamespaceId().equals(namespaceId.getNamespace());
       }
-    }, ProgramType.values());
+    });
+    return !Iterables.isEmpty(runtimeInfos);
   }
 
   private InstanceId createInstanceId(CConfiguration cConf) {

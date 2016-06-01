@@ -24,7 +24,6 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
@@ -206,13 +205,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") String appId) throws Exception {
     Id.Application id = validateApplicationId(namespaceId, appId);
-    try {
-      applicationLifecycleService.removeApplication(id);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (CannotBeDeletedException e) {
-      // Keeping this for backward compatibility. Ideally this should return conflict, not forbidden.
-      responder.sendString(HttpResponseStatus.FORBIDDEN, "Program is still running");
-    }
+    applicationLifecycleService.removeApplication(id);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
@@ -223,13 +217,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteAllApps(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     Id.Namespace id = validateNamespace(namespaceId);
-    try {
-      applicationLifecycleService.removeAll(id);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (CannotBeDeletedException e) {
-      // Keeping this for backward compatibility. Ideally this should return conflict, not forbidden.
-      responder.sendString(HttpResponseStatus.FORBIDDEN, "Program is still running");
-    }
+    applicationLifecycleService.removeAll(id);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
