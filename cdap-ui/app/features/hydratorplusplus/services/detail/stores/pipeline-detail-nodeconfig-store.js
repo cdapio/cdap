@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusNodeConfigStore', function(HydratorPlusPlusConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, HydratorPlusPlusConfigStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusHydratorService) {
+  .service('HydratorPlusPlusNodeConfigStore', function(HydratorPlusPlusNodeConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, HydratorPlusPlusConfigStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusHydratorService) {
 
     var dispatcher;
     this.changeListeners = [];
@@ -61,7 +61,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       // This is done here as DAGPlusPlusNodesStore is being reused between create and view pipelines states.
       // So we need to destroy the dispatcher updating all listeners of the store so when we switch states
       // one does not get notified if out of context.
-      HydratorPlusPlusConfigDispatcher.destroyDispatcher();
+      HydratorPlusPlusNodeConfigDispatcher.destroyDispatcher();
       this.changeListeners = [];
     };
     this.init = function() {
@@ -70,7 +70,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       } else if ($state.includes('hydratorplusplus.detail.**')) {
         this.ConfigStore = HydratorPlusPlusDetailNonRunsStore;
       }
-      dispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
+      dispatcher = HydratorPlusPlusNodeConfigDispatcher.getDispatcher();
       dispatcher.register('onPluginChange', this.setState.bind(this));
       dispatcher.register('onPluginRemove', function() {
         this.setDefaults();
