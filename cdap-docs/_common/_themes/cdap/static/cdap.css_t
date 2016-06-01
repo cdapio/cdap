@@ -304,7 +304,7 @@ p.rubric {
     background-color: #EDEDED; 
     color: #111;
     font-size: 110%; 
-    font-weight:normal;
+    font-weight: normal;
     margin: 30px 0 10px 0;
     padding: 5px 0  5px  15px;
     text-shadow: 0 1px 0 white;
