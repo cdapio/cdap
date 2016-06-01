@@ -12,8 +12,8 @@
 @import url("cdap.css");
 
 div.toctree-wrapper.compound ul {
-  padding-left: 0px;
-  padding-top: 0px;
+  padding-left: 0;
+  padding-top: 0;
 }
 
 div.toctree-wrapper.compound li.toctree-l1 a.reference.internal {
@@ -22,9 +22,9 @@ div.toctree-wrapper.compound li.toctree-l1 a.reference.internal {
   display: block;
   font-size: 150%;
   font-weight: bold;
-  margin: 15px 0px 10px -15px;
-  padding: 5px 0px 5px 15px;
-  text-shadow: 0px 1px 0px white;
+  margin: 15px 0 10px -15px;
+  padding: 5px 0 5px 15px;
+  text-shadow: 0 1px 0 white;
 }
 
 div.toctree-wrapper.compound li.toctree-l1 + li {
@@ -50,8 +50,8 @@ div.toctree-wrapper.compound li.toctree-l2 a.reference.internal {
   color: #ff6600;
   font-size: 100%;
   font-weight: normal;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
 }
 
 div.toctree-wrapper.compound li.toctree-l2 a.reference.internal:hover {
