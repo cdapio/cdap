@@ -230,19 +230,16 @@ start() {
     if $foreground; then
         nice -1 "${JAVACMD}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
               | tee -a "${APP_HOME}"/logs/cdap.log
-        background_process=$!
         ret=$?
         return ${ret}
     else
         nohup nice -1 "${JAVACMD}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
               2>&1 < /dev/null >> "${APP_HOME}"/logs/cdap.log &
         background_process=$!
-        ret=$?
         echo $background_process > $pid
 
         echo -n "Starting Standalone CDAP ..."
 
-        background_process=$!
         while kill -0 $background_process >/dev/null 2>/dev/null ; do
           if grep '..* started successfully' "$APP_HOME/logs/cdap.log" > /dev/null 2>&1; then
             if $debug ; then
