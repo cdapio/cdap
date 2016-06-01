@@ -51,11 +51,9 @@
     if (data.development && data.development.length > 0 && data.development[0]) {
       ess = (data.development.length == 1) ? "" : "s" ;
       document.write('<optgroup label="Development Release' + ess +'">');          
-      if (data.development && data.development.length > 0) {
-        var i;
-        for (i in data.development) {
-          writeVersionLink(data.development[i][0], data.development[i][1]);
-        }
+      var i;
+      for (i in data.development) {
+        writeVersionLink(data.development[i][0], data.development[i][1]);
       }
       document.write('</optgroup>');
     } else {
