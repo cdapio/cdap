@@ -37,7 +37,6 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.DatasetSQLSpark;
-import co.cask.cdap.spark.app.ExplicitTransactionSpark;
 import co.cask.cdap.spark.app.Person;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
@@ -48,6 +47,7 @@ import co.cask.cdap.spark.app.SparkAppUsingObjectStore;
 import co.cask.cdap.spark.app.SparkLogParser;
 import co.cask.cdap.spark.app.StreamFormatSpecSpark;
 import co.cask.cdap.spark.app.TestSparkApp;
+import co.cask.cdap.spark.app.TransactionSpark;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
@@ -282,9 +282,9 @@ public class SparkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testExplicitTransaction() throws Exception {
-    ApplicationManager applicationManager = deployApplication(TestSparkApp.class);
 
+  public void testTransaction() throws Exception {
+    ApplicationManager applicationManager = deployApplication(TestSparkApp.class);
     StreamManager streamManager = getStreamManager("SparkStream");
 
     // Write some sentences to the stream
@@ -295,9 +295,10 @@ public class SparkTestRun extends TestFrameworkTestBase {
     streamManager.send("black bear");
 
     // Run the spark program
-    SparkManager sparkManager = applicationManager.getSparkManager(ExplicitTransactionSpark.class.getSimpleName());
+    SparkManager sparkManager = applicationManager.getSparkManager(TransactionSpark.class.getSimpleName());
     sparkManager.start(ImmutableMap.of(
       "source.stream", "SparkStream",
+      "keyvalue.table", "KeyValueTable",
       "result.all.dataset", "SparkResult",
       "result.threshold", "2",
       "result.threshold.dataset", "SparkThresholdResult"
@@ -327,7 +328,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
           itor.close();
         }
       }
-    }, 1, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
+    }, 3, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
 
     sparkManager.stop();
     sparkManager.waitForFinish(10, TimeUnit.SECONDS);
