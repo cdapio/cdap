@@ -21,8 +21,7 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       controller: 'instanceControlController',
       scope: {
-        basePath: '=',
-        isWorker: '@'
+        basePath: '='
       },
       templateUrl: 'instance-control/instance-control.html',
     };
@@ -30,18 +29,17 @@ angular.module(PKG.name + '.commons')
   .controller('instanceControlController', function ($scope, MyCDAPDataSource, myAlertOnValium) {
     var myDataSrc = new MyCDAPDataSource($scope);
 
-
     myDataSrc.request({
       _cdapPath: $scope.basePath + '/instances'
     }).then(function (res) {
-      if (!$scope.isWorker || $scope.isWorker === 'false') {
-        $scope.instance = res;
-      } else {
+      if (res.instances) {
         // This is due to https://issues.cask.co/browse/CDAP-6113
         $scope.instance = {
           provisioned: res.instances,
           requested: res.instances
         };
+      } else {
+        $scope.instance = res;
       }
     });
 
