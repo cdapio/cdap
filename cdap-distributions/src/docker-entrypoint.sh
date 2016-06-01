@@ -30,6 +30,7 @@ fi
 if [ "${1}" = 'cdap.sh' -a "$(id -u)" = '0' ]; then
   # Change the ownership of /opt/cdap/sdk to cdap
   chown -R cdap:cdap /opt/cdap/sdk
+  set -- gosu cdap.sh "$@"
 fi
 
 # As argument is not related to cdap,
