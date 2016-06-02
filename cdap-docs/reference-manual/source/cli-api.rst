@@ -99,7 +99,7 @@ Connecting to Secure CDAP Instances
 When connecting to secure CDAP instances, the CLI will look for an access token located at
 ``~/.cdap.accesstoken.<hostname>`` and use it if it exists and is valid. If not, the CLI will prompt
 you for the required credentials to acquire an access token from the CDAP instance. Once acquired,
-the CLI will save it to ``~/.cdap.accesstoken.<hostname>"`` for later use and use it for the rest of
+the CLI will save it to ``~/.cdap.accesstoken.<hostname>`` for later use and use it for the rest of
 the current CLI session.
 
 Options

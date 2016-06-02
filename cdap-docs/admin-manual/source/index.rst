@@ -35,7 +35,8 @@ installation and its security configuration.
 .. |system-requirements| replace:: **System Requirements:**
 .. _system-requirements: system-requirements.html
 
-- |system-requirements|_ Hardware, memory, core, and network **requirements** and software **prerequisites**.
+- |system-requirements|_ Hardware, memory, core, and network **requirements**, software
+  **prerequisites**, and using CDAP with **firewalls**.
 
 
 .. |installation| replace:: **Installation:**
