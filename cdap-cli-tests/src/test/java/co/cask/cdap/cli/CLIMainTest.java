@@ -328,6 +328,7 @@ public class CLIMainTest extends CLITestBase {
     try {
       testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
       testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "/echo");
+      testCommandOutputContains(cli, "check service availability " + qualifiedServiceId, "Service is available");
       testCommandOutputContains(cli, "call service " + qualifiedServiceId
         + " POST /echo body \"testBody\"", ":testBody");
     } finally {

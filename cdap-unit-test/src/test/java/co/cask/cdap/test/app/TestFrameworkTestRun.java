@@ -39,6 +39,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -57,6 +58,7 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
@@ -79,7 +81,6 @@ import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -97,8 +98,6 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -116,6 +115,9 @@ import java.util.concurrent.TimeoutException;
 @Category(SlowTests.class)
 public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -199,14 +201,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Only one instance of the worker and it throws an exception. ProgramRunStatus should go to FAILED state.
     testExceptionWorker(workerManager);
-    List<RunRecord> runRecords = workerManager.getHistory(ProgramRunStatus.FAILED);
     Tasks.waitFor(3, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
         return workerManager.getHistory(ProgramRunStatus.FAILED).size();
       }
     }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
-    Assert.assertEquals(3, runRecords.size());
 
     // Test a case where worker completes without an exception.
     workerManager.start();
@@ -375,8 +375,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Verify the Spark result.
     DataSetManager<Table> dataSetManager = getDataset(AppWithPlugin.SPARK_TABLE);
     Table table = dataSetManager.get();
-    Scanner scanner = table.scan(null, null);
-    try {
+    try (Scanner scanner = table.scan(null, null)) {
       for (int i = 0; i < 5; i++) {
         Row row = scanner.next();
         Assert.assertNotNull(row);
@@ -386,9 +385,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
       // There shouldn't be any more rows in the table.
       Assert.assertNull(scanner.next());
-
-    } finally {
-      scanner.close();
     }
   }
 
@@ -455,7 +451,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
           readCountName, AggregationFunction.SUM,
           writeCountName, AggregationFunction.SUM
         ),
-        ImmutableMap.<String, String>of(),
+        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+                        Constants.Metrics.Tag.APP, DatasetWithMRApp.class.getSimpleName(),
+                        Constants.Metrics.Tag.MAPREDUCE, DatasetWithMRApp.MAPREDUCE_PROGRAM),
         ImmutableList.<String>of()
       )
     );

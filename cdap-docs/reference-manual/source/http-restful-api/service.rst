@@ -47,6 +47,44 @@ The response body will contain a JSON-formatted list of the existing services::
       ...
   ]
 
+Checking Service Availability
+-----------------------------
+Once a service is started, you can can check whether the service is ready to accept service method requests by issuing
+an HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/available
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the application
+   * - ``<service-id>``
+     - Name of the service whose availability needs to be checked
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``503 Service Unavailable``
+     - The service is unavailable to take requests at the moment. For example, it might not have been started, or
+       if the service has been started, it might not have become available yet to take requests.
+   * - ``200 OK``
+     - Service is ready to accept requests.
+
+Note that when the service availability check returns ``200``, it is expected that calling the service
+methods will work. However, there is still a possibility for a service method call to fail; for example, if the
+service fails just after the availability call returns. It is highly recommended that error conditions
+(a ``503`` status code) be handled when making requests to service methods simply by retrying the request.
+
 Requesting Service Methods
 --------------------------
 To make a request to a service's method, send the value of the method's ``@Path`` annotation

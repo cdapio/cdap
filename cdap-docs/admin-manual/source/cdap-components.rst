@@ -11,7 +11,7 @@ CDAP Components
 These are the CDAP components:
 
 - **CDAP Master:** Service for managing runtime, lifecycle and resources of CDAP applications (package *cdap-master*);
-- **CDAP Router:** Service supporting REST endpoints for CDAP (package *cdap-gateway*);
+- **CDAP Router:** Service supporting HTTP RESTful endpoints for CDAP (package *cdap-gateway*);
 - **CDAP Kafka:** Metrics and logging transport service, using an embedded version of *Kafka* (package *cdap-kafka*);
 - **CDAP UI:** User interface for managing CDAP applications (package *cdap-ui*); and
 - **CDAP Authentication Server:** Performs client authentication for CDAP when security is enabled (package *cdap-security*).
@@ -37,6 +37,7 @@ For Standalone CDAP, they are located in ``<CDAP-SDK-HOME>/logs``.
 If you have :ref:`CDAP Security <admin-security>` enabled, then you will have an
 additional file, ``cdap-security.xml`` (documented in :ref:`an appendix
 <appendix-cdap-security.xml>`), with additional settings.
+
 
 Installation Summary
 ====================

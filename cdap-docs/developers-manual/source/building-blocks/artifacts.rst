@@ -91,6 +91,8 @@ JSON config file must be provided to specify which artifacts it extends. In addi
 artifact is a third-party JAR, the plugins in the artifact can be explicitly listed in that same config
 file. 
 
+.. highlight:: json
+
 For example, suppose you want to add ``mysql-connector-java-5.1.3.jar`` as a system artifact. The
 artifact is the MySQL JDBC driver, and is a third-party JAR that we want to use as a JDBC plugin for
 the ``cdap-etl-batch`` artifact. You would place the JAR file in the artifacts directory along with a
@@ -112,6 +114,8 @@ This config file specifies that the artifact can be used by versions 3.2.0 (incl
 of the cdap-etl-batch artifact. It also specifies that there is one plugin of type ``jdbc`` and name
 ``mysql`` with class ``com.mysql.jdbc.Driver``. Once added, this system artifact would be usable by
 applications in all namespaces.
+
+.. highlight:: java
 
 Example Use Case: Configurable Applications
 ===========================================
@@ -185,6 +189,8 @@ Our development team writes code such as::
       table.put(put);
     }
   }
+
+.. highlight:: console
 
 Our build system creates a JAR named ``myapp-1.0.0.jar`` that contains the ``MyApp`` class.
 The JAR is deployed via the RESTful API::

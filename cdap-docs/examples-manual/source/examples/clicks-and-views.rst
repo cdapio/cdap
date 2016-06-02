@@ -66,9 +66,12 @@ to know which source each record came from. This is possible by calling the ``ge
 .. |example-italic| replace:: *ClicksAndViews*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <ClicksAndViews>`
 
-.. include:: _includes/_building-starting-running.txt
+.. include:: _includes/_building-running.txt
 
+- Once the application has been deployed, `run the example <#running-the-example>`__.
 
+- When finished, you can `remove the application <#removing-the-application>`__.
+  
 Running the Example
 ===================
 
@@ -114,7 +117,8 @@ Querying the Results
 --------------------
 .. highlight:: console
 
-To sample the *joined* ``PartitionedFileSet``, execute an explore query using the CDAP CLI:
+Once the MapReduce job has completed, you can sample the *joined* ``PartitionedFileSet``, 
+by executing an explore query using the CDAP CLI:
 
 .. tabbed-parsed-literal::
 
@@ -155,6 +159,7 @@ With our sample data, the click through rate is ``0.5``::
   +=============+
   Fetched 1 rows
 
-.. Stopping and Removing the Application
-.. =====================================
+Removing the Application
+========================
 .. include:: _includes/_removing-application.txt
+  :start-after: **Removing the Application**

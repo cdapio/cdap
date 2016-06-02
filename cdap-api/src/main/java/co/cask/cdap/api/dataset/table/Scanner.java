@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 /**
  * Interface for table scan operation.
  */
-public interface Scanner {
+public interface Scanner extends AutoCloseable {
 
   /**
    * Returns the next row or {@code null} if the scanner is exhausted.
@@ -32,6 +32,7 @@ public interface Scanner {
   /**
    * Closes the scanner and releases any resources.
    */
+  @Override
   void close();
 
 }

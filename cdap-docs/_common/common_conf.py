@@ -241,6 +241,7 @@ if short_version:
 .. |short-version| replace:: %(short_version)s
 .. |bold-short-version| replace:: **%(short_version)s**
 .. |literal-short-version| replace:: ``%(short_version)s``
+.. |literal-cdap-slash-short-version| replace:: ``cdap/%(short_version)s``
 .. |previous-short-version| replace:: %(previous_short_version)s
 .. |bold-previous-short-version| replace:: **%(previous_short_version)s**
 .. |literal-previous-short-version| replace:: ``%(previous_short_version)s``
@@ -514,6 +515,11 @@ htmlhelp_basename = 'CDAPdoc'
 # This is because it needs to be set as the last item.
 html_context = {'html_short_title_toc': html_short_title_toc}
 
+# Custom CustomHTMLTranslator to customize formatting of titles
+html_translator_class = 'customHTML.CustomHTMLTranslator'
+
+html_add_permalinks = u'\U0001F517' # HTML '&#128279;' # Link symbol: see http://www.fileformat.info/info/unicode/char/1f517/index.htm
+
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
@@ -717,18 +723,32 @@ def set_conf_for_manual():
 def source_read_handler(app, docname, source):
     doc_path = app.env.doc2path(docname)
     if doc_path.endswith(".md"):
-        # Cache the self.env.config.rst_epilog and rst_prolog
+        # Cache the self.env.config.rst_epilog, rst_prolog, highlight_language
         if app.env.config.rst_epilog:
             app.env.config.rst_epilog_cache = app.env.config.rst_epilog
             app.env.config.rst_epilog = None
         if app.env.config.rst_prolog:
             app.env.config.rst_prolog_cache = app.env.config.rst_prolog
             app.env.config.rst_prolog = None
+        if app.env.config.highlight_language:
+            app.env.config.highlight_language_cache = app.env.config.highlight_language
+            app.env.config.highlight_language = 'none'
     else:
-        if not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and app.env.config.rst_epilog_cache:
+        if (not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and 
+                app.env.config.rst_epilog_cache):
             app.env.config.rst_epilog = app.env.config.rst_epilog_cache
-        if not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and app.env.config.rst_prolog_cache:
+        if (not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and 
+                app.env.config.rst_prolog_cache):
             app.env.config.rst_prolog = app.env.config.rst_prolog_cache
+        if (app.env.config.highlight_language == 'none' and 
+                hasattr(app.env.config, 'highlight_language_cache') and 
+                app.env.config.highlight_language_cache):
+            app.env.config.highlight_language = app.env.config.highlight_language_cache
+            
+
+# -- Configure Application --------------------------------------------------
 
 def setup(app):
-    app.connect('source-read', source_read_handler)
+    app.connect('source-read', source_read_handler) # Used for Markdown files
+    from jsonEllipsisLexer import JsonEllipsisLexer # Add JsonEllipsisLexer (json-ellipsis)
+    app.add_lexer("json-ellipsis", JsonEllipsisLexer())

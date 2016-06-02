@@ -187,8 +187,7 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
 
     // If the instance has been removed in the next barrier,
     // find the next start barrier that this instance needs to consume from
-    Scanner scanner = table.scan(Bytes.add(queueName.toBytes(), nextBarrier.getStartRow()), barrierScanEndRow);
-    try {
+    try (Scanner scanner = table.scan(Bytes.add(queueName.toBytes(), nextBarrier.getStartRow()), barrierScanEndRow)) {
       Row row;
       boolean found = false;
       while (!found && (row = scanner.next()) != null) {
@@ -203,8 +202,6 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
         // Remove the state since this consumer instance is not longer active
         table.delete(queueName.toBytes(), stateColumn);
       }
-    } finally {
-      scanner.close();
     }
   }
 
@@ -213,8 +210,7 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
    */
   void clear() {
     // Scan and delete all barrier rows
-    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
-    try {
+    try (Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow)) {
       Row row = scanner.next();
       while (row != null) {
         table.delete(row.getRow());
@@ -222,8 +218,6 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
       }
       // Also delete the consumer state rows
       table.delete(queueName.toBytes());
-    } finally {
-      scanner.close();
     }
   }
 
@@ -306,10 +300,9 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
 
     // Remove all barriers for groups that are removed.
     // Also remove barriers that have all consumers consumed pass that barrier
-    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
     // Multimap from groupId to barrier start rows. Ordering need to be maintained as the scan order.
     Multimap<Long, byte[]> deletes = LinkedHashMultimap.create();
-    try {
+    try (Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow)) {
       Row row = scanner.next();
       while (row != null) {
         deleteRemovedGroups(row, groupsIds);
@@ -336,8 +329,6 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
         }
         row = scanner.next();
       }
-    } finally {
-      scanner.close();
     }
 
     // Remove barries that have all consumers consumed passed it
@@ -388,8 +379,7 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
   }
 
   void getLatestConsumerGroups(Collection<? super ConsumerGroupConfig> result) {
-    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
-    try {
+    try (Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow)) {
       // Get the last row
       Row lastRow = null;
       Row row = scanner.next();
@@ -405,14 +395,11 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
       for (Map.Entry<byte[], byte[]> entry : lastRow.getColumns().entrySet()) {
         result.add(GSON.fromJson(new String(entry.getValue(), Charsets.UTF_8), ConsumerGroupConfig.class));
       }
-    } finally {
-      scanner.close();
     }
   }
 
   private PairCollector<Long, QueueBarrier> scanBarriers(PairCollector<Long, QueueBarrier> collector) {
-    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
-    try {
+    try (Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow)) {
       Row row;
       while ((row = scanner.next()) != null) {
         Map<Long, QueueBarrier> info = decodeBarrierInfo(row);
@@ -424,15 +411,12 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
           }
         }
       }
-    } finally {
-      scanner.close();
     }
     return collector;
   }
 
   private Collector<QueueBarrier> scanBarriers(long groupId, Collector<QueueBarrier> collector) {
-    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
-    try {
+    try (Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow)) {
       Row row;
       while ((row = scanner.next()) != null) {
         QueueBarrier info = decodeBarrierInfo(row, groupId);
@@ -440,8 +424,6 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
           break;
         }
       }
-    } finally {
-      scanner.close();
     }
     return collector;
   }

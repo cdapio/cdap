@@ -328,15 +328,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
           public void apply() throws Exception {
             // Prefix name is "/" terminated ("queue:///namespace/app/flow/"), hence the scan is unique for the flow
             byte[] startRow = Bytes.toBytes(prefixName.toString());
-            Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow));
-            try {
+            try (Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow))) {
               Row row = scanner.next();
               while (row != null) {
                 table.delete(row.getRow());
                 row = scanner.next();
               }
-            } finally {
-              scanner.close();
             }
           }
         });

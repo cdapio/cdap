@@ -14,13 +14,26 @@
  * the License.
  */
 
-class TrackerMetadataController{
-  constructor($state, myTrackerApi, $scope) {
+/**
+ * This class is responsible for controlling the Metadata View in Tracker
+ * entity detai page.
+ **/
+class TrackerMetadataController {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
+    this.myAlertOnValium = myAlertOnValium;
+    this.$timeout = $timeout;
+
+    this.propertyInput = {
+      key: '',
+      value: ''
+    };
 
     let entitySplit = this.$state.params.entityType.split(':');
+
+    this.entityType = entitySplit;
 
     let params = {
       scope: this.$scope,
@@ -153,9 +166,86 @@ class TrackerMetadataController{
 
     return fieldsArr;
   }
+
+  /* METADATA PROPERTIES CONTROL */
+  /*
+    TODO:
+      - Add support for Stream Views
+      - What to do with externalDataset type
+  */
+  enableAddProperty() {
+    this.addPropertyEnable = true;
+    this.propertyFocus();
+  }
+
+  deleteProperty(key) {
+    let deleteParams = {
+      namespace: this.$state.params.namespace,
+      entityType: this.$state.params.entityType,
+      entityId: this.$state.params.entityId,
+      key: key,
+      scope: this.$scope
+    };
+    this.myTrackerApi.deleteEntityProperty(deleteParams)
+      .$promise
+      .then(() => {
+        delete this.properties.user[key];
+      }, (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
+  }
+
+  addProperty() {
+    if (!this.propertyInput.key || !this.propertyInput.value) { return; }
+
+    let addParams = {
+      namespace: this.$state.params.namespace,
+      entityType: this.$state.params.entityType,
+      entityId: this.$state.params.entityId,
+      scope: this.$scope
+    };
+
+    let obj = {};
+    obj[this.propertyInput.key] = this.propertyInput.value;
+
+    this.myTrackerApi.addEntityProperty(addParams, obj)
+      .$promise
+      .then(() => {
+        this.properties.user[this.propertyInput.key] = this.propertyInput.value;
+
+        this.propertyInput.key = '';
+        this.propertyInput.value = '';
+        this.propertyFocus();
+      }, (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
+  }
+
+  propertyKeypress(event) {
+    switch (event.keyCode) {
+      case 13: // Enter Key
+        this.addProperty();
+        break;
+      case 27: // Esc key
+        this.addPropertyEnable = false;
+    }
+  }
+
+  propertyFocus() {
+    this.$timeout( () => {
+      let elem = document.getElementById('property-key-input');
+      angular.element(elem)[0].focus();
+    });
+  }
 }
 
-TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope'];
+TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerMetadataController', TrackerMetadataController);

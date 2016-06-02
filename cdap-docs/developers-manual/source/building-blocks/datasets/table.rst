@@ -120,13 +120,10 @@ A ``scan`` operation fetches a subset of rows or all of the rows of a Table::
 
   // Scan all rows from startRow (inclusive) to
   // stopRow (exclusive)
-  Scanner scanner = t.scan(startRow, stopRow);
-  try {
+  try (Scanner scanner = t.scan(startRow, stopRow)) {
     while ((row = scanner.next()) != null) {
       LOG.info("column1: " + row.getString("column1", "null"));
     }
-  } finally {
-    scanner.close();
   }
 
 To scan a set of rows not bounded by ``startRow`` and/or ``stopRow``

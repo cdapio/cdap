@@ -704,13 +704,10 @@ public class IndexedTableTest {
       tx.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          Scanner scanner = iTable.readByIndex(idxCol1, oneBytes);
-          try {
+          try (Scanner scanner = iTable.readByIndex(idxCol1, oneBytes)) {
             Row row = scanner.next();
             TableAssert.assertRow(row, row1, new byte[][]{idxCol1}, new byte[][]{oneBytes});
             assertEmpty(scanner);
-          } finally {
-            scanner.close();
           }
         }
       });

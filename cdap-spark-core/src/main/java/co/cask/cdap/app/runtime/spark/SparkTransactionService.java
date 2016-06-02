@@ -171,6 +171,8 @@ final class SparkTransactionService extends AbstractIdleService {
       return;
     }
 
+    LOG.debug("Spark job ended: {}", jobTransaction);
+
     // Cleanup the stage to job map
     stageToJob.keySet().removeAll(jobTransaction.getStageIds());
 

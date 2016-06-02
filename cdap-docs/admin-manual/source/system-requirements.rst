@@ -72,7 +72,10 @@ Network Requirements
 CDAP components communicate over your network with *HBase*, *HDFS*, and *YARN*.
 For the best performance, CDAP components should be located on the same LAN,
 ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
-components as you would *Hadoop datanodes*.  
+components as you would *Hadoop datanodes*.
+
+See the section below (:ref:`admin-manual-cdap-and-firewalls`) for information on
+configuring CDAP with a firewall and the listening ports that are used.
 
 
 .. _admin-manual-software-requirements:
@@ -176,3 +179,53 @@ NTP (Network Time Protocol)
 - If you need to adjust the configuration (add or delete servers, use servers closer to you, etc.)::
 
     $ vi /etc/ntp.conf
+
+
+.. _admin-manual-cdap-and-firewalls:
+
+CDAP and Firewalls
+==================
+In general, your :ref:`cluster configuration <admin-manual-install-deployment-architectures>`
+cannot have a firewall between the cluster and CDAP. Instead, if a firewall is used, the
+cluster and certain CDAP components need to be together behind the firewall. These are the
+ports which can be opened to provide external access:
+
+**Listen Ports for External Access**
+
+.. csv-table:: 
+   :header: "Description", "Governing Configuration", "Default Value in Packages/MapR", "Default Value in Ambari/Cloudera Manager"
+   :widths: 25, 25, 25, 25
+
+   "CDAP Router listen port (HTTP RESTful)", "``router.bind.port``", "10000", "11015"
+   "CDAP Router listen port (HTTP RESTful) (SSL)", "``router.ssl.bind.port``", "10443", "10443"
+   "CDAP UI listen port", "``dashboard.bind.port``", "9999", "9999"
+   "CDAP UI listen port (SSL)", "``dashboard.ssl.bind.port``", "9443", "9443"
+   "CDAP Auth Server listen port", "``security.auth.server.bind.port``", "10009", "10009"
+   "CDAP Auth Server listen port (SSL)", "``security.auth.server.ssl.bind.port``", "10010", "10010"
+
+The exact configuration and ports required will vary depending on your use of firewalls
+and your specific configuration. This diagram shows a likely scenario that you could use:
+
+.. image:: ../../developers-manual/source/_images/arch_components_view.png
+   :width: 6in
+   :align: center
+
+In this diagram, we show the CDAP Router "traversing" the firewall. Note that the CDAP UI
+can be completely outside of the firewall, as it needs to talk to clients, the CDAP
+Router, and the CDAP Auth Server. These two services (Router and Auth Server) need to be
+accessible from the outside to users, but also must be able to connect to nodes within the
+cluster. They need unrestricted client access to the cluster with the ability to establish
+connections to cluster nodes, on any port that a container may choose to open.
+
+Taking this same picture, if the firewall were moved to the left of the CDAP Router/Auth
+Server, then two ports (10000 and 10009) would need to be opened to allow access by
+clients to the hosts running the CDAP Router/Auth Server. There could be another firewall
+between the CDAP Router/Auth Server and the cluster, as long as it provids client access
+from the CDAP Auth Server to the ZooKeeper nodes. The same is true for the CDAP Router
+(access to the Zookeeper nodes), except it also needs unrestricted client access, so it
+usually doesn't make sense to firewall the CDAP Router when essentially you're allowing
+all traffic through.
+
+As your configuration can vary from these descriptions, this information is intended to
+guide you in understanding what the different components require in order to successfully
+run CDAP rather than provide strict requirements.

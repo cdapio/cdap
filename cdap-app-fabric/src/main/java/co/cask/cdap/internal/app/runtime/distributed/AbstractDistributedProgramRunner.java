@@ -366,6 +366,10 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     // by the distributed ProgramRunner.
     CConfiguration copied = CConfiguration.copy(conf);
     copied.unset(Constants.AppFabric.RUNTIME_EXT_DIR);
+
+    // Set the CFG_LOCAL_DATA_DIR to a relative path as the data directory for the container should be relative to the
+    // container directory
+    copied.set(Constants.CFG_LOCAL_DATA_DIR, "data");
     try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
       copied.writeXml(writer);
     }
