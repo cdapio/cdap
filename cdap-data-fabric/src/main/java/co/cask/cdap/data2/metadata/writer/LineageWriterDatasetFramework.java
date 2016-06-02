@@ -26,9 +26,12 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -38,17 +41,23 @@ import javax.annotation.Nullable;
  * {@link DatasetFramework} that also records lineage (program-dataset access) records.
  */
 public class LineageWriterDatasetFramework extends ForwardingDatasetFramework implements ProgramContextAware {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LineageWriterDatasetFramework.class);
+
+  private final UsageRegistry usageRegistry;
   private final LineageWriter lineageWriter;
   private final ProgramContext programContext = new ProgramContext();
 
   private AuditPublisher auditPublisher;
 
   @Inject
-  public LineageWriterDatasetFramework(
-    @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-    LineageWriter lineageWriter) {
+  public LineageWriterDatasetFramework(@Named(DataSetsModules.BASIC_DATASET_FRAMEWORK)
+                                         DatasetFramework datasetFramework,
+                                       LineageWriter lineageWriter,
+                                       UsageRegistry usageRegistry) {
     super(datasetFramework);
     this.lineageWriter = lineageWriter;
+    this.usageRegistry = usageRegistry;
   }
 
   @SuppressWarnings("unused")
@@ -93,18 +102,21 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Override
   @Nullable
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
-                                          @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader,
+                                          @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
                                           @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException {
     T dataset = super.getDataset(datasetInstanceId, arguments, classLoader, owners);
     writeLineage(datasetInstanceId, dataset);
+    writeUsage(datasetInstanceId, owners);
     return dataset;
   }
 
   @Override
   @Nullable
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
-                                          @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader)
+                                          @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
     T dataset = super.getDataset(datasetInstanceId, arguments, classLoader);
     writeLineage(datasetInstanceId, dataset);
@@ -114,25 +126,41 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Override
   @Nullable
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
-                                          @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader,
+                                          @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException {
     T dataset = super.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
     writeLineage(datasetInstanceId, dataset);
+    writeUsage(datasetInstanceId, owners);
     return dataset;
   }
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+                                          @Nullable Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+                                          @Nullable Iterable<? extends Id> owners,
+                                          AccessType accessType)
     throws DatasetManagementException, IOException {
     T dataset = super.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, accessType);
     writeLineage(datasetInstanceId, dataset, accessType);
+    writeUsage(datasetInstanceId, owners);
     return dataset;
+  }
+
+  private void writeUsage(Id.DatasetInstance datasetInstanceId, @Nullable Iterable<? extends Id> owners) {
+    if (null == owners) {
+      return;
+    }
+    try {
+      usageRegistry.registerAll(owners, datasetInstanceId);
+    } catch (Exception e) {
+      LOG.warn("Failed to register usage of {} -> {}", owners, datasetInstanceId, e);
+    }
   }
 
   @Override
@@ -159,4 +187,5 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
       AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programContext.getRun());
     }
   }
+
 }

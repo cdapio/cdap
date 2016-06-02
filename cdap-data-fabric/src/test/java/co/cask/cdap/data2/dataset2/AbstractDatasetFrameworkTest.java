@@ -39,6 +39,7 @@ import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
+import co.cask.cdap.data2.registry.NoOpUsageRegistry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -538,7 +539,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // Access instance
     Id.Run runId = new Id.Run(Id.Program.from("ns", "app", ProgramType.FLOW, "flow"), RunIds.generate().getId());
     LineageWriterDatasetFramework lineageFramework =
-      new LineageWriterDatasetFramework(framework, new NoOpLineageWriter());
+      new LineageWriterDatasetFramework(framework, new NoOpLineageWriter(), new NoOpUsageRegistry());
     lineageFramework.initContext(runId);
     lineageFramework.setAuditPublisher(inMemoryAuditPublisher);
     lineageFramework.getDataset(MY_TABLE, null, getClass().getClassLoader());

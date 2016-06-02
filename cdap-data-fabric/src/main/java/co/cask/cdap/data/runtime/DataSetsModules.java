@@ -36,6 +36,8 @@ import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
+import co.cask.cdap.data2.registry.DefaultUsageRegistry;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -75,6 +77,10 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
+
+        bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        expose(UsageRegistry.class);
+
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
 
@@ -107,6 +113,10 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
+
+        bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        expose(UsageRegistry.class);
+
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
 
@@ -139,6 +149,10 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
+
+        bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        expose(UsageRegistry.class);
+
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
 

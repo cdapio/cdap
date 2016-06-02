@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -59,7 +58,6 @@ import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
-import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
@@ -75,8 +73,6 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -95,7 +91,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +109,7 @@ public abstract class DatasetServiceTestBase {
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
   protected InMemoryDatasetFramework inMemoryDatasetFramework;
+  protected DatasetInstanceService instanceService;
 
   private int port = -1;
 
@@ -122,6 +118,9 @@ public abstract class DatasetServiceTestBase {
 
   @Before
   public void before() throws Exception {
+
+    // TODO: this whole method is a mess. Streamline it!
+
     CConfiguration cConf = CConfiguration.create();
     File dataDir = new File(tmpFolder.newFolder(), "data");
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
@@ -136,19 +135,18 @@ public abstract class DatasetServiceTestBase {
     discoveryService = new InMemoryDiscoveryService();
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
-    // Tx Manager to support working with datasets
-    Configuration txConf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, txConf);
-    txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
-    InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
-    TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
-
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule());
+
+    // Tx Manager to support working with datasets
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+    InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
+    TransactionSystemClientService txSystemClientService =
+      new DelegatingTransactionSystemClientService(txSystemClient);
 
     DatasetDefinitionRegistryFactory registryFactory = new DatasetDefinitionRegistryFactory() {
       @Override
@@ -173,13 +171,14 @@ public abstract class DatasetServiceTestBase {
 
     opExecutorService.startAndWait();
 
+    Map<String, DatasetModule> defaultModules =
+      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
+                                   Names.named("defaultDatasetModules")));
+
     ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
-      .putAll(injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
-                                           Names.named("defaultDatasetModules"))))
+      .putAll(defaultModules)
       .putAll(DatasetMetaTableUtil.getModules())
       .build();
-
-    TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
     inMemoryDatasetFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClientService, inMemoryDatasetFramework);
@@ -187,25 +186,21 @@ public abstract class DatasetServiceTestBase {
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
     namespaceStore = new InMemoryNamespaceStore();
     namespaceStore.create(NamespaceMeta.DEFAULT);
-    DatasetInstanceService instanceService = new DatasetInstanceService(
-      new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
-                             // we don't need any default modules in this test
-                             Collections.<String, DatasetModule>emptyMap()),
+    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, mdsDatasetsRegistry,
+                                                            locationFactory, defaultModules);
+    instanceService = new DatasetInstanceService(
+      typeManager,
       new DatasetInstanceManager(mdsDatasetsRegistry),
       new InMemoryDatasetOpExecutor(dsFramework),
       exploreFacade,
       cConf,
-      txExecutorFactory,
-      registryFactory,
       namespaceStore);
 
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
-                                                        // we don't need any default modules in this test
-                                                        Collections.<String, DatasetModule>emptyMap()),
+                                 typeManager,
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.BadRequestException;
@@ -29,14 +30,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
-import co.cask.cdap.data2.datafabric.dataset.AbstractDatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -45,8 +43,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.store.NamespaceStore;
-import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.collect.ImmutableList;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -56,6 +55,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /**
@@ -69,37 +69,31 @@ public class DatasetInstanceService {
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
   private final boolean allowDatasetUncheckedUpgrade;
-  private final UsageRegistry usageRegistry;
   private final NamespaceStore nsStore;
 
   private AuditPublisher auditPublisher;
 
+  private final LoadingCache<Id.DatasetInstance, DatasetMeta> metaCache;
+
+
   @Inject
   public DatasetInstanceService(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
-                                TransactionExecutorFactory txFactory,
-                                DatasetDefinitionRegistryFactory registryFactory,
                                 NamespaceStore nsStore) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
-    this.usageRegistry = new UsageRegistry(txFactory, new AbstractDatasetProvider(registryFactory) {
-      @Override
-      public DatasetMeta getMeta(Id.DatasetInstance instance) throws Exception {
-        return DatasetInstanceService.this.get(instance, ImmutableList.<Id>of());
-      }
-
-      @Override
-      public void createIfNotExists(Id.DatasetInstance instance, String type,
-                                    DatasetProperties creationProps) throws Exception {
-        DatasetInstanceService.this.createIfNotExists(
-          instance.getNamespace(), instance.getId(),
-          new DatasetInstanceConfiguration(type, creationProps.getProperties(), creationProps.getDescription()));
-      }
-    });
     this.nsStore = nsStore;
     this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+    this.metaCache = CacheBuilder.newBuilder().build(
+      new CacheLoader<Id.DatasetInstance, DatasetMeta>() {
+        @Override
+        public DatasetMeta load(Id.DatasetInstance datasetId) throws Exception {
+          return getFromMds(datasetId);
+        }
+      }
+    );
   }
 
   @SuppressWarnings("unused")
@@ -132,6 +126,20 @@ public class DatasetInstanceService {
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists.
    */
   public DatasetMeta get(Id.DatasetInstance instance, List<? extends Id> owners) throws Exception {
+    try {
+      return metaCache.get(instance);
+    } catch (ExecutionException e) {
+      if ((e.getCause() instanceof Exception) && (e.getCause() instanceof HttpErrorStatusProvider)) {
+         throw (Exception) e.getCause();
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Read the dataset meta data (instance and type) from MDS.
+   */
+  private DatasetMeta getFromMds(Id.DatasetInstance instance) throws Exception {
     // TODO: CDAP-3901 add back namespace existence check
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
@@ -145,8 +153,6 @@ public class DatasetInstanceService {
       // TODO: This shouldn't happen unless CDAP is in an invalid state - maybe give different error
       throw new NotFoundException(datasetTypeId);
     }
-
-    registerUsage(instance, owners);
     return new DatasetMeta(spec, typeMeta, null);
   }
 
@@ -163,18 +169,6 @@ public class DatasetInstanceService {
       throw new NotFoundException(instance);
     }
     return DatasetsUtil.fixOriginalProperties(spec).getOriginalProperties();
-  }
-
-  private void registerUsage(Id.DatasetInstance instance, List<? extends Id> owners) {
-    for (Id owner : owners) {
-      try {
-        if (owner instanceof Id.Program) {
-          usageRegistry.register((Id.Program) owner, instance);
-        }
-      } catch (Exception e) {
-        LOG.warn("Failed to register usage of {} -> {}", owner, instance);
-      }
-    }
   }
 
   /**
@@ -221,6 +215,7 @@ public class DatasetInstanceService {
                                                           .build(),
                                                         false);
     instanceManager.add(namespace, spec);
+    metaCache.invalidate(newInstance);
     publishAudit(newInstance, AuditType.CREATE);
 
     // Enable explore
@@ -272,6 +267,7 @@ public class DatasetInstanceService {
                                                           .build(),
                                                         true);
     instanceManager.add(instance.getNamespace(), spec);
+    metaCache.invalidate(instance);
 
     DatasetInstanceConfiguration creationProperties =
       new DatasetInstanceConfiguration(existing.getType(), properties, null);
@@ -373,6 +369,7 @@ public class DatasetInstanceService {
     if (!instanceManager.delete(instance)) {
       throw new DatasetNotFoundException(instance);
     }
+    metaCache.invalidate(instance);
 
     DatasetTypeMeta typeMeta = getTypeInfo(instance.getNamespace(), spec.getType());
     if (typeMeta == null) {
@@ -427,3 +424,4 @@ public class DatasetInstanceService {
     AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }
+

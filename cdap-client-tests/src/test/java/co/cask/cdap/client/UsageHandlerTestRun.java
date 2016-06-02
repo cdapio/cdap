@@ -230,6 +230,31 @@ public class UsageHandlerTestRun extends ClientTestBase {
       Assert.assertEquals(0, getAppDatasetUsage(app).size());
       Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
     }
+
+    deployApp(AllProgramsApp.class);
+
+    try {
+      // the program will run and stop by itself.
+      startProgram(program);
+      waitState(program, ProgramStatus.STOPPED);
+
+      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
+      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
+      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
+
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
+      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+    } finally {
+      deleteApp(app);
+
+      Assert.assertEquals(0, getAppStreamUsage(app).size());
+      Assert.assertEquals(0, getProgramStreamUsage(program).size());
+      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+      Assert.assertEquals(0, getAppDatasetUsage(app).size());
+      Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+    }
   }
 
   @Test

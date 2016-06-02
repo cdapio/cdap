@@ -30,20 +30,20 @@ public class UsageDatasetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private final Id.Program flow11 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow11");
-  private final Id.Program flow12 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow12");
-  private final Id.Program service11 = Id.Program.from("ns1", "app1", ProgramType.SERVICE, "service11");
+  protected final Id.Program flow11 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow11");
+  protected final Id.Program flow12 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow12");
+  protected final Id.Program service11 = Id.Program.from("ns1", "app1", ProgramType.SERVICE, "service11");
 
-  private final Id.Program flow21 = Id.Program.from("ns1", "app2", ProgramType.FLOW, "flow21");
-  private final Id.Program flow22 = Id.Program.from("ns1", "app2", ProgramType.FLOW, "flow22");
-  private final Id.Program service21 = Id.Program.from("ns1", "app2", ProgramType.SERVICE, "service21");
+  protected final Id.Program flow21 = Id.Program.from("ns1", "app2", ProgramType.FLOW, "flow21");
+  protected final Id.Program flow22 = Id.Program.from("ns1", "app2", ProgramType.FLOW, "flow22");
+  protected final Id.Program service21 = Id.Program.from("ns1", "app2", ProgramType.SERVICE, "service21");
 
-  private final Id.DatasetInstance datasetInstance1 = Id.DatasetInstance.from("ns1", "ds1");
-  private final Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from("ns1", "ds2");
-  private final Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from("ns1", "ds3");
+  protected final Id.DatasetInstance datasetInstance1 = Id.DatasetInstance.from("ns1", "ds1");
+  protected final Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from("ns1", "ds2");
+  protected final Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from("ns1", "ds3");
 
-  private final Id.Stream stream1 = Id.Stream.from("ns1", "s1");
-  private final Id.Stream stream2 = Id.Stream.from("ns2", "s1");
+  protected final Id.Stream stream1 = Id.Stream.from("ns1", "s1");
+  protected final Id.Stream stream2 = Id.Stream.from("ns2", "s1");
 
   @Test
   public void testOneMapping() throws Exception {
@@ -191,7 +191,7 @@ public class UsageDatasetTest {
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream2));
   }
 
-  private static UsageDataset getUsageDataset(String instanceId) throws Exception {
+  protected static UsageDataset getUsageDataset(String instanceId) throws Exception {
     Id.DatasetInstance id = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, instanceId);
     return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id,
                                            UsageDataset.class.getSimpleName(), DatasetProperties.EMPTY, null, null);

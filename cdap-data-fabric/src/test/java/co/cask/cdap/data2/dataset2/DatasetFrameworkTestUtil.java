@@ -170,6 +170,15 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     return new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager), tables);
   }
 
+  /**
+   * @param tables the TransactionAwares over which the returned TransactionExecutor operates on.
+   * @return a TransactionExecutor that uses an in-memory implementation of a TransactionSystemClient.
+   */
+  public TransactionExecutor newInMemoryTransactionExecutor(Iterable<TransactionAware> tables) {
+    Preconditions.checkArgument(tables != null);
+    return new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager), tables);
+  }
+
   public TransactionManager getTxManager() {
     return txManager;
   }
