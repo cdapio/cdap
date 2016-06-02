@@ -44,7 +44,7 @@
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
     var ess = "s";
-    if (data.development && data.development.length > 0) {
+    if (data.development && data.development.length > 0 && data.development[0]) {
       if (data.development.length == 1) {
         ess = "";
       }
@@ -56,7 +56,7 @@
       document.write('</optgroup>');
     }
       document.write('<optgroup label="Current Release">');
-    if (data.current && data.current.length > 0) {
+    if (data.current && data.current.length > 1) {
       writelink(data.current[0], data.current[1]);
       document.write('</optgroup>');
     }
