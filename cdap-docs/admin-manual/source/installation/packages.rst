@@ -64,7 +64,7 @@ Preparing Package Managers
 
 .. include:: /../target/_includes/packages-installation.rst
     :start-after: .. _packages-preparing-package-managers:
-    :end-before: .. end_install-debian-using-apt
+    :end-before: .. _packages-package-installation-title:
 
 
 Installing CDAP Services
