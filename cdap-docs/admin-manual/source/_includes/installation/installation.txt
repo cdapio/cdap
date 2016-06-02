@@ -82,6 +82,28 @@ Update your APT-cache::
 
 .. end_install-debian-using-apt
 
+.. _|distribution|-install-using-tar:
+
+Using Tar
+.........
+Download the appropriate CDAP tar file, and then unpack it to an appropriate directory (indicated by ``$dir``):
+
+.. tabbed-parsed-literal::
+  :tabs: RHEL,Ubuntu
+  :languages: console,console
+  :mapping: rhel,ubuntu
+  :dependent: rhel-ubuntu
+           
+  .. RHEL
+
+  $ curl |http:|//repository.cask.co/downloads/co/cask/cdap/cdap-distributed-rpm-bundle/|short-version|/cdap-distributed-rpm-bundle-|short-version|.tgz
+  $ tar xf cdap-distributed-rpm-bundle-|short-version|.tgz -C $dir
+  
+  .. Ubuntu
+
+  $ curl |http:|//repository.cask.co/downloads/co/cask/cdap/cdap-distributed-deb-bundle/|short-version|/cdap-distributed-deb-bundle-|short-version|.tgz
+  $ tar xf cdap-distributed-deb-bundle-|short-version|.tgz -C $dir
+
 
 .. _|distribution|-package-installation-title:
 
@@ -123,6 +145,28 @@ On Debian using APT
 
   $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
 
+  
+Using Tar
+.........
+Having :ref:`previously downloaded and unpacked <|distribution|-install-using-tar>` 
+the appropriate tar file to a directory ``$dir``, use:
+
+.. tabbed-parsed-literal::
+  :tabs: RHEL,Ubuntu
+  :languages: console,console
+  :mapping: rhel,ubuntu
+  :dependent: rhel-ubuntu
+       
+  .. RHEL
+
+  $ sudo yum localinstall $dir/*.rpm
+  
+  .. Ubuntu
+
+  $ sudo dpkg -i $dir/*.deb
+  $ sudo apt-get install -f
+  
+  
 .. _|distribution|-create-required-directories:
 
 Create Required Directories

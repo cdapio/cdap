@@ -20,10 +20,10 @@ import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -87,12 +87,11 @@ public interface ProgramRuntimeService extends Service {
   ProgramLiveInfo getLiveInfo(Id.Program programId);
 
   /**
-   * Check if any program that satisfy the given {@link Predicate} is running.
+   * Get information about running programs.
    * Protected only to support v2 APIs
    *
-   * @param predicate Get call on each running {@link Id.Program}.
    * @param types Types of program to check
-   * returns True if a program is running as defined by the predicate.
+   * returns List of info about running programs.
    */
-  boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types);
+  List<RuntimeInfo> listAll(ProgramType... types);
 }

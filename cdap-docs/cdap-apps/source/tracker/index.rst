@@ -95,6 +95,7 @@ or (Distributed CDAP):
 
 Tracker is built from a system artifact included with CDAP, |literal-cask-tracker-version-jar|.
 
+.. highlight:: xml  
 
 Installation
 ============
@@ -145,7 +146,9 @@ in the ``cdap-site.xml`` as described above, need to follow these steps:
     .. parsed-literal::
 
       |cdap >| load artifact target/|cask-tracker-version-jar|
-    
+
+.. highlight:: json  
+
 - Create an application configuration file (``appconfig.txt``) that contains the Kafka
   Audit Log reader configuration (the property ``auditLogKafkaConfig``). It is the Kafka
   Consumer Flowlet configuration information. For example::
@@ -338,6 +341,7 @@ connecting to a Navigator instance:
 Details on completing this form are described in CDAP's documentation on
 :ref:`Navigator Integration Application <navigator-integration>`.
 
+.. highlight:: console  
 
 Tracker HTTP RESTful API
 ========================
@@ -380,6 +384,8 @@ results available, plus the offset used for the set of results returned. This is
 for pagination through the results. Results are sorted so that the most recent audit event
 in the time range is returned first.
 
+.. highlight:: json  
+
 If there are no results, an empty set of results will be returned (pretty-printed here for
 display)::
 
@@ -390,9 +396,14 @@ display)::
   }
 
 
-Example::
+Example:
 
-  curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/AuditLog/methods/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h'
+.. tabbed-parsed-literal::
+
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/AuditLog/methods/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h'
+
+
+.. highlight:: json-ellipsis
 
 Results (reformatted for display)::
 
@@ -437,9 +448,7 @@ Results (reformatted for display)::
           }
         }
       },
-      
-      . . .
-      
+      ...
       {
         "version": 1,
         "time": 1461266805404,

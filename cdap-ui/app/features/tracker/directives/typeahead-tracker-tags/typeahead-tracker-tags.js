@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
-
-import java.util.Iterator;
-
-/**
- * Iterator that can be closed.
- *
- * @param <T> Type of elements returned by this iterator
- */
-public interface CloseableIterator<T> extends Iterator<T>, AutoCloseable {
-  @Override
-  void close();
-}
+angular.module(PKG.name + '.feature.tracker')
+  .directive('myTypeaheadTrackerTags', function() {
+    return {
+      restrict: 'EA',
+      templateUrl: '/assets/features/tracker/directives/typeahead-tracker-tags/typeahead-tracker-tags.html',
+      scope: {
+        config: '='
+      },
+      controller: 'TypeaheadTrackerTagsCtrl',
+      controllerAs: 'TypeaheadTrackerTagsCtrl'
+    };
+  });

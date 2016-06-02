@@ -4,7 +4,7 @@
 .. example-italic
 .. application-overview-page
 
-.. |example-dir|      replace:: |example|
 .. |example-artifact| replace:: |example|
+.. |example-dir|      replace:: |example|
 
-.. include:: _includes/_building-starting-running-example-with-dir.txt
+.. include:: _includes/_building-running-base.txt

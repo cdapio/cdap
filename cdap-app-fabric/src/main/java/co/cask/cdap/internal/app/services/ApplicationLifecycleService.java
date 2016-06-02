@@ -68,6 +68,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
@@ -79,6 +80,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -350,20 +352,34 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public void removeAll(final Id.Namespace namespaceId) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<>(
       store.getAllApplications(namespaceId));
-
     //Check if any program associated with this namespace is running
-    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
+    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
+      Iterables.filter(runtimeService.listAll(ProgramType.values()),
+                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
-      public boolean apply(Id.Program programId) {
-        return programId.getApplication().getNamespace().equals(namespaceId);
+      public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
+        return runtimeInfo.getProgramId().toEntityId().getNamespace().equals(namespaceId.getId());
       }
-    }, ProgramType.values());
+    });
 
-    if (appRunning) {
-      throw new CannotBeDeletedException(namespaceId, "One of the program associated with this namespace is still " +
-        "running");
+    Set<String> runningPrograms = new HashSet<>();
+    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
+      runningPrograms.add(runtimeInfo.getProgramId().toEntityId().getApplication() +
+                            ": " + runtimeInfo.getProgramId().toEntityId().getProgram());
     }
 
+    if (!runningPrograms.isEmpty()) {
+      String appAllRunningPrograms = Joiner.on(',')
+        .join(runningPrograms);
+      throw new CannotBeDeletedException(namespaceId,
+                                         "The following programs are still running: " + appAllRunningPrograms) {
+        //Keeping this for backward compatibility. Ideally this should return conflict, not forbidden.
+        @Override
+        public int getStatusCode() {
+          return HttpResponseStatus.FORBIDDEN.getCode();
+        }
+      };
+    }
     //All Apps are STOPPED, delete them
     for (ApplicationSpecification appSpec : allSpecs) {
       Id.Application id = Id.Application.from(namespaceId.getId(), appSpec.getName());
@@ -379,15 +395,31 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public void removeApplication(final Id.Application appId) throws Exception {
     //Check if all are stopped.
-    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
+    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
+      Iterables.filter(runtimeService.listAll(ProgramType.values()),
+                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
-      public boolean apply(Id.Program programId) {
-        return programId.getApplication().equals(appId);
+      public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
+        return runtimeInfo.getProgramId().toEntityId().getApplication().equals(appId.getId());
       }
-    }, ProgramType.values());
+    });
 
-    if (appRunning) {
-      throw new CannotBeDeletedException(appId);
+    Set<String> runningPrograms = new HashSet<>();
+    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
+      runningPrograms.add(runtimeInfo.getProgramId().toEntityId().getProgram());
+    }
+
+    if (!runningPrograms.isEmpty()) {
+      String appAllRunningPrograms = Joiner.on(',')
+        .join(runningPrograms);
+      throw new CannotBeDeletedException(appId,
+                                         "The following programs are still running: " + appAllRunningPrograms) {
+          //Keeping this for backward compatibility. Ideally this should return conflict, not forbidden.
+          @Override
+          public int getStatusCode() {
+            return HttpResponseStatus.FORBIDDEN.getCode();
+          }
+      };
     }
 
     ApplicationSpecification spec = store.getApplication(appId);

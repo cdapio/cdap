@@ -7,6 +7,8 @@
 
 .. _faqs-cloudera-manager:
 
+.. highlight:: console
+
 ======================
 FAQs: Cloudera Manager
 ======================
