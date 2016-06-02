@@ -110,7 +110,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
    */
   public static class OneSpark extends AbstractSpark {
     @Override
-    public void beforeSubmit(SparkClientContext context) throws Exception {
+    public void initialize(SparkClientContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
 
       Preconditions.checkArgument(args.size() == 17);
@@ -129,7 +129,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
    */
   public static class AnotherSpark extends AbstractSpark {
     @Override
-    public void beforeSubmit(SparkClientContext context) throws Exception {
+    public void initialize(SparkClientContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
       Preconditions.checkArgument(args.size() == 17);
       Preconditions.checkArgument(args.get("input.path").contains("SparkInput"));

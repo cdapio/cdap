@@ -55,7 +55,7 @@ public class SparkAppUsingLocalFiles extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(SparkClientContext context) throws Exception {
+    public void initialize(SparkClientContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
       String localFilePath = args.get(LOCAL_FILE_RUNTIME_ARG);
       Preconditions.checkArgument(localFilePath != null, "Runtime argument %s must be set.", LOCAL_FILE_RUNTIME_ARG);
@@ -71,7 +71,7 @@ public class SparkAppUsingLocalFiles extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(SparkClientContext context) throws Exception {
+    public void initialize(SparkClientContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
       String localFilePath = args.get(LOCAL_FILE_RUNTIME_ARG);
       Preconditions.checkArgument(localFilePath != null, "Runtime argument %s must be set.", LOCAL_FILE_RUNTIME_ARG);

@@ -122,7 +122,7 @@ public class SparkPageRankApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(SparkClientContext context) throws Exception {
+    public void initialize(SparkClientContext context) throws Exception {
       context.setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
     }
   }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
@@ -26,9 +27,11 @@ import java.util.Map;
  * This abstract class provides a default implementation of {@link Spark} methods for easy extension.
  */
 @Beta
-public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConfigurer> implements Spark {
+public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConfigurer>
+  implements Spark, ProgramLifecycle<SparkClientContext> {
 
   private SparkConfigurer configurer;
+  private SparkClientContext context;
 
   @Override
   public final void configure(SparkConfigurer configurer) {
@@ -110,12 +113,31 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   @Override
+  @Deprecated
   public void beforeSubmit(SparkClientContext context) throws Exception {
     // Do nothing by default
   }
 
   @Override
+  @Deprecated
   public void onFinish(boolean succeeded, SparkClientContext context) throws Exception {
     // Do nothing by default
+  }
+
+  @Override
+  public void initialize(SparkClientContext context) throws Exception {
+    this.context = context;
+  }
+
+  @Override
+  public void destroy() {
+    // Do nothing by default
+  }
+
+  /**
+   * Return an instance of the {@link SparkClientContext}.
+   */
+  protected final SparkClientContext getContext() {
+    return context;
   }
 }
