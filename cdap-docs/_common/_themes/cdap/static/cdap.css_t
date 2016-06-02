@@ -170,21 +170,7 @@ div.sphinxsidebar input[type=text]{
     margin-left: 20px;
 }
 
-a.current {
-    font-weight: bold;
-}
-
 /* -- body styles ----------------------------------------------------------- */
-
-a {
-    color: #ff6600;
-    text-decoration: none;
-}
-
-a:hover {
-    color: #005B81;
-    text-decoration: underline;
-}
 
 div.body h1,
 div.body h2,
@@ -214,17 +200,34 @@ div.body h4 { background-color: #EDEDED; margin: 30px 0 10px 0; }
 div.body h5 { background-color: #F2F2F2; margin: 30px 0 10px 0; }
 div.body h6 { background-color: #F2F2F2; }
 
-a.headerlink {
-    color: #c60f0f;
-    font-size: 0.8em;
-    padding: 0 4px 0 4px;
+a {
+    color: #ff6600;
     text-decoration: none;
-    display: none;
 }
 
-a.headerlink:hover {
-    background-color: #c60f0f;
-    color: white;
+a.current {
+    font-weight: bold;
+}
+
+a:hover {
+    color: #005B81;
+    text-decoration: underline;
+}
+
+a.headerlink {
+    color: #ff6600;
+    font-size: 0.8em;
+    padding-top: .25em;
+    width: 1.5ex;
+    margin-left: -3ex;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    float: left;
+}
+
+h1:hover > a.headerlink {
+    margin-left: -2.5ex;
 }
 
 a.toc-backref {
