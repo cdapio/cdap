@@ -123,33 +123,63 @@
       <div class="title-tab text-center"
            ng-class="{ 'active': MetadataController.activePropertyTab === 0}"
            ng-click="MetadataController.activePropertyTab = 0">
-        <h4>User Properties</h4>
+        <h4>User</h4>
       </div>
 
       <div class="title-tab text-center"
            ng-class="{ 'active': MetadataController.activePropertyTab === 1}"
            ng-click="MetadataController.activePropertyTab = 1">
-        <h4>System Properties</h4>
+        <h4>System</h4>
       </div>
     </div>
 
     <div class="column-content">
       <!-- USER PROPERTIES -->
-      <div ng-if="MetadataController.activePropertyTab === 0">
-        <table class="table table-bordered"
-               ng-if="!MetadataController.properties.isUserEmpty">
+      <div class="table-container"
+           ng-if="MetadataController.activePropertyTab === 0">
+        <table class="table table-bordered">
           <tbody>
             <tr ng-repeat="(key, value) in MetadataController.properties.user">
               <td>{{ key }}</td>
               <td>{{ value }}</td>
+              <td class="text-center">
+                <span class="fa fa-trash text-danger"
+                      ng-click="MetadataController.deleteProperty(key)">
+                </span>
+              </td>
+            </tr>
+
+            <tr class="input-row"
+                ng-if="MetadataController.addPropertyEnable"
+                ng-keydown="MetadataController.propertyKeypress($event)">
+              <td>
+                <input type="text" class="form-control" id="property-key-input"
+                       ng-model="MetadataController.propertyInput.key"
+                       placeholder="key">
+              </td>
+              <td>
+                <input type="text" class="form-control"
+                       ng-model="MetadataController.propertyInput.value"
+                       placeholder="value">
+              </td>
+              <td class="text-center">
+                <button class="btn btn-default"
+                        ng-click="MetadataController.addProperty()">
+                  <i class="fa fa-plus"></i>
+                </button>
+              </td>
+            </tr>
+
+            <tr class="empty-row"
+                ng-if="!MetadataController.addPropertyEnable"
+                ng-click="MetadataController.enableAddProperty()">
+              <td></td>
+              <td></td>
+              <td></td>
             </tr>
           </tbody>
         </table>
 
-        <div class="no-properties-message text-center"
-             ng-if="MetadataController.properties.isUserEmpty">
-          <h4>There are no user properties</h4>
-        </div>
       </div>
 
       <!-- SYSTEM PROPERTIES -->

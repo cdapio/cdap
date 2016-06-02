@@ -401,12 +401,11 @@ public class LevelDBTableCore {
     DBIterator iterator = db.iterator();
     seekToStart(iterator, startRow);
     byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
-    Scanner scanner = new LevelDBScanner(iterator, endKey, filter, columns, null);
 
     DBIterator deleteIterator = db.iterator();
     seekToStart(deleteIterator, startRow);
     final int deletesPerRound = 1024; // todo make configurable
-    try {
+    try (Scanner scanner = new LevelDBScanner(iterator, endKey, filter, columns, null)) {
       Row rowValues;
       WriteBatch batch = db.createWriteBatch();
       int deletesInBatch = 0;
@@ -433,7 +432,6 @@ public class LevelDBTableCore {
         db.write(batch, getWriteOptions());
       }
     } finally {
-      scanner.close();
       deleteIterator.close();
     }
   }

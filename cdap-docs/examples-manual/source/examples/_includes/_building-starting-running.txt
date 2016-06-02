@@ -2,6 +2,7 @@
 .. To use this include, define these replacements:
 .. example
 .. example-italic
+.. application-overview-page
 
 .. |example-dir|      replace:: |example|
 .. |example-artifact| replace:: |example|

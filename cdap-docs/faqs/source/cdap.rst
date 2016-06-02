@@ -13,6 +13,7 @@ FAQs: CDAP
 
 .. rubric:: Configuration: General
 
+.. highlight:: console
 
 .. _faq-installation-startup-memory-core-requirements:
 
@@ -70,8 +71,8 @@ you can add this location to your PATH to prevent the need for specifying the en
 **Note:** These commands will list the contents of the package ``cdap-cli``, once it has
 been installed::
 
-  rpm -ql cdap-cli
-  dpkg -L cdap-cli
+  $ rpm -ql cdap-cli
+  $ dpkg -L cdap-cli
 
 
 .. rubric:: Installation: YARN
@@ -212,7 +213,7 @@ One item to check is that your system's network setting is configured to exclude
 not be able to communicate with each other, and you'll see error messages such as these.
 You can set a system's network setting for a proxy by using::
 
-  export no_proxy="localhost,127.0.0.1"
+  $ export no_proxy="localhost,127.0.0.1"
 
 
 The HiveServer2 already listens on port 10000; what should I do?
@@ -241,16 +242,16 @@ Things to check as possible solutions:
 
 1. Check if the JDK being used is :ref:`supported by CDAP <admin-manual-install-java-runtime>`::
 
-    java -version
+    $ java -version
 
 #. Check if the CDAP user is using a :ref:`correct version of the JDK <admin-manual-install-java-runtime>`::
 
-    sudo su - <cdap-user> 
-    java -version
+    $ sudo su - <cdap-user> 
+    $ java -version
    
 #. Run this command to see if all the CDAP classpaths are included::
 
-    /opt/cdap/master/bin/svc-master classpath | tr ':' '\n'
+    $ /opt/cdap/master/bin/svc-master classpath | tr ':' '\n'
    
    Expect to see (where *<version>* is the appropriate ``hbase-compat`` version)::
 

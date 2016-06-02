@@ -23,4 +23,10 @@ angular.module(`${PKG.name}.commons`)
   })
   .factory('ReduxThunk', function($window) {
     return $window.ReduxThunk;
+  })
+  .factory('js_beautify', function ($window) {
+    return $window.js_beautify;
+  })
+  .factory('esprima', function ($window) {
+    return $window.esprima;
   });

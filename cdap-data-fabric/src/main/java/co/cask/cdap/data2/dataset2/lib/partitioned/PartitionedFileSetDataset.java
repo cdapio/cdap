@@ -357,11 +357,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       if (partitions.size() >= limit) {
         break;
       }
-      Scanner scanner = partitionsTable.readByIndex(WRITE_PTR_COL, Bytes.toBytes(txId));
-      try {
+      try (Scanner scanner = partitionsTable.readByIndex(WRITE_PTR_COL, Bytes.toBytes(txId))) {
         scannerToPartitions(scanner, partitions, limit, predicate);
-      } finally {
-        scanner.close();
       }
       // remove the txIds as they are added to the partitions list already
       // if they're not removed, they will be persisted in the state for the next scan
@@ -373,14 +370,11 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     if (partitions.size() < limit) {
       // no read your own writes (partitions)
       scanUpTo = Math.min(tx.getWritePointer(), tx.getReadPointer() + 1);
-      Scanner scanner = partitionsTable.scanByIndex(WRITE_PTR_COL,
-                                                    Bytes.toBytes(partitionConsumerState.getStartVersion()),
-                                                    Bytes.toBytes(scanUpTo));
       Long endTxId;
-      try {
+      try (Scanner scanner = partitionsTable.scanByIndex(WRITE_PTR_COL,
+                                                         Bytes.toBytes(partitionConsumerState.getStartVersion()),
+                                                         Bytes.toBytes(scanUpTo))) {
         endTxId = scannerToPartitions(scanner, partitions, limit, predicate);
-      } finally {
-        scanner.close();
       }
       if (endTxId != null) {
         // nonnull means that the scanner was not exhausted
@@ -572,8 +566,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer, boolean decodeMetadata) {
     byte[] startKey = generateStartKey(filter);
     byte[] endKey = generateStopKey(filter);
-    Scanner scanner = partitionsTable.scan(startKey, endKey);
-    try {
+    try (Scanner scanner = partitionsTable.scan(startKey, endKey)) {
       while (true) {
         Row row = scanner.next();
         if (row == null) {
@@ -597,8 +590,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
           consumer.consume(key, Bytes.toString(pathBytes), decodeMetadata ? metadataFromRow(row) : null);
         }
       }
-    } finally {
-      scanner.close();
     }
   }
 

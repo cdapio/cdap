@@ -85,6 +85,10 @@ public class MapReduceContainerLauncher {
 
     // Invoke MapReduceClassLoader.getTaskContextProvider()
     classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
+    // Invoke StandardOutErrorRedirector.redirectToLogger()
+    classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
+      .getDeclaredMethod("redirectToLogger", String.class)
+      .invoke(null, "org.apache.hadoop.mapreduce");
 
     Class<?> mainClass = classLoader.loadClass(mainClassName);
     Method mainMethod = mainClass.getMethod("main", String[].class);

@@ -157,11 +157,10 @@ public class DataQualityAppTest extends TestBase {
     mrManager.waitForFinish(180, TimeUnit.SECONDS);
 
     Table logDataStore = (Table) getDataset("dataQuality").get();
-    Scanner scanner = logDataStore.scan(null, null);
 
     DiscreteValuesHistogram discreteValuesHistogramAggregationFunction = new DiscreteValuesHistogram();
     Row row;
-    try {
+    try (Scanner scanner = logDataStore.scan(null, null)) {
       while ((row = scanner.next()) != null) {
         if (Bytes.toString(row.getRow()).contains("content_length")) {
           Map<byte[], byte[]> columnsMapBytes = row.getColumns();
@@ -171,8 +170,6 @@ public class DataQualityAppTest extends TestBase {
           }
         }
       }
-    } finally {
-      scanner.close();
     }
 
     Map<String, Integer> outputMap = discreteValuesHistogramAggregationFunction.retrieveAggregation();

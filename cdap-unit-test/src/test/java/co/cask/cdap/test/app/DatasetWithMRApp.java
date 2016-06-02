@@ -37,7 +37,6 @@ public class DatasetWithMRApp extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("DatasetWithMRApp");
     setDescription("Copy Data from one KVTable Dataset to another");
     addMapReduce(new CopyMapReduce());
   }

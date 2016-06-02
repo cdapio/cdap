@@ -30,6 +30,7 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
@@ -43,7 +44,6 @@ import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionExecutor;
@@ -235,7 +235,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     // announce the twill runnable
     InetSocketAddress bindAddress = service.getBindAddress();
     int port = bindAddress.getPort();
-    cancelDiscovery = serviceAnnouncer.announce(getServiceName(programId), port);
+    cancelDiscovery = serviceAnnouncer.announce(ServiceDiscoverable.getName(programId.toEntityId()), port);
     LOG.info("Announced HTTP Service for Service {} at {}", programId, bindAddress);
 
     // Create a Timer thread to periodically collect handler that are no longer in used and call destroy on it
@@ -267,12 +267,6 @@ public class ServiceHttpServer extends AbstractIdleService {
 
   public void setInstanceCount(int instanceCount) {
     this.instanceCount.set(instanceCount);
-  }
-
-  private String getServiceName(Id.Program programId) {
-    return String.format("%s.%s.%s.%s",
-                         ProgramType.SERVICE.name().toLowerCase(),
-                         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
 
   private TimerTask createHandlerDestroyTask() {

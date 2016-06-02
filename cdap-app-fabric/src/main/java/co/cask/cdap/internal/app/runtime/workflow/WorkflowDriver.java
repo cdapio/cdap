@@ -46,6 +46,8 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -83,6 +85,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -135,8 +138,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Nullable
   private final PluginInstantiator pluginInstantiator;
 
-  private final CConfiguration cConf;
-
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService,
@@ -162,7 +163,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.store = store;
-    this.cConf = cConf;
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
                                                                          program, options);
 
@@ -208,7 +208,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     try {
       if (workflow instanceof ProgramLifecycle) {
         basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-        ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
+        ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
+        try {
+          ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
         store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
       }
     } catch (Throwable t) {
@@ -279,17 +284,22 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       transactionContext.start();
       if (workflow instanceof ProgramLifecycle) {
         basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-        ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
+        ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
+        try {
+          ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
         store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
       }
       transactionContext.finish();
     } catch (Throwable t) {
-      LOG.error(String.format("Failed to destroy the Workflow %s", workflowRunId), t);
       try {
         transactionContext.abort();
       } catch (Throwable e) {
-        LOG.error("Failed to abort the transaction.", e);
+        t.addSuppressed(e);
       }
+      LOG.error(String.format("Failed to destroy the Workflow %s", workflowRunId), t);
     }
   }
 
@@ -316,7 +326,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       });
       future.get();
     } catch (Throwable t) {
-      LOG.error("Error executing the action {} in the Workflow {}.", actionSpec.getName(), workflowRunId, t);
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
@@ -341,9 +350,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         actionSpec = node.getActionSpecification();
         break;
       default:
-        LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),
-                  actionInfo.getProgramName());
-        throw new IllegalStateException("Workflow stopped without executing all tasks");
+        throw new IllegalStateException(String.format("Unknown Program Type '%s', Program '%s' in the Workflow",
+                                                      actionInfo.getProgramType(), actionInfo.getProgramName()));
     }
     return actionSpec;
   }
@@ -604,5 +612,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         terminationLatch.countDown();
       }
     };
+  }
+
+  private ClassLoader setContextCombinedClassLoader(Workflow workflow) {
+    return ClassLoaders.setContextClassLoader(
+      new CombineClassLoader(null, Arrays.asList(workflow.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 }

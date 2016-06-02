@@ -99,16 +99,13 @@ public class UserProfileService extends AbstractService {
         }
       } else {
         // otherwise, scan the entire table
-        Scanner scanner = profiles.scan(null, null);
-        try {
+        try (Scanner scanner = profiles.scan(null, null)) {
           Row row;
           int profilesAdded = 0;
           while (profilesAdded < limit && (row = scanner.next()) != null) {
             profilesList.add(toProfile(row));
             profilesAdded++;
           }
-        } finally {
-          scanner.close();
         }
       }
 

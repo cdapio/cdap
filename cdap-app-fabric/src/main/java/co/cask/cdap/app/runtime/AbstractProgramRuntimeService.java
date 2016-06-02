@@ -300,22 +300,18 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types) {
+  public List<RuntimeInfo> listAll(ProgramType... types) {
+    List<RuntimeInfo> runningPrograms = new ArrayList<>();
     for (ProgramType type : types) {
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  list(type).entrySet()) {
+      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : list(type).entrySet()) {
         ProgramController.State programState = entry.getValue().getController().getState();
         if (programState.isDone()) {
           continue;
         }
-        Id.Program programId = entry.getValue().getProgramId();
-        if (predicate.apply(programId)) {
-          LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
-                    programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
-          return true;
-        }
+        runningPrograms.add(entry.getValue());
       }
     }
-    return false;
+    return runningPrograms;
   }
 
   @Override

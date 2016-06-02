@@ -34,6 +34,7 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -195,13 +196,15 @@ public abstract class SchedulerTestBase {
     }, timeoutSeconds, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
 
-
   private boolean isProgramRunning(ProgramRuntimeService runtimeService, final Id.Program program) {
-    return runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
+    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
+      Iterables.filter(runtimeService.listAll(ProgramType.values()),
+                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
-      public boolean apply(Id.Program programId) {
-        return programId.equals(program);
+      public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
+        return runtimeInfo.getProgramId().toEntityId().equals(program);
       }
-    }, ProgramType.values());
+    });
+    return !Iterables.isEmpty(runtimeInfos);
   }
 }

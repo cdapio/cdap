@@ -104,6 +104,8 @@ Using a FileSet as input or output of a MapReduce program is the same as for any
 The MapReduce program only needs to specify the names of the input and output datasets.
 Whether they are FileSets or another type of dataset is handled by the CDAP runtime system.
 
+.. highlight:: console
+
 However, you do need to tell CDAP the relative paths of the input and output files. Currently,
 this is only possible by specifying them as runtime arguments when the MapReduce program is started::
 
@@ -116,6 +118,8 @@ Note that for the input you can specify multiple paths separated by commas::
       "dataset.lines.input.paths":  "monday/lines.txt,tuesday/lines.txt"
 
 If you do not specify both the input and output paths, your MapReduce program will fail with an error.
+
+.. highlight:: java
 
 Using a FileSet Programmatically
 ================================

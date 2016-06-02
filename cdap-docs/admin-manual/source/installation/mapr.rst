@@ -71,7 +71,7 @@ Preparing Package Managers
 
 .. include:: /../target/_includes/mapr-installation.rst
     :start-after: .. _mapr-preparing-package-managers:
-    :end-before: .. end_install-debian-using-apt
+    :end-before: .. _mapr-package-installation-title:
 
 
 Installing CDAP Services
@@ -110,7 +110,7 @@ that value instead for ``/cdap/tx.snapshot``.
 .. |hdfs-user| replace:: ``cdap``
 
 .. include:: /../target/_includes/mapr-configuration.rst
-    :end-before:   .. _mapr-configuration-options-may-need
+    :end-before:   .. _mapr-configuration-options-may-need:
 
 #. Due to an issue with the version of the Kafka ZooKeeper client shipped with MapR, 
    it is necessary to disable use of the embedded Kafka in CDAP by setting these properties:
@@ -129,9 +129,9 @@ that value instead for ``/cdap/tx.snapshot``.
         <value>OFF</value>
       </property>
       
-    As a consequence of this setting, the container logs will not be streamed back to the
-    master process log file. This issue is due to a `known Kafka issue 
-    <https://issues.apache.org/jira/browse/TWILL-139?focusedCommentId=14598628>`__.   
+   As a consequence of this setting, the container logs will not be streamed back to the
+   master process log file. This issue is due to a `known Kafka issue 
+   <https://issues.apache.org/jira/browse/TWILL-139?focusedCommentId=14598628>`__.   
     
 #. Depending on your installation, you may need to set these properties:
 
