@@ -112,7 +112,7 @@ are extended from either ``SparkMain`` or ``JavaSparkMain``.
 
   .. Scala
 
-  class MyScalaSparkProgram extends ScalaSparkProgram {
+  class MyScalaSparkProgram extends SparkMain {
     override def run(implicit sec: SparkExecutionContext): Unit = {
       val sc = new SparkContext
       val RDD[(String, String)] = sc.fromDataset("mydataset")
