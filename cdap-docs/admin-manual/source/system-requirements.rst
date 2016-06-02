@@ -185,11 +185,10 @@ NTP (Network Time Protocol)
 
 CDAP and Firewalls
 ==================
-In your :ref:`cluster configuration <admin-manual-install-deployment-architectures>`, 
-there cannot be a firewall between the cluster and CDAP. Instead, if a
-firewall is used, the cluster and CDAP need to be together behind the
-firewall. These are the ports which can be opened to provide external
-access:
+In general, your :ref:`cluster configuration <admin-manual-install-deployment-architectures>`
+cannot have a firewall between the cluster and CDAP. Instead, if a firewall is used, the
+cluster and certain CDAP components need to be together behind the firewall. These are the
+ports which can be opened to provide external access:
 
 **Listen Ports for External Access**
 
@@ -203,3 +202,30 @@ access:
    "CDAP UI listen port (SSL)", "``dashboard.ssl.bind.port``", "9443", "9443"
    "CDAP Auth Server listen port", "``security.auth.server.bind.port``", "10009", "10009"
    "CDAP Auth Server listen port (SSL)", "``security.auth.server.ssl.bind.port``", "10010", "10010"
+
+The exact configuration and ports required will vary depending on your use of firewalls
+and your specific configuration. This diagram shows a likely scenario that you could use:
+
+.. image:: ../../developers-manual/source/_images/arch_components_view.png
+   :width: 6in
+   :align: center
+
+In this diagram, we show the CDAP Router "traversing" the firewall. Note that the CDAP UI
+can be completely outside of the firewall, as it needs to talk to clients, the CDAP
+Router, and the CDAP Auth Server. These two services (Router and Auth Server) need to be
+accessible from the outside to users, but also must be able to connect to nodes within the
+cluster. They need unrestricted client access to the cluster with the ability to establish
+connections to cluster nodes, on any port that a container may choose to open.
+
+Taking this same picture, if the firewall were moved to the left of the CDAP Router/Auth
+Server, then two ports (10000 and 10009) would need to be opened to allow access by
+clients to the hosts running the CDAP Router/Auth Server. There could be another firewall
+between the CDAP Router/Auth Server and the cluster, as long as it provids client access
+from the CDAP Auth Server to the ZooKeeper nodes. The same is true for the CDAP Router
+(access to the Zookeeper nodes), except it also needs unrestricted client access, so it
+usually doesn't make sense to firewall the CDAP Router when essentially you're allowing
+all traffic through.
+
+As your configuration can vary from these descriptions, this information is intended to
+guide you in understanding what the different components require in order to successfully
+run CDAP rather than provide strict requirements.
