@@ -33,7 +33,10 @@ import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -79,6 +82,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -131,6 +135,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     };
 
   private final ProgramLifecycleService lifecycleService;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
@@ -153,6 +158,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   ProgramLifecycleHttpHandler(Store store, ProgramRuntimeService runtimeService,
+                              DiscoveryServiceClient discoveryServiceClient,
                               ProgramLifecycleService lifecycleService,
                               QueueAdmin queueAdmin,
                               Scheduler scheduler, PreferencesStore preferencesStore,
@@ -160,6 +166,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               MetricStore metricStore) {
     this.store = store;
     this.runtimeService = runtimeService;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.lifecycleService = lifecycleService;
     this.metricStore = metricStore;
     this.queueAdmin = queueAdmin;
@@ -178,34 +185,34 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
-      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
-      Id.Run run = new Id.Run(programId, runId);
-      ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
-      if (appSpec == null) {
-        throw new NotFoundException(programId.getApplication());
-      }
-      if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
-        throw new NotFoundException(programId);
-      }
-      RunRecordMeta runRecordMeta = store.getRun(programId, runId);
-      if (runRecordMeta == null) {
-        throw new NotFoundException(run);
-      }
+    Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+    Id.Run run = new Id.Run(programId, runId);
+    ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+    if (appSpec == null) {
+      throw new NotFoundException(programId.getApplication());
+    }
+    if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
+      throw new NotFoundException(programId);
+    }
+    RunRecordMeta runRecordMeta = store.getRun(programId, runId);
+    if (runRecordMeta == null) {
+      throw new NotFoundException(run);
+    }
 
-      MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run);
+    MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run);
 
-      mrJobInfo.setState(runRecordMeta.getStatus().name());
-      // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
-      // in milliseconds. RunRecord returns seconds value.
-      mrJobInfo.setStartTime(TimeUnit.SECONDS.toMillis(runRecordMeta.getStartTs()));
-      Long stopTs = runRecordMeta.getStopTs();
-      if (stopTs != null) {
-        mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
-      }
+    mrJobInfo.setState(runRecordMeta.getStatus().name());
+    // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
+    // in milliseconds. RunRecord returns seconds value.
+    mrJobInfo.setStartTime(TimeUnit.SECONDS.toMillis(runRecordMeta.getStartTs()));
+    Long stopTs = runRecordMeta.getStopTs();
+    if (stopTs != null) {
+      mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
+    }
 
-      // JobClient (in DistributedMRJobInfoFetcher) can return NaN as some of the values, and GSON otherwise fails
-      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
-      responder.sendJson(HttpResponseStatus.OK, mrJobInfo, mrJobInfo.getClass(), gson);
+    // JobClient (in DistributedMRJobInfoFetcher) can return NaN as some of the values, and GSON otherwise fails
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
+    responder.sendJson(HttpResponseStatus.OK, mrJobInfo, mrJobInfo.getClass(), gson);
   }
 
   /**
@@ -402,7 +409,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
-    getRuns(responder, Id.Program.from(namespaceId, appId, type, programId), status, start, end, resultLimit);
+
+    ProgramId program = (new NamespaceId(namespaceId)).app(appId).program(type, programId);
+    ProgramSpecification specification = lifecycleService.getProgramSpecification(program);
+    if (specification == null) {
+      throw new NotFoundException(program);
+    }
+    getRuns(responder, program.toId(), status, start, end, resultLimit);
   }
 
   /**
@@ -972,6 +985,33 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          new ServiceInstances(instances, getInstanceCount(programId, serviceId)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    }
+  }
+
+  /**
+   * Return the availability (i.e. discoverable registration) status of a service.
+   */
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/available")
+  public void getServiceAvailability(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespaceId,
+                                     @PathParam("app-id") String appId,
+                                     @PathParam("service-id") String serviceId) throws NotFoundException {
+    ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+    ProgramStatus status = lifecycleService.getProgramStatus(programId);
+    if (status == ProgramStatus.STOPPED) {
+      responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, "Service is stopped. Please start it.");
+    } else {
+      // Construct discoverable name and return 200 OK if discoverable is present. If not return 503.
+      String serviceName = ServiceDiscoverable.getName(programId);
+      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName));
+      if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
+        LOG.trace("Discoverable endpoint {} not found", serviceName);
+        responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                             "Service is running but not accepting requests at this time.");
+      } else {
+        responder.sendString(HttpResponseStatus.OK, "Service is available to accept requests.");
+      }
     }
   }
 

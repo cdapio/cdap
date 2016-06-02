@@ -27,7 +27,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -71,7 +71,7 @@ public class SystemArtifactsAuthorizationTest {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
     Injector injector =  AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
-    AuthorizerInstantiatorService instantiatorService = injector.getInstance(AuthorizerInstantiatorService.class);
+    AuthorizerInstantiator instantiatorService = injector.getInstance(AuthorizerInstantiator.class);
     authorizer = instantiatorService.get();
     instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
   }

@@ -68,6 +68,25 @@ A ``PartitionedFileSet`` using the ``text`` format, with ``\n`` as the record de
     .setExploreFormat("text")
     .setExploreFormatProperty("delimiter", "\n")
     .setExploreSchema("record STRING")
+    .build()
+
+If you are running a version of Hive that reserves keywords and any of your column names is a `Hive reserved keyword
+<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Keywords,
+Non-reservedKeywordsandReservedKeywords>`__, you will need to enclose the column name in backticks.
+For example::
+
+    PartitionedFileSetProperties.builder()
+    // Properties for partitioning
+    .setPartitioning(Partitioning.builder().addLongField("time").build())
+    // Properties for file set
+    .setInputFormat(TextInputFormat.class)
+    .setOutputFormat(TextOutputFormat.class)
+    .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
+    // enable CDAP Explore
+    .setEnableExploreOnCreate(true)
+    .setExploreFormat("text")
+    .setExploreFormatProperty("delimiter", "\n")
+    .setExploreSchema("`date` STRING")
     .build() 
 
 These dataset properties map directly to table properties in Hive. In the case of the

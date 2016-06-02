@@ -47,19 +47,13 @@ upgrade instructions for the earlier versions and upgrade first to
 
 #. Update the CDAP packages by running either of these methods:
 
-   - On RPM using Yum (on one line)::
+   - On RPM using Yum::
 
-       $ sudo yum install cdap cdap-gateway \
-             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
-             cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
-             cdap-kafka cdap-master cdap-security cdap-ui
+       $ sudo yum upgrade 'cdap*'
 
-   - On Debian using APT (on one line)::
+   - On Debian using APT::
 
-       $ sudo apt-get install cdap cdap-gateway \
-             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
-             cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
-             cdap-kafka cdap-master cdap-security cdap-ui
+       $ sudo apt-get install --only-upgrade '^cdap.*'
 
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
    as the user that runs CDAP Master (the CDAP user)
@@ -67,9 +61,9 @@ upgrade instructions for the earlier versions and upgrade first to
 
      $ kinit -kt <keytab> <principal>
 
-#. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user)::
+#. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user, indicated by ``<cdap-user>``)::
 
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+     $ sudo -u <cdap-user> /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
      
    Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
    to a previous version are not possible.
@@ -97,7 +91,7 @@ upgrade instructions for the earlier versions and upgrade first to
    You can run the tool in a non-interactive fashion by using the ``force`` flag, in which case
    it will run unattended and not prompt for continuing::
    
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
+     $ sudo -u <cdap-user> /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
      
 #. Restart the CDAP processes::
 
@@ -170,9 +164,9 @@ get upgraded correctly and HBase regionservers may crash.**
 #. Upgrade to the new version of Hadoop.
 
 #. Run the *Post-Hadoop Upgrade Tasks* |---| to upgrade CDAP for the new version of Hadoop |---| by running
-   the *CDAP Upgrade Tool*, as the user that runs CDAP Master (the CDAP user)::
+   the *CDAP Upgrade Tool*, as the user that runs CDAP Master (the CDAP user, indicated by ``<cdap-user>``)::
 
-    $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
+    $ sudo -u <cdap-user> /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
 
 #. Enable all CDAP tables; from an HBase shell, run this command::
 

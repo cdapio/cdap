@@ -32,6 +32,7 @@ When using CDAP with Impala:
 
 - |fileset|_ The **CDAP FileSet Datasets** can be explored through ad-hoc SQL-like queries.
 
+.. highlight:: console
 
 Ingesting and Exploring Data with Impala
 ========================================

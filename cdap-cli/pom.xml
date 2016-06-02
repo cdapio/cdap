@@ -116,10 +116,6 @@
   <profiles>
     <profile>
       <id>dist</id>
-      <!-- Override to not package non-existent etc dir for cdap-cli -->
-      <properties>
-        <package.dirs>opt</package.dirs>
-      </properties>
       <build>
         <plugins>
           <plugin>
@@ -178,8 +174,28 @@
                   </resources>
                 </configuration>
               </execution>
+
+              <!-- Copy CLI profile.d file -->
+              <execution>
+                <id>copy-cli-etc</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-cli/etc</directory>
+                      <targetPath>etc</targetPath>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
             </executions>
           </plugin>
+
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
@@ -210,22 +226,17 @@
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-resources-plugin</artifactId>
-            <version>2.6</version>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
             <executions>
               <!-- Override parent to not generate init.d service script -->
               <execution>
                 <id>rename-rpm-service</id>
-                <phase></phase>
+                <phase/>
               </execution>
               <execution>
                 <id>rpm-init-permission</id>
-                <phase></phase>
+                <phase/>
               </execution>
             </executions>
           </plugin>
@@ -239,22 +250,17 @@
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-resources-plugin</artifactId>
-            <version>2.6</version>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
             <executions>
               <!-- Override parent to not generate init.d service script -->
               <execution>
                 <id>rename-deb-service</id>
-                <phase></phase>
+                <phase/>
               </execution>
               <execution>
                 <id>deb-init-permission</id>
-                <phase></phase>
+                <phase/>
               </execution>
             </executions>
           </plugin>

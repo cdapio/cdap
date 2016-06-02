@@ -29,6 +29,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -43,10 +44,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -68,10 +70,16 @@ import java.util.concurrent.TimeUnit;
 public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
   @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Gson GSON = new Gson();
   private static final Type STATES_TYPE = new TypeToken<List<ImmutablePair<Integer, String>>>() { }.getType();
+  private static File artifactJar;
+
+  @BeforeClass
+  public static void init() throws IOException {
+    artifactJar = createArtifactJar(ServiceLifecycleApp.class);
+  }
 
   @Test
   public void testLifecycleWithThreadTerminates() throws Exception {
@@ -81,7 +89,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     System.setProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
 
     try {
-      ApplicationManager appManager = deployApplication(ServiceLifecycleApp.class);
+      ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
       final ServiceManager serviceManager = appManager.getServiceManager("test").start();
 
@@ -126,7 +134,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     System.setProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
 
     try {
-      ApplicationManager appManager = deployApplication(ServiceLifecycleApp.class);
+      ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
       final ServiceManager serviceManager = appManager.getServiceManager("test").start();
 
@@ -183,7 +191,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
 
     try {
-      ApplicationManager appManager = deployApplication(ServiceLifecycleApp.class);
+      ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
       final ServiceManager serviceManager = appManager.getServiceManager("test").start();
       CountDownLatch uploadLatch = new CountDownLatch(1);
@@ -282,7 +290,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
 
     try {
-      ApplicationManager appManager = deployApplication(ServiceLifecycleApp.class);
+      ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
       final ServiceManager serviceManager = appManager.getServiceManager("test").start();
       final DataSetManager<KeyValueTable> datasetManager = getDataset(ServiceLifecycleApp.HANDLER_TABLE_NAME);
       // Clean up the dataset first to avoid being affected by other tests
@@ -334,7 +342,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
 
     try {
-      ApplicationManager appManager = deployApplication(ServiceLifecycleApp.class);
+      ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
       final ServiceManager serviceManager = appManager.getServiceManager("test").start();
       final DataSetManager<KeyValueTable> datasetManager = getDataset(ServiceLifecycleApp.HANDLER_TABLE_NAME);
       // Clean up the dataset first to avoid being affected by other tests
@@ -402,7 +410,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testInvalidResponder() throws Exception {
-    ApplicationManager appManager = deployApplication(ServiceLifecycleApp.class);
+    ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
     final ServiceManager serviceManager = appManager.getServiceManager("test").start();
 
     CountDownLatch uploadLatch = new CountDownLatch(1);
@@ -414,7 +422,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testInvalidContentProducer() throws Exception {
-    ApplicationManager appManager = deployApplication(ServiceLifecycleApp.class);
+    ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
     final ServiceManager serviceManager = appManager.getServiceManager("test").start();
 
     URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);

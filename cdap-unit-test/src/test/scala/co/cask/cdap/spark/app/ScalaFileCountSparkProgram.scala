@@ -47,6 +47,8 @@ class ScalaFileCountSparkProgram extends AbstractSpark with SparkMain {
     // create a new RDD with the same key but the value is the length of the string and write to dataset
     inputData.values
       .map(str => (str, str.length))
+      // This is for verifying bug CDAP-6109. Since the strings are unique, adding this won't change the result
+      .reduceByKey(_ + _)
       .saveAsDataset(output)
 
     val inputPartitionTime = sec.getRuntimeArguments.get("inputKey")

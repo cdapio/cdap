@@ -42,7 +42,9 @@ class HydratorPlusPlusPostActionsCtrl {
     this.myPipelineApi.fetchPlugins(params)
       .$promise
       .then( (res) => {
-        this.postActionsList = res.map( postaction => {
+        let filteredPlugins = this.filterPlugins(res);
+
+        this.postActionsList = filteredPlugins.map( postaction => {
           // Coverting the name to lowercase before lookup as we can maintain a case insensitive map in case backend wants to change from camelcase or to any other case.
           return Object.assign({}, postaction, { label: myHelpers.objectQuery(GLOBALS.pluginTypes, 'post-run-actions', postaction.name.toLowerCase()) || postaction.name });
         });
@@ -54,6 +56,30 @@ class HydratorPlusPlusPostActionsCtrl {
   setState() {
     this.postActions = this.HydratorPlusPlusConfigStore.getPostActions();
     this.activeTab = 'OVERVIEW';
+  }
+
+  /*
+   * Because there is no ability to change version for post-run actions in UI,
+   * this function is intended to show only 1 version. The assumption is that
+   * the list the backend sends, the latest version of the plugin is the one last
+   * on the list.
+   **/
+  filterPlugins(results) {
+    let pluginsMap = {};
+    let resultPlugin = [];
+
+    angular.forEach(results, (plugin) => {
+      if (!pluginsMap[plugin.name]) {
+        pluginsMap[plugin.name] = [];
+      }
+      pluginsMap[plugin.name].push(plugin);
+    });
+
+    angular.forEach(pluginsMap, (value) => {
+      resultPlugin.push(value[value.length - 1]);
+    });
+
+    return resultPlugin;
   }
 
   tabClick(tab) {

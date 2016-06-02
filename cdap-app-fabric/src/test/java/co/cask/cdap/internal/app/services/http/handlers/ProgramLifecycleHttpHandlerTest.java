@@ -51,6 +51,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -69,6 +70,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -78,6 +80,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -307,6 +310,23 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     testHistory(DummyAppWithTrackingTable.class,
                 Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME));
   }
+
+  /**
+   * Tests history of a non existing program
+   */
+  @Test
+  public void testNonExistingProgramHistory() throws Exception {
+    ProgramId program = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+    deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
+                                                   Constants.Gateway.API_VERSION_3_TOKEN,
+                                                   TEST_NAMESPACE2)).getStatusLine().getStatusCode();
+    int deleteStatus = doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                    TEST_NAMESPACE2)).getStatusLine().getStatusCode();
+    Assert.assertTrue("Unexpected history status " + historyStatus + " and/or deleteStatus " + deleteStatus,
+                      historyStatus == 404 && deleteStatus == 200);
+  }
+
 
   /**
    * Tests history of a workflow.
@@ -790,12 +810,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Id.Service service1 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE1), APP_WITH_SERVICES_APP_ID,
                                           APP_WITH_SERVICES_SERVICE_NAME);
-    Id.Service service2 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE2), APP_WITH_SERVICES_APP_ID,
-                                          APP_WITH_SERVICES_SERVICE_NAME);
+    final Id.Service service2 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE2), APP_WITH_SERVICES_APP_ID,
+                                                APP_WITH_SERVICES_SERVICE_NAME);
+    HttpResponse activeResponse = getServiceAvailability(service1);
+    // Service is not valid, so it should return 404
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), activeResponse.getStatusLine().getStatusCode());
+
+    activeResponse = getServiceAvailability(service2);
+    // Service has not been started, so it should return 503
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(),
+                        activeResponse.getStatusLine().getStatusCode());
 
     // start service in wrong namespace
     startProgram(service1, 404);
     startProgram(service2);
+
+    Tasks.waitFor(200, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getServiceAvailability(service2).getStatusLine().getStatusCode();
+      }
+    }, 2, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     // verify instances
     try {
@@ -831,6 +866,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // stop service
     stopProgram(service1, 404);
     stopProgram(service2);
+
+    activeResponse = getServiceAvailability(service2);
+    // Service has been stopped, so it should return 503
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(),
+                        activeResponse.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -900,6 +940,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
           return !consumer.dequeue(1).isEmpty();
         }
       });
+  }
+
+  private HttpResponse getServiceAvailability(Id.Service serviceId) throws Exception {
+    String activeUrl = String.format("apps/%s/services/%s/available", serviceId.getApplicationId(), serviceId.getId());
+    String versionedActiveUrl = getVersionedAPIPath(activeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                    serviceId.getNamespaceId());
+    return doGet(versionedActiveUrl);
   }
 
   private ServiceInstances getServiceInstances(Id.Service serviceId) throws Exception {
@@ -1110,7 +1157,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
 
     } catch (Exception e) {
-      // Log exception before finally block is called
       LOG.error("Got exception: ", e);
     } finally {
       HttpResponse httpResponse = doDelete(getVersionedAPIPath("apps/" + program.getApplicationId(),

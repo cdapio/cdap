@@ -53,6 +53,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
@@ -81,14 +82,17 @@ public class ExploreTableManager {
   private final ExploreService exploreService;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final ExploreTableNaming tableNaming;
+  private final boolean shouldEscapeColumns;
 
   @Inject
   public ExploreTableManager(ExploreService exploreService,
                              SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                             ExploreTableNaming tableNaming) {
+                             ExploreTableNaming tableNaming,
+                             Configuration hConf) {
     this.exploreService = exploreService;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.tableNaming = tableNaming;
+    this.shouldEscapeColumns = ExploreServiceUtils.shouldEscapeColumns(hConf);
   }
 
   /**
@@ -122,7 +126,7 @@ public class ExploreTableManager {
       Constants.Explore.STREAM_NAMESPACE, streamID.getNamespaceId(),
       Constants.Explore.FORMAT_SPEC, GSON.toJson(formatSpec));
 
-    String createStatement = new CreateStatementBuilder(streamName, tableName)
+    String createStatement = new CreateStatementBuilder(streamName, tableName, shouldEscapeColumns)
       .setSchema(schema)
       .setTableComment("CDAP Stream")
       .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
@@ -204,10 +208,11 @@ public class ExploreTableManager {
 
         // otherwise, derive the schema from the record type
         LOG.debug("Enabling explore for dataset instance {}", datasetName);
-        createStatement = new CreateStatementBuilder(datasetName, tableNaming.getTableName(datasetId))
-          .setSchema(hiveSchemaFor(recordType))
-          .setTableComment("CDAP Dataset")
-          .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
+        createStatement =
+          new CreateStatementBuilder(datasetName, tableNaming.getTableName(datasetId), shouldEscapeColumns)
+            .setSchema(hiveSchemaFor(recordType))
+            .setTableComment("CDAP Dataset")
+            .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
       } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
         Map<String, String> properties = spec.getProperties();
         if (FileSetProperties.isExploreEnabled(properties)) {
@@ -246,10 +251,11 @@ public class ExploreTableManager {
 
     try {
       Schema schema = Schema.parseJson(schemaStr);
-      String createStatement = new CreateStatementBuilder(datasetID.getId(), tableNaming.getTableName(datasetID))
-        .setSchema(schema)
-        .setTableComment("CDAP Dataset")
-        .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
+      String createStatement =
+        new CreateStatementBuilder(datasetID.getId(), tableNaming.getTableName(datasetID), shouldEscapeColumns)
+          .setSchema(schema)
+          .setTableComment("CDAP Dataset")
+          .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
 
       return exploreService.execute(datasetID.getNamespace(), createStatement);
     } catch (IOException e) {
@@ -407,10 +413,11 @@ public class ExploreTableManager {
       baseLocation = ((FileSet) dataset).getBaseLocation();
     }
 
-    CreateStatementBuilder createStatementBuilder = new CreateStatementBuilder(datasetID.getId(), tableName)
-      .setLocation(baseLocation)
-      .setPartitioning(partitioning)
-      .setTableProperties(tableProperties);
+    CreateStatementBuilder createStatementBuilder =
+      new CreateStatementBuilder(datasetID.getId(), tableName, shouldEscapeColumns)
+        .setLocation(baseLocation)
+        .setPartitioning(partitioning)
+        .setTableProperties(tableProperties);
 
     String schema = FileSetProperties.getExploreSchema(properties);
     String format = FileSetProperties.getExploreFormat(properties);
@@ -461,7 +468,14 @@ public class ExploreTableManager {
       String fieldName = entry.getKey();
       Comparable fieldValue = entry.getValue();
       String quote = fieldValue instanceof String ? "'" : "";
-      builder.append(sep).append(fieldName).append("=").append(quote).append(fieldValue.toString()).append(quote);
+      builder.append(sep);
+      if (shouldEscapeColumns) {
+        // a literal backtick(`) is just a double backtick(``)
+        builder.append('`').append(fieldName.replace("`", "``")).append('`');
+      } else {
+        builder.append(fieldName);
+      }
+      builder.append("=").append(quote).append(fieldValue.toString()).append(quote);
       sep = ", ";
     }
     builder.append(")");

@@ -45,13 +45,14 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -80,7 +81,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
-  private final AuthorizerInstantiatorService authorizerInstantiatorService;
+  private final AuthorizerInstantiator authorizerInstantiator;
   private final InstanceId instanceId;
   private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
 
@@ -91,7 +92,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                         MetricStore metricStore, Scheduler scheduler,
                         ApplicationLifecycleService applicationLifecycleService,
                         ArtifactRepository artifactRepository,
-                        AuthorizerInstantiatorService authorizerInstantiatorService,
+                        AuthorizerInstantiator authorizerInstantiator,
                         CConfiguration cConf) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
@@ -105,7 +106,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.metricStore = metricStore;
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
-    this.authorizerInstantiatorService = authorizerInstantiatorService;
+    this.authorizerInstantiator = authorizerInstantiator;
     this.instanceId = createInstanceId(cConf);
   }
 
@@ -171,7 +172,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // Skip authorization enforcement for the system user and the default namespace, so the DefaultNamespaceEnsurer
     // thread can successfully create the default namespace
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-      authorizerInstantiatorService.get().enforce(instanceId, principal, Action.ADMIN);
+      authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     }
 
     try {
@@ -183,7 +184,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     nsStore.create(metadata);
     // Skip authorization grants for the system user
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-      authorizerInstantiatorService.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
+      authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
     }
   }
 
@@ -210,8 +211,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     // Namespace can be deleted. Revoke all privileges first
-    authorizerInstantiatorService.get().enforce(namespace, SecurityRequestContext.toPrincipal(), Action.ADMIN);
-    authorizerInstantiatorService.get().revoke(namespace);
+    authorizerInstantiator.get().enforce(namespace, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().revoke(namespace);
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
@@ -277,7 +278,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     // Namespace data can be deleted. Revoke all privileges first
-    authorizerInstantiatorService.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
+    authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
                                                 Action.ADMIN);
     try {
       dsFramework.deleteAllInstances(namespaceId);
@@ -293,7 +294,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    authorizerInstantiatorService.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
+    authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
                                                 Action.ADMIN);
     NamespaceMeta metadata = nsStore.get(namespaceId);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(metadata);
@@ -311,12 +312,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   private boolean checkProgramsRunning(final NamespaceId namespaceId) {
-    return runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
+    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
+      Iterables.filter(runtimeService.listAll(ProgramType.values()),
+                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
-      public boolean apply(Id.Program program) {
-        return program.getNamespaceId().equals(namespaceId.getNamespace());
+      public boolean apply(ProgramRuntimeService.RuntimeInfo info) {
+        return info.getProgramId().getNamespaceId().equals(namespaceId.getNamespace());
       }
-    }, ProgramType.values());
+    });
+    return !Iterables.isEmpty(runtimeInfos);
   }
 
   private InstanceId createInstanceId(CConfiguration cConf) {

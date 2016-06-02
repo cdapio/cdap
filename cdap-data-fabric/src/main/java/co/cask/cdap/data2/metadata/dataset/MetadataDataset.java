@@ -423,16 +423,13 @@ public class MetadataDataset extends AbstractDataset {
     byte[] scanStartKey = MdsHistoryKey.getMdsScanStartKey(targetId, timeMillis).getKey();
     byte[] scanEndKey = MdsHistoryKey.getMdsScanEndKey(targetId).getKey();
     // TODO: add limit to scan, we need only one row
-    Scanner scanner = indexedTable.scan(scanStartKey, scanEndKey);
-    try {
+    try (Scanner scanner = indexedTable.scan(scanStartKey, scanEndKey)) {
       Row next = scanner.next();
       if (next != null) {
         return GSON.fromJson(next.getString(HISTORY_COLUMN), Metadata.class);
       } else {
         return new Metadata(targetId);
       }
-    } finally {
-      scanner.close();
     }
   }
 
@@ -676,9 +673,8 @@ public class MetadataDataset extends AbstractDataset {
     startRowKey = startRowKey == null ? valueRowPrefix : startRowKey;
     // stopRowKey will always be the last row key with the valueRowPrefix
     byte[] stopRowKey = Bytes.stopKeyForPrefix(valueRowPrefix);
-    Scanner scanner = indexedTable.scan(startRowKey, stopRowKey);
     Row row;
-    try {
+    try (Scanner scanner = indexedTable.scan(startRowKey, stopRowKey)) {
       while ((limit > 0) && (row = scanner.next()) != null) {
         byte[] rowKey = row.getRow();
         String targetType = MdsKey.getTargetType(rowKey);
@@ -701,8 +697,6 @@ public class MetadataDataset extends AbstractDataset {
         return null;
       }
       return startRowForNextBatch.getRow();
-    } finally {
-      scanner.close();
     }
   }
 
@@ -716,16 +710,13 @@ public class MetadataDataset extends AbstractDataset {
     byte[] indexStartPrefix = MdsKey.getIndexRowPrefix();
     byte[] indexStopPrefix = Bytes.stopKeyForPrefix(indexStartPrefix);
     int count = 0;
-    Scanner scanner = indexedTable.scan(indexStartPrefix, indexStopPrefix);
     Row row;
-    try {
+    try (Scanner scanner = indexedTable.scan(indexStartPrefix, indexStopPrefix)) {
       while (count < limit && ((row = scanner.next()) != null)) {
         if (deleteIndexRow(row)) {
           count++;
         }
       }
-    } finally {
-      scanner.close();
     }
     return count;
   }

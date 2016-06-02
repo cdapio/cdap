@@ -132,6 +132,24 @@ public class ExploreServiceUtils {
     return hiveVersion.getHiveExploreServiceClass();
   }
 
+  public static boolean shouldEscapeColumns(Configuration hConf) {
+    // backtick support was added in Hive13.
+    ExploreServiceUtils.HiveSupport hiveSupport = ExploreServiceUtils.checkHiveSupport(hConf.getClassLoader());
+    if (hiveSupport == HiveSupport.HIVE_12
+      || hiveSupport == HiveSupport.HIVE_CDH5_0
+      || hiveSupport == HiveSupport.HIVE_CDH5_1) {
+      return false;
+    }
+
+    // if this is set to false, we don't need to escape the columns.
+    if (!hConf.getBoolean("hive.support.sql11.reserved.keywords", true)) {
+      return false;
+    }
+
+    // otherwise, if this setting is set to 'column', escape all column names
+    return "column".equalsIgnoreCase(hConf.get("hive.support.quoted.identifiers", "column"));
+  }
+
   public static HiveSupport checkHiveSupport() {
     return checkHiveSupport(ExploreUtils.getExploreClassloader());
   }
@@ -168,7 +186,7 @@ public class ExploreServiceUtils {
     }
 
     String hiveVersion = getHiveVersion(hiveClassLoader);
-    LOG.info("Client Hive version: {}", hiveVersion);
+    LOG.debug("Client Hive version: {}", hiveVersion);
     if (hiveVersion.startsWith("0.12.")) {
       return HiveSupport.HIVE_12;
     } else if (hiveVersion.startsWith("0.13.")) {

@@ -37,7 +37,6 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.DatasetSQLSpark;
-import co.cask.cdap.spark.app.ExplicitTransactionSpark;
 import co.cask.cdap.spark.app.Person;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
@@ -48,6 +47,7 @@ import co.cask.cdap.spark.app.SparkAppUsingObjectStore;
 import co.cask.cdap.spark.app.SparkLogParser;
 import co.cask.cdap.spark.app.StreamFormatSpecSpark;
 import co.cask.cdap.spark.app.TestSparkApp;
+import co.cask.cdap.spark.app.TransactionSpark;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
@@ -66,9 +66,9 @@ import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +82,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -94,9 +95,6 @@ import java.util.concurrent.TimeUnit;
 public class SparkTestRun extends TestFrameworkTestBase {
 
   @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
-
-  @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkTestRun.class);
@@ -104,9 +102,23 @@ public class SparkTestRun extends TestFrameworkTestBase {
   private static final String TEST_STRING_1 = "persisted data";
   private static final String TEST_STRING_2 = "distributed systems";
 
+  private static final Map<Class<? extends Application>, File> ARTIFACTS = new IdentityHashMap<>();
+
+  @BeforeClass
+  public static void init() throws IOException {
+    ARTIFACTS.put(TestSparkApp.class, createArtifactJar(TestSparkApp.class));
+    ARTIFACTS.put(SparkAppUsingObjectStore.class, createArtifactJar(SparkAppUsingObjectStore.class));
+    ARTIFACTS.put(SparkAppUsingGetDataset.class, createArtifactJar(SparkAppUsingGetDataset.class));
+    ARTIFACTS.put(SparkAppUsingLocalFiles.class, createArtifactJar(SparkAppUsingLocalFiles.class));
+  }
+
+  private ApplicationManager deploy(Class<? extends Application> appClass) throws Exception {
+    return deployWithArtifact(appClass, ARTIFACTS.get(appClass));
+  }
+
   @Test
   public void testDatasetSQL() throws Exception {
-    ApplicationManager appManager = deployApplication(TestSparkApp.class);
+    ApplicationManager appManager = deploy(TestSparkApp.class);
 
     DataSetManager<ObjectMappedTable<Person>> tableManager = getDataset("PersonTable");
 
@@ -136,7 +148,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testClassicSpark() throws Exception {
-    ApplicationManager appManager = deployApplication(TestSparkApp.class);
+    ApplicationManager appManager = deploy(TestSparkApp.class);
 
     for (Class<?> sparkClass : Arrays.asList(TestSparkApp.ClassicSpark.class, TestSparkApp.ScalaClassicSpark.class)) {
       final SparkManager sparkManager = appManager.getSparkManager(sparkClass.getSimpleName()).start();
@@ -153,7 +165,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testStreamFormatSpec() throws Exception {
-    ApplicationManager appManager = deployApplication(TestSparkApp.class);
+    ApplicationManager appManager = deploy(TestSparkApp.class);
 
     StreamManager stream = getStreamManager("PeopleStream");
     stream.send("Old Man,50");
@@ -208,9 +220,9 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testSparkFork() throws Exception {
-    ApplicationManager appManager = deployApplication(TestSparkApp.class);
+    ApplicationManager appManager = deploy(TestSparkApp.class);
 
-    File barrierDir = TEMP_FOLDER.newFolder();
+    File barrierDir = TMP_FOLDER.newFolder();
 
     final WorkflowManager workflowManager = appManager.getWorkflowManager(
       TestSparkApp.ForkSparkWorkflow.class.getSimpleName())
@@ -228,7 +240,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testSparkWithObjectStore() throws Exception {
-    ApplicationManager applicationManager = deployApplication(SparkAppUsingObjectStore.class);
+    ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
 
     DataSetManager<ObjectStore<String>> keysManager = getDataset("keys");
     prepareInputData(keysManager);
@@ -269,7 +281,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testScalaSparkWithObjectStore() throws Exception {
-    ApplicationManager applicationManager = deployApplication(SparkAppUsingObjectStore.class);
+    ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
 
     DataSetManager<ObjectStore<String>> keysManager = getDataset("keys");
     prepareInputData(keysManager);
@@ -282,9 +294,8 @@ public class SparkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testExplicitTransaction() throws Exception {
-    ApplicationManager applicationManager = deployApplication(TestSparkApp.class);
-
+  public void testTransaction() throws Exception {
+    ApplicationManager applicationManager = deploy(TestSparkApp.class);
     StreamManager streamManager = getStreamManager("SparkStream");
 
     // Write some sentences to the stream
@@ -295,9 +306,10 @@ public class SparkTestRun extends TestFrameworkTestBase {
     streamManager.send("black bear");
 
     // Run the spark program
-    SparkManager sparkManager = applicationManager.getSparkManager(ExplicitTransactionSpark.class.getSimpleName());
+    SparkManager sparkManager = applicationManager.getSparkManager(TransactionSpark.class.getSimpleName());
     sparkManager.start(ImmutableMap.of(
       "source.stream", "SparkStream",
+      "keyvalue.table", "KeyValueTable",
       "result.all.dataset", "SparkResult",
       "result.threshold", "2",
       "result.threshold.dataset", "SparkThresholdResult"
@@ -327,7 +339,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
           itor.close();
         }
       }
-    }, 1, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
+    }, 3, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
 
     sparkManager.stop();
     sparkManager.waitForFinish(10, TimeUnit.SECONDS);
@@ -367,7 +379,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
   }
 
   private void testSparkWithGetDataset(Class<? extends Application> appClass, String sparkProgram) throws Exception {
-    ApplicationManager applicationManager = deployApplication(appClass);
+    ApplicationManager applicationManager = deploy(appClass);
 
     DataSetManager<FileSet> filesetManager = getDataset("logs");
     FileSet fileset = filesetManager.get();
@@ -404,7 +416,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   private void testSparkWithLocalFiles(Class<? extends Application> appClass,
                                        String sparkProgram, String prefix) throws Exception {
-    ApplicationManager applicationManager = deployApplication(appClass);
+    ApplicationManager applicationManager = deploy(appClass);
     URI localFile = createLocalPropertiesFile(prefix);
 
     SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram)
@@ -509,7 +521,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
   }
 
   private URI createLocalPropertiesFile(String filePrefix) throws IOException {
-    File file = TEMP_FOLDER.newFile(filePrefix + "-local.properties");
+    File file = TMP_FOLDER.newFile(filePrefix + "-local.properties");
     try (OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(file))) {
       out.write("a=1\n");
       out.write("b = 2\n");

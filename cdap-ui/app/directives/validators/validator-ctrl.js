@@ -34,17 +34,7 @@
  * }
  **/
 angular.module(PKG.name + '.commons')
-  .factory('js_beautify', function ($window) {
-    /**
-     * js_beautify is to format the indentation for javascript code
-     **/
-
-    return $window.js_beautify;
-  });
-
-
-angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, HydratorPlusPlusConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorPlusPlusHydratorService) {
+  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, HydratorPlusPlusConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorPlusPlusHydratorService, ValidatorFactory) {
     var vm = this;
 
     vm.validators = [];
@@ -58,7 +48,6 @@ angular.module(PKG.name + '.commons')
 
     // We just need to set the input schema as the output schema
     $scope.outputSchema = HydratorPlusPlusHydratorService.formatOutputSchema($scope.inputSchema);
-
 
     myHydratorValidatorsApi.get()
       .$promise
@@ -81,9 +70,15 @@ angular.module(PKG.name + '.commons')
           vm.validators = vm.validators.concat(value.functions);
         });
 
-        $scope.$watch(function () {
-          return vm.validationFields;
-        }, formatValidationRules, true);
+        if (!$scope.model.validationFields) {
+          vm.validationFields = ValidatorFactory.initValidationFields($scope.model.properties, vm.functionMap);
+        }
+
+        if (!$scope.isDisabled) {
+          $scope.$watch(function () {
+            return vm.validationFields;
+          }, formatValidationRules, true);
+        }
 
       });
 

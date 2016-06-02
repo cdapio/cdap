@@ -17,7 +17,7 @@
 """Simple, inelegant Sphinx extension which adds a directive for a
 tabbed parsed-literals that may be switched between in HTML.
 
-version: 0.2
+version: 0.3
 
 The directive adds these parameters, both optional:
 
@@ -48,7 +48,7 @@ For example, you could have a set of tabs:
     :mapping: linux,windows
     :dependent: linux-windows
     
-Clicking on a "Linux" tab in another tab-set woula activate the "Mac OS X" tab in this tab set.
+Clicking on a "Linux" tab in another tab-set would activate the "Mac OS X" tab in this tab set.
 
 Note that slightly different rule operate for replacements: a replacement such as
 "\|replace|" will work, and the backslash will be interpreted as a single backslash rather
@@ -365,10 +365,10 @@ class TabbedParsedLiteral(ParsedLiteral):
         line_counts = []
         lines = []
         for line_set in line_sets:
-#             block = '\n'.join(line_set).strip()
             block = '\n'.join(line_set).rstrip()
             block = block.replace('\\', '\\\\')
             block = block.replace('\\|', '\\\ |')
+            block = block.replace('*', '\*')            
             if not block.endswith('\n'):
                 block += '\n'
             lines.append(block)
@@ -401,14 +401,19 @@ class TabbedParsedLiteral(ParsedLiteral):
 
         line_counts, lines = self.cleanup_content()
         text = '\n'.join(lines)
-#         print "text:\n%s" % text
         # Sending text to state machine for inline text replacement
         text_nodes, messages = self.state.inline_text(text, self.lineno)
-        
-#         print "text_nodes:\n%s" % text_nodes
-#         for n in text_nodes:
-#             print "n:\n%s" % n
-#              n['classes'].append('snippet')
+ 
+# Debugging Code start
+#         if messages:
+#             print "text:\n%s" % text
+#             print "text_nodes:\n%s" % text_nodes
+#             for n in text_nodes:
+#                 print "n:\n%s" % n
+#             print 'messages:'
+#             for m in messages:
+#                 print m
+# Debugging Code end
         
         node = TabbedParsedLiteralNode(text, '', *text_nodes, **self.options)
         node.cleanup()

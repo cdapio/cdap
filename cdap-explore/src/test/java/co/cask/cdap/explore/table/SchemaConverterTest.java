@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.table;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
@@ -183,18 +184,49 @@ public class SchemaConverterTest {
 
   @Test
   public void testHiveSchemaFor() throws Exception {
+    SchemaConverter schemaConverter = new SchemaConverter(false);
     Assert.assertEquals("(a int, b bigint, c boolean, d float, e double, f string, g binary, " +
                           "h array<string>, i array<boolean>, j map<int,string>)",
-                        SchemaConverter.toHiveSchema(Record.class));
+                        schemaConverter.toHiveSchema(Record.class));
 
     Assert.assertEquals("(key string, value struct<ints:array<int>,name:string>)",
-                        SchemaConverter.toHiveSchema(KeyValue.class));
+                        schemaConverter.toHiveSchema(KeyValue.class));
 
     Assert.assertEquals("(i3 int, record2 struct<" +
                           "record:struct<a:int,b:bigint,c:boolean,d:float,e:double,f:string,g:binary," +
                             "h:array<string>,i:array<boolean>,j:map<int,string>>," +
                           "s2:string>)",
-                        SchemaConverter.toHiveSchema(Record3.class));
+                        schemaConverter.toHiveSchema(Record3.class));
+
+    schemaConverter = new SchemaConverter(true);
+    Assert.assertEquals("(`a` int, `b` bigint, `c` boolean, `d` float, `e` double, `f` string, `g` binary, " +
+                          "`h` array<string>, `i` array<boolean>, `j` map<int,string>)",
+                        schemaConverter.toHiveSchema(Record.class));
+
+    Assert.assertEquals("(`key` string, `value` struct<`ints`:array<int>,`name`:string>)",
+                        schemaConverter.toHiveSchema(KeyValue.class));
+
+    Assert.assertEquals("(`i3` int, `record2` struct<" +
+                          "`record`:struct<`a`:int,`b`:bigint,`c`:boolean,`d`:float,`e`:double,`f`:string,`g`:binary," +
+                          "`h`:array<string>,`i`:array<boolean>,`j`:map<int,string>>," +
+                          "`s2`:string>)",
+                        schemaConverter.toHiveSchema(Record3.class));
+  }
+
+  @Test
+  public void testBacktickInFieldName() throws Exception {
+    Schema schema = Schema.recordOf(
+      "backtick",
+      Schema.Field.of("abc`123", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("re`c", Schema.recordOf(
+        "record",
+        Schema.Field.of("`x", Schema.of(Schema.Type.INT))))
+    );
+
+    SchemaConverter schemaConverter = new SchemaConverter(false);
+    Assert.assertEquals("(abc`123 string, re`c struct<`x:int>)", schemaConverter.toHiveSchema(schema));
+    schemaConverter = new SchemaConverter(true);
+    Assert.assertEquals("(`abc``123` string, `re``c` struct<```x`:int>)", schemaConverter.toHiveSchema(schema));
   }
 
   @Test
@@ -210,17 +242,24 @@ public class SchemaConverterTest {
   @Test
   public void testSupportedTypes() throws Exception {
     // Should not throw an exception
-    SchemaConverter.toHiveSchema(NotRecursive.class);
+    new SchemaConverter(false).toHiveSchema(NotRecursive.class);
+    new SchemaConverter(true).toHiveSchema(NotRecursive.class);
   }
 
   private void verifyUnsupportedSchema(Type type) {
     String schema;
     try {
-      schema = SchemaConverter.toHiveSchema(type);
+      schema = new SchemaConverter(false).toHiveSchema(type);
+      Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
     } catch (UnsupportedTypeException e) {
       // expected
-      return;
     }
-    Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
+
+    try {
+      schema = new SchemaConverter(true).toHiveSchema(type);
+      Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
+    } catch (UnsupportedTypeException e) {
+      // expected
+    }
   }
 }

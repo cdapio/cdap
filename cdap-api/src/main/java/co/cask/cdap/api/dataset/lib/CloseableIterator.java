@@ -23,6 +23,7 @@ import java.util.Iterator;
  *
  * @param <T> Type of elements returned by this iterator
  */
-public interface CloseableIterator<T> extends Iterator<T> {
+public interface CloseableIterator<T> extends Iterator<T>, AutoCloseable {
+  @Override
   void close();
 }

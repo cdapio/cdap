@@ -46,7 +46,7 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -86,13 +86,13 @@ public class ArtifactRepository {
   private final List<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
   private final MetadataStore metadataStore;
-  private final AuthorizerInstantiatorService authorizerInstantiatorService;
+  private final AuthorizerInstantiator authorizerInstantiator;
   private final InstanceId instanceId;
 
   @VisibleForTesting
   @Inject
   public ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
-                            AuthorizerInstantiatorService authorizerInstantiatorService,
+                            AuthorizerInstantiator authorizerInstantiator,
                             ProgramRunnerFactory programRunnerFactory) {
     this.artifactStore = artifactStore;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
@@ -108,7 +108,7 @@ public class ArtifactRepository {
     }
     this.configReader = new ArtifactConfigReader();
     this.metadataStore = metadataStore;
-    this.authorizerInstantiatorService = authorizerInstantiatorService;
+    this.authorizerInstantiator = authorizerInstantiator;
     this.instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
   }
 
@@ -345,7 +345,7 @@ public class ArtifactRepository {
     Principal principal = SecurityRequestContext.toPrincipal();
     NamespaceId namespace = artifactId.getNamespace().toEntityId();
     // Enforce WRITE privileges on the namespace
-    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
+    authorizerInstantiator.get().enforce(namespace, principal, Action.WRITE);
 
     Location artifactLocation = Locations.toLocation(artifactFile);
     ArtifactDetail artifactDetail;
@@ -359,7 +359,7 @@ public class ArtifactRepository {
       artifactDetail = artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
     // grant ALL privileges once artifact is successfully added
-    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    authorizerInstantiator.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
     return artifactDetail;
   }
 
@@ -391,11 +391,11 @@ public class ArtifactRepository {
     // This method is used to add user plugin artifacts, so enforce authorization on the specified, non-system namespace
     Principal principal = SecurityRequestContext.toPrincipal();
     NamespaceId namespace = artifactId.getNamespace().toEntityId();
-    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
+    authorizerInstantiator.get().enforce(namespace, principal, Action.WRITE);
     ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, null,
                                                 Collections.<String, String>emptyMap());
     // artifact successfully added. now grant ALL permissions on the artifact to the current user
-    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    authorizerInstantiator.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
     return artifactDetail;
   }
 
@@ -426,12 +426,12 @@ public class ArtifactRepository {
     // This method is used to add user app artifacts, so enforce authorization on the specified, non-system namespace
     Principal principal = SecurityRequestContext.toPrincipal();
     NamespaceId namespace = artifactId.getNamespace().toEntityId();
-    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
+    authorizerInstantiator.get().enforce(namespace, principal, Action.WRITE);
 
     ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
                                                 Collections.<String, String>emptyMap());
     // artifact successfully added. now grant ALL permissions on the artifact to the current user
-    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    authorizerInstantiator.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
     return artifactDetail;
   }
 
@@ -501,7 +501,7 @@ public class ArtifactRepository {
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
   public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
-    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+    authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
                                                 Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
@@ -524,7 +524,7 @@ public class ArtifactRepository {
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
   public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
-    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+    authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
                                                 Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
@@ -548,7 +548,7 @@ public class ArtifactRepository {
    *                               able to remove a property, users must have admin privileges on the artifact
    */
   public void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception {
-    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+    authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
                                                 Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
@@ -574,7 +574,7 @@ public class ArtifactRepository {
    *                               able to remove properties, users must have admin privileges on the artifact
    */
   public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
-    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+    authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
                                                 Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
@@ -619,7 +619,7 @@ public class ArtifactRepository {
       LOG.trace("Skipping authorization enforcement since it is being called with the system principal. This is " +
                   "so the SystemArtifactLoader can load system artifacts.");
     } else {
-      authorizerInstantiatorService.get().enforce(instanceId, principal, Action.WRITE);
+      authorizerInstantiator.get().enforce(instanceId, principal, Action.WRITE);
     }
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
@@ -734,12 +734,12 @@ public class ArtifactRepository {
     // for deleting non-system artifacts, users need admin privileges on the artifact being deleted.
     Principal principal = SecurityRequestContext.toPrincipal();
     if (NamespaceId.SYSTEM.equals(artifactId.getNamespace().toEntityId())) {
-      authorizerInstantiatorService.get().enforce(instanceId, principal, Action.ADMIN);
+      authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     } else {
-      authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), principal, Action.ADMIN);
+      authorizerInstantiator.get().enforce(artifactId.toEntityId(), principal, Action.ADMIN);
     }
     // revoke all privileges on the artifact
-    authorizerInstantiatorService.get().revoke(artifactId.toEntityId());
+    authorizerInstantiator.get().revoke(artifactId.toEntityId());
     artifactStore.delete(artifactId);
     metadataStore.removeMetadata(artifactId);
   }

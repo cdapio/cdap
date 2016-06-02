@@ -64,6 +64,8 @@ import javax.annotation.Nullable;
 public class CreateStatementBuilder {
   private final String name;
   private final String hiveTableName;
+  private final boolean shouldEscapeColumns;
+  private final SchemaConverter schemaConverter;
   private String hiveSchema;
   private String location;
   private String tableComment;
@@ -71,17 +73,19 @@ public class CreateStatementBuilder {
   private Partitioning partitioning;
   private Map<String, String> tableProperties;
 
-  public CreateStatementBuilder(String name, String hiveTableName) {
+  public CreateStatementBuilder(String name, String hiveTableName, boolean shouldEscapeColumns) {
     this.name = name;
     this.hiveTableName = hiveTableName;
     this.tableProperties = addRequiredTableProperties(Maps.<String, String>newHashMap());
+    this.shouldEscapeColumns = shouldEscapeColumns;
+    this.schemaConverter = new SchemaConverter(shouldEscapeColumns);
   }
 
   /**
    * Set the schema for the table. Throws an exception if it is not valid for Hive.
    */
   public CreateStatementBuilder setSchema(Schema schema) throws UnsupportedTypeException {
-    this.hiveSchema = SchemaConverter.toHiveSchema(schema);
+    this.hiveSchema = schemaConverter.toHiveSchema(schema);
     return this;
   }
 
@@ -282,8 +286,9 @@ public class CreateStatementBuilder {
     if (partitioning != null && !partitioning.getFields().isEmpty()) {
       strBuilder.append(" PARTITIONED BY (");
       for (Map.Entry<String, Partitioning.FieldType> entry : partitioning.getFields().entrySet()) {
-        strBuilder.append(entry.getKey())
-          .append(" ")
+        strBuilder = shouldEscapeColumns ?
+          strBuilder.append('`').append(entry.getKey()).append('`') : strBuilder.append(entry.getKey());
+        strBuilder.append(" ")
           .append(FieldTypes.toHiveType(entry.getValue()))
           .append(", ");
       }

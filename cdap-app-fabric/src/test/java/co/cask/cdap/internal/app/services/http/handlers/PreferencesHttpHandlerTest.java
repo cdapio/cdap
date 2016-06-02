@@ -17,14 +17,19 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Map;
@@ -33,6 +38,18 @@ import java.util.Map;
  * Tests for {@link PreferencesHttpHandler}
  */
 public class PreferencesHttpHandlerTest extends AppFabricTestBase {
+
+  private static Store store;
+
+  @BeforeClass
+  public static void init() {
+    store = getInjector().getInstance(Store.class);
+  }
+
+  private void addApplication(String namespace, Application app) {
+    ApplicationSpecification appSpec = Specifications.from(app);
+    store.addApplication(new NamespaceId(namespace).app(appSpec.getName()).toId(), appSpec);
+  }
 
   @Test
   public void testInstance() throws Exception {
@@ -95,7 +112,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testApplication() throws Exception {
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    addApplication(TEST_NAMESPACE1, new WordCountApp());
     Map<String, String> propMap = Maps.newHashMap();
     Assert.assertEquals(propMap, getProperty(getURI(TEST_NAMESPACE1, "WordCountApp"), false, 200));
     Assert.assertEquals(propMap, getProperty(getURI(TEST_NAMESPACE1, "WordCountApp"), true, 200));
@@ -124,7 +141,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testProgram() throws Exception {
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    addApplication(TEST_NAMESPACE2, new WordCountApp());
     Map<String, String> propMap = Maps.newHashMap();
     Assert.assertEquals(propMap, getProperty(getURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"),
                                              false, 200));

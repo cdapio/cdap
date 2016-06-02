@@ -29,8 +29,11 @@ import java.util.Map;
  */
 public class SchemaConverter {
   private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
+  private final boolean escapeColumns;
 
-  private SchemaConverter() { }
+  public SchemaConverter(boolean escapeColumns) {
+    this.escapeColumns = escapeColumns;
+  }
 
   /**
    * Create a hive schema from the given type using reflection.
@@ -39,7 +42,7 @@ public class SchemaConverter {
    * @return hive schema that can be used in a create statement.
    * @throws UnsupportedTypeException if there is an unsupported type.
    */
-  public static String toHiveSchema(Type type) throws UnsupportedTypeException {
+  public String toHiveSchema(Type type) throws UnsupportedTypeException {
     // false is to disallow recursive schemas, which hive can't handle
     return toHiveSchema(schemaGenerator.generate(type, false));
   }
@@ -50,7 +53,7 @@ public class SchemaConverter {
    * @param schema schema to translate.
    * @return hive schema that can be used in a create statement.
    */
-  public static String toHiveSchema(Schema schema) throws UnsupportedTypeException {
+  public String toHiveSchema(Schema schema) throws UnsupportedTypeException {
     if (schema.getType() != Schema.Type.RECORD || schema.getFields().size() < 1) {
       throw new UnsupportedTypeException("Schema must be of type record and have at least one field.");
     }
@@ -70,7 +73,7 @@ public class SchemaConverter {
     return builder.toString();
   }
 
-  private static void appendType(StringBuilder builder, Schema schema) throws UnsupportedTypeException {
+  private void appendType(StringBuilder builder, Schema schema) throws UnsupportedTypeException {
     switch (schema.getType()) {
       case NULL:
         break;
@@ -135,10 +138,15 @@ public class SchemaConverter {
     }
   }
 
-  private static void appendField(StringBuilder builder, Schema.Field field, boolean inStruct)
+  private void appendField(StringBuilder builder, Schema.Field field, boolean inStruct)
     throws UnsupportedTypeException {
     String name = field.getName();
-    builder.append(name);
+    if (escapeColumns) {
+      // a literal backtick(`) is represented as a double backtick(``)
+      builder.append('`').append(name.replace("`", "``")).append('`');
+    } else {
+      builder.append(name);
+    }
     // structs look like "struct<name1:string,name2:array<int>>"
     // outside a struct fields look like "name1 string, name2 array<int>"
     builder.append(inStruct ? ":" : " ");

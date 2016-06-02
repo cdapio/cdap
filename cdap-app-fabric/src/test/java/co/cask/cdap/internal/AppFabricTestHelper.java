@@ -48,7 +48,7 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Supplier;
 import com.google.inject.AbstractModule;
@@ -104,7 +104,6 @@ public class AppFabricTestHelper {
       injector.getInstance(StreamCoordinatorClient.class).startAndWait();
       injector.getInstance(NotificationService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
-      injector.getInstance(AuthorizerInstantiatorService.class).startAndWait();
     }
     return injector;
   }

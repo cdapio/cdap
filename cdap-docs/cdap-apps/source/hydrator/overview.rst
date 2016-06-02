@@ -8,12 +8,6 @@
 ETL Overview 
 ============
 
-.. toctree::
-    :hidden:
-    :glob:
-
-    **
-
 A Quick Intro to ETL
 ====================
 

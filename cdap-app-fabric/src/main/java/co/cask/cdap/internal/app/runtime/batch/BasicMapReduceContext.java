@@ -153,7 +153,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public String toString() {
-    return String.format("job=%s,=%s", spec.getName(), super.toString());
+    return String.format("name=%s, jobId=%s, %s", spec.getName(),
+                         job == null ? null : job.getJobID(), super.toString());
   }
 
   @Override

@@ -16,7 +16,7 @@
  */
 
   angular.module(PKG.name + '.feature.hydratorplusplus')
-  .factory('HydratorPlusPlusCanvasFactory', function(myHelpers, $q, myAlertOnValium, GLOBALS, $filter) {
+  .factory('HydratorPlusPlusCanvasFactory', function(myHelpers, $q, myAlertOnValium, GLOBALS) {
 
     /*
       This is the inner utility function that is used once we have a source node to start our traversal.
@@ -94,7 +94,8 @@
       addConnectionsInOrder(source[0], finalConnections, originalConnections);
       if (finalConnections.length < originalConnections.length) {
         originalConnections.forEach(function(oConn) {
-          if ($filter('filter')(finalConnections, oConn).length === 0) {
+          var match = finalConnections.filter(fConn => fConn.from === oConn.from && fConn.to === oConn.to).length === 0;
+          if (match) {
             parallelConnections.push(oConn);
           }
         });
@@ -140,7 +141,8 @@
 
       if (angular.isArray(config.stages)) {
         config.stages.forEach( node => {
-          if (myHelpers.objectQuery( node, 'plugin', 'properties', 'length') > 0) {
+          if (angular.isObject(myHelpers.objectQuery( node, 'plugin', 'properties')) &&
+              Object.keys(node.plugin.properties).length > 0) {
             node.plugin.properties = propertiesIterator(node.plugin.properties, node.plugin._backendProperties);
           }
         });

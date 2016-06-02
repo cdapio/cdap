@@ -162,6 +162,11 @@ echo "Starting Parcel Build"
 
 validate_env
 
+# If detected version is a SNAPSHOT, convert it to numeric
+if [[ ${VERSION} =~ "-SNAPSHOT" ]] ; then
+  VERSION=${VERSION/-SNAPSHOT/.$(date +%s)}
+fi
+
 PARCEL_VERSION_ITERATION="${PARCEL_VERSION:-${VERSION}}-${PARCEL_ITERATION}"
 echo "Using version: ${PARCEL_VERSION_ITERATION}"
 PARCEL_ROOT_DIR="${PARCEL_BASE}-${PARCEL_VERSION_ITERATION}"

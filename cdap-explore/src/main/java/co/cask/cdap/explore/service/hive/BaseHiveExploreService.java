@@ -192,7 +192,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientReferenceQueue = new ReferenceQueue<>();
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
-    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory, new ExploreTableNaming());
+    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory,
+                                                       new ExploreTableNaming(), hConf);
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.tableNaming = tableNaming;
 
@@ -1322,6 +1323,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (UserGroupInformation.isSecurityEnabled()) {
       // make sure RM does not cancel delegation tokens after the query is run
       sessionConf.put("mapreduce.job.complete.cancel.delegation.tokens", "false");
+      sessionConf.put("spark.hadoop.mapreduce.job.complete.cancel.delegation.tokens", "false");
       // refresh delegations for the job - TWILL-170
       updateTokenStore();
     }

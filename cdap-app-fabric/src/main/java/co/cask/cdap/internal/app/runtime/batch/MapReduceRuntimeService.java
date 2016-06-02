@@ -288,9 +288,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         CConfiguration cConfCopy = cConf;
         contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
 
-        LOG.info("Submitting MapReduce Job: {}", context);
         // submits job and returns immediately. Shouldn't need to set context ClassLoader.
         job.submit();
+        // log after the job.submit(), because the jobId is not assigned before then
+        LOG.info("Submitted MapReduce Job: {}.", context);
 
         this.job = job;
         this.transaction = tx;

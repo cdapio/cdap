@@ -27,6 +27,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.apache.twill.common.Threads;
 import org.apache.twill.zookeeper.NodeChildren;
 import org.apache.twill.zookeeper.NodeData;
@@ -167,25 +168,29 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     final String znode = joinZNode(parentZnode, name);
     try {
       LOG.debug("Setting value for node {}", znode);
-      ListenableFuture<T> future = ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance),
-                                                               codec, MAX_RETRIES, znodeACL);
 
-      Futures.addCallback(future, new FutureCallback<T>() {
-        @Override
-        public void onSuccess(T result) {
-          LOG.debug("Created or set node {}", znode);
-          resources.put(name, result);
-        }
+      final SettableFuture<T> completion = SettableFuture.create();
+      Futures.addCallback(
+        ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance), codec, MAX_RETRIES, znodeACL),
+        new FutureCallback<T>() {
+          @Override
+          public void onSuccess(T result) {
+            LOG.debug("Created or set node {}", znode);
+            resources.put(name, result);
+            completion.set(result);
+          }
 
-        @Override
-        public void onFailure(Throwable t) {
-          LOG.error("Failed to set value for node {}", znode, t);
-          listeners.notifyError(name, t);
+          @Override
+          public void onFailure(Throwable t) {
+            LOG.error("Failed to set value for node {}", znode, t);
+            listeners.notifyError(name, t);
+            completion.setException(t);
+          }
         }
-      });
+      );
 
       // Block until it is done
-      future.get();
+      completion.get();
 
     } catch (Exception ioe) {
       throw Throwables.propagate(ioe);

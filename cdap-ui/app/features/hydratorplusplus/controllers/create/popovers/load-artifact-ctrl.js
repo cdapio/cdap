@@ -30,7 +30,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
 
     var artifactName = '';
     var artifactVersion = '';
-    var jarFile, jsonFile, artifactExtends;
+    var jarFile, jsonFile, artifactExtends, artifactPlugins = [];
 
     this.openJARFileDialog = () => {
       document.getElementById('jar-import-config-link').click();
@@ -91,13 +91,14 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
           } catch(e) {
             throw e;
           }
-          if (!artifactJson.properties || !artifactJson.parents) {
+          if (!artifactJson.parents) {
             this.jsonStatus = 2;
             this.jsonLoadFailMessage = this.GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-ERROR-JSON'];
             return;
           }
           jsonFile = artifactJson.properties;
           artifactExtends = artifactJson.parents.reduce( (prev, curr) => `${prev}/${curr}`);
+          artifactPlugins = artifactJson.plugins || [];
           this.jsonStatus = 1;
         },
         () => {
@@ -107,6 +108,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
       );
     };
     this.upload = () => {
+      this.errorMessage = '';
       let params = {
         namespace: this.$stateParams.namespace,
         artifactName: artifactName
@@ -122,11 +124,17 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
         'Content-type': 'application/octet-stream',
         'customHeader': {
           'Artifact-Version': artifactVersion,
-          'Artifact-Extends': artifactExtends
+          'Artifact-Extends': artifactExtends,
+          'Artifact-Plugins': JSON.stringify(artifactPlugins)
         }
       })
         .then(
-          () => this.myPipelineApi.loadJson(jsonParams, jsonFile).$promise,
+          () => {
+            if (!jsonFile || (angular.isObject(jsonFile) && Object.keys(jsonFile).length === 0)) {
+              return this.$q.resolve();
+            }
+            return this.myPipelineApi.loadJson(jsonParams, jsonFile).$promise;
+          },
           (err) => {
             this.errorMessage = err;
             return $q.reject(this.errorMessage);
@@ -143,7 +151,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
               });
           },
           (err) => {
-            this.errorMessage = `${err}`;
+            this.errorMessage = (err && err.data ? `${err.data}` : `${err}`);
           }
         );
     };

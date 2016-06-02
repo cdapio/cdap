@@ -57,7 +57,7 @@
     <name>local.data.dir</name>
     <value>data</value>
     <description>
-      Data directory for standalone mode
+      Data directory for standalone mode and the master process in distributed CDAP
     </description>
   </property>
 
