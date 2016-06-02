@@ -48,7 +48,7 @@
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
     
-    if (data.development && data.development.length > 0 && data.development[0]) {
+    if (Array.isArray(data.development) && data.development.length && data.development[0].length) {
       ess = (data.development.length == 1) ? "" : "s" ;
       document.write('<optgroup label="Development Release' + ess +'">');          
       var i;
@@ -61,14 +61,14 @@
     }
     
     document.write('<optgroup label="Current Release">');
-    if (data.current && data.current.length > 1 && data.current[0]) {
+    if (Array.isArray(data.current) && data.current.length && data.current[0].length) {
       writeVersionLink(data.current[0], data.current[1]);
     } else {
       writeLink('current', 'Current');
     }
     document.write('</optgroup>');
-    
-    if (data.older && data.older.length > 0 && data.older[0]) {
+
+    if (Array.isArray(data.older) && data.older.length && data.older[0].length) {
       ess = (data.older.length == 1) ? "" : "s" ;
       document.write('<optgroup label="Older Release' + ess + '">');
       var j;
