@@ -34,6 +34,9 @@ angular.module(PKG.name + '.commons')
                            myHelpers.objectQuery($scope.config, 'widget-attributes', 'delimiter') ||
                            ',';
 
+        $scope.keyPlaceholder = myHelpers.objectQuery($scope.config, 'widget-attributes', 'key-placeholder') || 'key';
+        $scope.valuePlaceholder = myHelpers.objectQuery($scope.config, 'widget-attributes', 'value-placeholder') || 'value';
+
         $scope.showDelimiter = true;
         var showDelimiterProperty = myHelpers.objectQuery($scope.config, 'widget-attributes', 'showDelimiter');
         if (($scope.config.properties && $scope.config.properties.showDelimiter === 'false') || showDelimiterProperty === 'false' ) {

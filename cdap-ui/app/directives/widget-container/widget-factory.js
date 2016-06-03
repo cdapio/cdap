@@ -64,7 +64,8 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'data-delimiter': '{{ myconfig.properties.delimiter || myconfig["widget-attributes"].delimiter }}',
-          'data-type': 'csv'
+          'data-type': 'csv',
+          'config': 'myconfig'
         }
       },
       'dsv': {
@@ -72,7 +73,8 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'data-delimiter': '{{ myconfig.properties.delimiter || myconfig["widget-attributes"].delimiter }}',
-          'data-type': 'dsv'
+          'data-type': 'dsv',
+          'config': 'myconfig'
         }
       },
       'ds-multiplevalues': {

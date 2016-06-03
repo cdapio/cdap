@@ -21,10 +21,11 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         delimiter: '@',
-        type: '@'
+        type: '@',
+        config: '='
       },
       templateUrl: 'widget-container/widget-dsv/widget-dsv.html',
-      controller: function($scope, EventPipe) {
+      controller: function($scope, EventPipe, myHelpers) {
         var modelCopy = angular.copy($scope.model);
 
         if ($scope.type === 'csv') {
@@ -32,6 +33,8 @@ angular.module(PKG.name + '.commons')
         } else {
           $scope.showDelimiter = true;
         }
+
+        $scope.placeholder = myHelpers.objectQuery($scope.config, 'widget-attributes', 'value-placeholder') || 'value';
 
         var delimiter = $scope.delimiter || ',';
 
