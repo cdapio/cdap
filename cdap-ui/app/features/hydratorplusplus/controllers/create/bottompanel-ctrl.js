@@ -54,6 +54,7 @@ class HydratorPlusPlusBottomPanelCtrl {
   }
   selectTab(tab) {
     this.activeTab = this.tabs[tab];
+    this.toggleCollapse(false);
   }
   setIsCollapsed() {
     this.bottomPanelState = this.HydratorPlusPlusBottomPanelStore.getPanelState();

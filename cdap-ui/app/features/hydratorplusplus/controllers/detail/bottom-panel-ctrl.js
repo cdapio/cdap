@@ -76,9 +76,11 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
     HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
     HydratorPlusPlusBottomPanelActions.expand();
-    DAGPlusPlusNodesStore.registerOnChangeListener(function() {
-      this.selectTab(5);
-    }.bind(this));
+    DAGPlusPlusNodesStore.registerOnChangeListener(() => {
+      if (DAGPlusPlusNodesStore.state.activeNodeId) {
+        this.selectTab(5);
+      }
+    });
 
     $scope.$on('$destroy', function() {
       HydratorPlusPlusBottomPanelActions.reset();
