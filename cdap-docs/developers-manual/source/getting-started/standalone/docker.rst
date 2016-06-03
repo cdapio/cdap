@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: CDAP Docker Image
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 ============
 Docker Image
@@ -178,8 +178,42 @@ Docker and CDAP Applications
 
 .. include:: ../dev-env.rst  
    :start-line: 7
+   :end-line: 23
 
-.. include:: ../start-stop-cdap.rst  
-   :start-line: 4
+.. tabbed-parsed-literal::
+   :tabs: "Linux Virtual Machine"
+   :independent:
+
+   $ mvn archetype:generate \
+       -DarchetypeGroupId=co.cask.cdap \
+       -DarchetypeArtifactId=cdap-app-archetype \
+       -DarchetypeVersion=\ |release|
+
+.. include:: ../dev-env.rst  
+   :start-line: 30
+
+Starting and Stopping Standalone CDAP
+============================================
+
+Use the ``cdap.sh`` script to start and stop the Standalone CDAP:
+
+.. tabbed-parsed-literal::
+   :tabs: "Linux Virtual Machine"
+   :independent:
+
+   $ cd /opt/cdap/sdk
+   $ ./bin/cdap.sh start
+     . . .
+   $ ./bin/cdap.sh stop
+
+Note that starting CDAP is not necessary if you use the Docker image, as it
+starts the Standalone CDAP automatically on startup.
+
+Once CDAP is started successfully, in a web browser you will be able to see the CDAP
+UI running at ``http://localhost:9999``, where you can deploy example applications and
+interact with CDAP. 
+
+Note that in the case of the Docker image, you will need to substitute 
+the Docker VM's IP address for ``localhost`` in the web browser address bar.
 
 .. include:: /_includes/building-apps.txt
