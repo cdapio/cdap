@@ -24,6 +24,10 @@ MAINTAINER Cask Data <ops@cask.co>
 # grab gosu for easy step-down from root
 ENV GOSU_VERSION 1.7
 RUN set -x && \
+  apt-get update && \
+  apt-get install -y \
+    curl \
+    git && \
   curl -o /usr/local/bin/gosu \
     "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" && \
   curl -o /usr/local/bin/gosu.asc \
@@ -39,12 +43,8 @@ RUN set -x && \
 COPY packer/scripts /tmp/scripts
 COPY packer/files /tmp/files
 
-# build cdap-standalone zip file, copy it to container and extract it
-RUN apt-get update && \
-    apt-get install -y \
-      curl \
-      git && \
-    curl -L http://chef.io/chef/install.sh | bash && \
+# Install Chef, setup APT, run Chef cdap::sdk recipe, then clean up
+RUN curl -L http://chef.io/chef/install.sh | bash && \
     for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
     chef-solo -o cdap::sdk -j /tmp/files/cdap-sdk.json && \
     for i in remove-chef.sh sdk-cleanup.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
