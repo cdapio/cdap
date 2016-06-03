@@ -28,10 +28,12 @@ RUN set -x && \
   apt-get install -y \
     curl \
     git && \
-  curl -o /usr/local/bin/gosu \
-    "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" && \
-  curl -o /usr/local/bin/gosu.asc \
-    "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" && \
+  curl -vL \
+    "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" > \
+    /usr/local/bin/gosu && \
+  curl -vL \
+    "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" > \
+    /usr/local/bin/gosu.asc && \
   export GNUPGHOME="$(mktemp -d)" && \
   gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && \
   gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu && \
