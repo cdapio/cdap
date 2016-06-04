@@ -49,7 +49,7 @@ Kitematic and then download, start, and connect to an instance of CDAP.
 
 #. Select the desired version.
    Note that the tag **latest** is the last version that was put up at Docker Hub, which is not the 
-   necessarily the most-current version:
+   necessarily the most-current version, which is |literal-version|:
  
      .. image:: ../../_images/kitematic/kitematic-3-select-tag.png
         :width: 4in
@@ -70,11 +70,10 @@ Kitematic and then download, start, and connect to an instance of CDAP.
         :width: 8in
         :align: center
 
-
 #. This shows that the CDAP instance is listening on the internal port ``9999`` within the
    Docker instance, while the Docker instance exposes that port on the external IP address
-   and port ``192.168.99.100:32769``. The text in blue is a link; clicking it will open it
-   in your system web browser and connect to the CDAP UI:
+   and port ``192.168.99.100:32769``. Enter that address into your system web browser to
+   connect to the CDAP UI:
    
      .. image:: ../../_images/kitematic/kitematic-6-cdap-ui.png
         :width: 8in
@@ -86,87 +85,97 @@ Kitematic and then download, start, and connect to an instance of CDAP.
 Docker from a Command Line
 ==========================
 
-- Docker is available for a variety of platforms. Download and install Docker in your environment by
-  following the `platform-specific installation instructions <https://docs.docker.com/engine/installation/>`__
-  from `Docker.com <https://docker.com>`__ to verify that Docker is working and has
-  started correctly.
+Docker is available for a variety of platforms. Download and install Docker in your
+environment by following the `platform-specific installation instructions
+<https://docs.docker.com/engine/installation/>`__ from `Docker.com <https://docker.com>`__
+to verify that Docker is working and has started correctly.
   
-  If you are not running on Linux, you need to start the Docker Virtual Machine (VM) before you
-  can use containers. For example:
-  
-  .. tabbed-parsed-literal::
-    :tabs: "Mac OS X",Windows
-    :mapping: linux,windows
-    :dependent: linux-windows
-    :languages: console,shell-session
-
-    .. Mac OS X
-    
-    $ boot2docker start
-    $ boot2docker ip
-    
-    .. Windows
-    
-    > boot2docker start
-    > boot2docker ip
+#. If you are not running on Linux, you need to create and start the Docker Virtual Machine (VM) before you
+   can use containers. For example:
    
-  to determine the Docker VM's IP address. You will need to use that address as the host
-  name when either connecting to the CDAP UI or making an HTTP request.
+   .. tabbed-parsed-literal::
+     :tabs: "Mac OS X",Windows
+     :mapping: linux,windows
+     :dependent: linux-windows
+     :languages: console,shell-session
+     
+     $ docker-machine create --driver virtualbox cdap
+     $ docker-machine env cdap
+     
+   This will create a new Docker virtual machine named ``cdap`` and print out the environment.
+
+#. When you run ``docker-machine env cdap``, it will print a message on the screen such as::
+
+     export DOCKER_TLS_VERIFY="1"
+     export DOCKER_HOST="tcp://192.168.99.100:2376"
+     export DOCKER_CERT_PATH="/Users/<username>/.docker/machine/machines/cdap"
+     export DOCKER_MACHINE_NAME="cdap"
+     # Run this command to configure your shell: 
+     # eval $(docker-machine env cdap)
+ 
+   It is essential to run these export commands (or the single ``eval`` command). Otherwise,
+   subsequent Docker commands will fail because they won't be able to connect to the correct
+   Docker VM.
   
-  When you run ``boot2docker start``, it will print a message on the screen such as::
+#. If you are running **Docker on either Mac OS X or Microsoft Windows**, Docker is running a
+   virtual Linux machine on top of your host OS. You will need to use the address shown
+   above (such as ``192.168.99.100``) as the host name when either connecting to the CDAP
+   UI or making an HTTP request.
 
-    To connect the Docker client to the Docker daemon, please set:
-        export DOCKER_HOST=tcp://192.168.59.103:2375
-        export DOCKER_CERT_PATH=/Users/.../.boot2docker/certs/boot2docker-vm
-        export DOCKER_TLS_VERIFY=1
+#. Once Docker has started, pull down the *CDAP Docker Image* from the Docker Hub using:
 
-  It is essential to run these export commands (or command, if only one). Otherwise,
-  subsequent Docker commands will fail because they can't tell how to connect to the
-  Docker VM.
+   .. tabbed-parsed-literal::
+     :tabs: "Linux or Mac OS X",Windows
+     :mapping: linux,windows
+     :dependent: linux-windows
+     :languages: console,shell-session
+ 
+     $ docker pull caskdata/cdap-standalone:|release|
 
-- Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using:
+#. Start the *Docker CDAP Virtual Machine* with:
 
-  .. tabbed-parsed-literal::
-    :tabs: "Mac OS X",Windows
-    :mapping: linux,windows
-    :dependent: linux-windows
-    :languages: console,shell-session
+   .. tabbed-parsed-literal::
+     :tabs: "Linux or Mac OS X",Windows
+     :mapping: linux,windows
+     :dependent: linux-windows
+     :languages: console,shell-session
+ 
+     $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
 
-    .. Mac OS X
-    
-    $ docker pull caskdata/cdap-standalone:|release|
-    
-    .. Windows
-    
-    > docker pull caskdata/cdap-standalone:|release|
+#. CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s software
+   directory is under ``/opt/cdap/sdk``.
 
+#. Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
+   at ``http://localhost:9999``. 
+  
+#. If you are **running Docker on either Mac OS X or Microsoft Windows**, replace ``localhost`` 
+   with the Docker VM's IP address (such as ``192.168.99.100``) that you obtained earlier.
+   Start a browser and enter the address to access the CDAP UI.
 
-- Start the *Docker CDAP Virtual Machine* with:
+#. To control the CDAP instance, use this command, substituting one of ``start``, ``restart``,
+   or ``stop`` for ``<command>``:
 
-  .. tabbed-parsed-literal::
-    :tabs: "Mac OS X",Windows
-    :mapping: linux,windows
-    :dependent: linux-windows
-    :languages: console,shell-session
+   .. tabbed-parsed-literal::
+     :tabs: "Linux or Mac OS X",Windows
+     :mapping: linux,windows
+     :dependent: linux-windows
+     :languages: console,shell-session
+     
+     $ docker exec -d $(docker ps | grep cdap-standalone | awk '{print $1}') /opt/cdap/sdk/bin/cdap.sh <command>
+  
+#. When you are finished, stop CDAP and shutdown Docker:
 
-    .. Mac OS X
-    
-    $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
-    
-    .. Windows
-    
-    > docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+   .. tabbed-parsed-literal::
+     :tabs: "Linux or Mac OS X",Windows
+     :mapping: linux,windows
+     :dependent: linux-windows
+     :languages: console,shell-session
+     
+     $ docker exec -d $(docker ps | grep cdap-standalone | awk '{print $1}') /opt/cdap/sdk/bin/cdap.sh stop
+     $ docker-machine stop cdap
 
-- CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
-  Directory is under ``/opt/cdap/sdk``.
-
-- Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
-  at ``http://localhost:9999``. Replace ``localhost`` with the Docker VM's IP address 
-  (such as ``192.168.59.103``) that you obtained earlier. Start a browser and enter the
-  address to access the CDAP UI.
-
-- For a full list of Docker Commands, see the `Docker Command Line Documentation.
-  <https://docs.docker.com/reference/commandline/cli/>`__
+#. For a full list of Docker Commands, see the `Docker Command Line Documentation.
+   <https://docs.docker.com/reference/commandline/cli/>`__
 
 .. _docker-cdap-applications:
 
@@ -178,42 +187,5 @@ Docker and CDAP Applications
 
 .. include:: ../dev-env.rst  
    :start-line: 7
-   :end-line: 23
-
-.. tabbed-parsed-literal::
-   :tabs: "Linux Virtual Machine"
-   :independent:
-
-   $ mvn archetype:generate \
-       -DarchetypeGroupId=co.cask.cdap \
-       -DarchetypeArtifactId=cdap-app-archetype \
-       -DarchetypeVersion=\ |release|
-
-.. include:: ../dev-env.rst  
-   :start-line: 30
-
-Starting and Stopping Standalone CDAP
-============================================
-
-Use the ``cdap.sh`` script to start and stop the Standalone CDAP:
-
-.. tabbed-parsed-literal::
-   :tabs: "Linux Virtual Machine"
-   :independent:
-
-   $ cd /opt/cdap/sdk
-   $ ./bin/cdap.sh start
-     . . .
-   $ ./bin/cdap.sh stop
-
-Note that starting CDAP is not necessary if you use the Docker image, as it
-starts the Standalone CDAP automatically on startup.
-
-Once CDAP is started successfully, in a web browser you will be able to see the CDAP
-UI running at ``http://localhost:9999``, where you can deploy example applications and
-interact with CDAP. 
-
-Note that in the case of the Docker image, you will need to substitute 
-the Docker VM's IP address for ``localhost`` in the web browser address bar.
 
 .. include:: /_includes/building-apps.txt
