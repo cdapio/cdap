@@ -78,10 +78,34 @@ Icon=cdap
 Categories=GNOME;GTK;Development;
 EOF
 
+# CDAP SDK Menu Entry
+cat > /usr/share/applications/cdap-sdk.desktop << EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=CDAP SDK
+Comment=CDAP SDK directory
+Exec=xdg-open /opt/cdap/sdk
+Type=Application
+Icon=cdap
+Categories=GNOME;GTK;Development;
+EOF
+
+# CDAP Examples Menu Entry
+cat > /usr/share/applications/cdap-examples.desktop << EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=CDAP Examples
+Comment=CDAP Examples directory
+Exec=xdg-open /opt/cdap/sdk/examples
+Type=Application
+Icon=cdap
+Categories=GNOME;GTK;Development;
+EOF
+
 # Copy welcome.txt and some icons to the desktop
 mkdir -p ~cdap/Desktop
 cp /etc/welcome.txt ~cdap/Desktop
-for i in cdap-ui cdap-docs eclipse idea lxterminal ; do
+for i in cdap-ui cdap-sdk cdap-examples cdap-docs eclipse idea lxterminal ; do
   cp /usr/share/applications/${i}.desktop ~cdap/Desktop
 done
 
