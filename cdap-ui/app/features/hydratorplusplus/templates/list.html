@@ -118,13 +118,13 @@
                 ng-if="pipeline.isDraft"
                 ng-click="caskConfirm()"
                 cask-confirmable="ListController.deleteDraft(pipeline.id)"
-                data-confirmable-content="Are you sure you want to delete this draft?"
+                data-confirmable-content="Are you sure you want to delete {{ pipeline.name }}?"
               ></span>
               <span class="fa fa-trash text-danger delete-draft"
                 ng-if="!pipeline.isDraft"
                 ng-click="caskConfirm()"
                 cask-confirmable="ListController.deleteApp(pipeline.name)"
-                data-confirmable-content="Are you sure you want to delete this pipeline?"
+                data-confirmable-content="Are you sure you want to delete {{ pipeline.name }}?"
               ></span>
             </td>
           </tr>
