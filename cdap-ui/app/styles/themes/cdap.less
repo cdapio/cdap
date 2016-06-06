@@ -35,13 +35,13 @@ body.theme-cdap {
     blockquote { border: 0; }
 
     h1 {
-      color: #5F6674;
+      color: #5f6674;
       font-size: 30px;
       font-weight: 400;
     }
 
     h2 {
-      color: #5F6674;
+      color: #5f6674;
       font-size: 20px;
       font-weight: 300;
       > span {
@@ -57,7 +57,7 @@ body.theme-cdap {
     }
 
     h4 {
-      color: #5F6674;
+      color: #5f6674;
       font-size: 16px;
       font-weight: 300;
     }
@@ -90,7 +90,8 @@ body.theme-cdap {
 
     .type-block {
       padding-bottom: 5px;
-      h2, [class*="icon-"] {
+      h2,
+      [class*="icon-"] {
         font-size: 21px;
       }
       h2 {
@@ -125,8 +126,10 @@ body.theme-cdap {
       @media (max-width: @screen-xs-max) {
         display: none;
       }
-      my-start-stop-button > .btn-group, > .btn-group {
+      my-start-stop-button > .btn-group,
+      > .btn-group {
         .box-shadow(0 1px 2px 0 rgba(0,0,0,.2));
+
         @media (max-width: @screen-xs-max) {
           display: block;
           margin-top: 20px;
@@ -181,6 +184,7 @@ body.theme-cdap {
         flex-wrap: wrap;
         align-items: center;
         justify-content: flex-start;
+
         @media (min-width: @screen-md-min) {
           border-right: 1px solid @table-border-color;
         }
@@ -190,13 +194,15 @@ body.theme-cdap {
         border-right: 1px solid @table-border-color;
         border-left: 1px solid @table-border-color;
         width: 335px;
+
         @media (max-width: @screen-sm-max) {
           border-top: 1px solid @table-border-color;
         }
         height: 60px;
         .order(1);
         span {
-          &.fa-circle, &.fa-caret-down {
+          &.fa-circle,
+          &.fa-caret-down {
             line-height: 48px;
             vertical-align: top;
           }
@@ -243,7 +249,8 @@ body.theme-cdap {
               white-space: nowrap;
               height: 100%;
               width: 100%;
-              &:hover, &:focus {
+              &:hover,
+              &:focus {
                 background-color: @subnav-border;
                 color: @btn-default-color;
               }
@@ -256,9 +263,11 @@ body.theme-cdap {
       }
       div.stop-run {
         .order(3);
+
         @media (max-width: @screen-xs-max) {
           display: none;
         }
+
         @media (min-width: @screen-sm-min) {
           margin-left: auto;
         }
@@ -268,9 +277,11 @@ body.theme-cdap {
             .cask-btn(@background: white, @border: 1px solid white, @border-radius: 0, @color: @btn-default-color, @font-size: 12px, @padding: 0);
             border-left-color: @table-border-color;
             width: 100px;
+
             @media (max-width: @screen-sm-max) {
               border-color: @table-border-color;
             }
+
             @media (max-width: @screen-md-max) {
               width: 60px;
             }
