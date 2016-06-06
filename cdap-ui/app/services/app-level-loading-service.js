@@ -38,4 +38,14 @@ angular.module(PKG.name + '.services')
       }
     };
 
+    this.hideLoadingIconImmediate = function(){
+      if (!deferred) {
+        return $q.when(true);
+      } else {
+        EventPipe.emit('hideLoadingIcon.immediate');
+        deferred.resolve(true);
+        deferred = null;
+      }      
+    }
+
   });

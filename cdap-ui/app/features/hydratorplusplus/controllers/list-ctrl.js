@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium) {
+  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService) {
     var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
 
@@ -202,6 +202,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     }
 
     vm.deleteDraft = function(draftId) {
+      myLoadingService.showLoadingIcon();
       let draftName;
       mySettings.get('hydratorDrafts')
         .then(function(res) {
@@ -214,6 +215,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         })
         .then(
           function success() {
+            myLoadingService.hideLoadingIconImmediate();
             $state.reload()
               .then(function() {
                 myAlertOnValium.show({
@@ -223,6 +225,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               });
           },
           function error() {
+            myLoadingService.hideLoadingIconImmediate();
             $state.reload()
               .then(function() {
                 myAlertOnValium.show({
@@ -235,6 +238,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
 
 
     vm.deleteApp = function (appId) {
+      myLoadingService.showLoadingIcon();
       var deleteParams = {
         namespace: $state.params.namespace,
         appId: appId,
@@ -243,6 +247,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       myAppsApi.delete(deleteParams)
         .$promise
         .then(function success () {
+          myLoadingService.hideLoadingIconImmediate();
           $state.reload()
             .then(function() {
               myAlertOnValium.show({
@@ -251,6 +256,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               });
             });
         }, function error () {
+          myLoadingService.hideLoadingIconImmediate();
           $state.reload()
             .then(function() {
               myAlertOnValium.show({
