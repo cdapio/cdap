@@ -21,7 +21,7 @@ body.theme-default {
   visibility: visible;
 
   header nav > ul {
-    border-left:1px solid @gray;
+    border-left: 1px solid @gray;
   }
   footer {
     border-top: 1px dashed white;
@@ -39,8 +39,8 @@ body.theme-default {
   .btn-info,
   .btn-warning,
   .btn-danger {
-    text-shadow: 0 -1px 0 rgba(0,0,0,.2);
-    @shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 1px 1px rgba(0,0,0,.075);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+    @shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 1px rgba(0, 0, 0, 0.075);
     .box-shadow(@shadow);
 
     // Reset the shadow
@@ -62,7 +62,7 @@ body.theme-default {
     border-color: darken(@btn-color, 14%);
 
     &:hover,
-    &:focus  {
+    &:focus {
       background-color: darken(@btn-color, 12%);
       background-position: 0 -15px;
     }
@@ -91,12 +91,16 @@ body.theme-default {
   }
 
   // Apply the mixin to the buttons
-  .btn-default { .btn-styles(@btn-default-bg); text-shadow: 0 1px 0 #fff; border-color: #ccc; }
+  .btn-default {
+    .btn-styles(@btn-default-bg);
+    text-shadow: 0 1px 0 #ffffff;
+    border-color: #cccccc;
+  }
   .btn-primary { .btn-styles(@btn-primary-bg); }
   .btn-success { .btn-styles(@btn-success-bg); }
-  .btn-info    { .btn-styles(@btn-info-bg); }
+  .btn-info { .btn-styles(@btn-info-bg); }
   .btn-warning { .btn-styles(@btn-warning-bg); }
-  .btn-danger  { .btn-styles(@btn-danger-bg); }
+  .btn-danger { .btn-styles(@btn-danger-bg); }
 
   //
   // Images
@@ -115,12 +119,12 @@ body.theme-default {
     .navbar-nav > .open > a,
     .navbar-nav > .active > a {
       #gradient > .vertical(@start-color: @navbar-inverse-link-active-bg; @end-color: lighten(@navbar-inverse-link-active-bg, 2.5%));
-      .box-shadow(inset 0 3px 9px rgba(0,0,0,.25));
+      .box-shadow(inset 0 3px 9px rgba(0, 0, 0,.25));
     }
 
     .navbar-brand,
     .navbar-nav > li > a {
-      text-shadow: 0 -1px 0 rgba(0,0,0,.25);
+      text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
     }
   }
 
@@ -137,7 +141,7 @@ body.theme-default {
       &,
       &:hover,
       &:focus {
-        color: #fff;
+        color: #ffffff;
         #gradient > .vertical(@start-color: @dropdown-link-active-bg; @end-color: darken(@dropdown-link-active-bg, 5%));
       }
     }
@@ -149,8 +153,9 @@ body.theme-default {
 
   // Common styles
   .alert {
-    text-shadow: 0 1px 0 rgba(255,255,255,.2);
-    @shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.05);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+
+    @shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(0, 0, 0, 0.05);
     .box-shadow(@shadow);
   }
 
@@ -161,10 +166,10 @@ body.theme-default {
   }
 
   // Apply the mixin to the alerts
-  .alert-success    { .alert-styles(@alert-success-bg); }
-  .alert-info       { .alert-styles(@alert-info-bg); }
-  .alert-warning    { .alert-styles(@alert-warning-bg); }
-  .alert-danger     { .alert-styles(@alert-danger-bg); }
+  .alert-success { .alert-styles(@alert-success-bg); }
+  .alert-info { .alert-styles(@alert-info-bg); }
+  .alert-warning { .alert-styles(@alert-warning-bg); }
+  .alert-danger { .alert-styles(@alert-danger-bg); }
 
   //
   // Progress bars
@@ -172,7 +177,7 @@ body.theme-default {
 
   // Give the progress background some depth
   .progress {
-    #gradient > .vertical(@start-color: darken(@progress-bg, 4%); @end-color: @progress-bg)
+    #gradient > .vertical(@start-color: darken(@progress-bg, 4%); @end-color: @progress-bg);
   }
 
   // Mixin for generating new styles
@@ -181,11 +186,11 @@ body.theme-default {
   }
 
   // Apply the mixin to the progress bars
-  .progress-bar            { .progress-bar-styles(@progress-bar-bg); }
-  .progress-bar-success    { .progress-bar-styles(@progress-bar-success-bg); }
-  .progress-bar-info       { .progress-bar-styles(@progress-bar-info-bg); }
-  .progress-bar-warning    { .progress-bar-styles(@progress-bar-warning-bg); }
-  .progress-bar-danger     { .progress-bar-styles(@progress-bar-danger-bg); }
+  .progress-bar { .progress-bar-styles(@progress-bar-bg); }
+  .progress-bar-success { .progress-bar-styles(@progress-bar-success-bg); }
+  .progress-bar-info { .progress-bar-styles(@progress-bar-info-bg); }
+  .progress-bar-warning { .progress-bar-styles(@progress-bar-warning-bg); }
+  .progress-bar-danger { .progress-bar-styles(@progress-bar-danger-bg); }
 
   // Reset the striped class because our mixins don't do multiple gradients and
   // the above custom styles override the new `.progress-bar-striped` in v3.2.0.
@@ -219,9 +224,9 @@ body.theme-default {
 
   // Common styles
   .panel {
-    .box-shadow(0 1px 2px rgba(0,0,0,.05));
-    background-image:none;
-    font-size:16px;
+    .box-shadow(0 1px 2px rgba(0, 0, 0, 0.05));
+    background-image: none;
+    font-size: 16px;
   }
 
   // Mixin for generating new styles
@@ -230,12 +235,12 @@ body.theme-default {
   }
 
   // Apply the mixin to the panel headings only
-  .panel-default > .panel-heading   { .panel-heading-styles(@panel-default-heading-bg);}
-  .panel-primary > .panel-heading   { .panel-heading-styles(@panel-primary-heading-bg); }
-  .panel-success > .panel-heading   { .panel-heading-styles(@panel-success-heading-bg); }
-  .panel-info > .panel-heading      { .panel-heading-styles(@panel-info-heading-bg); }
-  .panel-warning > .panel-heading   { .panel-heading-styles(@panel-warning-heading-bg); }
-  .panel-danger > .panel-heading    { .panel-heading-styles(@panel-danger-heading-bg); }
+  .panel-default > .panel-heading { .panel-heading-styles(@panel-default-heading-bg); }
+  .panel-primary > .panel-heading { .panel-heading-styles(@panel-primary-heading-bg); }
+  .panel-success > .panel-heading { .panel-heading-styles(@panel-success-heading-bg); }
+  .panel-info > .panel-heading { .panel-heading-styles(@panel-info-heading-bg); }
+  .panel-warning > .panel-heading { .panel-heading-styles(@panel-warning-heading-bg); }
+  .panel-danger > .panel-heading { .panel-heading-styles(@panel-danger-heading-bg); }
 
   //
   // Wells
@@ -244,7 +249,7 @@ body.theme-default {
   .well {
     #gradient > .vertical(@start-color: darken(@well-bg, 5%); @end-color: @well-bg);
     border-color: darken(@well-bg, 10%);
-    @shadow: inset 0 1px 3px rgba(0,0,0,.05), 0 1px 0 rgba(255,255,255,.1);
+    @shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1);
     .box-shadow(@shadow);
   }
 
