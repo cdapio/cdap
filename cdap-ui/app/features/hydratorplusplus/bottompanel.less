@@ -93,6 +93,12 @@ body.theme-cdap.state-hydratorplusplus {
     }
   }
   div.console {
+    @media (min-height: 800px) {
+      min-height: ~"-moz-calc(60vh - 113px)";
+      min-height: ~"-webkit-calc(60vh - 113px)";
+      min-height: ~"calc(60vh - 113px)";
+    }
+
     background-color: white;
     position: relative;
     width: 100%;
@@ -102,11 +108,6 @@ body.theme-cdap.state-hydratorplusplus {
     z-index: 1024;
     .transition(height 0.2s ease);
 
-    @media (min-height: 800px) {
-      min-height: ~"-moz-calc(60vh - 113px)";
-      min-height: ~"-webkit-calc(60vh - 113px)";
-      min-height: ~"calc(60vh - 113px)";
-    }
     // Styling for minimized bottom panel
     &.minimized {
       position: fixed;
