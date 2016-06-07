@@ -15,6 +15,8 @@
 # the License.
   
 # Builds README.rst file for GitHub pages
+# NOTE: This has not been updated to match current style of page with spaces and titles
+# Until this is fixed, please edit the RST file manually!
 
 SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
