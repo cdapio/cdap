@@ -80,6 +80,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           var instances = scope.model.instances[node.labelId] || 1;
 
           // Pushing labels down
+          // Since the labels are located in the parent, not inside the g element
+          // we have to push it to the right by 20 px, same as the shape
           parent.select('.label')
             .attr('transform', 'translate(20,'+ bbox.height / 3 + ')')
             .attr('class', 'node-label');
