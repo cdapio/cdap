@@ -27,7 +27,18 @@ public class HadoopClassExcluder extends ClassAcceptor {
   @Override
   public boolean accept(String className, URL classUrl, URL classPathUrl) {
     // exclude hadoop but not hbase and hive packages
-    return !(className.startsWith("org.apache.hadoop")
-      && !className.startsWith("org.apache.hadoop.hbase") && !className.startsWith("org.apache.hadoop.hive"));
+    if (className.startsWith("org.apache.hadoop.")) {
+      if (className.startsWith("org.apache.hadoop.hive.")) {
+        return true;
+      } else if (className.startsWith("org.apache.hadoop.hbase.")) {
+        // exclude tracing dependencies of classes that have dependencies on commons-logging implementation classes
+        // so that commons-logging jar is not packaged (this is required so that slf4j is used for log collection)
+        return !(className.startsWith("org.apache.hadoop.hbase.http.log.LogLevel")
+          || className.startsWith("org.apache.hadoop.hbase.http.HttpRequestLog"));
+      } else {
+        return false;
+      }
+    }
+    return true;
   }
 }
