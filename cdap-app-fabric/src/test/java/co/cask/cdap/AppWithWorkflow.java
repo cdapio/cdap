@@ -160,7 +160,8 @@ public class AppWithWorkflow extends AbstractApplication {
     }
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Map<String, String> args = context.getRuntimeArguments();
       String inputPath = args.get("inputPath");
       String outputPath = args.get("outputPath");

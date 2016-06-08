@@ -63,8 +63,8 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
   }
 
   @Override
-  public void initialize(MapReduceContext context) throws Exception {
-    super.initialize(context);
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     Job job = context.getHadoopJob();
     job.setMapperClass(FilterNormalizerMapper.class);
     job.setNumReduceTasks(0);

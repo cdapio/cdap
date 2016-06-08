@@ -143,8 +143,8 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   @Override
-  public void initialize(MapReduceContext context) throws Exception {
-    super.initialize(context);
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     if (Boolean.valueOf(context.getSpecification().getProperty(Constants.STAGE_LOGGING_ENABLED))) {
       LogStageInjector.start();
     }

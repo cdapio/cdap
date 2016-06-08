@@ -71,7 +71,8 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
   public static class OneMR extends AbstractMapReduce {
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Map<String, String> args = context.getRuntimeArguments();
 
       Preconditions.checkArgument(args.size() == 18);
@@ -92,9 +93,9 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
   public static class AnotherMR extends AbstractMapReduce {
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Map<String, String> args = context.getRuntimeArguments();
-
       Preconditions.checkArgument(args.size() == 18);
       Preconditions.checkArgument(args.get("input.path").contains("AnotherMRInput"));
       Preconditions.checkArgument(args.get("output.path").contains("ProgramOutput"));

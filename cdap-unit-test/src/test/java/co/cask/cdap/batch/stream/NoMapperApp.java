@@ -48,7 +48,8 @@ public class NoMapperApp extends AbstractApplication {
   public static final class NoMapperMapReduce extends AbstractMapReduce {
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Job job = context.getHadoopJob();
       job.setReducerClass(NoMapperReducer.class);
       context.addInput(Input.ofStream("nomapper"));

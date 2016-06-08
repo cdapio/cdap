@@ -19,7 +19,6 @@ package co.cask.cdap.examples.datacleansing;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
@@ -63,8 +62,8 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
   }
 
   @Override
-  public void initialize(MapReduceContext context) throws Exception {
-    super.initialize(context);
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     partitionCommitter =
       PartitionBatchInput.setInput(context, DataCleansing.RAW_RECORDS,
                                    new KVTableStatePersistor(DataCleansing.CONSUMING_STATE, "state.key"));

@@ -20,7 +20,6 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -61,8 +60,8 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
   }
 
   @Override
-  public void initialize(MapReduceContext context) throws Exception {
-    super.initialize(context);
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     Job job = context.getHadoopJob();
     job.setMapperClass(StreamConversionMapper.class);
     job.setNumReduceTasks(0);

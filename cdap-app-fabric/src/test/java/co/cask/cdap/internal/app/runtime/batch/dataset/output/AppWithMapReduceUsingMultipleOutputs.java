@@ -67,7 +67,8 @@ public class AppWithMapReduceUsingMultipleOutputs extends AbstractApplication {
   public static class SeparatePurchases extends AbstractMapReduce {
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
       Map<String, String> inputArgs = new HashMap<>();
       FileSetArguments.setInputPath(inputArgs, "inputFile");
 
@@ -93,9 +94,9 @@ public class AppWithMapReduceUsingMultipleOutputs extends AbstractApplication {
    */
   public static class InvalidMapReduce extends SeparatePurchases {
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
-      super.initialize(context);
-      context.addOutput(Output.ofDataset(SEPARATED_PURCHASES).alias("small_purchases"));
+    public void initialize() throws Exception {
+      super.initialize();
+      getContext().addOutput(Output.ofDataset(SEPARATED_PURCHASES).alias("small_purchases"));
     }
   }
 
