@@ -64,7 +64,7 @@ public class LevelDBTableService {
   private static final LevelDBTableService SINGLETON = new LevelDBTableService();
 
   public static LevelDBTableService getInstance() {
-    return SINGLETON;
+    return new LevelDBTableService();
   }
 
   /**

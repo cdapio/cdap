@@ -38,8 +38,11 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.internal.PreviewMain;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
@@ -140,6 +143,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
+  private final DatasetFramework remoteDatasetFramework;
 
   /**
    * Store manages non-runtime lifecycle.
@@ -163,7 +167,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin,
                               Scheduler scheduler, PreferencesStore preferencesStore,
                               MRJobInfoFetcher mrJobInfoFetcher,
-                              MetricStore metricStore) {
+                              MetricStore metricStore,
+                              DatasetFramework datasetFramework) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -173,6 +178,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
+    this.remoteDatasetFramework = datasetFramework;
   }
 
   /**
@@ -264,6 +270,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     json.addProperty("status", scheduler.scheduleState(programId, programId.getType().getSchedulableType(),
                                                        scheduleName).toString());
     responder.sendJson(HttpResponseStatus.OK, json);
+  }
+  @POST
+  @Path("/test/preview")
+  public void startPreview(HttpRequest request, HttpResponder responder) throws Exception {
+    PreviewMain previewMain = PreviewMain.createPreviewMain(remoteDatasetFramework);
+    previewMain.startUp();
+    previewMain.shutDown();
+    responder.sendString(HttpResponseStatus.OK, "Preview started and stopped successfully");
   }
 
   /**

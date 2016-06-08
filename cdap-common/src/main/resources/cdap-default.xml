@@ -62,6 +62,14 @@
   </property>
 
   <property>
+    <name>local.preview.dir</name>
+    <value>preview</value>
+    <description>
+      Data directory for standalone mode and the master process in distributed CDAP
+    </description>
+  </property>
+
+  <property>
     <name>mapreduce.include.custom.format.classes</name>
     <value>true</value>
     <description>
@@ -315,7 +323,7 @@
 
   <property>
     <name>audit.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Determines whether to publish audit messages to Apache Kafka
     </description>

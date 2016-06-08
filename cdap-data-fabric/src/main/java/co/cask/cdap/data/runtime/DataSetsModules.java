@@ -24,6 +24,7 @@ import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.HybridDatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metadata.publisher.KafkaMetadataChangePublisher;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
@@ -43,6 +44,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
 /**
@@ -116,6 +118,58 @@ public class DataSetsModules extends RuntimeModule {
     };
   }
 
+  public Module getPreviewModules(final DatasetFramework remoteDatasetFramework) {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        install(new FactoryModuleBuilder()
+                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                  .build(DatasetDefinitionRegistryFactory.class));
+
+        bind(MetadataStore.class).to(DefaultMetadataStore.class);
+        expose(MetadataStore.class);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named("inMemoryDatasetFramework"))
+          .to(RemoteDatasetFramework.class);
+
+        bind(DatasetFramework.class).annotatedWith(Names.named("remoteDatasetFramework")).
+          toInstance(remoteDatasetFramework);
+
+        bind(DatasetFramework.class).
+          annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK)).
+          toProvider(HybridDatasetProvider.class);
+
+        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        expose(LineageWriter.class);
+        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
+        expose(DatasetFramework.class);
+
+        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
+        expose(MetadataChangePublisher.class);
+      }
+    };
+  }
+
+  private static final class HybridDatasetProvider implements Provider<DatasetFramework> {
+    private final DatasetFramework inMemoryDatasetFramework;
+    private final DatasetFramework remoteDatasetFramework;
+
+    @Inject
+    public HybridDatasetProvider(@Named("inMemoryDatasetFramework")DatasetFramework inMemoryDatasetFramework,
+                                 @Named("remoteDatasetFramework")DatasetFramework remoteDatasetFramework) {
+      this.inMemoryDatasetFramework = inMemoryDatasetFramework;
+      this.remoteDatasetFramework = remoteDatasetFramework;
+    }
+
+    @Override
+    public DatasetFramework get() {
+      return new HybridDatasetFramework(inMemoryDatasetFramework, remoteDatasetFramework);
+    }
+  }
+
   @Override
   public Module getDistributedModules() {
     return new PrivateModule() {
@@ -130,7 +184,7 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
-          .to(RemoteDatasetFramework.class);
+          .to(HybridDatasetFramework.class);
         expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);

@@ -115,7 +115,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                       MetricStore metricStore, DatasetFramework datasetFramework,
                       DiscoveryServiceClient discoveryServiceClient) {
     super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin, scheduler, preferencesStore,
-          mrJobInfoFetcher, metricStore);
+          mrJobInfoFetcher, metricStore, datasetFramework);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
   }

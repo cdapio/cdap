@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.internal.PreviewMain;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import org.junit.Assert;
 import org.junit.Test;

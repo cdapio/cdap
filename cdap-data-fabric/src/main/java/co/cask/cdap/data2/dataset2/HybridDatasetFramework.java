@@ -21,10 +21,12 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +45,6 @@ public class HybridDatasetFramework implements DatasetFramework {
 
   private final DatasetFramework inMemoryDatasetFramework;
   private final DatasetFramework remoteDatasetFramework;
-
 
   public HybridDatasetFramework(DatasetFramework inMemory, DatasetFramework remote) {
     this.inMemoryDatasetFramework = inMemory;

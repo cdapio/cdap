@@ -420,6 +420,14 @@ public class StandaloneMain {
   }
 
   public static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
+    setConfigurations(cConf, hConf);
+    //Run dataset service on random port
+    List<Module> modules = createPersistentModules(cConf, hConf);
+
+    return new StandaloneMain(modules, cConf);
+  }
+
+  private static void setConfigurations(CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");
@@ -447,11 +455,6 @@ public class StandaloneMain {
         System.load(Joiner.on(File.separator).join(userDir, "lib", "native", "hadoop.dll"));
       }
     }
-
-    //Run dataset service on random port
-    List<Module> modules = createPersistentModules(cConf, hConf);
-
-    return new StandaloneMain(modules, cConf);
   }
 
   private static List<Module> createPersistentModules(CConfiguration cConf, Configuration hConf) {
