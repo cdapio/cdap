@@ -15,7 +15,7 @@
 -->
 
 <form plugin-property-edit-view>
-  <fieldset ng-disabled="isDisabled">
+
       <h4>Configuration</h4>
       <div class="form-group">
         <label class="control-label">
@@ -23,7 +23,7 @@
           <span class="fa fa-asterisk"></span>
           <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
         </label>
-        <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label"/>
+        <input ng-disabled="isDisabled" type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label"/>
       </div>
 
       <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
@@ -50,16 +50,35 @@
                     node="HydratorPlusPlusNodeConfigCtrl.state.node">
                   </plugin-functions>
                 </span>
-
                 <div>
-                  <div data-name="field"
-                       class="my-widget-container"
-                       ng-class="{'select-wrapper': field.widget === 'select'}"
-                       data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
-                       data-myconfig="field"
-                       data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-                       widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
-                       widget-container>
+                  <fieldset ng-disabled="isDisabled" ng-if="field['widget-type'] !== 'javascript-editor'">
+                    <div data-name="field"
+                         class="my-widget-container"
+                         ng-class="{'select-wrapper': field.widget === 'select'}"
+                         data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
+                         data-myconfig="field"
+                         data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+                         widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
+                         widget-container>
+                    </div>
+                  </fieldset>
+                  <!--
+                    We have a separate div for javascript editor and the reason for it as follows,
+
+                    ace-editor requires 'onFocus' event to enable copy paste functionality as part of the directive. When we wrap everything in <fieldset>
+                    and disable it in published mode the 'onFocus' event doesn't gets propagated to its children ergo ace-editor not knowing about 'onFocus' event. This prevents the user from copying the snippet (CMD + C) from the editor in published mode. Source JIRA: https://issues.cask.co/browse/CDAP-6074
+                  -->
+                  <div ng-if="field['widget-type'] === 'javascript-editor'">
+                    <div data-name="field"
+                         class="my-widget-container"
+                         ng-class="{'select-wrapper': field.widget === 'select'}"
+                         data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
+                         data-myconfig="field"
+                         disabled="isDisabled"
+                         data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+                         widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
+                         widget-container>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -77,9 +96,8 @@
                 uib-tooltip="{{HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip}}"
                 tooltip-placement="right"></span>
         </label>
-        <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.errorDatasetName"/>
+        <input ng-disabled="isDisabled" type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.errorDatasetName"/>
       </div>
 
-  </fieldset>
 
 </form>

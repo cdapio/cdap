@@ -21,9 +21,10 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         config: '=',
-        mode: '@'
+        mode: '@',
+        disabled: '='
       },
-      template: '<div ui-ace="aceoptions" ng-model="model" aceEditorStyle></div>',
+      template: '<div ui-ace="aceoptions" ng-model="model" ng-readonly="disabled" aceEditorStyle></div>',
       controller: function($scope) {
         var config = $window.ace.require('ace/config');
         config.set('modePath', '/assets/bundle/ace-editor-worker-scripts/');

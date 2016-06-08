@@ -97,6 +97,7 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'config': 'myconfig',
           'mode': 'javascript',
+          'disabled': 'disabled',
           placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
         }
       },
