@@ -31,8 +31,7 @@
       <label class="control-label col-xs-4">Hostname</label>
       <div class="col-xs-8">
         <input type="text" class="form-control"
-               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.navigatorHostName"
-               >
+               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.navigatorHostName">
       </div>
     </div>
 
@@ -40,8 +39,7 @@
       <label class="control-label col-xs-4">Username</label>
       <div class="col-xs-8">
         <input type="text" class="form-control"
-               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.username"
-               >
+               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.username">
       </div>
     </div>
 
@@ -49,8 +47,7 @@
       <label class="control-label col-xs-4">Password</label>
       <div class="col-xs-8">
         <input type="password" class="form-control"
-               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.password"
-               >
+               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.password">
       </div>
     </div>
 
@@ -131,8 +128,7 @@
       <label class="control-label col-xs-4">Zookeeper String</label>
       <div class="col-xs-8">
         <input type="text" class="form-control"
-               ng-model="IntegrationsController.navigatorInfo.auditKafkaConfig.zookeeperString"
-               >
+               ng-model="IntegrationsController.navigatorInfo.auditKafkaConfig.zookeeperString">
       </div>
     </div>
 
@@ -174,7 +170,8 @@
     </div>
   </fieldset>
 
-  <div ng-if="IntegrationsController.navigatorSetup.popoverEnabled">
+  <div class="configurations-buttons"
+    ng-if="IntegrationsController.navigatorSetup.popoverEnabled">
     <button class="btn btn-default pull-left"
             ng-disabled="IntegrationsController.saving"
             ng-click="IntegrationsController.cancelSetup()">

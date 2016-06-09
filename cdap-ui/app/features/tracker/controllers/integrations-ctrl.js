@@ -89,6 +89,7 @@ class TrackerIntegrationsController {
     $scope.$watch('IntegrationsController.navigatorSetup.isOpen', () => {
       if (!this.navigatorSetup.isOpen && this.navigatorSetup.isSetup) {
         this.navigatorSetup.popoverEnabled = false;
+        this.cancelSetup();
       }
       this.optionalSettings.navigator = false;
       this.optionalSettings.kafka = false;
