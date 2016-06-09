@@ -343,7 +343,7 @@ Here is an example of using an explicit transaction in Spark:
   }
 
   // Perform RDD operations together with direct dataset access in the same transaction
-  Transaction(datasetContext => {
+  Transaction((datasetContext: DatasetContext) => {
     sc.fromDataset[String, Int]("source")
       .saveAsDataset("sink")
 
