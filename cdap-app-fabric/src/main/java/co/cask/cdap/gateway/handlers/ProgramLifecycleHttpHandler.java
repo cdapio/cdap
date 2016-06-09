@@ -275,8 +275,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/test/preview")
   public void startPreview(HttpRequest request, HttpResponder responder) throws Exception {
     PreviewMain previewMain = PreviewMain.createPreviewMain(remoteDatasetFramework);
-    previewMain.startUp();
-    previewMain.shutDown();
+    try {
+      previewMain.startUp();
+    } finally {
+      previewMain.shutDown();
+    }
     responder.sendString(HttpResponseStatus.OK, "Preview started and stopped successfully");
   }
 

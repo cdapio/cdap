@@ -15,17 +15,17 @@
  */
 package co.cask.cdap.internal;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -45,7 +45,6 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -62,8 +61,13 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.base.Joiner;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -71,13 +75,19 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Preview Main.
@@ -212,7 +222,7 @@ public class PreviewMain {
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
     serviceStore.startAndWait();
-    streamService.startAndWait();
+//    streamService.startAndWait();
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -234,17 +244,38 @@ public class PreviewMain {
     System.out.println("Standalone CDAP started successfully.");
 
 
-//     Get purchase table and verify if its not null.
+    // discover app.fabric and get app list and print them.
+    final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
+      @Override
+      public EndpointStrategy get() {
+        return new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
+      }
+    });
+    Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);
+    if (discoverable == null) {
+      throw new ServiceUnavailableException("App-fabric service");
+    }
+    InetSocketAddress addr = discoverable.getSocketAddress();
+    String url = String.format("http://%s:%s%s/namespaces/%s/apps", addr.getHostName(), addr.getPort(),
+                               Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId());
+    hitEndpointPrintStatus(url);
 
-    Id.DatasetInstance purchaseInstance =
-      Id.DatasetInstance.from(Id.Namespace.DEFAULT, "purchases");
+    url = String.format("http://%s:%s%s/namespaces/default/artifacts?scope=system",
+                               addr.getHostName(), addr.getPort(), Constants.Gateway.API_VERSION_3);
+    hitEndpointPrintStatus(url);
 
-    ObjectMappedTable table = DatasetsUtil.getOrCreateDataset(injector.getInstance(DatasetFramework.class),
-                                                              purchaseInstance,
-                                                              "table", DatasetProperties.EMPTY,
-                                                              DatasetDefinition.NO_ARGUMENTS, null);
+    url = String.format("http://%s:%s%s/namespaces/default/artifacts?scope=user",
+                        addr.getHostName(), addr.getPort(), Constants.Gateway.API_VERSION_3);
+    hitEndpointPrintStatus(url);
+  }
 
-    System.out.println("Table is not null ? : " + table != null);
+  private void hitEndpointPrintStatus(String url) throws Exception {
+    System.out.println("Discovered App Fabric: Hitting " + url);
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(new URL(url)).build());
+    System.out.println(String.format("Response code : %s Response message : %s",
+                                     response.getResponseCode(), response.getResponseBodyAsString()));
+
   }
 
   /**
@@ -252,11 +283,10 @@ public class PreviewMain {
    */
   public void shutDown() {
     LOG.info("Shutting down Standalone CDAP");
-    boolean halt = false;
     try {
 
       // now the stream writer and the explore service (they need tx)
-      streamService.stopAndWait();
+//      streamService.stopAndWait();
 
 //      exploreClient.close();
 //      metadataService.stopAndWait();
@@ -277,16 +307,10 @@ public class PreviewMain {
 
       authorizerInstantiator.close();
     } catch (Throwable e) {
-      halt = true;
-      LOG.error("Exception during shutdown", e);
+
+      LOG.error("Exception during shutdown of PreviewMain", e);
     } finally {
       cleanupTempDir();
-    }
-
-    // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
-    // Therefore System.exit() won't do it, we need to force a halt.
-    if (halt) {
-      Runtime.getRuntime().halt(1);
     }
   }
 
@@ -323,7 +347,7 @@ public class PreviewMain {
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),
-      new DataSetsModules().getPreviewModules(remoteDsFramework),
+      new DataSetsModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
       new SecurityModules().getStandaloneModules(),

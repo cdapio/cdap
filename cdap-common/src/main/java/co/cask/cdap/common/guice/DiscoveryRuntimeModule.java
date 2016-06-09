@@ -57,8 +57,10 @@ public final class DiscoveryRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       InMemoryDiscoveryService discovery = IN_MEMORY_DISCOVERY_SERVICE;
-      bind(DiscoveryService.class).toInstance(discovery);
-      bind(DiscoveryServiceClient.class).toInstance(discovery);
+//      bind(DiscoveryService.class).toInstance(discovery);
+      bind(InMemoryDiscoveryService.class).in(Singleton.class);
+      bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
+      bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
     }
   }
 
