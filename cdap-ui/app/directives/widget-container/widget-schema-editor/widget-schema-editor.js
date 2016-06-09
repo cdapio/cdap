@@ -75,22 +75,18 @@ angular.module(PKG.name + '.commons')
           // watch for changes
           removeWatcher();
 
+          var availableImplicitSchema = Object.keys(IMPLICIT_SCHEMA);
+
           // do things based on format
-          if (['clf', 'syslog', ''].indexOf($scope.pluginProperties[watchProperty]) > -1) {
+          if (['clf', 'syslog', 'binary', ''].indexOf($scope.pluginProperties[watchProperty]) > -1) {
             $scope.model = null;
             $scope.disableEdit = true;
             $scope.pluginProperties['format.setting.pattern'] = null;
-            // $scope.fields = 'NOTHING';
-            if ($scope.pluginProperties[watchProperty] === 'clf') {
-              var clfSchema = IMPLICIT_SCHEMA.clf;
 
-              initialize(clfSchema);
-              $scope.fields = 'SHOW';
-            } else if ($scope.pluginProperties[watchProperty] === 'syslog') {
-              var syslogSchema = IMPLICIT_SCHEMA.syslog;
+            if (availableImplicitSchema.indexOf($scope.pluginProperties[watchProperty]) > -1) {
+              var implicitSchema = IMPLICIT_SCHEMA[$scope.pluginProperties[watchProperty]];
 
-              initialize(syslogSchema);
-              $scope.fields = 'SHOW';
+              initialize(implicitSchema);
             } else {
               $scope.fields = 'NOTHING';
             }
