@@ -90,8 +90,9 @@ class TrackerIntegrationsController {
       if (!this.navigatorSetup.isOpen && this.navigatorSetup.isSetup) {
         this.navigatorSetup.popoverEnabled = false;
       }
+      this.optionalSettings.navigator = false;
+      this.optionalSettings.kafka = false;
     });
-
   }
 
   getKafkaBrokerList() {
@@ -105,7 +106,11 @@ class TrackerIntegrationsController {
         let zookeeperKafka = res.filter( (config) => {
           return config.name === 'kafka.zookeeper.namespace';
         });
-        this.navigatorInfo.auditKafkaConfig.zookeeperString = zookeeperQuorum[0].value + '/' + zookeeperKafka[0].value;
+
+        let zookeeperString = zookeeperQuorum[0].value + '/' + zookeeperKafka[0].value;
+
+        this.navigatorInfo.auditKafkaConfig.zookeeperString = zookeeperString;
+        this.originalConfig.auditKafkaConfig.zookeeperString = zookeeperString;
       });
   }
 
@@ -304,10 +309,19 @@ class TrackerIntegrationsController {
       });
   }
 
+  validateFields() {
+    return this.navigatorInfo.navigatorConfig.navigatorHostName &&
+    this.navigatorInfo.navigatorConfig.username &&
+    this.navigatorInfo.navigatorConfig.password &&
+    this.navigatorInfo.auditKafkaConfig.zookeeperString;
+  }
+
   cancelSetup() {
+    this.navigatorSetup.isOpen = false;
     this.navigatorInfo.navigatorConfig = angular.copy(this.originalConfig.navigatorConfig);
     this.navigatorInfo.auditKafkaConfig = angular.copy(this.originalConfig.auditKafkaConfig);
-    this.navigatorSetup.isOpen = false;
+    this.optionalSettings.navigator = false;
+    this.optionalSettings.kafka = false;
   }
 
 }
