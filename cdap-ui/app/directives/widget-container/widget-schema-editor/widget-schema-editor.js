@@ -78,7 +78,7 @@ angular.module(PKG.name + '.commons')
           var availableImplicitSchema = Object.keys(IMPLICIT_SCHEMA);
 
           // do things based on format
-          if (['clf', 'syslog', 'binary', ''].indexOf($scope.pluginProperties[watchProperty]) > -1) {
+          if (availableImplicitSchema.concat(['']).indexOf($scope.pluginProperties[watchProperty]) > -1 ) {
             $scope.model = null;
             $scope.disableEdit = true;
             $scope.pluginProperties['format.setting.pattern'] = null;
