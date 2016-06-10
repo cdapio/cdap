@@ -73,8 +73,16 @@
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
         data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
         plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
+        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Stream'">
       </my-schema-editor>
+      <my-schema-editor-stream
+        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
+        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Stream'">
+      </my-schema-editor-stream>
     </div>
   </fieldset>
 
