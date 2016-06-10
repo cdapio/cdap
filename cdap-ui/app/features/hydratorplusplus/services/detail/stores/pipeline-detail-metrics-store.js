@@ -19,10 +19,17 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
 
     var dispatcher = HydratorPlusPlusDetailMetricsDispatcher.getDispatcher();
     this.changeListeners = [];
+    this.emitChange = function() {
+      this.changeListeners.forEach(function(listener) {
+        listener(this.state);
+      }.bind(this));
+    };
+
     this.setDefaults = function() {
       this.state = {
         metrics: []
       };
+      this.emitChange();
     };
     this.setDefaults();
     this.getMetrics = function() {
@@ -30,11 +37,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
-    };
-    this.emitChange = function() {
-      this.changeListeners.forEach(function(listener) {
-        listener(this.state);
-      }.bind(this));
     };
 
     this.emptyMetrics = function () {

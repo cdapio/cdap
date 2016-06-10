@@ -34,6 +34,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       }
 
       currentRunId = latestRunId;
+      // When current run id changes reset the metrics in the DAG.
+      HydratorPlusPlusDetailMetricsActions.reset();
 
       if (latestRunId) {
         var appParams = HydratorPlusPlusDetailRunsStore.getParams();
