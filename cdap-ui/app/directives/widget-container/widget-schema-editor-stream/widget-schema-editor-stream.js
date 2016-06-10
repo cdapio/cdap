@@ -300,7 +300,7 @@ angular.module(PKG.name + '.commons')
         }
 
         function formatSchema() {
-          var predefinedFormats = ['avro', 'clf', 'grok', 'syslog'];
+          var predefinedFormats = ['avro', 'grok'];
           if (predefinedFormats.indexOf($scope.pluginProperties[watchProperty]) === -1) {
             addFieldsNecessaryForStream();
           }
