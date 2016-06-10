@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,29 +36,33 @@ public final class DatasetModules {
   public static DatasetModule getDatasetModule(Class clazz)
     throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
-    DatasetModule module;
     if (DatasetModule.class.isAssignableFrom(clazz)) {
-      module = (DatasetModule) clazz.newInstance();
-    } else if (Dataset.class.isAssignableFrom(clazz)) {
-      module = new SingleTypeModule(clazz);
-    } else {
-      String msg = String.format(
-        "Cannot use class %s to instantiate dataset module: it must be of type DatasetModule or Dataset",
-        clazz.getName());
-      throw new IllegalArgumentException(msg);
+      return (DatasetModule) clazz.newInstance();
     }
-    return module;
+    if (Dataset.class.isAssignableFrom(clazz)) {
+      return new SingleTypeModule(clazz);
+    }
+
+    String msg = String.format(
+      "Cannot use class %s to instantiate dataset module; it must be of type DatasetModule or Dataset",
+      clazz.getName());
+    throw new IllegalArgumentException(msg);
   }
 
   /**
    * Gets class of the dataset module to be used in {@link #getDatasetModule(Class)};
+   *
+   * We support easier APIs for custom datasets: user can implement dataset and make it available for others to use
+   * by only implementing Dataset. Without requiring implementing datasets module, definition and other classes.
+   * In this case we wrap that Dataset implementation with SingleTypeModule. But since we don't have a way to serde
+   * dataset modules, if we pass only SingleTypeModule.class the Dataset implementation info will be lost. Hence, as
+   * a workaround we put Dataset implementation class in MDS (on DatasetService) and wrapping it with SingleTypeModule
+   * when we need to instantiate module.
    */
   public static Class getDatasetModuleClass(DatasetModule module) {
-
     if (module instanceof SingleTypeModule) {
       return ((SingleTypeModule) module).getDataSetClass();
-    } else {
-      return module.getClass();
     }
+    return module.getClass();
   }
 }

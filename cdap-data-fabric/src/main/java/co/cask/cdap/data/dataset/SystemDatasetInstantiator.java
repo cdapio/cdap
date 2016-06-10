@@ -80,7 +80,7 @@ public class SystemDatasetInstantiator implements Closeable {
 
   public <T extends Dataset> T getDataset(DatasetId datasetId, Map<String, String> arguments)
     throws DatasetInstantiationException {
-    return getDataset((Id.DatasetInstance) datasetId.toId(), arguments);
+    return getDataset(datasetId.toId(), arguments);
   }
 
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
