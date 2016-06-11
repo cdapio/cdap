@@ -119,7 +119,9 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001",
                           AppWithMapReduceUsingFileSet.class,
                           AppWithMapReduceUsingFileSet.ComputeSum.class,
-                          new BasicArguments(runtimeArguments), null);
+                          new BasicArguments(runtimeArguments),
+                          null,
+                          null);
 
     // test reading and writing same dataset
     // hack to use different datasets at each invocation of this test
@@ -130,12 +132,16 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     FileSetArguments.setInputPaths(inputArgs, "zzz");
     outputArgs = Maps.newHashMap();
     FileSetArguments.setOutputPath(outputArgs, "f123");
+    // this time configure the output format to use # as the separator, overriding the dataset properties
+    outputArgs.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + TextOutputFormat.SEPERATOR, "#");
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "boogie", inputArgs));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "boogie", outputArgs));
     testMapreduceWithFile("boogie", "zzz", "boogie", "f123",
                           AppWithMapReduceUsingFileSet.class,
                           AppWithMapReduceUsingFileSet.ComputeSum.class,
-                          new BasicArguments(runtimeArguments), null);
+                          new BasicArguments(runtimeArguments),
+                          null,
+                          "#"); // and also use # as the separator for validation
   }
 
   @Test
@@ -171,7 +177,8 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
                           AppWithMapReduceUsingRuntimeDatasets.class,
                           AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
                           new BasicArguments(runtimeArguments),
-                          AppWithMapReduceUsingRuntimeDatasets.COUNTERS);
+                          AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
+                          null);
 
     // validate that the table emitted metrics
     Collection<MetricTimeSeries> metrics =
@@ -207,14 +214,16 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
                           AppWithMapReduceUsingRuntimeDatasets.class,
                           AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
                           new BasicArguments(runtimeArguments),
-                          AppWithMapReduceUsingRuntimeDatasets.COUNTERS);
+                          AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
+                          null);
   }
 
   private void testMapreduceWithFile(String inputDatasetName, String inputPaths,
                                      String outputDatasetName, String outputPath,
                                      Class appClass, Class mrClass,
                                      Arguments runtimeArgs,
-                                     @Nullable final String counterTableName) throws Exception {
+                                     @Nullable final String counterTableName,
+                                     @Nullable final String outputSeparator) throws Exception {
 
     final ApplicationWithPrograms app = deployApp(appClass);
 
@@ -274,7 +283,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       CharStreams.newReaderSupplier(
         Locations.newInputSupplier(resultLocation), Charsets.UTF_8));
     Assert.assertNotNull(line);
-    String[] fields = line.split(":");
+    String[] fields = line.split(outputSeparator == null ? ":" : outputSeparator);
     Assert.assertEquals(2, fields.length);
     Assert.assertEquals(AppWithMapReduceUsingFileSet.FileMapper.ONLY_KEY, fields[0]);
     Assert.assertEquals(sum, Long.parseLong(fields[1]));
