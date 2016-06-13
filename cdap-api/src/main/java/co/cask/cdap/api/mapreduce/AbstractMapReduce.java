@@ -164,6 +164,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   @Override
   public final void initialize(MapReduceContext context) throws Exception {
     this.context = context;
+    initialize();
   }
 
   /**
@@ -172,7 +173,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * Default implementation of this method calls the deprecated {@link AbstractMapReduce#beforeSubmit} method.
    * @throws Exception if there is any error in initializing the MapReduce
    */
-  public void initialize() throws Exception {
+  protected void initialize() throws Exception {
     beforeSubmit(context);
   }
 
