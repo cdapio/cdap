@@ -88,7 +88,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
               };
             }.bind(this)
           }
-        });
+        })
+        .result
+        .then(this.deleteNode.bind(this));
   }
 
   deleteNode() {

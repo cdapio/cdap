@@ -31,17 +31,6 @@
 
 -->
 <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">
-  <div class="bottompanel-header clearfix" ng-init="showinfo = false">
-    <div class="pull-left">
-      <h3>
-        {{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}} Properties
-        <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>
-        <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">({{HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage}})</small>
-      </h3>
-      <p>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</p>
-    </div>
-  </div>
-
   <div class="bottompanel-body" ng-class="{'modal-sink': HydratorPlusPlusNodeConfigCtrl.state.node.type === 'sink'}">
     <div ng-show="!showinfo">
       <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">

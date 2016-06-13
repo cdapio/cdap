@@ -13,17 +13,32 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
-<div class="console-type">
-  <div class="node-config">
-    <div>
-      <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
-           ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-form.html'">
-      </div>
-      <div class="bottompanel-body" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin">
-        <p ng-if="HydratorPlusPlusNodeConfigCtrl.$state.includes('hydratorplusplus.create')">Please select a plugin to edit configuration.</p>
-        <p ng-if="HydratorPlusPlusNodeConfigCtrl.$state.includes('hydratorplusplus.detail')">Please select a plugin to view configuration.</p>
+<div class="modal-header clearfix">
+  <h3 class="modal-title">
+    <span>
+      {{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}} Properties
+      <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>
+    </span>
+    <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">({{HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage}})</small>
+    <span class="fa fa-times pull-right" ng-click="$close()"></span>
+    <p>
+      <small>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</small>
+    </p>
+  </h3>
+</div>
+<div class="modal-body config-modal">
+  <div class="console-type">
+    <div class="node-config">
+      <div>
+        <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
+             ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-form.html'">
+        </div>
+        <div class="bottompanel-body" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin">
+          <p ng-if="HydratorPlusPlusNodeConfigCtrl.$state.includes('hydratorplusplus.create')">Please select a plugin to edit configuration.</p>
+          <p ng-if="HydratorPlusPlusNodeConfigCtrl.$state.includes('hydratorplusplus.detail')">Please select a plugin to view configuration.</p>
+        </div>
       </div>
     </div>
   </div>
+  <br/>
 </div>
