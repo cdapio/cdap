@@ -30,8 +30,6 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -42,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -208,8 +207,9 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
 
   @Override
   public Map<String, String> getInputFormatConfiguration(Iterable<? extends Location> inputLocs) {
-    ImmutableMap.Builder<String, String> config = ImmutableMap.builder();
+    Map<String, String> config = new HashMap<>();
     config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
+    // runtime arguments may override the input properties
     config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
     String inputs = Joiner.on(',').join(Iterables.transform(inputLocs, new Function<Location, String>() {
       @Override
@@ -218,7 +218,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
       }
     }));
     config.put(FileInputFormat.INPUT_DIR, inputs);
-    return config.build();
+    return config;
   }
 
   @Override
@@ -236,13 +236,14 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
       throw new UnsupportedOperationException(
         "Output is not supported for external file set '" + spec.getName() + "'");
     }
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
-    builder.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
+    Map<String, String> config = new HashMap<>();
+    config.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
+    // runtime arguments may override the output properties
+    config.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
     if (outputLocation != null) {
-      builder.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
+      config.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
     }
-    return builder.build();
+    return config;
   }
 
   @Override
