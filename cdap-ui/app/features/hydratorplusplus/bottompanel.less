@@ -139,13 +139,7 @@ body.theme-cdap.state-hydratorplusplus {
       div.console-tabs {
         border-top: 0;
       }
-      .node-config .bottompanel-body {
-        div.config-table {
-          height: ~"-moz-calc(100vh - 284px)";
-          height: ~"-webkit-calc(100vh - 284px)";
-          height: ~"calc(100vh - 284px)";
-        }
-      }
+
       .post-actions-tab {
         .post-actions-sidebar {
           top: 41px;
@@ -682,6 +676,28 @@ body.theme-cdap.state-hydratorplusplus {
         display: block;
         content: '';
         margin-bottom: 10px;
+      }
+    }
+  }
+
+  .modal {
+    &.node-config-modal {
+      .modal-dialog {
+        width: 100%;
+        height: 70vh;
+        overflow-y: auto;
+
+        .modal-content {
+          .control-label {
+            font-weight: bold;
+          }
+          table.table {
+            border: 0;
+            .control-label {
+              font-weight: bold;
+            }
+          }
+        }
       }
     }
   }

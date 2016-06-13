@@ -37,17 +37,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.setState = function(plugin) {
       onPluginChange.call(this, plugin);
     };
-    this.setPlugin = function(plugin) {
-      this.plugin = plugin;
-      var type = this.isSource ? 'source': false;
-      if (!type && this.isSink) {
-        type = 'sink';
-      } else {
-        type = 'transform';
-      }
-
-      HydratorPlusPlusNodeConfigActions.savePlugin(plugin, type);
-    };
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
     };
@@ -77,7 +66,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         this.emitChange();
       }.bind(this));
       dispatcher.register('onReset', this.setDefaults.bind(this));
-      dispatcher.register('onPluginSave', this.setPlugin.bind(this));
     };
 
     function onPluginChange(node) {

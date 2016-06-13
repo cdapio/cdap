@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor(HydratorPlusPlusNodeConfigStore, $scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin) {
 
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -24,26 +24,23 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.GLOBALS = GLOBALS;
     this.myHelpers = myHelpers;
-    this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
     this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
     this.inputSchemaRowLimit = 15;
     this.loadNextInputSchemaRows = _.debounce(this.doLoadNextSetOfInputSchemaRows.bind(this));
-    this.setDefaults();
-    HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
+    this.$uibModal = $uibModal;
+    this.ConfigStore = HydratorPlusPlusConfigStore;
+    this.setDefaults(rPlugin);
+    this.showContents();
   }
-  setState() {
-    var appType = this.$state.params.type || this.HydratorPlusPlusNodeConfigStore.ConfigStore.getAppType();
-    var nodeState = this.HydratorPlusPlusNodeConfigStore.getState();
-    nodeState.appType = appType;
+  showContents() {
     if (angular.isArray(this.state.watchers)) {
       this.state.watchers.forEach(watcher => watcher());
       this.state.watchers = [];
     }
-    this.setDefaults(nodeState);
-    if (Object.keys(nodeState.node).length) {
+    if (Object.keys(this.state.node).length) {
       this.configfetched = false;
       this.$timeout(() => {
         this.loadNewPlugin();
@@ -52,7 +49,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
   }
   validateNodeLabel() {
-    let nodes = this.HydratorPlusPlusNodeConfigStore.ConfigStore.getNodes();
+    let nodes = this.ConfigStore.getNodes();
     let nodeName = this.myHelpers.objectQuery(this.state, 'node', 'plugin', 'label');
     if (!nodeName) {
       return;
@@ -269,8 +266,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.inputSchemaRowLimit += 10;
   }
 }
-
-HydratorPlusPlusNodeConfigCtrl.$inject = ['HydratorPlusPlusNodeConfigStore', '$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory'];
+HydratorPlusPlusNodeConfigCtrl.$inject = ['$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory', '$uibModal', 'HydratorPlusPlusConfigStore', 'rPlugin'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusNodeConfigCtrl', HydratorPlusPlusNodeConfigCtrl);

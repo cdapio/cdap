@@ -15,19 +15,15 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusNodeConfigActions', function(HydratorPlusPlusNodeConfigDispatcher, HydratorPlusPlusBottomPanelActions) {
+  .service('HydratorPlusPlusNodeConfigActions', function(HydratorPlusPlusNodeConfigDispatcher) {
     var dispatcher = HydratorPlusPlusNodeConfigDispatcher.getDispatcher();
     this.choosePlugin = function(plugin) {
       dispatcher.dispatch('onPluginChange', plugin);
-      HydratorPlusPlusBottomPanelActions.expand();
     };
     this.removePlugin = function() {
       dispatcher.dispatch('onPluginRemove');
     };
     this.reset = function() {
       dispatcher.dispatch('onReset');
-    };
-    this.savePlugin = function(plugin) {
-      dispatcher.dispatch('onPluginSave', plugin);
     };
   });

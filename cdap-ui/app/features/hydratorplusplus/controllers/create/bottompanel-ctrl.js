@@ -26,14 +26,6 @@ class HydratorPlusPlusBottomPanelCtrl {
         template: '/assets/features/hydratorplusplus/templates/partial/settings.html'
       },
       {
-        title: 'Node Configuration',
-        template: '/assets/features/hydratorplusplus/templates/partial/node-config.html'
-      },
-      {
-        title: 'Reference',
-        template: '/assets/features/hydratorplusplus/templates/partial/reference-tab.html'
-      },
-      {
         title: 'Post-Run Actions',
         template: '/assets/features/hydratorplusplus/templates/partial/postactions.html'
       }
@@ -43,11 +35,6 @@ class HydratorPlusPlusBottomPanelCtrl {
     this.HydratorPlusPlusBottomPanelStore = HydratorPlusPlusBottomPanelStore;
 
     this.HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
-    HydratorPlusPlusNodeConfigStore.registerOnChangeListener( () => {
-      if (this.HydratorPlusPlusNodeConfigStore.getState().isValidPlugin) {
-        this.selectTab(2);
-      }
-    } );
     HydratorPlusPlusConsoleStore.registerOnChangeListener( () => { this.selectTab(0); } );
     this.setIsCollapsed();
     this.selectTab(0);
