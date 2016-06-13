@@ -138,7 +138,7 @@ function download_includes() {
   # Group alphabetically each example separately, files from each example together
 
   test_an_include 0d1fdc6d75995c3c417886786ccc8997 ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViews.java
-  test_an_include 9bea51ff9b9139ee2a636f11ffd4a50a ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
+  test_an_include 6b6c72d2230e1f64e2827a49d92b9146 ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
 
   test_an_include 45cbe451f2821eddf2f1245eff468cee ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandom.java
   test_an_include 9dcf41f03ee52e42b77588fe18f542d5 ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandomFlow.java
@@ -147,11 +147,11 @@ function download_includes() {
   test_an_include 9f963a17090976d2c15a4d092bd9e8de ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberCounter.java
 
   test_an_include fa746b8f3423736310316f2d48b0fe7d ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
-  test_an_include fa7c9f6dc0cbd567bbe22b7592c24e9c ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
+  test_an_include cc6989fe673cd88545d73cdaffad1bb1 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
   test_an_include fe679b53a1dc757a15fd3fcafc2046fd ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
   test_an_include 9e137848822e63101b699af03af7f45e ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
-  test_an_include 8dcc2caeda8a76a7ec00bc24d0a7925e ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
+  test_an_include 4107ad528a3e9ca569a0cdee43b189c5 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
   
   test_an_include 4255a2e3d417e928ac5182ddd932139f ../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
 
@@ -159,21 +159,21 @@ function download_includes() {
 
   test_an_include f90e4e4ce08851f45bdbe2563efb51dd ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-  test_an_include edb7973c5d75f56162eb26e039784e72 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include bb7344dd2c55c5ef70653ff0b5fcd6df ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
 
   test_an_include 04abc21d3a3423cecc3b9c9619aa960d ../../cdap-examples/SpamClassifier/src/main/java/co/cask/cdap/examples/sparkstreaming/SpamClassifier.java
 
   test_an_include 3f25e035b2de8bd2d127733df1c58ff1 ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
   
-  test_an_include 0844143b24553469697dd78ed1a27adf ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include 2d854c9e6b473a05617913040018dd36 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include 1dff2aa10d09f384965e343be7f83f76 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
   test_an_include c488b6ad3b5708977a8a913460e4e650 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
-  test_an_include 58dbd509483bd7a117682d8a3a8ff017 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
+  test_an_include 6e0ed4027acafd163e8b891a1045717f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
   
   test_an_include 6e407b943f7d6c92877023628dceef96 ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
-  test_an_include 1b0e447ff4413f7fbe53052794abf40f ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
+  test_an_include 2ec634340cca4f453cfc05bb4c064130 ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
 
   test_an_include 58fe002977ee1a5613f465cc784d769d ../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
 
