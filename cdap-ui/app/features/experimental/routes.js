@@ -68,6 +68,16 @@ angular.module(PKG.name+'.feature.experimental')
             label: 'Schema Widget',
             parent: 'experimental.home'
           }
+        })
+        .state('experimental.logs', {
+          url: '/logs',
+          templateUrl: '/assets/features/experimental/templates/logs.html',
+          controller: 'LogsController',
+          controllerAs: 'vm',
+          ncyBreadcrumb: {
+            label: 'Log',
+            parent: 'experimental.home'
+          }
         });
 
   });

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,212 +14,46 @@
  * the License.
  */
 
-angular.module(PKG.name + '.commons')
-  .directive('myLogViewer', function ($filter, $timeout, $state, $location) {
+function LogViewerController () {
+  'ngInject';
 
-    var capitalize = $filter('caskCapitalizeFilter'),
-        filterFilter = $filter('filter');
-
-    return {
-      restrict: 'E',
-      scope: {
-        params: '='
-      },
-      templateUrl: 'log-viewer/log-viewer.html',
-
-      controller: function ($scope, myLogsApi, MyCDAPDataSource) {
-        var dataSrc = new MyCDAPDataSource($scope);
-        $scope.model = [];
-
-        var loadTimeout = null;
-
-        $scope.filters = 'all,info,warn,error,debug,other'.split(',')
-          .map(function (key) {
-            var p;
-            switch(key) {
-              case 'all':
-                p = function() { return true; };
-                break;
-              case 'other':
-                p = function(line) { return !(/- (INFO|WARN|ERROR|DEBUG)/).test(line.log); };
-                break;
-              default:
-                p = function(line) { return (new RegExp('- '+key.toUpperCase())).test(line.log); };
-            }
-            return {
-              key: key,
-              label: capitalize(key),
-              entries: [],
-              predicate: p
-            };
-          });
-
-        $scope.$watch('model', function (newVal) {
-          angular.forEach($scope.filters, function (one) {
-            one.entries = filterFilter(newVal, one.predicate);
-          });
-        });
-
-        var params = {};
-        var pollPromise = null;
-        var infiniteScrollDOMElement,
-            offsetDOMElement,
-            container,
-            logItem;
-
-        function pollForLogs(params) {
-          var path = '/namespaces/' + params.namespace +
-            '/apps/' + params.appId +
-            '/' + params.programType + '/' + params.programId +
-            '/runs/' + params.runId +
-            '/logs/prev?max=50&escape=false';
-
-          pollPromise = dataSrc.poll({
-            _cdapPath: path,
-            interval: 3000
-          }, function (res) {
-            $scope.model = res;
-
-            if (res.length >= 50) {
-              dataSrc.stopPoll(pollPromise.__pollId__);
-              pollPromise = null;
-            }
-          });
-        }
-
-
-        function initialize() {
-          params = {};
-          angular.copy($scope.params, params);
-          params.max = 50;
-          params.escape = false;
-          params.scope = $scope;
-
-          $scope.model = [];
-
-          if (!params.runId) { return; }
-
-          if (pollPromise) {
-            dataSrc.stopPoll(pollPromise.__pollId__);
-            pollPromise = null;
-          }
-
-          $scope.loadingNext = true;
-          myLogsApi.prevLogs(params)
-            .$promise
-            .then(function (res) {
-              $scope.model = res;
-
-              if (res.length < 50) {
-                pollForLogs(params);
-              }
-
-              $scope.loadingNext = false;
-            });
-        }
-
-        initialize();
-
-        $scope.$watch('params.runId', initialize);
-
-        $scope.loadNextLogs = function () {
-          if ($scope.loadingNext || $scope.loadingPrev) {
-            return;
-          }
-
-          if (pollPromise) {
-            dataSrc.stopPoll(pollPromise.__pollId__);
-            pollPromise = null;
-          }
-
-          $scope.loadingNext = true;
-          if ($scope.model.length) {
-            params.fromOffset = $scope.model[$scope.model.length-1].offset;
-          }
-
-          myLogsApi.nextLogs(params)
-            .$promise
-            .then(function (res) {
-              $scope.model = _.uniq($scope.model.concat(res));
-              $scope.loadingNext = false;
-            });
-        };
-
-        $scope.loadPrevLogs = function () {
-          if ($scope.loadingPrev || $scope.loadingNext) {
-            return;
-          }
-
-          $scope.loadingPrev = true;
-
-          if ($scope.model.length) {
-            params.fromOffset = $scope.model[0].offset;
-          }
-
-          myLogsApi.prevLogs(params)
-            .$promise
-            .then(function (res) {
-              $scope.model = _.uniq(res.concat($scope.model));
-              $scope.loadingPrev = false;
-
-              if (loadTimeout) {
-                $timeout.cancel(loadTimeout);
-              }
-
-              loadTimeout = $timeout(function() {
-                infiniteScrollDOMElement =  document.querySelector('[infinite-scroll]');
-                offsetDOMElement = document.getElementById(params.fromOffset);
-                container = angular.element(infiniteScrollDOMElement)[0];
-                logItem = angular.element(offsetDOMElement)[0];
-                container.scrollTop = logItem.offsetTop;
-              });
-            });
-        };
-
-        $scope.$on('$destroy', function () {
-          infiniteScrollDOMElement = offsetDOMElement = container = logItem = null;
-          if (loadTimeout) {
-            $timeout.cancel(loadTimeout);
-          }
-        });
-
-      },
-
-      link: function (scope, element) {
-
-        var termEl = angular.element(element[0].querySelector('.terminal')),
-            QPARAM = 'filter';
-
-        var filterTimeout = null;
-
-        scope.setFilter = function (k) {
-          var f = filterFilter(scope.filters, {key:k});
-          scope.activeFilter = f.length ? f[0] : scope.filters[0];
-
-          if (filterTimeout) {
-            $timeout.cancel(filterTimeout);
-          }
-
-          filterTimeout = $timeout(function(){
-            termEl.prop('scrollTop', termEl.prop('scrollHeight'));
-
-            if(false === $state.current.reloadOnSearch) {
-              var params = {};
-              params[QPARAM] = scope.activeFilter.key;
-              $location.search(params);
-            }
-          });
-
-        };
-
-        scope.setFilter($state.params[QPARAM]);
-
-        scope.$on('$destroy', function () {
-          termEl = null;
-          if (filterTimeout) {
-            $timeout.cancel(filterTimeout);
-          }
-        });
+  this.isMessageExpanded = false;
+  this.data = [
+    {
+      time: '2016-03-04 16:28:40, 798',
+      level: 'INFO',
+      source: 'leader-election-election-metrics-processor-part-0',
+      message: {
+        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
+        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
       }
+    },
+    {
+      time: '2016-03-04 16:28:43, 801',
+      level: 'INFO',
+      source: 'leader-election-election-metrics-processor-part-0',
+      message: {
+        content: 'Some Other log data that is irrelevant for this demo.'
+      }
+    },
+    {
+      time: '2016-03-04 16:28:43, 900',
+      level: 'INFO',
+      source: 'leader-election-election-metrics-processor-part-0',
+      message: {
+        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
+        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
+      }
+    },
+  ];
+
+}
+
+angular.module(PKG.name + '.commons')
+  .directive('myLogViewer', function () {
+    return {
+      templateUrl: 'log-viewer/log-viewer.html',
+      controller: LogViewerController,
+      controllerAs: 'LogViewer'
     };
   });

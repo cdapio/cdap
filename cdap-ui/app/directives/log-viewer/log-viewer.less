@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,109 @@
  * the License.
  */
 
-@import "../../styles/variables.less";
+@border-color: #cccccc;
+@table-background-color: white;
+@stack-trace-background-color: lighten(black, 35%);
+@stack-trace-font-color: #cccccc;
+@message-expanded-color: #dedede;
 
 my-log-viewer {
-  .row {
-    border: 1px solid lightgray;
-    padding: 10px 0;
-  }
-  .terminal {
-    background: @cdap-header;
-    color: white;
-    padding: 10px;
-    overflow: auto;
-    border: 1px inset #eeeeee;
-    border-radius: 4px;
-    min-height: 240px;
-    max-height: 600px;
-    pre {
-      background: transparent;
-      color: inherit;
-      border: 0;
-      padding: 0;
-      margin-bottom: 7px;
-      white-space: normal;
-      word-break: normal;
+  .log-viewer-container {
+
+    .logs-table {
+      .table {
+        background-color: @table-background-color;
+
+        th,
+        th:hover,
+        th:focus {
+          cursor: default;
+          font-size: 13px;
+        }
+
+        td {
+          padding: 7px 7px 7px 10px;
+          font-size: 13px;
+        }
+      }
+
+      .time {
+        width: 15%;
+      }
+
+      .level {
+        width: 7%;
+      }
+
+      .source {
+        width: 28%;
+      }
+
+      tbody {
+        .message {
+          padding-left: 0;
+          padding-right: 0;
+        }
+      }
+
+      .message {
+        width: 50%;
+        clear: both;
+
+        .message-main {
+          padding-left: 10px;
+          padding-right: 10px;
+        }
+
+        .fa {
+          font-size: 12px;
+          color: darken(@border-color, 15%);
+          margin-right: 5px;
+          cursor: pointer;
+        }
+
+        .icon-column {
+          width: 20px;
+          float: left;
+          cursor: pointer;
+        }
+
+        .message-column {
+          float: left;
+          width: 100%;
+        }
+
+        .stack-trace {
+          pre {
+            background-color: @stack-trace-background-color;
+            color: @stack-trace-font-color;
+            white-space: pre-wrap;
+            border: none;
+            border-radius: 0;
+            padding-left: 7px + 20px;
+            margin-bottom: 0;
+          }
+        }
+
+        &.stack-trace-expanded {
+          background-color: @message-expanded-color;
+          padding-bottom: 0;
+
+          .message-column {
+            padding-bottom: 10px;
+          }
+        }
+
+        &.stack-trace-available {
+          .message-column {
+            float: right;
+            width: ~"-moz-calc(100% - 20px)";
+            width: ~"-webkit-calc(100% - 20px)";
+            width: ~"calc(100% - 20px)";
+          }
+        }
+      }
+
     }
   }
 }

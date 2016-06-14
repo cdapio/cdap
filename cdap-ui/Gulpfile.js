@@ -228,7 +228,8 @@ function getEs6Directives(isNegate) {
     'plugin-templates',
     'my-global-navbar',
     'datetime-picker',
-    'datetime-range'
+    'datetime-range',
+    'log-viewer'
   ];
 
   return es6directives.map(function (directive) {

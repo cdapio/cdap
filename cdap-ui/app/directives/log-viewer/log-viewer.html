@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,38 +14,88 @@
   the License.
 -->
 
-<div class="row">
-  <div class="col-xs-2">
+<div class="log-viewer-container">
 
-    <ul class="nav nav-pills nav-stacked">
-      <li role="presentation"
-          ng-repeat="f in filters"
-          ng-class="{ active:activeFilter.key===f.key, disabled: !f.entries.length}">
-        <a href="#" ng-click="f.entries.length && setFilter(f.key)">
-          <span class="badge pull-right" ng-show="f.entries.length">{{f.entries.length}}</span>
-          <span>{{f.label}}</span>
-        </a>
-      </li>
-    </ul>
+  <!-- LOGS TIMELINE -->
+  <!-- LOGS TABLE -->
+  <div class="logs-table">
+    <table class="table table-bordered">
+      <thead>
+        <th class="time"
+            ng-if="!LogViewer.isMessageExpanded">
+          Time
+        </th>
 
-  </div>
-  <div class="col-xs-10">
-    <div class="text-center" ng-if="loadingPrev">
-      <span class="fa fa-refresh fa-spin"></span> Loading Logs
-    </div>
-    <div class="terminal" infinite-scroll-next="loadNextLogs()" infinite-scroll-prev="loadPrevLogs()" infinite-scroll>
-      <ul class="list-unstyled" ng-if="activeFilter.entries.length">
-        <li ng-repeat="entry in activeFilter.entries" id="{{entry.offset}}">
-          <pre>{{ ::entry.log }}</pre>
-        </li>
-      </ul>
-      <div ng-if="!activeFilter.entries.length && !(loadingNext || loadingPrev)">
-        No logs to display
-      </div>
-      <div class="text-center" ng-if="loadingNext">
-        <span class="fa fa-refresh fa-spin"></span> Loading Logs
-      </div>
-    </div>
+        <th class="level"
+            ng-if="!LogViewer.isMessageExpanded">
+          <span>Level</span>
+          <span class="pull-right">
+            <span class="fa fa-caret-down"></span>
+          </span>
+        </th>
 
+        <th class="source"
+            ng-if="!LogViewer.isMessageExpanded">
+          Source
+        </th>
+
+        <th class="message"
+            ng-class="{'expanded': LogViewer.isMessageExpanded }">
+          <span class="fa"
+                ng-class="{ 'fa-arrow-left': !LogViewer.isMessageExpanded,
+                  'fa-arrow-right': LogViewer.isMessageExpanded}"
+                ng-click="LogViewer.isMessageExpanded = !LogViewer.isMessageExpanded"></span>
+          <span>Message</span>
+        </th>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="log in LogViewer.data">
+          <!-- TIME -->
+          <td class="time"
+              ng-if="!LogViewer.isMessageExpanded">
+            <span>{{ log.time }}</span>
+          </td>
+
+          <!-- LEVEL -->
+          <td class="level"
+              ng-if="!LogViewer.isMessageExpanded">
+            <span>{{ log.level }}</span>
+          </td>
+
+          <!-- SOURCE -->
+          <td class="source"
+              ng-if="!LogViewer.isMessageExpanded">
+            <span>{{ log.source }}</span>
+          </td>
+
+          <!-- MESSAGE -->
+          <td class="message"
+              ng-class="{'stack-trace-expanded': log.isStackTraceExpanded,
+                'stack-trace-available': log.message.stackTrace }">
+            <div class="message-main clearfix">
+              <div class="icon-column"
+                   ng-if="log.message.stackTrace"
+                   ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded">
+                <span class="fa"
+                      ng-class="{'fa-plus': !log.isStackTraceExpanded,
+                        'fa-minus': log.isStackTraceExpanded }">
+                </span>
+              </div>
+              <div class="message-column">
+                {{ log.message.content }}
+              </div>
+            </div>
+
+            <div class="stack-trace"
+                 ng-class="{'expanded': LogViewer.isMessageExpanded}"
+                 ng-if="log.isStackTraceExpanded">
+              <pre>{{ log.message.stackTrace }}</pre>
+            </div>
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
