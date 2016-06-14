@@ -212,7 +212,7 @@ Error Code Values
 Example
 +++++++
 A sample request and responses for different error conditions are shown below.  Header values are
-wrapped for display purposes. 
+wrapped for display purposes.
 
 Request::
 
