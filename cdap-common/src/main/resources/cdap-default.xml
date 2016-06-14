@@ -754,27 +754,24 @@
 
   <property>
     <name>kafka.default.replication.factor</name>
-    <value>1</value>
+    <value>${kafka.server.default.replication.factor}</value>
     <description>
-      CDAP Kafka service replication factor; used to replicate Kafka messages across
-      multiple machines to prevent data loss in the event of a hardware
-      failure. The recommended setting is to run at least two CDAP Kafka servers.
-      If you are running two CDAP Kafka servers, set this value to 2; otherwise,
-      set it to the number of CDAP Kafka servers.
+      CDAP Kafka service replication factor (deprecated: replaced with kafka.server.replication.factor)
     </description>
   </property>
 
   <property>
-    <name>kafka.log.dir</name>
-    <value>/tmp/kafka-logs</value>
+    <name>kafka.log.retention.hours</name>
+    <value>${kafka.server.log.retention.hours}</value>
     <description>
-      CDAP Kafka service log storage directory
+      The number of hours to keep a log file before deleting it (deprecated: replaced with
+      kafka.server.log.retention.hours)
     </description>
   </property>
 
   <property>
     <name>kafka.num.partitions</name>
-    <value>10</value>
+    <value>${kafka.server.num.partitions}</value>
     <description>
       Default number of partitions for a topic
     </description>
@@ -784,8 +781,104 @@
     <name>kafka.seed.brokers</name>
     <value>127.0.0.1:9092</value>
     <description>
-      Comma-separated list of CDAP Kafka service brokers; for distributed CDAP, 
-      replace with list of FQDN:port brokers
+      Comma-separated list of CDAP Kafka service brokers; for distributed CDAP,
+      replace with list of FQDN:port brokers (deprecated: replaced with kafka.server.seed.brokers)
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.server.default.replication.factor</name>
+    <value>1</value>
+    <description>
+      CDAP Kafka service replication factor; used to replicate Kafka messages across
+      multiple machines to prevent data loss in the event of a hardware
+      failure. The recommended setting is to run at least two CDAP Kafka servers.
+      If you are running two CDAP Kafka servers, set this value to 2; otherwise,
+      set it to the maximum number of tolerated machine failures
+      plus one (assuming you have that number of machines).
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.server.log.dirs</name>
+    <value>/tmp/kafka-logs</value>
+    <description>
+      CDAP Kafka service log storage directory
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.server.log.flush.interval.messages</name>
+    <value>10000</value>
+    <description>
+      The interval length at which will force an fsync of data written to the log.
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.server.log.retention.hours</name>
+    <value>24</value>
+    <description>
+      The number of hours to keep a log file before deleting it
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.server.num.partitions</name>
+    <value>10</value>
+    <description>
+      Default number of partitions for a topic
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.server.socket.receive.buffer.bytes</name>
+    <value>1048576</value>
+    <description>
+      The size in bytes of the receive buffer the server prefers for socket connections
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.server.socket.send.buffer.bytes</name>
+    <value>1048576</value>
+    <description>
+      The size in bytes of the send buffer the server prefers for socket connections
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.server.zookeeper.connection.timeout.ms</name>
+    <value>1000000</value>
+    <description>
+      The maximum time (in milliseconds) that the client will wait to establish a connection to Zookeeper
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.socket.receive.buffer.bytes</name>
+    <value>${kafka.server.socket.receive.buffer.bytes}</value>
+    <description>
+      The size in bytes of the receive buffer the server prefers for socket connections (deprecated: replaced with
+      kafka.server.socket.receive.buffer.bytes)
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.socket.send.buffer.bytes</name>
+    <value>${kafka.server.socket.send.buffer.bytes}</value>
+    <description>
+      The size in bytes of the send buffer the server prefers for socket connections (deprecated: replaced with
+      kafka.server.socket.send.buffer.bytes)
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.zookeeper.connection.timeout.ms</name>
+    <value>${kafka.server.zookeeper.connection.timeout.ms}</value>
+    <description>
+      The maximum time (in milliseconds) that the client will wait to establish a connection to Zookeeper (deprecated:
+      replaced with kafka.server.zookeeper.connection.timeout.ms)
     </description>
   </property>
 
