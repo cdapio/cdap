@@ -1,4 +1,4 @@
-# Copyright © 2012-2014 Cask Data, Inc.
+# Copyright © 2012-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ COPY packer/files /tmp/files
 # build cdap-standalone zip file, copy it to container and extract it
 RUN apt-get update && \
     apt-get install -y curl git && \
-    curl -L http://chef.io/chef/install.sh | bash && \
+    curl -L http://chef.io/chef/install.sh | bash -- -v 12.11.17 && \
     for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
     chef-solo -o cdap::sdk -j /tmp/files/cdap-sdk.json && \
     for i in remove-chef.sh sdk-cleanup.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
@@ -38,8 +38,7 @@ RUN apt-get update && \
     /usr/share/locale/{a,b,c,d,e{l,o,s,t,u},f,g,h,i,j,k,lt,lv,m,n,o,p,r,s,t,u,v,w,x,z}*
 
 # Expose Ports (9999 & 10000 for CDAP)
-EXPOSE 9999
-EXPOSE 10000
+EXPOSE 9999 10000
 
 # start CDAP in the background and tail in the foreground
 ENTRYPOINT /opt/cdap/sdk/bin/cdap.sh start && \
