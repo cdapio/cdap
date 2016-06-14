@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _http-restful-api-preferences:
 .. _http-restful-api-v3-preferences:
@@ -13,23 +13,25 @@ Preferences HTTP RESTful API
 .. highlight:: console
 
 Use the CDAP Preferences HTTP RESTful API to save, retrieve, and delete preferences in CDAP.
+Preferences, their use, and examples of using them, are described in the
+:ref:`Administration Manual: Preferences <preferences>`.
 
-Preferences, their use and examples of using them, are described in the :ref:`Administration Manual: Preferences <preferences>`.
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
 
-For the remainder of this API, it is assumed that the preferences you are using are defined
-by the ``<base-url>``, as described under :ref:`Conventions <http-restful-api-conventions>`.
 
 Set Preferences
----------------
+===============
 To set preferences for the CDAP instance, namespace, application, or program, submit an HTTP PUT request::
 
-  PUT <base-url>/preferences/
+  PUT /v3/preferences/
 
-  PUT <base-url>/namespaces/<namespace>/preferences
+  PUT /v3/namespaces/<namespace>/preferences
 
-  PUT <base-url>/namespaces/<namespace>/apps/<app-id>/preferences
+  PUT /v3/namespaces/<namespace>/apps/<app-id>/preferences
 
-  PUT <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
+  PUT /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
    :widths: 20 80
@@ -68,17 +70,17 @@ that does not exist or an application that has not yet been deployed.
 
 
 Get Preferences
----------------
+===============
 
 To retrieve the current preferences, issue an HTTP GET request::
 
-  GET <base-url>/preferences/
+  GET /v3/preferences/
 
-  GET <base-url>/namespaces/<namespace>/preferences
+  GET /v3/namespaces/<namespace>/preferences
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/preferences
+  GET /v3/namespaces/<namespace>/apps/<app-id>/preferences
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
+  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 This will return a JSON String map of the preferences::
 
@@ -87,13 +89,13 @@ This will return a JSON String map of the preferences::
 To retrieve the resolved preferences (collapsing preferences from higher levels into a single level), set the
 ``resolved`` query parameter to ``true``::
 
-  GET <base-url>/preferences?resolved=true
+  GET /v3/preferences?resolved=true
 
-  GET <base-url>/namespaces/<namespace>/preferences?resolved=true
+  GET /v3/namespaces/<namespace>/preferences?resolved=true
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/preferences?resolved=true
+  GET /v3/namespaces/<namespace>/apps/<app-id>/preferences?resolved=true
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
+  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
 
 .. list-table::
    :widths: 20 80
@@ -124,16 +126,16 @@ To retrieve the resolved preferences (collapsing preferences from higher levels 
      - The entity for which preferences are being set was not found
 
 Delete Preferences
-------------------
+==================
 To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at one level with each request::
 
-  DELETE <base-url>/preferences/
+  DELETE /v3/preferences/
 
-  DELETE <base-url>/namespaces/<namespace>/preferences
+  DELETE /v3/namespaces/<namespace>/preferences
 
-  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/preferences
+  DELETE /v3/namespaces/<namespace>/apps/<app-id>/preferences
 
-  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
+  DELETE /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
    :widths: 20 80

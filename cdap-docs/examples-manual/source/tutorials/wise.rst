@@ -537,7 +537,7 @@ Accessing Data through WiseService
 ``WiseService`` is a WISE component that exposes specific HTTP endpoints to retrieve the
 content of the *pageViewStore* dataset. For example, ``WiseService`` defines this endpoint::
 
-  GET <base-url>/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/<ip-address>/count
+  GET /v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/<ip-address>/count
   
 Using the ``curl`` command and the CLI, example use of the service would be:
 

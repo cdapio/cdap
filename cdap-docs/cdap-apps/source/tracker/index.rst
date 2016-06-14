@@ -346,11 +346,12 @@ Details on completing this form are described in CDAP's documentation on
 Tracker HTTP RESTful API
 ========================
 
-Tracker supports searching of the *_auditLog* dataset through an HTTP RESTful API. To
-search for audit log entries for a particular dataset, stream, or stream view, submit an
-HTTP GET request::
+Tracker supports searching of the *_auditLog* dataset through an HTTP RESTful API. (See
+the :ref:`Reference Manual: HTTP RESTful API <http-restful-api-introduction>` for details
+on the conventions used for this API.) To search for audit log entries for a particular
+dataset, stream, or stream view, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
+  GET /v3/namespaces/<namespace>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
     [?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
 
 where:

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -36,8 +36,8 @@ CDAP HTTP RESTful API v3
 .. highlight:: console
 
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of
-purposes: everything from sending data events to a stream or to inspect the contents of a
-stream through checking the status of various system and custom CDAP services. V3 of the
+purposes: from sending data events to a stream and inspecting the contents of a
+stream through checking the status of system and custom CDAP services. V3 of the
 API includes the namespacing of applications, data, and metadata to achieve application and
 data isolation. This is an inital step towards introducing `multi-tenancy
 <http://en.wikipedia.org/wiki/Multitenancy>`__ into CDAP.

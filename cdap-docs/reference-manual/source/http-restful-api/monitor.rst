@@ -11,15 +11,21 @@ Monitor HTTP RESTful API
 
 .. highlight:: console
 
-CDAP internally uses a variety of system services that are critical to its functionality.
-This section describes the RESTful APIs that can be used to examine system services.
+Use the CDAP Monitor HTTP RESTful API to examine the CDAP system services used internally by CDAP.
+Additional details on monitoring can be found in the :ref:`Administration Manual: Logging
+and Monitoring <logging-monitoring>`.
 
-Listing all System Services and Their Details
----------------------------------------------
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
 
-For the detailed information of all available system services, use::
 
-  GET <base-url>/system/services
+Listing all System Services and their Details
+=============================================
+
+For the detailed information of all available CDAP system services, use::
+
+  GET /v3/system/services
 
 The response body will contain a JSON-formatted list of the existing system services::
 
@@ -50,11 +56,12 @@ information and an example of using these system services.
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-Checking the Status of all CDAP System Services
------------------------------------------------
-To check the status of all the system services, use::
 
-  GET <base-url>/system/services/status
+Checking the Status of all System Services
+==========================================
+To check the status of all the CDAP system services, use::
+
+  GET /v3/system/services/status
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -66,11 +73,12 @@ To check the status of all the system services, use::
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-Checking the Status of a CDAP System Service
---------------------------------------------
-To check the status of a specific system service, use::
 
-  GET <base-url>/system/services/<service-name>/status
+Checking the Status of a System Service
+=======================================
+To check the status of a specific CDAP system service, use::
+
+  GET /v3/system/services/<service-name>/status
 
 The status of these CDAP system services can be checked:
 
@@ -126,15 +134,16 @@ The status of these CDAP system services can be checked:
    :stub-columns: 1
    
    * - HTTP Method
-     - ``GET <base-url>/system/services/metrics/status``
+     - ``GET /v3/system/services/metrics/status``
    * - Description
      - Returns the status of the metrics service
 
-Container Information of a CDAP System Service
-----------------------------------------------
-If you are trying to debug a system service, you can retrieve container info for a system service with::
 
-  GET <base-url>/system/services/<service-id>/live-info
+Container Information of a System Service
+=========================================
+If you are trying to debug a CDAP system service, you can retrieve container info for a system service with::
+
+  GET /v3/system/services/<service-id>/live-info
   
 where
 
@@ -151,16 +160,15 @@ where
 
 
 Restarting System Service Instances
------------------------------------
+===================================
+To restart all instances of a CDAP system service, you can issue an HTTP POST request to the URL::
 
-To restart all instances of a system service in CDAP, you can issue an HTTP POST request to the URL::
-
-  POST <base-url>/system/services/<service-id>/restart
+  POST /v3/system/services/<service-id>/restart
 
 You can restart a particular instance of a system service in CDAP, using its instance id, by issuing
 an HTTP POST request to the URL::
 
-  POST <base-url>/system/services/<service-id>/instances/<instance-id>/restart
+  POST /v3/system/services/<service-id>/instances/<instance-id>/restart
 
 .. list-table::
    :widths: 20 80
@@ -192,7 +200,7 @@ an HTTP POST request to the URL::
 
 To retrieve details of the last restart attempt made for a particular service, issue an HTTP GET request to the URL::
 
-  GET <base-url>/system/services/<service-id>/latest-restart
+  GET /v3/system/services/<service-id>/latest-restart
 
 The response body will contain a JSON-formatted status of the last restart attempt for that service::
 
@@ -227,12 +235,12 @@ The response body will contain a JSON-formatted status of the last restart attem
 
 
 Scaling System Services
------------------------
-In distributed CDAP installations, the number of instances for system services 
+=======================
+In distributed CDAP installations, the number of instances for CDAP system services 
 can be queried and changed by using these commands::
 
-  GET <base-url>/system/services/<service-name>/instances
-  PUT <base-url>/system/services/<service-name>/instances
+  GET /v3/system/services/<service-name>/instances
+  PUT /v3/system/services/<service-name>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -257,13 +265,13 @@ with the arguments as a JSON string in the body::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/system/services/metrics/instances``
+     - ``GET /v3/system/services/metrics/instances``
    * - Description
      - Determine the number of instances being used for the metrics HTTP service 
    * - 
      - 
    * - HTTP Method
-     - ``PUT <base-url>/system/services/metrics/instances``
+     - ``PUT /v3/system/services/metrics/instances``
        ``instances``
 
        with the arguments as a JSON string in the body::

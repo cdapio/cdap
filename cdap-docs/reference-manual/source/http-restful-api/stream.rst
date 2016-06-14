@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _http-restful-api-stream:
 
@@ -11,18 +11,24 @@ Stream HTTP RESTful API
 
 .. highlight:: console
 
-This interface supports creation of a :ref:`Stream; <developers:streams>` sending, reading, and truncating events to
-and from a stream; and setting the TTL property of a stream.
+Use the CDAP Stream HTTP RESTful API to create a :ref:`stream <developers:streams>`; send,
+read, and truncate events sent to and from a stream; and set the TTL property of a stream.
 
 Streams may have multiple consumers (for example, multiple flows), each of which may be a
 group of different agents (for example, multiple instances of a flowlet).
 
+Additional details and examples are found in the :ref:`Developers' Manual: Streams <developers:streams>`.
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
+
 
 Creating a Stream
------------------
+=================
 A stream can be created with an HTTP PUT method to the URL::
 
-  PUT <base-url>/namespaces/<namespace>/streams/<new-stream-id>
+  PUT /v3/namespaces/<namespace>/streams/<new-stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -51,7 +57,7 @@ A stream can be created with an HTTP PUT method to the URL::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT <base-url>/namespaces/default/streams/mystream``
+     - ``PUT /v3/namespaces/default/streams/mystream``
    * - Description
      - Create a new stream named *mystream* in the namespace *default* 
 
@@ -89,16 +95,16 @@ be retrieved and modified afterwards using the ``/properties`` endpoint.
 If a property is not given in the request body, the default value will be used instead.
 
 Sending Events to a Stream
---------------------------
+==========================
 An event can be sent to a stream by sending an HTTP POST method to the URL of the stream::
 
-  POST <base-url>/namespaces/<namespace>/streams/<stream-id>
+  POST /v3/namespaces/<namespace>/streams/<stream-id>
 
 In cases where it is acceptable to have some events lost, events can be transmitted
 asynchronously to a stream with higher throughput by sending an HTTP POST method to the
 ``async`` URL::
 
-  POST <base-url>/namespaces/<namespace>/streams/<stream-id>/async
+  POST /v3/namespaces/<namespace>/streams/<stream-id>/async
 
 .. list-table::
    :widths: 20 80
@@ -132,7 +138,7 @@ asynchronously to a stream with higher throughput by sending an HTTP POST method
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/namespaces/default/streams/mystream``
+     - ``POST /v3/namespaces/default/streams/mystream``
    * - Description
      - Send an event to the existing stream named *mystream* in the namespace *default*
 
@@ -150,10 +156,10 @@ After receiving the request, the HTTP handler transforms it into a stream event:
   the header is added to the event.
 
 Sending Events to a Stream in Batch
------------------------------------
+===================================
 Multiple events can be sent to a stream in batch by sending an HTTP POST method to the URL of the stream::
 
-  POST <base-url>/namespaces/<namespace>/streams/<stream-id>/batch
+  POST /v3/namespaces/<namespace>/streams/<stream-id>/batch
 
 The ``Content-Type`` header must be specified to describe the data type in the POST body. Currently, these
 types are supported:
@@ -189,7 +195,7 @@ types are supported:
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/namespaces/default/streams/mystream/batch``
+     - ``POST /v3/namespaces/default/streams/mystream/batch``
    * - Content type header
      - ``Content-type: text/csv``
    * - POST body
@@ -213,10 +219,10 @@ the *stream-id* prefix is stripped from the header name and the header is added 
 in the request body.
 
 Reading Events from a Stream
-----------------------------
+============================
 Reading events from an existing stream is performed with an HTTP GET method to the URL::
 
-  GET <base-url>/namespaces/<namespace>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
+  GET /v3/namespaces/<namespace>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
 
 .. list-table::
    :widths: 20 80
@@ -275,19 +281,19 @@ The response body is a JSON array with the stream event objects as array element
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/namespaces/default/streams/mystream/events?limit=1``
+     - ``GET /v3/namespaces/default/streams/mystream/events?limit=1``
    * - Description
      - Read the initial event from an existing stream named *mystream* in the namespace *default*
    * - Response body
      - ``[ {"timestamp" : 1407806944181, "headers" : { }, "body" : "Hello World" } ]``
 
 Truncating a Stream
--------------------
+===================
 Truncating means deleting all events that were ever written to the stream.
 This is permanent and cannot be undone.
 A stream can be truncated with an HTTP POST method to the URL::
 
-  POST <base-url>/namespaces/<namespace>/streams/<stream-id>/truncate
+  POST /v3/namespaces/<namespace>/streams/<stream-id>/truncate
 
 .. list-table::
    :widths: 20 80
@@ -318,19 +324,19 @@ A stream can be truncated with an HTTP POST method to the URL::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/namespaces/default/streams/mystream/truncate``
+     - ``POST /v3/namespaces/default/streams/mystream/truncate``
    * - Description
      - Delete all events in the stream named *mystream* in the namespace *default*
 
 Deleting a Stream
------------------
+=================
 Deleting a stream means both deleting all events that were ever written to the stream and
 the stream endpoint itself. This is permanent and cannot be undone. If another stream is
 created with the same name, it will not return any of the previous stream's events.
 
 A stream can be deleted with an HTTP DELETE method to the URL::
 
-  DELETE <base-url>/namespaces/<namespace>/streams/<stream-id>
+  DELETE /v3/namespaces/<namespace>/streams/<stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -361,7 +367,7 @@ A stream can be deleted with an HTTP DELETE method to the URL::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``DELETE <base-url>/namespaces/default/streams/mystream``
+     - ``DELETE /v3/namespaces/default/streams/mystream``
    * - Description
      - Deletes the stream named *mystream* in the namespace *default* and all events in
        the stream
@@ -369,7 +375,7 @@ A stream can be deleted with an HTTP DELETE method to the URL::
 .. _http-restful-api-stream-setting-properties:
 
 Getting and Setting Stream Properties
--------------------------------------
+=====================================
 There are a number of stream properties that can be retrieved and specified.
 
 The **Time-To-Live** (TTL, specified in seconds) property governs how long an event is valid for consumption since 
@@ -390,7 +396,7 @@ The **description** of the stream.
 
 Stream properties can be retrieved with an HTTP PUT method to the URL::
 
-  GET <base-url>/namespaces/<namespace>/streams/<stream-id>
+  GET /v3/namespaces/<namespace>/streams/<stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -409,7 +415,7 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/namespaces/default/streams/who``
+     - ``GET /v3/namespaces/default/streams/who``
        ::
 
          { 
@@ -436,7 +442,7 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
 
 Stream properties can be changed with an HTTP PUT method to the URL::
 
-  PUT <base-url>/namespaces/<namespace>/streams/<stream-id>/properties
+  PUT /v3/namespaces/<namespace>/streams/<stream-id>/properties
 
 .. list-table::
    :widths: 20 80
@@ -495,7 +501,7 @@ the stream and re-create it with the new schema.
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT <base-url>/namespaces/default/streams/mystream/properties``
+     - ``PUT /v3/namespaces/default/streams/mystream/properties``
        ::
 
          { 
@@ -522,11 +528,10 @@ the stream and re-create it with the new schema.
        that uses a space delimiter instead of a comma delimiter. 
 
 Streams used by an Application
-------------------------------
-
+==============================
 You can retrieve a list of streams used by an application by issuing a HTTP GET request to the URL::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/streams
+  GET /v3/namespaces/<namespace>/apps/<app-id>/streams
 
 .. list-table::
    :widths: 20 80
@@ -550,11 +555,10 @@ You can retrieve a list of streams used by an application by issuing a HTTP GET 
      - Request was successful
 
 Streams used by a Program
--------------------------
-
+=========================
 You can retrieve a list of streams used by a program by issuing a HTTP GET request to the URL::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/streams 
+  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/streams 
 
 .. list-table::
    :widths: 20 80
@@ -582,11 +586,10 @@ You can retrieve a list of streams used by a program by issuing a HTTP GET reque
      - Request was successful
 
 Programs using a Stream 
------------------------
-
+========================
 You can retrieve a list of programs that are using a stream by issuing a HTTP GET request to the URL::
 
-  GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-id>/programs
+  GET /v3/namespaces/<namespace>/data/datasets/<dataset-id>/programs
 
 .. list-table::
    :widths: 20 80
@@ -608,5 +611,3 @@ You can retrieve a list of programs that are using a stream by issuing a HTTP GE
      - Description
    * - ``200 OK``
      - Request was successful
-
-

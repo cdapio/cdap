@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _http-restful-api-namespace:
 .. _http-restful-api-v3-namespace:
@@ -12,20 +12,25 @@ Namespace HTTP RESTful API
 
 .. highlight:: console
 
-Use the CDAP Namespace HTTP API to create, list or delete namespaces in the CDAP instance.
+Use the CDAP Namespace HTTP RESTful API to create, list, and delete namespaces in the CDAP instance.
 
 Namespaces, their use and examples, are described in the :ref:`Developers' Manual: Namespaces
 <namespaces>`.
 
-For the remainder of this API, it is assumed that the namespace you are using is defined
-by the ``<base-url>``, as descibed under :ref:`Conventions <http-restful-api-conventions>`. 
+The definition of namespace names supported by this API is described under
+:ref:`http-restful-api-namespace-characters`. 
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
+
 
 Create a Namespace
-------------------
+==================
 
 To create a namespace, submit an HTTP PUT request::
 
-  PUT <base-url>/namespaces/<namespace>
+  PUT /v3/namespaces/<namespace>
 
 .. list-table::
    :widths: 20 80
@@ -69,11 +74,11 @@ but with a message that the ``Namespace '<namespace>' already exists``.
      - The event successfully called the method, and the namespace was created
 
 List Existing Namespaces
-------------------------
+========================
 
 To list all of the existing namespaces, issue an HTTP GET request::
 
-  GET <base-url>/namespaces
+  GET /v3/namespaces
 
 This will return a JSON String map that lists each namespace with its name and description
 (reformatted to fit)::
@@ -82,11 +87,11 @@ This will return a JSON String map that lists each namespace with its name and d
    {"name":"demo_namespace","description":"My Demo Namespace","config":{"scheduler.queue.name":"demo"}]
 
 Details of a Namespace
-----------------------
+======================
 
 For detailed information on a specific namespace, use::
 
-  GET <base-url>/namespaces/<namespace>
+  GET /v3/namespaces/<namespace>
 
 The information (*namespace*, *description*, *config*) will be returned in the body of the
 response, such as::
@@ -116,11 +121,11 @@ response, such as::
 .. _http-restful-api-namespace-editing:
 
 Editing a Namespace
--------------------
+===================
 
 To edit an existing namespace, submit an HTTP PUT request to::
 
-  PUT <base-url>/namespaces/<namespace>/properties
+  PUT /v3/namespaces/<namespace>/properties
 
 .. list-table::
    :widths: 20 80
@@ -168,7 +173,7 @@ for when you `Create a Namespace`_.
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT <base-url>/namespaces/dev/properties``::
+     - ``PUT /v3/namespaces/dev/properties``::
 
          { 
            "description" : "Namespace for development of applications",
@@ -184,12 +189,12 @@ for when you `Create a Namespace`_.
 .. _http-restful-api-namespace-deleting:
 
 Deleting a Namespace
---------------------
+====================
 
 To delete an existing namespace (including all applications, streams, flows, datasets, metrics,
 and other components), submit an HTTP DELETE request to::
 
-  DELETE <base-url>/unrecoverable/namespaces/<namespace>
+  DELETE /v3/unrecoverable/namespaces/<namespace>
 
 .. list-table::
    :widths: 20 80

@@ -426,24 +426,18 @@ Testing Security
 
 .. highlight:: console
 
-As described in the :ref:`CDAP Reference Manual <http-restful-api-conventions>`, the
-**base URL** (represented by ``<base-url>``) that clients can use for the HTTP RESTful API is::
-
-  http://<host>:<port>/v3/namespaces/default/
-
-Note that if :ref:`SSL is enabled for CDAP Servers<running_servers_with_ssl>`, then the
-base URL will use ``https``.
-
-To ensure that you've configured security correctly, run these simple tests to verify that the
-security components are working as expected:
+To ensure that you've configured security correctly, run these simple tests to verify that
+the security components are working as expected. See the :ref:`CDAP Reference Manual: HTTP
+RESTful API <http-restful-api-conventions>` for information on the conventions used for
+these examples. Note that if :ref:`SSL is enabled for CDAP Servers <running_servers_with_ssl>`, 
+then the :ref:`base URL <http-restful-api-conventions-base-url>` used in these examples
+will use ``https`` instead of ``http``.
 
 .. highlight:: console
 
-- After configuring CDAP as described above, start (or restart) CDAP and attempt to make a request:
+- After configuring CDAP as described above, start (or restart) CDAP and attempt to make a request::
 
-  .. tabbed-parsed-literal::
-	
-    curl -v -w"\n" <base-url>/apps
+    GET /v3/apps
 	
   such as:
  
@@ -456,13 +450,11 @@ security components are working as expected:
 
     {"auth_uri":["http://localhost:10009/token"]}
 
-- Submit a username and password to one of the URIs to obtain an ``AccessToken``:
+- Submit a username and password to one of the URIs to obtain an ``AccessToken``::
 
-  .. tabbed-parsed-literal::
+    GET -u <username>:<password> <auth-uri>
 	
-    curl -v -w"\n" -X GET -u <username>:<password> <auth-uri>
-	
-  such as (assuming an authentication server at an URI ``localhost:10009`` and that you
+  such as (assuming a CDAP authentication server at a URI ``localhost:10009`` and that you
   have defined a username:password pair such as ``cdap:realtime``):
   
   .. tabbed-parsed-literal::
@@ -475,11 +467,9 @@ security components are working as expected:
     {"access_token":"AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS",
       "token_type":"Bearer","expires_in":86400}
 
-- Reattempt the first command, but this time include the ``access_token`` as a header in the request:
+- Reattempt the first command, but this time include the ``access_token`` as a header in the request::
 
-  .. tabbed-parsed-literal::
-	
-    curl -v -w"\n" -X GET <base-url>/apps -H "Authorization: Bearer <access_token>"
+    GET /v3/apps -H "Authorization: Bearer <access_token>"
 	  
   such as (formatted to fit):
 	
