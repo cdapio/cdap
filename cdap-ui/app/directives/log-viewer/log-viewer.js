@@ -18,6 +18,11 @@ function LogViewerController () {
   'ngInject';
 
   this.isMessageExpanded = false;
+  this.isTimeDisplayed = true;
+  this.isLevelDisplayed = true;
+  this.isSourceDisplayed = true;
+  this.isMessageDisplayed = true;
+
   this.data = [
     {
       time: '2016-03-04 16:28:40, 798',

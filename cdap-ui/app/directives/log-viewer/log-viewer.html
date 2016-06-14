@@ -16,18 +16,20 @@
 
 <div class="log-viewer-container">
 
+  <!-- LOGS HEADERBAR -->
+
   <!-- LOGS TIMELINE -->
   <!-- LOGS TABLE -->
   <div class="logs-table">
     <table class="table table-bordered">
       <thead>
         <th class="time"
-            ng-if="!LogViewer.isMessageExpanded">
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.isTimeDisplayed">
           Time
         </th>
 
         <th class="level"
-            ng-if="!LogViewer.isMessageExpanded">
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.isLevelDisplayed">
           <span>Level</span>
           <span class="pull-right">
             <span class="fa fa-caret-down"></span>
@@ -35,11 +37,12 @@
         </th>
 
         <th class="source"
-            ng-if="!LogViewer.isMessageExpanded">
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.isSourceDisplayed">
           Source
-        </th>
+        </th> 
 
         <th class="message"
+            ng-if="LogViewer.isMessageDisplayed"
             ng-class="{'expanded': LogViewer.isMessageExpanded }">
           <span class="fa"
                 ng-class="{ 'fa-arrow-left': !LogViewer.isMessageExpanded,
@@ -53,24 +56,25 @@
         <tr ng-repeat="log in LogViewer.data">
           <!-- TIME -->
           <td class="time"
-              ng-if="!LogViewer.isMessageExpanded">
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.isTimeDisplayed">
             <span>{{ log.time }}</span>
           </td>
 
           <!-- LEVEL -->
           <td class="level"
-              ng-if="!LogViewer.isMessageExpanded">
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.isLevelDisplayed">
             <span>{{ log.level }}</span>
           </td>
 
           <!-- SOURCE -->
           <td class="source"
-              ng-if="!LogViewer.isMessageExpanded">
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.isSourceDisplayed">
             <span>{{ log.source }}</span>
           </td>
 
           <!-- MESSAGE -->
           <td class="message"
+              ng-if="LogViewer.isMessageDisplayed"
               ng-class="{'stack-trace-expanded': log.isStackTraceExpanded,
                 'stack-trace-available': log.message.stackTrace }">
             <div class="message-main clearfix">
