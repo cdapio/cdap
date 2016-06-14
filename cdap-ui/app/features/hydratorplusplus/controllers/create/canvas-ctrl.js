@@ -76,6 +76,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
           controller: 'HydratorPlusPlusNodeConfigCtrl',
           controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
           resolve: {
+            rDisabled: function() {
+              return false;
+            },
             rPlugin: function() {
               let appType = this.HydratorPlusPlusConfigStore.getAppType();
               return {

@@ -15,7 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal, GLOBALS) {
+    this.GLOBALS = GLOBALS;
+    this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
     this.HydratorPlusPlusNodeConfigActions = HydratorPlusPlusNodeConfigActions;
@@ -51,7 +53,49 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       if (!nodeId) {
         return;
       }
-      this.HydratorPlusPlusNodeConfigActions.choosePlugin(this.HydratorPlusPlusDetailNonRunsStore.getPluginObject(nodeId));
+      let pluginNode = this.HydratorPlusPlusDetailNonRunsStore.getPluginObject(nodeId);
+      this.$uibModal
+          .open({
+            templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config.html',
+            size: 'lg',
+            backdrop: 'static',
+            windowTopClass: 'node-config-modal hydrator-modal',
+            controller: 'HydratorPlusPlusNodeConfigCtrl',
+            controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
+            resolve: {
+              rDisabled: function() {
+                return true;
+              },
+              rPlugin: ['HydratorPlusPlusHydratorService', 'GLOBALS', function(HydratorService, GLOBALS) {
+                let appType = this.HydratorPlusPlusDetailNonRunsStore.getPipelineType();
+                if (!pluginNode._backendProperties) {
+                  return HydratorService
+                    .fetchBackendProperties(pluginNode, appType)
+                    .then((node) => {
+                      return {
+                        node: node,
+                        isValidPlugin: true,
+                        type: appType,
+                        isSource: GLOBALS.pluginTypes[appType].source === pluginNode.type,
+                        isSink: GLOBALS.pluginTypes[appType].sink === pluginNode.type,
+                        isTransform: GLOBALS.pluginTypes[appType].transform === pluginNode.type
+                      };
+                    });
+                } else {
+                  return {
+                    node: pluginNode,
+                    isValidPlugin: true,
+                    type: appType,
+                    isSource: GLOBALS.pluginTypes[appType].source === pluginNode.type,
+                    isSink: GLOBALS.pluginTypes[appType].sink === pluginNode.type,
+                    isTransform: GLOBALS.pluginTypes[appType].transform === pluginNode.type
+                  };
+                }
+              }.bind(this)]
+            }
+          })
+          .result
+          .then(this.deleteNode.bind(this));
     };
 
     this.deleteNode = function() {
