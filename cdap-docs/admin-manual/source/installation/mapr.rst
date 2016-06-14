@@ -209,6 +209,4 @@ Kerberos is currently not supported by CDAP on secure MapR clusters.
 ..     :start-after: .. configuration-enabling-kerberos:
 ..     :end-before: .. _mapr-configuration-eps:
 
-.. _mapr-highly-available:
-
-.. include:: ../_includes/installation/ha-installation.txt
+.. include:: /../target/_includes/mapr-ha-installation.rst

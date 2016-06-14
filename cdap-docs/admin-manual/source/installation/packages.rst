@@ -116,6 +116,5 @@ Advanced Topics
     :start-after: .. configuration-enabling-kerberos:
     :end-before: .. _packages-configuration-eps:
 
-.. _packages-highly-available:
+.. include:: /../target/_includes/packages-ha-installation.rst
 
-.. include:: ../_includes/installation/ha-installation.txt

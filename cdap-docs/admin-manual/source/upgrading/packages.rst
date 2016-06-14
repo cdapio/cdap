@@ -27,9 +27,9 @@ version to a higher |short-version|\.x version.
 
 Upgrading CDAP Major/Minor Release Versions
 -------------------------------------------
-Upgrading between major versions of CDAP refers to upgrading from a
+Upgrading between major/minor versions of CDAP refers to upgrading from a
 |previous-short-version|\.x version to |short-version|\.x. Upgrades
-between multiple Major/Minor versions must be done consecutively, and a
+between multiple major/minor versions must be done consecutively, and a
 version cannot be skipped unless otherwise noted.
 
 Upgrade Steps

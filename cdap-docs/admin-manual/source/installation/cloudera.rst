@@ -543,38 +543,72 @@ Enabling CDAP HA
 In addition to having a :ref:`cluster architecture <admin-manual-install-deployment-architectures-ha>`
 that supports HA (high availability), these additional configuration steps need to followed and completed:
 
+CDAP Components
+...............
+For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
+comments apply:
+
+- Sync the configuration files (such as ``cdap-site.xml`` and ``cdap-security.xml``) on all the nodes. 
+  Though the Cloudera Manager UI will do this for you, as any customization of individual can over-ride this, 
+  it is important to keep this in mind as the end-goal when you make changes.
+- While the default *bind.address* settings (``0.0.0.0``, used for ``app.bind.address``,
+  ``data.tx.bind.address``, ``router.bind.address``, and so on) can be synced across hosts,
+  if you customize them to a particular IP address, they will |---| as a result |---| be
+  different on different hosts. This can be controlled by the settings for an individual *Role Instance*.
+
 CDAP Master
 ...........
-- Install multiple instances of the CDAP Master on different nodes.
-- The instances coordinate amongst themselves, setting a leader and followers.
+The CDAP Master service primarily performs coordination tasks and can be scaled for redundancy. The
+instances coordinate amongst themselves, electing one as a leader at all times.
+
+- Using the Cloudera Manager UI, add additional *Role Instances* of the role ``CDAP Master
+  Service`` to additional machines.
+- Ensure each machine has all required Gateway roles.
+- Start each ``CDAP Master Service`` role.
 
 CDAP Router
 ...........
-- Install multiple instances of the CDAP Router on different nodes.
-- Sync the configuration files (``cdap-site.xml``, ``cdap-security.xml``) on the nodes.
-- Place a load balancer, if desired, in front of these nodes.
-- The CDAP Router is stateless, and simply routes requests to the appropriate service.
+The CDAP Router service is a stateless API endpoint for CDAP, and simply routes requests to the
+appropriate service. It can be scaled horizontally for performance. A load balancer, if
+desired, can be placed in front of the nodes running the service.
+
+- Using the Cloudera Manager UI, add *Role Instances* of the role ``CDAP Gateway/Router
+  Service`` to additional machines.
+- Start each ``CDAP Gateway/Router Service`` role.
 
 CDAP Kafka
 ..........
-- Two properties govern the Kafka setting in the cluster.
-- The **list of Kafka seed brokers** is generated automatically, but the
-  replication factor (``kafka.default.replication.factor``) is not set
-  automatically. Instead, it needs to be set manually.
-- The **replication factor** is used to replicate Kafka messages across
-  multiple machines to prevent data loss in the event of a hardware
-  failure.
-- The recommended setting is to run at least two Kafka servers; set this
-  property to the number of Kafka servers.
+- Using the Cloudera Manager UI, add *Role Instances* of the role ``CDAP Kafka Service``
+  to additional machines.
+- Two properties govern the Kafka setting in the cluster:
+
+  - The **list of Kafka seed brokers** is generated automatically, but the
+    replication factor (``kafka.default.replication.factor``) is not set
+    automatically. Instead, it needs to be set manually.
+  - The **replication factor** is used to replicate Kafka messages across
+    multiple machines to prevent data loss in the event of a hardware
+    failure.
+
+- The recommended setting is to run **at least two** Kafka servers with a **minimum replication
+  factor of two**; set this property to the maximum number of tolerated machine failures
+  plus one (assuming you have that number of servers). For example, if you were running
+  five Kafka servers, and would tolerate two of those failing, you would set the
+  replication factor to three. The number of seed brokers listed should always be equal to
+  or greater than the replication factor.
+- Start each ``CDAP Kafka Service`` role.
 
 CDAP UI
 .......
-- Install multiple instances of the CDAP UI on different nodes.
+- Using the Cloudera Manager UI, add *Role Instances* of the role ``CDAP UI Service``
+  to additional machines.
 - For Cloudera Manager, the CDAP UI and the CDAP Router need to be on
   the same node so that the UI talks to the correct (the same) Router.
+- Start each ``CDAP UI Service`` role. 
 
 CDAP Authentication Server
 ..........................
-- Install multiple instances of the CDAP Authentication Server on different nodes.
+- Using the Cloudera Manager UI, add *Role Instances* of the role ``CDAP Security Auth
+  Service`` (the CDAP Authentication Server) to additional machines.
 - When an initial request is made to the Authentication Server, instead
   of returning a single VIP (virtual IP), it will return a list of routes.
+- Start each ``CDAP Security Auth Service`` role.  
