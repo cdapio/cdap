@@ -132,15 +132,16 @@ body.theme-cdap {
         width: 25%;
       }
       div.hydrator-metadata {
+        @media (min-width: @screen-lg-min) {
+          max-width: 650px;
+        }
+
         background-color: transparent;
         position: relative;
         z-index: 1021;
         .box-shadow(none);
         .transition(all 0.2s ease);
 
-        @media (min-width: @screen-lg-min) {
-          max-width: 650px;
-        }
         &:hover,
         &:focus {
           cursor: pointer;
