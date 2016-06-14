@@ -25,6 +25,7 @@ import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
+import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -33,7 +34,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTP
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.AbstractDatasetFrameworkTest;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -45,6 +45,7 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -127,12 +128,13 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       .build();
 
     InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
-    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClientService, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
+    TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
     DatasetInstanceService instanceService = new DatasetInstanceService(
-      new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
-      new DatasetInstanceManager(mdsDatasetsRegistry),
+      new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
+                             txExecutorFactory, mdsFramework, DEFAULT_MODULES),
+      new DatasetInstanceManager(txSystemClientService, txExecutorFactory, mdsFramework),
       new InMemoryDatasetOpExecutor(framework),
       exploreFacade,
       cConf,
@@ -143,10 +145,10 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
+                                 new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
+                                                        txExecutorFactory, mdsFramework, DEFAULT_MODULES),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
-                                 mdsDatasetsRegistry,
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,

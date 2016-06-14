@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.YarnDatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -69,9 +68,11 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named("datasetMDS"))
+          .toProvider(DatasetMdsProvider.class)
+          .in(Singleton.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
-        bind(MDSDatasetsRegistry.class).in(Singleton.class);
         bind(DatasetService.class);
         expose(DatasetService.class);
 
@@ -104,9 +105,11 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named("datasetMDS"))
+          .toProvider(DatasetMdsProvider.class)
+          .in(Singleton.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
-        bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
           .addBinding().to(LevelDBDatasetMetricsReporter.class);
@@ -141,9 +144,11 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named("datasetMDS"))
+          .toProvider(DatasetMdsProvider.class)
+          .in(Singleton.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
-        bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
           .addBinding().to(HBaseDatasetMetricsReporter.class);
@@ -176,9 +181,9 @@ public class DataSetServiceModules extends RuntimeModule {
     private final CConfiguration configuration;
 
     @Inject
-    public DatasetMdsProvider(DatasetDefinitionRegistryFactory registryFactory,
-                              @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
-                              CConfiguration configuration) {
+    DatasetMdsProvider(DatasetDefinitionRegistryFactory registryFactory,
+                       @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
+                       CConfiguration configuration) {
       this.registryFactory = registryFactory;
       this.defaultModules = defaultModules;
       this.configuration = configuration;
