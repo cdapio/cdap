@@ -3,7 +3,7 @@
 Enabling CDAP HA
 ----------------
 In addition to having a :ref:`cluster architecture <admin-manual-install-deployment-architectures-ha>`
-that supports HA (high availability), these additional configuration steps need to followed and completed:
+that supports HA (high availability), these additional configuration steps need to be followed and completed:
 
 CDAP Components
 ...............
@@ -40,23 +40,24 @@ desired, can be placed in front of the nodes running the service.
 CDAP Kafka
 ..........
 - Install the ``cdap-kafka`` package on different nodes.
-- Two properties need to be set in the ``cdap-site.xml`` files on each node.
-- The **Kafka brokers list** is a comma-separated list of hosts, followed by ``/${root.namespace}``:
+- Two properties need to be set in the ``cdap-site.xml`` files on each node:
 
-    ``kafka.seed.brokers``: ``myhost.example.com:9092,.../${root.namespace}``
+  - The **Kafka seed brokers list** is a comma-separated list of hosts, followed by ``/${root.namespace}``:
+
+      ``kafka.seed.brokers``: ``myhost.example.com:9092,.../${root.namespace}``
     
-  Substitute appropriate addresses for ``myhost.example.com`` in the above example.
+    Substitute appropriate addresses for ``myhost.example.com`` in the above example.
   
-- The **replication factor** is used to replicate Kafka messages across multiple
-  machines to prevent data loss in the event of a hardware failure:
+  - The **replication factor** is used to replicate Kafka messages across multiple
+    machines to prevent data loss in the event of a hardware failure:
   
-    ``kafka.default.replication.factor``: 2
+      ``kafka.default.replication.factor``: 2
 
-- The recommended setting is to run at least two Kafka servers with a minimum replication
+- The recommended setting is to run at least two Kafka brokers with a minimum replication
   factor of two; set this property to the maximum number of tolerated machine failures
-  plus one (assuming you have that number of servers). For example, if you were running
-  five Kafka servers, and would tolerate two of those failing, you would set the
-  replication factor to three. The number of seed brokers listed should always be equal to
+  plus one (assuming you have that number of machines). For example, if you were running
+  five Kafka brokers, and would tolerate two of those failing, you would set the
+  replication factor to three. The number of Kafka brokers listed should always be equal to
   or greater than the replication factor.
 - Start the ``cdap-kafka`` service on each node.
 
@@ -69,6 +70,6 @@ CDAP UI
 CDAP Authentication Server
 ..........................
 - Install the ``cdap-security`` package (the CDAP Authentication Server) on different nodes.
-- When an initial request is made to the Authentication Server, instead
-  of returning a single VIP (virtual IP), it will return a list of routes.
 - Start the ``cdap-security`` service on each node.
+- Note that when an unauthenticated request is made in a secure HA setup, a list of all
+  running authentication endpoints will be returned in the body of the request.
