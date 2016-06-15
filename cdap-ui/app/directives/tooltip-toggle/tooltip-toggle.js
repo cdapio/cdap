@@ -22,14 +22,21 @@ angular.module(PKG.name + '.commons')
       link: function (scope, element, attrs) {
         attrs.tooltipTrigger = 'customShow';
 
+        var toggleTimeout = null;
+
         scope.$watch(attrs.tooltipToggle, function (newVal) {
-          $timeout(function () {
+          $timeout.cancel(toggleTimeout);
+          toggleTimeout = $timeout(function () {
             if (newVal) {
               element.triggerHandler('customShow');
             } else {
               element.triggerHandler('customHide');
             }
           });
+        });
+
+        scope.$on('$destroy', function () {
+          $timeout.cancel(toggleTimeout);
         });
       }
     };

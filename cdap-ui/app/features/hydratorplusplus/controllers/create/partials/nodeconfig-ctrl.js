@@ -50,6 +50,13 @@ class HydratorPlusPlusNodeConfigCtrl {
     ];
     this.activeTab = 1;
     this.showContents();
+
+    // Timeouts
+    this.setStateTimeout = null;
+    this.$scope.$on('$destroy', () => {
+      this.$timeout.cancel(this.setStateTimeout);
+    });
+
   }
   showContents() {
     if (angular.isArray(this.state.watchers)) {
@@ -58,7 +65,9 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
     if (Object.keys(this.state.node).length) {
       this.configfetched = false;
-      this.$timeout(() => {
+
+      this.$timeout.cancel(this.setStateTimeout);
+      this.setStateTimeout = this.$timeout(() => {
         this.loadNewPlugin();
         this.validateNodeLabel();
       });

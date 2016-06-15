@@ -16,6 +16,8 @@
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusDetailConfigCtrl', function(HydratorPlusPlusDetailNonRunsStore, $timeout, $scope) {
+    var exportTimeout = null;
+
     this.setState = function() {
       this.config = HydratorPlusPlusDetailNonRunsStore.getConfigJson();
     };
@@ -29,10 +31,16 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       $scope.$on('$destroy', function () {
         URL.revokeObjectURL(this.url);
       }.bind(this));
-      $timeout(function() {
+
+      $timeout.cancel(exportTimeout);
+      exportTimeout = $timeout(function() {
         document.getElementById('pipeline-export-config-link').click();
       });
     };
+
+    $scope.$on('$destroy', function () {
+      $timeout.cancel(exportTimeout);
+    });
 
     HydratorPlusPlusDetailNonRunsStore.registerOnChangeListener(this.setState.bind(this));
   });
