@@ -11,7 +11,7 @@ Docker Image
 
 
 Docker is one of the easiest ways to start working with CDAP without having to manually
-configure anything. A Docker container with the CDAP SDK pre-installed is available on the Docker Hub
+configure anything. A Docker image with the CDAP SDK pre-installed is available on the Docker Hub
 for download.
 
 To use the **Docker image**, you can either start the container from :ref:`a command line
@@ -28,7 +28,7 @@ following the `platform-specific installation instructions <https://docs.docker.
 from `Docker.com <https://docker.com>`__, and verify that the Docker environment is working and has
 started correctly.
   
-#. If you are not running on Linux, you will need to create and start the Docker Virtual Machine (VM) before you
+#. If you are not running on Linux, you will need to create and start a Docker Virtual Machine (VM) before you
    can use containers. For example:
    
    .. tabbed-parsed-literal::
@@ -40,7 +40,7 @@ started correctly.
      $ docker-machine create --driver virtualbox cdap
      $ docker-machine env cdap
      
-   This will create a new Docker virtual machine named ``cdap`` and print out the environment.
+   This will create a new Docker virtual machine using VirtualBox named ``cdap`` and print out the environment.
 
 #. When you run ``docker-machine env cdap``, it will print a message on the screen such as::
 
@@ -84,9 +84,11 @@ started correctly.
      :dependent: linux-windows
      :languages: console,shell-session
  
-     $ docker run -d --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+     $ docker run --detach --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+     
+   This will start the container, name it ``cdap-standalone``, and setup the proxying of ports.
 
-#. CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s software
+#. CDAP will start automatically once the container starts. CDAP’s software
    directory is under ``/opt/cdap/sdk``.
 
 #. Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
@@ -94,9 +96,9 @@ started correctly.
   
 #. If you are **running Docker on either Mac OS X or Microsoft Windows**, replace ``localhost`` 
    with the Docker VM's IP address (such as ``192.168.99.100``) that you obtained earlier.
-   Start a browser and enter the address to access the CDAP UI.
+   Start a browser and enter the address to access the CDAP UI from outside Docker.
 
-#. To control the CDAP instance, use this command, substituting one of ``start``, ``restart``,
+#. To control the CDAP instance, use this command, substituting one of ``start``, ``restart``, ``status``,
    or ``stop`` for ``<command>``:
 
    .. tabbed-parsed-literal::
@@ -107,11 +109,11 @@ started correctly.
      
      .. Linux or Mac OS X
      
-     $ docker -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
+     $ docker exec --detach cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
 
      .. Windows
      
-     > docker -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
+     > docker exec --detach cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
 
 #. When you are finished, stop CDAP and then shutdown Docker:
 
@@ -123,12 +125,12 @@ started correctly.
      
      .. Linux or Mac OS X
      
-     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
+     $ docker exec --detach cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
      $ docker-machine stop cdap
 
      .. Windows
      
-     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
+     > docker exec --detach cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
      > docker-machine stop cdap
 
 #. For a full list of Docker Commands, see the `Docker Command Line Documentation.
