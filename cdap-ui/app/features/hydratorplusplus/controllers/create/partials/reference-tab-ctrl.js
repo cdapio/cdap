@@ -15,17 +15,14 @@
  */
 
 class HydratorPlusPlusReferenceTabCtrl {
-  constructor(HydratorPlusPlusPluginConfigFactory, HydratorPlusPlusNodeConfigStore, GLOBALS, myHelpers) {
+  constructor(HydratorPlusPlusPluginConfigFactory, GLOBALS, myHelpers) {
     this.GLOBALS = GLOBALS;
-    this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.myHelpers = myHelpers;
-    this.HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.setState();
   }
   setState() {
     this.state = this.state || {};
-    this.state.node = this.HydratorPlusPlusNodeConfigStore.getState().node;
     if (!this.state.node.plugin) {
       this.state.docReference = this.GLOBALS.en.hydrator.studio.info['DEFAULT-REFERENCE'];
     } else {
@@ -49,6 +46,6 @@ class HydratorPlusPlusReferenceTabCtrl {
   }
 }
 
-HydratorPlusPlusReferenceTabCtrl.$inject = ['HydratorPlusPlusPluginConfigFactory', 'HydratorPlusPlusNodeConfigStore', 'GLOBALS', 'myHelpers'];
+HydratorPlusPlusReferenceTabCtrl.$inject = ['HydratorPlusPlusPluginConfigFactory', 'GLOBALS', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusReferenceTabCtrl', HydratorPlusPlusReferenceTabCtrl);

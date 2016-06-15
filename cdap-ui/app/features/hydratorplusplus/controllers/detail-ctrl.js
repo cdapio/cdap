@@ -15,11 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCtrl', function(HydratorPlusPlusDetailRunsStore, rPipelineDetail, HydratorPlusPlusDetailActions, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusNodeConfigStore, HydratorPlusPlusDetailMetricsActions) {
+  .controller('HydratorPlusPlusDetailCtrl', function(HydratorPlusPlusDetailRunsStore, rPipelineDetail, HydratorPlusPlusDetailActions, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsActions) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     HydratorPlusPlusDetailRunsStore.init(rPipelineDetail);
     HydratorPlusPlusDetailNonRunsStore.init(rPipelineDetail);
-    HydratorPlusPlusNodeConfigStore.init();
 
     var params = HydratorPlusPlusDetailRunsStore.getParams();
     params.scope = $scope;
@@ -62,7 +61,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
       HydratorPlusPlusDetailRunsStore.reset();
       HydratorPlusPlusDetailNonRunsStore.reset();
-      HydratorPlusPlusNodeConfigStore.reset();
       HydratorPlusPlusDetailMetricsActions.reset();
     });
   });

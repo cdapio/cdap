@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusBottomPanelCtrl {
-  constructor(HydratorPlusPlusBottomPanelActions, HydratorPlusPlusBottomPanelStore, HydratorPlusPlusNodeConfigStore, HydratorPlusPlusConsoleStore) {
+  constructor(HydratorPlusPlusBottomPanelActions, HydratorPlusPlusBottomPanelStore, HydratorPlusPlusConsoleStore) {
     this.tabs = [
       {
         title: 'Console',
@@ -31,7 +31,6 @@ class HydratorPlusPlusBottomPanelCtrl {
       }
     ];
     this.HydratorPlusPlusBottomPanelActions = HydratorPlusPlusBottomPanelActions;
-    this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
     this.HydratorPlusPlusBottomPanelStore = HydratorPlusPlusBottomPanelStore;
 
     this.HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
@@ -62,6 +61,6 @@ class HydratorPlusPlusBottomPanelCtrl {
   }
 }
 
-HydratorPlusPlusBottomPanelCtrl.$inject = ['HydratorPlusPlusBottomPanelActions', 'HydratorPlusPlusBottomPanelStore', 'HydratorPlusPlusNodeConfigStore', 'HydratorPlusPlusConsoleStore'];
+HydratorPlusPlusBottomPanelCtrl.$inject = ['HydratorPlusPlusBottomPanelActions', 'HydratorPlusPlusBottomPanelStore', 'HydratorPlusPlusConsoleStore'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusBottomPanelCtrl', HydratorPlusPlusBottomPanelCtrl);
