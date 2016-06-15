@@ -30,7 +30,7 @@ COPY packer/files /tmp/files
 # build cdap-standalone zip file, copy it to container and extract it
 RUN apt-get update && \
     apt-get install -y curl git && \
-    curl -L http://chef.io/chef/install.sh | bash -- -v 12.11.17 && \
+    curl -L http://chef.io/chef/install.sh | bash -s -- -v 12.11.17 && \
     for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
     chef-solo -o cdap::sdk -j /tmp/files/cdap-sdk.json && \
     for i in remove-chef.sh sdk-cleanup.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
