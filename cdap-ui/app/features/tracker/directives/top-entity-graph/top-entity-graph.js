@@ -25,7 +25,7 @@ angular.module(PKG.name + '.feature.tracker')
         left: 130
       };
 
-      let parentHeight = 300;
+      let parentHeight = 222;
 
       let container = d3.select(element[0].parentNode).node().getBoundingClientRect();
       let width = container.width - margin.left - margin.right;

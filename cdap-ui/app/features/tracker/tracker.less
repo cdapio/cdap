@@ -35,7 +35,6 @@
 body[class*='state-tracker'] {
   main.container {
     margin-top: 50px;
-    width: 100%;
     padding: 0 0 15px 0;
 
     h1,
@@ -66,7 +65,6 @@ body.state-tracker-home.state-tracker {
   background-color: white;
 
   .tracker-content {
-    width: 500px;
     margin: 150px auto;
   }
 
@@ -87,6 +85,10 @@ body.state-tracker-home.state-tracker {
       span { color: @cdap-orange; }
     }
   }
+  div.tracker-search {
+    margin: 0 auto;
+    width: 500px;
+  }
 
   .form-group {
     margin-top: 25px;
@@ -100,6 +102,57 @@ body.state-tracker-home.state-tracker {
       font-size: 18px;
       color: @tracker-grey;
       margin-right: 8px;
+    }
+  }
+
+  div.tracker-metrics {
+    p {
+      line-height: 1;
+      &.metric-heading {
+        color: #333333;
+        font-size: 16px;
+        font-weight: 500;
+        margin: 35px auto 10px;
+      }
+      &.metric-timeframe {
+        color: #999999;
+        font-size: 12px;
+        margin-bottom: 20px;
+      }
+    }
+  }
+  div.metric-container {
+    width: 92%;
+    margin: 0 auto;
+  }
+  table.table {
+    background-color: transparent;
+    border: 1px solid @table-border-color;
+    th, td {
+      border: 1px solid @table-border-color;
+      font-weight: 500;
+      padding: 8px;
+      text-align: center;
+      width: 111px;
+    }
+    th {
+      border-bottom-width: 1px;
+      color: #333333;
+      font-size: 14px;
+      vertical-align: top;
+      span {
+        font-size: 12px;
+        line-height: 1;
+        padding-top: 2px;
+        width: 50%;
+      }
+    }
+    tr > td {
+      color: #666666;
+      font-size: 12px;
+      &:first-child {
+        color: #333333;
+      }
     }
   }
 }
