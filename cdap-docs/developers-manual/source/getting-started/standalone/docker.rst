@@ -11,74 +11,12 @@ Docker Image
 
 
 Docker is one of the easiest ways to start working with CDAP without having to manually
-configure anything. A Docker image with the CDAP SDK pre-installed is available on the Docker Hub
+configure anything. A Docker container with the CDAP SDK pre-installed is available on the Docker Hub
 for download.
 
-To use the **Docker image**, you can either use Docker's :ref:`Kitematic
-<docker-kitematic>` (on Mac OS X and Windows) |---| a graphical user interface for running
-Docker containers |---| or start the container from :ref:`a command line <docker-command-line>`.
-
-.. _docker-kitematic:
-
-Docker using Kitematic
-======================
-
-`Docker Kitematic <https://www.docker.com/docker-kitematic>`__ is available as part of the
-`Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for either Mac OS X or Microsoft Windows.
-It is a graphical user interface for running Docker containers. Follow these steps to install 
-Kitematic and then download, start, and connect to a CDAP container.
-
-#. Download and install the `Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for 
-   either Mac OS X or Microsoft Windows.
-
-#. Start Kitematic. On Mac OS X, it will be installed in ``/Applications/Docker/Kitematic``; on 
-   Windows, in ``Start Menu > Docker > Kitematic``.
-   
-#. Once Kitematic has started, search for the **CDAP image** using the search box at the
-   top of the window. Then click on the repository menu, circled in red here:
- 
-     .. image:: ../../_images/kitematic/kitematic-1-searching.png
-        :width: 8in
-        :align: center
-
-#. Click on the tags button:
- 
-     .. image:: ../../_images/kitematic/kitematic-2-tags.png
-        :width: 4in
-        :align: center
-
-#. Select the desired version.
-   Note that the tag **latest** is the last version that was put up at Docker Hub, which is not the 
-   necessarily the desired version, which is |literal-version|:
- 
-     .. image:: ../../_images/kitematic/kitematic-3-select-tag.png
-        :width: 4in
-        :align: center
-
-#. Close the menu by pressing the ``X`` in the circle. Press "Create" to download and start the CDAP image. 
-   When it has started up, you will see in the logs a message that the CDAP UI is listening on port 9999:
- 
-     .. image:: ../../_images/kitematic/kitematic-4-cdap-started.png
-        :width: 8in
-        :align: center
-
-#. To connect a web browser for the CDAP UI, you'll need to find the external IP addresses
-   and ports that the Docker host is exposing. The easiest way to do that is click on the
-   *Settings* tab, and then the *Ports* tab:
- 
-     .. image:: ../../_images/kitematic/kitematic-5-links.png
-        :width: 8in
-        :align: center
-
-#. This shows that the CDAP container is listening on the internal port ``9999`` within the
-   Docker host, while the Docker host proxies that port on the virtual machine IP address
-   and port (``192.168.99.100:32769``). Enter that address and port into your system web browser to
-   connect to the CDAP UI:
-   
-     .. image:: ../../_images/kitematic/kitematic-6-cdap-ui.png
-        :width: 8in
-        :align: center
-
+To use the **Docker image**, you can either start the container from :ref:`a command line
+<docker-command-line>` or use Docker's :ref:`Kitematic <docker-kitematic>` (on Mac OS X
+and Windows), a graphical user interface for running Docker containers.
 
 .. _docker-command-line:
 
@@ -195,6 +133,69 @@ started correctly.
 
 #. For a full list of Docker Commands, see the `Docker Command Line Documentation.
    <https://docs.docker.com/reference/commandline/cli/>`__
+
+
+.. _docker-kitematic:
+
+Docker using Kitematic
+======================
+
+`Docker Kitematic <https://www.docker.com/docker-kitematic>`__ is available as part of the
+`Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for either Mac OS X or Microsoft Windows.
+It is a graphical user interface for running Docker containers. Follow these steps to install 
+Kitematic and then download, start, and connect to a CDAP container.
+
+#. Download and install the `Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for 
+   either Mac OS X or Microsoft Windows.
+
+#. Start Kitematic. On Mac OS X, it will be installed in ``/Applications/Docker/Kitematic``; on 
+   Windows, in ``Start Menu > Docker > Kitematic``.
+   
+#. Once Kitematic has started, search for the **CDAP image** using the search box at the
+   top of the window. Then click on the repository menu, circled in red here:
+ 
+     .. image:: ../../_images/kitematic/kitematic-1-searching.png
+        :width: 8in
+        :align: center
+
+#. Click on the tags button:
+ 
+     .. image:: ../../_images/kitematic/kitematic-2-tags.png
+        :width: 4in
+        :align: center
+
+#. Select the desired version.
+   Note that the tag **latest** is the last version that was put up at Docker Hub, which is not the 
+   necessarily the desired version, which is |literal-version|:
+ 
+     .. image:: ../../_images/kitematic/kitematic-3-select-tag.png
+        :width: 4in
+        :align: center
+
+#. Close the menu by pressing the ``X`` in the circle. Press "Create" to download and start the CDAP image. 
+   When it has started up, you will see in the logs a message that the CDAP UI is listening on port 9999:
+ 
+     .. image:: ../../_images/kitematic/kitematic-4-cdap-started.png
+        :width: 8in
+        :align: center
+
+#. To connect a web browser for the CDAP UI, you'll need to find the external IP addresses
+   and ports that the Docker host is exposing. The easiest way to do that is click on the
+   *Settings* tab, and then the *Ports* tab:
+ 
+     .. image:: ../../_images/kitematic/kitematic-5-links.png
+        :width: 8in
+        :align: center
+
+#. This shows that the CDAP container is listening on the internal port ``9999`` within the
+   Docker host, while the Docker host proxies that port on the virtual machine IP address
+   and port (``192.168.99.100:32769``). Enter that address and port into your system web browser to
+   connect to the CDAP UI:
+   
+     .. image:: ../../_images/kitematic/kitematic-6-cdap-ui.png
+        :width: 8in
+        :align: center
+
 
 .. _docker-cdap-applications:
 
