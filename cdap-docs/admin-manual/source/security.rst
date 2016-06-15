@@ -408,7 +408,6 @@ Property                                          Default Value        Descripti
                                                                        exempt from authentication.
 ================================================= ==================== ======================================================
 
-
 For example, the following configuration in ``cdap-site.xml`` will allow unauthenticated
 posting to all streams in the default namespace::
 
@@ -450,16 +449,17 @@ will use ``https`` instead of ``http``.
 
     {"auth_uri":["http://localhost:10009/token"]}
 
-- Submit a username and password to one of the URIs to obtain an ``AccessToken``::
+- Submit a username and password to one of the authentication URIs (``<auth-uri>``) to
+  obtain an ``AccessToken``::
 
-    GET -u <username>:<password> <auth-uri>
+    GET <auth-uri> <username>:<password>
 	
-  such as (assuming a CDAP authentication server at a URI ``localhost:10009`` and that you
-  have defined a username:password pair such as ``cdap:realtime``):
+  such as (assuming a CDAP authentication server at the URI ``localhost:10009`` and that you
+  have defined a *username:password* pair such as ``cdap:bigdata``):
   
   .. tabbed-parsed-literal::
 	
-    $ curl -v -w"\n" -X GET -u cdap:realtime "http://localhost:10009/token"
+    $ curl -v -w"\n" -X GET "http://localhost:10009/token" -u cdap:bigdata 
 
   This should return a ``200 OK`` response with the ``AccessToken`` string in the response
   body (formatted to fit)::
@@ -469,7 +469,7 @@ will use ``https`` instead of ``http``.
 
 - Reattempt the first command, but this time include the ``access_token`` as a header in the request::
 
-    GET /v3/apps -H "Authorization: Bearer <access_token>"
+    GET /v3/apps "Authorization: Bearer <access_token>"
 	  
   such as (formatted to fit):
 	
