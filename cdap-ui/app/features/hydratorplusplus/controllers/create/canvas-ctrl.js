@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,7 +49,6 @@ class HydratorPlusPlusCreateCanvasCtrl {
 
   setActiveNode() {
     var nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
-    console.log('Active node', nodeId);
     if (!nodeId) {
       return;
     }
@@ -62,10 +61,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
       nodeFromNodesStore = this.DAGPlusPlusNodesStore.getNodes().filter(node => node.name === nodeId);
       pluginNode = nodeFromNodesStore[0];
     }
-    console.log('Plugin Node', pluginNode);
     this.$uibModal
         .open({
-          templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config.html',
+          templateUrl: '/assets/features/hydratorplusplus/templates/partial/node/popover.html',
           size: 'lg',
           windowTopClass: 'node-config-modal hydrator-modal',
           controller: 'HydratorPlusPlusNodeConfigCtrl',
@@ -96,7 +94,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
           }
         })
         .result
-        .then(this.deleteNode.bind(this), this.deleteNode.bind(this));
+        .then(this.deleteNode.bind(this), this.deleteNode.bind(this)); // Both close and ESC events in the modal are considered as SUCCESS and ERROR in promise callback. Hence the same callback for both success & failure.
   }
 
   deleteNode() {

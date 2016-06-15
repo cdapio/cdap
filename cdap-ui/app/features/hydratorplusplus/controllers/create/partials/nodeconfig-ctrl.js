@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,21 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.ConfigStore = HydratorPlusPlusConfigStore;
     this.$scope.isDisabled = rDisabled;
     this.setDefaults(rPlugin);
+    this.tabs = [
+      {
+        label: 'Configuration',
+        templateUrl: '/assets/features/hydratorplusplus/templates/partial/node/configuration-tab.html'
+      },
+      {
+        label: 'Preview',
+        templateUrl: '/assets/features/hydratorplusplus/templates/partial/node/preview-tab.html'
+      },
+      {
+        label: 'Reference',
+        templateUrl: '/assets/features/hydratorplusplus/templates/partial/node/reference-tab.html'
+      }
+    ];
+    this.activeTab = 1;
     this.showContents();
   }
   showContents() {

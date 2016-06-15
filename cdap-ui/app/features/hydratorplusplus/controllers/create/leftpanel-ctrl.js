@@ -232,7 +232,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     let templateType = this.HydratorPlusPlusConfigStore.getArtifact().name;
     let openTemplatesPopup = () => {
       this.$uibModal.open({
-        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/pre-configured-batch-list.html',
+        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/pre-configured-templates.html',
         size: 'lg',
         backdrop: true,
         keyboard: true,

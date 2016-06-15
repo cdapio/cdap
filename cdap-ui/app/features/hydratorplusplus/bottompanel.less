@@ -690,7 +690,7 @@ body.theme-cdap.state-hydratorplusplus {
     &.node-config-modal {
       .modal-dialog {
         width: 100%;
-        height: 70vh;
+        overflow-y: hidden;
 
         .modal-header {
           .modal-title {
@@ -701,9 +701,30 @@ body.theme-cdap.state-hydratorplusplus {
         .modal-content {
           .modal-body {
             padding: 10px;
+            overflow-y: hidden;
 
             .console-type {
               border: 1px solid @table-border-color;
+
+              .node-config {
+                ul.nav.nav-tabs {
+                  li {
+                    color: #666666;
+                    font-weight: 500;
+                    padding: 10px 15px;
+                    cursor: pointer;
+
+                    &.active {
+                      border-bottom: 2px solid @hydrator-blue;
+                    }
+                  }
+                }
+                .bottompanel-body {
+                  padding: 10px;
+                  overflow-y: auto;
+                  height: 59vh;
+                }
+              }
             }
             .control-label {
               font-weight: bold;

@@ -56,7 +56,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       let pluginNode = this.HydratorPlusPlusDetailNonRunsStore.getPluginObject(nodeId);
       this.$uibModal
           .open({
-            templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config.html',
+            templateUrl: '/assets/features/hydratorplusplus/templates/partial/node/popover.html',
             size: 'lg',
             backdrop: 'static',
             windowTopClass: 'node-config-modal hydrator-modal',
@@ -88,7 +88,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             }
           })
           .result
-          .then(this.deleteNode.bind(this), this.deleteNode.bind(this));
+          .then(this.deleteNode.bind(this), this.deleteNode.bind(this)); // Both close and ESC events in the modal are considered as SUCCESS and ERROR in promise callback. Hence the same callback for both success & failure.
     };
 
     this.deleteNode = () => {
