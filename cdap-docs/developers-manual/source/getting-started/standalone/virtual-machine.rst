@@ -64,10 +64,9 @@ Use the ``cdap.sh`` script to start and stop the Standalone CDAP:
    :tabs: "Linux Virtual Machine"
    :independent:
 
-   $ cd /opt/cdap/sdk
-   $ ./bin/cdap.sh start
+   $ /opt/cdap/sdk/bin/cdap.sh start
      . . .
-   $ ./bin/cdap.sh stop
+   $ /opt/cdap/sdk/bin/cdap.sh stop
 
 Note that starting CDAP is not necessary if you use the Virtual Machine, as it
 starts the Standalone CDAP automatically on startup.
