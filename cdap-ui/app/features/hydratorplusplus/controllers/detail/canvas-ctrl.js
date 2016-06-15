@@ -15,14 +15,14 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal, GLOBALS) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal, GLOBALS, DAGPlusPlusNodesDispatcher) {
     this.GLOBALS = GLOBALS;
     this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
-    this.HydratorPlusPlusNodeConfigActions = HydratorPlusPlusNodeConfigActions;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
+    this.DAGPlusPlusNodesDispatcher = DAGPlusPlusNodesDispatcher;
 
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
@@ -88,11 +88,11 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             }
           })
           .result
-          .then(this.deleteNode.bind(this));
+          .then(this.deleteNode.bind(this), this.deleteNode.bind(this));
     };
 
-    this.deleteNode = function() {
-      this.HydratorPlusPlusNodeConfigActions.removePlugin();
+    this.deleteNode = () => {
+      this.DAGPlusPlusNodesDispatcher.getDispatcher().dispatch('onNodeSelectReset');
     };
 
     this.generateSchemaOnEdge = function (sourceId) {
@@ -118,5 +118,5 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     }.bind(this));
 
 
-    DAGPlusPlusNodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
+    DAGPlusPlusNodesStore.registerOnChangeListener(this.setActiveNode.bind(this));
   });
