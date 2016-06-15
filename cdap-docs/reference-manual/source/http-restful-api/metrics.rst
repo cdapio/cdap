@@ -87,39 +87,39 @@ These are the available application contexts of CDAP:
    * - System Metric
      - Context
    * - One Run of a flowlet
-     - ``namespace:<namespace> app:<app-id> flow:<flow-id> flowlet:<flowlet-id> run:<run-id>``
+     - ``namespace:<namespace-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id> run:<run-id>``
    * - One flowlet of a flow
-     - ``namespace:<namespace> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
+     - ``namespace:<namespace-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
    * - All flowlets of a flow
-     - ``namespace:<namespace> app:<app-id> flow:<flow-id>``
+     - ``namespace:<namespace-id> app:<app-id> flow:<flow-id>``
    * - All flowlets of all flows of an application
-     - ``namespace:<namespace> app:<app-id> flow:*``
+     - ``namespace:<namespace-id> app:<app-id> flow:*``
    * - All Mappers of a MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:m``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:<mapreduce-id> tasktype:m``
    * - All Reducers of a MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:r``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:<mapreduce-id> tasktype:r``
    * - One Run of a MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> run:<run-id>``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:<mapreduce-id> run:<run-id>``
    * - One MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id>``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:<mapreduce-id>``
    * - All MapReduce of an application
-     - ``namespace:<namespace> app:<app-id> mapreduce:*``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:*``
    * - One service
-     - ``namespace:<namespace> app:<app-id> service:<service-id>``
+     - ``namespace:<namespace-id> app:<app-id> service:<service-id>``
    * - All services of an application
-     - ``namespace:<namespace> app:<app-id> service:*``
+     - ``namespace:<namespace-id> app:<app-id> service:*``
    * - One Spark program
-     - ``namespace:<namespace> app:<app-id> spark:<spark-id>``
+     - ``namespace:<namespace-id> app:<app-id> spark:<spark-id>``
    * - All Spark programs of an application
-     - ``namespace:<namespace> app:<app-id> spark:*``
+     - ``namespace:<namespace-id> app:<app-id> spark:*``
    * - One worker
-     - ``namespace:<namespace> app:<app-id> worker:<worker-id>``
+     - ``namespace:<namespace-id> app:<app-id> worker:<worker-id>``
    * - All workers of an application
-     - ``namespace:<namespace> app:<app-id> workers:*``
+     - ``namespace:<namespace-id> app:<app-id> workers:*``
    * - All components of an application
-     - ``namespace:<namespace> app:<app-id>``
+     - ``namespace:<namespace-id> app:<app-id>``
    * - All components of all applications
-     - ``namespace:<namespace> app:*``
+     - ``namespace:<namespace-id> app:*``
 
 Stream metrics are only available at the stream level and the only available context is:
 
@@ -130,7 +130,7 @@ Stream metrics are only available at the stream level and the only available con
    * - Stream Metric
      - Context
    * - A single stream
-     - ``namespace:<namespace> stream:<stream-id>``
+     - ``namespace:<namespace-id> stream:<stream-id>``
 
 Dataset metrics are available at the dataset level, but they can also be queried down to the
 flowlet, worker, service, Mapper, or Reducer level:
@@ -142,15 +142,15 @@ flowlet, worker, service, Mapper, or Reducer level:
    * - Dataset Metric
      - Context
    * - A single dataset in the context of a single flowlet
-     - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
+     - ``namespace:<namespace-id> dataset:<dataset-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
    * - A single dataset in the context of a single flow
-     - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id>``
+     - ``namespace:<namespace-id> dataset:<dataset-id> app:<app-id> flow:<flow-id>``
    * - A single dataset in the context of a specific application
-     - ``namespace:<namespace> dataset:<dataset-id> app:<app-id>``
+     - ``namespace:<namespace-id> dataset:<dataset-id> app:<app-id>``
    * - A single dataset
-     - ``namespace:<namespace> dataset:<dataset-id>``
+     - ``namespace:<namespace-id> dataset:<dataset-id>``
    * - All datasets
-     - ``namespace:<namespace> dataset:*``
+     - ``namespace:<namespace-id> dataset:*``
 
 .. _available-system-metrics:
 
@@ -450,7 +450,7 @@ To query a metric within a given context, perform an HTTP POST request::
    * - ``time-range``
      - A :ref:`time range <http-restful-api-metrics-time-range>` or ``aggregate=true`` for 
        all since the application was deployed
-   * - ``tags`` *[Optional]*
+   * - ``tags`` *(optional)*
      - :ref:`Tag list <http-restful-api-metrics-groupby>` by which to group results (optional)
 
 **Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and

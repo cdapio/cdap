@@ -43,7 +43,7 @@ Creating a Stream View
 ======================
 A view can be added to an existing stream with an HTTP POST request to the URL::
 
-  PUT /v3/namespaces/<namespace>/streams/<stream-id>/views/<view-id>
+  PUT /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>
 
 .. list-table::
    :widths: 20 80
@@ -51,7 +51,7 @@ A view can be added to an existing stream with an HTTP POST request to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of the stream (must be already existing)
@@ -115,7 +115,7 @@ Listing Stream Views
 To list all of the existing stream views of an existing stream, issue an HTTP GET request
 to the URL::
 
-  GET /v3/namespaces/<namespace>/streams/<stream-id>/views
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views
 
 .. list-table::
    :widths: 20 80
@@ -123,7 +123,7 @@ to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of the stream (must be already existing)
@@ -162,7 +162,7 @@ Details of a Stream View
 For detailed information on an existing stream view, issue an HTTP GET request
 to the URL::
 
-  GET /v3/namespaces/<namespace>/streams/<stream-id>/views/<view-id>
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>
 
 .. list-table::
    :widths: 20 80
@@ -170,7 +170,7 @@ to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of the stream
@@ -220,7 +220,7 @@ Deleting a Stream View
 ========================
 To delete an existing stream view, issue an HTTP DELETE request to the URL::
 
-  DELETE /v3/namespaces/<namespace>/streams/<stream-id>/views/<view-id>
+  DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>
 
 .. list-table::
    :widths: 20 80
@@ -228,7 +228,7 @@ To delete an existing stream view, issue an HTTP DELETE request to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of the stream

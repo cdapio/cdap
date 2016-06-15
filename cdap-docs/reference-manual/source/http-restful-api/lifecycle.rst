@@ -30,7 +30,7 @@ Create an Application
 ---------------------
 To create an application, submit an HTTP PUT request::
 
-  PUT /v3/namespaces/<namespace>/apps/<app-name>
+  PUT /v3/namespaces/<namespace-id>/apps/<app-name>
 
 The request body is a JSON object specifying the artifact to use to create the application,
 and an optional application configuration. For example:
@@ -58,7 +58,7 @@ Update an Application
 ---------------------
 To update an application, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/apps/<app-name>/update
+  POST /v3/namespaces/<namespace-id>/apps/<app-name>/update
 
 The request body is a JSON object specifying the updated artifact version and the updated application
 config. For example, a request body of:
@@ -86,10 +86,10 @@ overwritten by the config specified in the request.
 
 Deploy an Artifact and Application
 ----------------------------------
-To deploy an application from your local file system into the namespace *<namespace>*,
+To deploy an application from your local file system into the namespace *namespace-id*,
 submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/apps
+  POST /v3/namespaces/<namespace-id>/apps
 
 with the name of the JAR file as a header::
 
@@ -119,7 +119,7 @@ For an application that has a configuration class such as::
 
 we can deploy it with this RESTful call::
 
-  POST /v3/namespaces/<namespace>/apps
+  POST /v3/namespaces/<namespace-id>/apps
   -H "X-Archive-Name: <jar-name>"
   -H "X-App-Config: "{\"streamName\" : \"newStream\", \"datasetName\" : \"newDataset\" }"
   --data-binary "@<jar-location>"
@@ -129,16 +129,16 @@ Note that the ``X-App-Config`` header contains the JSON serialization string of 
 Deployed Applications
 ---------------------
 
-To list all of the deployed applications in the namespace *<namespace>*, issue an HTTP
+To list all of the deployed applications in the namespace *namespace-id*, issue an HTTP
 GET request::
 
-  GET /v3/namespaces/<namespace>/apps[?artifactName=<artifact-names>[&artifactVersion=<artifact-version>]]
+  GET /v3/namespaces/<namespace-id>/apps[?artifactName=<artifact-names>[&artifactVersion=<artifact-version>]]
 
 This will return a JSON String map that lists each application with its name, description, and artifact.
 The list can optionally be filtered by one or more artifact names. It can also be filtered by artifact version.
 For example::
 
-  GET /v3/namespaces/<namespace>/apps?artifactName=cdap-etl-batch,cdap-etl-realtime
+  GET /v3/namespaces/<namespace-id>/apps?artifactName=cdap-etl-batch,cdap-etl-realtime
 
 will return all applications that use either the ``cdap-etl-batch`` or ``cdap-etl-realtime`` artifacts.
 
@@ -147,9 +147,9 @@ Details of a Deployed Application
 ---------------------------------
 
 For detailed information on an application that has been deployed in the namespace
-*<namespace>*, use::
+*namespace-id*, use::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>
 
 The information will be returned in the body of the response. It includes the name and description
 of the application; the artifact, streams, and datasets that it uses; and all of its programs.
@@ -160,7 +160,7 @@ of the application; the artifact, streams, and datasets that it uses; and all of
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -182,7 +182,7 @@ Delete an Application
 To delete an application |---| together with all of its flows, MapReduce or Spark
 programs, schedules, custom services, and workflows |---| submit an HTTP DELETE::
 
-  DELETE /v3/namespaces/<namespace>/apps/<application-name>
+  DELETE /v3/namespaces/<namespace-id>/apps/<application-name>
 
 .. list-table::
    :widths: 20 80
@@ -190,7 +190,7 @@ programs, schedules, custom services, and workflows |---| submit an HTTP DELETE:
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``application-name``
      - Name of the application to be deleted
@@ -210,11 +210,11 @@ Details of a Program
 After an application is deployed, you can retrieve the details of its flows, MapReduce and Spark programs,
 custom services, schedules, workers, and workflows by submitting an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>
 
 To retrieve information about the schedules of the program's workflows, use::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/schedules
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
   
 .. list-table::
    :widths: 20 80
@@ -222,7 +222,7 @@ To retrieve information about the schedules of the program's workflows, use::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
@@ -300,7 +300,7 @@ Start a Program
 After an application is deployed, you can start its flows, MapReduce and Spark programs,
 custom services, workers, and workflows by submitting an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/start
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/start
 
 When starting an program, you can optionally specify runtime arguments as a JSON map in the request body.
 CDAP will use these these runtime arguments only for this single invocation of the program.
@@ -311,7 +311,7 @@ CDAP will use these these runtime arguments only for this single invocation of t
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
@@ -339,7 +339,7 @@ Start Multiple Programs
 You can start multiple programs from different applications and program types
 by submitting an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/start
+  POST /v3/namespaces/<namespace-id>/start
 
 with a JSON array in the request body consisting of multiple JSON objects with these parameters:
 
@@ -407,7 +407,7 @@ Stop a Program
 You can stop the flows, MapReduce and Spark programs, custom services, workers, and
 workflows of an application by submitting an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/stop
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/stop
 
 .. list-table::
    :widths: 20 80
@@ -415,7 +415,7 @@ workflows of an application by submitting an HTTP POST request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
@@ -441,7 +441,7 @@ Stop a Program Run
 ------------------
 You can stop a specific run of a program by submitting an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/stop
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/stop
 
 .. list-table::
    :widths: 20 80
@@ -449,7 +449,7 @@ You can stop a specific run of a program by submitting an HTTP POST request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
@@ -474,7 +474,7 @@ Stop Multiple Programs
 You can stop multiple programs from different applications and program types
 by submitting an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/stop
+  POST /v3/namespaces/<namespace-id>/stop
 
 with a JSON array in the request body consisting of multiple JSON objects with these parameters:
 
@@ -539,7 +539,7 @@ Status of a Program
 -------------------
 To retrieve the status of a program, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/status
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/status
 
 .. list-table::
    :widths: 20 80
@@ -547,7 +547,7 @@ To retrieve the status of a program, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
@@ -575,7 +575,7 @@ Status of Multiple Programs
 You can retrieve the status of multiple programs from different applications and program types
 by submitting an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/status
+  POST /v3/namespaces/<namespace-id>/status
 
 with a JSON array in the request body consisting of multiple JSON objects with these parameters:
 
@@ -635,7 +635,7 @@ Container Information
 To find out the address of an program's container host and the container’s debug port, you can query
 CDAP for a flow or service’s live info via an HTTP GET method::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/live-info
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -643,7 +643,7 @@ CDAP for a flow or service’s live info via an HTTP GET method::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
@@ -668,7 +668,7 @@ Scaling
 You can retrieve the instance count executing different components from various applications and
 different program types using an HTTP POST method::
 
-  POST /v3/namespaces/<namespace>/instances
+  POST /v3/namespaces/<namespace-id>/instances
 
 .. list-table::
    :widths: 20 80
@@ -676,7 +676,7 @@ different program types using an HTTP POST method::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
 
 with a JSON array in the request body consisting of multiple JSON objects with these parameters:
@@ -744,8 +744,8 @@ Scaling Flowlets
 You can query and set the number of instances executing a given flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
-  PUT /v3/namespaces/<namespace>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -757,7 +757,7 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
@@ -802,8 +802,8 @@ Scaling Services
 You can query or change the number of instances of a service
 by using the ``instances`` parameter with HTTP GET or PUT methods::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/services/<service-id>/instances
-  PUT /v3/namespaces/<namespace>/apps/<app-id>/services/<service-id>/instances
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/instances
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -815,7 +815,7 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -840,8 +840,8 @@ Scaling Workers
 You can query or change the number of instances of a worker by using the ``instances``
 parameter with HTTP GET or PUT methods::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/workers/<worker-id>/instances
-  PUT /v3/namespaces/<namespace>/apps/<app-id>/workers/<worker-id>/instances
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workers/<worker-id>/instances
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/workers/<worker-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -853,7 +853,7 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -885,7 +885,7 @@ services, or workflows), issue an HTTP GET to the program’s URL with the ``run
 parameter. This will return a JSON list of all runs for the program, each with a start
 time, end time, and program status::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs
 
 .. list-table::
    :widths: 20 80
@@ -893,7 +893,7 @@ time, end time, and program status::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -954,7 +954,7 @@ Retrieving Specific Run Information
 
 To fetch the run record for a particular run of a program, use::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>
 
 
 .. list-table::
@@ -963,7 +963,7 @@ To fetch the run record for a particular run of a program, use::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -1002,21 +1002,21 @@ For services, you can retrieve:
 
 - the history of successfully completed Twill service runs using::
 
-    GET /v3/namespaces/<namespace>/apps/<app-id>/services/<service-id>/runs?status=completed
+    GET /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runs?status=completed
 
 For workflows, you can retrieve:
 
 - the information about the currently running node(s) in the workflow::
 
-    GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/current
+    GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/current
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 
-    GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/schedules
+    GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
 
 - the next time that the workflow is scheduled to run (using the parameter ``nextruntime``)::
 
-    GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/nextruntime
+    GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
 
 .. rubric:: Examples
@@ -1107,8 +1107,8 @@ As a schedule is initially deployed in a *suspended* state, a call to this API i
 
 To suspend or resume a schedule use::
 
-  POST /v3/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/suspend
-  POST /v3/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/resume
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/suspend
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/resume
 
 .. list-table::
    :widths: 20 80
@@ -1116,7 +1116,7 @@ To suspend or resume a schedule use::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -1172,8 +1172,8 @@ either a currently running or suspended workflow.
 
 To suspend or resume a workflow, use::
   
-  POST /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
-  POST /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
 
 .. list-table::
    :widths: 20 80
@@ -1181,7 +1181,7 @@ To suspend or resume a workflow, use::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application

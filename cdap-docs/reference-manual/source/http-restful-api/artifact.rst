@@ -28,7 +28,7 @@ Add an Artifact
 ===============
 An artifact can be added (loaded) with an HTTP POST method to the URL::
 
-  POST /v3/namespaces/<namespace>/artifacts/<artifact-name>
+  POST /v3/namespaces/<namespace-id>/artifacts/<artifact-name>
 
 The request body must contain the binary contents of the artifact.
 
@@ -38,7 +38,7 @@ The request body must contain the binary contents of the artifact.
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact to be created
@@ -72,7 +72,7 @@ List Available Artifacts
 ========================
 To retrieve a list of available artifacts, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/artifacts[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts[?scope=<scope>]
 
 .. list-table::
    :widths: 20 80
@@ -80,7 +80,7 @@ To retrieve a list of available artifacts, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``scope``
      - Optional scope filter. If not specified, artifacts in the ``user`` and
@@ -117,7 +117,7 @@ List Artifact Versions
 ======================
 To list all versions of a specific artifact, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/artifact/<artifact-name>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifact/<artifact-name>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -125,7 +125,7 @@ To list all versions of a specific artifact, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -153,7 +153,7 @@ Retrieve Artifact Details
 =========================
 To retrieve details about a specific version of an artifact, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -161,7 +161,7 @@ To retrieve details about a specific version of an artifact, submit an HTTP GET 
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -211,7 +211,7 @@ Set Artifact Properties
 =======================
 To set properties for a specific version of an artifact, submit an HTTP PUT request::
 
-  PUT /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties
+  PUT /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties
 
 .. list-table::
    :widths: 20 80
@@ -219,7 +219,7 @@ To set properties for a specific version of an artifact, submit an HTTP PUT requ
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -245,7 +245,7 @@ Set an Artifact Property
 ========================
 To set a specific property for a specific version of an artifact, submit an HTTP PUT request::
 
-  PUT /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  PUT /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
   
 .. list-table::
    :widths: 20 80
@@ -253,7 +253,7 @@ To set a specific property for a specific version of an artifact, submit an HTTP
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -277,7 +277,7 @@ Retrieve Artifact Properties
 ============================
 To retrieve properties for a specific version of an artifact, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties[?scope=<scope>&keys=<keys>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties[?scope=<scope>&keys=<keys>]
   
 .. list-table::
    :widths: 20 80
@@ -285,7 +285,7 @@ To retrieve properties for a specific version of an artifact, submit an HTTP GET
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -310,7 +310,7 @@ Retrieve an Artifact Property
 =============================
 To retrieve a specific property for a specific version of an artifact, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
   
 .. list-table::
    :widths: 20 80
@@ -318,7 +318,7 @@ To retrieve a specific property for a specific version of an artifact, submit an
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -339,7 +339,7 @@ Delete Artifact Properties
 ==========================
 To delete all properties for a specific version of an artifact, submit an HTTP DELETE request::
 
-  GET /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties
   
 .. list-table::
    :widths: 20 80
@@ -347,7 +347,7 @@ To delete all properties for a specific version of an artifact, submit an HTTP D
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -365,7 +365,7 @@ Delete an Artifact Property
 ===========================
 To delete a specific property for a specific version of an artifact, submit an HTTP DELETE request::
 
-  GET /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
   
 .. list-table::
    :widths: 20 80
@@ -373,7 +373,7 @@ To delete a specific property for a specific version of an artifact, submit an H
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -394,7 +394,7 @@ List Extensions (Plugin Types) available to an Artifact
 To list the extensions (plugin types) available to an artifact, submit
 an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/extensions[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -402,7 +402,7 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -428,7 +428,7 @@ List Plugins available to an Artifact
 To list plugins of a specific type available to an artifact, submit
 an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -436,7 +436,7 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -491,7 +491,7 @@ Retrieve Plugin Details
 To retrieve details about a specific plugin available to an artifact, submit
 an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>/plugins/<plugin-name>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>/plugins/<plugin-name>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -499,7 +499,7 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -551,7 +551,7 @@ Delete an Artifact
 ==================
 To delete an artifact, submit an HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>
+  DELETE /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>
 
 .. list-table::
    :widths: 20 80
@@ -559,7 +559,7 @@ To delete an artifact, submit an HTTP DELETE request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
@@ -610,7 +610,7 @@ List Application Classes
 ========================
 To list application classes, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/classes/apps[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/classes/apps[?scope=<scope>]
 
 .. list-table::
    :widths: 20 80
@@ -618,7 +618,7 @@ To list application classes, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``scope``
      - Optional scope filter. If not specified, classes from artifacts in the ``user`` and
@@ -666,7 +666,7 @@ Retrieve Application Class Details
 ==================================
 To retrieve details about a specific application class, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/classes/apps/<class-name>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/classes/apps/<class-name>[?scope=<scope>]
 
 .. list-table::
    :widths: 20 80
@@ -674,7 +674,7 @@ To retrieve details about a specific application class, submit an HTTP GET reque
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``class-name``
      - Application class name

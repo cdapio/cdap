@@ -31,7 +31,7 @@ Listing all Services
 
 You can list all services in a namespace in CDAP by issuing an HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/services
+  GET /v3/namespaces/<namespace-id>/services
 
 .. list-table::
    :widths: 20 80
@@ -39,7 +39,7 @@ You can list all services in a namespace in CDAP by issuing an HTTP GET request 
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
      
 The response body will contain a JSON-formatted list of the existing services::
@@ -60,7 +60,7 @@ Checking Service Availability
 Once a service is started, you can can check whether the service is ready to accept service method requests by issuing
 an HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/services/<service-id>/available
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/available
 
 .. list-table::
    :widths: 20 80
@@ -68,7 +68,7 @@ an HTTP GET request to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -100,7 +100,7 @@ as part of the request URL along with any additional headers, body, and query pa
 
 The request type is defined by the service's method::
 
-  <request-type> /v3/namespaces/<namespace>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
+  <request-type> /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
   
 **Note:** Any reserved or unsafe characters in the path parameters should be encoded using 
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`. See the
@@ -113,7 +113,7 @@ encoding parameters.
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``request-type``
      - One of GET, POST, PUT, or DELETE. This is defined by the handler method.

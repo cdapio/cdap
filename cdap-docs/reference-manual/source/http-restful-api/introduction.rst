@@ -48,11 +48,11 @@ In this API, each endpoint is documented with the HTTP method for the request an
 resource identifier. The base URL is assumed to precede each API's resource identifier.
 For example, the endpoint documentation for creating a stream is::
 
-  PUT /v3/namespaces/<namespace>/streams/<new-stream-id>
+  PUT /v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
 This means you would use::
 
-  PUT http://<host>:<port>/v3/namespaces/<namespace>/streams/<new-stream-id>
+  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
 If you are using the CDAP SDK, running on your local machine, you might make a ``curl`` call such as:
 
@@ -64,9 +64,9 @@ Variable Replacement
 --------------------
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
-  PUT /v3/namespaces/<namespace>/streams/<new-stream-id>
+  PUT /v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
-indicates that text such as ``<namespace>`` and ``<new-stream-id>`` are variables and that
+indicates that text such as ``<namespace-id>`` and ``<new-stream-id>`` are variables and that
 you are to replace them with your values, perhaps in this case the namespace *default* and
 the stream *mystream*::
 

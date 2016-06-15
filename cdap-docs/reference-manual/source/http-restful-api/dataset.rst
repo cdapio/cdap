@@ -25,7 +25,7 @@ Listing all Datasets
 
 You can list all datasets in CDAP by issuing an HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/data/datasets
+  GET /v3/namespaces/<namespace-id>/data/datasets
 
 .. list-table::
    :widths: 20 80
@@ -33,7 +33,7 @@ You can list all datasets in CDAP by issuing an HTTP GET request to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
 
 The response body will contain a JSON-formatted list of the existing datasets::
@@ -58,7 +58,7 @@ Creating a Dataset
 
 You can create a dataset by issuing an HTTP PUT request to the URL::
 
-  PUT /v3/namespaces/<namespace>/data/datasets/<dataset-name>
+  PUT /v3/namespaces/<namespace-id>/data/datasets/<dataset-name>
 
 with JSON-formatted name of the dataset type, properties, and description in a body::
 
@@ -75,7 +75,7 @@ with JSON-formatted name of the dataset type, properties, and description in a b
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``dataset-name``
      - Name of the new dataset
@@ -122,7 +122,7 @@ Properties of an Existing Dataset
 You can retrieve the properties with which a dataset was created or last updated by issuing an HTTP GET request to
 the URL::
 
-	GET /v3/namespaces/<namespace>/data/datasets/<dataset-name>/properties
+	GET /v3/namespaces/<namespace-id>/data/datasets/<dataset-name>/properties
 
 .. list-table::
    :widths: 20 80
@@ -130,7 +130,7 @@ the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``dataset-name``
      - Name of the existing dataset
@@ -163,7 +163,7 @@ Updating an Existing Dataset
 
 You can update an existing dataset's table and properties by issuing an HTTP PUT request to the URL::
 
-	PUT /v3/namespaces/<namespace>/data/datasets/<dataset-name>/properties
+	PUT /v3/namespaces/<namespace-id>/data/datasets/<dataset-name>/properties
 
 with JSON-formatted properties in the body::
 
@@ -180,7 +180,7 @@ with JSON-formatted properties in the body::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``dataset-name``
      - Name of the existing dataset
@@ -216,7 +216,7 @@ Deleting a Dataset
 
 You can delete a dataset by issuing an HTTP DELETE request to the URL::
 
-  DELETE /v3/namespaces/<namespace>/data/datasets/<dataset-name>
+  DELETE /v3/namespaces/<namespace-id>/data/datasets/<dataset-name>
 
 .. list-table::
    :widths: 20 80
@@ -224,7 +224,7 @@ You can delete a dataset by issuing an HTTP DELETE request to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``dataset-name``
      - Dataset name
@@ -259,7 +259,7 @@ Deleting all Datasets
 If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, 
 you can delete all Datasets (in a namespace) by issuing an HTTP DELETE request to the URL::
 
-  DELETE /v3/unrecoverable/namespaces/<namespace>/datasets
+  DELETE /v3/unrecoverable/namespaces/<namespace-id>/datasets
 
 .. list-table::
    :widths: 20 80
@@ -267,7 +267,7 @@ you can delete all Datasets (in a namespace) by issuing an HTTP DELETE request t
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
 
 .. rubric:: HTTP Responses
@@ -298,7 +298,7 @@ Truncating a Dataset
 
 You can truncate a dataset by issuing an HTTP POST request to the URL::
 
-  POST /v3/namespaces/<namespace>/data/datasets/<dataset-name>/admin/truncate
+  POST /v3/namespaces/<namespace-id>/data/datasets/<dataset-name>/admin/truncate
 
 This will clear the existing data from the dataset. This cannot be undone.
 
@@ -308,7 +308,7 @@ This will clear the existing data from the dataset. This cannot be undone.
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``dataset-name``
      - Dataset name
@@ -328,7 +328,7 @@ Datasets used by an Application
 
 You can retrieve a list of datasets used by an application by issuing a HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/datasets
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/datasets
 
 .. list-table::
    :widths: 20 80
@@ -336,7 +336,7 @@ You can retrieve a list of datasets used by an application by issuing a HTTP GET
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Application ID
@@ -356,7 +356,7 @@ Datasets used by a Program
 
 You can retrieve a list of datasets used by a program by issuing a HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/datasets
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/datasets
 
 .. list-table::
    :widths: 20 80
@@ -364,7 +364,7 @@ You can retrieve a list of datasets used by a program by issuing a HTTP GET requ
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Application ID
@@ -388,7 +388,7 @@ Programs using a Dataset
 
 You can retrieve a list of programs that are using a dataset by issuing a HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/data/datasets/<dataset-id>/programs
+  GET /v3/namespaces/<namespace-id>/data/datasets/<dataset-id>/programs
 
 .. list-table::
    :widths: 20 80
@@ -396,7 +396,7 @@ You can retrieve a list of programs that are using a dataset by issuing a HTTP G
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``dataset-id``
      - Dataset ID

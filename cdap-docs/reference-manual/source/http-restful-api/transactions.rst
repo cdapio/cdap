@@ -31,9 +31,9 @@ To retrieve the number of invalid transactions in the system, issue an HTTP GET 
 
   GET /v3/transactions/invalid/size
 
-The response is a JSON string, with the integer number of invalid transactions as ``size``::
+The response is a JSON string, with the integer number of invalid transactions as ``<size>``::
 
-  { "size": size }
+  { "size": <size> }
 
 
 .. _http-restful-api-transactions-truncate:
@@ -45,9 +45,9 @@ To truncate invalid transactions before a specific time, issue an HTTP POST requ
 
   POST /v3/transactions/invalid/remove/until
 
-with the timestamp in milliseconds (``timestamp-ms``) as a JSON string in the body::
+with the timestamp in milliseconds (``<timestamp-ms>``) as a JSON string in the body::
 
-  { "time" : timestamp-ms }
+  { "time" : <timestamp-ms> }
 
 **Note:** Since improperly removing invalid transactions may result in data inconsistency,
 please refer to :ref:`Transaction Service Maintenance <tx-maintenance>` for proper usage.

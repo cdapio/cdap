@@ -78,7 +78,7 @@ Checking the Status of a System Service
 =======================================
 To check the status of a specific CDAP system service, use::
 
-  GET /v3/system/services/<service-name>/status
+  GET /v3/system/services/<service-id>/status
 
 The status of these CDAP system services can be checked:
 
@@ -86,8 +86,8 @@ The status of these CDAP system services can be checked:
    :header-rows: 1
    :widths: 25 25 50
    
-   * - Service 
-     - Service-Name
+   * - Service
+     - Service ID
      - Description of the service
    * - ``Metrics``
      - ``metrics``
@@ -154,7 +154,7 @@ where
    * - Parameter
      - Description
    * - ``service-id``
-     - Name of the system service
+     - Name (ID) of the system service
      
 **Note:** This returns useful information only for Distributed CDAP installations.
 
@@ -177,10 +177,10 @@ an HTTP POST request to the URL::
    * - Parameter
      - Description
    * - ``service-id``
-     - Name of the service whose instances are to be restarted
+     - Name (ID) of the system service whose instances are to be restarted
    * - ``instance-id``
      - Specific instance of a service that needs to be restarted;
-       instance-id runs from 0 to (the number of instances per service -1)
+       ``instance-id`` runs from 0 to (the number of instances-per-service -1)
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -219,7 +219,7 @@ The response body will contain a JSON-formatted status of the last restart attem
    * - Parameter
      - Description
    * - ``service-id``
-     - Name of the service for which details of last restart are to be retrieved
+     - Name (ID) of the system service for which details of last restart are to be retrieved
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -239,8 +239,8 @@ Scaling System Services
 In distributed CDAP installations, the number of instances for CDAP system services 
 can be queried and changed by using these commands::
 
-  GET /v3/system/services/<service-name>/instances
-  PUT /v3/system/services/<service-name>/instances
+  GET /v3/system/services/<service-id>/instances
+  PUT /v3/system/services/<service-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -252,8 +252,8 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
-   * - ``system-name``
-     - Name of the system service 
+   * - ``service-id``
+     - Name (ID) of the system service 
    * - ``quantity``
      - Number of instances to be used
      

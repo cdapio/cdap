@@ -27,11 +27,11 @@ To set preferences for the CDAP instance, namespace, application, or program, su
 
   PUT /v3/preferences/
 
-  PUT /v3/namespaces/<namespace>/preferences
+  PUT /v3/namespaces/<namespace-id>/preferences
 
-  PUT /v3/namespaces/<namespace>/apps/<app-id>/preferences
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/preferences
 
-  PUT /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
    :widths: 20 80
@@ -39,7 +39,7 @@ To set preferences for the CDAP instance, namespace, application, or program, su
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of  application
@@ -76,11 +76,11 @@ To retrieve the current preferences, issue an HTTP GET request::
 
   GET /v3/preferences/
 
-  GET /v3/namespaces/<namespace>/preferences
+  GET /v3/namespaces/<namespace-id>/preferences
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/preferences
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/preferences
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 This will return a JSON String map of the preferences::
 
@@ -91,11 +91,11 @@ To retrieve the resolved preferences (collapsing preferences from higher levels 
 
   GET /v3/preferences?resolved=true
 
-  GET /v3/namespaces/<namespace>/preferences?resolved=true
+  GET /v3/namespaces/<namespace-id>/preferences?resolved=true
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/preferences?resolved=true
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/preferences?resolved=true
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
 
 .. list-table::
    :widths: 20 80
@@ -103,7 +103,7 @@ To retrieve the resolved preferences (collapsing preferences from higher levels 
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of application
@@ -131,11 +131,11 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
 
   DELETE /v3/preferences/
 
-  DELETE /v3/namespaces/<namespace>/preferences
+  DELETE /v3/namespaces/<namespace-id>/preferences
 
-  DELETE /v3/namespaces/<namespace>/apps/<app-id>/preferences
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/preferences
 
-  DELETE /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
    :widths: 20 80
@@ -143,7 +143,7 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of application

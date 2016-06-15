@@ -27,7 +27,7 @@ Downloading Application Logs
 Logs emitted by a *flow*, *MapReduce*, *service*, or *Spark* program running in CDAP can be
 downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -35,7 +35,7 @@ downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET reque
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
@@ -65,7 +65,7 @@ Downloading Application Logs for a Run
 ======================================
 To download logs for a program run, send an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/logs?start=<ts>&stop=<ts>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -73,7 +73,7 @@ To download logs for a program run, send an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application being called

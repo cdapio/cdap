@@ -28,7 +28,7 @@ Creating a Stream
 =================
 A stream can be created with an HTTP PUT method to the URL::
 
-  PUT /v3/namespaces/<namespace>/streams/<new-stream-id>
+  PUT /v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -36,7 +36,7 @@ A stream can be created with an HTTP PUT method to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``new-stream-id``
      - Name of the stream to be created
@@ -98,13 +98,13 @@ Sending Events to a Stream
 ==========================
 An event can be sent to a stream by sending an HTTP POST method to the URL of the stream::
 
-  POST /v3/namespaces/<namespace>/streams/<stream-id>
+  POST /v3/namespaces/<namespace-id>/streams/<stream-id>
 
 In cases where it is acceptable to have some events lost, events can be transmitted
 asynchronously to a stream with higher throughput by sending an HTTP POST method to the
 ``async`` URL::
 
-  POST /v3/namespaces/<namespace>/streams/<stream-id>/async
+  POST /v3/namespaces/<namespace-id>/streams/<stream-id>/async
 
 .. list-table::
    :widths: 20 80
@@ -112,7 +112,7 @@ asynchronously to a stream with higher throughput by sending an HTTP POST method
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
@@ -159,7 +159,7 @@ Sending Events to a Stream in Batch
 ===================================
 Multiple events can be sent to a stream in batch by sending an HTTP POST method to the URL of the stream::
 
-  POST /v3/namespaces/<namespace>/streams/<stream-id>/batch
+  POST /v3/namespaces/<namespace-id>/streams/<stream-id>/batch
 
 The ``Content-Type`` header must be specified to describe the data type in the POST body. Currently, these
 types are supported:
@@ -170,7 +170,7 @@ types are supported:
 
    * - Content-Type
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``text/{sub-type}``
      - Text content with one line per event; the ``sub-type`` can be anything
@@ -222,7 +222,7 @@ Reading Events from a Stream
 ============================
 Reading events from an existing stream is performed with an HTTP GET method to the URL::
 
-  GET /v3/namespaces/<namespace>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
 
 .. list-table::
    :widths: 20 80
@@ -230,7 +230,7 @@ Reading events from an existing stream is performed with an HTTP GET method to t
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
@@ -293,7 +293,7 @@ Truncating means deleting all events that were ever written to the stream.
 This is permanent and cannot be undone.
 A stream can be truncated with an HTTP POST method to the URL::
 
-  POST /v3/namespaces/<namespace>/streams/<stream-id>/truncate
+  POST /v3/namespaces/<namespace-id>/streams/<stream-id>/truncate
 
 .. list-table::
    :widths: 20 80
@@ -301,7 +301,7 @@ A stream can be truncated with an HTTP POST method to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
@@ -336,7 +336,7 @@ created with the same name, it will not return any of the previous stream's even
 
 A stream can be deleted with an HTTP DELETE method to the URL::
 
-  DELETE /v3/namespaces/<namespace>/streams/<stream-id>
+  DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -344,7 +344,7 @@ A stream can be deleted with an HTTP DELETE method to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
@@ -396,7 +396,7 @@ The **description** of the stream.
 
 Stream properties can be retrieved with an HTTP PUT method to the URL::
 
-  GET /v3/namespaces/<namespace>/streams/<stream-id>
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -404,7 +404,7 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
@@ -442,7 +442,7 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
 
 Stream properties can be changed with an HTTP PUT method to the URL::
 
-  PUT /v3/namespaces/<namespace>/streams/<stream-id>/properties
+  PUT /v3/namespaces/<namespace-id>/streams/<stream-id>/properties
 
 .. list-table::
    :widths: 20 80
@@ -450,7 +450,7 @@ Stream properties can be changed with an HTTP PUT method to the URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
@@ -524,14 +524,14 @@ the stream and re-create it with the new schema.
      
    * - Description
      - Change the TTL property of the stream named *mystream* in the namespace *default* to 1 day,
-       and the format to CSV (comma separated values) with a three field schema
+       and the format to CSV (comma-separated values) with a three field schema
        that uses a space delimiter instead of a comma delimiter. 
 
 Streams used by an Application
 ==============================
 You can retrieve a list of streams used by an application by issuing a HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/streams
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/streams
 
 .. list-table::
    :widths: 20 80
@@ -539,7 +539,7 @@ You can retrieve a list of streams used by an application by issuing a HTTP GET 
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Application ID
@@ -558,7 +558,7 @@ Streams used by a Program
 =========================
 You can retrieve a list of streams used by a program by issuing a HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/streams 
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/streams 
 
 .. list-table::
    :widths: 20 80
@@ -566,7 +566,7 @@ You can retrieve a list of streams used by a program by issuing a HTTP GET reque
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Application ID
@@ -589,7 +589,7 @@ Programs using a Stream
 ========================
 You can retrieve a list of programs that are using a stream by issuing a HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace>/data/datasets/<dataset-id>/programs
+  GET /v3/namespaces/<namespace-id>/data/datasets/<dataset-id>/programs
 
 .. list-table::
    :widths: 20 80
@@ -597,7 +597,7 @@ You can retrieve a list of programs that are using a stream by issuing a HTTP GE
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``dataset-id``
      - Dataset ID

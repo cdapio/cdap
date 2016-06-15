@@ -33,7 +33,7 @@ Submitting a Query
 ------------------
 To submit a SQL query, post the query string to the ``queries`` URL::
 
-  POST /v3/namespaces/<namespace>/data/explore/queries
+  POST /v3/namespaces/<namespace-id>/data/explore/queries
 
 .. list-table::
    :widths: 20 80
@@ -41,7 +41,7 @@ To submit a SQL query, post the query string to the ``queries`` URL::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
 
 The body of the request must contain a JSON string of the form::
@@ -342,7 +342,7 @@ List of Queries
 ---------------
 To return a list of queries, use::
 
-   GET /v3/namespaces/<namespace>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
+   GET /v3/namespaces/<namespace-id>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
 
 .. list-table::
    :widths: 20 80
@@ -350,7 +350,7 @@ To return a list of queries, use::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``limit``
      - Optional number indicating how many results to return in the response; by default, 50 results are returned
@@ -403,7 +403,7 @@ Count of Active Queries
 -----------------------
 To return the count of **active** queries, use::
 
-   GET /v3/namespaces/<namespace>/data/explore/queries/count
+   GET /v3/namespaces/<namespace-id>/data/explore/queries/count
 
 .. list-table::
    :widths: 20 80
@@ -411,7 +411,7 @@ To return the count of **active** queries, use::
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
 
 The results are returned in the body as a JSON string::
@@ -481,13 +481,13 @@ respond to queries or be available for exploration using the CDAP UI.
 
 For datasets::
 
-  POST /v3/namespaces/<namespace>/data/explore/datasets/<dataset-name>/enable
-  POST /v3/namespaces/<namespace>/data/explore/datasets/<dataset-name>/disable
+  POST /v3/namespaces/<namespace-id>/data/explore/datasets/<dataset-name>/enable
+  POST /v3/namespaces/<namespace-id>/data/explore/datasets/<dataset-name>/disable
 
 For streams::
 
-  POST /v3/namespaces/<namespace>/data/explore/streams/<stream-name>/tables/<table-name>/enable
-  POST /v3/namespaces/<namespace>/data/explore/streams/<stream-name>/tables/<table-name>/disable
+  POST /v3/namespaces/<namespace-id>/data/explore/streams/<stream-name>/tables/<table-name>/enable
+  POST /v3/namespaces/<namespace-id>/data/explore/streams/<stream-name>/tables/<table-name>/disable
 
 Each of these endpoints returns a query handle that can be used to submit requests
 tracking the :ref:`status of the query <http-restful-api-query-status>`.
@@ -498,7 +498,7 @@ tracking the :ref:`status of the query <http-restful-api-query-status>`.
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``dataset-name``
      - Name of the dataset

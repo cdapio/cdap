@@ -32,7 +32,7 @@ Obtaining a Token's Values
 To retrieve the values that were put into the workflow token for a particular run, 
 use an HTTP GET request to the query's URL::
 
-  GET /v3/namespaces/<namespace>/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}[/nodes/{node-id}]/token
+  GET /v3/namespaces/<namespace-id>/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}[/nodes/{node-id}]/token
   
 The request can (optionally) contain a *node-id* to limit the request to a particular node in workflow.
 
@@ -42,7 +42,7 @@ The request can (optionally) contain a *node-id* to limit the request to a parti
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -154,7 +154,7 @@ Listing Local Datasets
 ----------------------
 To retrieve the local datasets associated with a particular run, use an HTTP GET request to the query's URL::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
 
 where
 
@@ -164,7 +164,7 @@ where
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -177,7 +177,7 @@ Deleting Local Datasets
 -----------------------
 To delete the local datasets associated with a particular run, use an HTTP DELETE request to the query's URL::
 
-  DELETE /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
 
 where
 
@@ -187,7 +187,7 @@ where
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -203,7 +203,7 @@ a part of a given workflow run.
 
 To retrieve the state of a particular workflow run, use an HTTP GET request to the query's URL::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/nodes/state
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/nodes/state
 
 where
 
@@ -213,7 +213,7 @@ where
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -254,7 +254,7 @@ Statistics of Successful Runs
 This request returns general statistics about all *successful* workflow runs in a particular time interval, 
 with an analysis based on a series of (optionally) provided percentiles::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/statistics?
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/statistics?
     start=<start-time>&end=<end-time>&percentile=<percentile-1>&percentile=<percentile-2>...
     
 where
@@ -265,7 +265,7 @@ where
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -363,7 +363,7 @@ This request returns a list of workflow metrics, based on a workflow run and a s
 number of *successful* runs of the workflow that are spaced apart by a time interval from
 each other::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/statistics?
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/statistics?
     limit=<limit>&interval=<interval>
     
 where
@@ -374,7 +374,7 @@ where
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
@@ -459,7 +459,7 @@ Comparing Two Runs
 ------------------
 This request compares the metrics of two runs of a workflow::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/compare?
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/compare?
     other-run-id=<other-run-id>
     
 where
@@ -470,7 +470,7 @@ where
 
    * - Parameter
      - Description
-   * - ``namespace``
+   * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Name of the application
