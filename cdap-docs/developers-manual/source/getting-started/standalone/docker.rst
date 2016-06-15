@@ -26,7 +26,7 @@ Docker using Kitematic
 `Docker Kitematic <https://www.docker.com/docker-kitematic>`__ is available as part of the
 `Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for either Mac OS X or Microsoft Windows.
 It is a graphical user interface for running Docker containers. Follow these steps to install 
-Kitematic and then download, start, and connect to an instance of CDAP.
+Kitematic and then download, start, and connect to a CDAP container.
 
 #. Download and install the `Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for 
    either Mac OS X or Microsoft Windows.
@@ -49,7 +49,7 @@ Kitematic and then download, start, and connect to an instance of CDAP.
 
 #. Select the desired version.
    Note that the tag **latest** is the last version that was put up at Docker Hub, which is not the 
-   necessarily the most-current version, which is |literal-version|:
+   necessarily the desired version, which is |literal-version|:
  
      .. image:: ../../_images/kitematic/kitematic-3-select-tag.png
         :width: 4in
@@ -63,16 +63,16 @@ Kitematic and then download, start, and connect to an instance of CDAP.
         :align: center
 
 #. To connect a web browser for the CDAP UI, you'll need to find the external IP addresses
-   and ports that the Docker instance is exposing. The easiest way to do that is click on the
+   and ports that the Docker host is exposing. The easiest way to do that is click on the
    *Settings* tab, and then the *Ports* tab:
  
      .. image:: ../../_images/kitematic/kitematic-5-links.png
         :width: 8in
         :align: center
 
-#. This shows that the CDAP instance is listening on the internal port ``9999`` within the
-   Docker instance, while the Docker instance exposes that port on the external IP address
-   and port ``192.168.99.100:32769``. Enter that address into your system web browser to
+#. This shows that the CDAP container is listening on the internal port ``9999`` within the
+   Docker host, while the Docker host proxies that port on the virtual machine IP address
+   and port (``192.168.99.100:32769``). Enter that address and port into your system web browser to
    connect to the CDAP UI:
    
      .. image:: ../../_images/kitematic/kitematic-6-cdap-ui.png
@@ -85,12 +85,12 @@ Kitematic and then download, start, and connect to an instance of CDAP.
 Docker from a Command Line
 ==========================
 
-Docker is available for a variety of platforms. Download and install Docker in your
-environment by following the `platform-specific installation instructions
-<https://docs.docker.com/engine/installation/>`__ from `Docker.com <https://docker.com>`__
-to verify that Docker is working and has started correctly.
+Docker environments are available for a variety of platforms. Download and install Docker for your platform by
+following the `platform-specific installation instructions <https://docs.docker.com/engine/installation/>`__
+from `Docker.com <https://docker.com>`__, and verify that the Docker environment is working and has
+started correctly.
   
-#. If you are not running on Linux, you need to create and start the Docker Virtual Machine (VM) before you
+#. If you are not running on Linux, you will need to create and start the Docker Virtual Machine (VM) before you
    can use containers. For example:
    
    .. tabbed-parsed-literal::
@@ -130,9 +130,15 @@ to verify that Docker is working and has started correctly.
      :dependent: linux-windows
      :languages: console,shell-session
  
+     .. Linux or Mac OS X
+     
      $ docker pull caskdata/cdap-standalone:|release|
 
-#. Start the *Docker CDAP Virtual Machine* with:
+     .. Windows
+    
+     > docker pull caskdata/cdap-standalone:|release|
+
+#. Start the *CDAP Standalone Docker container* with:
 
    .. tabbed-parsed-literal::
      :tabs: "Linux or Mac OS X",Windows
@@ -140,7 +146,7 @@ to verify that Docker is working and has started correctly.
      :dependent: linux-windows
      :languages: console,shell-session
  
-     $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+     $ docker run -d --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
 
 #. CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s software
    directory is under ``/opt/cdap/sdk``.
@@ -161,9 +167,15 @@ to verify that Docker is working and has started correctly.
      :dependent: linux-windows
      :languages: console,shell-session
      
-     $ docker exec -d $(docker ps | grep cdap-standalone | awk '{print $1}') /opt/cdap/sdk/bin/cdap.sh <command>
-  
-#. When you are finished, stop CDAP and shutdown Docker:
+     .. Linux or Mac OS X
+     
+     $ docker -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
+
+     .. Windows
+     
+     > docker -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
+
+#. When you are finished, stop CDAP and then shutdown Docker:
 
    .. tabbed-parsed-literal::
      :tabs: "Linux or Mac OS X",Windows
@@ -171,8 +183,15 @@ to verify that Docker is working and has started correctly.
      :dependent: linux-windows
      :languages: console,shell-session
      
-     $ docker exec -d $(docker ps | grep cdap-standalone | awk '{print $1}') /opt/cdap/sdk/bin/cdap.sh stop
+     .. Linux or Mac OS X
+     
+     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
      $ docker-machine stop cdap
+
+     .. Windows
+     
+     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
+     > docker-machine stop cdap
 
 #. For a full list of Docker Commands, see the `Docker Command Line Documentation.
    <https://docs.docker.com/reference/commandline/cli/>`__
