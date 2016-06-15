@@ -204,7 +204,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     vm.deleteDraft = function(draftId) {
       myLoadingService.showLoadingIcon()
       .then(function(){
-        let draftName; 
+        let draftName;
         mySettings.get('hydratorDrafts')
           .then(function(res){
             let draft = myHelpers.objectQuery(res, $stateParams.namespace, draftId);
@@ -248,7 +248,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         };
         return myAppsApi.delete(deleteParams)
           .$promise;
-      })  
+      })
       .then(function success () {
         myLoadingService.hideLoadingIconImmediate();
         $state.reload()
@@ -267,6 +267,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               content:  'Pipeline ' + appId + ' delete failed'
             });
           });
-      });      
+      });
     };
   });
