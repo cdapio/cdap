@@ -30,9 +30,13 @@
 
         <th class="level"
             ng-if="!LogViewer.isMessageExpanded && LogViewer.isLevelDisplayed">
-          <span>Level</span>
-          <span class="pull-right">
-            <span class="fa fa-caret-down"></span>
+          <span uib-dropdown>
+            <span uib-dropdown-toggle>Level <span class="fa fa-caret-down"></span></span>
+            <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
+              <li ng-repeat="option in LogViewer.logEvents">
+                <input type="checkbox"><span ui-sref='test'>{{option}}</span></li>
+              </li>
+            </ul>
           </span>
         </th>
 

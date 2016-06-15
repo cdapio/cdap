@@ -23,6 +23,8 @@ function LogViewerController () {
   this.isSourceDisplayed = true;
   this.isMessageDisplayed = true;
 
+  this.logEvents = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"];
+
   this.data = [
     {
       time: '2016-03-04 16:28:40, 798',
@@ -51,7 +53,6 @@ function LogViewerController () {
       }
     },
   ];
-
 }
 
 angular.module(PKG.name + '.commons')
