@@ -262,4 +262,3 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
 
   });
-
