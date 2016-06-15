@@ -313,7 +313,7 @@ should be replaced, as it will be removed in a later version of CDAP::
 
    * - Parameter
      - Description
-   * - ``<context>`` *[Optional]*
+   * - ``context`` *[Optional]*
      - Metrics context to search within. If not provided, the search is provided across
        all contexts. Consists of a collection of tags.
        
@@ -368,7 +368,7 @@ To search for the available metrics within a given context, perform an HTTP POST
 
    * - Parameter
      - Description
-   * - ``<context>``
+   * - ``context``
      - Metrics context to search within. Consists of a collection of tags.
      
 **Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
@@ -443,14 +443,14 @@ To query a metric within a given context, perform an HTTP POST request::
 
    * - Parameter
      - Description
-   * - ``<context>``
+   * - ``context``
      - Metrics context to search within, a collection of tags
-   * - ``<metric>``
+   * - ``metric``
      - Metric(s) being queried, a collection of metric names
-   * - ``<time-range>``
+   * - ``time-range``
      - A :ref:`time range <http-restful-api-metrics-time-range>` or ``aggregate=true`` for 
        all since the application was deployed
-   * - ``<tags>`` *[Optional]*
+   * - ``tags`` *[Optional]*
      - :ref:`Tag list <http-restful-api-metrics-groupby>` by which to group results (optional)
 
 **Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
@@ -512,11 +512,11 @@ Results from a query are returned as a JSON string, in the format::
 
    * - Name
      - Description
-   * - ``<start-time>``
+   * - ``start-time``
      - Start time, in seconds, with 0 being from the beginning of the query records
-   * - ``<metric>``
+   * - ``metric``
      - End time, in seconds
-   * - ``<series-array>``
+   * - ``series-array``
      - An array of metric results, which can be one series, a multiple time series, or
        none (an empty array)
 

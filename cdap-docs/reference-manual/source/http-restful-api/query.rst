@@ -41,7 +41,7 @@ To submit a SQL query, post the query string to the ``queries`` URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
 
 The body of the request must contain a JSON string of the form::
@@ -50,7 +50,7 @@ The body of the request must contain a JSON string of the form::
     "query":"<SQL-query-string>"
   }
 
-where ``<SQL-query-string>`` is the actual SQL query.
+where ``SQL-query-string`` is the actual SQL query.
 If you are running a version of Hive that uses reserved keywords, and a column in your query is a `Hive reserved keyword
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Keywords,
 Non-reservedKeywordsandReservedKeywords>`__, you must enclose the column name in backticks.
@@ -113,7 +113,7 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
 
    * - Parameter
      - Description
-   * - ``<query-handle>``
+   * - ``query-handle``
      - Handle obtained when the query was submitted
 
 .. rubric:: HTTP Responses
@@ -171,7 +171,7 @@ If the query's status is ``FINISHED`` and it has results, you can obtain the sch
 
    * - Parameter
      - Description
-   * - ``<query-handle>``
+   * - ``query-handle``
      - Handle obtained when the query was submitted
 
 .. rubric:: HTTP Responses
@@ -241,7 +241,7 @@ If the batch size is not specified, the default is 20.
 
    * - Parameter
      - Description
-   * - ``<query-handle>``
+   * - ``query-handle``
      - Handle obtained when the query was submitted
 
 .. rubric:: HTTP Responses
@@ -308,7 +308,7 @@ This frees all resources that are held by this query.
 
    * - Parameter
      - Description
-   * - ``<query-handle>``
+   * - ``query-handle``
      - Handle obtained when the query was submitted
 
 .. rubric:: HTTP Responses
@@ -350,14 +350,14 @@ To return a list of queries, use::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<limit>``
+   * - ``limit``
      - Optional number indicating how many results to return in the response; by default, 50 results are returned
-   * - ``<cursor>``
+   * - ``cursor``
      - Optional string specifying if the results returned should be in the forward or reverse direction;
        should be one of ``next`` or ``prev``
-   * - ``<offset>``
+   * - ``offset``
      - Optional offset for pagination; returns the results that are greater than offset if the cursor is ``next`` or
        results that are less than offset if cursor is ``prev``
 
@@ -411,7 +411,7 @@ To return the count of **active** queries, use::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
 
 The results are returned in the body as a JSON string::
@@ -437,7 +437,7 @@ The results of the query are returned in CSV format.
 
    * - Parameter
      - Description
-   * - ``<query-handle>``
+   * - ``query-handle``
      - Handle obtained when the query was submitted or via a list of queries
 
 .. rubric:: Comments
@@ -498,13 +498,13 @@ tracking the :ref:`status of the query <http-restful-api-query-status>`.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<dataset-name>``
+   * - ``dataset-name``
      - Name of the dataset
-   * - ``<stream-name>``
+   * - ``stream-name``
      - Name of the stream
-   * - ``<table-name>``
+   * - ``table-name``
      - Name of the table
      
 .. rubric:: HTTP Responses

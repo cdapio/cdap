@@ -36,9 +36,9 @@ A stream can be created with an HTTP PUT method to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<new-stream-id>``
+   * - ``new-stream-id``
      - Name of the stream to be created
 
 .. rubric:: HTTP Responses
@@ -63,7 +63,7 @@ A stream can be created with an HTTP PUT method to the URL::
 
 .. rubric:: Comments
 
-- The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
+- The ``new-stream-id`` should only contain ASCII letters, digits and hyphens.
 - If the stream already exists, no error is returned, and the existing stream remains in place.
 
 Optionally, properties for the stream can be set by providing them in the body of the request. These properties can
@@ -112,9 +112,9 @@ asynchronously to a stream with higher throughput by sending an HTTP POST method
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of an existing stream
 
 .. rubric:: HTTP Responses
@@ -170,10 +170,10 @@ types are supported:
 
    * - Content-Type
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``text/<sub-type>``
-     - Text content with one line per event; the ``<sub-type>`` can be anything
+   * - ``text/{sub-type}``
+     - Text content with one line per event; the ``sub-type`` can be anything
    * - ``avro/binary``
      - Avro Object Container File format; each Avro record in the file becomes a single event in the stream
 
@@ -230,15 +230,15 @@ Reading events from an existing stream is performed with an HTTP GET method to t
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of an existing stream
-   * - ``<startTime>``
+   * - ``startTime``
      - Optional timestamp in milliseconds to start reading events from (inclusive); default is 0
-   * - ``<endTime>``
+   * - ``endTime``
      - Optional timestamp in milliseconds for the last event to read (exclusive); default is the maximum timestamp (2^63)
-   * - ``<limit>``
+   * - ``limit``
      - Optional maximum number of events to read; default is unlimited
 
 .. rubric:: HTTP Responses
@@ -301,9 +301,9 @@ A stream can be truncated with an HTTP POST method to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of an existing stream
 
 .. rubric:: HTTP Responses
@@ -316,7 +316,7 @@ A stream can be truncated with an HTTP POST method to the URL::
    * - ``200 OK``
      - The stream was successfully truncated
    * - ``404 Not Found``
-     - The stream ``<stream-id>`` does not exist
+     - The stream ``{stream-id}`` does not exist
 
 .. rubric:: Example
 .. list-table::
@@ -344,9 +344,9 @@ A stream can be deleted with an HTTP DELETE method to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of an existing stream
 
 .. rubric:: HTTP Responses
@@ -359,7 +359,7 @@ A stream can be deleted with an HTTP DELETE method to the URL::
    * - ``200 OK``
      - The stream was successfully deleted
    * - ``404 Not Found``
-     - The stream ``<stream-id>`` does not exist
+     - The stream ``{stream-id}`` does not exist
 
 .. rubric:: Example
 .. list-table::
@@ -404,9 +404,9 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of an existing stream
 
 .. rubric:: Example
@@ -450,9 +450,9 @@ Stream properties can be changed with an HTTP PUT method to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of an existing stream
 
 New properties are passed in the JSON request body.
@@ -539,9 +539,9 @@ You can retrieve a list of streams used by an application by issuing a HTTP GET 
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Application ID
 
 .. rubric:: HTTP Responses
@@ -566,13 +566,13 @@ You can retrieve a list of streams used by a program by issuing a HTTP GET reque
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Application ID
-   * - ``<program-type>``
+   * - ``program-type``
      - Program type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Program ID
 
 .. rubric:: HTTP Responses
@@ -597,9 +597,9 @@ You can retrieve a list of programs that are using a stream by issuing a HTTP GE
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<dataset-id>``
+   * - ``dataset-id``
      - Dataset ID
 
 .. rubric:: HTTP Responses

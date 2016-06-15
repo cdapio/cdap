@@ -38,9 +38,9 @@ The request body must contain the binary contents of the artifact.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact to be created
 
 Several optional headers may also be specified:
@@ -80,9 +80,9 @@ To retrieve a list of available artifacts, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, artifacts in the ``user`` and
        ``system`` scopes are returned. Otherwise, only artifacts in the specified scope are returned.
 
@@ -125,11 +125,11 @@ To list all versions of a specific artifact, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to ``user``.
 
 This will return a JSON array that lists each version of the specified artifact with
@@ -161,13 +161,13 @@ To retrieve details about a specific version of an artifact, submit an HTTP GET 
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
 
 This will return a JSON object that contains information about: classes in the artifact;
@@ -219,11 +219,11 @@ To set properties for a specific version of an artifact, submit an HTTP PUT requ
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
 
 The request body must be a JSON object that contains the properties for the artifact.
@@ -253,13 +253,13 @@ To set a specific property for a specific version of an artifact, submit an HTTP
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<property>``
+   * - ``property``
      - Property to set
 
 The request body must contain the value to set for the property. If the property already exists,
@@ -285,15 +285,15 @@ To retrieve properties for a specific version of an artifact, submit an HTTP GET
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
-   * - ``<keys>``
+   * - ``keys``
      - Optional comma-separated list of property keys to return. If not specified, all keys are returned. 
 
 This will return a JSON object that contains the properties of the artifact.
@@ -318,13 +318,13 @@ To retrieve a specific property for a specific version of an artifact, submit an
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<property>``
+   * - ``property``
      - Property to retrieve
 
 .. container:: highlight
@@ -347,11 +347,11 @@ To delete all properties for a specific version of an artifact, submit an HTTP D
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
 
 .. container:: highlight
@@ -373,13 +373,13 @@ To delete a specific property for a specific version of an artifact, submit an H
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<property>``
+   * - ``property``
      - Property key to delete
 
 .. container:: highlight
@@ -402,13 +402,13 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
   
 This will return a JSON array that lists the extensions (plugin types) available to the artifact.
@@ -436,15 +436,15 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<plugin-type>``
+   * - ``plugin-type``
      - Type of plugins to list
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
 
 This will return a JSON array that lists the plugins of the specified type
@@ -499,17 +499,17 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<plugin-type>``
+   * - ``plugin-type``
      - Type of the plugin
-   * - ``<plugin-name>``
+   * - ``plugin-name``
      - Name of the plugin
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
 
 This will return a JSON array that lists the plugins of the specified type and name
@@ -559,11 +559,11 @@ To delete an artifact, submit an HTTP DELETE request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
 
 Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
@@ -595,9 +595,9 @@ To delete a system artifact, submit an HTTP DELETE request::
 
    * - Parameter
      - Description
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
 
 Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
@@ -618,9 +618,9 @@ To list application classes, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, classes from artifacts in the ``user`` and
        ``system`` scopes are returned. Otherwise, only classes from artifacts in the specified scope are returned.
 
@@ -674,11 +674,11 @@ To retrieve details about a specific application class, submit an HTTP GET reque
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<class-name>``
+   * - ``class-name``
      - Application class name
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to ``user``.
 
 This will return a JSON array that lists each application class with that class name.

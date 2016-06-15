@@ -39,7 +39,7 @@ You can list all services in a namespace in CDAP by issuing an HTTP GET request 
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
      
 The response body will contain a JSON-formatted list of the existing services::
@@ -68,11 +68,11 @@ an HTTP GET request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<service-id>``
+   * - ``service-id``
      - Name of the service whose availability needs to be checked
 
 .. rubric:: HTTP Responses
@@ -113,15 +113,15 @@ encoding parameters.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<request-type>``
+   * - ``request-type``
      - One of GET, POST, PUT, or DELETE. This is defined by the handler method.
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<service-id>``
+   * - ``service-id``
      - Name of the service being called
-   * - ``<endpoint-path>``
+   * - ``endpoint-path``
      - Endpoint path of the method being called
 
 .. rubric:: HTTP Responses

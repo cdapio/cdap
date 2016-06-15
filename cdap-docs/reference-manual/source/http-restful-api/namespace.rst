@@ -38,10 +38,10 @@ To create a namespace, submit an HTTP PUT request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace
 
-The ``<namespace>`` must be of the limited character set for namespaces, as 
+The ``namespace`` must be of the limited character set for namespaces, as 
 described in the :ref:`Introduction <http-restful-api-namespace-characters>`.
 Properties for the namespace are passed in the JSON request body:
 
@@ -104,7 +104,7 @@ response, such as::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace
 
 .. rubric:: HTTP Responses
@@ -133,10 +133,10 @@ To edit an existing namespace, submit an HTTP PUT request to::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace
 
-The ``<namespace>`` must be the name of an existing namespace.
+The ``namespace`` must be the name of an existing namespace.
 Properties for the namespace are passed in the JSON request body, as described
 for when you `Create a Namespace`_.
 
@@ -202,7 +202,7 @@ and other components), submit an HTTP DELETE request to::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace
 
 To prevent accidental use of this method, it will only work if the ``cdap-site.xml`` parameter

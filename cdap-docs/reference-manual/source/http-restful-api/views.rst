@@ -51,11 +51,11 @@ A view can be added to an existing stream with an HTTP POST request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream (must be already existing)
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the view to be created, or, if already existing, updated
 
 The request body is a JSON object specifying the :ref:`read format <stream-exploration-stream-format>` to be used. 
@@ -123,9 +123,9 @@ to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream (must be already existing)
 
 The response body is a JSON object with a list of all the views currently existing for the
@@ -170,11 +170,11 @@ to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the existing view
      
 .. rubric:: Example
@@ -228,11 +228,11 @@ To delete an existing stream view, issue an HTTP DELETE request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the existing view
      
 .. rubric:: Example

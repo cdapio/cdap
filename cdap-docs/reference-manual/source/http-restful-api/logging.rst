@@ -35,15 +35,15 @@ downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET reque
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program (*flow*, *MapReduce*, *service*, *Spark*, *workflow*) being called
-   * - ``<ts>``
+   * - ``ts``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
 .. rubric:: Example
@@ -73,17 +73,17 @@ To download logs for a program run, send an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program (*flow*, *MapReduce*, *service*, *Spark*, *workflow*) being called
-   * - ``<run-id>``
+   * - ``run-id``
      - Run id of the program run
-   * - ``<ts>``
+   * - ``ts``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
 .. rubric:: Example
@@ -118,9 +118,9 @@ where:
 
    * - Parameter
      - Description
-   * - ``<service-id>``
+   * - ``service-id``
      - One of ``appfabric``, ``dataset.executor``, ``explore.service``, ``metrics``, ``metrics.processor``, ``streams``, ``transaction``
-   * - ``<ts>``
+   * - ``ts``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
 Note that the start and stop times are **not** optional.

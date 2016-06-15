@@ -35,13 +35,13 @@ where:
 
    * - Parameter
      - Description
-   * - ``<host>``
+   * - ``host``
      - Host name of the CDAP server
-   * - ``<port>``
+   * - ``port``
      - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: **10000**)
 
 
-**Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` instead and ``<port>`` becomes the port that is set
+**Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` instead and ``port`` becomes the port that is set
 as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
 
 In this API, each endpoint is documented with the HTTP method for the request and a

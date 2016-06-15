@@ -47,7 +47,7 @@ To retrieve all the configurations used by CDAP, issue an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<type>``
+   * - ``type``
      - Format for returned type, either ``json`` (default) or ``xml``
 
 .. highlight:: json
@@ -87,7 +87,7 @@ To retrieve all the configurations used by HBase, issue an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<type>``
+   * - ``type``
      - Format for returned type, either ``json`` (default) or ``xml``
 
 .. highlight:: xml

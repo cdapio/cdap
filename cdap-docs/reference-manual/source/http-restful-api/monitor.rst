@@ -153,7 +153,7 @@ where
 
    * - Parameter
      - Description
-   * - ``<service-id>``
+   * - ``service-id``
      - Name of the system service
      
 **Note:** This returns useful information only for Distributed CDAP installations.
@@ -176,9 +176,9 @@ an HTTP POST request to the URL::
 
    * - Parameter
      - Description
-   * - ``<service-id>``
+   * - ``service-id``
      - Name of the service whose instances are to be restarted
-   * - ``<instance-id>``
+   * - ``instance-id``
      - Specific instance of a service that needs to be restarted;
        instance-id runs from 0 to (the number of instances per service -1)
 
@@ -218,7 +218,7 @@ The response body will contain a JSON-formatted status of the last restart attem
 
    * - Parameter
      - Description
-   * - ``<service-id>``
+   * - ``service-id``
      - Name of the service for which details of last restart are to be retrieved
 
 .. rubric:: HTTP Responses
@@ -252,9 +252,9 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
-   * - ``<system-name>``
+   * - ``system-name``
      - Name of the system service 
-   * - ``<quantity>``
+   * - ``quantity``
      - Number of instances to be used
      
 **Note:** In standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.

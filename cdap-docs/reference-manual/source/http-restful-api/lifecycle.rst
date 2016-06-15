@@ -160,9 +160,9 @@ of the application; the artifact, streams, and datasets that it uses; and all of
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
 
 .. rubric:: HTTP Responses
@@ -190,12 +190,12 @@ programs, schedules, custom services, and workflows |---| submit an HTTP DELETE:
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<application-name>``
+   * - ``application-name``
      - Name of the application to be deleted
 
-**Note:** The ``<application-name>`` in this URL is the name of the application
+**Note:** The ``application-name`` in this URL is the name of the application
 as configured by the application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the application.
 This does not delete the streams and datasets associated with the application
@@ -222,16 +222,16 @@ To retrieve information about the schedules of the program's workflows, use::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the *workflow* being called, when retrieving schedules
   
 The response will be a JSON array containing details about the program. The details returned depend on the
@@ -311,13 +311,13 @@ CDAP will use these these runtime arguments only for this single invocation of t
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
@@ -415,13 +415,13 @@ workflows of an application by submitting an HTTP POST request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
@@ -449,16 +449,16 @@ You can stop a specific run of a program by submitting an HTTP POST request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
-   * - ``<run-id>``
+   * - ``run-id``
      - Run id of the run being called
 
 For example::
@@ -547,13 +547,13 @@ To retrieve the status of a program, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``schedules``, ``services``, ``spark``, ``workers``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the *flow*, *MapReduce*, *schedule*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
@@ -643,13 +643,13 @@ CDAP for a flow or service’s live info via an HTTP GET method::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``services``, or  ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program (*flow*, *service*, or *worker*)
 
 Example::
@@ -676,7 +676,7 @@ different program types using an HTTP POST method::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
 
 with a JSON array in the request body consisting of multiple JSON objects with these parameters:
@@ -757,15 +757,15 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application being called
-   * - ``<flow-id>``
+   * - ``flow-id``
      - Name of the flow
-   * - ``<flowlet-id>``
+   * - ``flowlet-id``
      - Name of the flowlet
-   * - ``<quantity>``
+   * - ``quantity``
      - Number of instances to be used
 
 .. rubric:: Examples
@@ -815,13 +815,13 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<service-id>``
+   * - ``service-id``
      - Name of the service
-   * - ``<quantity>``
+   * - ``quantity``
      - Number of instances to be used
 
 .. rubric:: Example
@@ -853,13 +853,13 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<worker-id>``
+   * - ``worker-id``
      - Name of the worker
-   * - ``<quantity>``
+   * - ``quantity``
      - Number of instances to be used
 
 .. rubric:: Example
@@ -893,13 +893,13 @@ time, end time, and program status::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, or *workflow* being called
 
 You can filter the runs by the status of a program, the start and end times, 
@@ -911,13 +911,13 @@ and can limit the number of returned records:
 
    * - Query Parameter
      - Description
-   * - ``<status>``
+   * - ``status``
      - running/completed/failed
-   * - ``<start>``
+   * - ``start``
      - start timestamp
-   * - ``<end>``
+   * - ``end``
      - end timestamp
-   * - ``<limit>``
+   * - ``limit``
      - maximum number of returned records
 
 The result returned will include the *runid* field, a UUID that uniquely identifies a run within CDAP,
@@ -963,15 +963,15 @@ To fetch the run record for a particular run of a program, use::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, or *workflow* being called
-   * - ``<run-id>``
+   * - ``run-id``
      - Run id of the run
 
 
@@ -1116,11 +1116,11 @@ To suspend or resume a schedule use::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<schedule-name>``
+   * - ``schedule-name``
      - Name of the schedule
 
 .. container:: table-block-example
@@ -1181,13 +1181,13 @@ To suspend or resume a workflow, use::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-name>``
+   * - ``workflow-name``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
 
 .. container:: table-block-example

@@ -33,7 +33,7 @@ You can list all datasets in CDAP by issuing an HTTP GET request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
 
 The response body will contain a JSON-formatted list of the existing datasets::
@@ -75,13 +75,13 @@ with JSON-formatted name of the dataset type, properties, and description in a b
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<dataset-name>``
+   * - ``dataset-name``
      - Name of the new dataset
-   * - ``<type-name>``
+   * - ``type-name``
      - Type of the new dataset
-   * - ``<properties>``
+   * - ``properties``
      - Dataset properties, map of String to String.
    * - ``description``
      - Dataset description
@@ -130,9 +130,9 @@ the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<dataset-name>``
+   * - ``dataset-name``
      - Name of the existing dataset
 
 .. rubric:: HTTP Responses
@@ -180,9 +180,9 @@ with JSON-formatted properties in the body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<dataset-name>``
+   * - ``dataset-name``
      - Name of the existing dataset
 
 .. rubric:: HTTP Responses
@@ -224,9 +224,9 @@ You can delete a dataset by issuing an HTTP DELETE request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<dataset-name>``
+   * - ``dataset-name``
      - Dataset name
 
 .. rubric:: HTTP Responses
@@ -267,7 +267,7 @@ you can delete all Datasets (in a namespace) by issuing an HTTP DELETE request t
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
 
 .. rubric:: HTTP Responses
@@ -308,9 +308,9 @@ This will clear the existing data from the dataset. This cannot be undone.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<dataset-name>``
+   * - ``dataset-name``
      - Dataset name
 
 .. rubric:: HTTP Responses
@@ -336,9 +336,9 @@ You can retrieve a list of datasets used by an application by issuing a HTTP GET
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Application ID
 
 .. rubric:: HTTP Responses
@@ -364,13 +364,13 @@ You can retrieve a list of datasets used by a program by issuing a HTTP GET requ
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Application ID
-   * - ``<program-type>``
+   * - ``program-type``
      - Program type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
-   * - ``<program-id>``
+   * - ``program-id``
      - Program ID
 
 .. rubric:: HTTP Responses
@@ -396,9 +396,9 @@ You can retrieve a list of programs that are using a dataset by issuing a HTTP G
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<dataset-id>``
+   * - ``dataset-id``
      - Dataset ID
 
 .. rubric:: HTTP Responses

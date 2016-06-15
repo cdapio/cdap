@@ -42,15 +42,15 @@ The request can (optionally) contain a *node-id* to limit the request to a parti
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
-   * - ``<node-id>``
+   * - ``node-id``
      - Name of a node in the workflow (optional)
      
 .. rubric:: Extending the Request
@@ -164,13 +164,13 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
 
 Deleting Local Datasets
@@ -187,13 +187,13 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
 
 Workflow State
@@ -213,13 +213,13 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
      
 .. rubric:: Example
@@ -265,17 +265,17 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<start-time>``
+   * - ``start-time``
      - Start time of runs (in seconds); if not provided, defaults to ``now`` (optional) 
-   * - ``<end-time>``
+   * - ``end-time``
      - End time of runs (in seconds); if not provided, defaults to ``now-1d`` (optional) 
-   * - ``<percentile-1>``
+   * - ``percentile-1``
      - List of percentiles (each greater than zero and less than 100) to be used for generating statistics;
        if not provided, defaults to 90 (optional) 
 
@@ -374,17 +374,17 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
-   * - ``<limit>``
+   * - ``limit``
      - The number of the records to compare against (before and after) the run; if not provided, defaults to ``10`` (optional) 
-   * - ``<interval>``
+   * - ``interval``
      - The time interval with which to space out the runs before and after, with units; if not provided, defaults to ``10s`` (optional) 
 
 If the query was successful, the body will contain a JSON structure of statistics.
@@ -470,15 +470,15 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
-   * - ``<other-run-id>``
+   * - ``other-run-id``
      - UUID of the other workflow run to be used in the comparison
 
 If the query was successful, the body will contain a JSON structure of statistics. Note that if either of

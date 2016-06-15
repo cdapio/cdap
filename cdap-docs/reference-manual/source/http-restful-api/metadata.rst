@@ -80,25 +80,25 @@ updated. Existing keys not in the properties map will not be deleted.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
 
 .. rubric:: HTTP Responses
@@ -151,27 +151,27 @@ in the response body (pretty-printed)::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, properties in the ``user`` and
        ``system`` scopes are returned. Otherwise, only properties in the specified scope are returned.
 
@@ -231,27 +231,27 @@ or, for a particular view of a stream::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
-   * - ``<key>``
+   * - ``key``
      - Metadata property key
 
 .. rubric:: HTTP Responses
@@ -303,25 +303,25 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
 
 .. rubric:: HTTP Responses
@@ -368,27 +368,27 @@ with the metadata tags returned as a JSON string in the return body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, properties in the ``user`` and
        ``system`` scopes are returned. Otherwise, only properties in the specified scope are returned.
 
@@ -448,27 +448,27 @@ or, for a particular view of a stream::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
-   * - ``<tag>``
+   * - ``tag``
      - Metadata tag
 
 .. rubric:: HTTP Responses
@@ -554,12 +554,12 @@ Entities that match the specified query and entity type are returned in the body
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
        ``program``, ``stream``, or ``view``
-   * - ``<term>``
+   * - ``term``
      - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive
 
 .. rubric:: HTTP Responses
@@ -597,21 +597,21 @@ Search for properties and tags by specifying one of:
 Since CDAP also annotates *system* metadata to entities by default as mentioned at
 :ref:`System Metadata <metadata-lineage-system-metadata>`, the following *special* search queries are also supported:
 
-- artifacts or applications containing a specific plugin: ``plugin:<plugin-name>``
+- artifacts or applications containing a specific plugin: ``{plugin}:{plugin-name}``
 
 - programs with a specific mode: ``batch`` or ``realtime``
 
-- applications with a specific program type: ``flow:<flow-name>``, ``service:<service-name>``,
-  ``mapreduce:<mapreduce-name>``, ``spark:<spark-name>``, ``worker:<worker-name>``,
-  ``workflow:<workflow-name>``
+- applications with a specific program type: ``flow:{flow-name}``, ``service:{service-name}``,
+  ``mapreduce:{mapreduce-name}``, ``spark:{spark-name}``, ``worker:{worker-name}``,
+  ``workflow:{workflow-name}``
 
 - datasets, streams or views with schema field:
 
-  - field name only: ``<field-name>``
-  - field name with a type: ``<field-name>:<field-type>``, where ``field-type`` can be
+  - field name only: ``field-name``
+  - field name with a type: ``{field-name}:{field-type}``, where ``field-type`` can be:
 
-    - simple types - ``int``, ``long``, ``boolean``, ``float``, ``double``, ``bytes``, ``string``, ``enum``
-    - ``array``, ``map``, ``record`` or ``union``
+    - simple types: ``int``, ``long``, ``boolean``, ``float``, ``double``, ``bytes``, ``string``, ``enum``
+    - complex types: ``array``, ``map``, ``record``, ``union``
 
 ::
 
@@ -652,20 +652,20 @@ where:
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``datasets`` or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the ``dataset`` or ``stream``
-   * - ``<start-ts>``
+   * - ``start-ts``
      - Starting time-stamp of lineage (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
-   * - ``<end-ts>``
+   * - ``end-ts``
      - Ending time-stamp of lineage (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
-   * - ``<levels>``
+   * - ``levels``
      - Number of levels of lineage output to return. Defaults to 10. Determines how far back the provenance
        of the data in the lineage chain is calculated.
-   * - ``<collapse>``
+   * - ``collapse``
      - An optional set of ``collapse`` types (any of ``access``, ``run`` or ``component``) by which to 
        :ref:`collapse the lineage output <http-restful-api-metadata-lineage-collapse>`. 
        By default, lineage output is not collapsed. Multiple collapse parameters is supported.
@@ -678,7 +678,7 @@ For more information about collapsing lineage output, please refer to the sectio
 
 The lineage will be returned as a JSON string in the body of the response. The JSON describes lineage as a graph
 of connections between programs and datasets (or streams) in the specified time range. The number of
-levels of the request (``<levels>``) determines the depth of the graph. This impacts how far back the provenance of the
+levels of the request (``levels``) determines the depth of the graph. This impacts how far back the provenance of the
 data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage-lineage>`.
 
 Lineage JSON consists of three main sections:
@@ -1102,15 +1102,15 @@ with the metadata returned as a JSON string in the return body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<run-id>``
+   * - ``run-id``
      - Program run id
 
 .. rubric:: HTTP Responses
