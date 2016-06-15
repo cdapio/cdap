@@ -66,32 +66,25 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               rDisabled: function() {
                 return true;
               },
-              rPlugin: ['HydratorPlusPlusHydratorService', 'GLOBALS', function(HydratorService, GLOBALS) {
-                let appType = this.HydratorPlusPlusDetailNonRunsStore.getPipelineType();
-                if (!pluginNode._backendProperties) {
-                  return HydratorService
-                    .fetchBackendProperties(pluginNode, appType)
-                    .then((node) => {
-                      return {
-                        node: node,
-                        isValidPlugin: true,
-                        type: appType,
-                        isSource: GLOBALS.pluginTypes[appType].source === pluginNode.type,
-                        isSink: GLOBALS.pluginTypes[appType].sink === pluginNode.type,
-                        isTransform: GLOBALS.pluginTypes[appType].transform === pluginNode.type
-                      };
-                    });
-                } else {
-                  return {
-                    node: pluginNode,
-                    isValidPlugin: true,
-                    type: appType,
-                    isSource: GLOBALS.pluginTypes[appType].source === pluginNode.type,
-                    isSink: GLOBALS.pluginTypes[appType].sink === pluginNode.type,
-                    isTransform: GLOBALS.pluginTypes[appType].transform === pluginNode.type
-                  };
-                }
-              }.bind(this)]
+              rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore) {
+                let pluginId = pluginNode.name;
+                let appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
+                let sourceConn = HydratorPlusPlusDetailNonRunsStore
+                  .getSourceNodes(pluginId)
+                  .filter( node => typeof node.outputSchema === 'string');
+                return HydratorPlusPlusNodeService
+                  .getPluginInfo(pluginNode, appType, sourceConn)
+                  .then((nodeWithInfo) => (
+                    {
+                      node: nodeWithInfo,
+                      isValidPlugin: true,
+                      type: appType,
+                      isSource: GLOBALS.pluginTypes[appType].source === nodeWithInfo.type,
+                      isSink: GLOBALS.pluginTypes[appType].sink === nodeWithInfo.type,
+                      isTransform: GLOBALS.pluginTypes[appType].transform === nodeWithInfo.type
+                    }
+                  ));
+              }]
             }
           })
           .result

@@ -79,17 +79,25 @@ class HydratorPlusPlusCreateCanvasCtrl {
             rDisabled: function() {
               return false;
             },
-            rPlugin: function() {
-              let appType = this.HydratorPlusPlusConfigStore.getAppType();
-              return {
-                node: pluginNode,
-                isValidPlugin: true,
-                type: appType,
-                isSource: this.GLOBALS.pluginTypes[appType].source === pluginNode.type,
-                isSink: this.GLOBALS.pluginTypes[appType].sink === pluginNode.type,
-                isTransform: this.GLOBALS.pluginTypes[appType].transform === pluginNode.type
-              };
-            }.bind(this)
+            rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusConfigStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusConfigStore, GLOBALS) {
+              let pluginId = pluginNode.name;
+              let appType = HydratorPlusPlusConfigStore.getAppType();
+              let sourceConn = HydratorPlusPlusConfigStore
+                .getSourceNodes(pluginId)
+                .filter( node => typeof node.outputSchema === 'string');
+              return HydratorPlusPlusNodeService
+                .getPluginInfo(pluginNode, appType, sourceConn)
+                .then((nodeWithInfo) => (
+                  {
+                    node: nodeWithInfo,
+                    isValidPlugin: true,
+                    type: appType,
+                    isSource: GLOBALS.pluginTypes[appType].source === nodeWithInfo.type,
+                    isSink: GLOBALS.pluginTypes[appType].sink === nodeWithInfo.type,
+                    isTransform: GLOBALS.pluginTypes[appType].transform === nodeWithInfo.type
+                  }
+                ));
+            }]
           }
         })
         .result
