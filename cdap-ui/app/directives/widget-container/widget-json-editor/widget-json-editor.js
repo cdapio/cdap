@@ -23,7 +23,7 @@ angular.module(PKG.name + '.commons')
         placeholder: '='
       },
       template: '<textarea class="form-control" data-ng-trim="false" cask-json-edit="internalModel" placeholder="placeholder"></textarea>',
-      controller: function($scope, EventPipe) {
+      controller: function($scope) {
         function initialize () {
           try {
             $scope.internalModel = JSON.parse($scope.model);
