@@ -26,7 +26,6 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
       controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorPlusPlusHydratorService, $timeout, myAlertOnValium) {
-        var modelCopy = angular.copy($scope.model);
         $scope.limitedToView = 15;
         var typeMap = 'map<string, string>';
 
@@ -221,11 +220,6 @@ angular.module(PKG.name + '.commons')
 
         initialize($scope.model);
 
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-          initialize($scope.model);
-        });
-
         EventPipe.on('schema.clear', function () {
           var schema;
           try {
@@ -389,7 +383,6 @@ angular.module(PKG.name + '.commons')
           EventPipe.cancelEvent('schema.export');
           EventPipe.cancelEvent('schema.import');
           EventPipe.cancelEvent('schema.clear');
-          EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
           URL.revokeObjectURL($scope.url);
 
