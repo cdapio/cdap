@@ -33,6 +33,7 @@ angular.module(PKG.name + '.commons')
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
         var defaultType = null;
         var watchProperty = null;
+        var schemaExportTimeout = null;
 
         $scope.fields = 'SHOW';
 
@@ -357,7 +358,11 @@ angular.module(PKG.name + '.commons')
           $scope.url = URL.createObjectURL(blob);
           $scope.exportFileName = 'schema';
 
-          $timeout(function() {
+          if (schemaExportTimeout) {
+            $timeout.cancel(schemaExportTimeout);
+          }
+
+          schemaExportTimeout = $timeout(function() {
             document.getElementById('schema-export-link').click();
           });
         }
@@ -387,6 +392,10 @@ angular.module(PKG.name + '.commons')
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
           URL.revokeObjectURL($scope.url);
+
+          if (schemaExportTimeout) {
+            $timeout.cancel(schemaExportTimeout);
+          }
         });
 
         $scope.loadNextSetOfRows = function() {
