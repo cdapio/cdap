@@ -15,14 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal, GLOBALS, DAGPlusPlusNodesDispatcher) {
-    this.GLOBALS = GLOBALS;
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal) {
     this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
-    this.DAGPlusPlusNodesDispatcher = DAGPlusPlusNodesDispatcher;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
 
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
@@ -37,7 +36,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setState.bind(this));
     var obj = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
 
-    DAGPlusPlusNodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
+    this.DAGPlusPlusNodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
 
     this.updateNodesAndConnections = function () {
       var activeNode = this.DAGPlusPlusNodesStore.getActiveNodeId();
@@ -66,7 +65,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               rDisabled: function() {
                 return true;
               },
-              rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore) {
+              rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore, GLOBALS) {
                 let pluginId = pluginNode.name;
                 let appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
                 let sourceConn = HydratorPlusPlusDetailNonRunsStore
@@ -79,9 +78,9 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                       node: nodeWithInfo,
                       isValidPlugin: true,
                       type: appType,
-                      isSource: GLOBALS.pluginTypes[appType].source === nodeWithInfo.type,
-                      isSink: GLOBALS.pluginTypes[appType].sink === nodeWithInfo.type,
-                      isTransform: GLOBALS.pluginTypes[appType].transform === nodeWithInfo.type
+                      isSource: GLOBALS.pluginConvert[nodeWithInfo.type] === 'source',
+                      isSink: GLOBALS.pluginConvert[nodeWithInfo.type] === 'sink',
+                      isTransform: GLOBALS.pluginConvert[nodeWithInfo.type] === 'transform'
                     }
                   ));
               }]
@@ -92,7 +91,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
 
     this.deleteNode = () => {
-      this.DAGPlusPlusNodesDispatcher.getDispatcher().dispatch('onNodeSelectReset');
+      this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
     };
 
     this.generateSchemaOnEdge = function (sourceId) {

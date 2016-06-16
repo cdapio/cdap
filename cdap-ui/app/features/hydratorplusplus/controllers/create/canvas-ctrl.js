@@ -15,11 +15,11 @@
  */
 
 class HydratorPlusPlusCreateCanvasCtrl {
-  constructor(HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesStore, HydratorPlusPlusConfigStore, HydratorPlusPlusHydratorService, $uibModal, GLOBALS, DAGPlusPlusNodesDispatcher) {
+  constructor(HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesStore, HydratorPlusPlusConfigStore, HydratorPlusPlusHydratorService, $uibModal, GLOBALS, DAGPlusPlusNodesActionsFactory) {
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
-    this.DAGPlusPlusNodesDispatcher = DAGPlusPlusNodesDispatcher;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.GLOBALS = GLOBALS;
 
     this.setState = () => {
@@ -75,6 +75,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
             rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusConfigStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusConfigStore, GLOBALS) {
               let pluginId = pluginNode.name;
               let appType = HydratorPlusPlusConfigStore.getAppType();
+
               let sourceConn = HydratorPlusPlusConfigStore
                 .getSourceNodes(pluginId)
                 .filter( node => typeof node.outputSchema === 'string');
@@ -85,9 +86,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
                     node: nodeWithInfo,
                     isValidPlugin: true,
                     type: appType,
-                    isSource: GLOBALS.pluginTypes[appType].source === nodeWithInfo.type,
-                    isSink: GLOBALS.pluginTypes[appType].sink === nodeWithInfo.type,
-                    isTransform: GLOBALS.pluginTypes[appType].transform === nodeWithInfo.type
+                    isSource: GLOBALS.pluginConvert[nodeWithInfo.type] === 'source',
+                    isSink: GLOBALS.pluginConvert[nodeWithInfo.type] === 'sink',
+                    isTransform: GLOBALS.pluginConvert[nodeWithInfo.type] === 'transform'
                   }
                 ));
             }]
@@ -98,7 +99,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
   }
 
   deleteNode() {
-    this.DAGPlusPlusNodesDispatcher.getDispatcher().dispatch('onNodeSelectReset');
+    this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
     this.setStateAndUpdateConfigStore();
   }
 
@@ -108,6 +109,6 @@ class HydratorPlusPlusCreateCanvasCtrl {
 }
 
 
-HydratorPlusPlusCreateCanvasCtrl.$inject = ['HydratorPlusPlusBottomPanelStore', 'DAGPlusPlusNodesStore', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusHydratorService', '$uibModal', 'GLOBALS', 'DAGPlusPlusNodesDispatcher'];
+HydratorPlusPlusCreateCanvasCtrl.$inject = ['HydratorPlusPlusBottomPanelStore', 'DAGPlusPlusNodesStore', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusHydratorService', '$uibModal', 'GLOBALS', 'DAGPlusPlusNodesActionsFactory'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusCreateCanvasCtrl', HydratorPlusPlusCreateCanvasCtrl);

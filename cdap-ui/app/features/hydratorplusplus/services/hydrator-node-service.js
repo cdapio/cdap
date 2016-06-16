@@ -34,10 +34,6 @@ class HydratorPlusPlusNodeService {
       var sourceSchema = null;
       var isStreamSource = false;
 
-      var clfSchema = this.IMPLICIT_SCHEMA.clf;
-
-      var syslogSchema = this.IMPLICIT_SCHEMA.syslog;
-
       var source;
       if (sourceConn && sourceConn.length) {
         source = sourceConn[0];
@@ -47,10 +43,8 @@ class HydratorPlusPlusNodeService {
           isStreamSource = true;
         }
 
-        if (source.plugin.properties.format && source.plugin.properties.format === 'clf') {
-          sourceSchema = clfSchema;
-        } else if (source.plugin.properties.format && source.plugin.properties.format === 'syslog') {
-          sourceSchema = syslogSchema;
+        if (Object.keys(this.IMPLICIT_SCHEMA).indexOf(source.plugin.properties.format) !== -1) {
+          sourceSchema = this.IMPLICIT_SCHEMA[source.plugin.properties.format];
         }
 
       } else {
