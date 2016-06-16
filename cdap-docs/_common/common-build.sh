@@ -77,7 +77,7 @@ API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 CHECK_INCLUDES=''
 
 if [[ "x${COLOR_LOGS}" != "x" ]]; then
-  SPHINX_COLOR=""
+  SPHINX_COLOR=''
   RED="$(tput setaf 1)"
   BOLD="$(tput bold)"
   RED_BOLD="$(tput setaf 1; tput bold)"
