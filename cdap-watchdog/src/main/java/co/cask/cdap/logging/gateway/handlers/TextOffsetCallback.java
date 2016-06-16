@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,31 +18,21 @@ package co.cask.cdap.logging.gateway.handlers;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
-import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * Callback to handle log events from LogReader.
+ * LogReader callback to encode log events, as {@link FormattedTextLogEvent} that contains log text and log offset
  */
-class LogReaderCallback implements Callback {
-  private final List<FormattedLogEvent> logResults;
-  private final HttpResponder responder;
+public class TextOffsetCallback extends AbstractJSONCallback {
   private final PatternLayout patternLayout;
   private final boolean escape;
-  private final AtomicInteger count = new AtomicInteger();
 
-  LogReaderCallback(HttpResponder responder, String logPattern, boolean escape) {
-    this.logResults = Lists.newArrayList();
-    this.responder = responder;
+  public TextOffsetCallback(HttpResponder responder, String logPattern, boolean escape) {
+    super(responder);
     this.escape = escape;
 
     ch.qos.logback.classic.Logger rootLogger =
@@ -56,26 +46,20 @@ class LogReaderCallback implements Callback {
 
   @Override
   public void init() {
+    super.init();
     patternLayout.start();
   }
 
   @Override
-  public void handle(LogEvent event) {
+  public void close() {
+    super.close();
+    patternLayout.stop();
+  }
+
+  @Override
+  protected Object encodeSend(LogEvent event) {
     String log = patternLayout.doLayout(event.getLoggingEvent());
     log = escape ? StringEscapeUtils.escapeHtml(log) : log;
-
-    logResults.add(new FormattedLogEvent(log, event.getOffset()));
-    count.incrementAndGet();
-  }
-
-  @Override
-  public int getCount() {
-    return count.get();
-  }
-
-  @Override
-  public void close() {
-    patternLayout.stop();
-    responder.sendJson(HttpResponseStatus.OK, logResults);
+    return new FormattedTextLogEvent(log, event.getOffset());
   }
 }
