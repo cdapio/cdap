@@ -23,7 +23,7 @@
 
     :copyright: Copyright 2016 by Cask Data, Inc.
     :license: Apache License, Version 2.0, see http://www.apache.org/licenses/LICENSE-2.0
-    :version: 0.1
+    :version: 0.2
 
 """
 
@@ -44,19 +44,18 @@ class CustomHTMLTranslator(HTMLTranslator):
         close = close_tag.rfind('>')
         if close != -1:
             h_level = close_tag[close-1]
-        if (self.permalink_text and self.builder.add_permalinks and
-            node.parent.hasattr('ids') and node.parent['ids']):
+        if (h_level and h_level.isdigit() and (close == close_tag.rfind('h%s>' % h_level) + 2) and self.permalink_text
+                and self.builder.add_permalinks and node.parent.hasattr('ids') and node.parent['ids']):
             aname = node.parent['ids'][0]
             tags = []
-            if h_level:
-                open_tag = "<h%s>" % h_level
-                # Walk back to find open_tag in body
-                for i in reversed(range(len(self.body))):
-                    tags.append(self.body.pop())
-                    if tags[-1] == open_tag:
-                        self.body.append(tags.pop())
-                        tags.reverse()
-                        break
+            open_tag = "<h%s>" % h_level
+            # Walk back to find open_tag in body
+            for i in reversed(range(len(self.body))):
+                tags.append(self.body.pop())
+                if tags[-1] == open_tag:
+                    self.body.append(tags.pop())
+                    tags.reverse()
+                    break
             
             # <h1>Manual Installation using Packages<a class="headerlink" href="#manual-installation-using-packages"
             # title="Permalink to this headline">¶</a></h1>
@@ -73,5 +72,3 @@ class CustomHTMLTranslator(HTMLTranslator):
             self.body = self.body + tags            
 
         BaseTranslator.depart_title(self, node)
-
-
