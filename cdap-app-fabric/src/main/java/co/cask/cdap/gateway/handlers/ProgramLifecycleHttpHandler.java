@@ -271,16 +271,63 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                        scheduleName).toString());
     responder.sendJson(HttpResponseStatus.OK, json);
   }
+  private PreviewMain previewMain;
+
   @POST
-  @Path("/test/preview")
+  @Path("/preview/initialize")
   public void startPreview(HttpRequest request, HttpResponder responder) throws Exception {
-    PreviewMain previewMain = PreviewMain.createPreviewMain(remoteDatasetFramework);
-    try {
+    if (previewMain == null) {
+      previewMain = PreviewMain.createPreviewMain(remoteDatasetFramework);
       previewMain.startUp();
-    } finally {
-      previewMain.shutDown();
+    } else {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Preview already running");
+      return;
     }
-    responder.sendString(HttpResponseStatus.OK, "Preview started and stopped successfully");
+    responder.sendString(HttpResponseStatus.OK, "Preview started successfully");
+  }
+
+  @POST
+  @Path("/preview/run")
+  public void runPreview(HttpRequest request, HttpResponder responder) throws Exception {
+    if (previewMain == null) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Preview is stopped, start before running");
+      return;
+    }
+    previewMain.deployAndRunApp(request.getContent());
+    responder.sendString(HttpResponseStatus.OK, "Preview run completed successfully");
+  }
+
+  @POST
+  @Path("/preview/datasets")
+  public void getDatasets(HttpRequest request, HttpResponder responder) throws Exception {
+    if (previewMain == null) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Preview is stopped, start before running");
+      return;
+    }
+    String result = previewMain.getRemoteDatasets();
+    responder.sendString(HttpResponseStatus.OK, result);
+  }
+
+  @POST
+  @Path("/preview/status")
+  public void getPreview(HttpRequest request, HttpResponder responder) throws Exception {
+    if (previewMain == null) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Preview is stopped, start before running");
+      return;
+    }
+    previewMain.runStatus();
+    responder.sendString(HttpResponseStatus.OK, "Preview run completed successfully");
+  }
+
+  @POST
+  @Path("/preview/stop")
+  public void stopPreview(HttpRequest request, HttpResponder responder) throws Exception {
+    if (previewMain == null) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Preview is already stopped");
+    }
+    previewMain.shutDown();
+    previewMain = null;
+    responder.sendString(HttpResponseStatus.OK, "Preview stopped successfully");
   }
 
   /**

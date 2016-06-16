@@ -56,6 +56,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -77,6 +78,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +88,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -238,12 +241,19 @@ public class PreviewMain {
       externalAuthenticationServer.startAndWait();
     }
 
+    System.out.println("Preview CDAP started successfully.");
+  }
+
+  private String hitEndpointPrintStatus(String url) throws Exception {
+    System.out.println("Discovered App Fabric: Hitting " + url);
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(new URL(url)).build());
+    System.out.println(String.format("Response code : %s Response message : %s",
+                                     response.getResponseCode(), response.getResponseBodyAsString()));
+    return response.getResponseBodyAsString();
+  }
 
 
-
-    System.out.println("Standalone CDAP started successfully.");
-
-
+  public void deployAndRunApp(ChannelBuffer content) throws Exception {
     // discover app.fabric and get app list and print them.
     final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
@@ -257,32 +267,75 @@ public class PreviewMain {
       throw new ServiceUnavailableException("App-fabric service");
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
-    String url = String.format("http://%s:%s%s/namespaces/%s/apps", addr.getHostName(), addr.getPort(),
+
+    String getNamespacesUrl = String.format("http://%s:%s%s/namespaces/", addr.getHostName(), addr.getPort(),
+                                      Constants.Gateway.API_VERSION_3);
+    hitEndpointPrintStatus(getNamespacesUrl);
+
+    String getAppsUrl = String.format("http://%s:%s%s/namespaces/%s/apps", addr.getHostName(), addr.getPort(),
                                Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId());
-    hitEndpointPrintStatus(url);
+    hitEndpointPrintStatus(getAppsUrl);
 
-    url = String.format("http://%s:%s%s/namespaces/default/artifacts?scope=system",
-                               addr.getHostName(), addr.getPort(), Constants.Gateway.API_VERSION_3);
-    hitEndpointPrintStatus(url);
 
-    url = String.format("http://%s:%s%s/namespaces/default/artifacts?scope=user",
-                        addr.getHostName(), addr.getPort(), Constants.Gateway.API_VERSION_3);
-    hitEndpointPrintStatus(url);
+    String url = String.format("http://%s:%s%s/namespaces/%s/apps/testAppPreview",
+                               addr.getHostName(), addr.getPort(),
+                               Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId());
+
+    HttpRequest httpRequest = HttpRequest.put(new URL(url)).withBody(content.toByteBuffer()).
+      addHeader("Content-Type", "json").build();
+    HttpResponse response = HttpRequests.execute(httpRequest);
+    System.out.println("Deploy response code : " +
+                         response.getResponseCode() + " response message :" + response.getResponseMessage());
+
+    hitEndpointPrintStatus(getAppsUrl);
+
+    String workflows = String.format("http://%s:%s%s/namespaces/%s/workflows",
+                               addr.getHostName(), addr.getPort(),
+                               Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId());
+    hitEndpointPrintStatus(workflows);
+
+    url = String.format("http://%s:%s%s/namespaces/%s/apps/testAppPreview/workflows/DataPipelineWorkflow/start",
+                        addr.getHostName(), addr.getPort(),
+                        Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId());
+
+    httpRequest = HttpRequest.post(new URL(url)).build();
+    response = HttpRequests.execute(httpRequest);
+    System.out.println("Start response code : " +
+                         response.getResponseCode() + " response message :" + response.getResponseMessage());
   }
 
-  private void hitEndpointPrintStatus(String url) throws Exception {
-    System.out.println("Discovered App Fabric: Hitting " + url);
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(new URL(url)).build());
-    System.out.println(String.format("Response code : %s Response message : %s",
-                                     response.getResponseCode(), response.getResponseBodyAsString()));
+  public void runStatus() throws Exception {
+    final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
+      @Override
+      public EndpointStrategy get() {
+        return new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
+      }
+    });
+    Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);
+    if (discoverable == null) {
+      throw new ServiceUnavailableException("App-fabric service");
+    }
+    InetSocketAddress addr = discoverable.getSocketAddress();
 
+    String workflowStatusUrl =
+      String.format("http://%s:%s%s/namespaces/default/apps/testAppPreview/workflows/DataPipelineWorkflow/status",
+                    addr.getHostName(), addr.getPort(), Constants.Gateway.API_VERSION_3);
+    hitEndpointPrintStatus(workflowStatusUrl);
+
+  }
+
+  public String getRemoteDatasets() throws Exception {
+    DatasetFramework framework = injector.getInstance(DatasetFramework.class);
+    Collection<DatasetSpecificationSummary> summary = framework.getInstances(Id.Namespace.DEFAULT);
+    return summary.toString();
   }
 
   /**
    * Shutdown the service.
    */
   public void shutDown() {
-    LOG.info("Shutting down Standalone CDAP");
+    LOG.info("Shutting down Preview CDAP");
     try {
 
       // now the stream writer and the explore service (they need tx)
@@ -347,7 +400,7 @@ public class PreviewMain {
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),
-      new DataSetsModules().getStandaloneModules(),
+      new DataSetsModules().getPreviewModules(remoteDsFramework),
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
       new SecurityModules().getStandaloneModules(),

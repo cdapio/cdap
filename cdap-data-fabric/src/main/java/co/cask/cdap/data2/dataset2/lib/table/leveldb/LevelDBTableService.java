@@ -183,7 +183,7 @@ public class LevelDBTableService {
     String dbPath = getDBPath(basePath, tableName);
 
     Options options = new Options();
-    options.createIfMissing(true);
+    options.createIfMissing(false);
     options.errorIfExists(false);
     options.comparator(new KeyValueDBComparator());
     options.blockSize(blockSize);
@@ -194,9 +194,9 @@ public class LevelDBTableService {
     // directory there with a lock.  So we want to avoid calling open if the path doesn't already exist and
     // throw the exception ourselves.
     File dbDir = new File(dbPath);
-//    if (!dbDir.exists()) {
-//      throw new IOException("Database " + dbPath + " does not exist and the create if missing option is disabled");
-//    }
+    if (!dbDir.exists()) {
+      throw new IOException("Database " + dbPath + " does not exist and the create if missing option is disabled");
+    }
     DB db = factory.open(dbDir, options);
     tables.put(tableName, db);
     return db;

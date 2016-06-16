@@ -144,6 +144,10 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
+
+        bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        expose(UsageRegistry.class);
+
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
 
@@ -184,7 +188,7 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
-          .to(HybridDatasetFramework.class);
+          .to(RemoteDatasetFramework.class);
         expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);

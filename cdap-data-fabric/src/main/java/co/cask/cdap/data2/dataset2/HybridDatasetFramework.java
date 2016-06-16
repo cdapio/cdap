@@ -49,7 +49,6 @@ public class HybridDatasetFramework implements DatasetFramework {
   public HybridDatasetFramework(DatasetFramework inMemory, DatasetFramework remote) {
     this.inMemoryDatasetFramework = inMemory;
     this.remoteDatasetFramework = remote;
-
   }
 
   @Override
@@ -93,7 +92,7 @@ public class HybridDatasetFramework implements DatasetFramework {
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
     throws DatasetManagementException {
-    return null;
+    return remoteDatasetFramework.getInstances(namespaceId);
   }
 
   @Nullable
@@ -171,7 +170,11 @@ public class HybridDatasetFramework implements DatasetFramework {
                                           @Nullable Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
-    return getDataset(datasetInstanceId, arguments, classLoader, null);
+    if (datasetInstanceId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+      return inMemoryDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader);
+    } else {
+      return remoteDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader);
+    }
   }
 
   @Nullable
