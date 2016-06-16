@@ -21,7 +21,8 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.StageConfigurer;
 
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 
@@ -32,13 +33,12 @@ import javax.annotation.Nullable;
  */
 public class DefaultStageConfigurer implements StageConfigurer {
   private Schema outputSchema;
-  private Schema inputSchema;
   private final String stageName;
-  boolean inputSchemaSet;
+  private Map<String, Schema> inputSchemas;
 
   public DefaultStageConfigurer(String stageName) {
     this.stageName = stageName;
-    this.inputSchemaSet = false;
+    this.inputSchemas = new HashMap<>();
   }
 
   @Nullable
@@ -49,7 +49,13 @@ public class DefaultStageConfigurer implements StageConfigurer {
   @Override
   @Nullable
   public Schema getInputSchema() {
-    return inputSchema;
+    return inputSchemas.entrySet().iterator().next().getValue();
+  }
+
+  @Nullable
+  @Override
+  public Map<String, Schema> getInputSchemas() {
+    return inputSchemas;
   }
 
   @Override
@@ -57,14 +63,8 @@ public class DefaultStageConfigurer implements StageConfigurer {
     this.outputSchema = outputSchema;
   }
 
-  public void setInputSchema(@Nullable Schema inputSchema) {
-    if (this.inputSchemaSet && !Objects.equals(this.inputSchema, inputSchema)) {
-      throw new IllegalArgumentException(
-        String.format("Two different input schema were set for stage %s. Schema1 = %s. Schema2 = %s.",
-                      stageName, this.inputSchema, inputSchema));
-    }
-    this.inputSchema = inputSchema;
-    this.inputSchemaSet = true;
+  public void addInputSchema(@Nullable String stageName, @Nullable Schema inputSchema) {
+    inputSchemas.put(stageName, inputSchema);
   }
 }
 

@@ -46,7 +46,8 @@ public class TransformExecutor<IN> implements Destroyable {
 
   public TransformResponse runOneIteration(IN input) throws Exception {
     for (String stageName : startingPoints) {
-      executeTransformation(stageName, ImmutableList.of(input));
+      // no prevStage for starting points
+      executeTransformation("", stageName, ImmutableList.of(input));
     }
 
     Map<String, Collection<Object>> terminalNodeEntriesMap = new HashMap<>();
@@ -68,12 +69,14 @@ public class TransformExecutor<IN> implements Destroyable {
     return new TransformResponse(terminalNodeEntriesMap, errors);
   }
 
-  private <T> void executeTransformation(final String stageName, Collection<T> input) throws Exception {
+  private <T> void executeTransformation(final String prevStageName, final String stageName,
+                                         Collection<T> input) throws Exception {
     if (input == null) {
       return;
     }
 
     TransformDetail transformDetail = transformDetailMap.get(stageName);
+    transformDetail.setPrevStage(prevStageName);
     Transformation<T, Object> transformation = transformDetail.getTransformation();
 
 
@@ -86,8 +89,9 @@ public class TransformExecutor<IN> implements Destroyable {
       transformation.transform(inputEntry, transformDetail);
     }
 
-    for (String nextStage : transformDetail.getNextStages()) {
-      executeTransformation(nextStage, transformDetail.getEntries());
+    Collection<String> nextStages = transformDetail.getNextStages();
+    for (String nextStage : nextStages) {
+      executeTransformation(stageName, nextStage, transformDetail.getEntries());
     }
 
   }

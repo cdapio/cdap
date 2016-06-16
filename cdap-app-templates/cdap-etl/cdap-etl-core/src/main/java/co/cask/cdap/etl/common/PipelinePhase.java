@@ -61,6 +61,16 @@ public class PipelinePhase implements Iterable<StageInfo> {
     return Collections.unmodifiableSet(stageInfos == null ? new HashSet<StageInfo>() : stageInfos);
   }
 
+  public Set<StageInfo> getStagesOfType(String... pluginTypes) {
+    Set<StageInfo> stageInfos = new HashSet<>();
+    for (String pluginType: pluginTypes) {
+      if (stages.get(pluginType) != null) {
+        stageInfos.addAll(stages.get(pluginType));
+      }
+    }
+    return Collections.unmodifiableSet(stageInfos == null ? new HashSet<StageInfo>() : stageInfos);
+  }
+
   public Set<String> getStageOutputs(String stage) {
     Set<String> outputs = dag.getNodeOutputs(stage);
     return Collections.unmodifiableSet(outputs == null ? new HashSet<String>() : outputs);
