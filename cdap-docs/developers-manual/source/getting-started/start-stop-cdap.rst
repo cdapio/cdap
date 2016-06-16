@@ -32,5 +32,6 @@ Once CDAP is started successfully, in a web browser you will be able to see the 
 UI running at ``http://localhost:9999``, where you can deploy example applications and
 interact with CDAP. 
 
-Note that in the case of the Docker image, you will need to substitute 
-the Docker VM's IP address for ``localhost`` in the web browser address bar.
+Note that in the case of the Docker container running inside a Virtual Machine (as on
+either Mac OS X or Microsoft Windows), you will need to substitute the Docker VM's IP
+address for ``localhost`` in the web browser address bar.
