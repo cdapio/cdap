@@ -77,7 +77,7 @@ API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 CHECK_INCLUDES=''
 
 if [[ "x${COLOR_LOGS}" != "x" ]]; then
-  SPHINX_COLOR=""
+  SPHINX_COLOR=''
   RED="$(tput setaf 1)"
   BOLD="$(tput bold)"
   RED_BOLD="$(tput setaf 1; tput bold)"
@@ -437,8 +437,8 @@ function display_messages_file() {
 
 function rewrite() {
   # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4
-  # or if $4=="", substitutes text in-place in file $1, replacing text $2 with text $3
-  # or if $3 & $4=="", substitutes text in-place in file $1, using sed command $2
+  # or if $4=='', substitutes text in-place in file $1, replacing text $2 with text $3
+  # or if $3 & $4=='', substitutes text in-place in file $1, using sed command $2
   cd ${SCRIPT_PATH}
   local rewrite_source=${1}
   echo "Re-writing"
