@@ -34,7 +34,7 @@
             <span uib-dropdown-toggle>Level <span class="fa fa-caret-down"></span></span>
             <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
               <li ng-repeat="option in LogViewer.logEvents">
-                <input type="checkbox"><span ui-sref='test'>{{option}}</span></li>
+                <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span ui-sref='test'>{{option}}</span></li>
               </li>
             </ul>
           </span>
@@ -43,7 +43,7 @@
         <th class="source"
             ng-if="!LogViewer.isMessageExpanded && LogViewer.isSourceDisplayed">
           Source
-        </th> 
+        </th>
 
         <th class="message"
             ng-if="LogViewer.isMessageDisplayed"
@@ -57,7 +57,7 @@
       </thead>
 
       <tbody>
-        <tr ng-repeat="log in LogViewer.data">
+        <tr ng-repeat="log in LogViewer.data | filter:LogViewer.eventFilter">
           <!-- TIME -->
           <td class="time"
               ng-if="!LogViewer.isMessageExpanded && LogViewer.isTimeDisplayed">
