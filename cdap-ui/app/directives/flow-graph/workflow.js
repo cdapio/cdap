@@ -65,15 +65,18 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
 
           // WORKFLOW TOKENS
           // It will default render with class hidden
-          parent.append('circle')
-            .attr('r', 10)
+          var token = parent.append('g')
             .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
-            .attr('class', 'workflow-token hidden')
+            .attr('class', 'token hidden')
             .attr('id', 'token-' + scope.instanceMap[node.labelId].nodeId);
-          parent.append('text')
+
+          token.append('circle')
+            .attr('r', 11)
+            .attr('class', 'workflow-token');
+          token.append('text')
             .text('T')
-            .attr('x', -5)
-            .attr('y', (-defaultRadius - 20))
+            .attr('x', -4)
+            .attr('y', 5)
             .attr('class', 'token-label');
 
 
@@ -148,18 +151,21 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
             .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
             .attr('class', 'workflow-shapes foundation-shape conditional-svg');
 
-          if (node.label === 'IF' && (scope.workflowStatus === 'COMPLETED' || scope.workflowStatus === 'FAILED')) {
-            parent.append('circle')
-              .attr('r', 10)
+          if (node.label === 'IF') {
+            parent.attr('class', 'if-condition');
+
+            var token = parent.append('g')
               .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
-              .attr('class', 'workflow-token')
+              .attr('class', 'token hidden')
               .attr('id', 'token-' + scope.instanceMap[node.labelId].nodeId);
 
-
-            parent.append('text')
+            token.append('circle')
+              .attr('r', 11)
+              .attr('class', 'workflow-token');
+            token.append('text')
               .text('T')
-              .attr('x', -5)
-              .attr('y', (-defaultRadius - 20))
+              .attr('x', -4)
+              .attr('y', 5)
               .attr('class', 'token-label');
           }
 
@@ -256,7 +262,7 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
 
               // Token icon should only show when status is COMPLETED
               scope.svg.select('#token-' + instanceId)
-                .attr('class', 'workflow-token');
+                .attr('class', 'token');
 
               break;
             case 'RUNNING':
@@ -273,6 +279,14 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
           }
 
         });
+
+        if (scope.workflowStatus === 'COMPLETED' || scope.workflowStatus === 'FAILED') {
+          var ifNodes = scope.svg.selectAll('.if-condition')[0];
+          angular.forEach(ifNodes, function (ifNode) {
+            d3.select(ifNode).select('.token')
+              .attr('class', 'token');
+          });
+        }
 
       };
 
