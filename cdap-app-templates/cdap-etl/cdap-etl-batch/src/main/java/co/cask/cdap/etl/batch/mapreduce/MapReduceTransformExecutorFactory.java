@@ -21,18 +21,24 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.Aggregator;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.JoinConfig;
+import co.cask.cdap.etl.api.Joiner;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
+import co.cask.cdap.etl.batch.join.InnerJoin;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.TrackedEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
+import co.cask.cdap.etl.common.TransformDetail;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
@@ -101,9 +107,93 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                                                            mapOutputValClassName),
                                        stageMetrics);
       }
+    } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
+      BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName);
+      BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
+      batchJoiner.initialize(runtimeContext);
+      StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
+      if (isMapper) {
+        return getTrackedJoinOnStep(new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName), stageMetrics);
+      } else {
+        return getTrackedMergeStep(new ReducerJoinerTransformation(batchJoiner, mapOutputKeyClassName), stageMetrics);
+      }
     }
     return super.getTransformation(pluginType, stageName);
   }
+
+  /**
+   * A Transformation that uses an join's joinOn method. Converts join value to tagged map output with stage name for
+   * reducer. It uses {@link MapTaggedOutputWritable} to tag join value with stage name so that we can use this
+   * in mapreduce.
+   *
+   * @param <JOIN_KEY> type of join key
+   * @param <JOIN_VALUE> type of the join value
+   * @param <OUT> type of the output of joiner
+   * @param <OUT_KEY> type of the map output
+   */
+  private static class MapperJoinerTransformation<JOIN_KEY, JOIN_VALUE, OUT, OUT_KEY extends Writable>
+    implements Transformation<JOIN_VALUE, KeyValue<OUT_KEY, MapTaggedOutputWritable<JOIN_VALUE>>> {
+    private final Joiner<JOIN_KEY, JOIN_VALUE, OUT> joiner;
+    private final WritableConversion<JOIN_KEY, OUT_KEY> keyConversion;
+
+    MapperJoinerTransformation(Joiner<JOIN_KEY, JOIN_VALUE, OUT> joiner, String joinKeyClassName) {
+      this.joiner = joiner;
+      WritableConversion<JOIN_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(joinKeyClassName);
+      this.keyConversion = keyConversion == null ? new CastConversion<JOIN_KEY, OUT_KEY>() : keyConversion;
+    }
+
+    @Override
+    public void transform(JOIN_VALUE input, Emitter<KeyValue<OUT_KEY, MapTaggedOutputWritable<JOIN_VALUE>>> emitter)
+      throws Exception {
+      JOIN_KEY key;
+      String stageName;
+      // TODO Use input to get stageName
+      if (emitter instanceof TransformDetail) {
+        stageName = ((TransformDetail) emitter).getPrevStage();
+      } else {
+        stageName = ((TransformDetail) ((TrackedEmitter) emitter).getEmitter()).getPrevStage();
+      }
+      key = joiner.joinOn(stageName, input);
+      MapTaggedOutputWritable<JOIN_VALUE> output = new MapTaggedOutputWritable(stageName, input);
+      emitter.emit(new KeyValue<>(keyConversion.toWritable(key), output));
+    }
+  }
+
+  /**
+   * A Transformation that uses an join's merge method based on type of the join.
+   *
+   * @param <JOIN_KEY> type of join key
+   * @param <JOIN_VALUE> type of the join value
+   * @param <OUT> type of the output of joiner
+   * @param <REDUCE_KEY> type of the reduce key=
+   */
+  private static class ReducerJoinerTransformation<JOIN_KEY, JOIN_VALUE, OUT, REDUCE_KEY extends WritableComparable>
+    implements Transformation<KeyValue<REDUCE_KEY, Iterator<MapTaggedOutputWritable<JOIN_VALUE>>>, OUT> {
+    private final Joiner<JOIN_KEY, JOIN_VALUE, OUT> joiner;
+    private final WritableConversion<JOIN_KEY, REDUCE_KEY> keyConversion;
+
+    ReducerJoinerTransformation(Joiner<JOIN_KEY, JOIN_VALUE, OUT> joiner, String joinKeyClassName) {
+      this.joiner = joiner;
+      WritableConversion<JOIN_KEY, REDUCE_KEY> keyConversion = WritableConversions.getConversion(joinKeyClassName);
+      this.keyConversion = keyConversion == null ? new CastConversion<JOIN_KEY, REDUCE_KEY>() : keyConversion;
+    }
+
+    @Override
+    public void transform(KeyValue<REDUCE_KEY, Iterator<MapTaggedOutputWritable<JOIN_VALUE>>> input,
+                          Emitter<OUT> emitter) throws Exception {
+      JOIN_KEY joinKey = keyConversion.fromWritable(input.getKey());
+      JoinConfig joinConfig = joiner.getJoinConfig();
+      String joinType = joinConfig.getJoinType();
+
+      switch (joinType) {
+        case "innerjoin":
+          new InnerJoin<>(joiner, joinKey, input.getValue(), emitter).join();
+          break;
+        default:
+      }
+    }
+  }
+
 
   /**
    * A Transformation that uses an aggregator's groupBy method. Supports applying a function to the types
@@ -124,7 +214,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     private final WritableConversion<GROUP_KEY, OUT_KEY> keyConversion;
     private final WritableConversion<GROUP_VAL, OUT_VAL> valConversion;
 
-    public MapperAggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator,
+    MapperAggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator,
                                           String groupKeyClassName,
                                           String groupValClassName) {
       this.aggregator = aggregator;
@@ -165,7 +255,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     private final WritableConversion<GROUP_KEY, REDUCE_KEY> keyConversion;
     private final WritableConversion<GROUP_VAL, REDUCE_VAL> valConversion;
 
-    public ReducerAggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator,
+    ReducerAggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator,
                                            String groupKeyClassName,
                                            String groupValClassName) {
       this.aggregator = aggregator;
@@ -207,6 +297,12 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     @Override
     public T fromWritable(W val) {
       return (T) val;
+    }
+
+    // never used
+    @Override
+    public W toWritable() {
+      return null;
     }
   }
 }

@@ -28,6 +28,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
@@ -211,6 +212,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     job.setMapperClass(ETLMapper.class);
     Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
+    Set<StageInfo> joiners = phaseSpec.getPhase().getStagesOfType(BatchJoiner.PLUGIN_TYPE);
     if (!aggregators.isEmpty()) {
       job.setReducerClass(ETLReducer.class);
       String aggregatorName = aggregators.iterator().next().getName();
@@ -262,6 +264,43 @@ public class ETLMapReduce extends AbstractMapReduce {
 
       job.setMapOutputKeyClass(outputKeyClass);
       job.setMapOutputValueClass(outputValClass);
+    } else if (!joiners.isEmpty()) {
+      job.setReducerClass(ETLReducer.class);
+      StageInfo joiner = joiners.iterator().next();
+      String joinerName = joiner.getName();
+      BatchJoiner batchJoiner = pluginInstantiator.newPluginInstance(joinerName);
+
+      MapReduceJoinerContext joinerContext =
+        new MapReduceJoinerContext(context, mrMetrics,
+                                   new DatasetContextLookupProvider(context), joinerName,
+                                   context.getRuntimeArguments());
+      batchJoiner.prepareRun(joinerContext);
+      finishers.add(batchJoiner, joinerContext);
+
+      if (joinerContext.getNumPartitions() != null) {
+        job.setNumReduceTasks(joinerContext.getNumPartitions());
+      }
+      Class<?> outputKeyClass = joinerContext.getJoinKeyClass();
+      if (outputKeyClass == null) {
+        outputKeyClass = TypeChecker.getJoinKeyClass(batchJoiner);
+      }
+      hConf.set(GROUP_KEY_CLASS, outputKeyClass.getName());
+
+      WritableConversion writableConversion = WritableConversions.getConversion(outputKeyClass.getName());
+      // if the conversion is null, it means the user is using their own object.
+      if (writableConversion != null) {
+        outputKeyClass = writableConversion.getWritableClass();
+      }
+
+      // check classes here instead of letting mapreduce do it, since mapreduce throws a cryptic error
+      if (!WritableComparable.class.isAssignableFrom(outputKeyClass)) {
+        throw new IllegalArgumentException(String.format(
+          "Invalid joiner %s. The join key class %s must implement Hadoop's WritableComparable.",
+          joinerName, outputKeyClass));
+      }
+
+      job.setMapOutputKeyClass(outputKeyClass);
+      job.setMapOutputValueClass(MapTaggedOutputWritable.class);
     } else {
       job.setNumReduceTasks(0);
     }

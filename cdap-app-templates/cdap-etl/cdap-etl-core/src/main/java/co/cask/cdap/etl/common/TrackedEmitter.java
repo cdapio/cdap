@@ -31,9 +31,14 @@ public class TrackedEmitter<T> implements Emitter<T> {
   private final String emitMetricName;
 
   public TrackedEmitter(Emitter<T> delegate, StageMetrics stageMetrics, String emitMetricName) {
+
     this.delegate = delegate;
     this.stageMetrics = stageMetrics;
     this.emitMetricName = emitMetricName;
+  }
+
+  public Emitter<T> getEmitter() {
+    return delegate;
   }
 
   @Override

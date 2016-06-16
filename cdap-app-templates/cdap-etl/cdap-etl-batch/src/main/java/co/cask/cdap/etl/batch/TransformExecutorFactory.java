@@ -101,4 +101,14 @@ public abstract class TransformExecutorFactory<T> {
     return new TrackedTransform<>(transform, stageMetrics, "aggregator.groups", TrackedTransform.RECORDS_OUT);
   }
 
+  protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedJoinOnStep(Transformation<IN, OUT> transform,
+                                                                            StageMetrics stageMetrics) {
+    return new TrackedTransform<>(transform, stageMetrics, TrackedTransform.RECORDS_IN, null);
+  }
+
+  protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedMergeStep(Transformation<IN, OUT> transform,
+                                                                           StageMetrics stageMetrics) {
+    return new TrackedTransform<>(transform, stageMetrics, null, TrackedTransform.RECORDS_OUT);
+  }
+
 }

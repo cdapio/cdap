@@ -36,4 +36,6 @@ public abstract class WritableConversion<T, W extends Writable> {
 
   public abstract T fromWritable(W val);
 
+  public abstract W toWritable();
+
 }

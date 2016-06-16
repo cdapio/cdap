@@ -22,6 +22,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
@@ -84,6 +85,7 @@ public class TransformRunner<KEY, VALUE> {
 
     PipelinePhase phase = phaseSpec.getPhase();
     Set<StageInfo> aggregators = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE);
+    Set<StageInfo> joiners = phase.getStagesOfType(BatchJoiner.PLUGIN_TYPE);
     if (!aggregators.isEmpty()) {
       String aggregatorName = aggregators.iterator().next().getName();
       // if we're in the mapper, get the part of the pipeline starting from sources and ending at aggregator
@@ -92,6 +94,17 @@ public class TransformRunner<KEY, VALUE> {
       } else {
         // if we're in the reducer, get the part of the pipeline starting from the aggregator and ending at sinks
         phase = phase.subsetFrom(ImmutableSet.of(aggregatorName));
+      }
+    }
+
+    if (!joiners.isEmpty()) {
+      String joinerName = joiners.iterator().next().getName();
+      // if we're in the mapper, get the part of the pipeline starting from sources and ending at joiner
+      if (jobContext instanceof Mapper.Context) {
+        phase = phase.subsetTo(ImmutableSet.of(joinerName));
+      } else {
+        // if we're in the reducer, get the part of the pipeline starting from the joiner and ending at sinks
+        phase = phase.subsetFrom(ImmutableSet.of(joinerName));
       }
     }
     TransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
@@ -114,9 +127,16 @@ public class TransformRunner<KEY, VALUE> {
                                                      PipelinePhase pipelinePhase,
                                                      Configuration hConf) {
     Set<StageInfo> aggregators = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE);
+    Set<StageInfo> joiners = pipelinePhase.getStagesOfType(BatchJoiner.PLUGIN_TYPE);
     if (!aggregators.isEmpty()) {
       String aggregatorName = aggregators.iterator().next().getName();
       if (pipelinePhase.getSinks().contains(aggregatorName)) {
+        return new SingleOutputWriter<>(context);
+      }
+    }
+    if (!joiners.isEmpty()) {
+      String joinerName = joiners.iterator().next().getName();
+      if (pipelinePhase.getSinks().contains(joinerName)) {
         return new SingleOutputWriter<>(context);
       }
     }

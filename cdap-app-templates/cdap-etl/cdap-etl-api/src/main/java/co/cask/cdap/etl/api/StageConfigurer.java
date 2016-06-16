@@ -19,6 +19,7 @@ package co.cask.cdap.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -34,6 +35,13 @@ public interface StageConfigurer {
    */
   @Nullable
   Schema getInputSchema();
+
+  /**
+   * get the input schemas for this stage, or null if its unknown
+   * @return map of input schemas
+   */
+  @Nullable
+  Map<String, Schema> getInputSchemas();
 
   /**
    * set output schema for this stage, or null if its unknown

@@ -52,6 +52,11 @@ public class WritableConversions {
                   public StructuredRecord fromWritable(StructuredRecordWritable val) {
                     return val.get();
                   }
+
+                  @Override
+                  public StructuredRecordWritable toWritable() {
+                    return new StructuredRecordWritable();
+                  }
                 });
     builder.put(String.class.getName(),
                 new WritableConversion<String, Text>() {
@@ -63,6 +68,11 @@ public class WritableConversions {
                   @Override
                   public String fromWritable(Text val) {
                     return val.toString();
+                  }
+
+                  @Override
+                  public Text toWritable() {
+                    return new Text();
                   }
                 });
     builder.put(Integer.class.getName(),
@@ -76,6 +86,11 @@ public class WritableConversions {
                   public Integer fromWritable(IntWritable val) {
                     return val.get();
                   }
+
+                  @Override
+                  public IntWritable toWritable() {
+                    return new IntWritable();
+                  }
                 });
     builder.put(Long.class.getName(),
                 new WritableConversion<Long, LongWritable>() {
@@ -87,6 +102,11 @@ public class WritableConversions {
                   @Override
                   public Long fromWritable(LongWritable val) {
                     return val.get();
+                  }
+
+                  @Override
+                  public LongWritable toWritable() {
+                    return new LongWritable();
                   }
                 });
     builder.put(Float.class.getName(),
@@ -100,6 +120,11 @@ public class WritableConversions {
                   public Float fromWritable(FloatWritable val) {
                     return val.get();
                   }
+
+                  @Override
+                  public FloatWritable toWritable() {
+                    return new FloatWritable();
+                  }
                 });
     builder.put(Double.class.getName(),
                 new WritableConversion<Double, DoubleWritable>() {
@@ -111,6 +136,11 @@ public class WritableConversions {
                   @Override
                   public Double fromWritable(DoubleWritable val) {
                     return val.get();
+                  }
+
+                  @Override
+                  public DoubleWritable toWritable() {
+                    return new DoubleWritable();
                   }
                 });
     builder.put(Boolean.class.getName(),
@@ -124,6 +154,11 @@ public class WritableConversions {
                   public Boolean fromWritable(BooleanWritable val) {
                     return val.get();
                   }
+
+                  @Override
+                  public BooleanWritable toWritable() {
+                    return new BooleanWritable();
+                  }
                 });
     builder.put(byte[].class.getName(),
                 new WritableConversion<byte[], BytesWritable>() {
@@ -135,6 +170,11 @@ public class WritableConversions {
                   @Override
                   public byte[] fromWritable(BytesWritable val) {
                     return val.getBytes();
+                  }
+
+                  @Override
+                  public BytesWritable toWritable() {
+                    return new BytesWritable();
                   }
                 });
     CONVERSIONS = builder.build();
