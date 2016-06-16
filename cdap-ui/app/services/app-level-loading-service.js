@@ -18,24 +18,31 @@ angular.module(PKG.name + '.services')
   .service('myLoadingService', function($q, EventPipe) {
     var deferred;
     this.showLoadingIcon = function() {
-      if (deferred) {
-        return deferred.promise;
-      } else {
-        deferred = $q.defer();
-        EventPipe.emit('showLoadingIcon');
-        deferred.resolve(true);
+      if (deferred){ 
         return deferred.promise;
       }
+      deferred = $q.defer();
+      EventPipe.emit('showLoadingIcon');
+      deferred.resolve(true);
+      return deferred.promise;
     };
 
     this.hideLoadingIcon = function() {
       if (!deferred) {
         return $q.when(true);
-      } else {
-        EventPipe.emit('hideLoadingIcon');
-        deferred.resolve(true);
-        deferred = null;
-      }
+      } 
+      EventPipe.emit('hideLoadingIcon');
+      deferred.resolve(true);
+      deferred = null;
+    };
+
+    this.hideLoadingIconImmediate = function(){
+      if (!deferred) {
+        return $q.when(true);
+      } 
+      EventPipe.emit('hideLoadingIcon.immediate');
+      deferred.resolve(true);
+      deferred = null;
     };
 
   });
