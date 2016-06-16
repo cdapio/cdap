@@ -437,8 +437,8 @@ function display_messages_file() {
 
 function rewrite() {
   # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4
-  # or if $4=="", substitutes text in-place in file $1, replacing text $2 with text $3
-  # or if $3 & $4=="", substitutes text in-place in file $1, using sed command $2
+  # or if $4=='', substitutes text in-place in file $1, replacing text $2 with text $3
+  # or if $3 & $4=='', substitutes text in-place in file $1, using sed command $2
   cd ${SCRIPT_PATH}
   local rewrite_source=${1}
   echo "Re-writing"
