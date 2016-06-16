@@ -27,7 +27,6 @@ function LogViewerController () {
   this.logIncludes = [];
   var toIncludeArray = this.logIncludes;
 
-
   this.data = [
     {
       time: '2016-03-04 16:28:40, 798',
@@ -82,6 +81,23 @@ function LogViewerController () {
       }
     },
   ];
+
+  this.totalCount = this.data.length;
+  var errorCount = 0;
+  var warningCount = 0;
+
+  //Compute Total
+  for(var k = 0; k < this.data.length; k++){
+    var currentItem = this.data[k].level;
+    if(currentItem === 'ERROR'){
+      errorCount++;
+    } else if(currentItem === 'WARN'){
+      warningCount++;
+    }
+  }
+
+  this.errorCount = errorCount;
+  this.warningCount = warningCount;
 
   this.includeEvent = function(eventType){
     var i = toIncludeArray.indexOf(eventType);
