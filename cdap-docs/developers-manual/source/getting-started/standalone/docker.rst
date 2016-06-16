@@ -84,7 +84,7 @@ started correctly.
      :dependent: linux-windows
      :languages: console,shell-session
  
-     $ docker run --detach --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+     $ docker run -d --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
      
    This will start the container, name it ``cdap-standalone``, and setup the proxying of ports.
 
@@ -109,11 +109,11 @@ started correctly.
      
      .. Linux or Mac OS X
      
-     $ docker exec --detach cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
+     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
 
      .. Windows
      
-     > docker exec --detach cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
+     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
 
 #. When you are finished, stop CDAP and then shutdown Docker:
 
@@ -125,12 +125,12 @@ started correctly.
      
      .. Linux or Mac OS X
      
-     $ docker exec --detach cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
+     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
      $ docker-machine stop cdap
 
      .. Windows
      
-     > docker exec --detach cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
+     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
      > docker-machine stop cdap
 
 #. For a full list of Docker Commands, see the `Docker Command Line Documentation.
