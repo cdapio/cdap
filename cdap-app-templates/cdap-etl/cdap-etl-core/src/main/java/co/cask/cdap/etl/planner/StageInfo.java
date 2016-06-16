@@ -16,7 +16,12 @@
 
 package co.cask.cdap.etl.planner;
 
+import co.cask.cdap.api.data.schema.Schema;
+import com.google.common.collect.ImmutableSet;
+
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -24,19 +29,53 @@ import javax.annotation.Nullable;
  */
 public class StageInfo {
   private final String name;
+  private final Set<String> inputs;
+  private final Map<String, Schema> inputSchemas;
+  private final Set<String> outputs;
+  private final Schema outputSchema;
   private final String errorDatasetName;
 
   public StageInfo(String name) {
-    this(name, null);
+    this.name = name;
+    this.inputs = null;
+    this.inputSchemas = null;
+    this.outputs = null;
+    this.outputSchema = null;
+    this.errorDatasetName = null;
   }
 
-  public StageInfo(String name, @Nullable String errorDatasetName) {
+  public StageInfo(String name, @Nullable Set<String> inputs, @Nullable Map<String, Schema> inputSchemas,
+                   @Nullable Set<String> outputs, @Nullable Schema outputSchema, @Nullable String errorDatasetName) {
     this.name = name;
+    this.inputSchemas = inputSchemas;
+    this.outputSchema = outputSchema;
+    this.inputs = ImmutableSet.copyOf(inputs);
+    this.outputs = ImmutableSet.copyOf(outputs);
     this.errorDatasetName = errorDatasetName;
   }
 
   public String getName() {
     return name;
+  }
+
+  @Nullable
+  public Set<String> getInputs() {
+    return inputs;
+  }
+
+  @Nullable
+  public Map<String, Schema> getInputSchemas() {
+    return inputSchemas;
+  }
+
+  @Nullable
+  public Set<String> getOutputs() {
+    return outputs;
+  }
+
+  @Nullable
+  public Schema getOutputSchema() {
+    return outputSchema;
   }
 
   @Nullable
@@ -56,18 +95,26 @@ public class StageInfo {
     StageInfo that = (StageInfo) o;
 
     return Objects.equals(name, that.name) &&
+      Objects.equals(inputs, that.inputs) &&
+      Objects.equals(inputSchemas, that.inputSchemas) &&
+      Objects.equals(outputs, that.outputs) &&
+      Objects.equals(outputSchema, that.outputSchema) &&
       Objects.equals(errorDatasetName, that.errorDatasetName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, errorDatasetName);
+    return Objects.hash(name, inputs, inputSchemas, outputs, outputSchema, errorDatasetName);
   }
 
   @Override
   public String toString() {
     return "StageInfo{" +
       "name='" + name + '\'' +
+      "inputs='" + inputs + '\'' +
+      "inputSchemas='" + inputSchemas + '\'' +
+      "outputs='" + outputs + '\'' +
+      "outputSchema='" + outputSchema + '\'' +
       ", errorDatasetName='" + errorDatasetName + '\'' +
       '}';
   }

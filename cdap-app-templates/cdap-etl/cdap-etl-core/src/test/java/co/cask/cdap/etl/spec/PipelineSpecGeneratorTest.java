@@ -205,31 +205,31 @@ public class PipelineSpecGeneratorTest {
           .build())
       .addStage(
         StageSpec.builder("sink1", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
-          .setInputSchema(SCHEMA_B)
+          .addInputSchema("t3", SCHEMA_B)
           .addInputs("t3")
           .build())
       .addStage(
         StageSpec.builder("sink2", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
-          .setInputSchema(SCHEMA_A)
+          .addInputSchemas(ImmutableMap.<String, Schema>of("t1", SCHEMA_A, "t2", SCHEMA_A, "source", SCHEMA_A))
           .addInputs("t1", "t2", "source")
           .build())
       .addStage(
         StageSpec.builder("t1", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
-          .setInputSchema(SCHEMA_A)
+          .addInputSchema("source", SCHEMA_A)
           .setOutputSchema(SCHEMA_A)
           .addInputs("source")
           .addOutputs("t2", "t3", "sink2")
           .build())
       .addStage(
         StageSpec.builder("t2", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
-          .setInputSchema(SCHEMA_A)
+          .addInputSchemas(ImmutableMap.<String, Schema>of("source", SCHEMA_A, "t1", SCHEMA_A))
           .setOutputSchema(SCHEMA_A)
           .addInputs("source", "t1")
           .addOutputs("t3", "sink2")
           .build())
       .addStage(
         StageSpec.builder("t3", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
-          .setInputSchema(SCHEMA_A)
+          .addInputSchemas(ImmutableMap.<String, Schema>of("t1", SCHEMA_A, "t2", SCHEMA_A))
           .setOutputSchema(SCHEMA_B)
           .addInputs("t1", "t2")
           .addOutputs("sink1")
@@ -241,8 +241,8 @@ public class PipelineSpecGeneratorTest {
     Assert.assertEquals(expected, actual);
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testConflictingInputSchemas() {
+  @Test
+  public void testMultipleInputSchemas() {
     /*
      *           ---- transformA ----
      *           |                  |
@@ -263,16 +263,50 @@ public class PipelineSpecGeneratorTest {
       .addConnection("tB", "sink")
       .build();
     specGenerator.generateSpec(etlConfig);
+
+    // test the spec generated is correct, with the right input and output schemas and artifact information.
+    BatchPipelineSpec actual = specGenerator.generateSpec(etlConfig);
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", emptyMap, ARTIFACT_ID))
+          .setOutputSchema(SCHEMA_A)
+          .addOutputs("tA", "tB")
+          .build())
+      .addStage(
+        StageSpec.builder("sink", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
+          .addInputSchemas(ImmutableMap.<String, Schema>of("tA", SCHEMA_A, "tB", SCHEMA_B))
+          .addInputs("tA", "tB")
+          .build())
+      .addStage(
+        StageSpec.builder("tA", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
+          .addInputSchema("source", SCHEMA_A)
+          .setOutputSchema(SCHEMA_A)
+          .addInputs("source")
+          .addOutputs("sink")
+          .build())
+      .addStage(
+        StageSpec.builder("tB", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
+          .addInputSchema("source", SCHEMA_A)
+          .setOutputSchema(SCHEMA_B)
+          .addInputs("source")
+          .addOutputs("sink")
+          .build())
+      .addConnections(etlConfig.getConnections())
+      .setResources(etlConfig.getResources())
+      .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
+      .build();
+    Assert.assertEquals(expected, actual);
   }
 
   private static class MockPlugin implements PipelineConfigurable {
     private final Schema schema;
 
-    public MockPlugin() {
+    MockPlugin() {
       this.schema = null;
     }
 
-    public MockPlugin(Schema schema) {
+    MockPlugin(Schema schema) {
       this.schema = schema;
     }
 

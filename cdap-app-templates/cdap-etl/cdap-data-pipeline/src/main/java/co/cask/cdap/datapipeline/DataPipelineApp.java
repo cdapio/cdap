@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
@@ -46,7 +47,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   public static final String SCHEDULE_NAME = "dataPipelineSchedule";
   public static final String DEFAULT_DESCRIPTION = "Data Pipeline Application";
   private static final Set<String> supportedPluginTypes = ImmutableSet.of(
-    BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE,
+    BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE,
     Constants.CONNECTOR_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE);
 
   @Override
@@ -71,7 +72,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     BatchPipelineSpec spec = specGenerator.generateSpec(config);
 
     PipelinePlanner planner = new PipelinePlanner(supportedPluginTypes,
-                                                  ImmutableSet.of(BatchAggregator.PLUGIN_TYPE),
+                                                  ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
                                                   ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE));
     PipelinePlan plan = planner.plan(spec);
 

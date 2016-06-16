@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2016 Cask Data, Inc.
  *
@@ -17,34 +18,34 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.etl.api.Aggregator;
-import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.Joiner;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageLifecycle;
 
-import java.util.Iterator;
+import java.util.List;
 
 /**
- * An {@link Aggregator} used in batch programs.
- * As it is used in batch programs, a BatchAggregator must be parameterized
- * with supported group key and value classes. Group keys and values can be a
+ * A {@link Joiner} used for batch programs.
+ * As it is used in batch programs, a BatchJoiner must be parameterized
+ * with supported join key and input record classes. Join keys and input records can be a
  * byte[], Boolean, Integer, Long, Float, Double, String, or StructuredRecord.
- * If the group key is not one of those types and is being used in mapreduce,
+ * If the join key is not one of those types and is being used in mapreduce,
  * it must implement Hadoop's org.apache.hadoop.io.WritableComparable interface.
- * If the group value is not one of those types and is being used in mapreduce,
+ * If the input record is not one of those types and is being used in mapreduce,
  * it must implement Hadoop's org.apache.hadoop.io.Writable interface.
- * If the aggregator is being used in spark, both the group key and value must implement the
+ * If the joiner is being used in spark, both the join key and input record must implement the
  * {@link java.io.Serializable} interface.
  *
- * @param <GROUP_KEY> group key type. Must be a supported type
- * @param <GROUP_VALUE> group value type. Must be a supported type
- * @param <OUT> output object type
+ *
+ * @param <JOIN_KEY> type of join key. Must be a supported type
+ * @param <INPUT_RECORD> type of input record. Must be a supported type
+ * @param <OUT> type of output object
  */
 @Beta
-public abstract class BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends BatchConfigurable<BatchAggregatorContext>
-  implements Aggregator<GROUP_KEY, GROUP_VALUE, OUT>, PipelineConfigurable, StageLifecycle<BatchRuntimeContext> {
-  public static final String PLUGIN_TYPE = "batchaggregator";
+public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchConfigurable<BatchJoinerContext>
+  implements Joiner<JOIN_KEY, INPUT_RECORD, OUT>, PipelineConfigurable, StageLifecycle<BatchJoinerRuntimeContext> {
+  public static final String PLUGIN_TYPE = "batchjoiner";
 
   /**
    * Configure the pipeline. This is run once when the pipeline is being published.
@@ -60,34 +61,34 @@ public abstract class BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends Batch
 
   /**
    * Prepare a pipeline run. This is run every time before a pipeline runs in order to help set up the run.
-   * This is where you would set things like the number of partitions to use when grouping, and setting the
-   * group key and value classes if they are not known at compile time.
+   * This is where you would set things like the number of partitions to use when joining, and setting the
+   * join key class if they are not known at compile time.
    *
    * @param context batch execution context
    * @throws Exception
    */
   @Override
-  public void prepareRun(BatchAggregatorContext context) throws Exception {
-    // no-op
+  public void prepareRun(BatchJoinerContext context) throws Exception {
+    //no-op
   }
 
   /**
-   * Initialize the Batch Aggregator. Executed inside the Batch Run. This method is guaranteed to be invoked
-   * before any calls to {@link #groupBy(Object, Emitter)} and {@link #aggregate(Object, Iterator, Emitter)} are made.
+   * Initialize the Batch Joiner. Executed inside the Batch Run. This method is guaranteed to be invoked
+   * before any calls to {@link #joinOn(String, Object)} and {@link #merge(Object, List)} are made.
    *
-   * @param context {@link BatchRuntimeContext}
+   * @param context runtime context for joiner which exposes input schemas and output schema for joiner
    * @throws Exception if there is any error during initialization
    */
   @Override
-  public void initialize(BatchRuntimeContext context) throws Exception {
-    // no-op
+  public void initialize(BatchJoinerRuntimeContext context) throws Exception {
+    //no-op
   }
 
   /**
-   * Destroy the Batch Aggregator. Executed at the end of the Batch Run.
+   * Destroy the Batch Joiner. Executed at the end of the Batch Run.
    */
   @Override
   public void destroy() {
-    // no-op
+    //no-op
   }
 }
