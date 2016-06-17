@@ -705,6 +705,16 @@ public final class Constants {
     }
 
     /**
+     * Secure Store
+     */
+    public static final class Store {
+      /** Location of the secure store file. */
+      public static final String SECURE_STORE_FILE_PATH = "security.store.file.path";
+      /** Password to access the secure store. */
+      public static final String SECURE_STORE_FILE_PASSWORD = "security.store.file.password";
+    }
+
+    /**
      * Headers for security.
      */
     public static final class Headers {
