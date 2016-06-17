@@ -18,7 +18,9 @@ WITH="with"
 WITHOUT="without"
 WITH_JAVADOCS="$WITHOUT"
 
-MANUALS="introduction developers-manual cdap-apps admin-manual integrations examples-manual reference-manual faqs"
+CDAP_MANUALS="introduction developers-manual cdap-apps admin-manual integrations examples-manual reference-manual faqs"
+EXTENSION_MANUALS="hydrator-manual"
+MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 
 # Used to monitor any changes in building of Javadocs
 # BUILD.rst
