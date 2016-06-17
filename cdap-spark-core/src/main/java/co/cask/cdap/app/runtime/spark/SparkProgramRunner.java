@@ -48,6 +48,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -276,7 +277,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       public void failed(Service.State from, @Nullable Throwable failure) {
         closeAll(closeables);
         store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus(), failure);
+                      ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
       }
     };
   }

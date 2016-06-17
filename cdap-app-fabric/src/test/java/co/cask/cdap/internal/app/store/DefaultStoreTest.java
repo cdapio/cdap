@@ -59,12 +59,12 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowNodeThrowable;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -211,7 +211,8 @@ public class DefaultStoreTest {
     // stop the Spark program with failure
     NullPointerException npe = new NullPointerException("dataset not found");
     IllegalArgumentException iae = new IllegalArgumentException("illegal argument", npe);
-    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED, iae);
+    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED,
+                  new BasicThrowable(iae));
 
     // stop Workflow
     store.setStop(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
@@ -233,7 +234,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(sparkName, nodeStateDetail.getNodeId());
     Assert.assertEquals(NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
     Assert.assertEquals(sparkRunId.getId(), nodeStateDetail.getRunId());
-    WorkflowNodeThrowable failureCause = nodeStateDetail.getFailureCause();
+    BasicThrowable failureCause = nodeStateDetail.getFailureCause();
     Assert.assertNotNull(failureCause);
     Assert.assertTrue("illegal argument".equals(failureCause.getMessage()));
     Assert.assertTrue("java.lang.IllegalArgumentException".equals(failureCause.getClassName()));

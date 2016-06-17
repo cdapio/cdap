@@ -48,6 +48,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -242,7 +243,7 @@ public class DefaultStore implements Store {
             case FAILED:
               Throwable failureCause = updateStatus == ProgramRunStatus.FAILED
                 ? new Throwable("Marking run record as failed since no running program found.") : null;
-              mds.recordProgramStop(id, pid, nowSecs, updateStatus, failureCause);
+              mds.recordProgramStop(id, pid, nowSecs, updateStatus, new BasicThrowable(failureCause));
               break;
             default:
               break;
@@ -278,7 +279,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus,
-                      final Throwable failureCause) {
+                      final BasicThrowable failureCause) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override

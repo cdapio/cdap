@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.workflow.NodeStatus;
@@ -28,7 +29,7 @@ public final class WorkflowNodeStateDetail {
   private final String nodeId;
   private final NodeStatus nodeStatus;
   private final String runId;
-  private final WorkflowNodeThrowable failureCause;
+  private final BasicThrowable failureCause;
 
   /**
    * Create a new instance.
@@ -49,7 +50,7 @@ public final class WorkflowNodeStateDetail {
    * @param failureCause cause of failure, {code null} if execution of the node succeeded
    */
   public WorkflowNodeStateDetail(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
-                                 @Nullable WorkflowNodeThrowable failureCause) {
+                                 @Nullable BasicThrowable failureCause) {
     this.nodeId = nodeId;
     this.nodeStatus = nodeStatus;
     this.runId = runId;
@@ -83,7 +84,7 @@ public final class WorkflowNodeStateDetail {
    * Return the detail message string for failure if node execution failed, otherwise {@code null} is returned.
    */
   @Nullable
-  public WorkflowNodeThrowable getFailureCause() {
+  public BasicThrowable getFailureCause() {
     return failureCause;
   }
 }
