@@ -16,10 +16,14 @@
 
 @border-color: #cccccc;
 @headerbar-background-color: #525252;
+@headerbar-text-color: #D6D6D6;
 @table-background-color: white;
 @stack-trace-background-color: lighten(black, 35%);
 @stack-trace-font-color: #cccccc;
 @message-expanded-color: #dedede;
+@searchbar-placeholder-color: #787878;
+@searchbar-input-color: blue;
+
 
 my-log-viewer {
   .log-viewer-container {
@@ -72,7 +76,7 @@ my-log-viewer {
           min-width: 115px;
         }
         .stat-name {
-          color: white;
+          color: @headerbar-text-color;
           margin-left: 10px;
           margin-right: 4px;
         }
@@ -102,8 +106,8 @@ my-log-viewer {
 
 
       .log-actions {
-        width: 30%;
-        min-width: 430px;
+        width: 27%;
+        min-width: 410px;
         height: 50px;
         float: right;
         background-color: @headerbar-background-color;
@@ -125,10 +129,38 @@ my-log-viewer {
           margin-right: 3px;
           outline:grey;
         }
+        .search {
+          position: relative;
+        }
+        .search .fa-search {
+          position: absolute;
+          top: 7px;
+          right: 8px;
+        }
         .log-searchbar{
           height: 25px;
+          width: 140px;
+          padding-right:20px;
           border-radius: 5px;
-
+          outline: none;
+          color: @searchbar-input-color !important;
+          font-weight:bold;
+          text-indent: 5px;
+        }
+        .log-searchbar:focus {
+          color: @searchbar-input-color !important;
+        }
+        .log-searchbar::-webkit-input-placeholder {
+          color: @searchbar-placeholder-color !important;
+        }
+        .log-searchbar:-moz-placeholder { /* Firefox 18- */
+          color: @searchbar-placeholder-color !important;
+        }
+        .log-searchbar::-moz-placeholder {  /* Firefox 19+ */
+          color: @searchbar-placeholder-color !important;
+        }
+        .log-searchbar:-ms-input-placeholder {
+          color: @searchbar-placeholder-color !important;
         }
         .logs-full-screen {
           width: 30px;
