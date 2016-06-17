@@ -40,14 +40,21 @@ my-log-viewer {
         float: left;
         color: white;
         background-color: @headerbar-background-color;
+        display: table;
+        margin: auto;
 
+        .log-stats {
+          height: 50px;
+          width: 33%;
+          min-width: 40px;
+          display: table-cell;
+          vertical-align: middle;
+        }
         .stat-name {
           color: white;
           margin-left: 20px;
           margin-right: 4px;
-
         }
-
         .stat-count {
           width: 30px;
           height: 15px;
@@ -68,12 +75,19 @@ my-log-viewer {
 
 
       .log-actions {
-        width: 35%;
+        width: 45%;
         min-width: 200px;
         height: 50px;
         float: right;
         background-color: @headerbar-background-color;
+        display: table;
+        margin: auto;
 
+        .log-action-container {
+          height: 50px;
+          display: table-cell;
+          vertical-align: middle;
+        }
         .log-action-btn {
           height: 30px;
           width: 100px;
@@ -90,6 +104,8 @@ my-log-viewer {
         .logs-full-screen {
           width: 30px;
           height: 30px;
+          display: table-cell;
+          vertical-align: middle;
         }
       }
     }
