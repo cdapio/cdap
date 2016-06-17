@@ -17,6 +17,7 @@ package co.cask.cdap.gateway.handlers.metrics;
 
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -33,6 +34,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -123,14 +125,12 @@ public abstract class MetricsSuiteTestBase {
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
     injector = startMetricsService(conf);
-
     store = injector.getInstance(Store.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     metricStore = injector.getInstance(MetricStore.class);
 
     tmpFolder.create();
     dataDir = tmpFolder.newFolder();
-    initialize();
   }
 
   @AfterClass
@@ -139,13 +139,7 @@ public abstract class MetricsSuiteTestBase {
       return;
     }
     stopMetricsService(conf);
-    try {
-      stop();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      tmpFolder.delete();
-    }
+    tmpFolder.delete();
   }
 
   @After
@@ -153,13 +147,9 @@ public abstract class MetricsSuiteTestBase {
     metricStore.deleteAll();
   }
 
-  public static void initialize() throws IOException {
-    CConfiguration cConf = CConfiguration.create();
-
-    // use this injector instead of the one in startMetricsService because that one uses a
-    // mock metrics collection service while we need a real one.
+  public static Injector startMetricsService(CConfiguration conf) {
     Injector injector = Guice.createInjector(Modules.override(
-      new ConfigModule(cConf),
+      new ConfigModule(conf),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new MetricsHandlerModule(),
@@ -173,51 +163,9 @@ public abstract class MetricsSuiteTestBase {
       @Override
       protected void configure() {
         bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+        bind(Store.class).to(DefaultStore.class);
       }
     }));
-
-    collectionService = injector.getInstance(MetricsCollectionService.class);
-    collectionService.startAndWait();
-    setupMeta();
-  }
-
-  public static void stop() {
-    collectionService.stopAndWait();
-
-    Deque<File> files = Lists.newLinkedList();
-    files.add(dataDir);
-
-    File file = files.peekLast();
-    while (file != null) {
-      File[] children = file.listFiles();
-      if (children == null || children.length == 0) {
-        files.pollLast().delete();
-      } else {
-        Collections.addAll(files, children);
-      }
-      file = files.peekLast();
-    }
-  }
-
-  public static Injector startMetricsService(CConfiguration conf) {
-    // Set up our Guice injections
-    injector = Guice.createInjector(Modules.override(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-        }
-      },
-      new AppFabricTestModule(conf)
-    ).with(new AbstractModule() {
-             @Override
-             protected void configure() {
-               // It's a bit hacky to add it here. Need to refactor
-               // these bindings out as it overlaps with
-               // AppFabricServiceModule
-               bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-             }
-           }
-    ));
 
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -230,6 +178,9 @@ public abstract class MetricsSuiteTestBase {
 
     metrics = injector.getInstance(MetricsQueryService.class);
     metrics.startAndWait();
+
+    collectionService = injector.getInstance(MetricsCollectionService.class);
+    collectionService.startAndWait();
 
     logReader = injector.getInstance(LogReader.class);
 
@@ -244,25 +195,12 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static void stopMetricsService(CConfiguration conf) {
+    collectionService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     transactionManager.stopAndWait();
     metrics.stopAndWait();
     conf.clear();
-  }
-
-  // write WordCount app to metadata store
-  public static void setupMeta() {
-    nonExistingResources = ImmutableList.of(
-      "/system/apps/WordCont/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCouner/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/flowlets/couter/reads?aggregate=true",
-      "/system/datasets/wordStat/reads?aggregate=true",
-      "/system/datasets/wordStat/apps/WordCount/reads?aggregate=true",
-      "/system/datasets/wordStas/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/system/datasets/wordStts/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/system/streams/wordStrea/collect.events?aggregate=true"
-    );
   }
 
   public static URI getEndPoint(String path) throws URISyntaxException {

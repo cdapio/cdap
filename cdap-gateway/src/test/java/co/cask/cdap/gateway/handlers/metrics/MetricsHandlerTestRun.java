@@ -37,6 +37,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
@@ -195,10 +196,22 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // verify "*"
 
+    // components (services) are listed as optional, as metrics are cleared between tests,
+    // some of the services might not have emitter metrics yet since this test begining,
+    // so all expected components are listed under optional.
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*",
+                               //required
                                getSearchResultExpected("app", "WordCount1",
-                                                       "app", "WCount1",
-                                                       "component", "metrics.processor"));
+                                                       "app", "WCount1"),
+                               //optional
+                               getSearchResultExpected(
+                                 "app", "WordCount1",
+                                 "app", "WCount1",
+                                 "component", "metrics",
+                                 "component", "dataset.service",
+                                 "component", "dataset.executor",
+                                 "component", "transactions",
+                                 "component", "metrics.processor"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*",
                                getSearchResultExpected("flow", "WCounter",
@@ -811,11 +824,22 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private void verifySearchResultWithTags(String url, List<Map<String, String>> expectedValues) throws Exception {
+    List<Map<String, String>> reply = getMetricsResults(url);
+    Assert.assertTrue(reply.containsAll(expectedValues) && expectedValues.containsAll(reply));
+  }
+
+  // to support optional values in results.
+  private List<Map<String, String>> getMetricsResults(String url) throws Exception {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
-    List<Map<String, String>> reply = GSON.fromJson(result, new TypeToken<List<Map<String, String>>>() { }.getType());
-    Assert.assertTrue(reply.containsAll(expectedValues) && expectedValues.containsAll(reply));
+    return GSON.fromJson(result, new TypeToken<List<Map<String, String>>>() { }.getType());
+  }
+
+  private void verifySearchResultWithTags(String url, List<Map<String, String>> requiredValues,
+                                          List<Map<String, String>> allValues)  throws Exception {
+    List<Map<String, String>> reply = getMetricsResults(url);
+    Assert.assertTrue(reply.containsAll(requiredValues) && allValues.containsAll(reply));
   }
 
   class TimeSeriesResult {
