@@ -33,6 +33,9 @@
 @entity-detail-top-bar-size: 50px;
 
 body[class*='state-tracker'] {
+  &:not(.state-tracker-home) {
+    main.container { width: 100%; }
+  }
   main.container {
     margin-top: 50px;
     padding: 0 0 15px 0;
@@ -112,7 +115,7 @@ body.state-tracker-home.state-tracker {
         color: #333333;
         font-size: 16px;
         font-weight: 500;
-        margin: 35px auto 10px;
+        margin: 35px auto 5px;
       }
       &.metric-timeframe {
         color: #999999;
@@ -128,7 +131,9 @@ body.state-tracker-home.state-tracker {
   table.table {
     background-color: transparent;
     border: 1px solid @table-border-color;
-    th, td {
+    margin: 0;
+    th,
+    td {
       border: 1px solid @table-border-color;
       font-weight: 500;
       padding: 8px;
@@ -140,19 +145,20 @@ body.state-tracker-home.state-tracker {
       color: #333333;
       font-size: 14px;
       vertical-align: top;
+      &:hover,
+      &:focus { cursor: default; }
+
       span {
         font-size: 12px;
         line-height: 1;
-        padding-top: 2px;
+        padding-top: 4px;
         width: 50%;
       }
     }
     tr > td {
       color: #666666;
       font-size: 12px;
-      &:first-child {
-        color: #333333;
-      }
+      &:first-child { color: #333333; }
     }
   }
 }
