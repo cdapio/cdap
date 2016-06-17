@@ -384,22 +384,10 @@ cdap_manuals_list = [
 ]
 
 cdap_extension_manuals_list = [
-    ['hydrator-manual',   'hydrator',     'Cask Hydrator',                   'new-icon',],
+    ['hydrator-manual',   'hydrator',     'Cask Hydrator',                   '',],
 ]
 
 manuals_list = cdap_manuals_list + cdap_extension_manuals_list
-
-# manual_intersphinx_mapping = {
-#   'introduction': 'introduction',
-#   'developers-manual': 'developers',
-#   'cdap-apps': 'cdapapps',
-#   'admin-manual': 'admin',
-#   'integrations': 'integrations',
-#   'examples-manual': 'examples',
-#   'reference-manual': 'reference',
-#   'faqs': 'faqs',
-#   'hydrator-manual': 'hydrator',
-# }
 
 manual_intersphinx_mapping = {}
 manuals_dict = {}

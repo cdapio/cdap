@@ -7,6 +7,7 @@
     See http://stackoverflow.com/questions/4870346/can-a-jinja-variables-scope-extend-beyond-in-an-inner-block
 #}
 {%- set CDAP_DOCS = 'CDAP Documentation' %}
+{%- set CDAP_EXTENSIONS = 'CDAP Extensions' %}
 {%- set master_url_root = pathto(master_doc, 1) %}
 {%- if master_url_root == '#' %}{% set master_url_root = '' %}{% endif %}
 {%- if html_short_title_toc != CDAP_DOCS %}{% set master_url_root =  master_url_root + '/..' %}{%- endif %}
@@ -27,33 +28,24 @@
     {% set _ = hrefs.append(master_url_root + '/../'+ href) %}
     {% set _ = titles.append(title) %}
 {%- endfor %}
-{%- set CDAP_EXTENSIONS = 'CDAP Extensions' %}
+{%- macro build_manuals_list(manuals, doc_set) %}
+    <ul class="this-page-menu">
+    {%- for manual_dir in manual_dirs %}
+      {%- if manual_dir in manuals %}
+      {%- set doc = '' %}{% set docb = '' %}
+      {%- set title = titles[loop.index0] %}
+      {%- if (title == html_short_title_toc) and (pagename == 'index') %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
+      {%- if manual_dir == pagename %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
+      {%- if loop.first and html_short_title_toc == doc_set and pagename == 'index' %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
+      <li><div class="{{ icons[loop.index0] }}"></div>{{ doc }}<a href="{{ hrefs[loop.index0] }}" rel="nofollow">{{ title }}</a>{{ docb }}</li>
+      {%- endif %}
+    {%- endfor %}
+    </ul>
+{%- endmacro %}
 
   <div role="note" aria-label="manuals links">
     <h3><a href="{{ master_url_root }}{{ _('/../index.html') }}" rel="nofollow">{{ CDAP_DOCS }} v{{ version }}</a></h3>
-    <ul class="this-page-menu">
-    {%- for manual_dir in manual_dirs %}
-      {%- if manual_dir in theme_cdap_manuals %}
-      {%- set doc = '' %}{% set docb = '' %}
-      {%- set title = titles[loop.index0] %}
-      {%- if (title == html_short_title_toc) and (pagename == 'index') %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
-      {%- if manual_dir == pagename %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
-      {%- if loop.first and html_short_title_toc == CDAP_DOCS and pagename == 'index' %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
-      <li><div class="{{ icons[loop.index0] }}"></div>{{ doc }}<a href="{{ hrefs[loop.index0] }}" rel="nofollow">{{ title }}</a>{{ docb }}</li>
-      {%- endif %}
-    {%- endfor %}
-    </ul>
-    <h3>{{ CDAP_EXTENSIONS }}</h3>
-    <ul class="this-page-menu">
-    {%- for manual_dir in manual_dirs %}
-      {%- if manual_dir in theme_cdap_extension_manuals %}
-      {%- set doc = '' %}{% set docb = '' %}
-      {%- set title = titles[loop.index0] %}
-      {%- if (title == html_short_title_toc) and (pagename == 'index') %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
-      {%- if manual_dir == pagename %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
-      {%- if loop.first and html_short_title_toc == CDAP_DOCS and pagename == 'index' %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
-      <li><div class="{{ icons[loop.index0] }}"></div>{{ doc }}<a href="{{ hrefs[loop.index0] }}" rel="nofollow">{{ title }}</a>{{ docb }}</li>
-      {%- endif %}
-    {%- endfor %}
-    </ul>
+    {{ build_manuals_list(theme_cdap_manuals, CDAP_DOCS) }}
+    <h3 class="cdap-extensions">{{ CDAP_EXTENSIONS }}</h3>
+    {{ build_manuals_list(theme_cdap_extension_manuals, CDAP_EXTENSIONS) }}
   </div>
