@@ -21,13 +21,19 @@
 
     <div class="log-stats-container">
       <div class="log-stats-total log-stats">
-        <span class="stat-name log-stats-total-text">Total</span><div class="stat-count total-num">{{LogViewer.totalCount}}</div>
+          <span class="stat-name log-stats-total-text">Total Message</span>
+          <div class="stat-count total-num">
+            <span class="stat-count-number">{{LogViewer.totalCount}}</span></div>
       </div>
       <div class="log-stats-errors log-stats">
-        <span class="stat-name log-stats-errors-text">Errors</span><div class="stat-count errors-num">{{LogViewer.errorCount}}</div>
+        <span class="stat-name log-stats-errors-text">Error</span>
+          <div class="stat-count errors-num"><span class='stat-count-number'>{{LogViewer.errorCount}}</span></div>
       </div>
       <div class="log-stats-warnings log-stats">
-        <span class="stat-name log-stats-warnings-text">Warnings</span><div class="stat-count warnings-num">{{LogViewer.warningCount}}</div>
+        <span class="stat-name log-stats-warnings-text">Warning</span>
+        <div class="stat-count warnings-num">
+          <span class='stat-count-number'>{{LogViewer.warningCount}}</span>
+        </div>
       </div>
     </div>
 
@@ -36,7 +42,7 @@
         <button class="log-action-btn" ng-click="">View Raw</button>
         <button class="log-action-btn" ng-click="">Download All</button>
         <input type='text' class="log-searchbar" placeholder="Search">
-        <button class="glyphicon glyphicon-fullscreen" ng-click=""></button>
+        <i class="fa fa-expand" aria-hidden="true" ng-click=""></i>
       </div>
     </div>
 

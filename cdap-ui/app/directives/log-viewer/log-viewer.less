@@ -28,6 +28,8 @@ my-log-viewer {
       background-color: @headerbar-background-color;
       height: 50px;
       width: 100%;
+      min-width: 940px;
+
 
       div {
         display: inline-block;
@@ -45,22 +47,47 @@ my-log-viewer {
 
         .log-stats {
           height: 50px;
-          width: 33%;
           min-width: 40px;
           display: table-cell;
           vertical-align: middle;
+          text-align: center;
+          font-weight: bold;
+          top:-5px;
+
+          .stats-wrapper {
+            position: relative;
+          }
+
+        }
+        .log-stats-total {
+          width: 140px;
+          min-width: 140px;
+        }
+        .log-stats-errors {
+          width: 90px;
+          min-width: 90px;
+        }
+        .log-stats-warnings {
+          width: 115px;
+          min-width: 115px;
         }
         .stat-name {
           color: white;
-          margin-left: 20px;
+          margin-left: 10px;
           margin-right: 4px;
         }
         .stat-count {
           width: 30px;
           height: 15px;
-          border-radius: 5px;
+          border-radius: 8px;
           color: black;
           display: inline-block;
+          position:relative;
+          top:2px;
+        }
+        .stat-count-number {
+          position: relative;
+          top:-2px;
         }
         .total-num {
           background-color: #DFDFDF;
@@ -75,8 +102,8 @@ my-log-viewer {
 
 
       .log-actions {
-        width: 45%;
-        min-width: 200px;
+        width: 30%;
+        min-width: 430px;
         height: 50px;
         float: right;
         background-color: @headerbar-background-color;
@@ -89,23 +116,31 @@ my-log-viewer {
           vertical-align: middle;
         }
         .log-action-btn {
-          height: 30px;
+          height: 25px;
           width: 100px;
           border: solid 1px white;
           color: white;
           background-color: @headerbar-background-color;
           border-radius: 4px;
           margin-right: 3px;
+          outline:grey;
         }
         .log-searchbar{
-          height: 30px;
+          height: 25px;
           border-radius: 5px;
+
         }
         .logs-full-screen {
           width: 30px;
           height: 30px;
           display: table-cell;
           vertical-align: middle;
+          color: white;
+          background-color: @headerbar-background-color;
+        }
+        .fa-expand {
+          color:white;
+          padding-left: 10px;
         }
       }
     }
