@@ -31,6 +31,7 @@ angular.module(PKG.name + '.commons')
         var angularElement,
             widget,
             fieldset;
+        element.removeAttr('widget-container');
         widget = WidgetFactory.registry[scope.myconfig.widget] ||
                  WidgetFactory.registry[scope.myconfig['widget-type']];
         if (!widget) {
@@ -46,10 +47,8 @@ angular.module(PKG.name + '.commons')
         });
 
         fieldset.append(angularElement);
-        element.append(fieldset);
-
-        element.removeAttr('widget-container');
-        $compile(element)(scope);
+        var content = $compile(fieldset)(scope);
+        element.append(content);
       }
     };
 
