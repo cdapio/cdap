@@ -35,8 +35,8 @@
     </div>
     <div class="terminal" infinite-scroll-next="loadNextLogs()" infinite-scroll-prev="loadPrevLogs()" infinite-scroll>
       <ul class="list-unstyled" ng-if="activeFilter.entries.length">
-        <li ng-repeat="entry in activeFilter.entries | orderBy:'offset'" id="{{entry.offset}}">
-          <pre ng-bind="entry.log"></pre>
+        <li ng-repeat="entry in activeFilter.entries" id="{{entry.offset}}">
+          <pre>{{ ::entry.log }}</pre>
         </li>
       </ul>
       <div ng-if="!activeFilter.entries.length && !(loadingNext || loadingPrev)">

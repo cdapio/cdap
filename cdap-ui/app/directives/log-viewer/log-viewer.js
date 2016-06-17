@@ -31,6 +31,8 @@ angular.module(PKG.name + '.commons')
         var dataSrc = new MyCDAPDataSource($scope);
         $scope.model = [];
 
+        var loadTimeout = null;
+
         $scope.filters = 'all,info,warn,error,debug,other'.split(',')
           .map(function (key) {
             var p;
@@ -157,13 +159,23 @@ angular.module(PKG.name + '.commons')
               $scope.model = _.uniq(res.concat($scope.model));
               $scope.loadingPrev = false;
 
-              $timeout(function() {
+              if (loadTimeout) {
+                $timeout.cancel(loadTimeout);
+              }
+
+              loadTimeout = $timeout(function() {
                 var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
                 var logItem = angular.element(document.getElementById(params.fromOffset))[0];
                 container.scrollTop = logItem.offsetTop;
               });
             });
         };
+
+        $scope.$on('$destroy', function () {
+          if (loadTimeout) {
+            $timeout.cancel(loadTimeout);
+          }
+        });
 
       },
 
@@ -172,11 +184,17 @@ angular.module(PKG.name + '.commons')
         var termEl = angular.element(element[0].querySelector('.terminal')),
             QPARAM = 'filter';
 
+        var filterTimeout = null;
+
         scope.setFilter = function (k) {
           var f = filterFilter(scope.filters, {key:k});
           scope.activeFilter = f.length ? f[0] : scope.filters[0];
 
-          $timeout(function(){
+          if (filterTimeout) {
+            $timeout.cancel(filterTimeout);
+          }
+
+          filterTimeout = $timeout(function(){
             termEl.prop('scrollTop', termEl.prop('scrollHeight'));
 
             if(false === $state.current.reloadOnSearch) {
@@ -189,6 +207,12 @@ angular.module(PKG.name + '.commons')
         };
 
         scope.setFilter($state.params[QPARAM]);
+
+        scope.$on('$destroy', function () {
+          if (filterTimeout) {
+            $timeout.cancel(filterTimeout);
+          }
+        });
       }
     };
   });
