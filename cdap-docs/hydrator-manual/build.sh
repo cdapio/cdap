@@ -116,7 +116,7 @@ function extract_table() {
 function download_includes() {
   echo_red_bold "Downloading Markdown doc file includes from GitHub repo caskdata/hydrator-plugins..."
   set_version
-  
+
   # Copy the source _includes files so they can be populated with the markdown files
   local hydrator_plugins="hydrator-plugins"
   local plugins="plugins"

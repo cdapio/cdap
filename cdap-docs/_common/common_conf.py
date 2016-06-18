@@ -122,6 +122,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
     'tabbed-parsed-literal',
+    'youtube',
 ]
 
 # The Inter-Sphinx mapping

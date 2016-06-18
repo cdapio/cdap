@@ -50,6 +50,12 @@ est laborum.
 Hydrator Quick Start
 ====================
 
+A quick introduction demonstrating the use of Cask Hydrator.
 
 
+..  youtube::  ezTzYIS88YU
+   :align: center
 
+
+..    :height: 100%
+..    :width: 800px
