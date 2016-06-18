@@ -10,7 +10,13 @@
 Hydrator Plugins 
 =================
 
-- Plugin types for Batch 
+.. toctree::
+   :maxdepth: 2
+   
+    Batch Plugins <batch/index>
+    Real-time Plugins <realtime/index>
+
+- Plugins for Batch 
 
   - Source plugins
   - Transform plugins 
@@ -19,7 +25,7 @@ Hydrator Plugins
   - Compute
   - Sink
 
-- Plugin types for real-time 
+- Plugins for Real-time 
 
   - Source
   - Transform

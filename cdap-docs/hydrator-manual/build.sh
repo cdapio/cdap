@@ -99,6 +99,14 @@ function download_md_doc_file() {
   fi
 }
 
+function download_md_file() {
+  local source_dir="${1}"
+  local source_file_name="${2}"
+  local append_file="${3}"
+
+  
+}
+
 function extract_table() {
   # Extracts a table written in Markdown from a file so it can be reused in reST files
   local base_target="${1}"
@@ -133,6 +141,8 @@ function download_includes() {
   local hydrator_source="${base_source}/${hydrator_branch}"
   echo_red_bold "Using $hydrator_source"
   get_hydrator_version $base_target $hydrator_source
+  
+  # Original Downloads
   
   # Parameter          1            2                3                 4                      5
   # Definition         base_target  base_source      source_dir        source_file_name       append_file (optional)
@@ -210,7 +220,17 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source transform-plugins StreamFormatter-transform.md
 
   extract_table ${base_target} transforms/validator.md validator-extract.txt
+
+  # New Downloads
+  # Definition         $base_target  $hydrator_source
   
+  # Parameter      1                 2                         3
+  # Definition     source_dir        source_file_name          append_file (optional)
+  download_md_file cassandra-plugins Cassandra-batchsink.md 
+  download_md_file cassandra-plugins Cassandra-batchsource.md 
+  download_md_file cassandra-plugins Cassandra-realtimesink.md 
+
+
 }
 
 run_command ${1}
