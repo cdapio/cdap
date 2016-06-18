@@ -112,13 +112,13 @@ body.state-tracker-home.state-tracker {
     p {
       line-height: 1;
       &.metric-heading {
-        color: #333333;
+        color: @title-font-color;
         font-size: 16px;
         font-weight: 500;
         margin: 35px auto 5px;
       }
       &.metric-timeframe {
-        color: #999999;
+        color: @tracker-grey;
         font-size: 12px;
         margin-bottom: 20px;
       }
@@ -142,7 +142,7 @@ body.state-tracker-home.state-tracker {
     }
     th {
       border-bottom-width: 1px;
-      color: #333333;
+      color: @title-font-color;
       font-size: 14px;
       vertical-align: top;
       &:hover,
@@ -156,9 +156,9 @@ body.state-tracker-home.state-tracker {
       }
     }
     tr > td {
-      color: #666666;
+      color: @search-font-color;
       font-size: 12px;
-      &:first-child { color: #333333; }
+      &:first-child { color: @title-font-color; }
     }
   }
 }
