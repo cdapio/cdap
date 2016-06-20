@@ -181,8 +181,8 @@ public class DefaultStoreTest {
     ProgramId sparkProgram = appId.spark(sparkName);
 
     long currentTime = System.currentTimeMillis();
-    RunId workflowRunId = RunIds.generate(currentTime);
-    ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId.getId());
+    String workflowRunId = RunIds.generate(currentTime).getId();
+    ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId);
 
     // start Workflow
     store.setStart(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime);
@@ -190,7 +190,7 @@ public class DefaultStoreTest {
     // start MapReduce as a part of Workflow
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, mapReduceName,
                                                      ProgramOptionConstants.WORKFLOW_NAME, workflowName,
-                                                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+                                                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId mapReduceRunId = RunIds.generate(currentTime + 10);
     store.setStart(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 10, null,
@@ -202,7 +202,7 @@ public class DefaultStoreTest {
     // start Spark program as a part of Workflow
     systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, sparkName,
                                  ProgramOptionConstants.WORKFLOW_NAME, workflowName,
-                                 ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+                                 ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId sparkRunId = RunIds.generate(currentTime + 60);
     store.setStart(sparkProgram.toId(), sparkRunId.getId(), currentTime + 60, null,

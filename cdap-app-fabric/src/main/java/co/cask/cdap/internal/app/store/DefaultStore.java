@@ -241,9 +241,10 @@ public class DefaultStore implements Store {
             case COMPLETED:
             case KILLED:
             case FAILED:
-              Throwable failureCause = updateStatus == ProgramRunStatus.FAILED
-                ? new Throwable("Marking run record as failed since no running program found.") : null;
-              mds.recordProgramStop(id, pid, nowSecs, updateStatus, new BasicThrowable(failureCause));
+              BasicThrowable failureCause = updateStatus == ProgramRunStatus.FAILED
+                ? new BasicThrowable(new Throwable("Marking run record as failed since no running program found."))
+                : null;
+              mds.recordProgramStop(id, pid, nowSecs, updateStatus, failureCause);
               break;
             default:
               break;

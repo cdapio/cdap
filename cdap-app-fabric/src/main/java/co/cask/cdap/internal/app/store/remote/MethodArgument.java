@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,8 +14,30 @@
  * the License.
  */
 
-/**
- * Classes to handle data fabric requests.
- */
-package co.cask.cdap.gateway.handlers.dataset;
+package co.cask.cdap.internal.app.store.remote;
 
+import com.google.gson.JsonElement;
+
+import javax.annotation.Nullable;
+
+/**
+ * Allows for simple serialization/deserialization of a method argument.
+ */
+public final class MethodArgument {
+  private final String type;
+  private final JsonElement value;
+
+  public MethodArgument(String type, JsonElement value) {
+    this.type = type;
+    this.value = value;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  @Nullable
+  public JsonElement getValue() {
+    return value;
+  }
+}

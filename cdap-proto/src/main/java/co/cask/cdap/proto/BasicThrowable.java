@@ -18,6 +18,7 @@ package co.cask.cdap.proto;
 
 import co.cask.cdap.proto.codec.BasicThrowableCodec;
 
+import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
@@ -88,5 +89,39 @@ public final class BasicThrowable {
   @Nullable
   public BasicThrowable getCause() {
     return cause;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BasicThrowable that = (BasicThrowable) o;
+
+    if (!className.equals(that.className)) {
+      return false;
+    }
+    if (!message.equals(that.message)) {
+      return false;
+    }
+
+    if (!Arrays.equals(stackTraces, that.stackTraces)) {
+      return false;
+    }
+    return !(cause != null ? !cause.equals(that.cause) : that.cause != null);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = className.hashCode();
+    result = 31 * result + message.hashCode();
+    result = 31 * result + Arrays.hashCode(stackTraces);
+    result = 31 * result + (cause != null ? cause.hashCode() : 0);
+    return result;
   }
 }
