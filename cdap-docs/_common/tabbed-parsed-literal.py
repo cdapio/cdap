@@ -218,30 +218,24 @@ DIV_DIV_END = """
 """
 
 
-def dequote(s):
+def dequote(text):
     """
-    If a string has single or double quotes around it, remove them.
+    If text has single or double quotes around it, remove them.
     Make sure the pair of quotes match.
-    If a matching pair of quotes is not found, return the string unchanged.
+    If a matching pair of quotes is not found, return the text unchanged.
     """
-    if (s[0] == s[-1]) and s.startswith(("'", '"')):
-        return s[1:-1]
-    return s
+    if (text[0] == text[-1]) and text.startswith(("'", '"')):
+        return text[1:-1]
+    return text
     
-def clean_ascii(s):
+def clean_alphanumeric(text):
     """
-    If a string has any non-ASCII characters, replace them with a hyphen.
+    If text has any non-alphanumeric characters, replace them with a hyphen.
     """
-    s_clean = ''
-    for c in s:
-        s_clean += c if c.isalnum() else '-'
-    return s_clean
-
-def cleaned_string(s):
-    """
-    De-quote and remove non-ASCII characters.
-    """
-    return clean_ascii(dequote(s))
+    text_clean = ''
+    for charc in text:
+        text_clean += charc if charc.isalnum() else '-'
+    return text_clean
     
 def convert(c, state={}):
     """
@@ -393,18 +387,18 @@ class TabbedParsedLiteral(ParsedLiteral):
     
         return line_counts, lines
     
-    def cleanup_option(self, option, default, ascii_only=False):
+    def cleanup_option(self, option, default, aphanumeric_only=False):
         """Removes leading or trailing quotes or double-quotes from a string option."""
         _option = self.options.get(option,'')
         if not _option:
             return default
         else:
-            return clean_ascii(dequote(_option)) if ascii_only else dequote(_option)
+            return clean_alphanumeric(dequote(_option)) if aphanumeric_only else dequote(_option)
 
-    def cleanup_options(self, option, default, ascii_only=False, lower=False):
+    def cleanup_options(self, option, default, aphanumeric_only=False, lower=False):
         """
         Removes leading or trailing quotes or double-quotes from a string option list.
-        Removes non-ASCII characters if ascii_only true.
+        Removes non-aphanumeric characters if aphanumeric_only true.
         Converts from Unicode to string
         """
         _option = self.options.get(option,'')
@@ -414,7 +408,7 @@ class TabbedParsedLiteral(ParsedLiteral):
             _options = []
             for s in _option.split(","):
                 s = dequote(s)
-                s = clean_ascii(s) if ascii_only else s
+                s = clean_alphanumeric(s) if aphanumeric_only else s
                 s = s.lower() if lower else s
                 _options.append(str(s))         
             return _options
@@ -451,7 +445,7 @@ class TabbedParsedLiteral(ParsedLiteral):
         node['linenos'] = self.cleanup_options('linenos', '')
         node['single'] = self.options.has_key('single')
         node['tab_labels'] = self.cleanup_options('tabs', DEFAULT_TAB_LABELS)
-        node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS, ascii_only=True, lower=True)
+        node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS, aphanumeric_only=True, lower=True)
 
         tab_count = len(node['tabs'])
         if tab_count == 1:
@@ -465,7 +459,7 @@ class TabbedParsedLiteral(ParsedLiteral):
             node['languages'] = [DEFAULT_LANGUAGES[0]] * tab_count
         if not node['independent']:
             node['dependent'] = self.cleanup_option('dependent', DEFAULT_TAB_SET)
-        node['mapping'] = self.cleanup_options('mapping', node['tabs'], ascii_only=True, lower=True)
+        node['mapping'] = self.cleanup_options('mapping', node['tabs'], aphanumeric_only=True, lower=True)
         if tab_count != len(node['mapping']):
             print "Warning: tabs (%s) don't match mapping (%s)" % (node['tabs'], node['mapping'])
             if tab_count > 1:
@@ -658,7 +652,7 @@ def visit_tpl_html(self, node):
         tab_content_html += tab_entry_start + start_tag + highlighted + DIV_END + DIV_DIV_END
                                                     
     nav_tabs_html = NAV_TABS % nav_tabs_html
-    tab_content_html = TAB_CONTENT_START + tab_content_html + DIV_END    
+    tab_content_html = TAB_CONTENT_START + tab_content_html + DIV_END
     self.body.append(start_html + nav_tabs_html + tab_content_html + DIV_END)
     raise nodes.SkipNode
 
