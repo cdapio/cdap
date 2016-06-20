@@ -368,7 +368,11 @@ class TabbedParsedLiteral(ParsedLiteral):
             block = '\n'.join(line_set).rstrip()
             block = block.replace('\\', '\\\\')
             block = block.replace('\\|', '\\\ |')
-            block = block.replace('*', '\*')            
+            block = block.replace('*', '\*')
+            block = block.replace(' |-', ' \|-')
+            block = block.replace('\n|-', '\n\|-')
+            block = block.replace(' |+', ' \|+')
+            block = block.replace('\n|+', '\n\|+')
             if not block.endswith('\n'):
                 block += '\n'
             lines.append(block)
