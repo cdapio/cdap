@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -43,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Handles Dataset admin operations.
@@ -77,41 +80,56 @@ public class DatasetAdminService {
    * @param datasetInstanceId dataset instance to be created
    * @param typeMeta type meta for the dataset
    * @param props dataset instance properties
-   * @param existing true, if dataset already exists (in case of update)
+   * @param existing if dataset already exists (in case of update), the existing properties
    * @return dataset specification
    * @throws Exception
    */
-  public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props, boolean existing) throws Exception {
-    LOG.info("Creating dataset instance {}, type meta: {}, props: {}", datasetInstanceId, typeMeta, props);
+  public DatasetSpecification createOrUpdate(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+                                             DatasetProperties props, @Nullable DatasetSpecification existing)
+    throws Exception {
+
+    if (existing == null) {
+      LOG.info("Creating dataset instance {}, type meta: {}, props: {}", datasetInstanceId, typeMeta, props);
+    } else {
+      LOG.info("Updating dataset instance {}, type meta: {}, existing: {}, props: {}",
+               datasetInstanceId, typeMeta, existing, props);
+    }
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+
       DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
-
       if (type == null) {
-        String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
-        LOG.error(msg);
-        throw new BadRequestException(msg);
+        throw new BadRequestException(
+          String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
       }
+      DatasetSpecification spec = existing == null
+          ? type.configure(datasetInstanceId.getId(), props)
+          : type.reconfigure(datasetInstanceId.getId(), props, existing);
 
-      DatasetSpecification spec = type.configure(datasetInstanceId.getId(), props);
       DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespaceId());
       DatasetAdmin admin = type.getAdmin(context, spec);
-      try {
+      if (existing != null) {
+        if (admin instanceof Updatable) {
+          ((Updatable) admin).update(existing);
+        } else {
+          admin.upgrade();
+        }
+      } else {
         admin.create();
-
-        writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing);
-
-        return spec;
-      } catch (IOException e) {
-        String msg = String.format("Error creating dataset \"%s\": %s", datasetInstanceId, e.getMessage());
-        LOG.error(msg, e);
-        throw new IOException(msg, e);
       }
-    } catch (IOException e) {
-      String msg = String.format("Error instantiating the dataset admin for dataset %s", datasetInstanceId);
-      LOG.error(msg, e);
-      throw new IOException(msg, e);
+
+      writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null);
+      return spec;
+
+    } catch (Exception e) {
+      if (e instanceof IncompatibleUpdateException) {
+        // this is expected to happen if user provides bad update properties, so we log this as debug
+        LOG.debug("Incompatible update for dataset '{}'", datasetInstanceId, e);
+      } else {
+        LOG.error("Error {} dataset '{}': {}",
+                  existing == null ? "creating" : "updating", datasetInstanceId, e.getMessage(), e);
+      }
+      throw e;
     }
   }
 
@@ -158,9 +176,8 @@ public class DatasetAdminService {
       DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
 
       if (type == null) {
-        String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
-        LOG.error(msg);
-        throw new BadRequestException(msg);
+        throw new BadRequestException(
+          String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
       }
 
       DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);

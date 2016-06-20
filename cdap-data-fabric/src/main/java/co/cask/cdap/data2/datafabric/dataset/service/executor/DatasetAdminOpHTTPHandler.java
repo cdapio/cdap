@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -84,17 +85,47 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
                                                          InternalDatasetCreationParams.class);
     Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
     Preconditions.checkArgument(params.getTypeMeta() != null, "Missing required 'typeMeta' parameter.");
-    Preconditions.checkArgument(params.isExisting() != null, "Missing required 'existing' parameter.");
 
     DatasetProperties props = params.getProperties();
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
     try {
       Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, name);
-      DatasetSpecification spec = datasetAdminService.create(instanceId, typeMeta, props, params.isExisting());
+      DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, null);
       responder.sendJson(HttpResponseStatus.OK, spec);
     } catch (BadRequestException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  @POST
+  @Path("/data/datasets/{name}/admin/update")
+  public void update(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId,
+                     @PathParam("name") String name) {
+    InternalDatasetUpdateParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+                                                       InternalDatasetUpdateParams.class);
+    Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
+    Preconditions.checkArgument(params.getTypeMeta() != null, "Missing required 'typeMeta' parameter.");
+    Preconditions.checkArgument(params.getExistingSpec() != null, "Missing required 'existingSpec' parameter.");
+
+    DatasetProperties props = params.getProperties();
+    DatasetSpecification existing = params.getExistingSpec();
+    DatasetTypeMeta typeMeta = params.getTypeMeta();
+
+    try {
+      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, name);
+      DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, existing);
+      responder.sendJson(HttpResponseStatus.OK, spec);
+    } catch (NotFoundException e) {
+      LOG.debug("Got handler exception", e);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
+    } catch (BadRequestException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (IncompatibleUpdateException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }

@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -74,7 +74,7 @@ public class DatasetsUtilTest extends DatasetServiceTestBase {
     testFix("table",
             DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "fam").build());
     testFix("indexedTable",
-            DatasetProperties.builder().add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "a,c").build());
+            DatasetProperties.builder().add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "a,c").build());
   }
 
   private void testFix(String type, DatasetProperties props) {

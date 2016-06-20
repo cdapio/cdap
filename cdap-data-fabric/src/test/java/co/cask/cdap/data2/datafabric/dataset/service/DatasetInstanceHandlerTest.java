@@ -42,7 +42,6 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
@@ -53,7 +52,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -191,7 +189,10 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(0, instances.size());
 
     try {
-      DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
+      DatasetProperties props = DatasetProperties.builder()
+        .add("prop1", "val1")
+        .add(TestModule2.NOT_RECONFIGURABLE, "this")
+        .build();
 
       // deploy modules
       deployModule("module1", TestModule1.class);
@@ -211,18 +212,27 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Map<String, String> retrievedProps = getInstanceProperties("dataset1").getResponseObject();
       Assert.assertEquals(props.getProperties(), retrievedProps);
 
-      Map<String, String> newProps = ImmutableMap.of("prop2", "val2");
+      // these properties are incompatible because TestModule1.NOT_RECONFIGURABLE may not change
+      DatasetProperties newProps = DatasetProperties.builder()
+        .add("prop2", "val2")
+        .add(TestModule2.NOT_RECONFIGURABLE, "that")
+        .build();
+      Assert.assertEquals(HttpStatus.SC_CONFLICT, updateInstance("dataset1", newProps).getResponseCode());
 
-      // update dataset instance
+      // update dataset instance with valid properties
+      newProps = DatasetProperties.builder()
+        .add("prop2", "val2")
+        .add(TestModule2.NOT_RECONFIGURABLE, "this")
+        .build();
       Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", newProps).getResponseCode());
 
       meta = getInstanceObject("dataset1").getResponseObject();
-      Assert.assertEquals(newProps, meta.getSpec().getOriginalProperties());
+      Assert.assertEquals(newProps.getProperties(), meta.getSpec().getOriginalProperties());
       Assert.assertEquals("val2", meta.getSpec().getProperty("prop2"));
       Assert.assertNull(meta.getSpec().getProperty("prop1"));
 
       retrievedProps = getInstanceProperties("dataset1").getResponseObject();
-      Assert.assertEquals(newProps, retrievedProps);
+      Assert.assertEquals(newProps.getProperties(), retrievedProps);
 
     } finally {
       // delete dataset instance
@@ -335,7 +345,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     response = createInstance(datasetInstance, Table.class.getName(), null);
     assertNamespaceNotFound(response, nonExistent);
 
-    response = updateInstance(datasetInstance, new HashMap<String, String>());
+    response = updateInstance(datasetInstance, DatasetProperties.EMPTY);
     assertNamespaceNotFound(response, nonExistent);
 
     response = deleteInstance(datasetInstance);
@@ -378,14 +388,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     return HttpRequests.execute(request);
   }
 
-  private HttpResponse updateInstance(String instanceName, Map<String, String> props) throws IOException {
+  private HttpResponse updateInstance(String instanceName, DatasetProperties props) throws IOException {
     return updateInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), props);
   }
 
-  private HttpResponse updateInstance(Id.DatasetInstance instance, Map<String, String> props) throws IOException {
+  private HttpResponse updateInstance(Id.DatasetInstance instance, DatasetProperties props) throws IOException {
     HttpRequest request = HttpRequest.put(getUrl(instance.getNamespaceId(),
                                                  "/data/datasets/" + instance.getId() + "/properties"))
-      .withBody(GSON.toJson(props)).build();
+      .withBody(GSON.toJson(props.getProperties())).build();
     return HttpRequests.execute(request);
   }
 

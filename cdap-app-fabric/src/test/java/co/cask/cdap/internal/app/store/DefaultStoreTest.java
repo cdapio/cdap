@@ -34,7 +34,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.AbstractFlow;
@@ -456,7 +455,7 @@ public class DefaultStoreTest {
       createDataset("dataset2", KeyValueTable.class);
 
       createDataset("dataset3", IndexedTable.class,
-                    DatasetProperties.builder().add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "foo").build());
+                    DatasetProperties.builder().add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "foo").build());
       addFlow(new FlowImpl("flow2"));
       addFlow(new FlowImpl("flow3"));
       addMapReduce(new FooMapReduceJob("mrJob2"));

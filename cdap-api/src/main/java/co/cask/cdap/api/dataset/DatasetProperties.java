@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,6 +48,13 @@ public final class DatasetProperties {
     return new Builder();
   }
 
+  /**
+   * Helper method to create a DatasetProperties from a map of key/values.
+   */
+  public static DatasetProperties of(Map<String, String> props) {
+    return builder().addAll(props).build();
+  }
+
   @Nullable
   public String getDescription() {
     return description;
@@ -63,6 +70,7 @@ public final class DatasetProperties {
   @Override
   public String toString() {
     return "DatasetProperties{" +
+      "description=" + description +
       "properties=" + properties +
       '}';
   }

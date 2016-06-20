@@ -138,7 +138,7 @@ public class ExistingEntitySystemMetadataWriter {
     try (SystemDatasetInstantiator systemDatasetInstantiator = systemDatasetInstantiatorFactory.create()) {
       for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
         Id.DatasetInstance dsInstance = Id.DatasetInstance.from(namespace, summary.getName());
-        DatasetProperties dsProperties = DatasetProperties.builder().addAll(summary.getProperties()).build();
+        DatasetProperties dsProperties = DatasetProperties.of(summary.getProperties());
         String dsType = summary.getType();
         Dataset dataset = null;
         try {

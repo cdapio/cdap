@@ -22,6 +22,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -61,8 +64,11 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -103,6 +109,9 @@ public abstract class AbstractDatasetFrameworkTest {
   protected static CConfiguration cConf;
   protected static TransactionExecutorFactory txExecutorFactory;
   protected static InMemoryAuditPublisher inMemoryAuditPublisher;
+
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -327,6 +336,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     framework.addModule(IN_MEMORY, new InMemoryTableModule());
     framework.addModule(CORE, new CoreDatasetsModule());
+    framework.addModule(FILE, new FileSetModule());
     framework.addModule(KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
     // keyvalue has been added in the system namespace
     Assert.assertTrue(framework.hasSystemType(Table.class.getName()));
@@ -343,6 +353,29 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertEquals(Table.class.getName(), spec.getType());
     framework.addInstance(Table.class.getName(), MY_TABLE2, DatasetProperties.EMPTY);
     Assert.assertTrue(framework.hasInstance(MY_TABLE2));
+
+    // Update instances
+    File baseDir = TMP_FOLDER.newFolder();
+    framework.addInstance(FileSet.class.getName(), MY_DS, FileSetProperties.builder()
+      .setBasePath(baseDir.getPath())
+      .setDataExternal(true)
+      .build());
+    // this should fail because it would "internalize" external data
+    try {
+      framework.updateInstance(MY_DS, DatasetProperties.EMPTY);
+      Assert.fail("update should have thrown instance conflict");
+    } catch (InstanceConflictException e) {
+      // expected
+    }
+    baseDir = TMP_FOLDER.newFolder();
+    // this should succeed because it simply changes the external path
+    framework.updateInstance(MY_DS, FileSetProperties.builder()
+      .setBasePath(baseDir.getPath())
+      .setDataExternal(true)
+      .build());
+    spec = framework.getDatasetSpec(MY_DS);
+    Assert.assertNotNull(spec);
+    Assert.assertEquals(baseDir.getPath(), FileSetProperties.getBasePath(spec.getProperties()));
 
     // cleanup
     try {

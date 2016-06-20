@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -48,12 +49,29 @@ public class DatasetModuleMeta {
    */
   public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
                            Collection<String> types, Collection<String> usesModules) {
+    this(name, className, jarLocation, types, usesModules, new ArrayList<String>());
+  }
+
+  /**
+   * Creates instance of {@link DatasetModuleMeta}
+   * @param name name of the dataset module
+   * @param className class name of the dataset module
+   * @param jarLocation location of the dataset module jar. {@code null} means this is "system module" which classes
+   *                    always present in classpath. This helps to minimize redundant copying of jars.
+   * @param types list of types announced by this module in the order they are announced
+   * @param usesModules list of modules that this module depends on, ordered in a way they must be
+   *                    loaded and initialized
+   * @param usedByModules list of modules that depend on this module
+   */
+  public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
+                           Collection<String> types, Collection<String> usesModules,
+                           Collection<String> usedByModules) {
     this.name = name;
     this.className = className;
     this.jarLocation = jarLocation;
     this.types = Collections.unmodifiableList(new ArrayList<>(types));
     this.usesModules = Collections.unmodifiableList(new ArrayList<>(usesModules));
-    this.usedByModules = new ArrayList<>();
+    this.usedByModules = new ArrayList<>(usedByModules);
   }
 
   /**
@@ -126,5 +144,26 @@ public class DatasetModuleMeta {
       ", usesModules=" + usesModules +
       ", usedByModules=" + usedByModules +
       '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    DatasetModuleMeta that = (DatasetModuleMeta) o;
+    return Objects.equals(name, that.name) &&
+      Objects.equals(className, that.className) &&
+      Objects.equals(types, that.types) &&
+      Objects.equals(usesModules, that.usesModules) &&
+      Objects.equals(usedByModules, that.usedByModules);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, className, types, usesModules, usedByModules);
   }
 }

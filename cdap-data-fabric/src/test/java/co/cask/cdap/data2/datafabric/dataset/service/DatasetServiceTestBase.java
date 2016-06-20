@@ -111,6 +111,8 @@ public abstract class DatasetServiceTestBase {
   protected RemoteDatasetFramework dsFramework;
   protected InMemoryDatasetFramework inMemoryDatasetFramework;
   protected DatasetInstanceService instanceService;
+  protected DatasetDefinitionRegistryFactory registryFactory;
+  protected Injector injector;
 
   private int port = -1;
 
@@ -136,7 +138,7 @@ public abstract class DatasetServiceTestBase {
     discoveryService = new InMemoryDiscoveryService();
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
-    final Injector injector = Guice.createInjector(
+    injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
@@ -149,7 +151,7 @@ public abstract class DatasetServiceTestBase {
     TransactionSystemClientService txSystemClientService =
       new DelegatingTransactionSystemClientService(txSystemClient);
 
-    DatasetDefinitionRegistryFactory registryFactory = new DatasetDefinitionRegistryFactory() {
+    registryFactory = new DatasetDefinitionRegistryFactory() {
       @Override
       public DatasetDefinitionRegistry create() {
         DefaultDatasetDefinitionRegistry registry = new DefaultDatasetDefinitionRegistry();
@@ -181,7 +183,7 @@ public abstract class DatasetServiceTestBase {
       .putAll(DatasetMetaTableUtil.getModules())
       .build();
 
-    inMemoryDatasetFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
+    inMemoryDatasetFramework = new InMemoryDatasetFramework(registryFactory, modules);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
     namespaceStore = new InMemoryNamespaceStore();
@@ -281,8 +283,18 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected HttpResponse deployModule(Id.DatasetModule module, Class moduleClass) throws Exception {
+    return deployModule(module, moduleClass, false);
+  }
+
+  protected HttpResponse deployModule(String moduleName, Class moduleClass, boolean force) throws Exception {
+    return deployModule(Id.DatasetModule.from(Id.Namespace.DEFAULT, moduleName), moduleClass, force);
+  }
+
+  protected HttpResponse deployModule(Id.DatasetModule module, Class moduleClass, boolean force) throws Exception {
     Location moduleJar = createModuleJar(moduleClass);
-    HttpRequest request = HttpRequest.put(getUrl(module.getNamespaceId(), "/data/modules/" + module.getId()))
+    String urlPath = "/data/modules/" + module.getId();
+    urlPath = force ? urlPath + "?force=true" : urlPath;
+    HttpRequest request = HttpRequest.put(getUrl(module.getNamespaceId(), urlPath))
       .addHeader("X-Class-Name", moduleClass.getName())
       .withBody(Locations.newInputSupplier(moduleJar)).build();
     return HttpRequests.execute(request);
@@ -334,4 +346,6 @@ public abstract class DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.toString()));
   }
+
+
 }

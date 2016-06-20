@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -47,11 +46,11 @@ public class LevelDBTable extends BufferingTable {
   private Transaction tx;
   private long persistedVersion;
 
-  public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
+  public LevelDBTable(DatasetContext datasetContext, String tableName,
                       LevelDBTableService service, CConfiguration cConf,
-                      Schema schema, String schemaRowField) throws IOException {
-    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level,
-          false, schema, schemaRowField);
+                      DatasetSpecification spec) throws IOException {
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName),
+          false, spec.getProperties());
     this.core = new LevelDBTableCore(getTableName(), service);
   }
 

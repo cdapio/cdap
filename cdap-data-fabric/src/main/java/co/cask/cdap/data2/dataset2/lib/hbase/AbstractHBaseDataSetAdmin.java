@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,7 +78,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   @Override
   public void upgrade() throws IOException {
-    upgradeTable(Boolean.valueOf(System.getProperty(SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE)));
+    updateTable(Boolean.valueOf(System.getProperty(SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE)));
   }
 
   @Override
@@ -104,31 +104,31 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   }
 
   /**
-   * Performs upgrade on a given HBase table. It will be upgraded if either its spec has
-   * changed since the HBase table was created or upgraded, or if the CDAP version recorded
-   * in the HTable descriptor
+   * Performs update on a given HBase table. It will be updated if either its spec has
+   * changed since the HBase table was created or updated, or if the CDAP version recorded
+   * in the HTable descriptor is less than the current CDAP version.
    *
-   * @param force forces upgrade regardless of whether the table needs upgrade.
-   * @throws IOException If upgrade failed.
+   * @param force forces update regardless of whether the table needs it.
+   * @throws IOException If update failed.
    */
-  public void upgradeTable(boolean force) throws IOException {
+  public void updateTable(boolean force) throws IOException {
 
     HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(getAdmin(), tableId);
 
-    // Upgrade any table properties if necessary
-    boolean needUpgrade = upgradeTable(tableDescriptor) || force;
+    // update any table properties if necessary
+    boolean needUpdate = needsUpdate(tableDescriptor) || force;
 
     // Get the cdap version from the table
     ProjectInfo.Version version = getVersion(tableDescriptor);
 
-    if (!needUpgrade && version.compareTo(ProjectInfo.getVersion()) >= 0) {
-      // If neither the table spec nor the cdap version have changed, no need to upgrade
+    if (!needUpdate && version.compareTo(ProjectInfo.getVersion()) >= 0) {
+      // If neither the table spec nor the cdap version have changed, no need to update
       LOG.info("Table '{}' has not changed and its version '{}' is same or greater " +
                  "than current CDAP version '{}'", tableId, version, ProjectInfo.getVersion());
       return;
     }
 
-    // create a new descriptor for the table upgrade
+    // create a new descriptor for the table update
     HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
 
     // Generate the coprocessor jar
@@ -161,13 +161,13 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
     setVersion(newDescriptor);
 
-    LOG.info("Upgrading table '{}'...", tableId);
+    LOG.info("Updating table '{}'...", tableId);
     boolean enableTable = false;
     try {
       tableUtil.disableTable(getAdmin(), tableId);
       enableTable = true;
     } catch (TableNotEnabledException e) {
-      LOG.debug("Table '{}' was not enabled before upgrade and will not be enabled after upgrade.", tableId);
+      LOG.debug("Table '{}' was not enabled before update and will not be enabled after update.", tableId);
     }
 
     tableUtil.modifyTable(getAdmin(), newDescriptor.build());
@@ -175,7 +175,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       tableUtil.enableTable(getAdmin(), tableId);
     }
 
-    LOG.info("Table '{}' upgrade completed.", tableId);
+    LOG.info("Table '{}' update completed.", tableId);
   }
 
   public static void setVersion(HTableDescriptorBuilder tableDescriptor) {
@@ -198,11 +198,12 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   protected abstract CoprocessorJar createCoprocessorJar() throws IOException;
 
   /**
-   * Modifies the table descriptor for upgrade.
+   * Modifies the table descriptor for update, if an update is needed due to a dataset properties change,
+   * that is, if the current table descriptor does not reflect the current dataset specification.
    *
-   * @return true if the table descriptor is modified.
+   * @return true if the table descriptor is modified, that is, whether update is needed.
    */
-  protected abstract boolean upgradeTable(HTableDescriptor tableDescriptor);
+  protected abstract boolean needsUpdate(HTableDescriptor tableDescriptor);
 
   /**
    * Holder for coprocessor information.

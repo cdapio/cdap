@@ -92,10 +92,16 @@ import javax.annotation.Nullable;
  * as it would break parsing of the configuration property.
  * </p>
  *
- * @see co.cask.cdap.api.dataset.lib.IndexedTableDefinition#INDEX_COLUMNS_CONF_KEY
+ * @see #INDEX_COLUMNS_CONF_KEY
  */
 public class IndexedTable extends AbstractDataset implements Table {
   private static final Logger LOG = LoggerFactory.getLogger(IndexedTable.class);
+
+  /**
+   * Configuration key for defining column names to index in the DatasetSpecification properties.
+   * Multiple column names should be listed as a comma-separated string, e.g. "column1,column2,etc".
+   */
+  public static final String INDEX_COLUMNS_CONF_KEY = "columnsToIndex";
 
   /**
    * Column key used to store the existence of a row in the secondary index.
@@ -110,7 +116,6 @@ public class IndexedTable extends AbstractDataset implements Table {
   // the secondary index column
   private SortedSet<byte[]> indexedColumns;
 
-
   /**
    * Configuration time constructor.
    * 
@@ -119,13 +124,12 @@ public class IndexedTable extends AbstractDataset implements Table {
    * @param index table to use as the index
    * @param columnsToIndex the names of the data columns to index
    */
-  public IndexedTable(String name, Table table, Table index, byte[][] columnsToIndex) {
+  public IndexedTable(String name, Table table, Table index, SortedSet<byte[]> columnsToIndex) {
     super(name, table, index);
     this.table = table;
     this.index = index;
-    this.indexedColumns = new TreeSet<>(Bytes.BYTES_COMPARATOR);
+    this.indexedColumns = columnsToIndex;
     this.hasColumnWithDelimiter = hasDelimiterByte(columnsToIndex);
-    Collections.addAll(this.indexedColumns, columnsToIndex);
   }
 
   /**
@@ -143,7 +147,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    * @param columns the set of columns being checked
    * @return true if any of the columns contain the DELIMITER_BYTE
    */
-  private boolean hasDelimiterByte(byte[][] columns) {
+  private boolean hasDelimiterByte(Set<byte[]> columns) {
     for (byte[] column : columns) {
       for (byte b : column) {
         if (b == DELIMITER_BYTE) {

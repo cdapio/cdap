@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,21 +19,21 @@ package co.cask.cdap.test.app;
 import com.google.common.base.Objects;
 
 /**
- *
+ * App that creates the RecordDataset of {@link DatasetDeployApp} with an incompatible record class.
  */
-public class IncompatibleDatasetUncheckedUpgradeApp extends DatasetUncheckedUpgradeApp {
+public class IncompatibleDatasetDeployApp extends DatasetDeployApp {
 
   @Override
   protected Class<?> getRecordClass() {
-    return Record.class;
+    return IncompatibleRecord.class;
   }
 
-  public static final class Record {
+  public static final class IncompatibleRecord {
     private final long id;
     private final String firstName;
     private final boolean alive;
 
-    public Record(long id, String firstName, boolean alive) {
+    public IncompatibleRecord(long id, String firstName, boolean alive) {
       this.id = id;
       this.firstName = firstName;
       this.alive = alive;
@@ -48,7 +48,7 @@ public class IncompatibleDatasetUncheckedUpgradeApp extends DatasetUncheckedUpgr
         return false;
       }
 
-      Record that = (Record) o;
+      IncompatibleRecord that = (IncompatibleRecord) o;
 
       return Objects.equal(this.id, that.id) &&
         Objects.equal(this.firstName, that.firstName) &&

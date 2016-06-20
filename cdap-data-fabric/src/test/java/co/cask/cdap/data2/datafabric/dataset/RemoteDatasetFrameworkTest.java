@@ -34,6 +34,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTP
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.AbstractDatasetFrameworkTest;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -119,7 +120,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
-
     opExecutorService.startAndWait();
 
     ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
@@ -128,7 +128,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       .putAll(DatasetMetaTableUtil.getModules())
       .build();
 
-    InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
+    InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
@@ -136,7 +136,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
                              txExecutorFactory, mdsFramework, DEFAULT_MODULES),
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, mdsFramework),
-      new InMemoryDatasetOpExecutor(framework),
+      new LocalDatasetOpExecutor(cConf, discoveryService, opExecutorService),
       exploreFacade,
       cConf,
       NAMESPACE_STORE);

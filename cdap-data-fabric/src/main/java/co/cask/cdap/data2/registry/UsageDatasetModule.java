@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,8 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -44,7 +46,9 @@ public class UsageDatasetModule implements DatasetModule {
   /**
    * Dataset definition for creating {@link UsageDataset}.
    */
-  public static final class UsageDatasetDefinition extends AbstractDatasetDefinition<UsageDataset, DatasetAdmin> {
+  public static final class UsageDatasetDefinition
+    extends AbstractDatasetDefinition<UsageDataset, DatasetAdmin>
+    implements Reconfigurable {
 
     private final DatasetDefinition<? extends Table, ?> tableDefinition;
 
@@ -61,9 +65,25 @@ public class UsageDatasetModule implements DatasetModule {
         .addAll(properties.getProperties())
         .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name())
         .build();
-
+      DatasetSpecification spec = tableDefinition.configure(instanceName, datasetProperties);
       return DatasetSpecification.builder(instanceName, getName())
-        .properties(datasetProperties.getProperties())
+        .properties(spec.getProperties())
+        .build();
+    }
+
+    @Override
+    public DatasetSpecification reconfigure(String instanceName, DatasetProperties properties,
+                                            DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      // Use ConflictDetection.NONE as we only need a flag whether a program uses a dataset/stream.
+      // Having conflict detection will lead to failures when programs start, and all try to register at the same time.
+      DatasetProperties datasetProperties = DatasetProperties.builder()
+        .addAll(properties.getProperties())
+        .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name())
+        .build();
+      DatasetSpecification spec = AbstractDatasetDefinition
+        .reconfigure(tableDefinition, instanceName, datasetProperties, currentSpec);
+      return DatasetSpecification.builder(instanceName, getName())
+        .properties(spec.getProperties())
         .build();
     }
 

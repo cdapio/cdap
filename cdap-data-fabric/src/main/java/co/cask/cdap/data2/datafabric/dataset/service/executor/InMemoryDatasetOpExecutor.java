@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,9 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Updatable;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
@@ -50,7 +53,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props, boolean existing)
+                                     DatasetProperties props)
     throws Exception {
 
     DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());
@@ -65,6 +68,31 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
     admin.create();
 
     return spec;
+  }
+
+  @Override
+  public DatasetSpecification update(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+                                     DatasetProperties props, DatasetSpecification existing) throws Exception {
+    // TODO: Note - for now, just sending the name. However, type likely needs to be namesapce-aware too.
+    DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());
+    if (type == null) {
+      throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+    }
+    try {
+      DatasetSpecification spec = type.reconfigure(datasetInstanceId.getId(), props, existing);
+      DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
+      if (admin instanceof Updatable) {
+        ((Updatable) admin).update(existing);
+      } else {
+        admin.create();
+      }
+      if (spec.getDescription() == null && existing.getDescription() != null) {
+        spec.setDescription(existing.getDescription());
+      }
+      return spec;
+    } catch (IncompatibleUpdateException e) {
+      throw new ConflictException(e.getMessage());
+    }
   }
 
   @Override

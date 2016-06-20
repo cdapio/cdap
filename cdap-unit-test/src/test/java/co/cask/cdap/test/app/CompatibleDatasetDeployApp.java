@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,24 +19,24 @@ package co.cask.cdap.test.app;
 import com.google.common.base.Objects;
 
 /**
- *
+ * App that creates the RecordDataset of {@link DatasetDeployApp} with a compatible record class.
  */
-public class CompatibleDatasetUncheckedUpgradeApp extends DatasetUncheckedUpgradeApp {
+public class CompatibleDatasetDeployApp extends DatasetDeployApp {
 
   @Override
   protected Class<?> getRecordClass() {
-    return Record.class;
+    return CompatibleRecord.class;
   }
 
-  public static final class Record {
+  public static final class CompatibleRecord {
     private final String id;
     private final String firstName;
-    private final boolean alive;
+    private final String lastName;
 
-    public Record(String id, String firstName, boolean alive) {
+    public CompatibleRecord(String id, String firstName, String lastName) {
       this.id = id;
       this.firstName = firstName;
-      this.alive = alive;
+      this.lastName = lastName;
     }
 
     @Override
@@ -48,16 +48,16 @@ public class CompatibleDatasetUncheckedUpgradeApp extends DatasetUncheckedUpgrad
         return false;
       }
 
-      Record that = (Record) o;
+      CompatibleRecord that = (CompatibleRecord) o;
 
       return Objects.equal(this.id, that.id) &&
         Objects.equal(this.firstName, that.firstName) &&
-        Objects.equal(this.alive, that.alive);
+        Objects.equal(this.lastName, that.lastName);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(id, firstName, alive);
+      return Objects.hashCode(id, firstName, lastName);
     }
   }
 }

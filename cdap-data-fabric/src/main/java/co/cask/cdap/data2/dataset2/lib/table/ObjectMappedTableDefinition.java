@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,8 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
@@ -39,55 +40,26 @@ import java.util.Map;
 /**
  * DatasetDefinition for {@link ObjectMappedTableDataset}.
  */
-public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<ObjectMappedTable, DatasetAdmin> {
+public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<ObjectMappedTable>  {
 
   private static final Gson GSON = new Gson();
   private static final String TABLE_NAME = "objects";
-  private final DatasetDefinition<? extends Table, ?> tableDef;
 
   public ObjectMappedTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name);
-    Preconditions.checkArgument(tableDef != null, "Table definition is required");
-    this.tableDef = tableDef;
+    super(name, TABLE_NAME, tableDef);
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    Map<String, String> props = properties.getProperties();
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.OBJECT_TYPE));
-    // schema can normally be derived from the type. However, we cannot use the Type in this method because
-    // this is called by the system, where the Type is often not available. for example, if somebody creates
-    // an ObjectMappedTable<Purchase> where Purchase is a class internal to their app.
-    // we require schema here because we want to validate it to make sure it is supported.
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA));
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_NAME));
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_TYPE));
-    try {
-      Schema objectSchema = ObjectMappedTableProperties.getObjectSchema(props);
-      validateSchema(objectSchema);
-      String keyName = ObjectMappedTableProperties.getRowKeyExploreName(props);
-      Schema.Type keyType = ObjectMappedTableProperties.getRowKeyExploreType(props);
-      Schema fullSchema = addKeyToSchema(objectSchema, keyName, keyType);
-      DatasetProperties fullProperties = DatasetProperties.builder()
-        .addAll(properties.getProperties())
-        .add(Table.PROPERTY_SCHEMA, fullSchema.toString())
-        .add(Table.PROPERTY_SCHEMA_ROW_FIELD, keyName)
-        .build();
-      return DatasetSpecification.builder(instanceName, getName())
-        .properties(fullProperties.getProperties())
-        .datasets(tableDef.configure(TABLE_NAME, fullProperties))
-        .build();
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Could not parse schema.", e);
-    } catch (UnsupportedTypeException e) {
-      throw new IllegalArgumentException("Schema is of an unsupported type.", e);
-    }
+    return super.configure(instanceName, configureSchema(properties));
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(datasetContext, spec.getSpecification(TABLE_NAME), classLoader);
+  public DatasetSpecification reconfigure(String instanceName,
+                                          DatasetProperties newProperties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    // TODO (CDAP-6268): validate schema compatibility
+    return super.reconfigure(instanceName, configureSchema(newProperties), currentSpec);
   }
 
   @Override
@@ -110,6 +82,7 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
     }
 
     // reconstruct the table schema here because of backwards compatibility
+    DatasetDefinition<Table, DatasetAdmin> tableDef = getDelegate(TABLE_NAME);
     Table table = tableDef.getDataset(datasetContext, tableSpec, arguments, classLoader);
     Map<String, String> properties = spec.getProperties();
 
@@ -117,6 +90,34 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
       ObjectMappedTableProperties.getObjectTypeRepresentation(properties), TypeRepresentation.class);
     Schema objSchema = ObjectMappedTableProperties.getObjectSchema(properties);
     return new ObjectMappedTableDataset(spec.getName(), table, typeRep, objSchema, classLoader);
+  }
+
+  private DatasetProperties configureSchema(DatasetProperties properties) {
+    Map<String, String> props = properties.getProperties();
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.OBJECT_TYPE));
+    // schema can normally be derived from the type. However, we cannot use the Type in this method because
+    // this is called by the system, where the Type is often not available. for example, if somebody creates
+    // an ObjectMappedTable<Purchase> where Purchase is a class internal to their app.
+    // we require schema here because we want to validate it to make sure it is supported.
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA));
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_NAME));
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_TYPE));
+    try {
+      Schema objectSchema = ObjectMappedTableProperties.getObjectSchema(props);
+      validateSchema(objectSchema);
+      String keyName = ObjectMappedTableProperties.getRowKeyExploreName(props);
+      Schema.Type keyType = ObjectMappedTableProperties.getRowKeyExploreType(props);
+      Schema fullSchema = addKeyToSchema(objectSchema, keyName, keyType);
+      return DatasetProperties.builder()
+        .addAll(properties.getProperties())
+        .add(Table.PROPERTY_SCHEMA, fullSchema.toString())
+        .add(Table.PROPERTY_SCHEMA_ROW_FIELD, keyName)
+        .build();
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Could not parse schema.", e);
+    } catch (UnsupportedTypeException e) {
+      throw new IllegalArgumentException("Schema is of an unsupported type.", e);
+    }
   }
 
   private void validateSchema(Schema schema) throws UnsupportedTypeException {

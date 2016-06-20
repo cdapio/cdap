@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,11 +44,22 @@ public interface DatasetOpExecutor extends Service {
    * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance.
    * @param typeMeta Data set type meta
    * @param props Data set instance properties
-   * @param existing true, if dataset already exists (in case of update)
    * @throws IOException
    */
-  DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetProperties props,
-                              boolean existing) throws Exception;
+  DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetProperties props)
+    throws Exception;
+
+  /**
+   * Creates a dataset.
+   *
+   * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance.
+   * @param typeMeta dataset type meta
+   * @param props dataset instance properties
+   * @param existing the existing dataset spec
+   * @throws IOException
+   */
+  DatasetSpecification update(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+                              DatasetProperties props, DatasetSpecification existing) throws Exception;
 
   /**
    * Drops dataset.

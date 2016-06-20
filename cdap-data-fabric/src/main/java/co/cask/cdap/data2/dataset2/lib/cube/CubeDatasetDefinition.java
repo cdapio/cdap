@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,14 +21,14 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -36,6 +36,7 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +75,10 @@ import java.util.Set;
  * respectively). The {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} measurement is aggregated within an aggregation
  * if it contains all required dimensions which non-null value.
  */
-public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset, DatasetAdmin> {
+public class CubeDatasetDefinition
+  extends AbstractDatasetDefinition<CubeDataset, DatasetAdmin>
+  implements Reconfigurable {
+
   public static final String PROPERTY_AGGREGATION_PREFIX = "dataset.cube.aggregation.";
   public static final String PROPERTY_DIMENSIONS = "dimensions";
   public static final String PROPERTY_REQUIRED_DIMENSIONS = "requiredDimensions";
@@ -105,23 +109,15 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    int[] resolutions = getResolutions(properties.getProperties());
 
+    DatasetProperties factTableProperties = computeFactTableProperties(properties);
     List<DatasetSpecification> datasetSpecs = Lists.newArrayList();
 
     // Configuring table that hold mappings of tag names and values and such
     datasetSpecs.add(metricsTableDef.configure("entity", properties));
 
-    // Configuring tables that hold data of specific resolution
-    Map<String, Aggregation> aggregations = getAggregations(properties.getProperties());
-
-    // Adding pre-splitting for fact tables
-    Map<String, String> preSplitProperties = configurePreSplits(aggregations);
-    DatasetProperties factTableProperties =
-      DatasetProperties.builder().addAll(properties.getProperties()).addAll(preSplitProperties).build();
-
     // NOTE: we create a table per resolution; we later will use that to e.g. configure ttl separately for each
-    for (int resolution : resolutions) {
+    for (int resolution : getResolutions(properties.getProperties())) {
       datasetSpecs.add(tableDef.configure(String.valueOf(resolution), factTableProperties));
     }
 
@@ -132,18 +128,45 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
   }
 
   @Override
+  public DatasetSpecification reconfigure(String instanceName,
+                                          DatasetProperties newProps,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+
+    DatasetProperties factTableProperties = computeFactTableProperties(newProps);
+    List<DatasetSpecification> datasetSpecs = Lists.newArrayList();
+
+    // Configuring table that hold mappings of tag names and values and such
+    datasetSpecs.add(reconfigure(metricsTableDef, "entity", newProps, currentSpec.getSpecification("entity")));
+
+    for (int resolution : getResolutions(newProps.getProperties())) {
+      String factTableName = String.valueOf(resolution);
+      DatasetSpecification existing = currentSpec.getSpecification(factTableName);
+      DatasetSpecification factTableSpec = existing == null
+        ? tableDef.configure(factTableName, factTableProperties)
+        : reconfigure(tableDef, factTableName, factTableProperties, existing);
+      datasetSpecs.add(factTableSpec);
+    }
+
+    return DatasetSpecification.builder(instanceName, getName())
+      .properties(newProps.getProperties())
+      .datasets(datasetSpecs)
+      .build();
+  }
+
+  @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    List<DatasetAdmin> admins = Lists.newArrayList();
+    Map<String, DatasetAdmin> admins = new HashMap<>();
 
-    admins.add(metricsTableDef.getAdmin(datasetContext, spec.getSpecification("entity"), classLoader));
+    admins.put("entity", metricsTableDef.getAdmin(datasetContext, spec.getSpecification("entity"), classLoader));
 
     int[] resolutions = getResolutions(spec.getProperties());
     for (int resolution : resolutions) {
-      admins.add(tableDef.getAdmin(datasetContext, spec.getSpecification(String.valueOf(resolution)), classLoader));
+      String resolutionTable = String.valueOf(resolution);
+      admins.put(resolutionTable,
+                 tableDef.getAdmin(datasetContext, spec.getSpecification(resolutionTable), classLoader));
     }
-
-    return new CompositeDatasetAdmin(admins);
+    return new CubeDatasetAdmin(spec, admins);
   }
 
   @Override
@@ -166,9 +189,16 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
     return new CubeDataset(spec.getName(), entityTable, resolutionTables, aggregations);
   }
 
-  private Map<String, String> configurePreSplits(Map<String, Aggregation> aggregations) {
+  private DatasetProperties computeFactTableProperties(DatasetProperties props) {
+    // Configuring tables that hold data of specific resolution
+    Map<String, Aggregation> aggregations = getAggregations(props.getProperties());
+    // Adding pre-splitting for fact tables
     byte[][] splits = FactTable.getSplits(aggregations.size());
-    return ImmutableMap.of(HBaseTableAdmin.PROPERTY_SPLITS, GSON.toJson(splits));
+    // and combine them
+    return DatasetProperties.builder()
+      .addAll(props.getProperties())
+      .add(HBaseTableAdmin.PROPERTY_SPLITS, GSON.toJson(splits))
+      .build();
   }
 
   private Map<String, Aggregation> getAggregations(Map<String, String> properties) {

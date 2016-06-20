@@ -197,7 +197,7 @@ public class DataSetServiceModules extends RuntimeModule {
         .build();
       // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
       //       as long as the data is durably persisted
-      return new StaticDatasetFramework(registryFactory, modulesMap, configuration);
+      return new StaticDatasetFramework(registryFactory, modulesMap);
     }
   }
 }

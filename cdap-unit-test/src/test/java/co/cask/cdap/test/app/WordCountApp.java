@@ -104,7 +104,7 @@ public class WordCountApp extends AbstractApplication {
 
     @Override
     public String toString() {
-      return "MyRecord{" +
+      return "CompatibleRecord{" +
         "title='" + title + '\'' +
         ", text='" + text + '\'' +
         ", expired=" + expired +

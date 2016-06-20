@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,27 +22,21 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 /**
  * Information for creating dataset instance.
  */
-final class InternalDatasetCreationParams {
+class InternalDatasetCreationParams {
 
   private final DatasetTypeMeta typeMeta;
   private final DatasetProperties instanceProps;
-  private final Boolean existing;
 
-  public InternalDatasetCreationParams(DatasetTypeMeta typeMeta, DatasetProperties instanceProps, boolean existing) {
+  InternalDatasetCreationParams(DatasetTypeMeta typeMeta, DatasetProperties instanceProps) {
     this.typeMeta = typeMeta;
     this.instanceProps = instanceProps;
-    this.existing = existing;
   }
 
-  public DatasetTypeMeta getTypeMeta() {
+  DatasetTypeMeta getTypeMeta() {
     return typeMeta;
   }
 
-  public DatasetProperties getProperties() {
+  DatasetProperties getProperties() {
     return instanceProps;
-  }
-
-  public Boolean isExisting() {
-    return existing;
   }
 }

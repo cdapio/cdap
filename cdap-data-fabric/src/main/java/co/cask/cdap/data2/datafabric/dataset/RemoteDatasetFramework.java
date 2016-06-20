@@ -177,6 +177,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public DatasetTypeMeta getTypeInfo(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getTypeName());
+  }
+
+  @Override
   public void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
     clientCache.getUnchecked(datasetInstanceId.getNamespace()).truncateInstance(datasetInstanceId.getId());
   }

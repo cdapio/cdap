@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -207,7 +207,7 @@ public class DataMigration {
     throws DatasetManagementException, IOException {
     DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
-      new InMemoryDatasetFramework(registryFactory, injector.getInstance(CConfiguration.class));
+      new InMemoryDatasetFramework(registryFactory);
     // TODO: this doesn't sound right. find out why its needed.
     datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "table"), new HBaseTableModule());
     datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "metricsTable"),

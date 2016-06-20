@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,14 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
@@ -37,16 +38,16 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
-public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
+public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updatable {
   public static final String PROPERTY_SPLITS = "hbase.splits";
 
   private static final Gson GSON = new Gson();
-  private static final byte[] DEFAULT_DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   private final DatasetSpecification spec;
   // todo: datasets should not depend on cdap configuration!
@@ -68,11 +69,11 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   public void create() throws IOException {
-    HColumnDescriptor columnDescriptor = new HColumnDescriptor(getColumnFamily(spec));
+    HColumnDescriptor columnDescriptor = new HColumnDescriptor(TableProperties.getColumnFamily(spec.getProperties()));
 
-    if (supportsReadlessIncrements(spec)) {
+    if (TableProperties.supportsReadlessIncrements(spec.getProperties())) {
       columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
-    } else if (isTransactional(spec)) {
+    } else if (TableProperties.isTransactional(spec.getProperties())) {
       // NOTE: we cannot limit number of versions as there's no hard limit on # of excluded from read txs
       columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     } else {
@@ -96,13 +97,13 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
     tableDescriptor.addFamily(columnDescriptor);
 
     // if the dataset is configured for readless increments, the set the table property to support upgrades
-    boolean supportsReadlessIncrements = supportsReadlessIncrements(spec);
+    boolean supportsReadlessIncrements = TableProperties.supportsReadlessIncrements(spec.getProperties());
     if (supportsReadlessIncrements) {
       tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT, "true");
     }
 
     // if the dataset is configured to be non-transactional, the set the table property to support upgrades
-    if (!isTransactional(spec)) {
+    if (!TableProperties.isTransactional(spec.getProperties())) {
       tableDescriptor.setValue(Constants.Dataset.TABLE_TX_DISABLED, "true");
       if (supportsReadlessIncrements) {
         // readless increments CPs by default assume that table is transactional
@@ -127,8 +128,14 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
   }
 
   @Override
-  protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
-    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(getColumnFamily(spec));
+  public void update(DatasetSpecification oldSpec) throws IOException {
+    updateTable(false);
+  }
+
+  @Override
+  protected boolean needsUpdate(HTableDescriptor tableDescriptor) {
+    HColumnDescriptor columnDescriptor =
+      tableDescriptor.getFamily(TableProperties.getColumnFamily(spec.getProperties()));
 
     boolean needUpgrade = false;
     if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
@@ -182,8 +189,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   protected CoprocessorJar createCoprocessorJar() throws IOException {
-    boolean supportsIncrement = supportsReadlessIncrements(spec);
-    boolean transactional = isTransactional(spec);
+    boolean supportsIncrement = TableProperties.supportsReadlessIncrements(spec.getProperties());
+    boolean transactional = TableProperties.isTransactional(spec.getProperties());
     return createCoprocessorJarInternal(conf, locationFactory, tableUtil, transactional, supportsIncrement);
   }
 
@@ -220,26 +227,37 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
   /**
    * Returns whether or not the dataset defined in the given specification should enable read-less increments.
    * Defaults to false.
+   *
+   * @deprecated use {@link TableProperties#supportsReadlessIncrements(Map)} instead
    */
-  public static boolean supportsReadlessIncrements(DatasetSpecification spec) {
-    return "true".equalsIgnoreCase(spec.getProperty(Table.PROPERTY_READLESS_INCREMENT));
+  @Deprecated
+  @SuppressWarnings("unused")
+  public static boolean supportsReadlessIncrements(Map<String, String> props) {
+    return TableProperties.supportsReadlessIncrements(props);
   }
 
   /**
    * Returns whether or not the dataset defined in the given specification is transactional.
    * Defaults to true.
+   *
+   * @deprecated use {@link TableProperties#isTransactional(Map)} instead
    */
-  public static boolean isTransactional(DatasetSpecification spec) {
-    return !"true".equalsIgnoreCase(spec.getProperty(Constants.Dataset.TABLE_TX_DISABLED));
+  @Deprecated
+  @SuppressWarnings("unused")
+  public static boolean isTransactional(Map<String, String> props) {
+    return TableProperties.isTransactional(props);
   }
 
   /**
    * Returns the column family as being set in the given specification.
-   * If it is not set, the {@link #DEFAULT_DATA_COLUMN_FAMILY} will be returned.
+   * If it is not set, the {@link TableProperties#DEFAULT_DATA_COLUMN_FAMILY} will be returned.
+   *
+   * @deprecated use {@link TableProperties#getColumnFamily(Map)} instead
    */
-  public static byte[] getColumnFamily(DatasetSpecification spec) {
-    String columnFamily = spec.getProperty(Table.PROPERTY_COLUMN_FAMILY);
-    return columnFamily == null ? DEFAULT_DATA_COLUMN_FAMILY : Bytes.toBytes(columnFamily);
+  @Deprecated
+  @SuppressWarnings("unused")
+  public static byte[] getColumnFamily(Map<String, String> props) {
+    return TableProperties.getColumnFamily(props);
   }
 
   /**

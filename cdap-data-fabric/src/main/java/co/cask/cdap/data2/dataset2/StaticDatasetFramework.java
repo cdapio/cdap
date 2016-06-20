@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Throwables;
@@ -46,9 +45,8 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
   private final Cache<String, Object> cache = CacheBuilder.newBuilder().build();
 
   public StaticDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                Map<String, DatasetModule> modules,
-                                CConfiguration configuration) {
-    super(registryFactory, modules, configuration);
+                                Map<String, DatasetModule> modules) {
+    super(registryFactory, modules);
   }
 
   @Override

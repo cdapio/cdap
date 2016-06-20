@@ -63,7 +63,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.discovery.Discoverable;
@@ -90,7 +89,6 @@ import javax.annotation.Nullable;
  */
 public class UnitTestManager implements TestManager {
 
-  private static final Gson GSON = new Gson();
   private static final ClassAcceptor CLASS_ACCEPTOR = new ClassAcceptor() {
     final Set<String> visibleResources = ProgramResources.getVisibleResources();
 

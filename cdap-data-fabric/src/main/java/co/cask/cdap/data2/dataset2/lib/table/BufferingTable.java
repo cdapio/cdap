@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
@@ -28,6 +27,7 @@ import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableSplit;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.Constants;
@@ -118,26 +118,25 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    * @param level the conflict detection level
    */
   public BufferingTable(String name, ConflictDetection level) {
-    this(name, level, false, null, null);
+    this(name, false, Collections.singletonMap(Table.PROPERTY_CONFLICT_LEVEL, level.name()));
   }
 
   /**
    * Creates an instance of {@link BufferingTable}.
    *
    * @param name the name of the table
-   * @param level the conflict detection level
    * @param enableReadlessIncrements whether or not readless increments are enabled
-   * @param schema the schema of the table, or null if there is no schema
-   * @param rowFieldName the name of the schema field that the row key maps to, or null if there is none
+   * @param properties dataset properties for the table
    */
-  public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements,
-                        @Nullable Schema schema, @Nullable String rowFieldName) {
-    super(schema, rowFieldName);
+  public BufferingTable(String name, boolean enableReadlessIncrements,
+                        Map<String, String> properties) {
+    super(properties);
+
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
                                 "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
     this.name = name;
-    this.conflictLevel = level;
+    this.conflictLevel = TableProperties.getConflictDetectionLevel(properties, ConflictDetection.ROW);
     this.enableReadlessIncrements = enableReadlessIncrements;
     // TODO: having central dataset management service will allow us to use table ids instead of names, which will
     //       reduce changeset size transferred to/from server

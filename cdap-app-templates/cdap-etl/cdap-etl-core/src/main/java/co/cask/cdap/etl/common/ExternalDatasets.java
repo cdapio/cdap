@@ -71,7 +71,7 @@ public final class ExternalDatasets {
         // Note: the dataset properties are the same as the arguments since we cannot identify them separately
         // since they are mixed up in a single configuration object (CDAP-5674)
         // Also, the properties of the external dataset created will contain runtime arguments for the same reason.
-        admin.createDataset(inputName, EXTERNAL_DATASET_TYPE, DatasetProperties.builder().addAll(arguments).build());
+        admin.createDataset(inputName, EXTERNAL_DATASET_TYPE, DatasetProperties.of(arguments));
       } else {
         // Check if the external dataset name clashes with an existing CDAP Dataset
         String datasetType = admin.getDatasetType(inputName);
@@ -121,7 +121,7 @@ public final class ExternalDatasets {
         // Note: the dataset properties are the same as the arguments since we cannot identify them separately
         // since they are mixed up in a single configuration object (CDAP-5674)
         // Also, the properties of the external dataset created will contain runtime arguments for the same reason.
-        admin.createDataset(outputName, EXTERNAL_DATASET_TYPE, DatasetProperties.builder().addAll(arguments).build());
+        admin.createDataset(outputName, EXTERNAL_DATASET_TYPE, DatasetProperties.of(arguments));
       } else {
         // Check if the external dataset name clashes with an existing CDAP Dataset
         String datasetType = admin.getDatasetType(outputName);

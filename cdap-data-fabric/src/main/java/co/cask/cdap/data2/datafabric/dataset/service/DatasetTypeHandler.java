@@ -53,6 +53,7 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handles dataset type management calls.
@@ -130,6 +131,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules/{name}")
   public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
+                                @QueryParam("force") final boolean forceUpdate,
                                 @HeaderParam(HEADER_CLASS_NAME) final String className) throws Exception {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     if (Id.Namespace.SYSTEM.equals(namespace)) {
@@ -185,15 +187,10 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
         // Copy uploaded content to a temporary location
         Location tmpLocation = archive.getTempFile(".tmp");
         try {
-          conflictIfModuleExists(datasetModuleId);
-
           Locations.mkdirsIfNotExists(archiveDir);
 
           LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation);
           Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
-
-          // Check if the module exists one more time to minimize the window of possible conflict
-          conflictIfModuleExists(datasetModuleId);
 
           // Finally, move archive to final location
           LOG.debug("Storing module {} jar at {}", datasetModuleId, archive);
@@ -202,7 +199,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
                                                 tmpLocation, archive));
           }
 
-          typeManager.addModule(datasetModuleId, className, archive);
+          typeManager.addModule(datasetModuleId, className, archive, forceUpdate);
           // todo: response with DatasetModuleMeta of just added module (and log this info)
           LOG.info("Added module {}", datasetModuleId);
           responder.sendStatus(HttpResponseStatus.OK);
@@ -300,24 +297,6 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       responder.sendJson(HttpResponseStatus.OK, typeMeta);
-    }
-  }
-
-  /**
-   * Checks if the given module name already exists.
-   *
-   * @param datasetModuleId {@link Id.DatasetModule} of the module to check
-   * @throws DatasetModuleConflictException if the module exists
-   */
-  private void conflictIfModuleExists(Id.DatasetModule datasetModuleId) throws DatasetModuleConflictException {
-    if (cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE)) {
-      return;
-    }
-    DatasetModuleMeta existing = typeManager.getModule(datasetModuleId);
-    if (existing != null) {
-      String message = String.format("Cannot add module %s: module with same name already exists: %s",
-                                     datasetModuleId, existing);
-      throw new DatasetModuleConflictException(message);
     }
   }
 

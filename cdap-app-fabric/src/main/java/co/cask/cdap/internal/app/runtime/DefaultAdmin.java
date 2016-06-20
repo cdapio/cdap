@@ -64,7 +64,7 @@ public class DefaultAdmin implements Admin {
     if (spec == null) {
       throw new InstanceNotFoundException(name);
     }
-    return DatasetProperties.builder().addAll(spec.getOriginalProperties()).build();
+    return DatasetProperties.of(spec.getOriginalProperties());
   }
 
   @Override

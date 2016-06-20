@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.app.guice;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.store.ServiceStore;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -91,14 +90,12 @@ public class ServiceStoreModules extends RuntimeModule {
   private static final class DatasetFrameworkProvider implements Provider<DatasetFramework> {
 
     private final Injector injector;
-    private final CConfiguration cConf;
     private final Map<String, DatasetModule> datasetModules;
 
     @Inject
-    private DatasetFrameworkProvider(Injector injector, CConfiguration cConf,
+    private DatasetFrameworkProvider(Injector injector,
                                      @Named("service.store.ds.modules") Map<String, DatasetModule> datasetModules) {
       this.injector = injector;
-      this.cConf = cConf;
       this.datasetModules = datasetModules;
     }
 
@@ -113,7 +110,7 @@ public class ServiceStoreModules extends RuntimeModule {
         }
       };
 
-      return new InMemoryDatasetFramework(registryFactory, datasetModules, cConf);
+      return new InMemoryDatasetFramework(registryFactory, datasetModules);
     }
   }
 }

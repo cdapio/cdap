@@ -18,16 +18,21 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
+import co.cask.cdap.api.dataset.Reconfigurable;
+import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.annotations.VisibleForTesting;
@@ -113,8 +118,8 @@ public interface DatasetFramework {
    * Adds information about dataset instance to the system.
    *
    * This uses
-   * {@link co.cask.cdap.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
-   * method to build {@link co.cask.cdap.api.dataset.DatasetSpecification} which describes dataset instance
+   * {@link DatasetDefinition#configure(String, DatasetProperties)}
+   * method to build {@link DatasetSpecification} which describes dataset instance
    * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
    *
    * @param datasetTypeName dataset instance type name
@@ -131,14 +136,15 @@ public interface DatasetFramework {
   /**
    * Updates the existing dataset instance in the system.
    *
-   * This uses
-   * {@link co.cask.cdap.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
-   * method to build {@link co.cask.cdap.api.dataset.DatasetSpecification} with new properties,
-   * which describes dataset instance and {@link DatasetAdmin} is used to upgrade
-   * {@link Dataset} for the dataset instance.
+   * This uses {@link Reconfigurable#reconfigure}, or if that method is not
+   * implemented by the dataset type, {@link DatasetDefinition#configure},
+   * to build a new {@link DatasetSpecification}. If the {@link DatasetAdmin}
+   * implements {@link Updatable}, it is called to update the dataset instance.
    * @param datasetInstanceId dataset instance name
    * @param props dataset instance properties
    * @throws IOException when creation of dataset instance using its admin fails
+   * @throws IncompatibleUpdateException if the new properties are incompatible with existing
+   *         properties, as determined by {@link Reconfigurable#reconfigure}
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
@@ -188,6 +194,14 @@ public interface DatasetFramework {
    */
   @VisibleForTesting
   boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException;
+
+  /**
+   * @return the meta data for a dataset type or null if it does not exist.
+   * @throws DatasetManagementException
+   * @throws ServiceUnavailableException when the dataset service is not running
+   */
+  @Nullable
+  DatasetTypeMeta getTypeInfo(Id.DatasetType datasetTypeId) throws DatasetManagementException;
 
   /**
    * Truncates a dataset instance.

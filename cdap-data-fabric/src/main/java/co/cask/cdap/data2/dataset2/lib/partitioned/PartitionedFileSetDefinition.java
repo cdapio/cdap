@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,11 +22,12 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
@@ -34,6 +35,8 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -49,7 +52,9 @@ import java.util.Map;
  * partitioned dataset, so all admin is simply on the partition table.
  * TODO rethink this
  */
-public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<PartitionedFileSet, DatasetAdmin> {
+public class PartitionedFileSetDefinition
+  extends AbstractDatasetDefinition<PartitionedFileSet, DatasetAdmin>
+  implements Reconfigurable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDefinition.class);
 
@@ -77,10 +82,12 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    Partitioning partitioning = PartitionedFileSetProperties.getPartitioning(properties.getProperties());
+    Preconditions.checkNotNull(partitioning, "Properties do not contain partitioning");
     // define the columns for indexing on the partitionsTable
     DatasetProperties indexedTableProperties = DatasetProperties.builder()
       .addAll(properties.getProperties())
-      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
+      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
       .build();
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
@@ -90,12 +97,45 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
   }
 
   @Override
+  public DatasetSpecification reconfigure(String instanceName,
+                                          DatasetProperties properties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+
+    // validate that the partitioning is not changing
+    Partitioning oldPartitioning = PartitionedFileSetProperties.getPartitioning(currentSpec.getProperties());
+    Partitioning newPartitioning = PartitionedFileSetProperties.getPartitioning(properties.getProperties());
+    Preconditions.checkNotNull(oldPartitioning, "Existing dataset has no partitioning");
+    Preconditions.checkNotNull(newPartitioning, "New properties do not contain partitioning");
+    if (!Iterators.elementsEqual(oldPartitioning.getFields().entrySet().iterator(),
+                                 newPartitioning.getFields().entrySet().iterator())) {
+      throw new IncompatibleUpdateException(String.format(
+        "Partitioning cannot be changed. Existing: %s, new: %s", oldPartitioning, newPartitioning));
+    }
+
+    // define the columns for indexing on the partitionsTable
+    DatasetProperties indexedTableProperties = DatasetProperties.builder()
+      .addAll(properties.getProperties())
+      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
+      .build();
+    return DatasetSpecification.builder(instanceName, getName())
+      .properties(properties.getProperties())
+      .datasets(AbstractDatasetDefinition.reconfigure(filesetDef, FILESET_NAME, properties,
+                                                      currentSpec.getSpecification(FILESET_NAME)),
+                AbstractDatasetDefinition.reconfigure(indexedTableDef, PARTITION_TABLE_NAME, indexedTableProperties,
+                                                      currentSpec.getSpecification(PARTITION_TABLE_NAME)))
+      .build();
+  }
+
+  @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
     return new PartitionedFileSetAdmin(
-        datasetContext, spec, getExploreProvider(),
+      datasetContext, spec, getExploreProvider(),
+      ImmutableMap.<String, DatasetAdmin>of(
+        FILESET_NAME,
         filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
-        indexedTableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
+        PARTITION_TABLE_NAME,
+        indexedTableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader)));
   }
 
   @Override

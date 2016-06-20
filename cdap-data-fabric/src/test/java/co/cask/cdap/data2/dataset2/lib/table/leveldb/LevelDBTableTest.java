@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -69,7 +70,11 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
   @Override
   protected LevelDBTable getTable(DatasetContext datasetContext, String name,
                                   ConflictDetection level) throws IOException {
-    return new LevelDBTable(datasetContext, name, ConflictDetection.valueOf(level.name()), service, cConf, null, null);
+    DatasetSpecification spec = DatasetSpecification
+      .builder(name, "table")
+      .property(Table.PROPERTY_CONFLICT_LEVEL, level.name())
+      .build();
+    return new LevelDBTable(datasetContext, name, service, cConf, spec);
   }
 
   @Override

@@ -23,12 +23,13 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
+import co.cask.cdap.api.dataset.Updatable;
+import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -36,7 +37,9 @@ import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.audit.AuditPayload;
@@ -63,6 +66,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -89,12 +93,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   // and delete all instances in a namespace, so we keep it as a separate key
   private final Table<Id.Namespace, Id.DatasetInstance, DatasetSpecification> instances;
   private final Table<Id.Namespace, Id.DatasetModule, String> moduleClasses;
+  private final Map<Id.DatasetType, DatasetTypeMeta> types;
 
   private final Lock readLock;
   private final Lock writeLock;
-
-  private final boolean allowDatasetUncheckedUpgrade;
-
+  
   // NOTE: used only for "internal" operations, that doesn't return to client object of custom type
   // NOTE: for getting dataset/admin objects we construct fresh new one using all modules (no dependency management in
   //       this in-mem implementation for now) and passed client (program) class loader
@@ -103,20 +106,18 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   private AuditPublisher auditPublisher;
 
-  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration) {
-    this(registryFactory, new HashMap<String, DatasetModule>(), configuration);
+  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory) {
+    this(registryFactory, new HashMap<String, DatasetModule>());
   }
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                  @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
-                                  CConfiguration configuration) {
+                                  @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
     this.registryFactory = registryFactory;
-    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
-
     this.namespaces = Sets.newHashSet();
     this.nonDefaultTypes = HashMultimap.create();
     this.instances = HashBasedTable.create();
+    this.types = Maps.newHashMap();
     this.registries = Maps.newHashMap();
     // the order in which module classes are inserted is important,
     // so we use a table where Map<Id.DatasetModule, String> is a LinkedHashMap
@@ -157,12 +158,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws ModuleConflictException {
+    // TODO (CDAP-6297): check if existing modules overlap, or if this removes a type other modules depend on
     writeLock.lock();
     try {
-      if (moduleClasses.contains(moduleId.getNamespace(), moduleId)) {
-        throw new ModuleConflictException(String.format("Cannot add module '%s', it already exists.", moduleId));
-      }
-
       DatasetDefinitionRegistry registry = registries.get(moduleId.getNamespace());
       if (registry == null) {
         registry = registryFactory.create();
@@ -172,7 +170,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       module.register(trackingRegistry);
       String moduleClassName = DatasetModules.getDatasetModuleClass(module).getName();
       moduleClasses.put(moduleId.getNamespace(), moduleId, moduleClassName);
-      nonDefaultTypes.putAll(moduleId.getNamespace(), trackingRegistry.getTypes());
+      List<String> types = trackingRegistry.getTypes();
+      nonDefaultTypes.putAll(moduleId.getNamespace(), types);
+      for (String type : types) {
+        this.types.put(Id.DatasetType.from(moduleId.getNamespace(), type),
+                       new DatasetTypeMeta(type, Collections.singletonList(
+                         new DatasetModuleMeta(moduleId.getId(), moduleClassName, null,
+                                               types, Collections.<String>emptyList()))));
+      }
     } finally {
       writeLock.unlock();
     }
@@ -187,7 +192,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteModule(Id.DatasetModule moduleId) {
-    // todo: check if existing datasets or modules use this module
+    // TODO (CDAP-6297): check if existing datasets or modules use this module
     writeLock.lock();
     try {
       moduleClasses.remove(moduleId.getNamespace(), moduleId);
@@ -226,7 +231,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                           DatasetProperties props) throws DatasetManagementException, IOException {
     writeLock.lock();
     try {
-      if (!allowDatasetUncheckedUpgrade && instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId)) {
+      if (instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId)) {
         throw new InstanceConflictException(String.format("Dataset instance '%s' already exists.", datasetInstanceId));
       }
 
@@ -265,14 +270,22 @@ public class InMemoryDatasetFramework implements DatasetFramework {
           String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
                         oldSpec.getType(), datasetInstanceId.getNamespaceId()));
       }
-      DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
-      spec = spec.setOriginalProperties(props);
+      DatasetSpecification spec =
+        AbstractDatasetDefinition.reconfigure(def, datasetInstanceId.getId(), props, oldSpec)
+          .setOriginalProperties(props);
       if (props.getDescription() != null) {
         spec = spec.setDescription(props.getDescription());
       }
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
-      def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).upgrade();
+      DatasetAdmin admin = def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null);
+      if (admin instanceof Updatable) {
+        ((Updatable) admin).update(oldSpec);
+      } else {
+        admin.upgrade();
+      }
       publishAudit(datasetInstanceId, AuditType.UPDATE);
+    } catch (IncompatibleUpdateException e) {
+      throw new InstanceConflictException("Update failed for dataset instance " + datasetInstanceId, e);
     } finally {
       writeLock.unlock();
     }
@@ -327,6 +340,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public boolean hasType(Id.DatasetType datasetTypeId) {
     return registries.containsKey(datasetTypeId.getNamespace()) &&
       registries.get(datasetTypeId.getNamespace()).hasType(datasetTypeId.getTypeName());
+  }
+
+  @Nullable
+  @Override
+  public DatasetTypeMeta getTypeInfo(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return types.get(datasetTypeId);
   }
 
   @Override

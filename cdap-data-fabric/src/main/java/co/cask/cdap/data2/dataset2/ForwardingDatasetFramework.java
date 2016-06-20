@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.apache.twill.filesystem.Location;
@@ -104,6 +105,12 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   @Override
   public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
     return delegate.hasType(datasetTypeId);
+  }
+
+  @Nullable
+  @Override
+  public DatasetTypeMeta getTypeInfo(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return delegate.getTypeInfo(datasetTypeId);
   }
 
   @Override
