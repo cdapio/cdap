@@ -4,9 +4,9 @@
 
 .. _cask-hydrator-plugins-batch-transformations:
 
-======================
-Batch Transformations 
-======================
+=============================
+Batch Transformation Plugins 
+=============================
 
 Hydrator Version |cdap-hydrator-version|
 

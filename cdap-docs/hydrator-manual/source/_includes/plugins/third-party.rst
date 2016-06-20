@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-third-party-jars:
+.. _cask-hydrator-third-party-plugins:
 
-======================
-Using Third-Party JARs 
-======================
+==========================
+Adding Third-Party Plugins
+==========================
 
 .. highlight:: json  
 

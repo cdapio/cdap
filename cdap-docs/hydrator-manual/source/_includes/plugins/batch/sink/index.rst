@@ -4,9 +4,9 @@
 
 .. _cask-hydrator-plugins-batch-sinks:
 
-===========
-Batch Sinks
-===========
+==================
+Batch Sink Plugins
+==================
 
 Hydrator Version |cdap-hydrator-version|
 

@@ -4,9 +4,9 @@
 
 .. _cask-hydrator-plugins-batch-sources:
 
-=============
-Batch Sources
-=============
+====================
+Batch Source Plugins
+====================
 
 Hydrator Version |cdap-hydrator-version|
 
