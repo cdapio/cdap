@@ -20,6 +20,12 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.id.ParentedId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
@@ -64,9 +70,8 @@ public class PreviewHttpHandler extends AbstractHttpHandler {
   @Path("/preview")
   public void startPreview(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws IOException, BadRequestException {
-
     String previewId = RunIds.generate().getId();
-    responder.sendString(HttpResponseStatus.OK, previewId);
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(new PreviewId(namespaceId, previewId)));
   }
 
   /**
@@ -116,6 +121,41 @@ public class PreviewHttpHandler extends AbstractHttpHandler {
 
   /**
    *
+   */
+  public class PreviewId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+
+    private final String namespace;
+    private final String preview;
+
+    public PreviewId(String namespace, String preview) {
+      super(EntityType.APPLICATION);
+      this.namespace = namespace;
+      this.preview = preview;
+    }
+
+    @Override
+    protected Iterable<String> toIdParts() {
+      return null;
+    }
+
+    @Override
+    public Id toId() {
+      return null;
+    }
+
+    @Override
+    public String getNamespace() {
+      return namespace;
+    }
+
+    @Override
+    public NamespaceId getParent() {
+      return new NamespaceId(namespace);
+    }
+  }
+
+  /**
+   *
    * @param request
    * @param responder
    * @param namespaceId
@@ -126,12 +166,10 @@ public class PreviewHttpHandler extends AbstractHttpHandler {
   public void getPreviewStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("preview-id") String previewId) {
-    PreviewStatus status = new PreviewStatus(PreviewStatus.Status.RUN_FAILED, "No FileSystem for scheme: maprfs");
+    PreviewStatus status = new PreviewStatus(PreviewStatus.Status.RUN_FAILED,
+                                             "Preview Failed. Reason: No FileSystem for scheme: maprfs.");
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(status));
   }
-
-
-
 
   /**
    *
