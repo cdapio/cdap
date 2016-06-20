@@ -1,0 +1,16 @@
+
+
+<div class="modal-body">
+  <div>
+    <span>Are you sure you want to delete</span>
+    <span class="fa fa-times pull-right" ng-click="$close()"></span>
+  </div>
+  <div>
+    "<strong>{{::templateName}}</strong>" plugin template?
+  </div>
+</div>
+<div class="modal-footer">
+  <span class="text-danger">{{error}}</span>
+  <button type="button" class="btn btn-grey-cancel" ng-disabled="disableButtons" ng-click="$close()">No</button>
+  <button type="button" class="btn btn-blue" ng-disabled="disableButtons" ng-click="ok()">Yes</button>
+</div>
