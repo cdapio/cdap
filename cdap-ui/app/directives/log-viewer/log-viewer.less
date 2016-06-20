@@ -16,15 +16,14 @@
 
 @border-color: #cccccc;
 @headerbar-background-color: #525252;
-@headerbar-text-color: #D6D6D6;
+@headerbar-text-color: #d6d6d6;
 @table-background-color: white;
 @stack-trace-background-color: lighten(black, 35%);
 @stack-trace-font-color: #cccccc;
 @message-expanded-color: #dedede;
 @searchbar-placeholder-color: #787878;
 @searchbar-input-color: blue;
-@timeline-buffer-color: #A6A6A6;
-
+@timeline-buffer-color: #a6a6a6;
 
 my-log-viewer {
   .log-viewer-container {
@@ -35,11 +34,9 @@ my-log-viewer {
       width: 100%;
       min-width: 940px;
 
-
       div {
         display: inline-block;
       }
-
       .log-stats-container {
         width: 35%;
         min-width: 150px;
@@ -57,7 +54,7 @@ my-log-viewer {
           vertical-align: middle;
           text-align: center;
           font-weight: bold;
-          top:-5px;
+          top: -5px;
 
           .stats-wrapper {
             position: relative;
@@ -87,15 +84,15 @@ my-log-viewer {
           border-radius: 8px;
           color: black;
           display: inline-block;
-          position:relative;
-          top:2px;
+          position: relative;
+          top: 2px;
         }
         .stat-count-number {
           position: relative;
-          top:-2px;
+          top: -2px;
         }
         .total-num {
-          background-color: #DFDFDF;
+          background-color: #dfdfdf;
         }
         .errors-num {
           background-color: red;
@@ -104,7 +101,6 @@ my-log-viewer {
           background-color: orange;
         }
       }
-
 
       .log-actions {
         width: 27%;
@@ -128,7 +124,7 @@ my-log-viewer {
           background-color: @headerbar-background-color;
           border-radius: 4px;
           margin-right: 3px;
-          outline:grey;
+          outline: grey;
         }
         .search {
           position: relative;
@@ -138,14 +134,14 @@ my-log-viewer {
           top: 7px;
           right: 8px;
         }
-        .log-searchbar{
+        .log-searchbar {
           height: 25px;
           width: 140px;
-          padding-right:20px;
+          padding-right: 20px;
           border-radius: 5px;
           outline: none;
           color: @searchbar-input-color !important;
-          font-weight:bold;
+          font-weight: bold;
           text-indent: 5px;
         }
         .log-searchbar:focus {
@@ -164,9 +160,9 @@ my-log-viewer {
           color: @searchbar-placeholder-color !important;
         }
         .fa-expand {
-          color:white;
+          color: white;
           padding-left: 10px;
-          cursor:pointer;
+          cursor: pointer;
         }
       }
     }

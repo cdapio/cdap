@@ -24,8 +24,14 @@ function LogViewerController () {
   this.isMessageDisplayed = true;
 
   this.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
-  this.logIncludes = [];
-  var toIncludeArray = this.logIncludes;
+
+  var included = {
+    'ERROR' : 0,
+    'WARN' : 0,
+    'INFO' : 0,
+    'DEBUG' : 0,
+    'TRACE' : 0
+  };
 
   this.data = [
     {
@@ -128,6 +134,7 @@ function LogViewerController () {
   this.totalCount = this.data.length;
   var errorCount = 0;
   var warningCount = 0;
+  var numEvents = 0;
 
   //Compute Total
   for(var k = 0; k < this.data.length; k++){
@@ -142,22 +149,22 @@ function LogViewerController () {
   this.errorCount = errorCount;
   this.warningCount = warningCount;
 
+  //New 'includeEvent' function
   this.includeEvent = function(eventType){
-    var i = toIncludeArray.indexOf(eventType);
-    if(i > -1){
-      toIncludeArray.splice(i, 1);
-    } else {
-      toIncludeArray.push(eventType);
+    if(included[eventType] > 0){
+      included[eventType] = 0;
+      numEvents--;
+    } else{
+      included[eventType] = 1;
+      numEvents++;
     }
   };
 
   this.eventFilter = function(log){
-    if(toIncludeArray.length > 0){
-      if(toIncludeArray.indexOf(log.level) < 0){
-        return;
-      }
+    if(numEvents === 0 || included[log.level] === 1){
+      return log;
     }
-    return log;
+    return;
   };
 
 }
