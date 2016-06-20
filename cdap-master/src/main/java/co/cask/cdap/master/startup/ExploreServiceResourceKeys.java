@@ -16,21 +16,26 @@
 
 package co.cask.cdap.master.startup;
 
-import co.cask.cdap.common.MasterUtils;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.startup.Check;
-
-import java.util.Set;
 
 /**
- * Base for master startup checks.
+ * Extends the ServiceResourceKeys class to override the number of instances for the explore service.
  */
-public abstract class AbstractMasterCheck extends Check {
-  protected final CConfiguration cConf;
-  protected final Set<ServiceResourceKeys> systemServicesResourceKeys;
+public class ExploreServiceResourceKeys extends ServiceResourceKeys {
 
-  protected AbstractMasterCheck(CConfiguration cConf) {
-    this.cConf = cConf;
-    this.systemServicesResourceKeys = MasterUtils.createSystemServicesResourceKeysSet(cConf);
+  public ExploreServiceResourceKeys(CConfiguration cConf, String serviceName, String memoryKey, String vcoresKey,
+                             String instancesKey, String maxInstancesKey) {
+    super(cConf, serviceName, memoryKey, vcoresKey, instancesKey, maxInstancesKey);
   }
+
+  @Override
+  public int getInstances() {
+    return 1;
+  }
+
+  @Override
+  public int getMaxInstances() {
+    return 1;
+  }
+
 }

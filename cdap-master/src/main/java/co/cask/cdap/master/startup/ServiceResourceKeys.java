@@ -16,18 +16,22 @@
 
 package co.cask.cdap.master.startup;
 
+import co.cask.cdap.common.conf.CConfiguration;
+
 /**
  * Convenience class to group config keys for memory, cores, and instances for each system service.
  */
-class ServiceResourceKeys {
+public class ServiceResourceKeys {
   private final String serviceName;
   private final String memoryKey;
   private final String vcoresKey;
   private final String instancesKey;
   private final String maxInstancesKey;
+  protected final CConfiguration cConf;
 
-  ServiceResourceKeys(String serviceName, String memoryKey, String vcoresKey,
+  public ServiceResourceKeys(CConfiguration cConf, String serviceName, String memoryKey, String vcoresKey,
                              String instancesKey, String maxInstancesKey) {
+    this.cConf = cConf;
     this.serviceName = serviceName;
     this.memoryKey = memoryKey;
     this.vcoresKey = vcoresKey;
@@ -43,15 +47,31 @@ class ServiceResourceKeys {
     return memoryKey;
   }
 
+  public int getMemory() {
+    return cConf.getInt(memoryKey);
+  }
+
   public String getVcoresKey() {
     return vcoresKey;
+  }
+
+  public int getVcores() {
+    return cConf.getInt(vcoresKey);
   }
 
   public String getInstancesKey() {
     return instancesKey;
   }
 
+  public int getInstances() {
+    return cConf.getInt(instancesKey);
+  }
+
   public String getMaxInstancesKey() {
     return maxInstancesKey;
+  }
+
+  public int getMaxInstances() {
+    return cConf.getInt(maxInstancesKey);
   }
 }
