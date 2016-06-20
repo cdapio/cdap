@@ -73,7 +73,7 @@ ark 'sdk' do
   version ver
   owner node['cdap']['sdk']['user']
   group node['cdap']['sdk']['user']
-  notifies :restart, 'service[cdap-sdk]', :delayed if node['cdap']['sdk']['init_actions'].include(:start)
+  notifies :restart, 'service[cdap-sdk]', :delayed if node['cdap']['sdk']['init_actions'].include?(:start)
 end
 
 service 'cdap-sdk' do
