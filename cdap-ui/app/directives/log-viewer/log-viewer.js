@@ -62,7 +62,10 @@ angular.module(PKG.name + '.commons')
 
         var params = {};
         var pollPromise = null;
-
+        var infiniteScrollDOMElement,
+            offsetDOMElement,
+            container,
+            logItem;
 
         function pollForLogs(params) {
           var path = '/namespaces/' + params.namespace +
@@ -164,14 +167,17 @@ angular.module(PKG.name + '.commons')
               }
 
               loadTimeout = $timeout(function() {
-                var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
-                var logItem = angular.element(document.getElementById(params.fromOffset))[0];
+                infiniteScrollDOMElement =  document.querySelector('[infinite-scroll]');
+                offsetDOMElement = document.getElementById(params.fromOffset);
+                container = angular.element(infiniteScrollDOMElement)[0];
+                logItem = angular.element(offsetDOMElement)[0];
                 container.scrollTop = logItem.offsetTop;
               });
             });
         };
 
         $scope.$on('$destroy', function () {
+          infiniteScrollDOMElement = offsetDOMElement = container = logItem = null;
           if (loadTimeout) {
             $timeout.cancel(loadTimeout);
           }
@@ -209,6 +215,7 @@ angular.module(PKG.name + '.commons')
         scope.setFilter($state.params[QPARAM]);
 
         scope.$on('$destroy', function () {
+          termEl = null;
           if (filterTimeout) {
             $timeout.cancel(filterTimeout);
           }
@@ -216,4 +223,3 @@ angular.module(PKG.name + '.commons')
       }
     };
   });
-

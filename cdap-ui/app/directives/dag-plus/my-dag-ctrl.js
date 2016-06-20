@@ -167,6 +167,7 @@ angular.module(PKG.name + '.commons')
             };
 
             $scope.$on('$destroy', function () {
+              elem = null;
               scope.$destroy();
             });
 
@@ -411,6 +412,7 @@ angular.module(PKG.name + '.commons')
       });
 
       $scope.$on('$destroy', function () {
+        label = null;
         scope.$destroy();
       });
 
@@ -737,6 +739,7 @@ angular.module(PKG.name + '.commons')
 
     $scope.$on('$destroy', function () {
       closeAllPopovers();
+      labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();
 
