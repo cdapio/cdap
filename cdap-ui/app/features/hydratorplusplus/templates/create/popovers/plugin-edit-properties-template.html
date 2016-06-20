@@ -26,10 +26,10 @@
         <input ng-disabled="isDisabled" type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label"/>
       </div>
 
-      <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
+      <div ng-repeat="group in ::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
         <div class="widget-group-container">
           <h4>{{::group.display}}</h4>
-          <div ng-repeat="field in group.fields">
+          <div ng-repeat="field in ::group.fields">
             <div ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty">
 
               <div class="form-group">
@@ -59,9 +59,9 @@
                          class="my-widget-container"
                          ng-class="{'select-wrapper': field.widget === 'select'}"
                          data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
-                         data-myconfig="field"
+                         data-myconfig="::field"
                          data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-                         widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
+                         widget-disabled="::(HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name])"
                          widget-container>
                     </div>
                   </fieldset>
@@ -76,10 +76,10 @@
                          class="my-widget-container"
                          ng-class="{'select-wrapper': field.widget === 'select'}"
                          data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
-                         data-myconfig="field"
-                         disabled="isDisabled"
+                         data-myconfig="::field"
+                         disabled="::isDisabled"
                          data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-                         widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
+                         widget-disabled="::(HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name])"
                          widget-container>
                     </div>
                   </div>

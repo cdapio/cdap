@@ -43,6 +43,10 @@ angular.module(PKG.name + '.commons')
 
         angularElement = angular.element(widget.element);
         angular.forEach(widget.attributes, function(value, key) {
+          if (key.includes('data-')) {
+            angularElement.attr(key, '::'+value);
+            return;
+          }
           angularElement.attr(key, value);
         });
 
