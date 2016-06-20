@@ -27,6 +27,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
@@ -56,6 +57,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -447,7 +449,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
             }
           });
 
-          bind(Store.class).to(DefaultStore.class);
+          bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
           bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
 
           // For binding StreamWriter

@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -88,7 +89,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
-  private final Store store;
+  private final RuntimeStore runtimeStore;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final UsageRegistry usageRegistry;
@@ -100,7 +101,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, Store store,
+                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore,
                                 UsageRegistry usageRegistry) {
     super(cConf);
     this.injector = injector;
@@ -112,7 +113,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.store = store;
+    this.runtimeStore = runtimeStore;
     this.usageRegistry = usageRegistry;
   }
 
@@ -228,8 +229,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(),
-                       arguments.asMap());
+        runtimeStore.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(),
+                              arguments.asMap());
       }
 
       @Override
@@ -241,15 +242,16 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           runStatus = ProgramController.State.KILLED.getRunStatus();
         }
 
-        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      runStatus);
+        runtimeStore.setStop(program.getId(), runId.getId(),
+                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), runStatus);
       }
 
       @Override
       public void failed(Service.State from, @Nullable Throwable failure) {
         closeAllQuietly(closeables);
-        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+        runtimeStore.setStop(program.getId(), runId.getId(),
+                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
       }
     };
   }

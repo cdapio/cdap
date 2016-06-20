@@ -28,7 +28,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
-import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -92,12 +92,13 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
-  private final Store store;
+  private final RuntimeStore runtimeStore;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, TransactionSystemClient txClient,
                      DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
-                     DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store) {
+                     DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
+                     RuntimeStore runtimeStore) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -106,7 +107,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
-    this.store = store;
+    this.runtimeStore = runtimeStore;
   }
 
   @Override
@@ -180,7 +181,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                             runtimeContext, submitter, host);
 
       sparkRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(), closeables, store),
+        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(),
+                                     closeables, runtimeStore),
         Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
 
@@ -245,7 +247,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
    */
   private Service.Listener createRuntimeServiceListener(final Id.Program programId, final RunId runId,
                                                         final Arguments arguments, final Arguments userArgs,
-                                                        final Iterable<Closeable> closeables, final Store store) {
+                                                        final Iterable<Closeable> closeables,
+                                                        final RuntimeStore runtimeStore) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
@@ -258,7 +261,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(), arguments.asMap());
+        runtimeStore.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId,
+                              userArgs.asMap(), arguments.asMap());
       }
 
       @Override
@@ -269,15 +273,15 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           // Service was killed
           runStatus = ProgramController.State.KILLED.getRunStatus();
         }
-        store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      runStatus);
+        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                             runStatus);
       }
 
       @Override
       public void failed(Service.State from, @Nullable Throwable failure) {
         closeAll(closeables);
-        store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
       }
     };
   }
