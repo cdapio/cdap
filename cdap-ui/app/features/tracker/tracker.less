@@ -45,9 +45,7 @@ body[class*='state-tracker'] {
     h3,
     h4,
     h5,
-    h6 {
-      font-weight: 500;
-    }
+    h6 { font-weight: 500; }
   }
 
   .alerts { top: 50px; }
@@ -67,9 +65,7 @@ body.state-tracker-enable {
 body.state-tracker-home.state-tracker {
   background-color: white;
 
-  .tracker-content {
-    margin: 150px auto;
-  }
+  .tracker-content { margin: 150px auto; }
 
   div.tracker-banner {
     width: 425px;
@@ -96,9 +92,7 @@ body.state-tracker-home.state-tracker {
   .form-group {
     margin-top: 25px;
 
-    .form-control {
-      height: 40px;
-    }
+    .form-control { height: 40px; }
 
     span {
       line-height: 40px;
@@ -131,7 +125,8 @@ body.state-tracker-home.state-tracker {
   table.table {
     background-color: transparent;
     border: 1px solid @table-border-color;
-    margin: 0;
+    margin: 0 auto;
+    max-width: 340px;
     th,
     td {
       border: 1px solid @table-border-color;
@@ -166,9 +161,7 @@ body.state-tracker-home.state-tracker {
 body.state-tracker {
   background-color: #e5e5e5;
 
-  .content-loading {
-    margin-top: 150px;
-  }
+  .content-loading { margin-top: 150px; }
 
   .tracker-top-search {
     background-color: #dfdfdf;
@@ -258,13 +251,9 @@ body.state-tracker {
           margin: 0 -20px;
           padding: 3px 20px;
 
-          &.hover {
-            background-color: #dfdfdf;
-          }
+          &.hover { background-color: #dfdfdf; }
 
-          .only-button {
-            margin-right: 10px;
-          }
+          .only-button { margin-right: 10px; }
         }
 
         label {
@@ -275,9 +264,7 @@ body.state-tracker {
 
           &.active { color: @active-font; }
 
-          input[type='checkbox'] {
-            margin-top: 3px;
-          }
+          input[type='checkbox'] { margin-top: 3px; }
         }
       }
     }
@@ -321,9 +308,7 @@ body.state-tracker {
 
         h4,
         h5,
-        p {
-          font-weight: 500;
-        }
+        p { font-weight: 500; }
 
         h4,
         h4 a {
@@ -392,9 +377,7 @@ body.state-tracker-detail-entity {
         color: @tracker-grey;
         font-size: 12px;
       }
-      .entity-type {
-        margin-top: 3px;
-      }
+      .entity-type { margin-top: 3px; }
 
       &.offset { padding-left: 20px; }
     }
@@ -424,9 +407,7 @@ body.state-tracker-detail-entity {
       }
     }
 
-    .action-button {
-      padding-right: 15px;
-    }
+    .action-button { padding-right: 15px; }
   }
 
   main.container {
@@ -441,9 +422,7 @@ body.state-tracker-detail-entity {
     }
   }
 
-  .entity-container {
-    padding: 20px;
-  }
+  .entity-container { padding: 20px; }
 
   .entity-detail-tags-column,
   .entity-detail-schema-column,
@@ -460,14 +439,10 @@ body.state-tracker-detail-entity {
       border-left: 0;
 
       th:first-child,
-      td:first-child {
-        border-left: 0;
-      }
+      td:first-child { border-left: 0; }
 
       th:last-child,
-      td:last-child {
-        border-right: 0;
-      }
+      td:last-child { border-right: 0; }
 
       tr:first-child {
         td { border-top: 0; }
@@ -536,15 +511,9 @@ body.state-tracker-detail-entity {
     width: 100%;
 
     th,
-    td {
-      font-size: 13px;
-    }
-    td {
-      word-break: break-word;
-    }
-    span.fa {
-      color: @tracker-grey;
-    }
+    td { font-size: 13px; }
+    td { word-break: break-word; }
+    span.fa { color: @tracker-grey; }
     tbody tr:nth-child(2n) {
       background-color: darken(@filter-sidebar-background-color, 1%);
     }
@@ -562,15 +531,9 @@ body.state-tracker-detail-entity {
     }
 
     .table {
-      td:last-child {
-        width: 15%;
-      }
-      td:first-child {
-        width: 45%;
-      }
-      td.nth-child(2) {
-        width: 40%;
-      }
+      td:last-child { width: 15%; }
+      td:first-child { width: 45%; }
+      td.nth-child(2) { width: 40%; }
     }
 
     .complex-type {
@@ -591,9 +554,7 @@ body.state-tracker-detail-entity {
       cursor: pointer;
       h4 { color: @tracker-grey; }
 
-      &:first-child {
-        border-right: 1px solid @border-color;
-      }
+      &:first-child { border-right: 1px solid @border-color; }
 
       &.active {
         background-color: white;
@@ -610,9 +571,7 @@ body.state-tracker-detail-entity {
           font-weight: 500;
           width: 30%;
         }
-        &:last-child {
-          width: 50px;
-        }
+        &:last-child { width: 50px; }
         pre {
           background: none;
           border: none;
@@ -628,9 +587,7 @@ body.state-tracker-detail-entity {
 
         height: @row-height;
 
-        td {
-          padding: 0;
-        }
+        td { padding: 0; }
 
         .btn {
           width: 100%;
@@ -645,9 +602,7 @@ body.state-tracker-detail-entity {
           border: none;
           border-radius: 0;
 
-          &:focus {
-            border: 1px solid @tracker-green;
-          }
+          &:focus { border: 1px solid @tracker-green; }
         }
       }
     }
@@ -659,9 +614,7 @@ body.state-tracker-detail-entity {
       left: 0;
       right: 0;
 
-      .table-container {
-        height: 100%;
-      }
+      .table-container { height: 100%; }
     }
   }
 }
@@ -674,9 +627,7 @@ body.state-tracker-detail-entity-lineage {
 }
 
 body.state-tracker-detail-entity-audit {
-  .audit-container {
-    padding: 20px;
-  }
+  .audit-container { padding: 20px; }
 
   .audit-logs-table-container {
     margin-top: 20px;
@@ -746,9 +697,7 @@ body.state-tracker-integrations {
       .box-shadow(0 0 20px 1px rgba(0, 0, 0, 0.5));
 
       h3,
-      h4 {
-        margin-bottom: 15px;
-      }
+      h4 { margin-bottom: 15px; }
       h3 {
         font-size: 22px;
         margin-top: 5px;
@@ -918,13 +867,9 @@ body.state-tracker-integrations {
         color: white;
 
         &:hover,
-        &:focus {
-          background-color: darken(@tracker-green, 10%);
-        }
+        &:focus { background-color: darken(@tracker-green, 10%); }
 
-        .fa {
-          margin-left: 10px;
-        }
+        .fa { margin-left: 10px; }
       }
 
       ul.dropdown-menu {
@@ -943,9 +888,7 @@ body.state-tracker-integrations {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
   }
 
-  .tooltip-arrow {
-    display: none;
-  }
+  .tooltip-arrow { display: none; }
 }
 
 .popover.complex-schema {
