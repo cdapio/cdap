@@ -118,6 +118,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       return runtimeInfo;
     } catch (Exception e) {
       cleanUpTask.run();
+      // RE: error message - could also be exception during runner#run
       LOG.error("Exception while trying to createPluginSnapshot", e);
       throw Throwables.propagate(e);
     }

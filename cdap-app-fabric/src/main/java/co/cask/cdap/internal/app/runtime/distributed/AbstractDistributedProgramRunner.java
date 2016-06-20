@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.program.Program;
@@ -32,6 +33,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
@@ -76,6 +78,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -168,7 +171,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 
-      Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      final Map<String, LocalizeResource> localizeResources = new HashMap<>();
       final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
                                                             DirUtils.createTempDir(tempDir));
 
@@ -196,6 +199,22 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
       // Twill would also ignore it if it is not running in secure mode.
       // The HDFS token should already obtained by Twill.
+
+
+      LOG.info("Version 000202");
+      LOG.info("Options#CFG_HDFS_USER: {}", options.getArguments().getOption(Constants.CFG_HDFS_USER));
+
+      String keytabPath = "/tmp/new.keytab";
+      String user = "ali/secure-autobuild-v29908-1000.dev.continuuity.net@CONTINUUITY.NET";
+      UserGroupInformation aliUGI = UserGroupInformation.loginUserFromKeytabAndReturnUGI(user, keytabPath);
+
+//     UserGroupInformation proxyAli =
+//         UserGroupInformation.createProxyUser("ali", UserGroupInformation.getLoginUser());
+
+      return ProgramRunners.runAsUGI(aliUGI, new Callable<ProgramController>() {
+        @Override
+        public ProgramController call() throws Exception {
+
       return launch(program, options, localizeResources, tempDir, new ApplicationLauncher() {
         @Override
         public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths,
@@ -208,10 +227,10 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           // so it can't be unset by Spark
           twillPreparer.withEnv(Collections.singletonMap("SPARK_YARN_MODE", "true"));
           if (options.isDebug()) {
-            LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
-                     program.getId(), programOptions, logbackURI);
             twillPreparer.enableDebugging();
           }
+          LOG.info("Starting {} with debugging enabled: {}, programOptions: {}, and logback: {}",
+                   program.getId(), options.isDebug(), programOptions, logbackURI);
           // Add scheduler queue name if defined
           if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
             LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
@@ -244,6 +263,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           // Add secure tokens
           if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
             // TokenSecureStoreUpdater.update() ignores parameters
+            // move 'secureStoreUpdater.update(null, null)' outside of this doAs block, if using hadoop impersonation
             twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
           }
 
@@ -290,6 +310,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           return addCleanupListener(twillController, program, tempDir);
         }
       });
+
+
+        }
+      });
+
     } catch (Exception e) {
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);

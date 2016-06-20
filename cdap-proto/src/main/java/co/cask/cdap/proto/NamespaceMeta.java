@@ -56,6 +56,7 @@ public final class NamespaceMeta {
     private String name;
     private String description;
     private String schedulerQueueName;
+    private String hdfsUser;
 
     public Builder() {
      // No-Op
@@ -65,25 +66,31 @@ public final class NamespaceMeta {
       this.name = meta.getName();
       this.description = meta.getDescription();
       this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
+      this.hdfsUser = meta.getConfig().getHdfsUser();
     }
 
-    public Builder setName(final Id.Namespace id) {
+    public Builder setName(Id.Namespace id) {
       this.name = id.getId();
       return this;
     }
 
-    public Builder setName(final String name) {
+    public Builder setName(String name) {
       this.name = name;
       return this;
     }
 
-    public Builder setDescription(final String description) {
+    public Builder setDescription(String description) {
       this.description = description;
       return this;
     }
 
-    public Builder setSchedulerQueueName(final String schedulerQueueName) {
+    public Builder setSchedulerQueueName(String schedulerQueueName) {
       this.schedulerQueueName = schedulerQueueName;
+      return this;
+    }
+
+    public Builder setHdfsUser(String hdfsUser) {
+      this.hdfsUser = hdfsUser;
       return this;
     }
 
@@ -98,7 +105,11 @@ public final class NamespaceMeta {
       if (schedulerQueueName == null) {
         schedulerQueueName = "";
       }
-      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName));
+
+      if (hdfsUser == null) {
+        hdfsUser = "";
+      }
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, hdfsUser));
     }
   }
 

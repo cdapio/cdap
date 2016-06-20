@@ -54,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A {@link SecureStoreUpdater} that updates all secure tokens used by the platform.
@@ -87,6 +88,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
 
       if (secureExplore) {
         HiveTokenUtils.obtainToken(refreshedCredentials);
+        // why is this in the if (secureExplore)
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
@@ -153,6 +155,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
    * Since Hive classes are not in MasterServiceMain's classpath, create an instance of HiveConf using reflection.
    * Call this method only if explore is enabled.
    */
+  @Nullable
   private Configuration getHiveConf() {
     ClassLoader hiveClassloader = ExploreUtils.getExploreClassloader();
     ClassLoader contextClassloader = Thread.currentThread().getContextClassLoader();

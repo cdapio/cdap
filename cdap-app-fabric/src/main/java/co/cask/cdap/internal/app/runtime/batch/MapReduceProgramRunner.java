@@ -197,8 +197,12 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       // runner, which is probably the yarn user. This may cause permissions issues if the program
       // tries to access cdap data. For example, writing to a FileSet will fail, as the yarn user will
       // be running the job, but the data directory will be owned by cdap.
+      // TODO: don't we have the same concern for workers or services?
       if (MapReduceTaskContextProvider.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
         mapReduceRuntimeService.start();
+        // this launches Hadoop MR as 'ali', but has hbase issues. container_tokens doesn't have hbase tokens in it
+//        ProgramRunners.startAsProxyUser(options.getArguments().getOption(Constants.CFG_HDFS_USER),
+//                                        mapReduceRuntimeService);
       } else {
         ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), mapReduceRuntimeService);
       }
@@ -210,7 +214,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   }
 
   /**
-   * Creates a service listener to reactor on state changes on {@link MapReduceRuntimeService}.
+   * Creates a service listener to react to state changes on {@link MapReduceRuntimeService}.
    */
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
                                                         final Iterable<Closeable> closeables,

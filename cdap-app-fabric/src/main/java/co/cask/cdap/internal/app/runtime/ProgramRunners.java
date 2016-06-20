@@ -63,6 +63,38 @@ public final class ProgramRunners {
       });
   }
 
+
+  public static void startAsProxyUser(String user, final Service service) throws IOException, InterruptedException {
+    runAsProxyUser(user, new Callable<ListenableFuture<Service.State>>() {
+      @Override
+      public ListenableFuture<Service.State> call() throws Exception {
+        return service.start();
+      }
+    });
+  }
+
+  /**
+   * Impersonates as the given user to perform an action.
+   *
+   * @param user user to impersonate
+   * @param callable action to perform
+   */
+  public static <T> T runAsProxyUser(String user, final Callable<T> callable) throws IOException, InterruptedException {
+    return runAsUGI(UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser()),
+                    callable);
+  }
+
+
+  public static <T> T runAsUGI(UserGroupInformation ugi,
+                               final Callable<T> callable) throws IOException, InterruptedException {
+    return ugi.doAs(new PrivilegedExceptionAction<T>() {
+      @Override
+      public T run() throws Exception {
+        return callable.call();
+      }
+    });
+  }
+
   /**
    * Updates the given arguments to always have the logical start time set.
    *

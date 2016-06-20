@@ -38,6 +38,7 @@ public class SchedulerQueueResolver {
    * Construct SchedulerQueueResolver with CConfiguration and Store.
    */
   public SchedulerQueueResolver(CConfiguration cConf, NamespaceStore store) {
+    // TODO: move the default value to cdap-default.xml? Or not (since its empty string)?
     this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
     this.store = store;
   }
@@ -55,7 +56,7 @@ public class SchedulerQueueResolver {
    * @param namespaceId NamespaceId
    * @return schedule queue at namespace level or default queue.
    */
-  @Nullable
+  // check usages dont expect Nullable
   public String getQueue(Id.Namespace namespaceId) {
     NamespaceMeta meta = store.get(namespaceId);
     if (meta != null) {

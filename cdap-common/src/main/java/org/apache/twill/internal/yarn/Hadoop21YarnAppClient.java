@@ -17,9 +17,11 @@
  */
 package org.apache.twill.internal.yarn;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.protocolrecords.GetNewApplicationResponse;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationSubmissionContext;
@@ -38,7 +40,11 @@ import org.apache.twill.internal.appmaster.ApplicationSubmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -50,21 +56,47 @@ import javax.annotation.Nullable;
  * </p>
  */
 // TODO: This is a copy from Twill, and can be removed when TWILL-119 is fixed. CDAP-4923 tracks Twill-0.8.0 upgrade.
+// After copying, we have removed the addRMToken() method. That functionality is in YarnTokenUtils.
+// Additionally, we have updated it to not have a single YarnClient, but instead a collection of YarnClients, one per
+// UGI. We need to do this because YarnClient is not designed to be reusable across UGIs. Even if the calling UGI
+// changes, the Yarn user still is the original UGI that constructed the YARN client.
 public final class Hadoop21YarnAppClient extends AbstractIdleService implements YarnAppClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(Hadoop21YarnAppClient.class);
-  private final YarnClient yarnClient;
+  private final Configuration configuration;
+
+  // TODO: make thread safe
+  // alternatively, simply construct a new YARNClient when needed. Shouldn't be too expensive
+  private Map<String, YarnClient> yarnClients = new HashMap<>();
 
   public Hadoop21YarnAppClient(Configuration configuration) {
-    this.yarnClient = YarnClient.createYarnClient();
-    yarnClient.init(configuration);
+    this.configuration = configuration;
+  }
+
+  private YarnClient getYarnClient() {
+    try {
+      String userName = UserGroupInformation.getCurrentUser().getShortUserName();
+      LOG.info("poop - contains user: {} - {}", userName, yarnClients.containsKey(userName));
+      if (!yarnClients.containsKey(userName)) {
+        Stopwatch sw = new Stopwatch().start();
+        YarnClient yarnClient = YarnClient.createYarnClient();
+        yarnClient.init(configuration);
+        yarnClient.start();
+
+        LOG.info("took: {}", sw.elapsedMillis());
+        yarnClients.put(userName, yarnClient);
+      }
+      return yarnClients.get(userName);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public ProcessLauncher<ApplicationMasterInfo> createLauncher(TwillSpecification twillSpec,
                                                                @Nullable String schedulerQueue) throws Exception {
     // Request for new application
-    YarnClientApplication application = yarnClient.createApplication();
+    YarnClientApplication application = getYarnClient().createApplication();
     final GetNewApplicationResponse response = application.getNewApplicationResponse();
     final ApplicationId appId = response.getApplicationId();
 
@@ -93,6 +125,7 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
         appSubmissionContext.setMaxAppAttempts(2);
 
         try {
+          YarnClient yarnClient = getYarnClient();
           yarnClient.submitApplication(appSubmissionContext);
           return new ProcessControllerImpl(yarnClient, appId);
         } catch (Exception e) {
@@ -126,22 +159,33 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
 
   @Override
   public ProcessController<YarnApplicationReport> createProcessController(ApplicationId appId) {
-    return new ProcessControllerImpl(yarnClient, appId);
+    return new ProcessControllerImpl(getYarnClient(), appId);
   }
 
   @Override
   public List<NodeReport> getNodeReports() throws Exception {
-    return this.yarnClient.getNodeReports();
+    return getYarnClient().getNodeReports();
   }
 
   @Override
   protected void startUp() throws Exception {
-    yarnClient.start();
+    // no-op
   }
 
   @Override
   protected void shutDown() throws Exception {
-    yarnClient.stop();
+    List<Long> longs = new ArrayList<>();
+    Stopwatch sw = new Stopwatch().start();
+
+    for (YarnClient client : yarnClients.values()) {
+      client.stop();
+      longs.add(sw.elapsedMillis());
+    }
+
+    yarnClients.clear();
+
+    LOG.info("took: {}", longs);
+    LOG.info("crap - stopping {}", yarnClients.keySet());
   }
 
   private static final class ProcessControllerImpl implements ProcessController<YarnApplicationReport> {

@@ -28,12 +28,20 @@ public class NamespaceConfig {
   @SerializedName("scheduler.queue.name")
   private final String schedulerQueueName;
 
-  public NamespaceConfig(String schedulerQueueName) {
+  @SerializedName("hdfs.user")
+  private final String hdfsUser;
+
+  public NamespaceConfig(String schedulerQueueName, String hdfsUser) {
     this.schedulerQueueName = schedulerQueueName;
+    this.hdfsUser = hdfsUser;
   }
 
   public String getSchedulerQueueName() {
     return schedulerQueueName;
+  }
+
+  public String getHdfsUser() {
+    return hdfsUser;
   }
 
   @Override
@@ -44,19 +52,28 @@ public class NamespaceConfig {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    NamespaceConfig other = (NamespaceConfig) o;
-    return Objects.equals(schedulerQueueName, other.schedulerQueueName);
+
+    NamespaceConfig that = (NamespaceConfig) o;
+
+    if (!schedulerQueueName.equals(that.schedulerQueueName)) {
+      return false;
+    }
+    return hdfsUser.equals(that.hdfsUser);
+
   }
 
   @Override
   public int hashCode() {
-    return schedulerQueueName.hashCode();
+    int result = schedulerQueueName.hashCode();
+    result = 31 * result + hdfsUser.hashCode();
+    return result;
   }
 
   @Override
   public String toString() {
     return "NamespaceConfig{" +
-      "scheduler.queue.name='" + schedulerQueueName + '\'' +
+      "schedulerQueueName='" + schedulerQueueName + '\'' +
+      ", hdfsUser='" + hdfsUser + '\'' +
       '}';
   }
 }

@@ -46,8 +46,11 @@ public class CreateNamespaceCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String name = arguments.get(ArgumentName.NAMESPACE_NAME.toString());
     String description = arguments.get(ArgumentName.NAMESPACE_DESCRIPTION.toString(), "");
+    String yarnQueue = arguments.get(ArgumentName.NAMESPACE_YARN_QUEUE.toString(), "");
+    String hdfsUser = arguments.get(ArgumentName.NAMESPACE_HDFS_USER.toString(), "");
+
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setName(name).setDescription(description);
+    builder.setName(name).setDescription(description).setSchedulerQueueName(yarnQueue).setHdfsUser(hdfsUser);
     namespaceClient.create(builder.build());
 
     output.println(String.format(SUCCESS_MSG, name));
@@ -55,8 +58,9 @@ public class CreateNamespaceCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("create namespace <%s> [<%s>]",
-                         ArgumentName.NAMESPACE_NAME, ArgumentName.NAMESPACE_DESCRIPTION);
+    return String.format("create namespace <%s> [<%s>] [<%s>] [<%s>]",
+                         ArgumentName.NAMESPACE_NAME, ArgumentName.NAMESPACE_DESCRIPTION,
+                         ArgumentName.NAMESPACE_YARN_QUEUE, ArgumentName.NAMESPACE_HDFS_USER);
   }
 
   @Override

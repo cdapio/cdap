@@ -78,6 +78,8 @@ public enum ArgumentName {
 
   NAMESPACE_NAME("namespace-name"),
   NAMESPACE_DESCRIPTION("namespace-description"),
+  NAMESPACE_YARN_QUEUE("namespace-yarn-queue"),
+  NAMESPACE_HDFS_USER("namespace-hdfs-user"),
 
   INSTANCE("instance-id"),
   COMMAND_CATEGORY("command-category"),

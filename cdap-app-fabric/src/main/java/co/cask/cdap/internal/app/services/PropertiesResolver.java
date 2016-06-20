@@ -16,13 +16,16 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.app.runtime.scheduler.HdfsUserResolver;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.store.NamespaceStore;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -35,11 +38,13 @@ public class PropertiesResolver {
 
   private final PreferencesStore prefStore;
   private final SchedulerQueueResolver queueResolver;
+  private final HdfsUserResolver hdfsUserResolver;
 
   @Inject
   PropertiesResolver(PreferencesStore prefStore, NamespaceStore store, CConfiguration cConf) {
     this.prefStore = prefStore;
     this.queueResolver = new SchedulerQueueResolver(cConf, store);
+    this.hdfsUserResolver = new HdfsUserResolver(cConf, store);
   }
 
   public Map<String, String> getUserProperties(Id.Program id) {
@@ -51,6 +56,9 @@ public class PropertiesResolver {
 
   public Map<String, String> getSystemProperties(Id.Program id) {
     Map<String, String> systemArgs = Maps.newHashMap();
+
+    systemArgs.put(Constants.CFG_HDFS_USER, hdfsUserResolver.getHdfsUser(id.getNamespace()));
+
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
     return systemArgs;
   }
