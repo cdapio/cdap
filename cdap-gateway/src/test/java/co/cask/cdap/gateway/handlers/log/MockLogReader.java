@@ -318,9 +318,9 @@ public class MockLogReader implements LogReader {
   /**
    * This method is used to generate the logs for program which are used for testing.
    * Single call to this method would add {@link #MAX} number of events.
-   * First 20 events are generated without {@link ApplicationLoggingContext#TAG_RUNID_ID} tag.
-   * For next 40 events, alternate event is tagged with {@code ApplicationLoggingContext#TAG_RUNID_ID}.
-   * Last 20 events are not tagged with {@code ApplicationLoggingContext#TAG_RUNID_ID}.
+   * First 20 events are generated without {@link ApplicationLoggingContext#TAG_RUN_ID} tag.
+   * For next 40 events, alternate event is tagged with {@code ApplicationLoggingContext#TAG_RUN_ID}.
+   * Last 20 events are not tagged with {@code ApplicationLoggingContext#TAG_RUN_ID}.
    * All events are alternately marked as {@link Level#ERROR} and {@link Level#WARN}.
    */
   private void generateLogs(LoggingContext loggingContext, Id.Program id, ProgramRunStatus runStatus)
@@ -347,7 +347,7 @@ public class MockLogReader implements LogReader {
       Map<String, String> tagMap = Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(),
                                                                          TAG_TO_STRING_FUNCTION));
       if (runId != null && stopTs == null && i % 2 == 0) {
-        tagMap.put(ApplicationLoggingContext.TAG_RUNID_ID, runId.getId());
+        tagMap.put(ApplicationLoggingContext.TAG_RUN_ID, runId.getId());
       }
       event.setMDCPropertyMap(tagMap);
       logEvents.add(new LogEvent(event, new LogOffset(i, i)));
