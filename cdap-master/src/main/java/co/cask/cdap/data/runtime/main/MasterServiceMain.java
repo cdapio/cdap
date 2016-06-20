@@ -63,11 +63,11 @@ import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -288,53 +288,73 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
+   * Function wrapper for returning a service's instance count.
+   */
+  private class InstanceCountFunction implements Function<String, Integer> {
+    private final String defaultInstancesKey;
+    private final String maxInstancesKey;
+
+    private InstanceCountFunction(String defaultInstancesKey, String maxInstancesKey) {
+      this.defaultInstancesKey = defaultInstancesKey;
+      this.maxInstancesKey = maxInstancesKey;
+    }
+
+    public Integer apply(String service) {
+      int maxCount = cConf.getInt(maxInstancesKey);
+
+      Integer savedCount = serviceStore.getServiceInstance(service);
+      if (savedCount == null || savedCount == 0) {
+        savedCount = Math.min(maxCount, cConf.getInt(defaultInstancesKey));
+      } else {
+        // If the max value is smaller than the saved instance count, update the store to the max value.
+        if (savedCount > maxCount) {
+          savedCount = maxCount;
+        }
+      }
+      return savedCount;
+    }
+  }
+
+  /**
    * Returns a map from system service name to a map from property to configuration key.
    */
-  private Map<String, Map<String, String>> getConfigKeys() {
-    Map<String, Map<String, String>> configKeys = Maps.newHashMap();
+  private Map<String, Function<String, Integer>> getConfigKeyFunctions() {
+    Map<String, Function<String, Integer>> configKeyFunctions = Maps.newHashMap();
 
-    configKeys.put(Constants.Service.LOGSAVER,
-                   ImmutableMap.of("default", Constants.LogSaver.NUM_INSTANCES,
-                                   "max", Constants.LogSaver.MAX_INSTANCES));
-    configKeys.put(Constants.Service.TRANSACTION,
-                   ImmutableMap.of("default", Constants.Transaction.Container.NUM_INSTANCES,
-                                   "max", Constants.Transaction.Container.MAX_INSTANCES));
-    configKeys.put(Constants.Service.METRICS_PROCESSOR,
-                   ImmutableMap.of("default", Constants.MetricsProcessor.NUM_INSTANCES,
-                                   "max", Constants.MetricsProcessor.MAX_INSTANCES));
-    configKeys.put(Constants.Service.METRICS,
-                   ImmutableMap.of("default", Constants.Metrics.NUM_INSTANCES,
-                                   "max", Constants.Metrics.MAX_INSTANCES));
-    configKeys.put(Constants.Service.STREAMS,
-                   ImmutableMap.of("default", Constants.Stream.CONTAINER_INSTANCES,
-                                   "max", Constants.Stream.MAX_INSTANCES));
-    configKeys.put(Constants.Service.DATASET_EXECUTOR,
-                   ImmutableMap.of("default", Constants.Dataset.Executor.CONTAINER_INSTANCES,
-                                   "max", Constants.Dataset.Executor.MAX_INSTANCES));
-    configKeys.put(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                   ImmutableMap.of("default", Constants.Explore.CONTAINER_INSTANCES,
-                                   "max", Constants.Explore.MAX_INSTANCES));
-    return configKeys;
+    configKeyFunctions.put(Constants.Service.LOGSAVER,
+                           new InstanceCountFunction(Constants.LogSaver.NUM_INSTANCES,
+                                                     Constants.LogSaver.MAX_INSTANCES));
+    configKeyFunctions.put(Constants.Service.TRANSACTION,
+                           new InstanceCountFunction(Constants.Transaction.Container.NUM_INSTANCES,
+                                                     Constants.Transaction.Container.MAX_INSTANCES));
+    configKeyFunctions.put(Constants.Service.METRICS_PROCESSOR,
+                           new InstanceCountFunction(Constants.MetricsProcessor.NUM_INSTANCES,
+                                                     Constants.MetricsProcessor.MAX_INSTANCES));
+    configKeyFunctions.put(Constants.Service.METRICS,
+                           new InstanceCountFunction(Constants.Metrics.NUM_INSTANCES,
+                                                     Constants.Metrics.MAX_INSTANCES));
+    configKeyFunctions.put(Constants.Service.STREAMS,
+                           new InstanceCountFunction(Constants.Stream.CONTAINER_INSTANCES,
+                                                     Constants.Stream.MAX_INSTANCES));
+    configKeyFunctions.put(Constants.Service.DATASET_EXECUTOR,
+                           new InstanceCountFunction(Constants.Dataset.Executor.CONTAINER_INSTANCES,
+                                                     Constants.Dataset.Executor.MAX_INSTANCES));
+    configKeyFunctions.put(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
+                           new Function<String, Integer>() {
+                             public Integer apply(String unused) {
+                               return 1;  // explore.service instances can not exceed 1
+                             }
+                           });
+    return configKeyFunctions;
   }
 
   private Map<String, Integer> getSystemServiceInstances() {
     Map<String, Integer> instanceCountMap = new HashMap<>();
-    for (Map.Entry<String, Map<String, String>> entry : getConfigKeys().entrySet()) {
+    for (Map.Entry<String, Function<String, Integer>> entry : getConfigKeyFunctions().entrySet()) {
       String service = entry.getKey();
-      Map<String, String> configKeys = entry.getValue();
+      Function<String, Integer> countFunction = entry.getValue();
       try {
-        int maxCount = cConf.getInt(configKeys.get("max"));
-
-        Integer savedCount = serviceStore.getServiceInstance(service);
-        if (savedCount == null || savedCount == 0) {
-          savedCount = Math.min(maxCount, cConf.getInt(configKeys.get("default")));
-        } else {
-          // If the max value is smaller than the saved instance count, update the store to the max value.
-          if (savedCount > maxCount) {
-            savedCount = maxCount;
-          }
-        }
-
+        Integer savedCount = countFunction.apply(service);
         serviceStore.setServiceInstance(service, savedCount);
         instanceCountMap.put(service, savedCount);
         LOG.info("Setting instance count of {} Service to {}", service, savedCount);
