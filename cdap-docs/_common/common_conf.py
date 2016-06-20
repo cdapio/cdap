@@ -296,6 +296,13 @@ if cask_tracker_version:
 
 """ % {'cask-tracker-version': cask_tracker_version}
 
+rst_epilog += """
+.. |cask-hydrator-version| replace:: %(cask-hydrator-version)s
+
+.. |literal-cask-hydrator-version| replace:: ``%(cask-hydrator-version)s``
+
+""" % {'cask-hydrator-version': os.environ.get('CASK_HYDRATOR_VERSION')}
+
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
 #today = ''
