@@ -93,6 +93,9 @@ public class PreviewHttpHandler extends AbstractHttpHandler {
    *
    */
   public static class PreviewStatus {
+    /**
+     *
+     */
     public enum Status {
       RUNNING,
       COMPLETED,
@@ -204,14 +207,14 @@ public class PreviewHttpHandler extends AbstractHttpHandler {
    *
    */
   public static class OutputRecord {
-    public String first_name;
-    public String last_name;
-    public Long zip_code;
+    public String firstName;
+    public String lastName;
+    public Long zipCode;
 
-    public OutputRecord(String first_name, String last_name, Long zip_code) {
-      this.first_name = first_name;
-      this.last_name = last_name;
-      this.zip_code = zip_code;
+    public OutputRecord(String firstName, String lastName, Long zipCode) {
+      this.firstName = firstName;
+      this.lastName = lastName;
+      this.zipCode = zipCode;
     }
   }
 
@@ -245,9 +248,9 @@ public class PreviewHttpHandler extends AbstractHttpHandler {
     public PipelinePreviewData() {
       inputSchema = Schema.recordOf("inputRecordSchema", Schema.Field.of("offset", Schema.of(Schema.Type.LONG)),
                                     Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
-      outputSchema = Schema.recordOf("outputRecordSchema", Schema.Field.of("first_name", Schema.of(Schema.Type.STRING)),
-                                     Schema.Field.of("last_name", Schema.of(Schema.Type.STRING)),
-                                     Schema.Field.of("zip_code", Schema.of(Schema.Type.LONG)));
+      outputSchema = Schema.recordOf("outputRecordSchema", Schema.Field.of("firstName", Schema.of(Schema.Type.STRING)),
+                                     Schema.Field.of("lastName", Schema.of(Schema.Type.STRING)),
+                                     Schema.Field.of("zipCode", Schema.of(Schema.Type.LONG)));
       errorRecordSchema = Schema.recordOf("errorRecordSchema", Schema.Field.of("errCode", Schema.of(Schema.Type.INT)),
                                      Schema.Field.of("errMsg", Schema.of(Schema.Type.STRING)),
                                      Schema.Field.of("invalidRecord", Schema.of(Schema.Type.STRING)));
