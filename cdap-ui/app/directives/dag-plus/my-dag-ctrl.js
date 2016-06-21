@@ -167,6 +167,7 @@ angular.module(PKG.name + '.commons')
             };
 
             $scope.$on('$destroy', function () {
+              elem.remove();
               elem = null;
               scope.$destroy();
             });
@@ -180,11 +181,15 @@ angular.module(PKG.name + '.commons')
           angular.forEach(labels, function (endpoint) {
             var label = endpoint.getOverlay('metricLabel');
 
-            $tooltip(angular.element(label.getElement()).children(), {
+            var tooltip = $tooltip(angular.element(label.getElement()).children(), {
               trigger: 'hover',
               title: 'Records Out',
               delay: 300,
               container: 'body'
+            });
+
+            $scope.$on('$destroy', function () {
+              tooltip.destroy();
             });
 
           });
@@ -259,6 +264,8 @@ angular.module(PKG.name + '.commons')
             nodeInfo.popover.show();
           });
         });
+
+
 
     };
 
@@ -495,9 +502,7 @@ angular.module(PKG.name + '.commons')
         });
       }, true);
       // This is needed to redraw connections and endpoints on browser resize
-      angular.element($window).on('resize', function() {
-        vm.instance.repaintEverything();
-      });
+      angular.element($window).on('resize', vm.instance.repaintEverything);
 
       DAGPlusPlusNodesStore.registerOnChangeListener(function () {
         vm.comments = DAGPlusPlusNodesStore.getComments();
@@ -742,6 +747,8 @@ angular.module(PKG.name + '.commons')
       labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();
+
+      angular.element($window).off('resize', vm.instance.repaintEverything);
 
       // Cancelling all timeouts
       $timeout.cancel(repaintTimeout);
