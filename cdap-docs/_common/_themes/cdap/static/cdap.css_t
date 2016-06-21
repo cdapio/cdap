@@ -128,7 +128,9 @@ div.sphinxsidebar h3 a {
 }
 
 div.sphinxsidebar h3.cdap-extensions {
+    background-color: #eee;
     margin-left: 10px;
+    padding-bottom: 0;
 }
 
 div.sphinxsidebar p {
@@ -140,7 +142,7 @@ div.sphinxsidebar p.topless {
 }
 
 div.sphinxsidebar ul {
-    margin-top:    10px;
+    margin-top:    5px;
     margin-bottom: 10px;
     margin-right:  10px;
     margin-left:   20px;
