@@ -150,6 +150,7 @@ gulp.task('js:lib', function() {
       './bower_components/sockjs-client/dist/sockjs.js',
 
       './bower_components/d3/d3.min.js',
+      './bower_components/d3-timeline/src/d3-timeline.js',
 
       './bower_components/epoch/epoch.min.js',
       './bower_components/lodash/lodash.js',
