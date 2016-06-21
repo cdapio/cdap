@@ -92,5 +92,17 @@ public class PreviewHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     responseContent = EntityUtils.toString(response.getEntity());
     LOG.info(responseContent);
+
+    path = String.format("previews/%s/logs", id.getPreview());
+    response = doGet(getVersionedAPIPath(path, "default"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    responseContent = EntityUtils.toString(response.getEntity());
+    LOG.info(responseContent);
+
+    path = String.format("previews/%s/metrics", id.getPreview());
+    response = doGet(getVersionedAPIPath(path, "default"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    responseContent = EntityUtils.toString(response.getEntity());
+    LOG.info(responseContent);
   }
 }

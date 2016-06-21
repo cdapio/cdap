@@ -20,6 +20,9 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.logging.gateway.handlers.FormattedLogEvent;
+import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
@@ -29,6 +32,7 @@ import co.cask.cdap.proto.id.ParentedId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -52,7 +56,10 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class PreviewHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
+
 
   @Inject
   PreviewHttpHandler() {
@@ -188,6 +195,85 @@ public class PreviewHttpHandler extends AbstractHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("preview-id") String previewId, @PathParam("stage-id") String stageId) {
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(new PipelinePreviewData()));
+  }
+
+  @GET
+  @Path("/previews/{preview-id}/logs")
+  public void getLogs(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId) {
+    List<FormattedLogEvent> logResults = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      FormattedLogEvent event
+        = new FormattedLogEvent("This is sample log - " + i, new LogOffset(i, System.currentTimeMillis()));
+      logResults.add(event);
+    }
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(logResults));
+  }
+
+  @GET
+  @Path("/previews/{preview-id}/metrics")
+  public void getMetric(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId) {
+
+    String response = "{\n" +
+      "    \"endTime\": 1466469538,\n" +
+      "    \"resolution\": \"2147483647s\",\n" +
+      "    \"series\": [\n" +
+      "        {\n" +
+      "            \"data\": [\n" +
+      "                {\n" +
+      "                    \"time\": 0,\n" +
+      "                    \"value\": 4\n" +
+      "                }\n" +
+      "            ],\n" +
+      "            \"grouping\": {},\n" +
+      "            \"metricName\": \"user.Projection.records.out\"\n" +
+      "        },\n" +
+      "        {\n" +
+      "            \"data\": [\n" +
+      "                {\n" +
+      "                    \"time\": 0,\n" +
+      "                    \"value\": 4\n" +
+      "                }\n" +
+      "            ],\n" +
+      "            \"grouping\": {},\n" +
+      "            \"metricName\": \"user.Projection.records.in\"\n" +
+      "        },\n" +
+      "        {\n" +
+      "            \"data\": [\n" +
+      "                {\n" +
+      "                    \"time\": 0,\n" +
+      "                    \"value\": 4\n" +
+      "                }\n" +
+      "            ],\n" +
+      "            \"grouping\": {},\n" +
+      "            \"metricName\": \"user.Stream.records.out\"\n" +
+      "        },\n" +
+      "        {\n" +
+      "            \"data\": [\n" +
+      "                {\n" +
+      "                    \"time\": 0,\n" +
+      "                    \"value\": 4\n" +
+      "                }\n" +
+      "            ],\n" +
+      "            \"grouping\": {},\n" +
+      "            \"metricName\": \"user.JavaScript.records.in\"\n" +
+      "        },\n" +
+      "        {\n" +
+      "            \"data\": [\n" +
+      "                {\n" +
+      "                    \"time\": 0,\n" +
+      "                    \"value\": 4\n" +
+      "                }\n" +
+      "            ],\n" +
+      "            \"grouping\": {},\n" +
+      "            \"metricName\": \"user.Stream.records.in\"\n" +
+      "        }\n" +
+      "    ],\n" +
+      "    \"startTime\": 0\n" +
+      "}\n";
+
+    responder.sendString(HttpResponseStatus.OK, response);
   }
 
   /**
