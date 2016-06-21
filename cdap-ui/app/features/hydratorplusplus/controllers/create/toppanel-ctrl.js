@@ -26,6 +26,11 @@ class HydratorPlusPlusTopPanelCtrl{
 
     this.canvasOperations = [
       {
+        name: 'Preview',
+        icon: 'fa fa-eye',
+        fn: this.onPreviewMode.bind(this)
+      },
+      {
         name: 'Export',
         icon: 'icon-export',
         fn: this.onExport.bind(this)
@@ -92,6 +97,10 @@ class HydratorPlusPlusTopPanelCtrl{
     }
   }
 
+
+  onPreviewMode() {
+    alert('hello!!');
+  }
   onExport() {
     this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
     let config = angular.copy(this.HydratorPlusPlusConfigStore.getDisplayConfig());
