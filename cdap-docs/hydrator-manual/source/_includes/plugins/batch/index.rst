@@ -14,7 +14,7 @@ Hydrator Version |cdap-hydrator-version|
     :maxdepth: 2
 
     Batch Source Plugins <sources/index>
-    Transformation Plugins <../transforms/index>
+    Batch Transformation Plugins <transforms/index>
     Batch Aggregator Plugins <aggregators/index>
     Batch Sink Plugins <sinks/index>
 

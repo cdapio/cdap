@@ -40,10 +40,6 @@ function get_hydrator_version() {
   export HYDRATOR_VERSION
 }
 
-function download_md_file_batch_transform() {
-  download_md_file "${1}" "${2}" "${3}" "batch" "transform"
-}
-
 function download_md_file() {
   local source_dir="${1}"
   local source_file_name="${2}"
@@ -51,47 +47,51 @@ function download_md_file() {
   local plugin_category="${4}"
   local plugin_type="${5}"
   
-  local source_name="${source_file_name%-*}"
+  local source_url="${HYDRATOR_SOURCE}/${source_dir}/docs/${source_file_name}"
 
+  local source_name="${source_file_name%-*}"
   local type=$(echo "${source_file_name#*-}" | tr [:upper:] [:lower:]) # batchsink
   type="${type%.md}" # strip suffix
   
   local type_capital="$(echo ${type:0:1} | tr [:lower:] [:upper:])${type:1}"
-  local type_plural="${type}s" # types are plural
   local target_file_name=$(echo "${source_file_name%-*}.md" | tr [:upper:] [:lower:]) # cassandra
 
-  # Determine from name of the plugin the
+  # Determine from name of the plugin file the
   # category (batch, realtime, shared-plugin, postaction) and 
   # type (source, sink, transform, aggregator)
   if [[ "x${plugin_category}${plugin_type}" == "x" ]]; then
     if [[ "x${type:0:5}" == "xbatch" ]]; then
       plugin_category="batch"
-      plugin_type="${type:5}s"
+      plugin_type="${type:5}"
     elif [[ "x${type:0:8}" == "xrealtime" ]]; then
       plugin_category="realtime"
-      plugin_type="${type:8}s"
+      plugin_type="${type:8}"
     elif [[ "x${type}" == "xpostaction" ]]; then
       plugin_category=''
-      plugin_type="${type}s"
+      plugin_type="${type}"
+      target_dir="${plugin_type}"
     else
-      # assume type transform
+      # assume type transform; to be copied to both batch and realtime
       plugin_category=''
-      plugin_type="transforms"
+      plugin_type="transform"
     fi
   fi
     
-  local source_url="${HYDRATOR_SOURCE}/${source_dir}/docs/${source_file_name}"
-  if [[ "x${plugin_category}" == "x" ]]; then
-    local target_dir="${plugin_type}"
-  else
-    local target_dir="${plugin_category}/${plugin_type}"
+  if [[ "x${plugin_category}" != "x" ]]; then
+    local target_dir="${plugin_category}/${plugin_type}s"
+#     local target_dir_extra=''
+  elif [[ "${plugin_type}" == "transform" ]]; then
+    local target_dir="batch/${plugin_type}s"
+    local target_dir_extra="realtime/${plugin_type}s"
   fi
-  local target="${BASE_TARGET}/${target_dir}/${target_file_name}"
   
-  if [ ! -d "${BASE_TARGET}/${target_dir}" ]; then
-    mkdir -p ${BASE_TARGET}/${target_dir}
-    echo "Creating Includes Directory: ${target_dir}"
+  local target="${BASE_TARGET}/${target_dir}/${target_file_name}"
+  if [[ "x${target_dir_extra}" != "x" ]]; then
+    local target_extra="${BASE_TARGET}/${target_dir_extra}/${target_file_name}"
+#   else
+#     local target_extra=''
   fi
+
   # Create display names for log output
   local fifty_spaces="                                                  "
   local display_source_file_name="${source_file_name}${fifty_spaces}"
@@ -116,6 +116,10 @@ function download_md_file() {
       cat ${BASE_TARGET}/_includes/${append_file} >> ${target}
     fi
     echo "${RETURN_STRING}${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
+    if [[ "x${target_dir_extra}" != "x" ]]; then
+      cp ${target} ${target_extra}
+      echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
+    fi
   else
     local m="URL does not exist: ${source_url}"
     echo_red_bold "${m}"
@@ -235,8 +239,8 @@ function download_includes() {
   download_md_file mongodb-plugins MongoDB-realtimesink.md
   
   # Currently only for batch
-  download_md_file_batch_transform spark-plugins NaiveBayesClassifier-sparkcompute.md
-  download_md_file_batch_transform spark-plugins NaiveBayesTrainer-sparksink.md
+  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "batch" "transform"
+  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md '' "batch" "transform"
   
   download_md_file transform-plugins CSVFormatter-transform.md
   download_md_file transform-plugins CSVParser-transform.md
@@ -250,7 +254,7 @@ function download_includes() {
   download_md_file transform-plugins JSONParser-transform.md
   download_md_file transform-plugins StreamFormatter-transform.md
 
-  extract_table ${BASE_TARGET} transforms/validator.md validator-extract.txt
+  extract_table ${BASE_TARGET} "batch/transforms/validator.md" validator-extract.txt
 }
 
 run_command ${1}

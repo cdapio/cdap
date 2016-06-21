@@ -25,7 +25,7 @@ Hydrator Plugins
 - :doc:`Plugins for Batch <batch/index>`
 
   - :doc:`Source Plugins <batch/sources/index>`
-  - :doc:`Transform Plugins <transforms/index>`
+  - :doc:`Transform Plugins <batch/transforms/index>`
   - :doc:`Aggregator Plugins <batch/aggregators/index>`
   - :doc:`Sink Plugins <batch/sinks/index>`
 
@@ -35,7 +35,7 @@ Hydrator Plugins
 - :doc:`Plugins for Real-time <realtime/index>`
 
   - :doc:`Source Plugins <realtime/sources/index>`
-  - :doc:`Transform Plugins <transforms/index>`
+  - :doc:`Transform Plugins <realtime/transforms/index>`
   - :doc:`Sink Plugins <realtime/sinks/index>`
 
 ..

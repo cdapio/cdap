@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-transformations:
+.. _cask-hydrator-plugins-realtime-transformations:
 
-======================
-Transformation Plugins
-======================
+================================
+Real-time Transformation Plugins
+================================
 
 Hydrator Version |cdap-hydrator-version|
 

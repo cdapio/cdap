@@ -14,5 +14,5 @@ Hydrator Version |cdap-hydrator-version|
     :maxdepth: 2
 
     Real-time Source Plugins <sources/index>
-    Transformation Plugins <../transforms/index>
+    Real-time Transformation Plugins <transforms/index>
     Real-time Sink Plugins <sinks/index>
