@@ -69,7 +69,7 @@ function download_md_file() {
     elif [[ "x${type}" == "xpostaction" ]]; then
       plugin_category=''
       plugin_type="${type}"
-      target_dir="${plugin_type}"
+      local target_dir="${plugin_type}s"
     else
       # assume type transform; to be copied to both batch and realtime
       plugin_category=''
@@ -79,17 +79,16 @@ function download_md_file() {
     
   if [[ "x${plugin_category}" != "x" ]]; then
     local target_dir="${plugin_category}/${plugin_type}s"
-#     local target_dir_extra=''
+    local target_dir_extra=''
   elif [[ "${plugin_type}" == "transform" ]]; then
     local target_dir="batch/${plugin_type}s"
     local target_dir_extra="realtime/${plugin_type}s"
   fi
   
   local target="${BASE_TARGET}/${target_dir}/${target_file_name}"
+  local target_extra=''
   if [[ "x${target_dir_extra}" != "x" ]]; then
-    local target_extra="${BASE_TARGET}/${target_dir_extra}/${target_file_name}"
-#   else
-#     local target_extra=''
+    target_extra="${BASE_TARGET}/${target_dir_extra}/${target_file_name}"
   fi
 
   # Create display names for log output
@@ -103,22 +102,28 @@ function download_md_file() {
     echo "Downloading ${display_source_file_name} from ${display_source_dir} to ${target_dir}/${target_file_name}"
     #     Downloading Cassandra-batchsink.md from cassandra-plugins to batch/sink/cassandra.md
     curl --silent ${source_url} --output ${target}
-    # If file does not begin with a "#" character, append "# title\n" to start
-    local first=$(head -1 ${target})
-    if [ "x${first:0:2}" != "x# " ]; then
-      local m="Markdown file missing initial title: ${source_file_name}: ${source_name} ${type_capital}"
+    if [ -e "${target}" ]; then
+      # If file does not begin with a "#" character, append "# title\n" to start
+      local first=$(head -1 ${target})
+      if [[ "x${first:0:2}" != "x# " ]]; then
+        local m="Markdown file missing initial title: ${source_file_name}: ${source_name} ${type_capital}"
+        echo_red_bold "${m}"
+        set_message "${m}"
+        echo "# ${source_name} ${type_capital}${RETURN_STRING}$(cat ${target})" > ${target}
+      fi
+      if [[ "x${append_file}" != "x" ]]; then
+        echo "  Appending ${append_file} to ${target_file_name}"
+        cat ${BASE_TARGET}/_includes/${append_file} >> ${target}
+      fi
+      echo "${RETURN_STRING}${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
+      if [[ "x${target_dir_extra}" != "x" ]]; then
+        cp ${target} ${target_extra}
+        echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
+      fi
+    else
+      local m="File does not exist: ${target}"
       echo_red_bold "${m}"
       set_message "${m}"
-      echo "# ${source_name} ${type_capital}${RETURN_STRING}$(cat ${target})" > ${target}
-    fi
-    if [[ "x${append_file}" != "x" ]]; then
-      echo "  Appending ${append_file} to ${target_file_name}"
-      cat ${BASE_TARGET}/_includes/${append_file} >> ${target}
-    fi
-    echo "${RETURN_STRING}${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
-    if [[ "x${target_dir_extra}" != "x" ]]; then
-      cp ${target} ${target_extra}
-      echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
     fi
   else
     local m="URL does not exist: ${source_url}"
