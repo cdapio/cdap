@@ -20,16 +20,16 @@
   <div class="logs-headerbar">
 
     <div class="log-stats-container">
-      <div class="log-stats-total log-stats">
+      <div class="log-stats-total log-stats text-center">
           <span class="stat-name log-stats-total-text">Total Message</span>
           <div class="stat-count total-num">
             <span class="stat-count-number">{{LogViewer.totalCount}}</span></div>
       </div>
-      <div class="log-stats-errors log-stats">
+      <div class="log-stats-errors log-stats text-center">
         <span class="stat-name log-stats-errors-text">Error</span>
           <div class="stat-count errors-num"><span class='stat-count-number'>{{LogViewer.errorCount}}</span></div>
       </div>
-      <div class="log-stats-warnings log-stats">
+      <div class="log-stats-warnings log-stats text-center">
         <span class="stat-name log-stats-warnings-text">Warning</span>
         <div class="stat-count warnings-num">
           <span class='stat-count-number'>{{LogViewer.warningCount}}</span>
@@ -62,12 +62,12 @@
     <table class="table table-bordered">
       <thead>
         <th class="time"
-            ng-if="!LogViewer.isMessageExpanded && LogViewer.isTimeDisplayed">
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.time">
           Time
         </th>
 
         <th class="level"
-            ng-if="!LogViewer.isMessageExpanded && LogViewer.isLevelDisplayed">
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.level">
           <span uib-dropdown>
             <span uib-dropdown-toggle>Level <span class="fa fa-caret-down"></span></span>
             <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
@@ -79,12 +79,12 @@
         </th>
 
         <th class="source"
-            ng-if="!LogViewer.isMessageExpanded && LogViewer.isSourceDisplayed">
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.source">
           Source
         </th>
 
         <th class="message"
-            ng-if="LogViewer.isMessageDisplayed"
+            ng-if="LogViewer.configOptions.message"
             ng-class="{'expanded': LogViewer.isMessageExpanded }">
           <span class="fa"
                 ng-class="{ 'fa-arrow-left': !LogViewer.isMessageExpanded,
@@ -98,25 +98,25 @@
         <tr ng-repeat="log in LogViewer.data | filter:LogViewer.eventFilter | filter:searchText">
           <!-- TIME -->
           <td class="time"
-              ng-if="!LogViewer.isMessageExpanded && LogViewer.isTimeDisplayed">
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.time">
             <span>{{ ::log.time }}</span>
           </td>
 
           <!-- LEVEL -->
           <td class="level"
-              ng-if="!LogViewer.isMessageExpanded && LogViewer.isLevelDisplayed">
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.level">
             <span>{{ ::log.level }}</span>
           </td>
 
           <!-- SOURCE -->
           <td class="source"
-              ng-if="!LogViewer.isMessageExpanded && LogViewer.isSourceDisplayed">
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.source">
             <span>{{ ::log.source }}</span>
           </td>
 
           <!-- MESSAGE -->
           <td class="message"
-              ng-if="LogViewer.isMessageDisplayed"
+              ng-if="LogViewer.configOptions.message"
               ng-class="{'stack-trace-expanded': log.isStackTraceExpanded,
                 'stack-trace-available': log.message.stackTrace }">
             <div class="message-main clearfix">

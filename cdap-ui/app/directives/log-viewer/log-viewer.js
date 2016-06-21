@@ -14,14 +14,23 @@
  * the License.
  */
 
-function LogViewerController () {
+function LogViewerController ($scope) {
   'ngInject';
 
-  this.isMessageExpanded = false;
-  this.isTimeDisplayed = true;
-  this.isLevelDisplayed = true;
-  this.isSourceDisplayed = true;
-  this.isMessageDisplayed = true;
+  this.configOptions = {
+    time: true,
+    level: true,
+    source: true,
+    message: true
+  };
+
+  if($scope.displayOptions !== undefined){
+    angular.forEach($scope.displayOptions, function(value, key) {
+      if(value === undefined || value === null){
+        value = configOptions[key];
+      }
+    })
+  }
 
   this.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
 
@@ -165,7 +174,6 @@ function LogViewerController () {
     }
     return;
   };
-
 }
 
 angular.module(PKG.name + '.commons')
@@ -173,6 +181,9 @@ angular.module(PKG.name + '.commons')
     return {
       templateUrl: 'log-viewer/log-viewer.html',
       controller: LogViewerController,
+      scope: {
+        displayOptions: '=?'
+      },
       controllerAs: 'LogViewer'
     };
   });
