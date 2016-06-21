@@ -175,7 +175,7 @@ copyright = u'2014-%s Cask Data, Inc.' % current_year
 #
 # The X.Y.Z version
 # The X.Y short-version
-# The full version, including alpha/beta/rc tags, or release version.
+# The "full" version, which includes any alpha/beta/rc/SNAPSHOT tags, also called the "release" version.
 version, short_version, release, version_tuple = get_sdk_version()
 git_hash, git_timestamp = get_git_hash_timestamp()
 
@@ -296,6 +296,13 @@ if cask_tracker_version:
 .. |literal-cask-tracker-version-jar| replace:: ``tracker-%(cask-tracker-version)s.jar``
 
 """ % {'cask-tracker-version': cask_tracker_version}
+
+rst_epilog += """
+.. |cask-hydrator-version| replace:: %(cask-hydrator-version)s
+
+.. |literal-cask-hydrator-version| replace:: ``%(cask-hydrator-version)s``
+
+""" % {'cask-hydrator-version': os.environ.get('CASK_HYDRATOR_VERSION')}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

@@ -605,8 +605,8 @@ shared by all branches of the fork. Updates to the singleton are made thread-saf
 synchronized updates, guaranteeing that value you obtain from reading the token is the
 last value written at runtime. This is a time-based guarantee.
 
-Example
--------
+Examples
+--------
 
 This code sample shows how to obtain values from the token from within a custom action,
 and from within a workflow with a predicate, fork and joins::
