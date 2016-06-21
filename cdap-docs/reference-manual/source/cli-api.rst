@@ -44,11 +44,11 @@ To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no a
   
   .. Distributed CDAP
 
-  $ ./opt/cdap/cli/bin/cdap-cli.sh
+  $ /opt/cdap/cli/bin/cdap-cli.sh
   
   .. Cloudera Manager Clusters
   
-  $ ./opt/cloudera/parcels/cdap/cli/bin/cdap-cli.sh
+  $ /opt/cloudera/parcels/cdap/cli/bin/cdap-cli.sh
 
 
 The executable should bring you into a shell, with a prompt similar to:
