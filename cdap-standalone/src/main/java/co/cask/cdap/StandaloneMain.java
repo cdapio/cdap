@@ -45,6 +45,7 @@ import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -52,6 +53,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -79,6 +81,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
@@ -126,6 +129,7 @@ public class StandaloneMain {
   private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
   private final TrackerAppCreationService trackerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
+  private final PreviewMain previewMain;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -205,6 +209,13 @@ public class StandaloneMain {
         }
       }
     });
+
+
+    previewMain = PreviewMain.createPreviewMain(
+      injector.getInstance(DatasetFramework.class),
+      injector.getInstance(InMemoryDiscoveryService.class),
+      injector.getInstance(ArtifactRepository.class)
+    );
   }
 
   /**
@@ -277,6 +288,7 @@ public class StandaloneMain {
     if (trackerAppCreationService != null) {
       trackerAppCreationService.startAndWait();
     }
+    previewMain.startUp();
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -293,6 +305,8 @@ public class StandaloneMain {
     LOG.info("Shutting down Standalone CDAP");
     boolean halt = false;
     try {
+      previewMain.shutDown();
+
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
         userInterfaceService.stopAndWait();

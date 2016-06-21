@@ -62,6 +62,15 @@
   </property>
 
   <property>
+    <name>local.preview.dir</name>
+    <value>preview</value>
+    <description>
+      Data directory for preview mode in standalone.
+    </description>
+  </property>
+
+
+  <property>
     <name>mapreduce.include.custom.format.classes</name>
     <value>true</value>
     <description>
