@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-realtimesinks:
+.. _cask-hydrator-plugins-batch-aggregators:
 
-===============
-Real-time Sinks
-===============
+========================
+Batch Aggregator Plugins
+========================
 
 Hydrator Version |cdap-hydrator-version|
 

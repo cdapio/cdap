@@ -4,9 +4,9 @@
 
 .. _cask-hydrator-plugins-transformations:
 
-===============
-Transformations 
-===============
+======================
+Transformation Plugins
+======================
 
 Hydrator Version |cdap-hydrator-version|
 

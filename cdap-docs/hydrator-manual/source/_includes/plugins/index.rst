@@ -13,38 +13,58 @@ Hydrator Plugins
 .. toctree::
    :maxdepth: 2
    
-    Batch Plugins <batch/index>
-    Real-time Plugins <realtime/index>
+    Plugins for Batch <batch/index>
+    Plugins for Real-time <realtime/index>
+    Shared Plugins <shared-plugins/index>
+    Post-Action Plugins <postactions/index>
     Adding Third-Party Plugins <third-party>
     Creating Custom Plugins <creating>
     Installing Plugins <installing>
 
 
-- Plugins for Batch 
+- :doc:`Plugins for Batch <batch/index>`
 
-  - Source plugins
-  - Transform plugins 
-  - Aggregator 
-  - Model
-  - Compute
-  - Sink
+  - :doc:`Source Plugins <batch/sources/index>`
+  - :doc:`Transform Plugins <transforms/index>`
+  - :doc:`Aggregator Plugins <batch/aggregators/index>`
+  - :doc:`Sink Plugins <batch/sinks/index>`
 
-- Plugins for Real-time 
+..   - :doc:`Compute Plugins <batch/computes/index>`
+..   - :doc:`Model Plugins <batch/models/index>`
 
-  - Source
-  - Transform
-  - Sink
+- :doc:`Plugins for Real-time <realtime/index>`
 
-- Adding third-party plugins
+  - :doc:`Source Plugins <realtime/sources/index>`
+  - :doc:`Transform Plugins <transforms/index>`
+  - :doc:`Sink Plugins <realtime/sinks/index>`
 
-  - JDBC
+..
 
-- Creating Custom plugins
-- Installing plugins	
+- :doc:`Shared Plugins <shared-plugins/index>`
 
-  - UI
-  - REST
-  - CLI 
+  - :doc:`CoreValidator Plugin <shared-plugins/core>`
+
+..
+
+- :doc:`Post-Action Plugins <postactions/index>`
+
+..
+
+- :doc:`Adding Third-Party Plugins <third-party>`
+- :doc:`Creating Custom Plugins <creating>`
+- :doc:`Installing Plugins <installing>`
+
+.. 
+.. - Adding third-party plugins
+.. 
+..   - JDBC
+.. 
+.. - Creating Custom plugins
+.. - Installing plugins	
+.. 
+..   - UI
+..   - REST
+..   - CLI 
 
 
 Details of the required properties for sources, transformations (transforms), and sinks
@@ -53,8 +73,9 @@ can be explored using RESTful APIs.
 If you are creating a custom plugin to extend the existing system artifacts, its name
 should not collide with existing names for ease of use in the CDAP UI.
 
-Shipped with CDAP, the plugins listed below (Hydrator Version |cdap-hydrator-version|) are
-available for creating ETL applications.
+Shipped with CDAP, the :doc:`batch <batch/index>` and :doc:`real-time <realtime/index>`
+plugins (Hydrator Version |cdap-hydrator-version|) are available for creating ETL
+applications.
 
 .. 
 .. .. toctree::
@@ -68,7 +89,20 @@ available for creating ETL applications.
 ..     Shared Plugins <shared-plugins/index>
 ..     Third-Party Jars <third-party>
 
-  
+.. 
+.. .. toctree::
+..    :maxdepth: 2
+..    
+..     Batch Sources <batch/sources/index>
+..     Batch Transforms <transforms/index>
+..     Batch Sinks <batch/sinks/index>
+..     Real-time Sources <realtime/sources/index>
+..     Real-time Transforms <transforms/index>
+..     Real-time Sinks <realtime/sinks/index>
+
+..     Shared Plugins <shared-plugins/index>
+..     Third-Party Jars <third-party>
+ 
 .. rubric:: Exploring Plugin Details
 
 Details on the available plugins can be obtained using the
