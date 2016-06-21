@@ -25,12 +25,12 @@ function LogViewerController () {
 
   this.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
 
-  var included = {
-    'ERROR' : 0,
-    'WARN' : 0,
-    'INFO' : 0,
-    'DEBUG' : 0,
-    'TRACE' : 0
+  let included = {
+    'ERROR' : false,
+    'WARN' : false,
+    'INFO' : false,
+    'DEBUG' : false,
+    'TRACE' : false
   };
 
   this.data = [
@@ -132,13 +132,13 @@ function LogViewerController () {
   ];
 
   this.totalCount = this.data.length;
-  var errorCount = 0;
-  var warningCount = 0;
-  var numEvents = 0;
+  let errorCount = 0;
+  let warningCount = 0;
+  let numEvents = 0;
 
   //Compute Total
-  for(var k = 0; k < this.data.length; k++){
-    var currentItem = this.data[k].level;
+  for(let k = 0; k < this.data.length; k++){
+    let currentItem = this.data[k].level;
     if(currentItem === 'ERROR'){
       errorCount++;
     } else if(currentItem === 'WARN'){
@@ -151,17 +151,16 @@ function LogViewerController () {
 
   //New 'includeEvent' function
   this.includeEvent = function(eventType){
-    if(included[eventType] > 0){
-      included[eventType] = 0;
+    if(included[eventType]){
       numEvents--;
     } else{
-      included[eventType] = 1;
       numEvents++;
     }
+    included[eventType] = !included[eventType];
   };
 
   this.eventFilter = function(log){
-    if(numEvents === 0 || included[log.level] === 1){
+    if(numEvents === 0 || included[log.level]){
       return log;
     }
     return;
