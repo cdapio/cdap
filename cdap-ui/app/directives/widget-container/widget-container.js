@@ -20,6 +20,7 @@ angular.module(PKG.name + '.commons')
       restrict: 'A',
       scope: {
         name: '=',
+        disabled: '=',
         model: '=',
         myconfig: '=',
         properties: '=',
