@@ -26,7 +26,6 @@ class HydratorPlusPlusStudioCtrl {
         .catch( () => this.isExpanded = true);
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     $scope.$on('$destroy', () => {
-      HydratorPlusPlusNodeConfigStore.reset();
       HydratorPlusPlusConsoleActions.resetMessages();
       $window.onbeforeunload = null;
     });
