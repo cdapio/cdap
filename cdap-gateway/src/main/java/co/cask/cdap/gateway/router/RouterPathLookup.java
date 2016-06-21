@@ -106,6 +106,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return Constants.Service.APP_FABRIC_HTTP;
     } else if (matches(uriParts, "v3", "security", "store", "namespaces", null)) {
       return Constants.Service.APP_FABRIC_HTTP;
+    } else if (matches(uriParts, "v3", "namespaces", null, "previews", null) ||
+      matches(uriParts, "v3", "namespaces", null, "preview")) {
+      return Constants.Service.PREVIEW_HTTP;
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
       || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
       requestMethod.equals(AllowedMethod.GET)) {

@@ -84,6 +84,7 @@ public final class Constants {
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
     public static final String METADATA_SERVICE = "metadata.service";
+    public static final String PREVIEW_HTTP = "preview";
   }
 
   /**
@@ -183,6 +184,17 @@ public final class Constants {
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
   }
 
+  /**
+   * Preview Configurations
+   */
+  public class Preview {
+    public static final String ENABLED = "enable.alpha.preview";
+
+    /**
+     * Guice named bindings.
+     */
+    public static final String HANDLERS_BINDING = "preview.http.handler";
+  }
   /**
    * Scheduler options.
    */
