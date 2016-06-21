@@ -38,27 +38,22 @@
         <p class="metric-heading">Top Applications</p>
         <p class="metric-timeframe">Last 7 days</p>
         <div class="metric-container">
-          <my-top-entity-graph
-            model="MainController.topAppsData"
-            type="apps">
-          </my-top-entity-graph>
+          <my-top-entity-graph type="applications"></my-top-entity-graph>
         </div>
       </div>
       <div class="col-md-4">
         <p class="metric-heading">Top Programs</p>
         <p class="metric-timeframe">Last 7 days</p>
         <div class="metric-container">
-          <my-top-entity-graph
-            model="MainController.topAppsData"
-            type="apps">
-          </my-top-entity-graph>
+          <my-top-entity-graph type="programs"></my-top-entity-graph>
         </div>
       </div>
       <div class="col-md-4">
         <p class="metric-heading">Top Datasets</p>
         <p class="metric-timeframe">Last 7 days</p>
         <div class="metric-container">
-          <table class="table">
+          <table ng-if="MainController.topDatasets.total >= 3"
+            class="table">
             <thead>
               <th>Dataset</th>
               <th colspan="2">
@@ -70,33 +65,24 @@
               </th>
             </thead>
             <tbody>
-              <tr>
-                <td>Name 01</td>
-                <td>-</td>
-                <td>-</td>
+              <tr ng-repeat="metric in MainController.topDatasets.results">
+                <td>{{ metric.columnValues.label }}</td>
+                <td>{{ metric.columnValues.read }}</td>
+                <td>{{ metric.columnValues.write }}</td>
               </tr>
-              <tr>
-                <td>Name 02</td>
-                <td>-</td>
-                <td>-</td>
-              </tr>
-              <tr>
-                <td>Name 03</td>
-                <td>-</td>
-                <td>-</td>
-              </tr>
-              <tr>
-                <td>Name 04</td>
-                <td>-</td>
-                <td>-</td>
-              </tr>
-              <tr>
-                <td>Name 05</td>
-                <td>-</td>
-                <td>-</td>
+              <tr ng-if="MainController.emptyRows === true"
+                ng-repeat="row in MainController.totalEmptyRows"
+                class="empty-row">
+                <td></td>
+                <td></td>
+                <td></td>
               </tr>
             </tbody>
           </table>
+          <div ng-if="MainController.topDatasets.total < 3"
+              class="well">
+            <p>Not enough data</p>
+          </div>
         </div>
       </div>
     </div>

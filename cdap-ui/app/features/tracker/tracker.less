@@ -136,7 +136,6 @@ body.state-tracker-home.state-tracker {
     td {
       border: 1px solid @table-border-color;
       font-weight: 500;
-      padding: 8px;
       text-align: center;
       width: 111px;
     }
@@ -144,6 +143,8 @@ body.state-tracker-home.state-tracker {
       border-bottom-width: 1px;
       color: #333333;
       font-size: 14px;
+      line-height: 1;
+      padding: 6px 10px;
       vertical-align: top;
       &:hover,
       &:focus { cursor: default; }
@@ -155,10 +156,31 @@ body.state-tracker-home.state-tracker {
         width: 50%;
       }
     }
-    tr > td {
-      color: #666666;
-      font-size: 12px;
-      &:first-child { color: #333333; }
+    tr {
+      > td {
+        color: #666666;
+        font-size: 12px;
+        max-width: 0;
+        overflow: hidden;
+        padding: 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        &:first-child {
+          color: #333333;
+          text-align: left;
+        }
+      }
+      &.empty-row > td { height: 38px; }
+    }
+  }
+  div.well {
+    background-color: #e8e8e8;
+    height: 234px;
+    margin-bottom: 0;
+    p {
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
     }
   }
 }
