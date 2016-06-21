@@ -115,7 +115,7 @@ Hadoop components, as required:
 
 **Note:** Component versions shown in these tables are those that we have tested and are
 confident of their suitability and compatibility. Later versions of components may work,
-but have not necessarily have been either tested or confirmed compatible.
+but have not necessarily been either tested or confirmed compatible.
 
 **Note:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase*, and
 *Hive* cluster configurations by adding those configurations to their class paths.
