@@ -24,13 +24,9 @@ function LogViewerController ($scope) {
     message: true
   };
 
-  if($scope.displayOptions !== undefined){
-    angular.forEach($scope.displayOptions, function(value, key) {
-      if(value === undefined || value === null){
-        value = configOptions[key];
-      }
-    })
-  }
+  angular.forEach($scope.displayOptions, (value, key) => {
+      this.configOptions[key] = value;
+  });
 
   this.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
 
