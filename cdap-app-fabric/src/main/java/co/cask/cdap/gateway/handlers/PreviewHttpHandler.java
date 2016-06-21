@@ -83,21 +83,6 @@ public class PreviewHttpHandler extends AbstractHttpHandler {
 
   /**
    *
-   * @param request
-   * @param responder
-   * @param namespaceId
-   * @param emitterId
-   */
-  @GET
-  @Path("/previews/{preview-id}/emitters/{emitter-id}")
-  public void getPreviewData(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("emitter-id") String emitterId) {
-
-  }
-
-  /**
-   *
    */
   public static class PreviewStatus {
     /**
