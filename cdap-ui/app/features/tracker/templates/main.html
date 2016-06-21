@@ -66,7 +66,16 @@
             </thead>
             <tbody>
               <tr ng-repeat="metric in MainController.topDatasets.results">
-                <td>{{ metric.columnValues.label }}</td>
+                <td>
+                  <span uib-tooltip="{{ metric.columnValues.label }}"
+                    tooltip-ellipsis="{{ metric.columnValues.label }}"
+                    tooltip-enable="metric.columnValues.label.length > 15"
+                    tooltip-append-to-body="true"
+                    tooltip-class="tracker-tooltip"
+                    tooltip-placement="top">
+                    {{ metric.columnValues.label }}
+                  </span>
+                </td>
                 <td>{{ metric.columnValues.read }}</td>
                 <td>{{ metric.columnValues.write }}</td>
               </tr>

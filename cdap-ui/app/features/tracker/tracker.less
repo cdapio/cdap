@@ -51,6 +51,21 @@ body[class*='state-tracker'] {
   .alerts { top: 50px; }
 
   footer { border-top: 1px solid @border-color; }
+
+  .tooltip {
+    &.tracker-tooltip {
+      .tooltip-inner {
+        border: none;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+        font-size: 12px;
+        color: white;
+        background-color: black;
+      }
+      &.top {
+        .tooltip-arrow { border-top-color: black; }
+      }
+    }
+  }
 }
 
 body.state-tracker-enable {
@@ -152,17 +167,23 @@ body.state-tracker-home.state-tracker {
       }
     }
     tr {
+      > td, > td span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
       > td {
         color: @search-font-color;
         font-size: 12px;
         max-width: 0;
-        overflow: hidden;
         padding: 10px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
         &:first-child {
           color: @title-font-color;
           text-align: left;
+        }
+        span {
+          display: block;
+          max-width: 100%;
         }
       }
       &.empty-row > td { height: 38px; }
@@ -900,17 +921,6 @@ body.state-tracker-integrations {
       }
     }
   }
-}
-
-.tooltip.tracker-tooltip {
-  .tooltip-inner {
-    color: @title-font-color;
-    background-color: white;
-    border: none;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
-  }
-
-  .tooltip-arrow { display: none; }
 }
 
 .popover.complex-schema {

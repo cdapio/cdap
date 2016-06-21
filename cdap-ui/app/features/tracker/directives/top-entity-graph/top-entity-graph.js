@@ -41,9 +41,9 @@ angular.module(PKG.name + '.feature.tracker')
               })
             };
 
-            if(response.total < 3) {
+            if(response.total < 2) {
               scope.noData = true;
-            } else if (response.total >= 3) {
+            } else if (response.total >= 2) {
               renderEntityGraph();
             }
 
@@ -172,9 +172,11 @@ angular.module(PKG.name + '.feature.tracker')
             let link = angular.element('<a></a>')
               .attr('class', 'entity-link')
               .attr('ui-sref', 'apps.detail.overview.programs({ appId: "' + result.label + '" })')
+              .attr('uib-tooltip', result.label)
+              .attr('tooltip-ellipsis', result.label)
+              .attr('tooltip-append-to-body', 'true')
+              .attr('tooltip-class', 'tracker-tooltip')
               .text(result.label);
-
-              // TODO: Add tooltip
 
             let elem = $compile(link)(scope);
             elem.css('top', y(result.label) + margin.top - 1 + (y.rangeBand()/2) + 'px');
@@ -188,9 +190,11 @@ angular.module(PKG.name + '.feature.tracker')
             let link = angular.element('<a></a>')
               .attr('class', 'entity-link')
               .attr('ui-sref', 'apps.detail.overview.programs({ appId: "' + result.label + '" })')
+              .attr('uib-tooltip', result.label)
+              .attr('tooltip-ellipsis', result.label)
+              .attr('tooltip-append-to-body', 'true')
+              .attr('tooltip-class', 'tracker-tooltip')
               .text(result.label);
-
-              // TODO: Add tooltip
 
             let elem = $compile(link)(scope);
             elem.css('top', y(result.label) + margin.top - 1 + (y.rangeBand()/2) + 'px');
