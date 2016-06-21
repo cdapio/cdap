@@ -10,7 +10,11 @@ Introduction to Hydrator
 
 - What is Hydrator 
 - What is a Pipeline
-  - Types of pipeline (Batch and realtime) 
-- What is a plugin 
-  - Types of plugins 
+
+  - Types of Pipeline (Batch and Real-time)
+  
+- What is a Plugin
+
+  - Types of Plugins
+  
 - Hydrator Studio
