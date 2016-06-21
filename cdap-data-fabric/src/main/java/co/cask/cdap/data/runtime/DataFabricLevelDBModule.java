@@ -36,7 +36,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
   @Override
   public void configure() {
-    bind(LevelDBTableService.class).toInstance(LevelDBTableService.getInstance());
+    bind(LevelDBTableService.class).in(Singleton.class);
 
     bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(LevelDBQueueAdmin.class).in(Singleton.class);

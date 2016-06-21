@@ -33,6 +33,7 @@ logs/
 /templates/
 /artifacts/
 /data/
+/preview/
 /data-fabric-tests/data/
 
 # gateway test leftover

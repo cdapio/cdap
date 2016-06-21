@@ -40,11 +40,15 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -52,6 +56,8 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -66,6 +72,7 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -79,6 +86,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
@@ -126,6 +134,7 @@ public class StandaloneMain {
   private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
   private final TrackerAppCreationService trackerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
+  private final PreviewMain previewMain;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -205,6 +214,20 @@ public class StandaloneMain {
         }
       }
     });
+
+
+    previewMain = PreviewMain.createPreviewMain(
+      injector.getInstance(DatasetFramework.class),
+      injector.getInstance(InMemoryDiscoveryService.class),
+      injector.getInstance(ArtifactRepository.class),
+      injector.getInstance(ArtifactStore.class),
+      authorizerInstantiator,
+      injector.getInstance(StreamAdmin.class),
+      injector.getInstance(StreamCoordinatorClient.class),
+      injector.getInstance(StreamConsumerFactory.class),
+      txService,
+      injector.getInstance(TransactionManager.class)
+    );
   }
 
   /**
@@ -277,6 +300,7 @@ public class StandaloneMain {
     if (trackerAppCreationService != null) {
       trackerAppCreationService.startAndWait();
     }
+    previewMain.startUp();
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -293,6 +317,8 @@ public class StandaloneMain {
     LOG.info("Shutting down Standalone CDAP");
     boolean halt = false;
     try {
+      previewMain.shutDown();
+
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
         userInterfaceService.stopAndWait();

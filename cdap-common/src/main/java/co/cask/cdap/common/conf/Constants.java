@@ -82,6 +82,7 @@ public final class Constants {
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
     public static final String METADATA_SERVICE = "metadata.service";
+    public static final String PREVIEW_HTTP = "preview";
   }
 
   /**
@@ -180,6 +181,15 @@ public final class Constants {
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
   }
 
+  /**
+   * Preview Configurations
+   */
+  public class Preview {
+    /**
+     * Guice named bindings.
+     */
+    public static final String HANDLERS_BINDING = "preview.http.handler";
+  }
   /**
    * Scheduler options.
    */
@@ -834,6 +844,7 @@ public final class Constants {
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
+  public static final String CFG_LOCAL_PREVIEW_DIR = "local.preview.dir";
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
