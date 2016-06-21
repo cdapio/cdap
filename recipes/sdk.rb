@@ -46,17 +46,6 @@ user node['cdap']['sdk']['user'] do
   only_if { node['cdap']['sdk']['manage_user'].to_s == 'true' }
 end
 
-ark 'sdk' do
-  url node['cdap']['sdk']['url']
-  prefix_root ark_prefix_path
-  prefix_home ark_prefix_path
-  checksum node['cdap']['sdk']['checksum']
-  version ver
-  owner node['cdap']['sdk']['user']
-  group node['cdap']['sdk']['user']
-  notifies :restart, 'service[cdap-sdk]', :delayed
-end
-
 template '/etc/init.d/cdap-sdk' do
   source 'cdap-service.erb'
   mode 0755
@@ -74,6 +63,17 @@ template '/etc/profile.d/cdap-sdk.sh' do
   group 'root'
   action :create
   variables :options => { 'path' => "${PATH}:#{node['cdap']['sdk']['install_path']}/sdk/bin" }
+end
+
+ark 'sdk' do
+  url node['cdap']['sdk']['url']
+  prefix_root ark_prefix_path
+  prefix_home ark_prefix_path
+  checksum node['cdap']['sdk']['checksum']
+  version ver
+  owner node['cdap']['sdk']['user']
+  group node['cdap']['sdk']['user']
+  notifies :restart, 'service[cdap-sdk]', :delayed if node['cdap']['sdk']['init_actions'].include?(:start)
 end
 
 service 'cdap-sdk' do
