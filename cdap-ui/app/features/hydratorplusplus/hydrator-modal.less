@@ -83,4 +83,57 @@
       }
     }
   }
+
+  &.node-config-modal {
+    .modal-dialog {
+      width: 100%;
+      overflow-y: hidden;
+
+      .modal-header {
+        .modal-title {
+          padding: 20px 20px 10px 10px;
+        }
+      }
+
+      .modal-content {
+        .modal-body {
+          padding: 0 10px;
+          overflow-y: hidden;
+
+          .console-type {
+            border: 1px solid @table-border-color;
+
+            .node-config {
+              ul.nav.nav-tabs {
+                li {
+                  color: #666666;
+                  font-weight: 500;
+                  padding: 10px 15px;
+                  cursor: pointer;
+
+                  &.active {
+                    border-bottom: 2px solid @hydrator-blue;
+                  }
+                }
+              }
+              .bottompanel-body {
+                padding: 0 10px 10px 10px;
+                overflow-y: auto;
+                height: 59vh;
+              }
+            }
+          }
+          .control-label {
+            font-weight: bold;
+          }
+          table.table {
+            border: 0;
+            .control-label {
+              font-weight: bold;
+            }
+          }
+        }
+      }
+    }
+  }
 }

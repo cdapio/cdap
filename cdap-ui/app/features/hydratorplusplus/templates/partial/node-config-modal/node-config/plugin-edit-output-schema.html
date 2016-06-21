@@ -1,18 +1,4 @@
-<!--
-  Copyright © 2015 Cask Data, Inc.
 
-  Licensed under the Apache License, Version 2.0 (the "License"); you may not
-  use this file except in compliance with the License. You may obtain a copy of
-  the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-  License for the specific language governing permissions and limitations under
-  the License.
--->
 
 <div class="output-schema" ng-init="watchproperty=HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties['property-watch']">
 
@@ -60,28 +46,13 @@
       </div>
     </div>
     <div ng-if="isDisabled">
-      <my-schema-editor
-        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
-        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
-        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
-        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
+      <my-schema-editor ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema" data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema || isDisabled" plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
     <div ng-if="!isDisabled">
-      <my-schema-editor
-        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
-        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
-        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
-        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Stream'">
+      <my-schema-editor ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema" data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema" plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Stream'">
       </my-schema-editor>
-      <my-schema-editor-stream
-        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
-        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
-        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
-        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Stream'">
+      <my-schema-editor-stream ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema" data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema" plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Stream'">
       </my-schema-editor-stream>
     </div>
   </fieldset>
@@ -93,9 +64,5 @@
   </div>
 </div>
 
-<my-file-select class="sr-only"
-                id="schema-import-link"
-                data-button-icon="fa-upload"
-                on-file-select="HydratorPlusPlusNodeConfigCtrl.importFiles($files)"
-                data-button-label="Import">
+<my-file-select class="sr-only" id="schema-import-link" data-button-icon="fa-upload" on-file-select="HydratorPlusPlusNodeConfigCtrl.importFiles($files)" data-button-label="Import">
 </my-file-select>
