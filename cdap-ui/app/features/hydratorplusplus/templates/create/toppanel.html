@@ -85,8 +85,15 @@
              ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()">
           <span class="fa fa-eye"></span>
         </div>
-        <div class="btn">
+        <div class="btn"
+             ng-click="HydratorPlusPlusTopPanelCtrl.runPreview()">
           <span class="fa fa-play"></span>
+        </div>
+        <div class="btn run-time">
+          <span ng-if="!HydratorPlusPlusTopPanelCtrl.previewStartTime">00:00</span>
+          <span ng-if="HydratorPlusPlusTopPanelCtrl.previewStartTime">
+            {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
+          </span>
         </div>
       </div>
     </div>

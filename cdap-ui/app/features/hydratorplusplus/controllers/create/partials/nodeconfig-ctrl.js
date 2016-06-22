@@ -15,7 +15,8 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, rIsPreviewMode) {
+    'ngInject';
 
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -48,7 +49,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/reference-tab.html'
       }
     ];
-    this.activeTab = 1;
+    this.activeTab = rIsPreviewMode ? 2 : 1;
     this.showContents();
 
     // Timeouts
@@ -291,7 +292,6 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.inputSchemaRowLimit += 10;
   }
 }
-HydratorPlusPlusNodeConfigCtrl.$inject = ['$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory', '$uibModal', 'HydratorPlusPlusConfigStore', 'rPlugin', 'rDisabled'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusNodeConfigCtrl', HydratorPlusPlusNodeConfigCtrl);

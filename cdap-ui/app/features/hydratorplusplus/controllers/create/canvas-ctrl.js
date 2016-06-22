@@ -63,19 +63,22 @@ class HydratorPlusPlusCreateCanvasCtrl {
   }
 
   setActiveNode() {
-    var nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
+    let nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
     if (!nodeId) {
       return;
     }
-    var pluginNode;
-    var nodeFromNodesStore;
-    var nodeFromConfigStore = this.HydratorPlusPlusConfigStore.getNodes().filter( node => node.name === nodeId );
+    let pluginNode;
+    let nodeFromNodesStore;
+    let nodeFromConfigStore = this.HydratorPlusPlusConfigStore.getNodes().filter( node => node.name === nodeId );
     if (nodeFromConfigStore.length) {
       pluginNode = nodeFromConfigStore[0];
     } else {
       nodeFromNodesStore = this.DAGPlusPlusNodesStore.getNodes().filter(node => node.name === nodeId);
       pluginNode = nodeFromNodesStore[0];
     }
+
+    let previewMode = this.previewMode;
+
     this.$uibModal
         .open({
           templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
@@ -86,6 +89,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
           resolve: {
             rDisabled: function() {
               return false;
+            },
+            rIsPreviewMode: function () {
+              return previewMode;
             },
             rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusConfigStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusConfigStore, GLOBALS) {
               let pluginId = pluginNode.name;

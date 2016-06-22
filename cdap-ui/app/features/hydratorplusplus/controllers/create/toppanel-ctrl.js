@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval) {
     'ngInject';
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -26,6 +26,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.previewActions = HydratorPlusPlusPreviewActions;
+    this.$interval = $interval;
 
     this.canvasOperations = [
       {
@@ -59,14 +60,23 @@ class HydratorPlusPlusTopPanelCtrl{
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
 
     this.previewMode = false;
+    this.previewStartTime = null;
+    this.displayDuration = null;
+    this.previewTimerInterval = null;
 
     var sub = this.previewStore.subscribe(() => {
       let state = this.previewStore.getState().preview;
       this.previewMode = state.isPreviewModeEnabled;
+
+      if (state.startTime) {
+        this.previewStartTime = state.startTime;
+        this.startTimer();
+      }
     });
 
     $scope.$on('$destroy', () => {
       sub();
+      this.$interval.cancel(this.previewTimerInterval);
     });
   }
   setMetadata(metadata) {
@@ -111,6 +121,28 @@ class HydratorPlusPlusTopPanelCtrl{
     }
   }
 
+  startTimer() {
+    this.previewTimerInterval = this.$interval(() => {
+      let duration = (new Date() - this.previewStartTime) / 1000;
+      duration = duration >= 0 ? duration : 0;
+
+      let minutes = Math.floor(duration / 60);
+      let seconds = Math.floor(duration % 60);
+      seconds = seconds < 10 ? '0' + seconds : seconds;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+
+      this.displayDuration = {
+        minutes: minutes,
+        seconds: seconds
+      };
+    }, 1000);
+  }
+
+  runPreview() {
+    this.previewStore.dispatch(
+      this.previewActions.setPreviewStartTime(new Date())
+    );
+  }
 
   togglePreviewMode() {
     this.previewStore.dispatch(

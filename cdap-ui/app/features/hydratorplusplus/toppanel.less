@@ -139,6 +139,15 @@ body.theme-cdap {
         &.active {
           background-color: #cdcdcd;
         }
+
+        &.run-time {
+          cursor: default;
+          flex-grow: 2;
+          color: @hydrator-blue;
+          font-size: 22px;
+          font-weight: 500;
+          &:hover { background-color: white; }
+        }
       }
       div.hydrator-metadata {
         @media (min-width: @screen-lg-min) {

@@ -28,6 +28,15 @@ class HydratorPlusPlusPreviewActions {
       });
     };
   }
+
+  setPreviewStartTime (startTime) {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.SET_PREVIEW_START_TIME,
+        payload: {startTime}
+      });
+    };
+  }
 }
 
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
