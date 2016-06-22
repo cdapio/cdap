@@ -55,8 +55,9 @@
           <table ng-if="MainController.topDatasets.total >= 3"
             class="table">
             <thead>
-              <th>Dataset</th>
-              <th colspan="2">
+              <th class="text-center">Dataset</th>
+              <th colspan="2"
+                  class="text-center">
                 5 Programs
                 <div class="clearfix">
                   <span class="pull-left">Reading</span>
@@ -66,7 +67,7 @@
             </thead>
             <tbody>
               <tr ng-repeat="metric in MainController.topDatasets.results">
-                <td>
+                <td class="text-left">
                   <span uib-tooltip="{{ metric.columnValues.label }}"
                     tooltip-ellipsis="{{ metric.columnValues.label }}"
                     tooltip-enable="metric.columnValues.label.length > 15"
@@ -76,8 +77,8 @@
                     {{ metric.columnValues.label }}
                   </span>
                 </td>
-                <td>{{ metric.columnValues.read }}</td>
-                <td>{{ metric.columnValues.write }}</td>
+                <td class="text-center">{{ metric.columnValues.read }}</td>
+                <td class="text-center">{{ metric.columnValues.write }}</td>
               </tr>
               <tr ng-if="MainController.emptyRows === true"
                 ng-repeat="row in MainController.totalEmptyRows"

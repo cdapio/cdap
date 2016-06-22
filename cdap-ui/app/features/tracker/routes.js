@@ -193,5 +193,15 @@ angular.module(PKG.name + '.feature.tracker')
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'
             }
+          })
+          .state('tracker.detail.entity.usage', {
+            url: '/usage?start&end',
+            templateUrl: '/assets/features/tracker/templates/usage.html',
+            controller: 'TrackerUsageController',
+            controllerAs: 'UsageController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'usage'
+            }
           });
   });
