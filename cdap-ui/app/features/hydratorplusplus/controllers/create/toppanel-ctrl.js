@@ -15,7 +15,8 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope) {
+    'ngInject';
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
@@ -23,12 +24,14 @@ class HydratorPlusPlusTopPanelCtrl{
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
+    this.previewStore = HydratorPlusPlusPreviewStore;
+    this.previewActions = HydratorPlusPlusPreviewActions;
 
     this.canvasOperations = [
       {
         name: 'Preview',
         icon: 'fa fa-eye',
-        fn: this.onPreviewMode.bind(this)
+        fn: this.togglePreviewMode.bind(this)
       },
       {
         name: 'Export',
@@ -54,6 +57,17 @@ class HydratorPlusPlusTopPanelCtrl{
     this.$stateParams = $stateParams;
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
+
+    this.previewMode = false;
+
+    var sub = this.previewStore.subscribe(() => {
+      let state = this.previewStore.getState().preview;
+      this.previewMode = state.isPreviewModeEnabled;
+    });
+
+    $scope.$on('$destroy', () => {
+      sub();
+    });
   }
   setMetadata(metadata) {
     this.state.metadata = metadata;
@@ -98,8 +112,10 @@ class HydratorPlusPlusTopPanelCtrl{
   }
 
 
-  onPreviewMode() {
-    alert('hello!!');
+  togglePreviewMode() {
+    this.previewStore.dispatch(
+      this.previewActions.togglePreviewMode(!this.previewMode)
+    );
   }
   onExport() {
     this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
@@ -157,8 +173,6 @@ class HydratorPlusPlusTopPanelCtrl{
     this.HydratorPlusPlusConfigActions.publishPipeline();
   }
 }
-
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
