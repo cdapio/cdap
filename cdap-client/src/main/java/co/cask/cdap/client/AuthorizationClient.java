@@ -213,10 +213,12 @@ public class AuthorizationClient extends AbstractAuthorizer {
     FeatureDisabledException, UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == httpResponse.getResponseCode()) {
-      if (!listAllRoles().contains(new Role(principal.getName()))) {
-        throw new NotFoundException("Role: " + principal.getName());
+      if (principal.getType().equals(Principal.PrincipalType.ROLE) &&
+        httpResponse.getResponseMessage().equals(String.format("%s not found.", principal.getName()))) {
+        throw new NotFoundException(principal.getName());
+      } else {
+        throw new NotFoundException(entityId);
       }
-      throw new NotFoundException(entityId);
     }
     return httpResponse;
   }
