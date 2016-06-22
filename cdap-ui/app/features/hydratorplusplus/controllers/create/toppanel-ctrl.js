@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state) {
     'ngInject';
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -27,6 +27,9 @@ class HydratorPlusPlusTopPanelCtrl{
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.previewActions = HydratorPlusPlusPreviewActions;
     this.$interval = $interval;
+    this.myPipelineApi = myPipelineApi;
+    this.$state = $state;
+    this.$scope = $scope;
 
     this.canvasOperations = [
       {
@@ -74,7 +77,7 @@ class HydratorPlusPlusTopPanelCtrl{
       }
     });
 
-    $scope.$on('$destroy', () => {
+    this.$scope.$on('$destroy', () => {
       sub();
       this.$interval.cancel(this.previewTimerInterval);
     });
@@ -142,6 +145,23 @@ class HydratorPlusPlusTopPanelCtrl{
     this.previewStore.dispatch(
       this.previewActions.setPreviewStartTime(new Date())
     );
+
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    this.myPipelineApi.runPreview(params, {}).$promise
+      .then((res) => {
+        this.previewStore.dispatch(
+          this.previewActions.setPreviewId(res)
+        );
+      }, (err) => {
+        this.HydratorPlusPlusConsoleActions.addMessage({
+          type: 'danger',
+          content: err.data
+        });
+      });
   }
 
   togglePreviewMode() {
