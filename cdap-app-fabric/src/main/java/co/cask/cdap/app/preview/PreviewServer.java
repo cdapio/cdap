@@ -25,7 +25,6 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
@@ -64,7 +63,6 @@ public class PreviewServer extends AbstractIdleService {
   private final InetAddress hostname;
   private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramLifecycleService programLifecycleService;
   private final SystemArtifactLoader systemArtifactLoader;
 
@@ -74,17 +72,17 @@ public class PreviewServer extends AbstractIdleService {
   private CConfiguration configuration;
 
   /**
-   * Construct the AppFabricServer with service factory and configuration coming from guice injection.
+   * Construct the PreviewServer with configuration coming from guice injection.
    */
   @Inject
-  public PreviewServer(CConfiguration configuration, DiscoveryService discoveryService,
+  public PreviewServer(CConfiguration configuration,
+                       @Named("shared-discovery-service") DiscoveryService discoveryService,
                        @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                       @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
+                       @Named(Constants.Preview.HANDLERS_BINDING) Set<HttpHandler> handlers,
                        @Nullable MetricsCollectionService metricsCollectionService,
                        ProgramRuntimeService programRuntimeService,
                        ApplicationLifecycleService applicationLifecycleService,
                        ProgramLifecycleService programLifecycleService,
-                       StreamCoordinatorClient streamCoordinatorClient,
                        SystemArtifactLoader systemArtifactLoader) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
@@ -93,13 +91,12 @@ public class PreviewServer extends AbstractIdleService {
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.streamCoordinatorClient = streamCoordinatorClient;
     this.programLifecycleService = programLifecycleService;
     this.systemArtifactLoader = systemArtifactLoader;
   }
 
   /**
-   * Configures the AppFabricService pre-start.
+   * Configures the Preview pre-start.
    */
   @Override
   protected void startUp() throws Exception {
@@ -111,7 +108,6 @@ public class PreviewServer extends AbstractIdleService {
         applicationLifecycleService.start(),
         systemArtifactLoader.start(),
         programRuntimeService.start(),
-        streamCoordinatorClient.start(),
         programLifecycleService.start()
       )
     ).get();

@@ -16,48 +16,42 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
-import co.cask.cdap.app.preview.PreviewModule;
 import co.cask.cdap.app.preview.PreviewServer;
+import co.cask.cdap.app.preview.PreviewServerModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.StreamService;
-import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
-import co.cask.cdap.data.view.ViewAdminModules;
-import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
+import co.cask.cdap.explore.client.ExploreClient;
+import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.metrics.guice.MetricsHandlerModule;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.security.guice.SecurityModules;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -79,8 +73,6 @@ public class PreviewMain {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewMain.class);
 
   private final Injector injector;
-  // todo
-  private final StreamService streamService;
   private final PreviewServer previewServer;
   private final MetricsCollectionService metricsCollectionService;
   private final LogAppenderInitializer logAppenderInitializer;
@@ -99,7 +91,6 @@ public class PreviewMain {
     previewServer = injector.getInstance(PreviewServer.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
-    streamService = injector.getInstance(StreamService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -125,14 +116,23 @@ public class PreviewMain {
    */
   public static PreviewMain createPreviewMain(DatasetFramework remoteDatasetFramework,
                                               InMemoryDiscoveryService discoveryService,
-                                              ArtifactRepository artifactRepository) {
+                                              ArtifactRepository artifactRepository,
+                                              ArtifactStore artifactStore,
+                                              AuthorizerInstantiator authorizerInstantiator,
+                                              StreamAdmin streamAdmin, StreamCoordinatorClient streamCoordinatorClient,
+                                              StreamConsumerFactory streamConsumerFactory,
+                                              InMemoryTransactionService transactionService,
+                                              TransactionManager transactionManager) {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, cConf.get(Constants.CFG_LOCAL_PREVIEW_DIR));
     cConf.set(Constants.Dataset.DATA_DIR, cConf.get(Constants.CFG_LOCAL_PREVIEW_DIR));
     Configuration hConf = new Configuration();
     setConfigurations(cConf, hConf);
     return new PreviewMain(createPreviewModules(cConf, hConf, remoteDatasetFramework,
-                                                discoveryService, artifactRepository), cConf);
+                                                discoveryService, artifactRepository, artifactStore,
+                                                authorizerInstantiator,
+                                                streamAdmin, streamCoordinatorClient, streamConsumerFactory,
+                                                transactionService, transactionManager), cConf);
   }
 
   private static void setConfigurations(CConfiguration cConf, Configuration hConf) {
@@ -218,7 +218,7 @@ public class PreviewMain {
     try {
       // preview will also stop all programs
       previewServer.stopAndWait();
-      // all programs are stopped: dataset service, metrics, transactions can stop now
+      // stop dataset service
       datasetService.stopAndWait();
 
       logAppenderInitializer.close();
@@ -233,15 +233,21 @@ public class PreviewMain {
   public static List<Module> createPreviewModules(CConfiguration cConf, Configuration hConf,
                                                   DatasetFramework remoteDsFramework,
                                                   InMemoryDiscoveryService discoveryService,
-                                                  ArtifactRepository artifactRepository) {
-    cConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, "data/preview");
+                                                  final ArtifactRepository artifactRepository,
+                                                  final ArtifactStore artifactStore,
+                                                  final AuthorizerInstantiator authorizerInstantiator,
+                                                  final StreamAdmin streamAdmin,
+                                                  final StreamCoordinatorClient streamCoordinatorClient,
+                                                  final StreamConsumerFactory streamConsumerFactory,
+                                                  final InMemoryTransactionService transactionService,
+                                                  final TransactionManager transactionManager) {
+    cConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, "preview");
 
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     // configure all services except for router to bind to 127.0.0.1
     String localhost = InetAddress.getLoopbackAddress().getHostAddress();
     cConf.set(Constants.AppFabric.SERVER_ADDRESS, localhost);
-    cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
     cConf.set(Constants.Dataset.Manager.ADDRESS, localhost);
     cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
     cConf.set(Constants.Stream.ADDRESS, localhost);
@@ -249,38 +255,34 @@ public class PreviewMain {
     cConf.set(Constants.Metrics.SERVER_ADDRESS, localhost);
     cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
-    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
-    cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
-    cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
 
     return ImmutableList.of(
       new ConfigModule(cConf, hConf),
       new IOModule(),
-      new ZKClientModule(),
-      new KafkaClientModule(),
-      new MetricsHandlerModule(),
       new DiscoveryRuntimeModule().getPreviewModules(discoveryService),
       new LocationRuntimeModule().getStandaloneModules(),
-      new PreviewModule().getPreviewModules(artifactRepository),
+      new PreviewServerModule().getPreviewModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new DataFabricModules().getStandaloneModules(),
+      new DataFabricModules().getPreviewModules(transactionManager),
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getPreviewModules(remoteDsFramework),
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
-      new SecurityModules().getStandaloneModules(),
-      new StreamServiceRuntimeModule().getStandaloneModules(),
-      new ServiceStoreModules().getStandaloneModules(),
-      new ExploreClientModule(),
-      new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
-      new NotificationServiceRuntimeModule().getStandaloneModules(),
-      new ViewAdminModules().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules(),
-      new NamespaceClientRuntimeModule().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
-      new MetadataServiceModule(),
-      new AuditModule().getStandaloneModules(),
-      new AuthorizationModule()
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(ArtifactRepository.class).toInstance(artifactRepository);
+          bind(ArtifactStore.class).toInstance(artifactStore);
+          bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
+          bind(StreamAdmin.class).toInstance(streamAdmin);
+          bind(StreamConsumerFactory.class).toInstance(streamConsumerFactory);
+          bind(StreamCoordinatorClient.class).toInstance(streamCoordinatorClient);
+          bind(InMemoryTransactionService.class).toInstance(transactionService);
+          // bind explore client to mock.
+          bind(ExploreClient.class).to(MockExploreClient.class);
+        }
+      }
     );
   }
 }

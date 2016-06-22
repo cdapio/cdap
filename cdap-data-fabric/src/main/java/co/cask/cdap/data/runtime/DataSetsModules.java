@@ -126,31 +126,33 @@ public class DataSetsModules extends RuntimeModule {
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
 
-//        bind(MetadataStore.class).to(DefaultMetadataStore.class);
-//        expose(MetadataStore.class);
+        bind(MetadataStore.class).to(DefaultMetadataStore.class);
+        expose(MetadataStore.class);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named("inMemoryDatasetFramework"))
+          .annotatedWith(Names.named("localDatasetFramework"))
           .to(RemoteDatasetFramework.class);
 
-        bind(DatasetFramework.class).annotatedWith(Names.named("remoteDatasetFramework")).
+        bind(DatasetFramework.class).annotatedWith(Names.named("actualDatasetFramework")).
           toInstance(remoteDatasetFramework);
 
         bind(DatasetFramework.class).
           annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK)).
-          toProvider(HybridDatasetProvider.class);
+          toProvider(HybridDatasetProvider.class).in(Scopes.SINGLETON);
 
-        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+        bind(DatasetFramework.class).
+          toProvider(HybridDatasetProvider.class).in(Scopes.SINGLETON);
+        expose(DatasetFramework.class);
 
-//        bind(LineageWriter.class).to(BasicLineageWriter.class);
-//        expose(LineageWriter.class);
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        expose(LineageWriter.class);
 
         bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageRegistry.class);
 
 
-//        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
-//        expose(MetadataChangePublisher.class);
+        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
+        expose(MetadataChangePublisher.class);
       }
     };
   }
@@ -160,8 +162,8 @@ public class DataSetsModules extends RuntimeModule {
     private final DatasetFramework remoteDatasetFramework;
 
     @Inject
-    public HybridDatasetProvider(@Named("inMemoryDatasetFramework")DatasetFramework inMemoryDatasetFramework,
-                                 @Named("remoteDatasetFramework")DatasetFramework remoteDatasetFramework) {
+    public HybridDatasetProvider(@Named("localDatasetFramework")DatasetFramework inMemoryDatasetFramework,
+                                 @Named("actualDatasetFramework")DatasetFramework remoteDatasetFramework) {
       this.inMemoryDatasetFramework = inMemoryDatasetFramework;
       this.remoteDatasetFramework = remoteDatasetFramework;
     }

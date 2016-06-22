@@ -62,11 +62,9 @@ import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager
 import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
@@ -86,7 +84,6 @@ import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
@@ -100,17 +97,6 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import org.quartz.SchedulerException;
-import org.quartz.core.JobRunShellFactory;
-import org.quartz.core.QuartzScheduler;
-import org.quartz.core.QuartzSchedulerResources;
-import org.quartz.impl.DefaultThreadExecutor;
-import org.quartz.impl.DirectSchedulerFactory;
-import org.quartz.impl.StdJobRunShellFactory;
-import org.quartz.impl.StdScheduler;
-import org.quartz.simpl.CascadingClassLoadHelper;
-import org.quartz.spi.ClassLoadHelper;
-import org.quartz.spi.JobStore;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -311,7 +297,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
       }
+      bind(Supplier.class).annotatedWith(Names.named("scheduler.supplier")).toProvider(SchedulerSupplierProvider.class);
     }
+
 
     @Provides
     @Named(Constants.AppFabric.SERVER_ADDRESS)
@@ -319,72 +307,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     public InetAddress providesHostname(CConfiguration cConf) {
       return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
-    }
-
-    /**
-     * Provides a supplier of quartz scheduler so that initialization of the scheduler can be done after guice
-     * injection. It returns a singleton of Scheduler.
-     */
-    @Provides
-    @SuppressWarnings("unused")
-    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DatasetBasedTimeScheduleStore scheduleStore,
-                                                                    final CConfiguration cConf) {
-      return new Supplier<org.quartz.Scheduler>() {
-        private org.quartz.Scheduler scheduler;
-
-        @Override
-        public synchronized org.quartz.Scheduler get() {
-          try {
-            if (scheduler == null) {
-              scheduler = getScheduler(scheduleStore, cConf);
-            }
-            return scheduler;
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      };
-    }
-
-    /**
-     * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
-     * and turning off check for new versions.
-     * @param store JobStore.
-     * @param cConf CConfiguration.
-     * @return an instance of {@link org.quartz.Scheduler}
-     * @throws SchedulerException
-     */
-    private org.quartz.Scheduler getScheduler(JobStore store,
-                                              CConfiguration cConf) throws SchedulerException {
-
-      int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE);
-      ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);
-      threadPool.initialize();
-      String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
-      String schedulerInstanceId = DirectSchedulerFactory.DEFAULT_INSTANCE_ID;
-
-      QuartzSchedulerResources qrs = new QuartzSchedulerResources();
-      JobRunShellFactory jrsf = new StdJobRunShellFactory();
-
-      qrs.setName(schedulerName);
-      qrs.setInstanceId(schedulerInstanceId);
-      qrs.setJobRunShellFactory(jrsf);
-      qrs.setThreadPool(threadPool);
-      qrs.setThreadExecutor(new DefaultThreadExecutor());
-      qrs.setJobStore(store);
-      qrs.setRunUpdateCheck(false);
-      QuartzScheduler qs = new QuartzScheduler(qrs, -1, -1);
-
-      ClassLoadHelper cch = new CascadingClassLoadHelper();
-      cch.initialize();
-
-      store.initialize(cch, qs.getSchedulerSignaler());
-      org.quartz.Scheduler scheduler = new StdScheduler(qs);
-
-      jrsf.initialize(scheduler);
-      qs.initialize();
-
-      return scheduler;
     }
   }
 }

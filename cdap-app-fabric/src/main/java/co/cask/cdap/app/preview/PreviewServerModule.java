@@ -21,16 +21,13 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -51,21 +48,16 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
- * Metrics http handlers.
+ * Preview server modules.
  */
-public class PreviewModule {
+public class PreviewServerModule {
 
-  public Module getPreviewModules(ArtifactRepository artifactRepository) {
-    return Modules.combine(new PreviewServiceModule(artifactRepository),
+  public Module getPreviewModules() {
+    return Modules.combine(new PreviewServiceModule(),
                            new ConfigStoreModule().getStandaloneModule());
   }
 
   private static final class PreviewServiceModule extends AbstractModule {
-    ArtifactRepository artifactRepository;
-
-    PreviewServiceModule(ArtifactRepository artifactRepository) {
-      this.artifactRepository = artifactRepository;
-    }
     @Override
     protected void configure() {
       bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
@@ -74,7 +66,7 @@ public class PreviewModule {
         new FactoryModuleBuilder()
           .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
                      },
-                     new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                     new TypeLiteral<PreviewApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
                      })
           .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
           })
@@ -82,16 +74,14 @@ public class PreviewModule {
 
       bind(Store.class).to(DefaultStore.class);
       bind(PreviewServer.class).in(Scopes.SINGLETON);
-      bind(ArtifactRepository.class).toInstance(artifactRepository);
-      bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
-      bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));
 
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(PreviewHttpHandler.class);
+      bind(Scheduler.class).to(NoopScheduler.class);
     }
 
     @Provides

@@ -33,7 +33,10 @@ import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public class PreviewDatasetFramework implements DatasetFramework{
+/**
+ * Datasetframework that delegates either to local or shared (actual) dataset framework.
+ */
+public class PreviewDatasetFramework implements DatasetFramework {
   DatasetFramework localDatasetFramework;
   DatasetFramework actualDatasetFramework;
 
@@ -48,7 +51,8 @@ public class PreviewDatasetFramework implements DatasetFramework{
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module, Location jarLocation) throws DatasetManagementException {
+  public void addModule(Id.DatasetModule moduleId,
+                        DatasetModule module, Location jarLocation) throws DatasetManagementException {
 
   }
 
@@ -63,17 +67,20 @@ public class PreviewDatasetFramework implements DatasetFramework{
   }
 
   @Override
-  public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props) throws DatasetManagementException, IOException {
+  public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId,
+                          DatasetProperties props) throws DatasetManagementException, IOException {
 
   }
 
   @Override
-  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props) throws DatasetManagementException, IOException {
+  public void updateInstance(Id.DatasetInstance datasetInstanceId,
+                             DatasetProperties props) throws DatasetManagementException, IOException {
 
   }
 
   @Override
-  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) throws DatasetManagementException {
+  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
+    throws DatasetManagementException {
     return null;
   }
 
@@ -115,37 +122,58 @@ public class PreviewDatasetFramework implements DatasetFramework{
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+                                             @Nullable ClassLoader classLoader)
+    throws DatasetManagementException, IOException {
     return null;
   }
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader, DatasetClassLoaderProvider classLoaderProvider) throws DatasetManagementException, IOException {
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+                                             @Nullable ClassLoader classLoader,
+                                             DatasetClassLoaderProvider classLoaderProvider)
+    throws DatasetManagementException, IOException {
     return null;
   }
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader, @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+                                          @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          @Nullable Iterable<? extends Id> owners)
+    throws DatasetManagementException, IOException {
     return null;
   }
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+                                          @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader)
+    throws DatasetManagementException, IOException {
     return null;
   }
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader, DatasetClassLoaderProvider classLoaderProvider, @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+                                          @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners)
+    throws DatasetManagementException, IOException {
     return null;
   }
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader, DatasetClassLoaderProvider classLoaderProvider, @Nullable Iterable<? extends Id> owners, AccessType accessType) throws DatasetManagementException, IOException {
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+                                          @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners,
+                                          AccessType accessType) throws DatasetManagementException, IOException {
     return null;
   }
 

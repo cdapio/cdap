@@ -48,7 +48,10 @@ public final class DiscoveryRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(DiscoveryService.class).toInstance(discoveryService);
+        bind(DiscoveryService.class).annotatedWith(
+          Names.named("shared-discovery-service")).toInstance(discoveryService);
+        bind(InMemoryDiscoveryService.class).in(Singleton.class);
+        bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
         bind(DiscoveryServiceClient.class).toInstance(discoveryService);
       }
     };
@@ -61,14 +64,11 @@ public final class DiscoveryRuntimeModule extends RuntimeModule {
 
   private static final class InMemoryDiscoveryModule extends AbstractModule {
 
-    // ensuring to be singleton across JVM
-    private static final InMemoryDiscoveryService IN_MEMORY_DISCOVERY_SERVICE = new InMemoryDiscoveryService();
-
     @Override
     protected void configure() {
-      InMemoryDiscoveryService discovery = IN_MEMORY_DISCOVERY_SERVICE;
-      bind(DiscoveryService.class).toInstance(discovery);
-      bind(DiscoveryServiceClient.class).toInstance(discovery);
+      bind(InMemoryDiscoveryService.class).in(Singleton.class);
+      bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
+      bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
     }
   }
 

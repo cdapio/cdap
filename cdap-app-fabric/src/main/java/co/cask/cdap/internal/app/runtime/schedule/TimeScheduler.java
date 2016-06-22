@@ -22,6 +22,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -36,6 +37,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.common.Threads;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
@@ -77,7 +79,7 @@ final class TimeScheduler implements Scheduler {
   private final Store store;
 
   @Inject
-  TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, Store store,
+  TimeScheduler(@Named("scheduler.supplier")Supplier schedulerSupplier, Store store,
                 ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver) {
     this.schedulerSupplier = schedulerSupplier;
     this.store = store;
