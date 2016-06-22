@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailBottomPanelCtrl', function(HydratorPlusPlusBottomPanelStore , DAGPlusPlusNodesStore, $scope, HydratorPlusPlusBottomPanelActions) {
+  .controller('HydratorPlusPlusDetailBottomPanelCtrl', function(HydratorPlusPlusBottomPanelStore, $scope, HydratorPlusPlusBottomPanelActions) {
     this.tabs = [
       {
         title: 'History',
@@ -36,10 +36,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       {
         title: 'Datasets',
         template: '/assets/features/hydratorplusplus/templates/detail/tabs/datasets.html'
-      },
-      {
-        title: 'Node Configuration',
-        template: '/assets/features/hydratorplusplus/templates/detail/tabs/node-configuration.html'
       },
       {
         title: 'Post-Run Actions',
@@ -76,11 +72,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
     HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
     HydratorPlusPlusBottomPanelActions.expand();
-    DAGPlusPlusNodesStore.registerOnChangeListener(() => {
-      if (DAGPlusPlusNodesStore.state.activeNodeId) {
-        this.selectTab(5);
-      }
-    });
 
     $scope.$on('$destroy', function() {
       HydratorPlusPlusBottomPanelActions.reset();

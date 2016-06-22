@@ -1,0 +1,54 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<div class="modal-header clearfix">
+  <h3 class="modal-title">
+    <span>
+      {{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}} Properties
+      <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>
+    </span>
+    <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">({{HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage}})</small>
+    <span class="fa fa-times pull-right" ng-click="$close()"></span>
+    <p>
+      <small>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</small>
+    </p>
+  </h3>
+</div>
+<div class="modal-body config-modal">
+  <div class="console-type">
+    <div class="node-config">
+      <div>
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 1" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 1}">
+            {{::HydratorPlusPlusNodeConfigCtrl.tabs[0].label}}
+          </li>
+          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 2" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 2}">
+            {{::HydratorPlusPlusNodeConfigCtrl.tabs[1].label}}
+          </li>
+          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 3" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 3}">
+            {{::HydratorPlusPlusNodeConfigCtrl.tabs[2].label}}
+          </li>
+        </ul>
+        <div ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[0].templateUrl" class="bottompanel-body">
+        </div>
+        <div ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 2" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[1].templateUrl" class="bottompanel-body">
+        </div>
+        <div ng-init="node=HydratorPlusPlusNodeConfigCtrl.state.node" ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 3" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[2].templateUrl" class="bottompanel-body">
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+</div>

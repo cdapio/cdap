@@ -260,16 +260,26 @@
 .tg a{font-weight:bold;}
 </style>
 <table class="tg" width= 100%>
+{#  Code to check relations, controlled by setting in the field list at the top :hide-relations: true #}
+{%- set hiderel = '' %}
+{%- set hiderel_key = 'hide-relations' %}
+{%- if meta is defined %}
+    {%- if hiderel_key in meta %}
+        {%- set hiderel = meta[hiderel_key] %}
+    {%- endif %}
+{%- endif %}
   <tr>
+    {%- if not hiderel %}
     <th class="tg-031e">
-    
     {%- if prev %}Previous Topic: 
     <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />{{ prev.title }}</a>&nbsp;&nbsp;
+    {%- else %}
+    &nbsp;&nbsp;
+    {%- endif %}
+    </th>
     {%- endif %}
     
-    </th>
     <th class="tg-s6z2">
-    
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}{% endtrans %}
@@ -281,17 +291,20 @@
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
     {%- endif %}
     {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
+      {% trans sphinx_version=sphinx_version|e %}&bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
     {%- endif %}
-    
     </th>
-    <th class="tg-0ord">
     
+    {%- if not hiderel %}
+    <th class="tg-0ord">
     {%- if next %}&nbsp;&nbsp;Next Topic:
     <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />{{ next.title }}</a>
+    {%- else %}
+    &nbsp;&nbsp;
     {%- endif %}
-    
     </th>
+    {%- endif %}
+
   </tr>
 </table>
 

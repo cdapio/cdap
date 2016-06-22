@@ -96,6 +96,8 @@ Verification
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
 
+.. _packages-installation-advanced-topics:
+
 Advanced Topics
 ===============
 
@@ -114,20 +116,5 @@ Advanced Topics
     :start-after: .. configuration-enabling-kerberos:
     :end-before: .. _packages-configuration-eps:
 
-.. _packages-highly-available:
+.. include:: /../target/_includes/packages-ha-installation.rst
 
-CDAP HA setup
--------------
-Repeat the installation steps on additional boxes. The configuration settings (in
-``cdap-site.xml``, *property:value*) needed to support high-availability are:
-
-- ``kafka.seed.brokers``: ``127.0.0.1:9092,.../${root.namespace}`` 
-  
-  - Kafka brokers list (comma-separated), followed by ``/${root.namespace}``
-  
-- ``kafka.default.replication.factor``: 2
-
-  - Used to replicate Kafka messages across multiple machines to prevent data loss in 
-    the event of a hardware failure.
-  - The recommended setting is to run at least two Kafka servers.
-  - Set this to the number of Kafka servers.

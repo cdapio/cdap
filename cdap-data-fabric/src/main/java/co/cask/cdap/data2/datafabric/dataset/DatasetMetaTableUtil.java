@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,32 +32,14 @@ import java.util.Map;
 /**
  * Utility for working with dataset metadata table.
  */
-public class DatasetMetaTableUtil {
+public final class DatasetMetaTableUtil {
   public static final String META_TABLE_NAME = "datasets.type";
   public static final String INSTANCE_TABLE_NAME = "datasets.instance";
 
-  private static final Id.DatasetInstance META_TABLE_INSTANCE_ID =
+  public static final Id.DatasetInstance META_TABLE_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, META_TABLE_NAME);
-  private static final Id.DatasetInstance INSTANCE_TABLE_INSTANCE_ID =
+  public static final Id.DatasetInstance INSTANCE_TABLE_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, INSTANCE_TABLE_NAME);
-
-  private final DatasetFramework framework;
-
-  public DatasetMetaTableUtil(DatasetFramework framework) {
-    this.framework = framework;
-  }
-
-  public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
-    return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, META_TABLE_INSTANCE_ID,
-                                                            DatasetTypeMDS.class.getName(),
-                                                            DatasetProperties.EMPTY, null, null);
-  }
-
-  public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException {
-    return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, INSTANCE_TABLE_INSTANCE_ID,
-                                                                DatasetInstanceMDS.class.getName(),
-                                                                DatasetProperties.EMPTY, null, null);
-  }
 
   /**
    * Adds datasets and types to the given {@link DatasetFramework} used by dataset service mds.
@@ -85,5 +67,9 @@ public class DatasetMetaTableUtil {
   public static Map<String, ? extends DatasetModule> getModules() {
     return ImmutableMap.of("typeMDSModule", new SingleTypeModule(DatasetTypeMDS.class),
                            "instanceMDSModule", new SingleTypeModule(DatasetInstanceMDS.class));
+  }
+
+  private DatasetMetaTableUtil() {
+    // protect the constructor for util class.
   }
 }

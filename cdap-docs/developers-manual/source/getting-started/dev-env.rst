@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _dev-env:
 
@@ -33,8 +33,9 @@ application template for the development of your application. You can import thi
 into your preferred IDE |---| such as `IntelliJ <https://www.jetbrains.com/idea/>`__ or 
 `Eclipse <https://www.eclipse.org/>`__ |---| and start developing your first CDAP application.
 
-For an application that contains a MapReduce program, use ``-DarchetypeArtifactId=cdap-mapreduce-archetype``
-instead; for Spark, use either ``cdap-spark-java-archetype`` or ``cdap-spark-scala-archetype``.
+For an application that contains a MapReduce program, set the ``archetypeArtifactId`` to
+``cdap-mapreduce-archetype``; for Spark, use either ``cdap-spark-java-archetype`` or
+``cdap-spark-scala-archetype``.
 
 Using IntelliJ
 --------------

@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,43 +14,17 @@
   the License.
 -->
 
-<!--
-  I have passed level-1 vandame
 
-  The spit follows like this,
-
-  - Show info about the plugin (iframe)
-  - OR: Show regular properties view
-    - Show loading icon while fetching plugin config
-    - OR: Don't show loading icon once fetch is complete
-      - Show "No properties for plugin" message(if no property present)
-      - OR: Show properties of the plugin
-        - Show non-configured plugin properties as simple textboxes
-        - OR: Show configured plugin properties (+ properties missed in plugin config json)
-
-
--->
 <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">
-  <div class="bottompanel-header clearfix" ng-init="showinfo = false">
-    <div class="pull-left">
-      <h3>
-        {{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}} Properties
-        <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>
-        <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">({{HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage}})</small>
-      </h3>
-      <p>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</p>
-    </div>
-  </div>
-
-  <div class="bottompanel-body" ng-class="{'modal-sink': HydratorPlusPlusNodeConfigCtrl.state.node.type === 'sink'}">
+  <div ng-class="{'modal-sink': HydratorPlusPlusNodeConfigCtrl.state.node.type === 'sink'}">
     <div ng-show="!showinfo">
       <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">
 
         <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noproperty !== 0">
-          <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noconfig" ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-noconfig-form.html'"></div>
+          <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noconfig" ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-noconfig-form.html'"></div>
 
           <div ng-if="(HydratorPlusPlusNodeConfigCtrl.state.configfetched && !HydratorPlusPlusNodeConfigCtrl.state.noconfig)">
-            <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-config-form.html'"></div>
+            <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-config-form.html'"></div>
           </div>
         </div>
 

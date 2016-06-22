@@ -15,12 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal) {
+    this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
-    this.HydratorPlusPlusNodeConfigActions = HydratorPlusPlusNodeConfigActions;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
 
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
@@ -35,7 +36,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setState.bind(this));
     var obj = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
 
-    DAGPlusPlusNodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
+    this.DAGPlusPlusNodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
 
     this.updateNodesAndConnections = function () {
       var activeNode = this.DAGPlusPlusNodesStore.getActiveNodeId();
@@ -51,11 +52,46 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       if (!nodeId) {
         return;
       }
-      this.HydratorPlusPlusNodeConfigActions.choosePlugin(this.HydratorPlusPlusDetailNonRunsStore.getPluginObject(nodeId));
+      let pluginNode = this.HydratorPlusPlusDetailNonRunsStore.getPluginObject(nodeId);
+      this.$uibModal
+          .open({
+            templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
+            size: 'lg',
+            backdrop: 'static',
+            windowTopClass: 'node-config-modal hydrator-modal',
+            controller: 'HydratorPlusPlusNodeConfigCtrl',
+            controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
+            resolve: {
+              rDisabled: function() {
+                return true;
+              },
+              rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore, GLOBALS) {
+                let pluginId = pluginNode.name;
+                let appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
+                let sourceConn = HydratorPlusPlusDetailNonRunsStore
+                  .getSourceNodes(pluginId)
+                  .filter( node => typeof node.outputSchema === 'string');
+                return HydratorPlusPlusNodeService
+                  .getPluginInfo(pluginNode, appType, sourceConn)
+                  .then((nodeWithInfo) => (
+                    {
+                      node: nodeWithInfo,
+                      isValidPlugin: true,
+                      type: appType,
+                      isSource: GLOBALS.pluginConvert[nodeWithInfo.type] === 'source',
+                      isSink: GLOBALS.pluginConvert[nodeWithInfo.type] === 'sink',
+                      isTransform: GLOBALS.pluginConvert[nodeWithInfo.type] === 'transform'
+                    }
+                  ));
+              }]
+            }
+          })
+          .result
+          .then(this.deleteNode.bind(this), this.deleteNode.bind(this)); // Both close and ESC events in the modal are considered as SUCCESS and ERROR in promise callback. Hence the same callback for both success & failure.
     };
 
-    this.deleteNode = function() {
-      this.HydratorPlusPlusNodeConfigActions.removePlugin();
+    this.deleteNode = () => {
+      this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
     };
 
     this.generateSchemaOnEdge = function (sourceId) {
@@ -81,5 +117,5 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     }.bind(this));
 
 
-    DAGPlusPlusNodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
+    DAGPlusPlusNodesStore.registerOnChangeListener(this.setActiveNode.bind(this));
   });

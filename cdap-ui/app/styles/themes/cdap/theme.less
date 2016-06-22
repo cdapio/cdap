@@ -48,7 +48,7 @@ body.theme-cdap {
   .alert {
     border: 0;
     color: white;
-    text-shadow: 0 1px 0 rgba(255,255,255,.2);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
     width: 100%;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -57,7 +57,7 @@ body.theme-cdap {
     padding-top: 10px;
     padding-bottom: 10px;
     .border-radius(0);
-    @shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.05);
+    @shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(0, 0, 0, 0.05);
     .box-shadow(@shadow);
     button.close {
       font-weight: 400;
@@ -72,10 +72,10 @@ body.theme-cdap {
   }
 
   // Apply the mixin to the alerts
-  .alert-success    { background-color: @alert-success-bg; }
-  .alert-info       { background-color: @alert-info-bg; }
-  .alert-warning    { background-color: @alert-warning-bg; }
-  .alert-danger     { background-color: @alert-danger-bg; }
+  .alert-success { background-color: @alert-success-bg; }
+  .alert-info { background-color: @alert-info-bg; }
+  .alert-warning { background-color: @alert-warning-bg; }
+  .alert-danger { background-color: @alert-danger-bg; }
 
   //
   // Status text
@@ -95,16 +95,19 @@ body.theme-cdap {
 
   .pagination {
     > li {
-      > a, > span {
+      > a,
+      > span {
         color: @cdap-header;
       }
     }
     > .active {
-      > a, > span {
+      > a,
+      > span {
         background-color: @cdap-header;
         border-color: @cdap-header;
         color: white;
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           background-color: @cdap-header;
           border-color: @cdap-header;
         }
@@ -118,7 +121,7 @@ body.theme-cdap {
 
   // Give the progress background some depth
   .progress {
-    #gradient > .vertical(@start-color: darken(@progress-bg, 4%); @end-color: @progress-bg)
+    #gradient > .vertical(@start-color: darken(@progress-bg, 4%); @end-color: @progress-bg);
   }
 
   // Mixin for generating new styles
@@ -127,11 +130,11 @@ body.theme-cdap {
   }
 
   // Apply the mixin to the progress bars
-  .progress-bar            { .progress-bar-styles(@progress-bar-bg); }
-  .progress-bar-success    { .progress-bar-styles(@progress-bar-success-bg); }
-  .progress-bar-info       { .progress-bar-styles(@progress-bar-info-bg); }
-  .progress-bar-warning    { .progress-bar-styles(@progress-bar-warning-bg); }
-  .progress-bar-danger     { .progress-bar-styles(@progress-bar-danger-bg); }
+  .progress-bar { .progress-bar-styles(@progress-bar-bg); }
+  .progress-bar-success { .progress-bar-styles(@progress-bar-success-bg); }
+  .progress-bar-info { .progress-bar-styles(@progress-bar-info-bg); }
+  .progress-bar-warning { .progress-bar-styles(@progress-bar-warning-bg); }
+  .progress-bar-danger { .progress-bar-styles(@progress-bar-danger-bg); }
 
   // Reset the striped class because our mixins don't do multiple gradients and
   // the above custom styles override the new `.progress-bar-striped` in v3.2.0.
@@ -157,20 +160,26 @@ body.theme-cdap {
         &:not(.btn-success) {
           color: @cdap-bluegray;
         }
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           cursor: pointer;
           text-decoration: none;
         }
         &.btn-danger { .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0); }
       }
     }
-    th, td {
+    th,
+    td {
       padding: 10px;
-      &:hover, &:focus { outline: none; }
+      &:hover,
+      &:focus {
+        outline: none;
+      }
     }
     th {
       font-size: 16px;
-      &:hover, &:focus {
+      &:hover,
+      &:focus {
         background-color: transparent;
         cursor: pointer;
       }
@@ -195,27 +204,29 @@ body.theme-cdap {
         }
       }
     }
-      td, th {
-        border-left: 1px solid @table-border-color;
-        border-top: 1px solid @table-border-color;
-      }
-      th {
-        border-top: 0;
-        border-bottom: 0;
-        &:first-child { .border-radius(@table-radius 0 0 0); }
-        &:last-child { .border-radius(0 @table-radius 0 0); }
-        &:only-child { .border-radius(@table-radius @table-radius 0 0); }
-      }
-      tr:last-child {
-        & > td:first-child { .border-radius(0 0 0 @table-radius); }
-        & > td:last-child { .border-radius(0 0 @table-radius 0); }
-        & > td:only-child { .border-radius(0 0 @table-radius @table-radius); }
-      }
+    td,
+    th {
+      border-left: 1px solid @table-border-color;
+      border-top: 1px solid @table-border-color;
+    }
+    th {
+      border-top: 0;
+      border-bottom: 0;
+      &:first-child { .border-radius(@table-radius 0 0 0); }
+      &:last-child { .border-radius(0 @table-radius 0 0); }
+      &:only-child { .border-radius(@table-radius @table-radius 0 0); }
+    }
+    tr:last-child {
+      & > td:first-child { .border-radius(0 0 0 @table-radius); }
+      & > td:last-child { .border-radius(0 0 @table-radius 0); }
+      & > td:only-child { .border-radius(0 0 @table-radius @table-radius); }
+    }
   }
 
   // ui-view[role="tabpanel"] .table:not([cask-sortable])
   .table.table-status {
-    th, td {
+    th,
+    td {
       border-left: 0;
       &:first-child { border-right: 1px solid @table-border-color; }
     }
@@ -231,6 +242,7 @@ body.theme-cdap {
         font-size: 18px;
         line-height: 1;
       }
+
       @media (min-width: @screen-md-min) {
         .row .col-xs-6:first-child > div {
           border-right: 1px solid @table-border-color;
@@ -265,7 +277,7 @@ body.theme-cdap {
   // Panels
   // --------------------------------------------------
 
-// Message panel (appears on Dev + Management start screens)
+  // Message panel (appears on Dev + Management start screens)
   .panel-message {
     background: white;
     border: 1px solid #d1d4dc;
@@ -325,23 +337,25 @@ body.theme-cdap {
   }
 
   // Apply the mixin to the panel headings only
-  .panel-default > .panel-heading   { background: @cdap-lightgray; border: 0; }
-  .panel-primary > .panel-heading   { .panel-heading-styles(@panel-primary-heading-bg); }
-  .panel-success > .panel-heading   { .panel-heading-styles(@panel-success-heading-bg); }
-  .panel-info > .panel-heading      { .panel-heading-styles(@panel-info-heading-bg); }
-  .panel-warning > .panel-heading   { .panel-heading-styles(@panel-warning-heading-bg); }
-  .panel-danger > .panel-heading    { .panel-heading-styles(@panel-danger-heading-bg); }
-
+  .panel-default > .panel-heading {
+    background: @cdap-lightgray;
+    border: 0;
+  }
+  .panel-primary > .panel-heading { .panel-heading-styles(@panel-primary-heading-bg); }
+  .panel-success > .panel-heading { .panel-heading-styles(@panel-success-heading-bg); }
+  .panel-info > .panel-heading { .panel-heading-styles(@panel-info-heading-bg); }
+  .panel-warning > .panel-heading { .panel-heading-styles(@panel-warning-heading-bg); }
+  .panel-danger > .panel-heading { .panel-heading-styles(@panel-danger-heading-bg); }
 
   //
   // Wells
   // --------------------------------------------------
 
   .well {
-    //#gradient > .vertical(@start-color: darken(@well-bg, 5%); @end-color: @well-bg);
-    background-color: #DCDCE4;
+    background-color: #dcdce4;
     border-color: darken(@well-bg, 10%);
-    @shadow: inset 0 1px 3px rgba(0,0,0,.05), 0 1px 0 rgba(255,255,255,.1);
+
+    @shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1);
     .box-shadow(@shadow);
     p {
       color: @cdap-header;
@@ -360,10 +374,11 @@ body.theme-cdap {
   // Modals
   // --------------------------------------------------
   .modal {
-  // Modal layout styles (container elements)
+    // Modal layout styles (container elements)
     &.center {
       .modal-dialog {
         max-width: 80%;
+
         @media (min-width: @screen-md-min) {
           width: 900px;
         }
@@ -408,10 +423,12 @@ body.theme-cdap {
       > div {
         margin: 0;
         padding-left: 15px;
+
         @media (max-width: @screen-sm-max) {
           max-width: 200px;
         }
-        h3, p {
+        h3,
+        p {
           @media (max-width: @screen-sm-max) {
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -429,6 +446,7 @@ body.theme-cdap {
       > h3 {
         line-height: 60px;
         padding-left: 15px;
+
         @media (max-width: @screen-sm-max) {
           max-width: 200px;
           white-space: nowrap;
@@ -457,7 +475,8 @@ body.theme-cdap {
         height: 60px;
         line-height: 60px;
         .transition(all 0.2s ease);
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           background-color: @cdap-header;
           border: 1px solid @cdap-header;
           color: white;
@@ -480,8 +499,9 @@ body.theme-cdap {
       border-top: 0;
     }
 
-  // Modal content styling (headings, forms, tables, etc.)
-    h3, h4 {
+    // Modal content styling (headings, forms, tables, etc.)
+    h3,
+    h4 {
       color: @cdap-header;
     }
     .control-label {
@@ -499,7 +519,7 @@ body.theme-cdap {
       // Metric picker specific styles.
       &.mp-dropdown-toggle {
         .border-radius(4px 0 0 4px);
-        border-right: 1px solid #ccc;
+        border-right: 1px solid #cccccc;
       }
 
       &.mp-input-group-input {

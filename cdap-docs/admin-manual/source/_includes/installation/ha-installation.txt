@@ -1,0 +1,75 @@
+.. _|distribution|-highly-available:
+
+Enabling CDAP HA
+----------------
+In addition to having a :ref:`cluster architecture <admin-manual-install-deployment-architectures-ha>`
+that supports HA (high availability), these additional configuration steps need to be followed and completed:
+
+CDAP Components
+...............
+For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
+comments apply:
+
+- Sync the configuration files (such as ``cdap-site.xml`` and ``cdap-security.xml``) on all the nodes. 
+- While the default *bind.address* settings (``0.0.0.0``, used for ``app.bind.address``,
+  ``data.tx.bind.address``, ``router.bind.address``, and so on) can be synced across hosts,
+  if you customize them to a particular IP address, they will |---| as a result |---| be
+  different on different hosts.
+- Starting services is described in :ref:`|distribution|-starting-services`.
+
+CDAP Master
+...........
+The CDAP Master service primarily performs coordination tasks and can be scaled for redundancy. The
+instances coordinate amongst themselves, electing one as a leader at all times.
+
+- Install the ``cdap-master`` package on different nodes.
+- Ensure they are configured identically (``/etc/cdap/conf/cdap-site.xml``). 
+- Start the ``cdap-master`` service on each node.
+
+CDAP Router
+...........
+The CDAP Router service is a stateless API endpoint for CDAP, and simply routes requests to the
+appropriate service. It can be scaled horizontally for performance. A load balancer, if
+desired, can be placed in front of the nodes running the service.
+
+- Install the ``cdap-gateway`` package on different nodes.
+- The ``router.bind.address`` may need to be customized on each box if it is not set to
+  the default wildcard address (``0.0.0.0``).
+- Start the ``cdap-router`` service on each node.
+
+CDAP Kafka
+..........
+- Install the ``cdap-kafka`` package on different nodes.
+- Two properties need to be set in the ``cdap-site.xml`` files on each node:
+
+  - The **Kafka seed brokers list** is a comma-separated list of hosts, followed by ``/${root.namespace}``:
+
+      ``kafka.seed.brokers``: ``myhost.example.com:9092,.../${root.namespace}``
+    
+    Substitute appropriate addresses for ``myhost.example.com`` in the above example.
+  
+  - The **replication factor** is used to replicate Kafka messages across multiple
+    machines to prevent data loss in the event of a hardware failure:
+  
+      ``kafka.default.replication.factor``: 2
+
+- The recommended setting is to run at least two Kafka brokers with a minimum replication
+  factor of two; set this property to the maximum number of tolerated machine failures
+  plus one (assuming you have that number of machines). For example, if you were running
+  five Kafka brokers, and would tolerate two of those failing, you would set the
+  replication factor to three. The number of Kafka brokers listed should always be equal to
+  or greater than the replication factor.
+- Start the ``cdap-kafka`` service on each node.
+
+CDAP UI
+.......
+- Install the ``cdap-ui`` package on different nodes.
+- Start the ``cdap-ui`` service on each node.
+
+
+CDAP Authentication Server
+..........................
+- Install the ``cdap-security`` package (the CDAP Authentication Server) on different nodes.
+- Start the ``cdap-security`` service on each node.
+- Note that when an unauthenticated request is made in a secure HA setup, a list of all
+  running authentication endpoints will be returned in the body of the request.

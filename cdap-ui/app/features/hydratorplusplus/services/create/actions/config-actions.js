@@ -41,9 +41,6 @@ class HydratorPlusPlusConfigActions {
   setConfig(config) {
     this.dispatcher.dispatch('onConfigSave', config);
   }
-  savePlugin(plugin, type) {
-    this.dispatcher.dispatch('onPluginSave', {plugin: plugin, type: type});
-  }
   saveAsDraft(config) {
     this.dispatcher.dispatch('onSaveAsDraft', config);
   }

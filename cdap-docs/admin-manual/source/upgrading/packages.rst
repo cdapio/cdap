@@ -15,13 +15,27 @@ Upgrading CDAP
 When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
-These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
-and then restart CDAP.
-
 **These steps will upgrade from CDAP** |bold-previous-short-version|\ **.x to**
 |bold-version|\ **.** If you are on an earlier version of CDAP, please follow the
 upgrade instructions for the earlier versions and upgrade first to
 |previous-short-version|\.x before proceeding.
+
+Upgrading CDAP Patch Release Versions
+-------------------------------------
+Upgrading between patch versions of CDAP refers to upgrading from one |short-version|\.x
+version to a higher |short-version|\.x version.
+
+Upgrading CDAP Major/Minor Release Versions
+-------------------------------------------
+Upgrading between major/minor versions of CDAP refers to upgrading from a
+|previous-short-version|\.x version to |short-version|\.x. Upgrades
+between multiple major/minor versions must be done consecutively, and a
+version cannot be skipped unless otherwise noted.
+
+Upgrade Steps
+-------------
+These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
+and then restart CDAP:
 
 .. highlight:: console
 

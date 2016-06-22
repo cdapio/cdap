@@ -30,7 +30,7 @@ BUILD_RST_HASH="6b6124e34febf8ff1259e923ce29b5f9"
 GIT_BRANCH_PARENT="develop"
 
 # Used by cdap-apps for Hydrator documentation
-GIT_BRANCH_CDAP_HYDRATOR="develop"
+GIT_BRANCH_CASK_HYDRATOR="develop"
 
 # Used by developers-manual
 CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
