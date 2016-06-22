@@ -14,6 +14,13 @@
   the License.
 -->
 
+<!-- PREVIEW -->
+<div class="preview-max-records" ng-if="CanvasCtrl.previewMode">
+  <span>Max Records</span>
+  <span class="max-records">5</span>
+</div>
+
+<!-- DAG -->
 <my-dag-plus ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"
   nodes="CanvasCtrl.nodes"
   connections="CanvasCtrl.connections"
