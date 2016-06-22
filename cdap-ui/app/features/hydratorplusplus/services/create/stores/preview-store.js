@@ -25,8 +25,8 @@ var preview = (state = getInitialState(), action = {}) => {
   switch(action.type) {
     case previewActions.TOGGLE_PREVIEW_MODE:
       let stateCopy = Object.assign({}, state);
-      stateCopy.isPreviewModeEnabled = action.payload;
-
+      const {isPreviewModeEnabled} = action.payload;
+      stateCopy.isPreviewModeEnabled = isPreviewModeEnabled;
       return Object.assign({}, state, stateCopy);
     default:
       return state;

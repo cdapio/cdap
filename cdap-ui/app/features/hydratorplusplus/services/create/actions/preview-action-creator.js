@@ -20,11 +20,11 @@ class HydratorPlusPlusPreviewActions {
     this.previewActions = PREVIEWSTORE_ACTIONS;
   }
 
-  togglePreviewMode (isEnabled) {
+  togglePreviewMode (isPreviewModeEnabled) {
     return (dispatch) => {
       dispatch({
         type: this.previewActions.TOGGLE_PREVIEW_MODE,
-        payload: isEnabled
+        payload: {isPreviewModeEnabled}
       });
     };
   }
