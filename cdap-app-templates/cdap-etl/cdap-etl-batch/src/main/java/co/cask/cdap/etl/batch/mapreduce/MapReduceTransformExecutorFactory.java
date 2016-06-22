@@ -145,7 +145,6 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     @Override
     public void transform(JOIN_VALUE input, Emitter<KeyValue<OUT_KEY, MapTaggedOutputWritable<JOIN_VALUE>>> emitter)
       throws Exception {
-      JOIN_KEY key;
       String stageName;
       // TODO Use input to get stageName
       if (emitter instanceof TransformDetail) {
@@ -153,7 +152,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       } else {
         stageName = ((TransformDetail) ((TrackedEmitter) emitter).getEmitter()).getPrevStage();
       }
-      key = joiner.joinOn(stageName, input);
+      JOIN_KEY key = joiner.joinOn(stageName, input);
       MapTaggedOutputWritable<JOIN_VALUE> output = new MapTaggedOutputWritable(stageName, input);
       emitter.emit(new KeyValue<>(keyConversion.toWritable(key), output));
     }
@@ -302,7 +301,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     // never used
     @Override
     public W toWritable() {
-      return null;
+      throw new UnsupportedOperationException("toWritable() not supported");
     }
   }
 }

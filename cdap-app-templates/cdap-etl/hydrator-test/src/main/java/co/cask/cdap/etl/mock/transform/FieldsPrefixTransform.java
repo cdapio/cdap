@@ -29,7 +29,6 @@ import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,8 +54,8 @@ public class FieldsPrefixTransform extends Transform<StructuredRecord, Structure
     try {
       Schema outSchema = config.getOutputSchema(Schema.parseJson(config.schemaStr));
       stageConfigurer.setOutputSchema(config.getOutputSchema(outSchema));
-    } catch (IOException e) {
-      e.printStackTrace();
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Invalid output schema: " + e.getMessage(), e);
     }
   }
 

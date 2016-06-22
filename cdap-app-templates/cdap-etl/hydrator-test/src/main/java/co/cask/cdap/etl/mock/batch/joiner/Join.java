@@ -158,26 +158,58 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
       this.requiredInputs = "requiredInputs";
     }
 
-    protected Map<String, List<String>> getJoinKeys() {
+    private void validateConfig() {
+      validateNumOfInputs();
+
       if (joinKeys == null || joinKeys.isEmpty()) {
         throw new IllegalArgumentException(String.format(
           "join keys can not be empty or null for plugin %s", PLUGIN_CLASS));
       }
 
-      Map<String, List<String>> stageToKey = new HashMap<>();
       Iterable<String> multipleJoinKeys = Splitter.on(':').trimResults().split(joinKeys);
+      if (Iterables.size(multipleJoinKeys) == 0) {
+        throw new IllegalArgumentException(String.format("There should be atleast %s join keys", numOfInputs));
+      }
+
       for (String key : multipleJoinKeys) {
+        int numOfStages = 0;
         Iterable<String> perStageJoinKeys = Splitter.on(',').trimResults().split(key);
         if (Iterables.size(perStageJoinKeys) != getNumOfInputs()) {
           throw new IllegalArgumentException(String.format("Number of join keys should be equal for all the stages " +
-                                                             "for " + " plugin %s", PLUGIN_TYPE));
+                                                             "for plugin %s", PLUGIN_TYPE));
         }
+
         for (String perStageKey : perStageJoinKeys) {
           Iterable<String> stageKey = Splitter.on('.').trimResults().split(perStageKey);
           if (Iterables.size(stageKey) != 2) {
             throw new IllegalArgumentException(String.format("Join key should be specified in stageName:joinKey format"
                                                                + " for %s of %s", perStageKey, PLUGIN_TYPE));
           }
+          numOfStages++;
+          if (numOfStages != getNumOfInputs()) {
+            throw new IllegalArgumentException(String.format("There should be same number "
+                                                               + " for %s of %s", perStageKey, PLUGIN_TYPE));
+          }
+        }
+      }
+    }
+
+    private void validateNumOfInputs() {
+      try {
+        Integer.parseInt(numOfInputs);
+      } catch (NumberFormatException exception) {
+        throw new IllegalArgumentException(String.format("Number of inputs to %s should be integer but found %s ",
+                                                         PLUGIN_TYPE, numOfInputs));
+      }
+    }
+
+    private Map<String, List<String>> getJoinKeys() {
+      Map<String, List<String>> stageToKey = new HashMap<>();
+      Iterable<String> multipleJoinKeys = Splitter.on(':').trimResults().split(joinKeys);
+      for (String key : multipleJoinKeys) {
+        Iterable<String> perStageJoinKeys = Splitter.on(',').trimResults().split(key);
+        for (String perStageKey : perStageJoinKeys) {
+          Iterable<String> stageKey = Splitter.on('.').trimResults().split(perStageKey);
           String stageName = Iterables.get(stageKey, 0);
           List<String> listOfKeys = stageToKey.get(stageName);
           if (listOfKeys == null) {
@@ -188,21 +220,11 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
         }
       }
 
-      if (stageToKey.size() != getNumOfInputs()) {
-        throw new IllegalArgumentException(String.format("Number of join keys should be equal to number of inputs for" +
-                                                           " plugin %s", PLUGIN_TYPE));
-      }
-
       return stageToKey;
     }
 
     private int getNumOfInputs() {
-      try {
-        return Integer.parseInt(numOfInputs);
-      } catch (NumberFormatException exception) {
-        throw new IllegalArgumentException(String.format("Number of inputs to %s should be integer but found %s ",
-                                                         PLUGIN_TYPE, numOfInputs));
-      }
+      return Integer.parseInt(numOfInputs);
     }
   }
 

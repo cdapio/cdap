@@ -19,10 +19,10 @@ package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.Joiner;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageLifecycle;
-import co.cask.cdap.etl.api.Joiner;
 
 import java.util.List;
 
