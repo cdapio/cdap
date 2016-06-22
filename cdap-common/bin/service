@@ -118,7 +118,7 @@ _start_java() {
   ulimit -a >>${loglog}
   echo "CLASSPATH=${CLASSPATH}" >>${loglog}
   # Start our JVM
-  local __defines="-Dcdap.service=${APP} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR}"
+  local __defines="-Dcdap.service=${APP} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
   __defines+=" -Dexplore.conf.files=${EXPLORE_CONF_FILES} -Dexplore.classpath=${EXPLORE_CLASSPATH}"
   __defines+=" ${OPTS}"
   nohup nice -n ${NICENESS} "${JAVA}" ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@} </dev/null >>${loglog} 2>&1 &
@@ -225,7 +225,7 @@ run() {
   else
     echo "Running class ${MAIN_CLASS}"
   fi
-  "${JAVA}" "${JAVA_HEAPMAX}" -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} ${OPTS} -cp ${CLASSPATH} ${MAIN_CLASS} ${@}
+  "${JAVA}" "${JAVA_HEAPMAX}" -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${MAIN_CLASS} ${@}
 }
 
 case ${1} in
