@@ -80,17 +80,21 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           var instances = scope.model.instances[node.labelId] || 1;
 
           // Pushing labels down
+          // Since the labels are located in the parent, not inside the g element
+          // we have to push it to the right by 20 px, same as the shape
           parent.select('.label')
-            .attr('transform', 'translate(0,'+ bbox.height / 3 + ')')
+            .attr('transform', 'translate(20,'+ bbox.height / 3 + ')')
             .attr('class', 'node-label');
 
-          var shapeSvg = parent.insert('circle', ':first-child')
+          var shapeSvg = parent.insert('g', ':first-child');
+
+          shapeSvg.insert('circle', ':first-child')
             .attr('x', -bbox.width / 2)
             .attr('y', -bbox.height / 2)
             .attr('r', flowletCircleRadius)
             .attr('class', 'flow-shapes foundation-shape flowlet-svg');
 
-          parent.insert('text')
+          shapeSvg.insert('text')
             .attr('y', -bbox.height/4)
             .text('x' + instances)
             .attr('class', 'flow-shapes flowlet-instance-count')
@@ -101,14 +105,16 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
             circleRadius: flowletCircleRadius,
             diagramWidth: leafDiagramWidth
           };
-          drawLeafShape(parent, leafOptions);
+          drawLeafShape(shapeSvg, leafOptions);
 
-          parent.insert('text')
-            .attr('x', calculateLeafBuffer(parent, leafOptions))
+          shapeSvg.insert('text')
+            .attr('x', calculateLeafBuffer(shapeSvg, leafOptions))
             .attr('y', metricCountPadding)
             .text(numberFilter(scope.model.metrics[scope.labelMap[node.labelId].name]))
             .attr('class', 'flow-shapes flowlet-event-count')
             .attr('id', 'metrics-' + node.labelId);
+
+          shapeSvg.attr('transform', 'translate(20, 0)');
 
           node.intersect = function(point) {
             return dagreD3.intersect.circle(node, flowletCircleRadius, point);
@@ -127,7 +133,9 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
             { x: w, y: -h/2}, //c
             { x: w/2, y: streamDiagramHeight} //d
           ],
-          shapeSvg = parent.insert('polygon', ':first-child')
+          shapeSvg = parent.insert('g', ':first-child');
+
+          shapeSvg.insert('polygon', ':first-child')
             .attr('points', points.map(function(d) { return d.x + ',' + d.y; }).join(' '))
             .attr('transform', 'translate(' + (-w/8) + ',' + (h * 1/2) + ')')
             .attr('class', 'flow-shapes foundation-shape stream-svg');
@@ -137,17 +145,20 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
             circleRadius: flowletCircleRadius,
             diagramWidth: leafDiagramWidth
           };
-          drawLeafShape(parent, leafOptions);
+          drawLeafShape(shapeSvg, leafOptions);
 
-          parent.append('text')
-            .attr('x', calculateLeafBuffer(parent, leafOptions))
+          shapeSvg.append('text')
+            .attr('x', calculateLeafBuffer(shapeSvg, leafOptions))
             .attr('y', metricCountPadding)
             .text(numberFilter(scope.model.metrics[scope.labelMap[node.labelId].name]))
             .attr('class', 'flow-shapes stream-event-count')
             .attr('id', 'metrics-' + node.labelId);
 
           parent.select('.label')
+            .attr('transform', 'translate(20, 0)')
             .attr('class', 'node-label');
+
+          shapeSvg.attr('transform', 'translate(20, 0)');
 
           node.intersect = function(point) {
             return dagreD3.intersect.polygon(node, points, point);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,16 +15,8 @@
  */
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.data2.transaction.DynamicTransactionExecutor;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Supplier;
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 
 /**
  * Module to implement DynamicTransactionExecutorFactory.
@@ -35,25 +27,5 @@ public class TransactionExecutorModule extends AbstractModule {
   @Override
   public void configure() {
     bind(TransactionExecutorFactory.class).to(DynamicTransactionExecutorFactory.class);
-  }
-
-  private static class DynamicTransactionExecutorFactory implements TransactionExecutorFactory {
-
-    private final TransactionSystemClient txClient;
-
-    @Inject
-    DynamicTransactionExecutorFactory(TransactionSystemClient txClient) {
-      this.txClient = txClient;
-    }
-
-    @Override
-    public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
-      return new DefaultTransactionExecutor(txClient, txAwares);
-    }
-
-    @Override
-    public TransactionExecutor createExecutor(Supplier<TransactionContext> txContextSupplier) {
-      return new DynamicTransactionExecutor(txContextSupplier);
-    }
   }
 }

@@ -7,7 +7,7 @@ CDAP Developers’ Manual Table of Contents
 ============================================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
     Introduction <index>
     Getting Started Developing <getting-started/index>

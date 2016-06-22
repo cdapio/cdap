@@ -1,8 +1,10 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
+
+:hide-relations: true
 
 .. _introduction-to-cdap:
 
@@ -27,7 +29,8 @@ technologies required, and then show an equivalent CDAP command with the resulti
 from the CDAP Command Line Interface. (Output has been reformatted to fit the webpage
 as required.)
 
-To try this yourself, :ref:`download a copy of CDAP SDK <standalone-index>`, install it
+To try this yourself, :ref:`download a copy of the CDAP SDK <standalone-index>`, 
+:ref:`install it <standalone-index>`,
 and then use the resources in its ``examples`` directory as you follow along.
 
 We'll look at these areas:
@@ -251,30 +254,26 @@ Data Exploration
  
             |cdap >| execute 'select * from stream_logEventStream limit 2'
            
-         .. container:: highlight
-       
-           ::
-            
-             +==============================================================================================================+
-             | stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |
-             | BIGINT                    | ders: map<string,string>  |                                                      |
-             +==============================================================================================================+
-             | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:40 +0000] "GET |
-             |                           | in"}                      |  /ajax/planStatusHistoryNeighbouringSummaries.action |
-             |                           |                           | ?planKey=COOP-DBT&buildNumber=284&_=1423341312519 HT |
-             |                           |                           | TP/1.1" 200 508 "http://builds.cask.co/browse/COOP-D |
-             |                           |                           | BT-284/log" "Mozilla/5.0 (Macintosh; Intel Mac OS X  |
-             |                           |                           | 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chro |
-             |                           |                           | me/38.0.2125.122 Safari/537.36"                      |
-             |--------------------------------------------------------------------------------------------------------------|
-             | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:47 +0000] "GET |
-             |                           | in"}                      |  /rest/api/latest/server?_=1423341312520 HTTP/1.1" 2 |
-             |                           |                           | 00 45 "http://builds.cask.co/browse/COOP-DBT-284/log |
-             |                           |                           | " "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) A |
-             |                           |                           | ppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.21 |
-             |                           |                           | 25.122 Safari/537.36"                                |
-             +==============================================================================================================+
-             Fetched 2 rows
+            +==============================================================================================================+
+            | stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |
+            | BIGINT                    | ders: map<string,string>  |                                                      |
+            +==============================================================================================================+
+            | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:40 +0000] "GET |
+            |                           | in"}                      |  /ajax/planStatusHistoryNeighbouringSummaries.action |
+            |                           |                           | ?planKey=COOP-DBT&buildNumber=284&_=1423341312519 HT |
+            |                           |                           | TP/1.1" 200 508 "http://builds.cask.co/browse/COOP-D |
+            |                           |                           | BT-284/log" "Mozilla/5.0 (Macintosh; Intel Mac OS X  |
+            |                           |                           | 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chro |
+            |                           |                           | me/38.0.2125.122 Safari/537.36"                      |
+            |--------------------------------------------------------------------------------------------------------------|
+            | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:47 +0000] "GET |
+            |                           | in"}                      |  /rest/api/latest/server?_=1423341312520 HTTP/1.1" 2 |
+            |                           |                           | 00 45 "http://builds.cask.co/browse/COOP-DBT-284/log |
+            |                           |                           | " "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) A |
+            |                           |                           | ppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.21 |
+            |                           |                           | 25.122 Safari/537.36"                                |
+            +==============================================================================================================+
+            Fetched 2 rows
 
 
 Data Exploration: Attaching a Schema
@@ -371,43 +370,49 @@ Data Exploration: Attaching a Schema
  
             |cdap >| execute 'select * from stream_logEventStream limit 2'
 
-         .. container:: highlight
-       
-           ::
-           
-            +==================================================================================================================================+
-            | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_logeventstr |
-            | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | eam.user_agent: ST |
-            | tream.ts | tream.he | tream.re | tream.re | tream.au | tream.da | tream.re | tream.st | tream.co | tream.re | RING               |
-            | : BIGINT | aders: m | mote_hos | mote_log | th_user: | te: STRI | quest: S | atus: IN | ntent_le | ferrer:  |                    |
-            |          | ap<strin | t: STRIN | in: STRI |  STRING  | NG       | TRING    | T        | ngth: IN | STRING   |                    |
-            |          | g,string | G        | NG       |          |          |          |          | T        |          |                    |
-            |          | >        |          |          |          |          |          |          |          |          |                    |
-            +==================================================================================================================================+
-            | 14437238 | {"conten | 69.181.1 |          |          | 08/Feb/2 | GET /aja | 200      | 508      | http://b | Mozilla/5.0 (Macin |
-            | 45737    | t.type": | 60.120   |          |          | 015:04:3 | x/planSt |          |          | uilds.ca | tosh; Intel Mac OS |
-            |          | "text/pl |          |          |          | 6:40 +00 | atusHist |          |          | sk.co/br |  X 10_10_1) AppleW |
-            |          | ain"}    |          |          |          | 00       | oryNeigh |          |          | owse/COO | ebKit/537.36 (KHTM |
-            |          |          |          |          |          |          | bouringS |          |          | P-DBT-28 | L, like Gecko) Chr |
-            |          |          |          |          |          |          | ummaries |          |          | 4/log    | ome/38.0.2125.122  |
-            |          |          |          |          |          |          | .action? |          |          |          | Safari/537.36      |
-            |          |          |          |          |          |          | planKey= |          |          |          |                    |
-            |          |          |          |          |          |          | COOP-DBT |          |          |          |                    |
-            |          |          |          |          |          |          | &buildNu |          |          |          |                    |
-            |          |          |          |          |          |          | mber=284 |          |          |          |                    |
-            |          |          |          |          |          |          | &_=14233 |          |          |          |                    |
-            |          |          |          |          |          |          | 41312519 |          |          |          |                    |
-            |          |          |          |          |          |          |  HTTP/1. |          |          |          |                    |
-            |          |          |          |          |          |          | 1        |          |          |          |                    |
-            |----------------------------------------------------------------------------------------------------------------------------------|
-            | 14437238 | {"conten | 69.181.1 |          |          | 08/Feb/2 | GET /res | 200      | 45       | http://b | Mozilla/5.0 (Macin |
-            | 45737    | t.type": | 60.120   |          |          | 015:04:3 | t/api/la |          |          | uilds.ca | tosh; Intel Mac OS |
-            |          | "text/pl |          |          |          | 6:47 +00 | test/ser |          |          | sk.co/br |  X 10_10_1) AppleW |
-            |          | ain"}    |          |          |          | 00       | ver?_=14 |          |          | owse/COO | ebKit/537.36 (KHTM |
-            |          |          |          |          |          |          | 23341312 |          |          | P-DBT-28 | L, like Gecko) Chr |
-            |          |          |          |          |          |          | 520 HTTP |          |          | 4/log    | ome/38.0.2125.122  |
-            |          |          |          |          |          |          | /1.1     |          |          |          | Safari/537.36      |
-            +==================================================================================================================================+
+            +========================================================================================================================+
+            | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l |
+            | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents |
+            | tream.ts | tream.he | tream.re | tream.re | tream.au | tream.da | tream.re | tream.st | tream.co | tream.re | tream.us |
+            | : BIGINT | aders: m | mote_hos | mote_log | th_user: | te: STRI | quest: S | atus: IN | ntent_le | ferrer:  | er_agent |
+            |          | ap<strin | t: STRIN | in: STRI |  STRING  | NG       | TRING    | T        | ngth: IN | STRING   | : STRING |
+            |          | g,string | G        | NG       |          |          |          |          | T        |          |          |
+            |          | >        |          |          |          |          |          |          |          |          |          |
+            +========================================================================================================================+
+            | 14437238 | {"conten | 69.181.1 |          |          | 08/Feb/2 | GET /aja | 200      | 508      | http://b | Mozilla/ |
+            | 45737    | t.type": | 60.120   |          |          | 015:04:3 | x/planSt |          |          | uilds.ca | 5.0 (Mac |
+            |          | "text/pl |          |          |          | 6:40 +00 | atusHist |          |          | sk.co/br | intosh;  |
+            |          | ain"}    |          |          |          | 00       | oryNeigh |          |          | owse/COO | Intel Ma |
+            |          |          |          |          |          |          | bouringS |          |          | P-DBT-28 | c OS X 1 |
+            |          |          |          |          |          |          | ummaries |          |          | 4/log    | 0_10_1)  |
+            |          |          |          |          |          |          | .action? |          |          |          | AppleWeb |
+            |          |          |          |          |          |          | planKey= |          |          |          | Kit/537. |
+            |          |          |          |          |          |          | COOP-DBT |          |          |          | 36 (KHTM |
+            |          |          |          |          |          |          | &buildNu |          |          |          | L, like  |
+            |          |          |          |          |          |          | mber=284 |          |          |          | Gecko) C |
+            |          |          |          |          |          |          | &_=14233 |          |          |          | hrome/38 |
+            |          |          |          |          |          |          | 41312519 |          |          |          | .0.2125. |
+            |          |          |          |          |          |          |  HTTP/1. |          |          |          | 122 Safa |
+            |          |          |          |          |          |          | 1        |          |          |          | ri/537.3 |
+            |          |          |          |          |          |          |          |          |          |          | 6        |
+            |------------------------------------------------------------------------------------------------------------------------|
+            | 14437238 | {"conten | 69.181.1 |          |          | 08/Feb/2 | GET /res | 200      | 45       | http://b | Mozilla/ |
+            | 45737    | t.type": | 60.120   |          |          | 015:04:3 | t/api/la |          |          | uilds.ca | 5.0 (Mac |
+            |          | "text/pl |          |          |          | 6:47 +00 | test/ser |          |          | sk.co/br | intosh;  |
+            |          | ain"}    |          |          |          | 00       | ver?_=14 |          |          | owse/COO | Intel Ma |
+            |          |          |          |          |          |          | 23341312 |          |          | P-DBT-28 | c OS X 1 |
+            |          |          |          |          |          |          | 520 HTTP |          |          | 4/log    | 0_10_1)  |
+            |          |          |          |          |          |          | /1.1     |          |          |          | AppleWeb |
+            |          |          |          |          |          |          |          |          |          |          | Kit/537. |
+            |          |          |          |          |          |          |          |          |          |          | 36 (KHTM |
+            |          |          |          |          |          |          |          |          |          |          | L, like  |
+            |          |          |          |          |          |          |          |          |          |          | Gecko) C |
+            |          |          |          |          |          |          |          |          |          |          | hrome/38 |
+            |          |          |          |          |          |          |          |          |          |          | .0.2125. |
+            |          |          |          |          |          |          |          |          |          |          | 122 Safa |
+            |          |          |          |          |          |          |          |          |          |          | ri/537.3 |
+            |          |          |          |          |          |          |          |          |          |          | 6        |
+            +========================================================================================================================+
             Fetched 2 rows
           
 .. container:: table-block
@@ -433,10 +438,6 @@ Data Exploration: Attaching a Schema
  
             |cdap >| get stream-stats logEventStream limit 1000
 
-         .. container:: highlight
-       
-          ::
-          
             column: stream_logeventstream.remote_host, type: STRING
             Unique elements: 6
  
@@ -766,10 +767,6 @@ Advanced Data Exploration
  
             |cdap >| execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'
  
-         .. container:: highlight
-       
-           ::
- 
             +======================================================================================================================+
             | remote_host: STRING | city: STRING | state: STRING | request: STRING                                                 |
             +======================================================================================================================+
@@ -1021,10 +1018,6 @@ Transforming Your Data
 
             |cdap >| get workflow schedules logEventStreamConverter.ETLWorkflow
  
-         .. container:: highlight
-       
-           ::
-
             +=================================================================================================================+
             | application | program     | program type | name        | type        | description | properties  | runtime args |
             +=================================================================================================================+
@@ -1196,10 +1189,6 @@ Transforming Your Data
  
             |cdap >| execute 'SELECT ts, request, status FROM dataset_logEventStream_converted LIMIT 2'
           
-         .. container:: highlight
-         
-           ::
-           
             +=====================================================================+
             | ts: BIGINT    | request: STRING                       | status: INT |
             +=====================================================================+
@@ -1683,10 +1672,6 @@ Building Real World Applications
 
             |cdap >| execute 'SELECT * FROM dataset_bouncecountstore LIMIT 5'
           
-         .. container:: highlight
-         
-          ::
-
             +===============================================================================================+
             | dataset_bouncecountstore.uri: STRING   | dataset_bouncecountstore  | dataset_bouncecountstore |
             |                                        | .totalvisits: BIGINT      | .bounces: BIGINT         |

@@ -25,6 +25,8 @@ The directive adds these parameters, both optional:
 
     :tabs: comma-separated list of tabs; default "Linux,Windows"
     
+    :mapping: comma-separated list of linked-tabs; default "Linux,Windows"
+
     :copyable: flag to indicate that all text can be "copied"
     
     :single: flag to indicate that only one tab should be used, with no label (not yet implemented)
@@ -32,8 +34,6 @@ The directive adds these parameters, both optional:
     :independent: flag to indicate that this tab set does not link to another tabs
     
     :dependent: name of tab set this tab belongs to; default "linux-windows"
-
-    :mapping: comma-separated list of linked-tabs; default "Linux,Windows"
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
@@ -49,6 +49,8 @@ For example, you could have a set of tabs:
     :dependent: linux-windows
     
 Clicking on a "Linux" tab in another tab-set would activate the "Mac OS X" tab in this tab set.
+The mappings can not use special characters. If a tab uses a special character, a mapping is required.
+An error is raised, as it cannot be resolved using the defaults.
 
 Note that slightly different rule operate for replacements: a replacement such as
 "\|replace|" will work, and the backslash will be interpreted as a single backslash rather
@@ -63,7 +65,6 @@ lines and the text following is auto-selected for copying on mouse-over. (On Saf
 command-V is still required for copying; other browser support click-copying to the
 clipboard.)
 
-FIXME: Add a concept of "tab labels" versus "tab keys".
 FIXME: Implement the ":single:" flag.
 
 Examples:
@@ -132,8 +133,9 @@ from docutils.parsers.rst.directives.body import ParsedLiteral
 from docutils.parsers.rst.roles import set_classes
 
 DEFAULT_LANGUAGES = ['console', 'shell-session']
+DEFAULT_TABS = ['linux', 'windows']
+DEFAULT_TAB_LABELS = ['Linux', 'Windows']
 DEFAULT_TAB_SET = 'linux-windows'
-DEFAULT_TABS = ['Linux', 'Windows']
 
 TPL_COUNTER = 0
 
@@ -216,15 +218,24 @@ DIV_DIV_END = """
 """
 
 
-def dequote(s):
+def dequote(text):
     """
-    If a string has single or double quotes around it, remove them.
+    If text has single or double quotes around it, remove them.
     Make sure the pair of quotes match.
-    If a matching pair of quotes is not found, return the string unchanged.
+    If a matching pair of quotes is not found, return the text unchanged.
     """
-    if (s[0] == s[-1]) and s.startswith(("'", '"')):
-        return s[1:-1]
-    return s
+    if (text[0] == text[-1]) and text.startswith(("'", '"')):
+        return text[1:-1]
+    return text
+    
+def clean_alphanumeric(text):
+    """
+    If text has any non-alphanumeric characters, replace them with a hyphen.
+    """
+    text_clean = ''
+    for charc in text:
+        text_clean += charc if charc.isalnum() else '-'
+    return text_clean
     
 def convert(c, state={}):
     """
@@ -368,7 +379,11 @@ class TabbedParsedLiteral(ParsedLiteral):
             block = '\n'.join(line_set).rstrip()
             block = block.replace('\\', '\\\\')
             block = block.replace('\\|', '\\\ |')
-            block = block.replace('*', '\*')            
+            block = block.replace('*', '\*')
+            block = block.replace(' |-', ' \|-')
+            block = block.replace('\n|-', '\n\|-')
+            block = block.replace(' |+', ' \|+')
+            block = block.replace('\n|+', '\n\|+')
             if not block.endswith('\n'):
                 block += '\n'
             lines.append(block)
@@ -376,23 +391,30 @@ class TabbedParsedLiteral(ParsedLiteral):
     
         return line_counts, lines
     
-    def cleanup_option(self, option, default):
+    def cleanup_option(self, option, default, aphanumeric_only=False):
         """Removes leading or trailing quotes or double-quotes from a string option."""
         _option = self.options.get(option,'')
         if not _option:
             return default
         else:
-            return dequote(_option)
+            return clean_alphanumeric(dequote(_option)) if aphanumeric_only else dequote(_option)
 
-    def cleanup_options(self, option, default):
-        """Removes leading or trailing quotes or double-quotes from a string option list."""
+    def cleanup_options(self, option, default, aphanumeric_only=False, lower=False):
+        """
+        Removes leading or trailing quotes or double-quotes from a string option list.
+        Removes non-aphanumeric characters if aphanumeric_only true.
+        Converts from Unicode to string
+        """
         _option = self.options.get(option,'')
         if not _option:
             return default
         else:
             _options = []
             for s in _option.split(","):
-                _options.append(dequote(s))         
+                s = dequote(s)
+                s = clean_alphanumeric(s) if aphanumeric_only else s
+                s = s.lower() if lower else s
+                _options.append(str(s))         
             return _options
                     
     def run(self):
@@ -426,7 +448,9 @@ class TabbedParsedLiteral(ParsedLiteral):
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')
         node['single'] = self.options.has_key('single')
-        node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS)
+        node['tab_labels'] = self.cleanup_options('tabs', DEFAULT_TAB_LABELS)
+        node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS, aphanumeric_only=True, lower=True)
+
         tab_count = len(node['tabs'])
         if tab_count == 1:
             # If only one tab, force to be independent
@@ -435,17 +459,17 @@ class TabbedParsedLiteral(ParsedLiteral):
             if not self.options.has_key('languages'):
                 node['languages'] = [DEFAULT_LANGUAGES[1]]
         if tab_count != len(node['languages']):
-            print "Error: tabs (%s) don't match languages (%s)" % (node['tabs'], node['languages'])
+            print "Warning: tabs (%s) don't match languages (%s)" % (node['tabs'], node['languages'])
             node['languages'] = [DEFAULT_LANGUAGES[0]] * tab_count
         if not node['independent']:
             node['dependent'] = self.cleanup_option('dependent', DEFAULT_TAB_SET)
-            node['mapping'] = self.cleanup_options('mapping', node['tabs'])
-            if tab_count != len(node['mapping']):
-                print "Error: tabs (%s) don't match mapping (%s)" % (node['tabs'], node['mapping'])
-                if tab_count > 1:
-                    node['mapping'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
-                else:
-                    node['mapping'] = [DEFAULT_TABS[0]] * tab_count
+        node['mapping'] = self.cleanup_options('mapping', node['tabs'], aphanumeric_only=True, lower=True)
+        if tab_count != len(node['mapping']):
+            print "Warning: tabs (%s) don't match mapping (%s)" % (node['tabs'], node['mapping'])
+            if tab_count > 1:
+                node['mapping'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
+            else:
+                node['mapping'] = [DEFAULT_TABS[0]] * tab_count
         return [node] + messages
         
 def visit_tpl_html(self, node):
@@ -565,26 +589,25 @@ def visit_tpl_html(self, node):
     languages = node.get('languages')
     line_counts = node.get('line_counts')
     tabs = node.get('tabs')
+    tab_labels = node.get('tab_labels')
     node_mapping = node.get('mapping')
     dependent = node.get('dependent')
 
-    clean_tabs = [str(tab) for tab in tabs]
     clean_tab_links = []
     mapping = {}
 
     i = 0
     if node_mapping:
         for m in node_mapping:
-            m = str(m).lower()
             if m in clean_tab_links:
                 i += 1
                 m = "%s%d" % (m, i)
             clean_tab_links.append(m)
         for i in range(len(clean_tab_links)):
-            mapping[clean_tab_links[i]] = str(node_mapping[i]).lower()
+            mapping[clean_tab_links[i]] = node_mapping[i]
     else:
         # Independent tabs use the tab for the link
-        clean_tab_links = [tab.replace(' ', '-').lower() for tab in clean_tabs]
+        clean_tab_links = tabs
     
     div_name = 'tabbedparsedliteral{0}'.format(TPL_COUNTER)
     fill_div_options = {'div_name': div_name}
@@ -593,21 +616,24 @@ def visit_tpl_html(self, node):
         # Independent node, doesn't participate in clicks with other nodes and has no mapping
         fill_div_options['class'] = 'independent'
         js_options = {'tab_links':clean_tab_links, 'div_name':div_name}
-        start_html = INDEPENDENT_JS_TPL.format(**js_options) + DIV_START.format(**fill_div_options)
+        js_tpl = INDEPENDENT_JS_TPL
     else:
         # Dependent node
         fill_div_options['class'] = "dependent-%s" % dependent
         js_options = {'tab_links':clean_tab_links, 
-                      'mapping': repr(mapping),
+                      'mapping':repr(mapping),
                       'div_name':div_name,
-                      'tabSetID':repr(dependent), }
-        start_html = DEPENDENT_JS_TPL.format(**js_options) + DIV_START.format(**fill_div_options)
+                      'tabSetID':repr(dependent),
+                     }
+        js_tpl = DEPENDENT_JS_TPL
+
+    start_html = js_tpl.format(**js_options) + DIV_START.format(**fill_div_options)
 
     text_list = node.astext().split('\n')
     offset = 0
     for index in range(len(tabs)):
         lang, lines = languages[index], line_counts[index]
-        tab_name, tab_link = clean_tabs[index], clean_tab_links[index]
+        tab_name, tab_link = tab_labels[index], clean_tab_links[index]
         start_tag = self.starttag(node, 'div', suffix='', CLASS='highlight-%s' % lang)
         tab_text = text_list[offset:offset + lines]
         offset += lines

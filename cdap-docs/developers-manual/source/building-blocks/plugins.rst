@@ -376,8 +376,15 @@ For example, to retrieve detail about our ``custom-transforms`` artifact:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]
+  $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]
 
+Using the CLI:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+ 
+    |cdap >| describe artifact properties custom-transforms 1.0.0 [system | user]
+    
 If you deployed the ``custom-transforms`` artifact as a system artifact, the scope is ``system``.
 If you deployed the ``custom-transforms`` artifact as a user artifact, the scope is ``user``.
 
@@ -388,8 +395,15 @@ specific type. For example, to check if ``cdap-etl-batch`` can access the plugin
 
 .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/|version|/extensions/transform?scope=system"
+    $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/|version|/extensions/transform?scope=system"
 
+Using the CLI:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+ 
+    |cdap >| list artifact plugins cdap-etl-batch |version| transform system
+    
 You can then check the list returned to see if your transforms are in the list. Note that
 the scope here refers to the scope of the parent artifact. In this example it is the ``system``
 scope because ``cdap-etl-batch`` is a system artifact. This is true even if you deployed

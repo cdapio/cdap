@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusBottomPanelCtrl {
-  constructor(HydratorPlusPlusBottomPanelActions, HydratorPlusPlusBottomPanelStore, HydratorPlusPlusNodeConfigStore, HydratorPlusPlusConsoleStore) {
+  constructor(HydratorPlusPlusBottomPanelActions, HydratorPlusPlusBottomPanelStore, HydratorPlusPlusConsoleStore) {
     this.tabs = [
       {
         title: 'Console',
@@ -26,28 +26,14 @@ class HydratorPlusPlusBottomPanelCtrl {
         template: '/assets/features/hydratorplusplus/templates/partial/settings.html'
       },
       {
-        title: 'Node Configuration',
-        template: '/assets/features/hydratorplusplus/templates/partial/node-config.html'
-      },
-      {
-        title: 'Reference',
-        template: '/assets/features/hydratorplusplus/templates/partial/reference-tab.html'
-      },
-      {
         title: 'Post-Run Actions',
         template: '/assets/features/hydratorplusplus/templates/partial/postactions.html'
       }
     ];
     this.HydratorPlusPlusBottomPanelActions = HydratorPlusPlusBottomPanelActions;
-    this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
     this.HydratorPlusPlusBottomPanelStore = HydratorPlusPlusBottomPanelStore;
 
     this.HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
-    HydratorPlusPlusNodeConfigStore.registerOnChangeListener( () => {
-      if (this.HydratorPlusPlusNodeConfigStore.getState().isValidPlugin) {
-        this.selectTab(2);
-      }
-    } );
     HydratorPlusPlusConsoleStore.registerOnChangeListener( () => { this.selectTab(0); } );
     this.setIsCollapsed();
     this.selectTab(0);
@@ -75,6 +61,6 @@ class HydratorPlusPlusBottomPanelCtrl {
   }
 }
 
-HydratorPlusPlusBottomPanelCtrl.$inject = ['HydratorPlusPlusBottomPanelActions', 'HydratorPlusPlusBottomPanelStore', 'HydratorPlusPlusNodeConfigStore', 'HydratorPlusPlusConsoleStore'];
+HydratorPlusPlusBottomPanelCtrl.$inject = ['HydratorPlusPlusBottomPanelActions', 'HydratorPlusPlusBottomPanelStore', 'HydratorPlusPlusConsoleStore'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusBottomPanelCtrl', HydratorPlusPlusBottomPanelCtrl);

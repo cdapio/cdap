@@ -15,25 +15,22 @@
  */
 
 class HydratorPlusPlusReferenceTabCtrl {
-  constructor(HydratorPlusPlusPluginConfigFactory, HydratorPlusPlusNodeConfigStore, GLOBALS, myHelpers) {
+  constructor(HydratorPlusPlusPluginConfigFactory, GLOBALS, myHelpers, $scope) {
     this.GLOBALS = GLOBALS;
-    this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.myHelpers = myHelpers;
-    this.HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
-    this.setState();
+    this.state = {};
+    this.showContents($scope.node);
   }
-  setState() {
-    this.state = this.state || {};
-    this.state.node = this.HydratorPlusPlusNodeConfigStore.getState().node;
-    if (!this.state.node.plugin) {
+  showContents(node) {
+    if (!node.plugin) {
       this.state.docReference = this.GLOBALS.en.hydrator.studio.info['DEFAULT-REFERENCE'];
     } else {
-      let key = `doc.${this.state.node.plugin.name}-${this.state.node.type}`;
+      let key = `doc.${node.plugin.name}-${node.type}`;
       this.HydratorPlusPlusPluginConfigFactory.fetchDocJson(
-        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name'),
-        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version'),
-        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'scope'),
+        this.myHelpers.objectQuery(node, 'plugin', 'artifact', 'name'),
+        this.myHelpers.objectQuery(node, 'plugin', 'artifact', 'version'),
+        this.myHelpers.objectQuery(node, 'plugin', 'artifact', 'scope'),
         key
       ).then (
         (res) => {
@@ -49,6 +46,6 @@ class HydratorPlusPlusReferenceTabCtrl {
   }
 }
 
-HydratorPlusPlusReferenceTabCtrl.$inject = ['HydratorPlusPlusPluginConfigFactory', 'HydratorPlusPlusNodeConfigStore', 'GLOBALS', 'myHelpers'];
+HydratorPlusPlusReferenceTabCtrl.$inject = ['HydratorPlusPlusPluginConfigFactory', 'GLOBALS', 'myHelpers', '$scope'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusReferenceTabCtrl', HydratorPlusPlusReferenceTabCtrl);

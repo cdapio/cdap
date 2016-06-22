@@ -32,13 +32,13 @@
         <thead>
           <th>Name</th>
           <th>Type</th>
-          <th>Null</th>
+          <th class="text-center">Null</th>
         </thead>
         <tbody>
           <tr ng-repeat="field in GetSchemaModalController.schema">
             <td>{{ field.name }}</td>
             <td>{{ field.type }}</td>
-            <td class="text-center">
+            <td class="text-center nullable">
               <input type="checkbox" ng-model="field.nullable" disabled>
             </td>
           </tr>

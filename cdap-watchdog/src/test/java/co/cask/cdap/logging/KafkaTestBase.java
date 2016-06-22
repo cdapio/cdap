@@ -54,7 +54,7 @@ public abstract class KafkaTestBase {
       new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new MetricsClientRuntimeModule().getNoopModules(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getDistributedModules(),
       new PrivateModule() {
         @Override

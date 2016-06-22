@@ -21,7 +21,8 @@ var gulp = require('gulp'),
     del = require('del'),
     mainBowerFiles = require('main-bower-files'),
     merge = require('merge-stream'),
-    autoprefixer = require('autoprefixer');
+    autoprefixer = require('autoprefixer'),
+    stylelint = require('stylelint');
 
 
 /*
@@ -63,7 +64,7 @@ gulp.task('fonts', function() {
 /*
   application CSS
  */
-gulp.task('css:app', function() {
+gulp.task('css:app', ['css:lint'], function() {
   var processor = [
     autoprefixer({ browsers: ['> 1%'], cascade:true })
   ];
@@ -79,6 +80,24 @@ gulp.task('css:app', function() {
     .pipe(plug.postcss(processor))
     .pipe(gulp.dest('./dist/assets/bundle'))
     .pipe(plug.livereload());
+});
+
+gulp.task('css:lint', function () {
+
+  return gulp.src([
+      './app/styles/common.less',
+      './app/styles/themes/*.less',
+      './app/directives/**/*.{less,css}',
+      './app/features/**/*.{less,css}'
+    ])
+    .pipe(plug.stylelint({
+      configFile: './.stylelintrc',
+      syntax: 'less',
+      reporters: [{
+        formatter: 'string',
+        console: true
+      }]
+    }));
 });
 
 

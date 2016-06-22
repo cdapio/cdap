@@ -10,14 +10,6 @@ import os
 sys.path.insert(0, os.path.abspath('../../_common'))
 from common_conf import * 
 
-# Override the common config
-
-html_short_title_toc = manuals_dict["faqs"]
-html_short_title = u'CDAP %s' % html_short_title_toc
-
-html_context = {"html_short_title_toc":html_short_title_toc}
-
-# Remove this guide from the mapping as it will fail as it has been deleted by clean
-intersphinx_mapping.pop("faqs", None)
+html_short_title_toc, html_short_title, html_context = set_conf_for_manual()
 
 html_theme = 'cdap-faqs'

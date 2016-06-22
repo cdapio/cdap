@@ -186,6 +186,8 @@ Verification
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
 
+.. _mapr-installation-advanced-topics:
+
 Advanced Topics
 ===============
 
@@ -206,3 +208,5 @@ Kerberos is currently not supported by CDAP on secure MapR clusters.
 .. .. include:: /../target/_includes/mapr-configuration.rst
 ..     :start-after: .. configuration-enabling-kerberos:
 ..     :end-before: .. _mapr-configuration-eps:
+
+.. include:: /../target/_includes/mapr-ha-installation.rst
