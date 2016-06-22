@@ -15,14 +15,13 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES){
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES){
     this.state = {};
     this.mySettings = mySettings;
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
     this.HydratorPlusPlusCanvasFactory = HydratorPlusPlusCanvasFactory;
     this.GLOBALS = GLOBALS;
     this.$stateParams = $stateParams;
-    this.myHelpers = myHelpers;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.$q = $q;
@@ -35,9 +34,7 @@ class HydratorPlusPlusConfigStore {
     this.setDefaults();
     this.hydratorPlusPlusConfigDispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
     this.hydratorPlusPlusConfigDispatcher.register('onEngineChange', this.setEngine.bind(this));
-    this.hydratorPlusPlusConfigDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
-    this.hydratorPlusPlusConfigDispatcher.register('onPluginAdd', this.setConfig.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onPluginEdit', this.editNodeProperties.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetInstance', this.setInstance.bind(this));
@@ -503,21 +500,8 @@ class HydratorPlusPlusConfigStore {
     } catch (e) {}
     traverseMap(adjacencyMap[pluginId], outputSchema);
   }
-  addNode(node) {
-    this.state.__ui__.nodes.push(node);
-  }
   getNodes() {
     return this.getState().__ui__.nodes;
-  }
-  getNode(nodeId) {
-    let nodes = this.state.__ui__.nodes;
-    let match = nodes.filter( node => node.name === nodeId);
-    if (match.length) {
-      match = match[0];
-    } else {
-      match = null;
-    }
-    return angular.copy(match);
   }
   getSourceNodes(nodeId) {
     let nodesMap = {};
@@ -739,6 +723,6 @@ class HydratorPlusPlusConfigStore {
   }
 }
 
-HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES'];
+HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);
