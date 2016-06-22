@@ -45,8 +45,7 @@ angular.module(PKG.name + '.commons')
         vm.openModal = function () {
           var modal = $uibModal.open({
             templateUrl: 'plugin-functions/functions/get-schema/get-schema-modal.html',
-            size: 'lg',
-            windowTopClass: 'hydrator-modal get-schema-modal',
+            windowClass: 'hydrator-modal node-config-modal',
             keyboard: true,
             controller: function ($scope, nodeInfo, $state) {
               var mvm = this;
