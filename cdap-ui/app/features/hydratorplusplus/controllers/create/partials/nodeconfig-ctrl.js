@@ -62,12 +62,6 @@ class HydratorPlusPlusNodeConfigCtrl {
     });
 
     this.previewData = null;
-    this.previewInputSchema = null;
-    this.previewOutputSchema = null;
-    this.previewSchemaExpanded = {
-      input: false,
-      output: false
-    };
     this.fetchPreview();
 
   }
@@ -278,21 +272,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       .$promise
       .then((res) => {
         this.previewData = res;
-
-        this.previewInputSchema = this.formatSchema(res.inputSchema.fields);
-        this.previewOutputSchema = this.formatSchema(res.outputSchema.fields);
       });
-  }
-
-  formatSchema(fields) {
-    return fields.map((field) => {
-      let obj = {
-        name: field.name,
-        type: angular.isArray(field.type) ? field.type[0] : field.type,
-        null: angular.isArray(field.type) ? true : false
-      };
-      return obj;
-    });
   }
 
   validateSchema() {
