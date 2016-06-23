@@ -81,14 +81,14 @@ public class LoggingTester {
 
     // Add logs with a different runid
     LoggingContextAccessor.setLoggingContext(
-      replaceTag(loggingContextNs1, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, "RUN2")));
+      replaceTag(loggingContextNs1, new Entry(ApplicationLoggingContext.TAG_RUN_ID, "RUN2")));
     for (int i = 40; i < 60; ++i) {
       logger.warn("RUN2 Test log message {} {} {}", i, "arg1", "arg2", e2);
     }
 
     // Add logs with null runid and null instanceid
     LoggingContextAccessor.setLoggingContext(
-      replaceTag(loggingContextNs1, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, null),
+      replaceTag(loggingContextNs1, new Entry(ApplicationLoggingContext.TAG_RUN_ID, null),
                  new Entry(ApplicationLoggingContext.TAG_INSTANCE_ID, null)));
     for (int i = 40; i < 60; ++i) {
       logger.warn("NULL Test log message {} {} {}", i, "arg1", "arg2", e2);
@@ -96,7 +96,7 @@ public class LoggingTester {
 
     // Check with null runId and null instanceId
     LoggingContextAccessor.setLoggingContext(
-      replaceTag(loggingContextNs2, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, null),
+      replaceTag(loggingContextNs2, new Entry(ApplicationLoggingContext.TAG_RUN_ID, null),
                  new Entry(ApplicationLoggingContext.TAG_INSTANCE_ID, null)));
     for (int i = 80; i < 120; ++i) {
       logger.warn("NS_2 Test log message {} {} {}", i, "arg1", "arg2", e2);
@@ -164,7 +164,7 @@ public class LoggingTester {
 
     // Try with a different run
     LogCallback logCallback10 = new LogCallback();
-    logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, "RUN2")),
+    logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUN_ID, "RUN2")),
                          ReadRange.LATEST, 20, Filter.EMPTY_FILTER, logCallback10);
     events = logCallback10.getEvents();
     Assert.assertEquals(20, events.size());
@@ -173,7 +173,7 @@ public class LoggingTester {
 
     // Try with a null runid, should return all events with or without runid
     LogCallback logCallback11 = new LogCallback();
-    logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, null)),
+    logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUN_ID, null)),
                          ReadRange.LATEST, 35, Filter.EMPTY_FILTER, logCallback11);
     events = logCallback11.getEvents();
     Assert.assertEquals(35, events.size());
@@ -255,7 +255,7 @@ public class LoggingTester {
 
     // Try with a different run
     LogCallback logCallback10 = new LogCallback();
-    logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, "RUN2")),
+    logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUN_ID, "RUN2")),
                          ReadRange.LATEST, 20, Filter.EMPTY_FILTER, logCallback10);
     events = logCallback10.getEvents();
     Assert.assertEquals(20, events.size());
@@ -264,7 +264,7 @@ public class LoggingTester {
 
     // Try with a null runid, should return all events with or without runid
     LogCallback logCallback11 = new LogCallback();
-    logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, null)),
+    logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUN_ID, null)),
                          ReadRange.LATEST, 40, Filter.EMPTY_FILTER, logCallback11);
     events = logCallback11.getEvents();
     Assert.assertEquals(40, events.size());

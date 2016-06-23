@@ -23,9 +23,7 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-ds-multiplevalues/widget-ds-multiplevalues.html',
-      controller: function($scope, EventPipe, myHelpers) {
-        var modelCopy = angular.copy($scope.model);
-
+      controller: function($scope, myHelpers) {
         $scope.valuesdelimiter = myHelpers
           .objectQuery($scope.config, 'widget-attributes', 'values-delimiter') || ':';
         $scope.delimiter = myHelpers
@@ -66,12 +64,6 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize();
-
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-
-          initialize();
-        });
 
         $scope.$watch('properties', function() {
           var str = '';

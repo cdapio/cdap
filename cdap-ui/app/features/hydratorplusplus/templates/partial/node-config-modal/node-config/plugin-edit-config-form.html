@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -16,47 +16,47 @@
 
 <div class="config-table source-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSource">
   <div>
-    <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-properties-template.html'"></div>
+    <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-properties-template.html'"></div>
   </div>
 
   <div>
-    <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+    <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
 <div class="config-table transform-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">
   <div>
-    <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-input-schema.html'"></div>
+    <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
   </div>
 
   <div>
-    <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-properties-template.html'"></div>
+    <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-properties-template.html'"></div>
   </div>
 
   <div>
-    <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+    <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
 <div class="validator-plugin" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Validator'">
   <div>
-    <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
+    <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-validator-transform.html'"></div>
   </div>
 </div>
 
 <div class="config-table sink-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">
   <div>
-    <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-input-schema.html'"></div>
+    <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
   </div>
 
   <div>
     <div class="row">
       <div class="col-xs-12">
-        <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-properties-template.html'"></div>
+        <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-properties-template.html'"></div>
       </div>
 
       <div class="col-xs-12 sink-output-schema" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.isOutputSchemaExists || HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.implicitSchema">
-        <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+        <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
       </div>
     </div>
   </div>

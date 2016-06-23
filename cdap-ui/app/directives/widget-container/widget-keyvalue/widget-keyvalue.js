@@ -24,9 +24,7 @@ angular.module(PKG.name + '.commons')
         isDropdown: '='
       },
       templateUrl: 'widget-container/widget-keyvalue/widget-keyvalue.html',
-      controller: function($scope, EventPipe, myHelpers) {
-        var modelCopy = angular.copy($scope.model);
-
+      controller: function($scope, myHelpers) {
         $scope.kvdelimiter = myHelpers.objectQuery($scope.config, 'kv-delimiter') ||
                              myHelpers.objectQuery($scope.config, 'widget-attributes', 'kv-delimiter') ||
                              ':';
@@ -75,12 +73,6 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize();
-
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-
-          initialize();
-        });
 
         $scope.$watch('properties', function() {
 

@@ -24,9 +24,9 @@
     </thead>
     <tbody>
       <tr ng-repeat="action in PostActionController.postActions">
-        <td>{{ action.plugin.name }}</td>
-        <td>{{ action._uiDescription }}</td>
-        <td>{{ action.plugin.properties.runCondition }}</td>
+        <td>{{ ::action.plugin.name }}</td>
+        <td>{{ ::action._uiDescription }}</td>
+        <td>{{ ::action.plugin.properties.runCondition }}</td>
         <td class="text-center">
           <a ng-click="PostActionController.viewAction(action)">View</a>
         </td>

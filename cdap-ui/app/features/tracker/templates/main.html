@@ -30,6 +30,75 @@
              pattern="^(?![*]).*$">
       <span class="fa fa-search form-control-feedback"></span>
     </div>
+  </div>
 
+  <div class="tracker-metrics">
+    <div class="row text-center">
+      <div class="col-md-4">
+        <p class="metric-heading">Top Applications</p>
+        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-container">
+          <my-top-entity-graph
+            model="MainController.topAppsData"
+            type="apps">
+          </my-top-entity-graph>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <p class="metric-heading">Top Programs</p>
+        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-container">
+          <my-top-entity-graph
+            model="MainController.topAppsData"
+            type="apps">
+          </my-top-entity-graph>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <p class="metric-heading">Top Datasets</p>
+        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-container">
+          <table class="table">
+            <thead>
+              <th>Dataset</th>
+              <th colspan="2">
+                5 Programs
+                <div class="clearfix">
+                  <span class="pull-left">Reading</span>
+                  <span class="pull-right">Writing</span>
+                </div>
+              </th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Name 01</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>Name 02</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>Name 03</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>Name 04</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>Name 05</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

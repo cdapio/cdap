@@ -51,14 +51,14 @@
         <div class="item-body" ng-class="{'view-icon': MySidePanel.view === 'icon', 'view-list': MySidePanel.view === 'list'}">
 
           <div ng-if="MySidePanel.view === 'icon'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText} | orderBy: 'templateName || name') track by $index"
-               class="plugin-item {{plugin.nodeClass}}"
+               class="plugin-item {{::plugin.nodeClass}}"
                my-popover
                data-placement="right"
                data-template="plugin.template"
                content-data="plugin"
                data-popover-context="MySidePanel"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
-            <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
+            <span ng-if="::plugin.icon" class="text-center fa {{::plugin.icon}}"></span>
             <span class="name">{{ plugin.name }}</span>
             <span class="plugin-badge">T</span>
           </div>
@@ -66,9 +66,9 @@
             <h4>No {{MySidePanel.itemGenericName}} found.</h4>
           </div>
           <div ng-if="MySidePanel.view === 'list'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText} | orderBy: 'name') track by $index"
-               class="plugin-item {{plugin.nodeClass}}"
+               class="plugin-item {{::plugin.nodeClass}}"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
-            <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
+            <span ng-if="::plugin.icon" class="text-center fa {{::plugin.icon}}"></span>
             <span class="name"
                   my-popover
                   data-placement="right"

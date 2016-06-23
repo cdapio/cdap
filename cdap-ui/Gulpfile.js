@@ -309,6 +309,7 @@ gulp.task('js:app', function() {
     './app/lib/global-lib.js'
   ])
     .pipe(plug.plumber())
+    .pipe(plug.replace('/* !! DISABLE DEBUG INFO !! */', '$compileProvider.debugInfoEnabled(false);'))
     .pipe(plug.ngAnnotate())
     // .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({

@@ -18,6 +18,33 @@ class TrackerMainController{
   constructor($state) {
     this.$state = $state;
     this.searchQuery = '';
+
+    // Placeholder data: TODO: remove once backend API is ready
+    this.topAppsData = {
+      'total' : 15,
+      'results' : [
+        {
+          'label' : 'Application1',
+          'value' : 36
+        },
+        {
+          'label' : 'Application3',
+          'value' : 28
+        },
+        {
+          'label' : 'Application2',
+          'value' : 17
+        },
+        {
+          'label' : 'Application5',
+          'value' : 17
+        },
+        {
+          'label' : 'Application4',
+          'value' : 1
+        }
+      ]
+    };
   }
 
   search(event) {

@@ -79,7 +79,7 @@ angular.module(PKG.name + '.commons')
       link: function (scope, elem, attr, ngModel) {
 
         if(attr.required!==undefined) {
-          elem.find('input').attr('required', true);
+          var input = elem.find('input').attr('required', true);
           // TODO: if the validators fail, propagate this information to the user
           ngModel.$validators.metricAndContext = function (m, v) {
             var t = m || v;
@@ -175,8 +175,8 @@ angular.module(PKG.name + '.commons')
         }
 
         var onBlurHandler = ngModel.$setTouched.bind(ngModel);
-        elem.find('button').on('blur', onBlurHandler);
-        elem.find('input').on('blur', onBlurHandler);
+        var button = elem.find('button').on('blur', onBlurHandler);
+        var inputBlur = elem.find('input').on('blur', onBlurHandler);
 
         var metricChanged = function (newVal, oldVal) {
           ngModel.$validate();
@@ -214,6 +214,9 @@ angular.module(PKG.name + '.commons')
 
         };
         scope.$watch('metric', metricChanged, true);
+        scope.$on('$destroy', function() {
+          input = button = inputBlur = null;
+        });
         fetchAhead();
       }
     };

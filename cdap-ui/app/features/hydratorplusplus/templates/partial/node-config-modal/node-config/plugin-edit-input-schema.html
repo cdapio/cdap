@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -32,12 +32,7 @@
         <tbody infinite-scroll="HydratorPlusPlusNodeConfigCtrl.doLoadNextSetOfInputSchemaRows()" infinite-scroll-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema.length <= HydratorPlusPlusNodeConfigCtrl.inputSchemaRowLimit">
           <tr ng-repeat="schema in HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema | limitTo: HydratorPlusPlusNodeConfigCtrl.inputSchemaRowLimit track by $index" ng-keypress="enter($event, $last)">
             <td class="name" ng-if="!schema.empty">
-              <span uib-tooltip="{{ schema.name }}"
-                    tooltip-ellipsis="{{ schema.name }}"
-                    data-ellipsis="isEllipsis"
-                    data-offset-value="20"
-                    tooltip-enable="isEllipsis"
-                    tooltip-append-to-body="true">
+              <span uib-tooltip="{{ schema.name }}" tooltip-ellipsis="{{ schema.name }}" data-ellipsis="isEllipsis" data-offset-value="20" tooltip-enable="isEllipsis" tooltip-append-to-body="true">
                 {{schema.name}}
               </span>
             </td>
@@ -46,7 +41,7 @@
               <span ng-if="schema.type.type === 'map'">map&lt;string, string&gt; </span>
             </td>
             <td class="nullable text-center" ng-if="!schema.empty">
-              <input type="checkbox" ng-model="schema.nullable" disabled>
+              <input type="checkbox" ng-model="schema.nullable" disabled="disabled">
             </td>
           </tr>
         </tbody>

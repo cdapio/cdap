@@ -344,6 +344,11 @@ function set_version() {
   fi
   cd ${current_directory}
   IFS="${OIFS}"
+  
+  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
+    GIT_BRANCH_CASK_HYDRATOR="develop"
+  fi
+  get_cask_hydrator_version ${GIT_BRANCH_CASK_HYDRATOR}
 }
 
 function display_version() {
@@ -355,7 +360,16 @@ function display_version() {
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
   echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
-  echo "GIT_BRANCH_CDAP_HYDRATOR: ${GIT_BRANCH_CDAP_HYDRATOR}"
+  echo "GIT_BRANCH_CASK_HYDRATOR: ${GIT_BRANCH_CASK_HYDRATOR}"
+  echo "CASK_HYDRATOR_VERSION: ${CASK_HYDRATOR_VERSION}"
+}
+
+function get_cask_hydrator_version() {
+  # $1 Branch of Hydrator Plugins to use
+  CASK_HYDRATOR_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
+  CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION#*<version>}
+  CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION%%</version>*}
+  export CASK_HYDRATOR_VERSION
 }
 
 function clear_messages_set_messages_file() {

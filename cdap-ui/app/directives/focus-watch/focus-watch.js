@@ -21,12 +21,23 @@ angular.module(PKG.name + '.commons')
         model: '=myFocusWatch'
       },
       link: function (scope, element) {
+        var focusTimeout = null;
 
         scope.$watch('model', function () {
           if (scope.model) {
-            $timeout(function() {
+            if (focusTimeout) {
+              $timeout.cancel(focusTimeout);
+            }
+
+            focusTimeout = $timeout(function() {
               element[0].focus();
             });
+          }
+        });
+
+        scope.$on('$destroy', function () {
+          if (focusTimeout) {
+            $timeout.cancel(focusTimeout);
           }
         });
       }

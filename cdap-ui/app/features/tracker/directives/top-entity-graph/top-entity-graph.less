@@ -27,6 +27,8 @@ my-top-entity-graph {
     border: 1px solid @border-color;
     border-radius: 3px;
     overflow: hidden;
+    margin: 0 auto;
+    max-width: 340px;
   }
 
   .top-entity-container {
@@ -40,11 +42,11 @@ my-top-entity-graph {
       .entity-link {
         position: absolute;
         font-size: 12px;
-        left: 15px;
-        font-weight: 500;
+        left: 10px;
+        font-weight: 600;
         color: @font-color;
         transform: translateY(-50%);
-
+        letter-spacing: 0.5px;
         &:hover {
           color: @tracker-green;
           text-decoration: none;
@@ -70,9 +72,7 @@ my-top-entity-graph {
 
       &.y {
         path,
-        line {
-          display: none;
-        }
+        line { display: none; }
       }
     }
 

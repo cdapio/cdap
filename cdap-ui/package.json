@@ -21,6 +21,7 @@
     "del": "2.2.0",
     "es6-promise": "3.0.2",
     "gulp": "3.9.0",
+    "gulp-header": "1.8.2",
     "gulp-angular-templatecache": "1.8.0",
     "gulp-babel": "6.1.1",
     "gulp-concat": "2.6.0",

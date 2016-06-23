@@ -26,13 +26,13 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'widget-container/widget-schema-editor-stream/widget-schema-editor-stream.html',
       controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorPlusPlusHydratorService, $timeout, myAlertOnValium) {
-        var modelCopy = angular.copy($scope.model);
         $scope.limitedToView = 15;
         var typeMap = 'map<string, string>';
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
         var defaultType = null;
         var watchProperty = null;
+        var schemaExportTimeout = null;
 
         $scope.fields = 'SHOW';
 
@@ -220,11 +220,6 @@ angular.module(PKG.name + '.commons')
 
         initialize($scope.model);
 
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-          initialize($scope.model);
-        });
-
         EventPipe.on('schema.clear', function () {
           var schema;
           try {
@@ -387,7 +382,11 @@ angular.module(PKG.name + '.commons')
           $scope.url = URL.createObjectURL(blob);
           $scope.exportFileName = 'schema';
 
-          $timeout(function() {
+          if (schemaExportTimeout) {
+            $timeout.cancel(schemaExportTimeout);
+          }
+
+          schemaExportTimeout = $timeout(function() {
             document.getElementById('schema-export-link').click();
           });
         }
@@ -414,9 +413,12 @@ angular.module(PKG.name + '.commons')
           EventPipe.cancelEvent('schema.export');
           EventPipe.cancelEvent('schema.import');
           EventPipe.cancelEvent('schema.clear');
-          EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
           URL.revokeObjectURL($scope.url);
+
+          if (schemaExportTimeout) {
+            $timeout.cancel(schemaExportTimeout);
+          }
         });
 
         $scope.loadNextSetOfRows = function() {

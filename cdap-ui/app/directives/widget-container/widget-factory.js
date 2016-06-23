@@ -28,26 +28,26 @@ angular.module(PKG.name + '.commons')
         element: '<input/>',
         attributes: {
           'class': 'form-control',
-          'data-ng-trim': 'false',
+          'ng-trim': 'false',
           'ng-model': 'model',
-          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
+          placeholder: '{{ ::myconfig["widget-attributes"].default}}'
         }
       },
       'textarea': {
         element: '<textarea></textarea>',
         attributes: {
           'class': 'form-control',
-          'data-ng-trim': 'false',
+          'ng-trim': 'false',
           'ng-model': 'model',
           'rows': '{{myconfig["widget-attributes"].rows}}',
-          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
+          placeholder: '{{::myconfig["widget-attributes"].default}}'
         }
       },
       'password': {
         element: '<input/>',
         attributes: {
           'class': 'form-control',
-          'data-ng-trim': 'false',
+          'ng-trim': 'false',
           'ng-model': 'model',
           type: 'password'
         }
@@ -63,8 +63,8 @@ angular.module(PKG.name + '.commons')
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': '{{ myconfig.properties.delimiter || myconfig["widget-attributes"].delimiter }}',
-          'data-type': 'csv',
+          'delimiter': '{{::myconfig["widget-attributes"].delimiter}}',
+          'type': 'csv',
           'config': 'myconfig'
         }
       },
@@ -72,8 +72,8 @@ angular.module(PKG.name + '.commons')
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': '{{ myconfig.properties.delimiter || myconfig["widget-attributes"].delimiter }}',
-          'data-type': 'dsv',
+          'delimiter': '{{::myconfig["widget-attributes"].delimiter}}',
+          'type': 'dsv',
           'config': 'myconfig'
         }
       },
@@ -97,16 +97,18 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'config': 'myconfig',
           'mode': 'javascript',
-          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
+          'disabled': 'disabled',
+          placeholder: '{{::myconfig["widget-attributes"].default}}'
         }
       },
       'python-editor': {
         element: '<div my-ace-editor></div>',
         attributes: {
           'ng-model': 'model',
-          'config': 'myconfig',
+          'data-config': 'myconfig',
           'mode': 'python',
-          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
+          'disabled': 'disabled',
+          placeholder: '{{::myconfig["widget-attributes"].default}}'
         }
       },
       'schema': {
@@ -158,14 +160,14 @@ angular.module(PKG.name + '.commons')
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {
           'ng-model': 'model',
-          'data-dataset-type': 'stream'
+          'dataset-type': 'stream'
         }
       },
       'dataset-selector': {
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {
           'ng-model': 'model',
-          'data-dataset-type': 'dataset'
+          'dataset-type': 'dataset'
         }
       }
     };

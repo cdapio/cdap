@@ -32,6 +32,7 @@ angular.module(PKG.name + '.commons')
 
         var vm = this;
 
+        var queriesTimeout = null;
         vm.queries = [];
         vm.currentPage = 1;
         var params = {
@@ -78,7 +79,8 @@ angular.module(PKG.name + '.commons')
                 }
               });
 
-              $timeout(function () {
+              $timeout.cancel(queriesTimeout);
+              queriesTimeout = $timeout(function () {
                 vm.previous = vm.queries.map(function (q) { return q.query_handle; });
               }, 1000);
 
@@ -159,6 +161,11 @@ angular.module(PKG.name + '.commons')
         vm.clone = function (query) {
           vm.query = query.statement;
         };
+
+
+        $scope.$on('$destroy', function() {
+          $timeout.cancel(queriesTimeout);
+        });
 
       }
 

@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@
           <span class="fa fa-asterisk"></span>
           <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
         </label>
-        <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label"/>
+        <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
       </div>
 
       <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
@@ -35,31 +35,19 @@
               <div class="form-group">
                 <label class="control-label">
                   <span>{{::field.label}}</span>
-                  <span class="fa fa-info-circle"
-                        uib-tooltip="{{::field.description}}"
-                        tooltip-placement="right"
-                        tooltip-append-to-body="true">
+                  <span class="fa fa-info-circle" uib-tooltip="{{::field.description}}" tooltip-placement="right" tooltip-append-to-body="true">
                   </span>
                   <span class="fa fa-asterisk" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required"></span>
                   <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
                 </label>
 
                 <span ng-if="field['plugin-function']">
-                  <plugin-functions
-                    fn-config="field['plugin-function']"
-                    node="HydratorPlusPlusNodeConfigCtrl.state.node">
+                  <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
                   </plugin-functions>
                 </span>
 
                 <div>
-                  <div data-name="field"
-                       class="my-widget-container"
-                       ng-class="{'select-wrapper': field.widget === 'select'}"
-                       data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
-                       data-myconfig="field"
-                       data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-                       widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
-                       widget-container>
+                  <div data-name="field" class="my-widget-container" ng-class="{'select-wrapper': field.widget === 'select'}" data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]" data-myconfig="field" data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]" widget-container>
                   </div>
                 </div>
               </div>
@@ -68,16 +56,13 @@
           </div>
         </div>
       </div>
-      <br/>
+      <br>
       <div class="form-group" ng-if="HydratorPlusPlusNodeConfigCtrl.state.showErrorDataset">
         <label class="control-label">
           Error Dataset
-          <span class="fa fa-info-circle"
-                ng-if="HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip"
-                uib-tooltip="{{HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip}}"
-                tooltip-placement="right"></span>
+          <span class="fa fa-info-circle" ng-if="HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip" uib-tooltip="{{HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip}}" tooltip-placement="right"></span>
         </label>
-        <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.errorDatasetName"/>
+        <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.errorDatasetName">
       </div>
 
   </fieldset>
