@@ -159,7 +159,7 @@ public class MapperWrapper extends Mapper {
         boolean result = super.nextKeyValue();
         if (++processedRecords > flushFreq) {
           try {
-            LOG.info("Flushing dataset operations...");
+            LOG.trace("Flushing dataset operations...");
             basicMapReduceContext.flushOperations();
           } catch (Exception e) {
             LOG.error("Failed to persist changes", e);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,11 +39,11 @@ import java.io.IOException;
  */
 public class ReducerWrapper extends Reducer {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ReducerWrapper.class);
   private static final String ATTR_REDUCER_CLASS = "c.reducer.class";
 
   /**
-   * Wraps the mapper defined in the job with this {@link MapperWrapper} if it is defined.
+   * Wraps the reducer defined in the job with this {@link ReducerWrapper} if it is defined.
    * @param job The MapReduce job
    */
   public static void wrap(Job job) {
@@ -87,7 +87,7 @@ public class ReducerWrapper extends Reducer {
       try {
         ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
-        LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
+        LOG.error("Failed to initialize reducer with {}", basicMapReduceContext, e);
         throw Throwables.propagate(e);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -141,7 +141,7 @@ public class ReducerWrapper extends Reducer {
         boolean result = super.nextKey();
         if (++processedRecords > flushFreq) {
           try {
-            LOG.info("Flushing dataset operations...");
+            LOG.trace("Flushing dataset operations...");
             basicMapReduceContext.flushOperations();
           } catch (Exception e) {
             LOG.error("Failed to persist changes", e);
