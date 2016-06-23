@@ -155,7 +155,8 @@ public class PipelinePlanner {
       // add other plugin types
       StageSpec spec = specs.get(stageName);
       String pluginType = spec.getPlugin().getType();
-      StageInfo stageInfo = new StageInfo(stageName, spec.getErrorDatasetName());
+      StageInfo stageInfo = new StageInfo(stageName, spec.getInputSchemas(), spec.getOutputSchema(), spec.getInputs()
+        , spec.getOutputs(), spec.getErrorDatasetName());
       phaseBuilder.addStage(pluginType, stageInfo);
     }
 

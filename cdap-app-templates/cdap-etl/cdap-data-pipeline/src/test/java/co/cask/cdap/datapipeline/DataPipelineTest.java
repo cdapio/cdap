@@ -36,6 +36,7 @@ import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.Join;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
+import co.cask.cdap.etl.mock.transform.FieldsPrefixTransformOne;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.Engine;
@@ -102,8 +103,8 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testJoinerWithMultipleSchemas() throws Exception {
-//    testJoinerPlugin(Engine.MAPREDUCE);
-    testOuterJoin(Engine.MAPREDUCE);
+    testJoinerPlugin(Engine.MAPREDUCE);
+//    testOuterJoin(Engine.MAPREDUCE);
   }
 
   private void testOuterJoin(Engine engine) throws Exception {
@@ -170,9 +171,11 @@ public class DataPipelineTest extends HydratorTestBase {
     // the order of input records and the fields
     for (StructuredRecord record : actualRecords) {
       if (record.get("tOneid") == "1") {
+        Assert.assertEquals(joinRecordSamuel.get("tTwoid"), record.get("tTwoid"));
         Assert.assertEquals(joinRecordSamuel.get("tOnename"), record.get("tOnename"));
         Assert.assertEquals(joinRecordSamuel.get("tTwoname"), record.get("tTwoname"));
       } else if (record.get("tOneid") == "2") {
+        Assert.assertEquals(joinRecordSamuel.get("tTwoid"), record.get("tTwoid"));
         Assert.assertEquals(joinRecordBob.get("tOnename"), record.get("tOnename"));
         Assert.assertEquals(joinRecordBob.get("tTwoname"), record.get("tTwoname"));
       } else if (record.get("tOneid") == "3") {
@@ -194,8 +197,8 @@ public class DataPipelineTest extends HydratorTestBase {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source1", MockSource.getPlugin("joinerInput")))
       .addStage(new ETLStage("tOne", FieldsPrefixTransform.getPlugin("tOne", inputSchema.toString())))
-      .addStage(new ETLStage("tTwo", FieldsPrefixTransform.getPlugin("tTwo", inputSchema.toString())))
-      .addStage(new ETLStage("testJoiner", Join.getPlugin("tOne.tOneid,tTwo.tTwoid:tOne.tOnename,tTwo.tTwoname",
+      .addStage(new ETLStage("tTwo", FieldsPrefixTransformOne.getPlugin("tTwo", inputSchema.toString())))
+      .addStage(new ETLStage("testJoiner", Join.getPlugin("tOne.tOneid,tTwo.tTwoid",
                                                           "innerjoin", "2", "", "", "")))
       .addStage(new ETLStage("sink1", MockSink.getPlugin("joinerOutput")))
       .addConnection("source1", "tOne")
