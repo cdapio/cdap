@@ -66,12 +66,29 @@ class HydratorPlusPlusPluginConfigFactory {
   }
 
   generateNodeConfig(backendProperties, nodeConfig) {
-    var isNewSpecVersion = this.myHelpers.objectQuery(nodeConfig, 'metadata', 'spec-version');
-    if (isNewSpecVersion) {
-      return this.generateConfigForNewSpec(backendProperties, nodeConfig);
-    } else {
-      return this.generateConfigForOlderSpec(backendProperties, nodeConfig);
+    var specVersion = this.myHelpers.objectQuery(nodeConfig, 'metadata', 'spec-version') || '0.0';
+    switch(specVersion) {
+      case '0.0':
+        return this.generateConfigForOlderSpec(backendProperties, nodeConfig);
+      case '1.0':
+      case '1.1':
+        return this.generateConfigForNewSpec(backendProperties, nodeConfig);
+      case '1.2':
+        return this.generateConfigFor12Spec(backendProperties, nodeConfig);
+      default: // No spec version which means
+        throw 'NO_JSON_FOUND';
     }
+  }
+
+  generateConfigFor12Spec(backendProperties, nodeConfig) {
+    var config = this.generateConfigForNewSpec(backendProperties, nodeConfig);
+    config.inputs = {};
+    if (typeof nodeConfig.inputs === 'object') {
+      if (nodeConfig.inputs.multipleInputs) {
+        config.input.multipleInputs = true;
+      }
+    }
+    return config;
   }
 
   generateConfigForNewSpec(backendProperties, nodeConfig) {
