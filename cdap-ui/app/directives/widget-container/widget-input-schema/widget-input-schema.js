@@ -19,7 +19,8 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'EA',
       scope: {
-        inputschema: '@'
+        inputSchema: '@',
+        multipleInputs: '@'
       },
       templateUrl: 'widget-container/widget-input-schema/widget-input-schema.html',
       controller: 'MyInputSchemaCtrl',
