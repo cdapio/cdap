@@ -74,6 +74,22 @@ angular.module(PKG.name + '.commons')
 
     vm.comments = [];
 
+    var repaintTimeout = null,
+        commentsTimeout = null,
+        nodesTimeout = null,
+        fitToScreenTimeout = null,
+        initTimeout = null,
+        nodePopoverTimeout = null;
+
+    function repaintEverything() {
+      if (repaintTimeout) {
+        $timeout.cancel(repaintTimeout);
+      }
+
+      repaintTimeout = $timeout(function () { vm.instance.repaintEverything(); });
+    }
+
+
     /*
     FIXME: This should be fixed. Right now the assumption is to update
      the store before my-dag directive is rendered. What happens if we get the
@@ -103,7 +119,7 @@ angular.module(PKG.name + '.commons')
       $scope.connections = DAGPlusPlusNodesStore.getConnections();
       vm.comments = DAGPlusPlusNodesStore.getComments();
 
-      $timeout(function () {
+      initTimeout = $timeout(function () {
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
@@ -151,6 +167,8 @@ angular.module(PKG.name + '.commons')
             };
 
             $scope.$on('$destroy', function () {
+              elem.remove();
+              elem = null;
               scope.$destroy();
             });
 
@@ -163,11 +181,15 @@ angular.module(PKG.name + '.commons')
           angular.forEach(labels, function (endpoint) {
             var label = endpoint.getOverlay('metricLabel');
 
-            $tooltip(angular.element(label.getElement()).children(), {
+            var tooltip = $tooltip(angular.element(label.getElement()).children(), {
               trigger: 'hover',
               title: 'Records Out',
               delay: 300,
               container: 'body'
+            });
+
+            $scope.$on('$destroy', function () {
+              tooltip.destroy();
             });
 
           });
@@ -215,7 +237,7 @@ angular.module(PKG.name + '.commons')
       // Hence the timeout to 1sec to render it in subsequent digest cycles.
       // FIXME: This directive should not be dependent on specific external component to render itself.
       // The left panel should default to expanded view and cleaning up the graph and fit to screen should happen in parallel.
-      $timeout(() => {
+      fitToScreenTimeout = $timeout(() => {
         vm.fitToScreen();
       }, 500);
     }
@@ -234,10 +256,16 @@ angular.module(PKG.name + '.commons')
       });
       nodeInfo.popover.$promise
         .then(function () {
-          $timeout(function () {
+          if (nodePopoverTimeout) {
+            $timeout.cancel(nodePopoverTimeout);
+          }
+
+          nodePopoverTimeout = $timeout(function () {
             nodeInfo.popover.show();
           });
         });
+
+
 
     };
 
@@ -391,6 +419,7 @@ angular.module(PKG.name + '.commons')
       });
 
       $scope.$on('$destroy', function () {
+        label = null;
         scope.$destroy();
       });
 
@@ -439,7 +468,11 @@ angular.module(PKG.name + '.commons')
       $scope.$watch('nodes', function () {
         closeAllPopovers();
 
-        $timeout(function () {
+        if (nodesTimeout) {
+          $timeout.cancel(nodesTimeout);
+        }
+
+        nodesTimeout = $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           addEndpoints();
 
@@ -462,22 +495,24 @@ angular.module(PKG.name + '.commons')
                   }
                 };
                 DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
-                $timeout(function () { vm.instance.repaintEverything(); });
+                repaintEverything();
               }
             });
           }
         });
       }, true);
       // This is needed to redraw connections and endpoints on browser resize
-      angular.element($window).on('resize', function() {
-        vm.instance.repaintEverything();
-      });
+      angular.element($window).on('resize', vm.instance.repaintEverything);
 
       DAGPlusPlusNodesStore.registerOnChangeListener(function () {
         vm.comments = DAGPlusPlusNodesStore.getComments();
 
         if (!vm.isDisabled) {
-          $timeout(function () {
+          if (commentsTimeout) {
+            $timeout.cancel(commentsTimeout);
+          }
+
+          commentsTimeout = $timeout(function () {
             var comments = document.querySelectorAll('.comment-box');
             vm.instance.draggable(comments, {
               start: function () {
@@ -580,7 +615,7 @@ angular.module(PKG.name + '.commons')
         'left': vm.panning.left + 'px'
       };
 
-      $timeout(function () { vm.instance.repaintEverything(); });
+      repaintEverything();
 
       DAGPlusPlusNodesActionsFactory.resetPluginCount();
       DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
@@ -655,7 +690,7 @@ angular.module(PKG.name + '.commons')
 
       $scope.getGraphMargins($scope.nodes);
 
-      $timeout(function () { vm.instance.repaintEverything(); });
+      repaintEverything();
 
       vm.panning.left = 0;
       vm.panning.top = 0;
@@ -709,8 +744,20 @@ angular.module(PKG.name + '.commons')
 
     $scope.$on('$destroy', function () {
       closeAllPopovers();
+      labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();
+
+      angular.element($window).off('resize', vm.instance.repaintEverything);
+
+      // Cancelling all timeouts
+      $timeout.cancel(repaintTimeout);
+      $timeout.cancel(commentsTimeout);
+      $timeout.cancel(nodesTimeout);
+      $timeout.cancel(fitToScreenTimeout);
+      $timeout.cancel(initTimeout);
+      $timeout.cancel(nodePopoverTimeout);
+
     });
 
   });

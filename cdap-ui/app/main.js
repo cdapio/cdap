@@ -212,6 +212,8 @@ angular
     $compileProvider.aHrefSanitizationWhitelist(
       /^\s*(https?|ftp|mailto|tel|file|blob):/
     );
+
+    /* !! DISABLE DEBUG INFO !! */
   })
 
   .config(function (cfpLoadingBarProvider) {

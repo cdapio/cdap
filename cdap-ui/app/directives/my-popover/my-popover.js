@@ -122,7 +122,10 @@ angular.module(PKG.name + '.commons')
           popoverElement.on('mouseleave', delayClose.bind(null, 200));
         }
         initPopover();
-        scope.$on('$destroy', destroyPopover);
+        scope.$on('$destroy', function () {
+          destroyPopover();
+          cancelTimers();
+        });
       }
     };
   });

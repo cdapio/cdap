@@ -30,6 +30,8 @@ angular.module(PKG.name + '.commons')
         }, modal, isBackendDown = false;
         var genericServiceErrorMsg = 'CDAP Services are not available';
         var genericSubtitle = 'Trying to connect...';
+        var hideLoadingTimeout = null;
+
         EventPipe.on('backendDown', function(message, subtitle) {
           if (!isBackendDown) {
             if (modal) {
@@ -63,7 +65,9 @@ angular.module(PKG.name + '.commons')
 
         EventPipe.on('hideLoadingIcon', function() {
           // Just making it smooth instead of being too 'speedy'
-          $timeout(function() {
+
+          $timeout.cancel(hideLoadingTimeout);
+          hideLoadingTimeout = $timeout(function() {
             if (!isBackendDown) {
               if (modal && !modal.$state) {
                 modal.close();

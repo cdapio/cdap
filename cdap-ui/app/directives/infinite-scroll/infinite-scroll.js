@@ -20,7 +20,7 @@ angular.module(PKG.name+'.commons')
     restrict: 'A',
     link: function (scope, elem, attrs) {
       // wrapping in timeout to have content loaded first and setting the scroll to the top
-      $timeout(function() {
+      var timeout = $timeout(function() {
         elem.prop('scrollTop', 10);
         elem.bind('scroll',_.debounce(scrollListener, 1000));
       }, 100);
@@ -35,6 +35,7 @@ angular.module(PKG.name+'.commons')
 
       scope.$on('$destroy', function () {
         elem.unbind('scroll');
+        $timeout.cancel(timeout);
       });
     }
   };

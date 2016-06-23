@@ -60,13 +60,28 @@
       </div>
     </div>
     <div ng-if="isDisabled">
-      <my-schema-editor ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema" data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema || isDisabled" plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
+      <my-schema-editor
+        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        data-disabled="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
+        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+        config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
     <div ng-if="!isDisabled">
-      <my-schema-editor ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema" data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema" plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Stream'">
+      <my-schema-editor
+        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
+        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+        config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
+        ng-if="::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Stream'">
       </my-schema-editor>
-      <my-schema-editor-stream ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema" data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema" plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Stream'">
+      <my-schema-editor-stream
+        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
+        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+        config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
+        ng-if="::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Stream'">
       </my-schema-editor-stream>
     </div>
   </fieldset>

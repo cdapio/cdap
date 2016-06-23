@@ -73,18 +73,18 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="pipeline in ListController.filtered = (ListController.pipelineList | filter: ListController.searchText ) | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
+          <tr ng-repeat="pipeline in ::ListController.pipelineList | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
             <td>
-              <a ui-sref="hydratorplusplus.detail({ pipelineId: pipeline.name })" ng-if="!pipeline.isDraft">
-                {{pipeline.name}}
+              <a ui-sref="hydratorplusplus.detail({ pipelineId: pipeline.name })" ng-if="::!pipeline.isDraft">
+                {{::pipeline.name}}
               </a>
-              <a ui-sref="hydratorplusplus.create({ draftId: pipeline.id, type:pipeline.artifact.name })" ng-if="pipeline.isDraft">
-                {{pipeline.name}}
+              <a ui-sref="hydratorplusplus.create({ draftId: pipeline.id, type:pipeline.artifact.name })" ng-if="::pipeline.isDraft">
+                {{::pipeline.name}}
               </a>
             </td>
             <td>
               <span class="icon-{{ ListController.GLOBALS.iconArtifact[pipeline.artifact.name] }}"></span>
-              <span>{{ ListController.GLOBALS.artifactConvert[pipeline.artifact.name] }}</span>
+              <span>{{ ::ListController.GLOBALS.artifactConvert[pipeline.artifact.name] }}</span>
             </td>
             <td>
               <span class="status-bubble"

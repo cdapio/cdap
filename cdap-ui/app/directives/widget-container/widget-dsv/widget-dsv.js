@@ -25,9 +25,7 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-dsv/widget-dsv.html',
-      controller: function($scope, EventPipe, myHelpers) {
-        var modelCopy = angular.copy($scope.model);
-
+      controller: function($scope, myHelpers) {
         if ($scope.type === 'csv') {
           $scope.showDelimiter = false;
         } else {
@@ -61,12 +59,6 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize();
-
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-
-          initialize();
-        });
 
         var propertyListener = $scope.$watch('properties', function() {
           var str = '';
