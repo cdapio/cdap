@@ -14,4 +14,98 @@
   the License.
 -->
 
-<p> Preview Coming soon....</p>
+<div class="row" ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData">
+  <div class="col-xs-12">
+    <h3 class="text-center">
+      No preview data.
+    </h3>
+  </div>
+</div>
+
+<div class="row" ng-if="HydratorPlusPlusNodeConfigCtrl.previewData">
+  <!-- INPUT RECORDS -->
+  <div class="col-xs-6 preview-input-records">
+    <!-- INPUT SCHEMA -->
+    <div class="schema-toggle">
+      <span class="fa fa-caret-down"></span>
+      <span>Schema</span>
+    </div>
+
+    <div class="schema-table">
+      <table class="table table-bordered">
+        <thead>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Null</th>
+        </thead>
+        <tbody>
+          <tr ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.inputSchema.fields">
+            <td>{{ ::field.name }}</td>
+            <td>{{ ::field.type }}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- INPUT RECORDS -->
+    <table class="table table-bordered">
+      <thead>
+        <th ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.inputSchema.fields">
+          {{ ::field.name }}
+        </th>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="row in ::HydratorPlusPlusNodeConfigCtrl.previewData.inputData">
+          <td ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.inputSchema.fields">
+            {{ ::row[field.name] }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- OUTPUT RECORDS -->
+  <div class="col-xs-6 preview-input-records">
+    <!-- OUTPUT SCHEMA -->
+    <div class="schema-toggle">
+      <span class="fa fa-caret-down"></span>
+      <span>Schema</span>
+    </div>
+
+    <div class="schema-table">
+      <table class="table table-bordered">
+        <thead>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Null</th>
+        </thead>
+        <tbody>
+          <tr ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.outputSchema.fields">
+            <td>{{ ::field.name }}</td>
+            <td>{{ ::field.type }}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- OUTPUT RECORDS -->
+    <table class="table table-bordered">
+      <thead>
+        <th ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.outputSchema.fields">
+          {{ ::field.name }}
+        </th>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="row in ::HydratorPlusPlusNodeConfigCtrl.previewData.outputData">
+          <td ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.outputSchema.fields">
+            {{ ::row[field.name] }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -18,7 +18,8 @@ let previewActions;
 let getInitialState = () => {
   return {
     isPreviewModeEnabled: false,
-    startTime: null
+    startTime: null,
+    previewId: null
   };
 };
 
@@ -34,6 +35,11 @@ var preview = (state = getInitialState(), action = {}) => {
       stateCopy = Object.assign({}, state);
       const {startTime} = action.payload;
       stateCopy.startTime = startTime;
+      return Object.assign({}, state, stateCopy);
+    case previewActions.SET_PREVIEW_ID:
+      stateCopy = Object.assign({}, state);
+      const {previewId} = action.payload;
+      stateCopy.previewId = previewId;
       return Object.assign({}, state, stateCopy);
     default:
       return state;
@@ -61,6 +67,7 @@ var PreviewStore = (PREVIEWSTORE_ACTIONS, Redux, ReduxThunk) => {
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .constant('PREVIEWSTORE_ACTIONS', {
     'TOGGLE_PREVIEW_MODE': 'TOGGLE_PREVIEW_MODE',
-    'SET_PREVIEW_START_TIME': 'SET_PREVIEW_START_TIME'
+    'SET_PREVIEW_START_TIME': 'SET_PREVIEW_START_TIME',
+    'SET_PREVIEW_ID': 'SET_PREVIEW_ID'
   })
   .factory('HydratorPlusPlusPreviewStore', PreviewStore);

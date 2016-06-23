@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, rIsPreviewMode) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, rIsPreviewMode, myPipelineApi, HydratorPlusPlusPreviewStore) {
     'ngInject';
 
     this.$scope = $scope;
@@ -34,6 +34,9 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.$uibModal = $uibModal;
     this.ConfigStore = HydratorPlusPlusConfigStore;
     this.$scope.isDisabled = rDisabled;
+    this.myPipelineApi = myPipelineApi;
+    this.previewStore = HydratorPlusPlusPreviewStore;
+
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -57,6 +60,9 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.setStateTimeout);
     });
+
+    this.previewData = null;
+    this.fetchPreview();
 
   }
   showContents() {
@@ -250,6 +256,23 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
   exportSchema() {
     this.EventPipe.emit('schema.export');
+  }
+
+  fetchPreview() {
+    let previewId = this.previewStore.getState().preview.previewId;
+
+    if (!previewId) { return; }
+    let params = {
+      namespace: this.$state.params.namespace,
+      previewId: previewId,
+      stage: this.state.node.plugin.label,
+      scope: this.$scope
+    };
+    this.myPipelineApi.getStagePreview(params)
+      .$promise
+      .then((res) => {
+        this.previewData = res;
+      });
   }
 
   validateSchema() {

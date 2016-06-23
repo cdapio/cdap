@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state, MyCDAPDataSource) {
     'ngInject';
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -30,6 +30,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
     this.$scope = $scope;
+    this.dataSrc = new MyCDAPDataSource($scope);
 
     this.canvasOperations = [
       {
@@ -64,17 +65,15 @@ class HydratorPlusPlusTopPanelCtrl{
 
     this.previewMode = false;
     this.previewStartTime = null;
-    this.displayDuration = null;
+    this.displayDuration = {
+      minutes: '00',
+      seconds: '00'
+    };
     this.previewTimerInterval = null;
 
     var sub = this.previewStore.subscribe(() => {
       let state = this.previewStore.getState().preview;
       this.previewMode = state.isPreviewModeEnabled;
-
-      if (state.startTime) {
-        this.previewStartTime = state.startTime;
-        this.startTimer();
-      }
     });
 
     this.$scope.$on('$destroy', () => {
@@ -138,12 +137,18 @@ class HydratorPlusPlusTopPanelCtrl{
         minutes: minutes,
         seconds: seconds
       };
-    }, 1000);
+    }, 500);
+  }
+  stopTimer() {
+    this.$interval.cancel(this.previewTimerInterval);
   }
 
   runPreview() {
+    let startTime = new Date();
+    this.previewStartTime = startTime;
+    this.startTimer();
     this.previewStore.dispatch(
-      this.previewActions.setPreviewStartTime(new Date())
+      this.previewActions.setPreviewStartTime(startTime)
     );
 
     let params = {
@@ -151,17 +156,39 @@ class HydratorPlusPlusTopPanelCtrl{
       scope: this.$scope
     };
 
+    // TODO: generate preview config
     this.myPipelineApi.runPreview(params, {}).$promise
       .then((res) => {
         this.previewStore.dispatch(
-          this.previewActions.setPreviewId(res)
+          this.previewActions.setPreviewId(res.preview)
         );
+
+        this.startPollPreviewStatus(res.preview);
       }, (err) => {
         this.HydratorPlusPlusConsoleActions.addMessage({
           type: 'danger',
           content: err.data
         });
       });
+  }
+
+  startPollPreviewStatus(previewId) {
+    this.dataSrc.poll({
+      _cdapNsPath: '/previews/' + previewId + '/status',
+      interval: 5000
+    }, (res) => {
+      if (res.status !== 'RUNNING') {
+        // this.stopTimer();
+        // this.dataSrc.stopPoll(res.__pollId__);
+
+
+        /* THIS IS ONLY FOR DEMO. REMOVE and uncomment the above */
+        setTimeout(() => {
+          this.stopTimer();
+          this.dataSrc.stopPoll(res.__pollId__);
+        }, 5000);
+      }
+    });
   }
 
   togglePreviewMode() {

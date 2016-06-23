@@ -37,6 +37,15 @@ class HydratorPlusPlusPreviewActions {
       });
     };
   }
+
+  setPreviewId (previewId) {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.SET_PREVIEW_ID,
+        payload: {previewId}
+      });
+    };
+  }
 }
 
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
