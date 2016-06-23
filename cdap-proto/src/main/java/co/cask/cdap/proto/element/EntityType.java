@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.QueryId;
@@ -70,6 +71,7 @@ public enum EntityType {
 
   QUERY(QueryId.class, Id.QueryHandle.class),
   SYSTEM_SERVICE(SystemServiceId.class, Id.SystemService.class);
+  // PREVIEW(PreviewId.class, null);
 
   private static final Map<Class<? extends EntityId>, EntityType> byIdClass;
   private static final Map<Class<? extends Id>, EntityType> byOldIdClass;

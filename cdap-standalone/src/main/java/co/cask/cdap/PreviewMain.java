@@ -16,9 +16,9 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.PreviewServerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.preview.PreviewServer;
-import co.cask.cdap.app.preview.PreviewServerModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -266,6 +266,7 @@ public class PreviewMain {
       new DataFabricModules().getPreviewModules(transactionManager),
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getPreviewModules(remoteDsFramework),
+
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),

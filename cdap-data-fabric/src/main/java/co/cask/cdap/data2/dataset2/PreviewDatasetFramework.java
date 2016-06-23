@@ -47,77 +47,114 @@ public class PreviewDatasetFramework implements DatasetFramework {
 
   @Override
   public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
-
+    if (moduleId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+      localDatasetFramework.addModule(moduleId, module);
+    }
   }
 
   @Override
   public void addModule(Id.DatasetModule moduleId,
                         DatasetModule module, Location jarLocation) throws DatasetManagementException {
-
+    if (moduleId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+      localDatasetFramework.addModule(moduleId, module, jarLocation);
+    }
   }
 
   @Override
   public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
-
+    if (moduleId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+      localDatasetFramework.deleteModule(moduleId);
+    }
   }
 
   @Override
   public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
-
+    if (Id.Namespace.SYSTEM.equals(namespaceId)) {
+      localDatasetFramework.deleteAllModules(namespaceId);
+    }
   }
 
   @Override
   public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId,
                           DatasetProperties props) throws DatasetManagementException, IOException {
-
+    if (datasetInstanceId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+      localDatasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
+    }
+    // Create the dataset instances corresponding to the Source and Sink during preview
+    actualDatasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
   }
+
+
 
   @Override
   public void updateInstance(Id.DatasetInstance datasetInstanceId,
                              DatasetProperties props) throws DatasetManagementException, IOException {
-
+    if (datasetInstanceId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+      localDatasetFramework.updateInstance(datasetInstanceId, props);
+    }
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
     throws DatasetManagementException {
-    return null;
+    if (Id.Namespace.SYSTEM.equals(namespaceId)) {
+      return localDatasetFramework.getInstances(namespaceId);
+    }
+    return actualDatasetFramework.getInstances(namespaceId);
   }
 
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    return null;
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      return localDatasetFramework.getDatasetSpec(datasetInstanceId);
+    }
+    return actualDatasetFramework.getDatasetSpec(datasetInstanceId);
   }
 
   @Override
   public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    return false;
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      return localDatasetFramework.hasInstance(datasetInstanceId);
+    }
+    return actualDatasetFramework.hasInstance(datasetInstanceId);
   }
 
   @Override
   public boolean hasSystemType(String typeName) throws DatasetManagementException {
-    return false;
+    return localDatasetFramework.hasSystemType(typeName);
   }
 
   @Override
   public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
-    return false;
+    if (Id.Namespace.SYSTEM.equals(datasetTypeId.getNamespace())) {
+      return localDatasetFramework.hasType(datasetTypeId);
+    }
+    return actualDatasetFramework.hasType(datasetTypeId);
   }
 
   @Override
   public void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
-
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      localDatasetFramework.truncateInstance(datasetInstanceId);
+    }
+    actualDatasetFramework.truncateInstance(datasetInstanceId);
   }
 
   @Override
   public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
-
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      localDatasetFramework.deleteInstance(datasetInstanceId);
+    }
+    actualDatasetFramework.deleteInstance(datasetInstanceId);
   }
 
   @Override
   public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
-
+    if (Id.Namespace.SYSTEM.equals(namespaceId)) {
+      localDatasetFramework.deleteAllInstances(namespaceId);
+    }
+    actualDatasetFramework.deleteAllInstances(namespaceId);
   }
 
   @Nullable
@@ -125,7 +162,10 @@ public class PreviewDatasetFramework implements DatasetFramework {
   public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
                                              @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
-    return null;
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      return localDatasetFramework.getAdmin(datasetInstanceId, classLoader);
+    }
+    return actualDatasetFramework.getAdmin(datasetInstanceId, classLoader);
   }
 
   @Nullable
@@ -134,7 +174,10 @@ public class PreviewDatasetFramework implements DatasetFramework {
                                              @Nullable ClassLoader classLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
     throws DatasetManagementException, IOException {
-    return null;
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      return localDatasetFramework.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
+    }
+    return actualDatasetFramework.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
   }
 
   @Nullable
@@ -144,7 +187,10 @@ public class PreviewDatasetFramework implements DatasetFramework {
                                           @Nullable ClassLoader classLoader,
                                           @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException {
-    return null;
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      return localDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, owners);
+    }
+    return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, owners);
   }
 
   @Nullable
@@ -153,7 +199,10 @@ public class PreviewDatasetFramework implements DatasetFramework {
                                           @Nullable Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
-    return null;
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      return localDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader);
+    }
+    return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader);
   }
 
   @Nullable
@@ -164,7 +213,10 @@ public class PreviewDatasetFramework implements DatasetFramework {
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException {
-    return null;
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      return localDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
+    }
+    return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
   }
 
   @Nullable
@@ -174,21 +226,30 @@ public class PreviewDatasetFramework implements DatasetFramework {
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends Id> owners,
                                           AccessType accessType) throws DatasetManagementException, IOException {
-    return null;
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      return localDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners,
+                                              accessType);
+    }
+    return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners,
+                                             accessType);
   }
 
   @Override
   public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
-
+    //TODO: verify this
+    if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      localDatasetFramework.writeLineage(datasetInstanceId, accessType);
+    }
+    actualDatasetFramework.writeLineage(datasetInstanceId, accessType);
   }
 
   @Override
   public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-
+    throw new UnsupportedOperationException(String.format("Namespace %s cannot be created in preview", namespaceId));
   }
 
   @Override
   public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-
+    throw new UnsupportedOperationException(String.format("Namespace %s cannot be deleted in preview", namespaceId));
   }
 }
