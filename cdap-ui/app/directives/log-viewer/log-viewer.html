@@ -18,10 +18,9 @@
 
   <!-- LOGS HEADERBAR -->
   <div class="logs-headerbar">
-
     <div class="log-stats-container">
       <div class="log-stats-total log-stats text-center">
-          <span class="stat-name log-stats-total-text">Total Message</span>
+          <span class="stat-name log-stats-total-text">Total Messages</span>
           <div class="stat-count total-num">
             <span class="stat-count-number">{{LogViewer.totalCount}}</span></div>
       </div>
@@ -117,7 +116,7 @@
               ng-if="LogViewer.configOptions.message"
               ng-class="{'stack-trace-expanded': log.isStackTraceExpanded,
                 'stack-trace-available': log.message.stackTrace }">
-            <div class="message-main clearfix">
+            <div class="message-main">
               <div class="icon-column"
                    ng-if="log.message.stackTrace"
                    ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded">

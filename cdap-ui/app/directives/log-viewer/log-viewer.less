@@ -14,6 +14,9 @@
  * the License.
  */
 
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
 @border-color: #cccccc;
 @headerbar-background-color: #525252;
 @headerbar-text-color: #d6d6d6;
@@ -30,43 +33,21 @@ my-log-viewer {
 
     .logs-headerbar {
       background-color: @headerbar-background-color;
-      height: 50px;
-      width: 100%;
 
-      div {
-        display: inline-block;
-      }
+      height: 50px;
+      .flexbox();
+      .flex-wrap(@wrap: wrap);
+      .justify-content(@justify: space-between);
+      .align-items(@align: center);
+
       .log-stats-container {
-        width: 35%;
-        min-width: 150px;
-        height: 50px;
-        float: left;
+        width: 40%;
         color: white;
         background-color: @headerbar-background-color;
-        display: table;
-        margin: auto;
-
-        .log-stats {
-          height: 50px;
-          min-width: 40px;
-          display: table-cell;
-          vertical-align: middle;
+        margin: 0;
+        div {
+          display: inline-block;
           font-weight: bold;
-          top: -5px;
-
-          .stats-wrapper {
-            position: relative;
-          }
-
-        }
-        .log-stats-total {
-          min-width: 140px;
-        }
-        .log-stats-errors {
-          min-width: 90px;
-        }
-        .log-stats-warnings {
-          min-width: 115px;
         }
         .stat-name {
           color: @headerbar-text-color;
@@ -74,59 +55,36 @@ my-log-viewer {
           margin-right: 4px;
         }
         .stat-count {
-          width: 30px;
-          height: 15px;
+          min-width: 30px;
           border-radius: 8px;
           color: black;
-          display: inline-block;
-          position: relative;
-          top: 2px;
         }
-        .stat-count-number {
-          position: relative;
-          top: -2px;
-        }
-        .total-num {
-          background-color: #dfdfdf;
-        }
-        .errors-num {
-          background-color: #fa4347;
-        }
-        .warnings-num {
-          background-color: #f4b400;
-        }
+        .total-num { background-color: #dfdfdf; }
+        .errors-num { background-color: #fa4347; }
+        .warnings-num { background-color: #f4b400; }
       }
 
       .log-actions {
-        width: 27%;
-        min-width: 410px;
-        height: 50px;
-        float: right;
-        background-color: @headerbar-background-color;
-        display: table;
-        margin: auto;
+        width: 60%;
+        margin: 0;
 
-        .log-action-container {
-          height: 50px;
-          display: table-cell;
-          vertical-align: middle;
-        }
         .log-action-btn {
           height: 25px;
           width: 100px;
           border: solid 1px white;
           color: white;
-          background-color: @headerbar-background-color;
+          background-color: transparent;
           border-radius: 4px;
           margin-right: 3px;
           outline: grey;
         }
         .search {
+          display: inline-block;
           position: relative;
         }
         .search .fa-search {
           position: absolute;
-          top: 7px;
+          top: 6px;
           right: 8px;
         }
         .log-searchbar {
@@ -138,27 +96,23 @@ my-log-viewer {
           color: @searchbar-input-color;
           font-weight: bold;
           text-indent: 5px;
-        }
-        .log-searchbar:focus {
-          color: @searchbar-input-color;
-        }
-        .log-searchbar::-webkit-input-placeholder {
-          color: @searchbar-placeholder-color;
-        }
-        .log-searchbar:-moz-placeholder { /* Firefox 18- */
-          color: @searchbar-placeholder-color;
-        }
-        .log-searchbar::-moz-placeholder {  /* Firefox 19+ */
-          color: @searchbar-placeholder-color;
-        }
-        .log-searchbar:-ms-input-placeholder {
-          color: @searchbar-placeholder-color;
+          .placeholder(@color: @searchbar-placeholder-color);
+          &:focus { color: @searchbar-input-color; }
         }
         .fa-expand {
           color: white;
           padding-left: 10px;
           cursor: pointer;
+          line-height: 25px;
         }
+      }
+      .log-action-container {
+        .flexbox();
+        .flex-wrap(@wrap: wrap);
+        .justify-content(@justify: flex-end);
+        .align-items(@align: center);
+        .align-content(@align: center);
+        margin-right: 10px;
       }
     }
 
@@ -182,8 +136,8 @@ my-log-viewer {
 
       .expand-all-btn {
         width: 75px;
-        height: 23px;
-        line-height: 23px;
+        height: 20px;
+        line-height: 20px;
         background-color: #5eb3fa;
         border-radius: 5px;
         float: right;
@@ -206,15 +160,10 @@ my-log-viewer {
           cursor: default;
           font-size: 13px;
 
-          ul.dropdown-menu {
-            width: 40px;
-          }
+          ul.dropdown-menu { width: 40px; }
 
           li {
-
-            input {
-              margin: 5px 5px 5px 8px;
-            }
+            input { margin: 5px 5px 5px 8px; }
           }
         }
 
@@ -224,17 +173,9 @@ my-log-viewer {
         }
       }
 
-      .time {
-        width: 15%;
-      }
-
-      .level {
-        width: 7%;
-      }
-
-      .source {
-        width: 28%;
-      }
+      .time { width: 15%; }
+      .level { width: 10%; }
+      .source { width: 28%; }
 
       tbody {
         .message {
@@ -243,9 +184,7 @@ my-log-viewer {
         }
       }
 
-      .highlighted {
-        background: blue;
-      }
+      .highlighted { background: blue; }
 
       .message {
         width: 50%;
@@ -269,11 +208,7 @@ my-log-viewer {
           cursor: pointer;
         }
 
-        .message-column {
-          float: left;
-          width: 100%;
-        }
-
+        .message-column { word-wrap: break-word; }
         .stack-trace {
           pre {
             background-color: @stack-trace-background-color;
@@ -289,22 +224,9 @@ my-log-viewer {
         &.stack-trace-expanded {
           background-color: @message-expanded-color;
           padding-bottom: 0;
-
-          .message-column {
-            padding-bottom: 10px;
-          }
-        }
-
-        &.stack-trace-available {
-          .message-column {
-            float: right;
-            width: ~"-moz-calc(100% - 20px)";
-            width: ~"-webkit-calc(100% - 20px)";
-            width: ~"calc(100% - 20px)";
-          }
+          .message-column { padding-bottom: 10px; }
         }
       }
-
     }
   }
 }
