@@ -256,22 +256,32 @@ def convert(c, state={}):
     DEBUG = False
 #     DEBUG = True
     w = []
+    leading_whitespace = ' ' * (len(c) - len(c.lstrip()))
     text_list = c.split()
     CLI = 'cdap-cli.sh'
     CURL = 'curl'
     DATA_OPTIONS = ['-d', '--data', '--data-ascii']
+    HEADER_OPTIONS = ['-H', '--header']
     # Local states
     IN_CLI = False
     IN_CURL = False
     IN_CURL_DATA = False
     IN_CURL_DATA_JSON = False
-    STATE_KEYS = ['IN_CLI', 'IN_CURL', 'IN_CURL_DATA', 'IN_CURL_DATA_JSON']
-    JSON_OPEN_CLOSE = {"open":"'{", "open_win": "\"{", "close": "}'", "close_win":"}\""}
+    IN_CURL_HEADER = False
+    IN_CURL_HEADER_ARTIFACT = False
+    STATE_KEYS = ['IN_CLI', 'IN_CURL', 'IN_CURL_DATA', 'IN_CURL_DATA_JSON', 'IN_CURL_HEADER', 'IN_CURL_HEADER_ARTIFACT']
+    JSON_OPEN_CLOSE = {
+        "open":"'{", 
+        "open_win": "\"{", 
+        "open-artifact": "'Artifact-", 
+        "close": "}'", 
+        "close_win": "}\"",
+        }
     # Passed state
     for s in STATE_KEYS:
         if not state.has_key(s):
             state[s] = False
-    if DEBUG: print "\nconverting: %s\nstate: %s" % (c, state)
+    if DEBUG: print "\nconverting: %s\nreceived state: %s" % (c, state)
     for i, v in enumerate(text_list):
         if DEBUG: print "v:%s" % v # v is the parsed snippet, split on spaces
         if v == CLI or state['IN_CLI']:
@@ -284,6 +294,10 @@ def convert(c, state={}):
             IN_CURL_DATA = True
         if state['IN_CURL_DATA_JSON']:
             IN_CURL_DATA_JSON = True
+        if state['IN_CURL_HEADER']:
+            IN_CURL_HEADER = True
+        if state['IN_CURL_HEADER_ARTIFACT']:
+            IN_CURL_HEADER_ARTIFACT = True
         if i == 0 and v == '$':
             w.append('>')
             for s in STATE_KEYS:
@@ -309,6 +323,12 @@ def convert(c, state={}):
             state['IN_CURL_DATA'] = True
             w.append(v)
             continue
+        if IN_CURL and (v in HEADER_OPTIONS):
+            if DEBUG: print "IN_CURL and HEADER_OPTIONS"
+            IN_CURL_HEADER = True
+            state['IN_CURL_HEADER'] = True
+            w.append(v)
+            continue
         if IN_CURL and IN_CURL_DATA:
             if DEBUG: print "IN_CURL and IN_CURL_DATA"
             if DEBUG: print "IN_CURL_DATA_JSON: %s" % IN_CURL_DATA_JSON
@@ -329,6 +349,25 @@ def convert(c, state={}):
                 if DEBUG: print "json..."
                 w.append(v.replace('"', '\\"'))
             else:
+                if DEBUG: print "data..."
+                w.append(v)
+            continue
+        if IN_CURL and IN_CURL_HEADER:
+            if DEBUG: print "IN_CURL and IN_CURL_HEADER"
+            state['IN_CURL'] = True        
+            if v.startswith(JSON_OPEN_CLOSE["open-artifact"]):
+                if DEBUG: print "Start of json"
+                IN_CURL_HEADER_ARTIFACT = True
+                # Don't pass this state, as we aren't tracking where the end is, and assume it is at end-of-line
+                # To track the end, we would need to push and pop opening and closing quotes...
+#                 state['IN_CURL_HEADER_ARTIFACT'] =  True
+                w.append("\"%s" % v.replace('"', '\\"')[1:])
+                continue
+            elif IN_CURL_HEADER_ARTIFACT:
+                if DEBUG: print "json..."
+                w.append(v.replace('"', '\\"'))
+            else:
+                # Currently, won't reach this, as once IN_CURL_HEADER_ARTIFACT we never leave until end-of-line 
                 if DEBUG: print "data..."
                 w.append(v)
             continue
@@ -353,9 +392,9 @@ def convert(c, state={}):
         else:
             if DEBUG: print "didn't find slash"
             w.append(v)
-    
-    if DEBUG: print "converted to: %s\nstate: %s" % (' '.join(w), state)
-    return ' '.join(w), state
+   
+    if DEBUG: print "converted to: %s\npassing state: %s" % (leading_whitespace + ' '.join(w), state)
+    return leading_whitespace + ' '.join(w), state
 
 
 class TabbedParsedLiteralNode(nodes.literal_block):

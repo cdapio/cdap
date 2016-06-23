@@ -126,7 +126,7 @@ the plugins when deploying the artifact. For example, if you are using the RESTf
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
-  -H "Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]" \
+  -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
   -H "Artifact-Version: 5.1.35" \
   -H "Artifact-Extends: system:cdap-etl-batch[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
   --data-binary @mysql-connector-java-5.1.35.jar

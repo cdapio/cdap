@@ -117,11 +117,11 @@ For an application that has a configuration class such as::
     String datasetName;
   }
 
-we can deploy it with this RESTful call::
+We can deploy it with this RESTful call::
 
   POST /v3/namespaces/<namespace-id>/apps
-  -H "X-Archive-Name: <jar-name>"
-  -H "X-App-Config: "{\"streamName\" : \"newStream\", \"datasetName\" : \"newDataset\" }"
+  -H "X-Archive-Name: <jar-name>" \
+  -H 'X-App-Config: "{\"streamName\" : \"newStream\", \"datasetName\" : \"newDataset\" }" ' \
   --data-binary "@<jar-location>"
 
 Note that the ``X-App-Config`` header contains the JSON serialization string of the ``MyAppConfig`` object.
