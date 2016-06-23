@@ -16,6 +16,9 @@
 
 package co.cask.cdap.pipeline;
 
+import java.util.Set;
+import javax.annotation.Nullable;
+
 /**
  * This interface represents the context in which a stage is running.
  * Ordinarily the context will be provided by the pipeline in which
@@ -38,4 +41,28 @@ public interface Context {
    * @return Object being send to downstream
    */
   Object getDownStream();
+
+  /**
+   * Returns a property value associated with the given key that was set by {@link #setProperty(String, Object)} call.
+   *
+   * @param key the property key
+   * @param <T> type of the value
+   * @return the value or {@code null} if no such property.
+   */
+  @Nullable
+  <T> T getProperty(String key);
+
+  /**
+   * Sets a value for the given property.
+   *
+   * @param key the property key
+   * @param value the property value
+   * @param <T> type of the value.
+   */
+  <T> void setProperty(String key, T value);
+
+  /**
+   * Returns the set of property keys in this context.
+   */
+  Set<String> getPropertyKeys();
 }

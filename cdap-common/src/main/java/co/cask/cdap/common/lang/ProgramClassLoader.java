@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * ClassLoader that implements bundle jar feature, in which the application jar contains
@@ -31,9 +30,7 @@ public class ProgramClassLoader extends DirectoryClassLoader {
   private final File dir;
 
   /**
-   * Constructs an instance that load classes from the given directory for the given program type.
-   * See {@link ProgramResources#getVisibleResources()} for details on system classes that
-   * are visible to the returned ClassLoader.
+   * Constructs an instance that load classes from the given directory.
    * <p/>
    * The URLs for class loading are:
    * <p/>
@@ -43,12 +40,6 @@ public class ProgramClassLoader extends DirectoryClassLoader {
    * [dir]/lib/*.jar
    * </pre>
    */
-  public static ProgramClassLoader create(CConfiguration cConf, File unpackedJarDir,
-                                          ClassLoader unfilteredParentClassLoader) throws IOException {
-    ClassLoader filteredParent = FilterClassLoader.create(unfilteredParentClassLoader);
-    return new ProgramClassLoader(cConf, unpackedJarDir, filteredParent);
-  }
-
   public ProgramClassLoader(CConfiguration cConf, File dir, ClassLoader parent) {
     super(dir, cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH, ""), parent, "lib");
     this.dir = dir;

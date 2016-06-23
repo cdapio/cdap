@@ -44,10 +44,10 @@ public class UniqueCountTableDefinition
   public UniqueCountTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new UniqueCountTable(spec.getName(),
-                                getDataset(datasetContext, "entryCountTable", Table.class, spec, arguments,
-                                           classLoader),
-                                getDataset(datasetContext, "uniqueCountTable", Table.class, spec, arguments,
-                                           classLoader));
+                                this.<Table>getDataset(datasetContext, "entryCountTable",
+                                                       spec, arguments, classLoader),
+                                this.<Table>getDataset(datasetContext, "uniqueCountTable",
+                                                       spec, arguments, classLoader));
   }
 
   public static class UniqueCountTable extends AbstractDataset {
