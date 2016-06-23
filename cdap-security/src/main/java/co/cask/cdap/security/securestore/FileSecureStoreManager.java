@@ -16,7 +16,7 @@
 
 package co.cask.cdap.security.securestore;
 
-import co.cask.cdap.api.security.SecureStoreManager;
+import co.cask.cdap.api.security.securestore.SecureStoreManager;
 import com.google.inject.Inject;
 
 import java.io.IOException;

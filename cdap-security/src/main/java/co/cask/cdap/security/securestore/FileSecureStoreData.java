@@ -16,8 +16,8 @@
 
 package co.cask.cdap.security.securestore;
 
-import co.cask.cdap.api.security.SecureStoreData;
-import co.cask.cdap.api.security.SecureStoreMetadata;
+import co.cask.cdap.api.security.securestore.SecureStoreData;
+import co.cask.cdap.api.security.securestore.SecureStoreMetadata;
 
 /**
  * Represents the data stored in the Secure Store.

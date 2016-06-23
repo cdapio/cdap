@@ -14,13 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.api.security;
+package co.cask.cdap.api.security.securestore;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
  * Provides read access to the secure store.
+ * For write access use {@link SecureStoreManager}
  */
 public interface SecureStore {
 

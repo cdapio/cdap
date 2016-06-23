@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.api.security;
+package co.cask.cdap.api.security.securestore;
 
 import java.util.Map;
 
 /**
- * Represents the metadata for the data stored in the secure store.
+ * Represents the metadata for the element stored in the secure store.
  */
 public interface SecureStoreMetadata {
 
   /**
-   * @return Name of the data.
+   * @return Name of the element.
    */
   String getName();
 
   /**
-   * @return Description of this data.
+   * @return Description of this element.
    */
   String getDescription();
 

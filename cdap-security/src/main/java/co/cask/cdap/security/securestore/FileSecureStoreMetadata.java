@@ -16,7 +16,7 @@
 
 package co.cask.cdap.security.securestore;
 
-import co.cask.cdap.api.security.SecureStoreMetadata;
+import co.cask.cdap.api.security.securestore.SecureStoreMetadata;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.Charsets;
@@ -155,10 +155,7 @@ class FileSecureStoreMetadata implements SecureStoreMetadata {
    */
   FileSecureStoreMetadata(byte[] bytes) throws IOException {
     String name = null;
-    String cipher = null;
-    int bitLength = 0;
     Date created = null;
-    int versions = 0;
     String description = null;
     Map<String, String> properties = null;
     try (JsonReader reader = new JsonReader(new InputStreamReader

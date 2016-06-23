@@ -14,20 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.api.security;
+package co.cask.cdap.api.security.securestore;
 
 /**
- * This represents the data stored in the Secure Store
+ * This represents the entity stored in the Secure Store.
+ * The data is stored as UTF8 encoded byte array.
+ * An instance of an implementation of SecureStoreData is created and returned from the
+ * {@link SecureStore}'s get method call.
  */
 public interface SecureStoreData {
 
   /**
-   * @return Returns an object representing the metadata associated with this data.
+   * @return Returns an object representing the metadata associated with this element.
+   * The metadata for an element contains its name, description, creation time and a map of all the
+   * element's properties set by the user.
    */
   SecureStoreMetadata getMetadata();
 
   /**
-   * @return The data stored in an utf-8 encoded byte array
+   * @return The data stored as an utf-8 encoded byte array
    */
   byte[] get();
 }

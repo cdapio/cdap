@@ -17,7 +17,8 @@
 package co.cask.cdap.internal.security;
 
 /**
- *
+ * This is tagging interface for a class providing an implementation of the secure store.
+ * TODO: Add methods to this once another implementation is added.
  */
 public interface SecureStoreProvider {
 }

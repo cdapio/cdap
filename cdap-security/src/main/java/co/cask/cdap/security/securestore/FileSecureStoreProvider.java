@@ -16,7 +16,7 @@
 
 package co.cask.cdap.security.securestore;
 
-import co.cask.cdap.api.security.SecureStoreMetadata;
+import co.cask.cdap.api.security.securestore.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
@@ -55,22 +55,28 @@ import javax.crypto.spec.SecretKeySpec;
  * File based implementation of secure store. Uses Java JCEKS based keystore.
  */
 @Singleton
-public class FileSecureStoreProvider implements SecureStoreProvider {
+class FileSecureStoreProvider implements SecureStoreProvider {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStoreProvider.class);
 
   private static final String SCHEME_NAME = "jceks";
-  /* This is used to create the key for storing metadata in the keystore. Changing this will make the
-     metadata for existing entries unreachable. */
+  /*
+   This is used to create the key for storing metadata in the keystore. Changing this will make the
+   metadata for existing entries unreachable.
+   */
   private static final String METADATA_SUFFIX = "_metadata";
   private static final String SECURE_STORE_DEFAULT_FILE_PATH = "/tmp";
   private static final String SECURE_STORE_DEFAULT_FILE_NAME = "securestore";
   private static final char[] SECURE_STORE_DEFAULT_PASSWORD = "cdapsecret".toCharArray();
-  /* Java Keystore needs an algorithm name to store a key, it is not used for any checks, only stored,
-     since we are not handling the encryption we don't care about this. */
+  /*
+   Java Keystore needs an algorithm name to store a key, it is not used for any checks, only stored,
+   since we are not handling the encryption we don't care about this.
+  */
   private static final String ALGORITHM_PROXY = "none";
 
-  /* A cache for metadata.
-     The assumption is that the number of entries won't be large enough to worry about memory. */
+  /*
+   A cache for metadata.
+   The assumption is that the number of entries won't be large enough to worry about memory.
+  */
   private final Map<String, SecureStoreMetadata> cache = new HashMap<>();
   private final char[] password;
   private final Path path;
@@ -111,22 +117,37 @@ public class FileSecureStoreProvider implements SecureStoreProvider {
     return fileSecureStoreProvider;
   }
 
+  /**
+   * Stores an element in the secure store. If the key already exists then delete it first.
+   * @param name
+   * @param data
+   * @param properties
+   * @throws IOException
+   */
   void put(String name, byte[] data, Map<String, String> properties) throws IOException {
     String metaKey = constructMetadataKey(name);
     writeLock.lock();
     try {
-      try {
-        if (keyStore.containsAlias(name) || cache.containsKey(metaKey)) {
-          // Clear the existing key so that we can write the new one.
-          delete(name);
-        }
-        cache.put(metaKey, FileSecureStoreMetadata.of(name, properties));
-        keyStore.setKeyEntry(name, new SecretKeySpec(data, ALGORITHM_PROXY),
-                             password, null);
-      } catch (KeyStoreException e) {
-        cache.remove(metaKey);
-        throw new IOException("Failed to store the key. ", e);
+      if (keyStore.containsAlias(name) || cache.containsKey(metaKey)) {
+        // Clear the existing key so that we can write the new one.
+        delete(name);
       }
+      keyStore.setKeyEntry(name, new SecretKeySpec(data, ALGORITHM_PROXY),
+                           password, null);
+      SecureStoreMetadata meta = FileSecureStoreMetadata.of(name, properties);
+      /*
+        The data was written successfully to the key store. Now try to write the metddata.
+        If this fails then try to delete the data and throw an exception.
+       */
+      try {
+        keyStore.setKeyEntry(metaKey, new KeyMetadata(meta), password, null);
+      } catch (KeyStoreException k) {
+        keyStore.deleteEntry(name);
+        throw k;
+      }
+      cache.put(metaKey, meta);
+    } catch (KeyStoreException e) {
+      throw new IOException("Failed to store the key. ", e);
     } finally {
       writeLock.unlock();
     }
@@ -134,18 +155,28 @@ public class FileSecureStoreProvider implements SecureStoreProvider {
     flush();
   }
 
+  /**
+   * Deletes the element with the given name.
+   * @param name
+   */
   void delete(String name) throws IOException {
     String metaKey = constructMetadataKey(name);
     writeLock.lock();
+    if (cache.containsKey(metaKey)) {
+      cache.remove(metaKey);
+    }
     try {
-      if (cache.containsKey(metaKey)) {
-        cache.remove(metaKey);
-      }
       if (keyStore.containsAlias(name)) {
         keyStore.deleteEntry(name);
       }
+      /* It's OK if we were able to delete the data but not the metadata.
+         Java keystore allows overwrites, so the next time we try to write a
+         key with the same name the metadata will be overwritten. */
+      if (keyStore.containsAlias(metaKey)) {
+        keyStore.deleteEntry(metaKey);
+      }
     } catch (KeyStoreException e) {
-      LOG.warn("Unable to delete the key " + name, e);
+      LOG.error("Failed to delete the key " + name, e);
     } finally {
       writeLock.unlock();
     }
@@ -153,19 +184,29 @@ public class FileSecureStoreProvider implements SecureStoreProvider {
     flush();
   }
 
+  /**
+   * List of all the entries in the secure store.
+   * @return A map of name -> description
+   * @throws IOException
+   */
   Map<String, String> list() throws IOException {
     Map<String, String> list = new HashMap<>();
+    String name = null;
     readLock.lock();
     try {
-      String alias = null;
       try {
         Enumeration<String> aliases = keyStore.aliases();
+        // Surprisingly enhanced for-each does not work for Enumeration
         while (aliases.hasMoreElements()) {
-          alias = aliases.nextElement();
-          list.put(alias, getDescription(alias));
+          name = aliases.nextElement();
+          // We don't want to list the meta data elements separately.
+          if (name.endsWith(METADATA_SUFFIX)) {
+            continue;
+          }
+          list.put(name, getDescription(name));
         }
       } catch (KeyStoreException e) {
-        throw new IOException("Can't get key " + alias + " from " + path, e);
+        throw new IOException("Failed to get the description for " + name, e);
       }
       return list;
 
@@ -174,27 +215,39 @@ public class FileSecureStoreProvider implements SecureStoreProvider {
     }
   }
 
-  @Nullable
-  SecureStoreMetadata getSecureStoreMetadata(String name) throws KeyStoreException {
+  /**
+   * Returns the metadata for the element identified by the given name.
+   * @param name
+   * @return
+   * @throws IOException
+   */
+  SecureStoreMetadata getSecureStoreMetadata(String name) throws IOException {
     String metaKey = constructMetadataKey(name);
     if (cache.containsKey(metaKey)) {
       return cache.get(metaKey);
-    } else if (keyStore.containsAlias(metaKey)) {
-      try {
-        SecureStoreMetadata meta = ((KeyMetadata) keyStore.getKey(metaKey, password)).metadata;
-        cache.put(metaKey, meta);
-        return meta;
-      } catch (NoSuchAlgorithmException | UnrecoverableKeyException e) {
-        e.printStackTrace();
-      }
     }
-    return null;
+    try {
+      if (!keyStore.containsAlias(metaKey)) {
+        throw new IOException("Metadata for " + name + " not found in the secure store.");
+      }
+      SecureStoreMetadata meta = ((KeyMetadata) keyStore.getKey(metaKey, password)).metadata;
+      cache.put(metaKey, meta);
+      return meta;
+    } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
+      throw new IOException("Unable to retrieve the metadata for " + name);
+    }
   }
 
+  /**
+   * Returns the securely stored data as a UTF8 encoded byte array.
+   * @param name
+   * @return
+   * @throws IOException
+   */
   byte[] getData(String name) throws IOException {
     try {
       if (!keyStore.containsAlias(name)) {
-        throw new IOException(name + " not found in the keystore.");
+        throw new IOException(name + " not found in the secure store.");
       }
       SecretKeySpec key = (SecretKeySpec) keyStore.getKey(name, password);
       return key.getEncoded();
@@ -338,11 +391,19 @@ public class FileSecureStoreProvider implements SecureStoreProvider {
   }
 
   @Nullable
-  private String getDescription(String name) throws KeyStoreException {
+  private String getDescription(String name) throws IOException {
     SecureStoreMetadata meta = getSecureStoreMetadata(name);
     return meta == null ? null : meta.getDescription();
   }
 
+  /**
+   * Try to persist the keystore on the file system.
+   * First save the current file as a backup, then store the current data in a new file.
+   * If all goes well then renme the new file to current and delete the old file.
+   * If anything fails then try to back up from the last successfully written file.
+   *
+   * @throws IOException
+   */
   private void flush() throws IOException {
     Path newPath = constructNewPath(path);
     Path oldPath = constructOldPath(path);
@@ -358,15 +419,6 @@ public class FileSecureStoreProvider implements SecureStoreProvider {
       }
       if (Files.exists(oldPath)) {
         renameOrFail(oldPath, Paths.get(oldPath.toString() + "_ORPHANED_" + System.currentTimeMillis()));
-      }
-      // put all of the updates into the keystore
-      for (Map.Entry<String, SecureStoreMetadata> entry: cache.entrySet()) {
-        try {
-          keyStore.setKeyEntry(entry.getKey(), new KeyMetadata(entry.getValue()),
-                               password, null);
-        } catch (KeyStoreException e) {
-          throw new IOException("Can't set metadata key " + entry.getKey(), e);
-        }
       }
 
       // Create the backup copy
@@ -388,7 +440,7 @@ public class FileSecureStoreProvider implements SecureStoreProvider {
       changed = false;
     } catch (IOException ioe) {
       resetKeyStoreState(resetPath);
-      throw ioe;
+      LOG.error("Failed to persist the key store. Secure data may be lost on a restart.", ioe);
     } finally {
       writeLock.unlock();
     }
@@ -487,40 +539,5 @@ public class FileSecureStoreProvider implements SecureStoreProvider {
       in.readFully(buf);
       metadata = new FileSecureStoreMetadata(buf);
     }
-  }
-
-  public static void main(String[] args) throws IOException, InterruptedException {
-//    char[] password = "none".toCharArray();
-//    char[] wrongPassword = "wrong".toCharArray();
-//    KeyStore ks = null;
-//    FileOutputStream fos;
-//    String alias = "First";
-//    try {
-//      ks = KeyStore.getInstance(SCHEME_NAME);
-//      ks.load(null, password);
-//      ks.setKeyEntry(alias, new SecretKeySpec("Super secret".getBytes(), "RSA"),
-//          password, null);
-//      System.out.println(ks.containsAlias(alias));
-//      fos = new java.io.FileOutputStream("keyStoreName");
-//      ks.store(fos, password);
-//      fos.close();
-//      ks = null;
-//      Thread.sleep(1000);
-//      KeyStore ks1 = KeyStore.getInstance(SCHEME_NAME);
-//      FileInputStream fis = new FileInputStream("keyStoreName");
-//      try {
-//        ks1.load(fis, null);
-//        System.out.println(ks1.containsAlias(alias));
-//      } catch (IOException ioe) {
-//        System.out.println("Wrong password");
-//        ioe.printStackTrace();
-//        System.out.println(ioe.getMessage());
-//      }
-//      KeyStore ks2 = KeyStore.getInstance(SCHEME_NAME);
-//      ks2.load(null, password);
-//      System.out.println(ks2.size());
-//    } catch (FileNotFoundException | CertificateException | NoSuchAlgorithmException | KeyStoreException e) {
-//      e.printStackTrace();
-//    }
   }
 }

@@ -16,17 +16,16 @@
 
 package co.cask.cdap.security.securestore;
 
-import co.cask.cdap.api.security.SecureStore;
-import co.cask.cdap.api.security.SecureStoreData;
-import co.cask.cdap.api.security.SecureStoreMetadata;
+import co.cask.cdap.api.security.securestore.SecureStore;
+import co.cask.cdap.api.security.securestore.SecureStoreData;
 import com.google.inject.Inject;
 
 import java.io.IOException;
-import java.security.KeyStoreException;
 import java.util.Map;
 
 /**
  * Provides a read only interface to the secure store.
+ * For write access use {@link FileSecureStoreManager}
  */
 public class FileSecureStore implements SecureStore {
 
@@ -38,7 +37,7 @@ public class FileSecureStore implements SecureStore {
   }
 
   /**
-   * @return A map of all the elements stored in the store. The map is Name -> Description
+   * @return A map of all the elements stored in the store. The map is Name -> Description.
    */
   @Override
   public Map<String, String> list() throws IOException {
@@ -46,18 +45,12 @@ public class FileSecureStore implements SecureStore {
   }
 
   /**
-   * @param name Name of the data element.
-   * @return An object representing the securely stored data associated with the name.
+   * @param name Name of the element.
+   * @return An object representing the securely stored element associated with the name.
    */
   @Override
   public SecureStoreData get(String name) throws IOException {
-    byte[] data = fileSecureStoreProvider.getData(name);
-    SecureStoreMetadata metadata;
-    try {
-      metadata = fileSecureStoreProvider.getSecureStoreMetadata(name);
-    } catch (KeyStoreException e) {
-      throw new IOException("Unable to retrieve metadata.", e);
-    }
-    return new FileSecureStoreData(metadata, data);
+    return new FileSecureStoreData(fileSecureStoreProvider.getSecureStoreMetadata(name),
+        fileSecureStoreProvider.getData(name));
   }
 }

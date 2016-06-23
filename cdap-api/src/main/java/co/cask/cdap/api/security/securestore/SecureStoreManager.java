@@ -14,21 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.api.security;
+package co.cask.cdap.api.security.securestore;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
  * Provides write access to the secure store.
+ * For read access use {@link SecureStore}.
  */
 public interface SecureStoreManager {
 
   /**
-   * @param name This is the identifier that will be used to retrieve the data
+   * @param name This is the identifier that will be used to retrieve this element.
    * @param data The sensitive data that has to be securely stored. Passed in as utf-8 formatted byte array
    * @param properties associated with this element
-   * @throws IOException If the attempt to store the data failed.
+   * @throws IOException If the attempt to store the element failed.
    */
   void put(String name, byte[] data, Map<String, String> properties) throws IOException;
 

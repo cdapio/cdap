@@ -16,10 +16,10 @@
 
 package co.cask.cdap.security.securestore;
 
-import co.cask.cdap.api.security.SecureStore;
-import co.cask.cdap.api.security.SecureStoreData;
-import co.cask.cdap.api.security.SecureStoreManager;
-import co.cask.cdap.api.security.SecureStoreMetadata;
+import co.cask.cdap.api.security.securestore.SecureStore;
+import co.cask.cdap.api.security.securestore.SecureStoreData;
+import co.cask.cdap.api.security.securestore.SecureStoreManager;
+import co.cask.cdap.api.security.securestore.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import org.apache.commons.io.Charsets;
@@ -107,9 +107,11 @@ public class FileSecureStoreTest {
   public void testGetMetadata() throws IOException {
     populateStore();
     SecureStoreMetadata metadata = FileSecureStoreMetadata.of(KEY1, PROPERTIES_1);
-    SecureStoreData secureStoreData = new FileSecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
     Assert.assertEquals(metadata.getDescription(), secureStore.get(KEY1).getMetadata().getDescription());
     Assert.assertEquals(metadata.getName(), secureStore.get(KEY1).getMetadata().getName());
+    SecureStoreMetadata metadata2 = FileSecureStoreMetadata.of(KEY2, PROPERTIES_2);
+    Assert.assertEquals(metadata2.getDescription(), secureStore.get(KEY2).getMetadata().getDescription());
+    Assert.assertEquals(metadata2.getName(), secureStore.get(KEY2).getMetadata().getName());
   }
 
   @Test
@@ -140,7 +142,7 @@ public class FileSecureStoreTest {
     try {
       secureStore.get(KEY1);
     } catch (IOException ioe) {
-      Assert.assertTrue(ioe.getMessage().contains("not found in the keystore"));
+      Assert.assertTrue(ioe.getMessage().contains("not found in the secure store"));
     }
   }
 }

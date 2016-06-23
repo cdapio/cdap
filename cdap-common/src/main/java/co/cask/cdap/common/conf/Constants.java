@@ -708,9 +708,9 @@ public final class Constants {
      * Secure Store
      */
     public static final class Store {
-      /** Location of the secure store file. */
+      /** Location of the secure store file. /tmp will be used if none is provided.*/
       public static final String SECURE_STORE_FILE_PATH = "security.store.file.path";
-      /** Password to access the secure store. */
+      /** Password to access the secure store. A default password is used if none is provided. */
       public static final String SECURE_STORE_FILE_PASSWORD = "security.store.file.password";
     }
 
