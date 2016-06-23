@@ -231,6 +231,7 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
   }
 
   public static final class ExceptionInInitialize extends NoOpAuthorizer {
+
     @Override
     public void initialize(AuthorizationContext context) throws Exception {
       throw new IllegalStateException("Testing exception during initialize");

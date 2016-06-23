@@ -44,8 +44,8 @@ import co.cask.cdap.security.authorization.NoOpAdmin;
 import co.cask.cdap.security.authorization.NoOpDatasetContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrincipalNotFoundException;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionFailureException;
@@ -332,7 +332,7 @@ public class AuthorizationHandlerTest {
     try {
       client.dropRole(admins);
       Assert.fail(String.format("Dropped a role %s which does not exists. Should have failed.", admins.getName()));
-    } catch (RoleNotFoundException expected) {
+    } catch (PrincipalNotFoundException expected) {
       // expected
     }
 
@@ -344,7 +344,7 @@ public class AuthorizationHandlerTest {
     try {
       client.addRoleToPrincipal(admins, spiderman);
       Assert.fail(String.format("Added role %s to principal %s. Should have failed.", admins, spiderman));
-    } catch (RoleNotFoundException expected) {
+    } catch (PrincipalNotFoundException expected) {
       // expected
     }
 
@@ -383,7 +383,7 @@ public class AuthorizationHandlerTest {
       client.removeRoleFromPrincipal(admins, spiderman);
       Assert.fail(String.format("Removed non-existing role %s from principal %s. Should have failed.", admins,
                                 spiderman));
-    } catch (RoleNotFoundException expected) {
+    } catch (PrincipalNotFoundException expected) {
       // expected
     }
   }

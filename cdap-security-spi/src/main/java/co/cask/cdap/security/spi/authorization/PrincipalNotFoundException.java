@@ -24,8 +24,8 @@ import java.net.HttpURLConnection;
 /**
  * Exception thrown when a {@link Role} is not found
  */
-public class RoleNotFoundException extends Exception implements HttpErrorStatusProvider {
-  public RoleNotFoundException(Role role) {
+public class PrincipalNotFoundException extends Exception implements HttpErrorStatusProvider {
+  public PrincipalNotFoundException(Role role) {
     super(String.format("%s not found.", role));
   }
 
