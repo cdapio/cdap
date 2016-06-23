@@ -16,30 +16,138 @@
 
 package co.cask.cdap.api.security.securestore;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Represents the metadata for the element stored in the secure store.
+ * Represents the metadata for the data stored in the Secure Store.
  */
-public interface SecureStoreMetadata {
+public final class SecureStoreMetadata {
+
+  private static final String NAME_FIELD = "name";
+  private static final String DESCRIPTION_FIELD = "description";
+  private static final String CREATED_FIELD = "created";
+  private static final String PROPERTIES_FIELD = "properties";
+  private static final String DESCRIPTION_DEFAULT = "";
+  private static final Gson GSON = new Gson();
+
+  private final String name;
+  private final String description;
+  private final Date created;
+  private final Map<String, String> properties;
+
+  private SecureStoreMetadata(String name, String description, Date created, Map<String, String> properties) {
+    this.name = name;
+    this.description = description;
+    this.created = created;
+    this.properties = properties;
+  }
+
+  public static SecureStoreMetadata of(String name, Map<String, String> properties) {
+    String tempDescription = properties.get(DESCRIPTION_FIELD) == null ?
+      DESCRIPTION_DEFAULT : properties.get(DESCRIPTION_FIELD);
+
+    return new SecureStoreMetadata(name, tempDescription, new Date(), properties);
+  }
 
   /**
-   * @return Name of the element.
+   * @return Name of the data.
    */
-  String getName();
-
-  /**
-   * @return Description of this element.
-   */
-  String getDescription();
+  public String getName() {
+    return name;
+  }
 
   /**
    * @return Last time, in epoch, this element was modified.
    */
-  long getLastModifiedTime();
+  public long getLastModifiedTime() {
+    return created.getTime();
+  }
 
   /**
    * @return A map of properties associated with this element.
    */
-  Map<String, String> getProperties();
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public Date getCreated() {
+    return created;
+  }
+
+  @Override
+  public String toString() {
+    return "SecureStoreMetadata{" +
+      "name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", created=" + created +
+      ", properties=" + properties +
+      '}';
+  }
+
+  /**
+   * Serialize the metadata to a byte array.
+   *
+   * @return the serialized bytes
+   * @throws IOException
+   */
+  public byte[] serialize() throws IOException {
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    OutputStreamWriter out = new OutputStreamWriter(buffer, Charset.forName("UTF-8"));
+    GSON.toJson(this, out);
+    return buffer.toByteArray();
+  }
+
+  /**
+   * Deserialize a new metadata object from a byte array.
+   *
+   * @param bytes the serialized metadata
+   * @throws IOException
+   */
+  public SecureStoreMetadata(byte[] bytes) throws IOException {
+    String name = null;
+    Date created = null;
+    String description = null;
+    Map<String, String> properties = null;
+    try (JsonReader reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(bytes),
+                                                                  Charset.forName("UTF-8")))) {
+      reader.beginObject();
+      while (reader.hasNext()) {
+        String field = reader.nextName();
+        if (NAME_FIELD.equals(field)) {
+          name = reader.nextString();
+        } else if (CREATED_FIELD.equals(field)) {
+          created = new Date(reader.nextLong());
+        } else if (DESCRIPTION_FIELD.equals(field)) {
+          description = reader.nextString();
+        } else if (PROPERTIES_FIELD.equalsIgnoreCase(field)) {
+          reader.beginObject();
+          properties = new HashMap<>();
+          while (reader.hasNext()) {
+            properties.put(reader.nextName(), reader.nextString());
+          }
+          reader.endObject();
+        }
+      }
+      reader.endObject();
+    }
+    this.name = name;
+    this.created = created;
+    this.description = description;
+    this.properties = properties;
+  }
 }

@@ -31,7 +31,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FileSecureStoreTest {
@@ -81,23 +83,23 @@ public class FileSecureStoreTest {
 
   @Test
   public void testListEmpty() throws IOException {
-    Assert.assertEquals(new HashMap<String, String>(), secureStore.list());
+    Assert.assertEquals(new ArrayList<>(), secureStore.list());
   }
 
   @Test
   public void testList() throws IOException {
     populateStore();
-    Map<String, String> expectedList = new HashMap<>(2);
-    expectedList.put(KEY1, DESCRIPTION1);
-    expectedList.put(KEY2, DESCRIPTION2);
+    List<SecureStoreMetadata> expectedList = new ArrayList<>();
+    expectedList.add(secureStore.get(KEY2).getMetadata());
+    expectedList.add(secureStore.get(KEY1).getMetadata());
     Assert.assertEquals(expectedList, secureStore.list());
   }
 
   @Test
   public void testGet() throws IOException {
     populateStore();
-    SecureStoreMetadata metadata = FileSecureStoreMetadata.of(KEY1, PROPERTIES_1);
-    SecureStoreData secureStoreData = new FileSecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
+    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, PROPERTIES_1);
+    SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
     Assert.assertArrayEquals(secureStoreData.get(), secureStore.get(KEY1).get());
     Assert.assertEquals(metadata.getDescription(), secureStore.get(KEY1).getMetadata().getDescription());
     Assert.assertEquals(metadata.getName(), secureStore.get(KEY1).getMetadata().getName());
@@ -106,10 +108,10 @@ public class FileSecureStoreTest {
   @Test
   public void testGetMetadata() throws IOException {
     populateStore();
-    SecureStoreMetadata metadata = FileSecureStoreMetadata.of(KEY1, PROPERTIES_1);
+    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, PROPERTIES_1);
     Assert.assertEquals(metadata.getDescription(), secureStore.get(KEY1).getMetadata().getDescription());
     Assert.assertEquals(metadata.getName(), secureStore.get(KEY1).getMetadata().getName());
-    SecureStoreMetadata metadata2 = FileSecureStoreMetadata.of(KEY2, PROPERTIES_2);
+    SecureStoreMetadata metadata2 = SecureStoreMetadata.of(KEY2, PROPERTIES_2);
     Assert.assertEquals(metadata2.getDescription(), secureStore.get(KEY2).getMetadata().getDescription());
     Assert.assertEquals(metadata2.getName(), secureStore.get(KEY2).getMetadata().getName());
   }
@@ -135,8 +137,8 @@ public class FileSecureStoreTest {
   @Test(expected = IOException.class)
   public void testDelete() throws IOException {
     populateStore();
-    SecureStoreMetadata metadata = FileSecureStoreMetadata.of(KEY1, PROPERTIES_1);
-    SecureStoreData secureStoreData = new FileSecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
+    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, PROPERTIES_1);
+    SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
     Assert.assertArrayEquals(secureStoreData.get(), secureStore.get(KEY1).get());
     secureStoreManager.delete(KEY1);
     try {

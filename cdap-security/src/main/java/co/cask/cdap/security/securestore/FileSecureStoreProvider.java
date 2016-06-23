@@ -126,7 +126,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
       }
       keyStore.setKeyEntry(name, new SecretKeySpec(data, ALGORITHM_PROXY),
                            password, null);
-      SecureStoreMetadata meta = FileSecureStoreMetadata.of(name, properties);
+      SecureStoreMetadata meta = SecureStoreMetadata.of(name, properties);
       /*
         The data was written successfully to the key store. Now try to write the metddata.
         If this fails then try to delete the data and throw an exception.
@@ -215,7 +215,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
    */
   @Override
   public SecureStoreData get(String name) throws IOException {
-    return new FileSecureStoreData(getSecureStoreMetadata(name), getData(name));
+    return new SecureStoreData(getSecureStoreMetadata(name), getData(name));
   }
 
   /**
@@ -518,7 +518,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-      byte[] serialized = ((FileSecureStoreMetadata) metadata).serialize();
+      byte[] serialized = ((SecureStoreMetadata) metadata).serialize();
       out.writeInt(serialized.length);
       out.write(serialized);
     }
@@ -527,7 +527,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
     ) throws IOException, ClassNotFoundException {
       byte[] buf = new byte[in.readInt()];
       in.readFully(buf);
-      metadata = new FileSecureStoreMetadata(buf);
+      metadata = new SecureStoreMetadata(buf);
     }
   }
 }

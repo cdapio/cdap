@@ -22,17 +22,29 @@ package co.cask.cdap.api.security.securestore;
  * An instance of an implementation of SecureStoreData is created and returned from the
  * {@link SecureStore}'s get method call.
  */
-public interface SecureStoreData {
+public final class SecureStoreData {
+
+  private final SecureStoreMetadata metadata;
+  private final byte[] data;
+
+  public SecureStoreData(SecureStoreMetadata metadata, byte[] data) {
+    this.metadata = metadata;
+    this.data = data;
+  }
 
   /**
    * @return Returns an object representing the metadata associated with this element.
    * The metadata for an element contains its name, description, creation time and a map of all the
    * element's properties set by the user.
    */
-  SecureStoreMetadata getMetadata();
+  public SecureStoreMetadata getMetadata() {
+    return metadata;
+  }
 
   /**
-   * @return The data stored as an utf-8 encoded byte array
+   * @return The data stored in a utf-8 encoded byte array
    */
-  byte[] get();
+  public byte[] get() {
+    return data;
+  }
 }
