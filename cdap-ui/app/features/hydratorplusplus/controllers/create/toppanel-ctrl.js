@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state, MyCDAPDataSource) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state, MyCDAPDataSource, GLOBALS) {
     'ngInject';
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -31,6 +31,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.$state = $state;
     this.$scope = $scope;
     this.dataSrc = new MyCDAPDataSource($scope);
+    this.GLOBALS = GLOBALS;
 
     this.canvasOperations = [
       {
@@ -156,8 +157,44 @@ class HydratorPlusPlusTopPanelCtrl{
       scope: this.$scope
     };
 
-    // TODO: generate preview config
-    this.myPipelineApi.runPreview(params, {}).$promise
+
+    // GENERATING PREVIEW CONFIG
+    // This might/should be extracted out to a factory
+
+    let pipelineConfig = this.HydratorPlusPlusConfigStore.getConfigForExport();
+    /**
+     *  This is a cheat way for generating preview for the entire pipeline
+     **/
+
+    let previewConfig = {
+      startStages: [],
+      endStages: [],
+      // useSinks: [], // we are not using sinks for now
+      numOfRecords: 10
+    };
+
+    // Get start stages and end stages
+    // Current implementation:
+    //    - start stages mean sources
+    //    - end stages mean sinks
+    angular.forEach(pipelineConfig.config.stages, (node) => {
+      if (this.GLOBALS.pluginConvert[node.plugin.type] === 'source') {
+        previewConfig.startStages.push(node.name);
+      } else if (this.GLOBALS.pluginConvert[node.plugin.type] === 'sink') {
+        previewConfig.endStages.push(node.name);
+      }
+    });
+    pipelineConfig.config.preview = previewConfig;
+
+    if (previewConfig.startStages.length === 0 || previewConfig.endStages.length === 0) {
+      this.HydratorPlusPlusConsoleActions.addMessage({
+        type: 'danger',
+        content: 'Please add a source and sink to the pipeline'
+      });
+      return;
+    }
+
+    this.myPipelineApi.runPreview(params, pipelineConfig).$promise
       .then((res) => {
         this.previewStore.dispatch(
           this.previewActions.setPreviewId(res.preview)
@@ -165,6 +202,7 @@ class HydratorPlusPlusTopPanelCtrl{
 
         this.startPollPreviewStatus(res.preview);
       }, (err) => {
+        this.stopTimer();
         this.HydratorPlusPlusConsoleActions.addMessage({
           type: 'danger',
           content: err.data
