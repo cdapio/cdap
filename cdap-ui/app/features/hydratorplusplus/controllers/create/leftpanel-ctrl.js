@@ -94,7 +94,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         }
       });
       if (!extensions.length) {
-        this.pluginsMap = [];
+        return;
       }
       this.pluginsMap = this.HydratorPlusPlusOrderingFactory.orderPluginTypes(this.pluginsMap);
     });

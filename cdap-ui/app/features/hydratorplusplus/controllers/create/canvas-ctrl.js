@@ -65,7 +65,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
         .open({
           templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
           size: 'lg',
-          windowClass: 'node-config-modal hydrator-modal',
+          windowClass: 'node-config-modal cdap-modal',
           controller: 'HydratorPlusPlusNodeConfigCtrl',
           controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
           resolve: {
