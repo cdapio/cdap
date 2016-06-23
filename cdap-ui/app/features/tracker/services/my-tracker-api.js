@@ -22,7 +22,9 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.programId + '/methods/auditlog/:entityType/:entityId',
       navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId,
       trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId,
-      propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties';
+      propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties',
+      // FIXME: This service name needs to come from UI_CONFIG. Need to figure out how to do this.
+      topEntitiesPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/topEntities/:entity';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -48,7 +50,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     deployTrackerApp: myHelpers.getConfig('PUT', 'REQUEST', trackerApp),
     startTrackerProgram: myHelpers.getConfig('POST', 'REQUEST', trackerApp + '/:programType/:programId/start', false, { suppressErrors: true }),
     trackerProgramStatus: myHelpers.getConfig('GET', 'REQUEST', trackerApp + '/:programType/:programId/status', false, { suppressErrors: true }),
-
+    getTopEntities: myHelpers.getConfig('GET', 'REQUEST', topEntitiesPath, false, { suppressErrors: true }),
 
     // METADATA PROPERTIES CONTROL
     deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true }),
