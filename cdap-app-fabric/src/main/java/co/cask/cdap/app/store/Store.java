@@ -17,6 +17,7 @@
 package co.cask.cdap.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -35,6 +36,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.ProgramRunId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import org.apache.twill.api.RunId;
 
@@ -46,8 +48,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * {@link Store} operates on a {@link Program}. It's responsible
- * for managing the lifecycle of a {@link Program}.
+ * Responsible for managing {@link Program} and {@link Application} metadata.
  */
 public interface Store extends RuntimeStore {
 
@@ -62,10 +63,21 @@ public interface Store extends RuntimeStore {
                                                            ProgramNotFoundException;
 
   /**
+   * Logs start of program run. This is a convenience method for testing, actual run starts should be recorded using
+   * {@link #setStart(Id.Program, String, long, String, Map, Map)}.
+   *
+   * @param id        id of the program
+   * @param pid       run id
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
+   */
+  @VisibleForTesting
+  void setStart(Id.Program id, String pid, long startTime);
+
+  /**
    * Fetches run records for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
-   * @param id        program id.
+   * @param id        id of the program
    * @param status    status of the program running/completed/failed or all
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
@@ -78,7 +90,7 @@ public interface Store extends RuntimeStore {
    * Fetches run records for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
-   * @param id        program id.
+   * @param id        id of the program
    * @param status    status of the program running/completed/failed or all
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
@@ -100,7 +112,7 @@ public interface Store extends RuntimeStore {
   /**
    * Fetches the run record for particular run of a program.
    *
-   * @param id        program id
+   * @param id        id of the program
    * @param runid     run id of the program
    * @return          run record for the specified program and runid, null if not found
    */
@@ -186,14 +198,14 @@ public interface Store extends RuntimeStore {
   /**
    * Sets the number of instances of a service.
    *
-   * @param id program id
+   * @param id id of the program
    * @param instances number of instances
    */
   void setServiceInstances(Id.Program id, int instances);
 
   /**
    * Returns the number of instances of a service.
-   * @param id program id
+   * @param id id of the program
    * @return number of instances
    */
   int getServiceInstances(Id.Program id);
@@ -201,7 +213,7 @@ public interface Store extends RuntimeStore {
   /**
    * Sets the number of instances of a {@link Worker}
    *
-   * @param id program id
+   * @param id id of the program
    * @param instances number of instances
    */
   void setWorkerInstances(Id.Program id, int instances);
@@ -209,7 +221,7 @@ public interface Store extends RuntimeStore {
   /**
    * Gets the number of instances of a {@link Worker}
    *
-   * @param id program id
+   * @param id id of the program
    * @return number of instances
    */
   int getWorkerInstances(Id.Program id);
@@ -267,7 +279,7 @@ public interface Store extends RuntimeStore {
 
   /**
    * Check if a program exists.
-   * @param id id of program.
+   * @param id id of the program
    * @return true if the program exists, false otherwise.
    */
   boolean programExists(Id.Program id);

@@ -112,8 +112,7 @@ public final class BasicThrowable {
     if (!Arrays.equals(stackTraces, that.stackTraces)) {
       return false;
     }
-    return !(cause != null ? !cause.equals(that.cause) : that.cause != null);
-
+    return cause != null ? cause.equals(that.cause) : that.cause == null;
   }
 
   @Override

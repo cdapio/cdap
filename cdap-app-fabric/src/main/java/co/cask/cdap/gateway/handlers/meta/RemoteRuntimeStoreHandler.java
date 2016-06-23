@@ -18,13 +18,16 @@ package co.cask.cdap.gateway.handlers.meta;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.app.store.remote.MethodArgument;
+import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -35,6 +38,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -42,7 +46,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * The {@link co.cask.http.HttpHandler} for handling REST calls to meta stores.
+ * The {@link HttpHandler} for handling REST calls from a {@link RemoteRuntimeStore}.
  */
 // we don't share the same version as other handlers, so we can upgrade/iterate faster
 @Path("/v1/execute")
@@ -60,57 +64,44 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/compareAndSetStatus")
-  public void compareAndSetStatus(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
+  public void compareAndSetStatus(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
-    String pid = deserialize(arguments.get(1));
-    ProgramRunStatus expectedStatus = deserialize(arguments.get(2));
-    ProgramRunStatus updateStatus = deserialize(arguments.get(3));
+    Id.Program program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    ProgramRunStatus expectedStatus = deserializeNext(arguments);
+    ProgramRunStatus updateStatus = deserializeNext(arguments);
     store.compareAndSetStatus(program, pid, expectedStatus, updateStatus);
 
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
-  @Path("/setStartWithTwillRunId")
-  public void setStartWithTwillRunId(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
+  @Path("/setStart")
+  public void setStart(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
-    String pid = deserialize(arguments.get(1));
-    long startTime = deserialize(arguments.get(2));
-    String twillRunId = deserialize(arguments.get(3));
-    Map<String, String> runtimeArgs = deserialize(arguments.get(4));
-    Map<String, String> systemArgs = deserialize(arguments.get(5));
+    Id.Program program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    long startTime = deserializeNext(arguments);
+    String twillRunId = deserializeNext(arguments);
+    Map<String, String> runtimeArgs = deserializeNext(arguments);
+    Map<String, String> systemArgs = deserializeNext(arguments);
     store.setStart(program, pid, startTime, twillRunId, runtimeArgs, systemArgs);
 
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
-  @Path("/setStart")
-  public void setStart(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
-
-    Id.Program program = deserialize(arguments.get(0));
-    String pid = deserialize(arguments.get(1));
-    long startTime = deserialize(arguments.get(2));
-    store.setStart(program, pid, startTime);
-
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  @POST
   @Path("/setStop")
-  public void setStop(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
+  public void setStop(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
-    String pid = deserialize(arguments.get(1));
-    long endTime = deserialize(arguments.get(2));
-    ProgramRunStatus runStatus = deserialize(arguments.get(3));
-    BasicThrowable failureCause = deserialize(arguments.get(4));
+    Id.Program program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    long endTime = deserializeNext(arguments);
+    ProgramRunStatus runStatus = deserializeNext(arguments);
+    BasicThrowable failureCause = deserializeNext(arguments);
     store.setStop(program, pid, endTime, runStatus, failureCause);
 
     responder.sendStatus(HttpResponseStatus.OK);
@@ -118,11 +109,11 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/setSuspend")
-  public void setSuspend(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
+  public void setSuspend(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
-    String pid = deserialize(arguments.get(1));
+    Id.Program program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
     store.setSuspend(program, pid);
 
     responder.sendStatus(HttpResponseStatus.OK);
@@ -130,11 +121,11 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/setResume")
-  public void setResume(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
+  public void setResume(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
-    String pid = deserialize(arguments.get(1));
+    Id.Program program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
     store.setResume(program, pid);
 
     responder.sendStatus(HttpResponseStatus.OK);
@@ -143,11 +134,11 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/updateWorkflowToken")
-  public void updateWorkflowToken(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
+  public void updateWorkflowToken(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
 
-    ProgramRunId workflowRunId = deserialize(arguments.get(0));
-    WorkflowToken token = deserialize(arguments.get(1));
+    ProgramRunId workflowRunId = deserializeNext(arguments);
+    WorkflowToken token = deserializeNext(arguments);
     store.updateWorkflowToken(workflowRunId, token);
 
     responder.sendStatus(HttpResponseStatus.OK);
@@ -155,23 +146,29 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/addWorkflowNodeState")
-  public void addWorkflowNodeState(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
+  public void addWorkflowNodeState(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
 
-    ProgramRunId workflowRunId = deserialize(arguments.get(0));
-    WorkflowNodeStateDetail nodeStateDetail = deserialize(arguments.get(1));
+    ProgramRunId workflowRunId = deserializeNext(arguments);
+    WorkflowNodeStateDetail nodeStateDetail = deserializeNext(arguments);
     store.addWorkflowNodeState(workflowRunId, nodeStateDetail);
 
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private List<MethodArgument> parseArguments(HttpRequest request) {
+  private Iterator<MethodArgument> parseArguments(HttpRequest request) {
     String body = request.getContent().toString(Charsets.UTF_8);
-    return GSON.fromJson(body, METHOD_ARGUMENT_LIST_TYPE);
+    List<MethodArgument> arguments = GSON.fromJson(body, METHOD_ARGUMENT_LIST_TYPE);
+    return arguments.iterator();
   }
 
   @Nullable
-  private <T> T deserialize(@Nullable MethodArgument argument) throws ClassNotFoundException {
+  private <T> T deserializeNext(Iterator<MethodArgument> arguments) throws ClassNotFoundException, BadRequestException {
+    if (!arguments.hasNext()) {
+      throw new BadRequestException("Expected additional elements.");
+    }
+
+    MethodArgument argument = arguments.next();
     if (argument == null) {
       return null;
     }

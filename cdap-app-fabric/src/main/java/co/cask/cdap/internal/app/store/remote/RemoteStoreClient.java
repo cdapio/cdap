@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Implements functionality common to making requests from implementations of remote stores.
+ * Common HTTP client functionality for remote store implementations.
  */
 public class RemoteStoreClient {
 
@@ -61,31 +61,28 @@ public class RemoteStoreClient {
     this.httpRequestConfig = new HttpRequestConfig(httpClientTimeoutMs, httpClientTimeoutMs);
   }
 
-  private InetSocketAddress getAppFabricServiceAddress() {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
-    if (discoverable != null) {
-      return discoverable.getSocketAddress();
-    }
-    throw new RuntimeException(
-      String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
-  }
-
   private String resolve(String resource) {
-    InetSocketAddress addr = getAppFabricServiceAddress();
+    Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
+    if (discoverable == null) {
+      throw new RuntimeException(
+        String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
+    }
+    InetSocketAddress addr = discoverable.getSocketAddress();
+
     return String.format("http://%s:%s%s/%s",
                          addr.getHostName(), addr.getPort(), "/v1", resource);
   }
 
   protected HttpResponse doPost(String resource, String body) {
-    return doRequest(resource, "POST", null, body);
+    return doRequest(resource, HttpMethod.POST, null, body);
   }
 
-  protected HttpResponse doRequest(String resource, String requestMethod,
+  protected HttpResponse doRequest(String resource, HttpMethod requestMethod,
                                    @Nullable Map<String, String> headers, @Nullable String body) {
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
-      HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.valueOf(requestMethod), url).addHeaders(headers);
+      HttpRequest.Builder builder = HttpRequest.builder(requestMethod, url).addHeaders(headers);
       if (body != null) {
         builder.withBody(body);
       }
@@ -104,7 +101,7 @@ public class RemoteStoreClient {
   }
 
   // creates error message, encoding details about the request
-  private String createErrorMessage(String resolvedUrl, String requestMethod,
+  private String createErrorMessage(String resolvedUrl, HttpMethod requestMethod,
                                     @Nullable Map<String, String> headers, @Nullable String body) {
     return String.format("Error making request to AppFabric Service at %s while doing %s with headers %s and body %s.",
                          resolvedUrl, requestMethod,

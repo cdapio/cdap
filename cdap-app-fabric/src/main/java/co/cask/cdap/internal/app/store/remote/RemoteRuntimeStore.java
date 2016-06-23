@@ -29,13 +29,11 @@ import co.cask.cdap.proto.codec.BasicThrowableCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,22 +57,14 @@ public class RemoteRuntimeStore extends RemoteStoreClient implements RuntimeStor
 
   @Override
   public void compareAndSetStatus(Id.Program id, String pid, ProgramRunStatus expectedStatus,
-                                  ProgramRunStatus updateStatus) {
-    executeRequest("compareAndSetStatus",
-                   id, pid, expectedStatus, updateStatus);
+                                  ProgramRunStatus newStatus) {
+    executeRequest("compareAndSetStatus", id, pid, expectedStatus, newStatus);
   }
 
   @Override
   public void setStart(Id.Program id, String pid, long startTime, @Nullable String twillRunId,
                        Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
-    executeRequest("setStartWithTwillRunId",
-                   id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
-  }
-
-  @Override
-  public void setStart(Id.Program id, String pid, long startTime) {
-    executeRequest("setStart",
-                   id, pid, startTime);
+    executeRequest("setStart", id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
   }
 
   @Override
@@ -86,46 +76,41 @@ public class RemoteRuntimeStore extends RemoteStoreClient implements RuntimeStor
   @Override
   public void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus,
                       @Nullable BasicThrowable failureCause) {
-    executeRequest("setStop",
-                   id, pid, endTime, runStatus, failureCause);
+    executeRequest("setStop", id, pid, endTime, runStatus, failureCause);
   }
 
   @Override
   public void setSuspend(Id.Program id, String pid) {
-    executeRequest("setSuspend",
-                   id, pid);
+    executeRequest("setSuspend", id, pid);
   }
 
   @Override
   public void setResume(Id.Program id, String pid) {
-    executeRequest("setResume",
-                   id, pid);
+    executeRequest("setResume", id, pid);
   }
 
   @Override
   public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
-    executeRequest("updateWorkflowToken",
-                   workflowRunId, token);
+    executeRequest("updateWorkflowToken", workflowRunId, token);
   }
 
   @Override
   public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
-    executeRequest("addWorkflowNodeState",
-                   workflowRunId, nodeStateDetail);
+    executeRequest("addWorkflowNodeState", workflowRunId, nodeStateDetail);
   }
 
   private void executeRequest(String methodName, Object... arguments) {
-    doPost("execute/" + methodName, GSON.toJson(createRequest(arguments)));
+    doPost("execute/" + methodName, GSON.toJson(createArguments(arguments)));
   }
 
-  private List<MethodArgument> createRequest(Object... arguments) {
+  private static List<MethodArgument> createArguments(Object... arguments) {
     List<MethodArgument> methodArguments = new ArrayList<>();
-    for (Object param : arguments) {
-      if (param == null) {
+    for (Object arg : arguments) {
+      if (arg == null) {
         methodArguments.add(null);
       } else {
-        String type = param.getClass().getName();
-        methodArguments.add(new MethodArgument(type, GSON.toJsonTree(param)));
+        String type = arg.getClass().getName();
+        methodArguments.add(new MethodArgument(type, GSON.toJsonTree(arg)));
       }
     }
     return methodArguments;

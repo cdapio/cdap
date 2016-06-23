@@ -24,13 +24,12 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.annotations.VisibleForTesting;
 
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Manages the runtime lifecycle of a {@link Program}.
+ * A store for runtime information of a {@link Program}.
  */
 public interface RuntimeStore {
 
@@ -38,20 +37,20 @@ public interface RuntimeStore {
    * Compare and set operation that allow to compare and set expected and update status.
    * Implementation of this method should guarantee that the operation is atomic or in transaction.
    *
-   * @param id              Info about program
-   * @param pid             The run id
-   * @param expectedStatus  The expected value
-   * @param updateStatus    The new value
+   * @param id id of the program
+   * @param pid the run id
+   * @param expectedStatus the expected value
+   * @param newStatus the new value
    */
-  void compareAndSetStatus(Id.Program id, String pid, ProgramRunStatus expectedStatus, ProgramRunStatus updateStatus);
+  void compareAndSetStatus(Id.Program id, String pid, ProgramRunStatus expectedStatus, ProgramRunStatus newStatus);
 
   /**
    * Logs start of program run.
    *
-   * @param id         Info about program
-   * @param pid        run id
-   * @param startTime  start timestamp in seconds; if run id is time-based pass the time from the run id
-   * @param twillRunId twill run id
+   * @param id id of the program
+   * @param pid run id
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
+   * @param twillRunId Twill run id
    * @param runtimeArgs the runtime arguments for this program run
    * @param systemArgs the system arguments for this program run
    */
@@ -59,33 +58,22 @@ public interface RuntimeStore {
                 Map<String, String> runtimeArgs, Map<String, String> systemArgs);
 
   /**
-   * Logs start of program run. This is a convenience method for testing, actual run starts should be recorded using
-   * {@link #setStart(Id.Program, String, long, String, Map, Map)}.
-   *
-   * @param id        Info about program
-   * @param pid       run id
-   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
-   */
-  @VisibleForTesting
-  void setStart(Id.Program id, String pid, long startTime);
-
-  /**
    * Logs end of program run.
    *
-   * @param id      id of program
-   * @param pid     run id
+   * @param id id of the program
+   * @param pid run id
    * @param endTime end timestamp in seconds
-   * @param runStatus   {@link ProgramRunStatus} of program run
+   * @param runStatus {@link ProgramRunStatus} of program run
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
 
   /**
    * Logs end of program run.
    *
-   * @param id      id of program
-   * @param pid     run id
+   * @param id id of the program
+   * @param pid run id
    * @param endTime end timestamp in seconds
-   * @param runStatus   {@link ProgramRunStatus} of program run
+   * @param runStatus {@link ProgramRunStatus} of program run
    * @param failureCause failure cause if the program failed to execute
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus,
@@ -93,15 +81,17 @@ public interface RuntimeStore {
 
   /**
    * Logs suspend of a program run.
-   * @param id      id of the program
-   * @param pid     run id
+   *
+   * @param id id of the program
+   * @param pid run id
    */
   void setSuspend(Id.Program id, String pid);
 
   /**
    * Logs resume of a program run.
-   * @param id      id of the program
-   * @param pid     run id
+   *
+   * @param id id of the program
+   * @param pid run id
    */
   void setResume(Id.Program id, String pid);
 
@@ -116,6 +106,7 @@ public interface RuntimeStore {
   /**
    * Add node state for the given {@link Workflow} run. This method is used to update the
    * state of the custom actions started by Workflow.
+   *
    * @param workflowRunId the Workflow run
    * @param nodeStateDetail the node state to be added for the Workflow run
    */

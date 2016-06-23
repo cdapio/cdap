@@ -70,7 +70,6 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
     RunRecordMeta runMeta = store.getRun(flowId, pid);
     Assert.assertEquals(initialRunRecord, runMeta);
 
-
     runtimeStore.setSuspend(flowId, pid);
     Assert.assertEquals(new RunRecordMeta(initialRunRecord, null, ProgramRunStatus.SUSPENDED),
                         store.getRun(flowId, pid));
