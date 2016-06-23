@@ -53,7 +53,7 @@ public class FieldsPrefixTransform extends Transform<StructuredRecord, Structure
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     try {
       Schema outSchema = config.getOutputSchema(Schema.parseJson(config.schemaStr));
-      stageConfigurer.setOutputSchema(config.getOutputSchema(outSchema));
+      stageConfigurer.setOutputSchema(outSchema);
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid output schema: " + e.getMessage(), e);
     }

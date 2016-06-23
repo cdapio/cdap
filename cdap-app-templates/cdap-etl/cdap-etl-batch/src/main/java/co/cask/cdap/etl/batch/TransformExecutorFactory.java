@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.StageLifecycle;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -39,10 +40,13 @@ import java.util.Map;
 public abstract class TransformExecutorFactory<T> {
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
+  protected final Map<String, Map<String, Schema>> perStageInputSchemas;
+
 
   public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics) {
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
+    perStageInputSchemas = new HashMap<>();
   }
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
@@ -65,6 +69,7 @@ public abstract class TransformExecutorFactory<T> {
     for (String pluginType : pipeline.getPluginTypes()) {
       for (StageInfo stageInfo : pipeline.getStagesOfType(pluginType)) {
         String stageName = stageInfo.getName();
+        perStageInputSchemas.put(stageName, stageInfo.getInputSchemas());
         transformations.put(stageName,
                             new TransformDetail(getTransformation(pluginType, stageName),
                                                 pipeline.getStageOutputs(stageName)));

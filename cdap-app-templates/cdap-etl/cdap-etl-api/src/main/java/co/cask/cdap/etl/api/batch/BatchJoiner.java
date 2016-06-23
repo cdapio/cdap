@@ -45,7 +45,7 @@ import java.util.List;
  */
 @Beta
 public abstract class BatchJoiner<JOIN_KEY, JOIN_VALUE, OUT> extends BatchConfigurable<BatchJoinerContext>
-  implements Joiner<JOIN_KEY, JOIN_VALUE, OUT>, PipelineConfigurable, StageLifecycle<BatchRuntimeContext> {
+  implements Joiner<JOIN_KEY, JOIN_VALUE, OUT>, PipelineConfigurable, StageLifecycle<BatchJoinerRuntimeContext> {
   public static final String PLUGIN_TYPE = "batchjoiner";
 
   /**
@@ -81,7 +81,7 @@ public abstract class BatchJoiner<JOIN_KEY, JOIN_VALUE, OUT> extends BatchConfig
    * @throws Exception if there is any error during initialization
    */
   @Override
-  public void initialize(BatchRuntimeContext context) throws Exception {
+  public void initialize(BatchJoinerRuntimeContext context) throws Exception {
     //no-op
   }
 

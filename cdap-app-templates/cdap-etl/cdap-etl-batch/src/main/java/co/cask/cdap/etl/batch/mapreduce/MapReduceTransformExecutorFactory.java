@@ -27,12 +27,14 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
+import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.batch.join.InnerJoin;
+import co.cask.cdap.etl.batch.join.OuterJoin;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
@@ -88,6 +90,15 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                        stageName, stageRuntimeArgs);
   }
 
+  protected BatchJoinerRuntimeContext createJoinerRuntimeContext(String stageName) {
+    Map<String, String> stageRuntimeArgs = pluginRuntimeArgs.get(stageName);
+    if (stageRuntimeArgs == null) {
+      stageRuntimeArgs = new HashMap<>();
+    }
+    return new MapReduceBatchJoinerRuntimeContext(taskContext, metrics, new DatasetContextLookupProvider(taskContext),
+                                                  stageName, stageRuntimeArgs, perStageInputSchemas.get(stageName));
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
@@ -109,7 +120,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
       BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName);
-      BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
+      BatchJoinerRuntimeContext runtimeContext = createJoinerRuntimeContext(stageName);
       batchJoiner.initialize(runtimeContext);
       StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
       if (isMapper) {
@@ -187,6 +198,9 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       switch (joinType) {
         case "innerjoin":
           new InnerJoin<>(joiner, joinKey, input.getValue(), emitter).join();
+          break;
+        case "outerjoin":
+          new OuterJoin<>(joiner, joinKey, input.getValue(), emitter).join();
           break;
         default:
       }

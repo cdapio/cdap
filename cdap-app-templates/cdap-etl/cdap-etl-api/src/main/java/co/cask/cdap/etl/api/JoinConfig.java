@@ -22,12 +22,13 @@ package co.cask.cdap.etl.api;
 public class JoinConfig {
 
   private String joinType;
-
   private int numOfInputs;
+  private Iterable<String> requiredInputs;
 
-  public JoinConfig(String joinType, int numOfInputs) {
+  public JoinConfig(String joinType, int numOfInputs, Iterable<String> requiredInputs) {
     this.joinType = joinType;
     this.numOfInputs = numOfInputs;
+    this.requiredInputs = requiredInputs;
   }
 
   public String getJoinType() {
@@ -36,5 +37,9 @@ public class JoinConfig {
 
   public int getNumOfInputs() {
     return numOfInputs;
+  }
+
+  public Iterable<String> getRequiredInputs() {
+    return requiredInputs;
   }
 }

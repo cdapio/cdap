@@ -30,6 +30,7 @@ import co.cask.cdap.etl.api.JoinResult;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
+import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
@@ -51,6 +52,7 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
   private Schema outputSchema;
+  private Map<String, Schema> inputSchemas;
 
   public Join(Config config) {
     this.config = config;
@@ -61,6 +63,12 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
     stageConfigurer.setOutputSchema(getOutputSchema(inputSchemas));
+    config.validateConfig();
+  }
+
+  @Override
+  public void initialize(BatchJoinerRuntimeContext context) throws Exception {
+    inputSchemas = context.getInputSchemas();
   }
 
   @Override
@@ -88,17 +96,16 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
 
   @Override
   public JoinConfig getJoinConfig() {
-    return new JoinConfig(config.joinType, config.getNumOfInputs());
+    return new JoinConfig(config.joinType, config.getNumOfInputs(), config.getRequiredInputs());
   }
 
   @Override
   public void merge(StructuredRecord joinKey, List<JoinResult> joinResults, Emitter<StructuredRecord> emitter) {
-    Set<Schema.Field> fields = new HashSet<>();
     StructuredRecord.Builder outRecordBuilder;
 
     for (JoinResult joinResult : joinResults) {
       if (outputSchema == null) {
-        outputSchema = getOutputSchema(fields, joinResult);
+        outputSchema = getOutputSchema(inputSchemas);
       }
       outRecordBuilder = StructuredRecord.builder(outputSchema);
       for (JoinElement joinElement : joinResult.getJoinResult()) {
@@ -107,31 +114,28 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
           outRecordBuilder.set(field.getName(), record.get(field.getName()));
         }
       }
+
       emitter.emit(outRecordBuilder.build());
     }
   }
 
-  private Schema getOutputSchema(Set<Schema.Field> fields, JoinResult joinResult) {
-    for (JoinElement joinElement : joinResult.getJoinResult()) {
-      StructuredRecord record = (StructuredRecord) joinElement.getJoinValue();
-      for (Schema.Field field : record.getSchema().getFields()) {
-        fields.add(field);
-      }
-    }
-    return Schema.recordOf("join.output", fields);
-  }
-
   private Schema getOutputSchema(Map<String, Schema> inputSchemas) {
-    Set<Schema.Field> fields = new HashSet<>();
-
-    // TODO use fields properties to create output schema
-      for (Schema inputSchema: inputSchemas.values()) {
-        List<Schema.Field> inputFields = inputSchema.getFields();
-        for (Schema.Field inputField: inputFields) {
-          fields.add(Schema.Field.of(inputField.getName(), inputField.getSchema()));
+    Set<Schema.Field> outFields = new HashSet<>();
+    Iterable<String> requiredInputs = config.getRequiredInputs();
+    for (Map.Entry<String, Schema> entry : inputSchemas.entrySet()) {
+      Schema inputSchema = entry.getValue();
+      if (Iterables.contains(requiredInputs, entry.getKey())) {
+        for (Schema.Field inputField: inputSchema.getFields()) {
+          outFields.add(Schema.Field.of(inputField.getName(), inputField.getSchema()));
+        }
+      } else { // mark it as nullable
+        for (Schema.Field inputField: inputSchema.getFields()) {
+          outFields.add(Schema.Field.of(inputField.getName(),
+                                        Schema.nullableOf(inputField.getSchema())));
         }
       }
-    return Schema.recordOf("join.output", fields);
+    }
+    return Schema.recordOf("join.output", outFields);
   }
 
   /**
@@ -168,15 +172,15 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
 
       Iterable<String> multipleJoinKeys = Splitter.on(':').trimResults().split(joinKeys);
       if (Iterables.size(multipleJoinKeys) == 0) {
-        throw new IllegalArgumentException(String.format("There should be atleast %s join keys", numOfInputs));
+        throw new IllegalArgumentException("There should be atleast one join key per stage");
       }
 
       for (String key : multipleJoinKeys) {
         int numOfStages = 0;
         Iterable<String> perStageJoinKeys = Splitter.on(',').trimResults().split(key);
         if (Iterables.size(perStageJoinKeys) != getNumOfInputs()) {
-          throw new IllegalArgumentException(String.format("Number of join keys should be equal for all the stages " +
-                                                             "for plugin %s", PLUGIN_TYPE));
+          throw new IllegalArgumentException(String.format("There should be atleast one join key per stage for plugin" +
+                                                             " type %s", PLUGIN_TYPE));
         }
 
         for (String perStageKey : perStageJoinKeys) {
@@ -186,10 +190,10 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
                                                                + " for %s of %s", perStageKey, PLUGIN_TYPE));
           }
           numOfStages++;
-          if (numOfStages != getNumOfInputs()) {
-            throw new IllegalArgumentException(String.format("There should be same number "
-                                                               + " for %s of %s", perStageKey, PLUGIN_TYPE));
-          }
+        }
+        if (numOfStages != getNumOfInputs()) {
+          throw new IllegalArgumentException(String.format("There should be same number of inputs for %s",
+                                                           PLUGIN_TYPE));
         }
       }
     }
@@ -226,17 +230,21 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
     private int getNumOfInputs() {
       return Integer.parseInt(numOfInputs);
     }
+
+    private Iterable<String> getRequiredInputs() {
+      return Splitter.on(',').trimResults().omitEmptyStrings().split(requiredInputs);
+    }
   }
 
   public static ETLPlugin getPlugin(String joinKeys, String joinType, String numOfInputs, String fieldsToSelect,
-                                    String fieldsToRename, String nullableInputs) {
+                                    String fieldsToRename, String requiredInputs) {
     Map<String, String> properties = new HashMap<>();
     properties.put("joinKeys", joinKeys);
     properties.put("joinType", joinType);
     properties.put("numOfInputs", numOfInputs);
     properties.put("fieldsToSelect", fieldsToSelect);
     properties.put("fieldsToRename", fieldsToRename);
-    properties.put("requiredInputs", nullableInputs);
+    properties.put("requiredInputs", requiredInputs);
     return new ETLPlugin("Join", BatchJoiner.PLUGIN_TYPE, properties, null);
   }
 

@@ -101,8 +101,88 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testJoiner() throws Exception {
-    testJoinerPlugin(Engine.MAPREDUCE);
+  public void testJoinerWithMultipleSchemas() throws Exception {
+//    testJoinerPlugin(Engine.MAPREDUCE);
+    testOuterJoin(Engine.MAPREDUCE);
+  }
+
+  private void testOuterJoin(Engine engine) throws Exception {
+    Schema inputSchema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source1", MockSource.getPlugin("joinerInput")))
+      .addStage(new ETLStage("tOne", FieldsPrefixTransform.getPlugin("tOne", inputSchema.toString())))
+      .addStage(new ETLStage("tTwo", FieldsPrefixTransform.getPlugin("tTwo", inputSchema.toString())))
+      .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("tOnename", "bob")))
+      .addStage(new ETLStage("testJoiner", Join.getPlugin("filter1.tOneid,tTwo.tTwoid:filter1.tOnename,tTwo.tTwoname",
+                                                          "outerjoin", "2", "", "", "")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin("joinerOutput")))
+      .addConnection("source1", "tOne")
+      .addConnection("source1", "tTwo")
+      .addConnection("tOne", "filter1")
+      .addConnection("filter1", "testJoiner")
+      .addConnection("tTwo", "testJoiner")
+      .addConnection("testJoiner", "sink1")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JoinerApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+
+    Schema outSchema = Schema.recordOf(
+      "join.output",
+      Schema.Field.of("tOneid", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("tTwoid", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("tOnename", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("tTwoname", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema).set("name", "samuel").set("id", "1").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema).set("name", "bob").set("id", "2").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema).set("name", "jane").set("id", "3").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "joinerInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // check sink
+    StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema).set("tOnename", "samuel").
+      set("tTwoname", "samuel").set("tOneid", "1").set("tTwoid", "1").build();
+    StructuredRecord joinRecordBob = StructuredRecord.builder(outSchema).set("tOnename", "bob").
+      set("tTwoname", "bob").set("tOneid", "2").set("tTwoid", "2").build();
+    StructuredRecord joinRecordJane = StructuredRecord.builder(outSchema).set("tOnename", "jane").
+      set("tTwoname", "jane").set("tOneid", "3").set("tTwoid", "3").build();
+
+    DataSetManager<Table> sinkManager = getDataset("joinerOutput");
+    List<StructuredRecord> actualRecords = MockSink.readOutput(sinkManager);
+    Assert.assertEquals(3, actualRecords.size());
+
+    // we need to do this because when we are creating structured record in join plugin, we are not sure what will be
+    // the order of input records and the fields
+    for (StructuredRecord record : actualRecords) {
+      if (record.get("tOneid") == "1") {
+        Assert.assertEquals(joinRecordSamuel.get("tOnename"), record.get("tOnename"));
+        Assert.assertEquals(joinRecordSamuel.get("tTwoname"), record.get("tTwoname"));
+      } else if (record.get("tOneid") == "2") {
+        Assert.assertEquals(joinRecordBob.get("tOnename"), record.get("tOnename"));
+        Assert.assertEquals(joinRecordBob.get("tTwoname"), record.get("tTwoname"));
+      } else if (record.get("tOneid") == "3") {
+        Assert.assertEquals(joinRecordJane.get("tOnename"), record.get("tOnename"));
+        Assert.assertEquals(joinRecordJane.get("tTwoname"), record.get("tTwoname"));
+      }
+    }
+
+    validateMetric(3, appId, "testJoiner.records.out");
+    validateMetric(3, appId, "sink1.records.in");
   }
 
   private void testJoinerPlugin(Engine engine) throws Exception {

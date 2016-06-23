@@ -16,7 +16,11 @@
 
 package co.cask.cdap.etl.planner;
 
+import co.cask.cdap.api.data.schema.Schema;
+
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -24,6 +28,10 @@ import javax.annotation.Nullable;
  */
 public class StageInfo {
   private final String name;
+  private final Map<String, Schema> inputSchemas;
+  private final Schema outputSchema;
+  private final Set<String> inputs;
+  private final Set<String> outputs;
   private final String errorDatasetName;
 
   public StageInfo(String name) {
@@ -33,6 +41,36 @@ public class StageInfo {
   public StageInfo(String name, @Nullable String errorDatasetName) {
     this.name = name;
     this.errorDatasetName = errorDatasetName;
+    this.inputSchemas = null;
+    this.outputSchema = null;
+    this.inputs = null;
+    this.outputs = null;
+  }
+
+  public StageInfo(String name, Map<String, Schema> inputSchemas, Schema outputSchema,
+                   Set<String> inputs, Set<String> outputs, String errorDatasetName) {
+    this.name = name;
+    this.inputSchemas = inputSchemas;
+    this.outputSchema = outputSchema;
+    this.inputs = inputs;
+    this.outputs = outputs;
+    this.errorDatasetName = errorDatasetName;
+  }
+
+  public Map<String, Schema> getInputSchemas() {
+    return inputSchemas;
+  }
+
+  public Schema getOutputSchema() {
+    return outputSchema;
+  }
+
+  public Set<String> getInputs() {
+    return inputs;
+  }
+
+  public Set<String> getOutputs() {
+    return outputs;
   }
 
   public String getName() {
