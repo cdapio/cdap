@@ -77,19 +77,19 @@ public class FileSystemCheck extends AbstractMasterCheck {
     if (rootExists) {
       // try creating a tmp file to check permissions
       try {
-        Location tmpFile = rootLocation.getTempFile("tmp");
+        Location tmpFile = rootLocation.append("newTempFile").getTempFile("tmp");
         if (!tmpFile.createNew()) {
           throw new RuntimeException(String.format(
-            "Could not make a temp file in directory %s on the FileSystem. " +
+            "Could not make a temp file %s in directory %s on the FileSystem. " +
               "Please check that user %s has permission to write to %s, " +
               "or create the directory manually with write permissions.",
-            rootPath, user, rootPath));
+            tmpFile, rootPath, user, rootPath));
         } else {
           tmpFile.delete();
         }
       } catch (IOException e) {
         throw new RuntimeException(String.format(
-          "Could not make a temp file in directory %s on the FileSystem. " +
+          "Could not make/delete a temp file in directory %s on the FileSystem. " +
             "Please check that user %s has permission to write to %s, " +
             "or create the directory manually with write permissions.",
           rootPath, user, rootPath), e);
