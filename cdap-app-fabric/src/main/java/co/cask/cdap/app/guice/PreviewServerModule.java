@@ -14,20 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.app.preview;
+package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
+import co.cask.cdap.app.preview.PreviewApplicationManager;
+import co.cask.cdap.app.preview.PreviewManager;
+import co.cask.cdap.app.preview.PreviewServer;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.gateway.handlers.PreviewHttpHandler;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.preview.DefaultPreviewManager;
 import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -75,6 +81,8 @@ public class PreviewServerModule {
       bind(Store.class).to(DefaultStore.class);
       bind(PreviewServer.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
+      // bind(ApplicationLifecycleService.class).in(Scopes.SINGLETON);
+      bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));

@@ -146,7 +146,7 @@
 
   <property>
     <name>standalone.disable.ui</name>
-    <value>true</value>
+    <value>false</value>
   </property>
 
   <!-- Zookeeper Configuration (only used when Zookeeper server is started in Standalone) -->
