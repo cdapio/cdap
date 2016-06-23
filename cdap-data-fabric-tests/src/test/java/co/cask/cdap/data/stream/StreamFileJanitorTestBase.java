@@ -19,6 +19,8 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -46,6 +48,7 @@ public abstract class StreamFileJanitorTestBase {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   protected static CConfiguration cConf = CConfiguration.create();
+  protected static NamespaceAdmin NS_ADMIN = new InMemoryNamespaceClient();
 
   protected abstract LocationFactory getLocationFactory();
 

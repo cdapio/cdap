@@ -31,6 +31,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -112,7 +113,8 @@ public abstract class AbstractDatasetFrameworkTest {
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
-      new AuditModule().getInMemoryModules());
+      new AuditModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules());
 
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     registryFactory = new DatasetDefinitionRegistryFactory() {

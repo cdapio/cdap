@@ -68,7 +68,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
+    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf, NS_ADMIN);
 
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 

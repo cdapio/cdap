@@ -19,6 +19,8 @@ package co.cask.cdap.common.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -33,11 +35,14 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
 
   private final LocationFactory locationFactory;
   private final String namespaceDir;
+  private final NamespaceAdmin nsAdmin;
 
   @Inject
-  public DefaultNamespacedLocationFactory(CConfiguration cConf, LocationFactory locationFactory) {
+  public DefaultNamespacedLocationFactory(CConfiguration cConf, LocationFactory locationFactory, NamespaceAdmin
+    nsAdmin) {
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
+    this.nsAdmin = nsAdmin;
   }
 
   @Override
@@ -47,7 +52,18 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
 
   @Override
   public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
-    Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
+    String hdfsDirectory = null;
+    try {
+      hdfsDirectory = nsAdmin.get(namespaceId).getConfig().getHdfsDirectory();
+    } catch (Exception e) {
+      Throwables.propagate(e);
+    }
+    Location namespaceLocation;
+    if (Strings.isNullOrEmpty(hdfsDirectory)) {
+      namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
+    } else {
+      namespaceLocation = getBaseLocation().append(hdfsDirectory);
+    }
     if (subPath != null) {
       namespaceLocation = namespaceLocation.append(subPath);
     }

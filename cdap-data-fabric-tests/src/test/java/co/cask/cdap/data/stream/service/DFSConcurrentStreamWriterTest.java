@@ -44,7 +44,7 @@ public class DFSConcurrentStreamWriterTest extends ConcurrentStreamWriterTestBas
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     LocationFactory locationFactory = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    namespacedLocationFactory = new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory);
+    namespacedLocationFactory = new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory, NS_ADMIN);
 
   }
 

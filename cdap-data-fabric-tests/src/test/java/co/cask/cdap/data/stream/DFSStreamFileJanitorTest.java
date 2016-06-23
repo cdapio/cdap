@@ -75,7 +75,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
+    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf, NS_ADMIN);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),

@@ -35,6 +35,7 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AbstractNamespaceClient.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+//        bind(NamespaceAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -45,6 +46,8 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AbstractNamespaceClient.class).to(LocalNamespaceClient.class);
+//        bind(NamespaceAdmin.class).to(LocalNamespaceClient.class);
+
       }
     };
   }
@@ -55,6 +58,7 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AbstractNamespaceClient.class).to(DiscoveryNamespaceClient.class);
+//        bind(NamespaceAdmin.class).to(DiscoveryNamespaceClient.class);
       }
     };
   }

@@ -19,6 +19,8 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
@@ -52,7 +54,8 @@ public class StreamFileSizeFetcherTest {
   @BeforeClass
   public static void init() throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
+    NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
+    namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory, nsAdmin);
   }
 
   @Test

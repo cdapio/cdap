@@ -35,7 +35,8 @@ public class LocalConcurrentStreamWriterTest extends ConcurrentStreamWriterTestB
   @BeforeClass
   public static void init() throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    namespacedLocationFactory = new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory);
+    namespacedLocationFactory = new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory,
+                                                                     NS_ADMIN);
   }
 
   @Override

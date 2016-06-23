@@ -22,6 +22,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -52,6 +54,7 @@ public class ProgramGenerationStageTest {
   public void testProgramGenerationForToyApp() throws Exception {
     cConf.set(Constants.AppFabric.OUTPUT_DIR, "programs");
     LocationFactory lf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
     // have to do this since we are not going through the route of create namespace -> deploy application
     // in real scenarios, the namespace directory would already be created
     Location namespaceLocation = lf.create(DefaultId.APPLICATION.getNamespaceId());
@@ -61,7 +64,7 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
-    NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, lf);
+    NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, lf, nsAdmin);
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(cConf, namespacedLocationFactory,
                                                                  new NoOpAuthorizer());
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
