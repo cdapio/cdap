@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -55,9 +54,32 @@ public class KafkaServerMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     CConfiguration cConf = CConfiguration.create();
-
     String zkConnectStr = cConf.get(Constants.Zookeeper.QUORUM);
     String zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+
+    int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);
+    String hostname = cConf.get(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG);
+
+    InetAddress address = Networks.resolve(hostname, new InetSocketAddress("localhost", 0).getAddress());
+    if (address.isAnyLocalAddress()) {
+      try {
+        address = InetAddress.getLocalHost();
+      } catch (UnknownHostException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+    if (address.isLoopbackAddress()) {
+      LOG.warn("Binding to loopback address!");
+    }
+    hostname = address.getCanonicalHostName();
+
+    int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
+                                     KafkaConstants.DEFAULT_NUM_PARTITIONS);
+    String logDir = cConf.get(KafkaConstants.ConfigKeys.LOG_DIR_CONFIG);
+
+    int replicationFactor = cConf.getInt(KafkaConstants.ConfigKeys.REPLICATION_FACTOR,
+                                         KafkaConstants.DEFAULT_REPLICATION_FACTOR);
+    LOG.info("Using replication factor {}", replicationFactor);
 
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
@@ -80,32 +102,11 @@ public class KafkaServerMain extends DaemonMain {
       }
     }
 
-    kafkaProperties = generateKafkaConfig(cConf);
+    int brokerId = generateBrokerId(address);
+    LOG.info(String.format("Initializing server with broker id %d", brokerId));
 
-    Preconditions.checkState(Integer.parseInt(
-      kafkaProperties.getProperty(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG)) > 0,
-                             "Num partitions should be greater than zero.");
-    int port = Integer.getInteger(kafkaProperties.getProperty(KafkaConstants.ConfigKeys.PORT_CONFIG), -1);
-    Preconditions.checkState(port > 0, "Port number is invalid.");
-
-    String hostname = kafkaProperties.getProperty("host.name");
-    InetAddress address = Networks.resolve(hostname, null);
-    if (hostname == null) {
-      if (address != null && address.isAnyLocalAddress()) {
-        kafkaProperties.remove("host.name");
-      } else {
-        hostname = address.getCanonicalHostName();
-        kafkaProperties.setProperty("host.name", hostname);
-      }
-    }
-    if (kafkaProperties.get("broker.id") == null) {
-      int brokerId = generateBrokerId(address);
-      LOG.info(String.format("Initializing server with broker id %d", brokerId));
-      kafkaProperties.setProperty("broker.id", Integer.toString(brokerId));
-    }
-    if (kafkaProperties.getProperty("zookeeper.connect") == null) {
-      kafkaProperties.setProperty("zookeeper.connect", zkConnectStr);
-    }
+    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions,
+                                          replicationFactor, logDir);
   }
 
   @Override
@@ -135,15 +136,29 @@ public class KafkaServerMain extends DaemonMain {
     // Nothing to do
   }
 
-  private Properties generateKafkaConfig(CConfiguration cConf) {
-    Properties prop = new Properties();
+  private Properties generateKafkaConfig(int brokerId, String zkConnectStr, String hostname, int port,
+                                         int numPartitions, int replicationFactor, String logDir) {
+    Preconditions.checkState(port > 0, "Port number is invalid.");
+    Preconditions.checkState(numPartitions > 0, "Num partitions should be greater than zero.");
 
-    Map<String, String> propConfigs = cConf.getValByRegex("^(kafka\\..server\\.*)$");
-    for (Map.Entry<String, String> pair : propConfigs.entrySet()) {
-      String key = pair.getKey();
-      String trimmedKey = key.substring(13);
-      prop.setProperty(trimmedKey, pair.getValue());
+    Properties prop = new Properties();
+    prop.setProperty("broker.id", Integer.toString(brokerId));
+    if (hostname != null) {
+      prop.setProperty("host.name", hostname);
     }
+    prop.setProperty("port", Integer.toString(port));
+    prop.setProperty("socket.send.buffer.bytes", "1048576");
+    prop.setProperty("socket.receive.buffer.bytes", "1048576");
+    prop.setProperty("socket.request.max.bytes", "104857600");
+    prop.setProperty("log.dir", logDir);
+    prop.setProperty("num.partitions", Integer.toString(numPartitions));
+    prop.setProperty("log.retention.hours", "24");
+    prop.setProperty("log.flush.interval.messages", "10000");
+    prop.setProperty("log.flush.interval.ms", "1000");
+    prop.setProperty("log.segment.bytes", "536870912");
+    prop.setProperty("zookeeper.connect", zkConnectStr);
+    prop.setProperty("zookeeper.connection.timeout.ms", "1000000");
+    prop.setProperty("default.replication.factor", Integer.toString(replicationFactor));
     return prop;
   }
 
