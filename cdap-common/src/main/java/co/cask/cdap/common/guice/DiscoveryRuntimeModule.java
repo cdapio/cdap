@@ -52,7 +52,7 @@ public final class DiscoveryRuntimeModule extends RuntimeModule {
           Names.named("shared-discovery-service")).toInstance(discoveryService);
         bind(InMemoryDiscoveryService.class).in(Singleton.class);
         bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
-        bind(DiscoveryServiceClient.class).toInstance(discoveryService);
+        bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
       }
     };
   }
