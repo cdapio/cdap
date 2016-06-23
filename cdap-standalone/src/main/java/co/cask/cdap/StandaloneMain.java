@@ -207,7 +207,7 @@ public class StandaloneMain {
     metadataService = injector.getInstance(MetadataService.class);
     remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
 
-    if (cConf.getBoolean(Constants.Preview.ENABLED)) {
+    if (cConf.getBoolean(Constants.Preview.ENABLED, false)) {
       previewServer = injector.getInstance(PreviewServer.class);
     } else {
       previewServer = null;

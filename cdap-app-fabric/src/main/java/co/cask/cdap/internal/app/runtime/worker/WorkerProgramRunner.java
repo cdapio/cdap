@@ -27,6 +27,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -62,12 +63,14 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final StreamWriterFactory streamWriterFactory;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final PreviewStore previewStore;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
-                             SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                             SecureStore secureStore, SecureStoreManager secureStoreManager,
+                             PreviewStore previewStore) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -76,6 +79,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.streamWriterFactory = streamWriterFactory;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.previewStore = previewStore;
   }
 
   @Override
@@ -119,7 +123,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, options, instanceId, instanceCount,
                                                           metricsCollectionService, datasetFramework, txClient,
                                                           discoveryServiceClient, streamWriterFactory,
-                                                          pluginInstantiator, secureStore, secureStoreManager);
+                                                          pluginInstantiator, secureStore, secureStoreManager,
+                                                          previewStore);
 
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 

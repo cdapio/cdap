@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -67,11 +68,12 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
                                  TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
-                                 SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
+                                 PreviewStore previewStore) {
     super(program, programOptions, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
-          secureStore, secureStoreManager, pluginInstantiator);
+          secureStore, secureStoreManager, pluginInstantiator, previewStore, null);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

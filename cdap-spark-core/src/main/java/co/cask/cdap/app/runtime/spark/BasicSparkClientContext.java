@@ -26,12 +26,14 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.internal.app.preview.NoopPreviewLogger;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -268,5 +270,15 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   void setState(ProgramState state) {
     this.state = state;
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return false;
+  }
+
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return new NoopPreviewLogger();
   }
 }

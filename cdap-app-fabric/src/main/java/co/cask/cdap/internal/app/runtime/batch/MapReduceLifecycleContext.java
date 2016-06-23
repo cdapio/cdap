@@ -34,6 +34,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -311,6 +312,16 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return delegate.getSecureData(namespace, name);
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return delegate.isPreviewEnabled();
+  }
+
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return delegate.getPreviewLogger(loggerName);
   }
 
   @Override

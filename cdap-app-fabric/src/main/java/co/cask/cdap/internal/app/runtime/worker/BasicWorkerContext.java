@@ -27,6 +27,7 @@ import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -72,11 +73,11 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      StreamWriterFactory streamWriterFactory,
                      @Nullable PluginInstantiator pluginInstantiator,
                      SecureStore secureStore,
-                     SecureStoreManager secureStoreManager) {
+                     SecureStoreManager secureStoreManager, PreviewStore previewStore) {
     super(program, programOptions, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, pluginInstantiator);
+          secureStore, secureStoreManager, pluginInstantiator, previewStore, null);
 
     this.specification = spec;
     this.instanceId = instanceId;

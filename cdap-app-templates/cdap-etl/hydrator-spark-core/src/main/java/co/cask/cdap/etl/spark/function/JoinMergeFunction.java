@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.spark.function;
 
+import co.cask.cdap.api.Debugger;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.Transformation;
@@ -50,7 +52,22 @@ public class JoinMergeFunction implements FlatMapFunction<Tuple2<Object, List<Jo
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner),
                                             pluginFunctionContext.createStageMetrics(),
                                             "joiner.keys",
-                                            TrackedTransform.RECORDS_OUT);
+                                            TrackedTransform.RECORDS_OUT, null, new Debugger() {
+        @Override
+        public boolean isPreviewEnabled() {
+          return false;
+        }
+
+        @Override
+        public PreviewLogger getPreviewLogger(String loggerName) {
+          return new PreviewLogger() {
+            @Override
+            public void log(String propertyName, Object propertyValue) {
+              // no-op
+            }
+          };
+        }
+      });
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();
