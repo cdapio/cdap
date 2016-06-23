@@ -43,19 +43,19 @@ public class FileSecureStoreTest {
   private static final String DESCRIPTION1 = "This is the first key.";
   private static final Map<String, String> PROPERTIES_1 = new HashMap<>();
 
-  {
+  private static final String KEY2 = "key2";
+  private static final String VALUE2 = "value2";
+  private static final String DESCRIPTION2 = "This is the second key.";
+
+  static {
     PROPERTIES_1.put(DESCRIPTION_KEY, DESCRIPTION1);
   }
 
   private static final Map<String, String> PROPERTIES_2 = new HashMap<>();
 
-  {
+  static {
     PROPERTIES_2.put(DESCRIPTION_KEY, DESCRIPTION2);
   }
-
-  private static final String KEY2 = "key2";
-  private static final String VALUE2 = "value2";
-  private static final String DESCRIPTION2 = "This is the second key.";
 
   private SecureStoreManager secureStoreManager;
   private SecureStore secureStore;
@@ -63,10 +63,10 @@ public class FileSecureStoreTest {
   @Before
   public void setUp() throws Exception {
     CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.Security.Store.SECURE_STORE_FILE_PATH, STORE_PATH);
-    FileSecureStoreProvider fileSecureStoreProvider = FileSecureStoreProvider.getInstance(conf);
-    secureStoreManager = new FileSecureStoreManager(fileSecureStoreProvider);
-    secureStore = new FileSecureStore(fileSecureStoreProvider);
+    conf.set(Constants.Security.Store.FILE_PATH, STORE_PATH);
+    FileSecureStoreProvider fileSecureStoreProvider = new FileSecureStoreProvider(conf);
+    secureStoreManager = fileSecureStoreProvider;
+    secureStore = fileSecureStoreProvider;
   }
 
   @After
@@ -80,7 +80,7 @@ public class FileSecureStoreTest {
   }
 
   @Test
-  public void testList_empty() throws IOException {
+  public void testListEmpty() throws IOException {
     Assert.assertEquals(new HashMap<String, String>(), secureStore.list());
   }
 
@@ -132,7 +132,7 @@ public class FileSecureStoreTest {
     secureStore.get("Dummy");
   }
 
-  @Test
+  @Test(expected = IOException.class)
   public void testDelete() throws IOException {
     populateStore();
     SecureStoreMetadata metadata = FileSecureStoreMetadata.of(KEY1, PROPERTIES_1);
@@ -143,6 +143,7 @@ public class FileSecureStoreTest {
       secureStore.get(KEY1);
     } catch (IOException ioe) {
       Assert.assertTrue(ioe.getMessage().contains("not found in the secure store"));
+      throw ioe;
     }
   }
 }

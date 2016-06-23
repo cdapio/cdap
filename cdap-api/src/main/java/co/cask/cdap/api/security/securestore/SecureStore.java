@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package co.cask.cdap.api.security.securestore;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Provides read access to the secure store.
@@ -28,7 +28,7 @@ public interface SecureStore {
   /**
    * @return A map of all the elements stored in the store. The map is Name -> Description
    */
-  Map<String, String> list() throws IOException;
+  List<SecureStoreMetadata> list() throws IOException;
 
   /**
    * @param name Name of the data element.

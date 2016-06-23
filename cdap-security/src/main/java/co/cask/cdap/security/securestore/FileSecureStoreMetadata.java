@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,8 @@
 package co.cask.cdap.security.securestore;
 
 import co.cask.cdap.api.security.securestore.SecureStoreMetadata;
+import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.Charsets;
 
 import java.io.ByteArrayInputStream;
@@ -94,24 +94,12 @@ class FileSecureStoreMetadata implements SecureStoreMetadata {
 
   @Override
   public String toString() {
-    final StringBuilder metaSB = new StringBuilder();
-    metaSB.append("name: ").append(name).append(", ");
-    metaSB.append("description: ").append(description).append(", ");
-    metaSB.append("created: ").append(created).append(", ");
-    metaSB.append("properties: ");
-    if ((properties != null) && !properties.isEmpty()) {
-      for (Map.Entry<String, String> property : properties.entrySet()) {
-        metaSB.append("[");
-        metaSB.append(property.getKey());
-        metaSB.append("=");
-        metaSB.append(property.getValue());
-        metaSB.append("], ");
-      }
-      metaSB.deleteCharAt(metaSB.length() - 2);  // remove last ', '
-    } else {
-      metaSB.append("null");
-    }
-    return metaSB.toString();
+    return "FileSecureStoreMetadata{" +
+      "name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", created=" + created +
+      ", properties=" + properties +
+      '}';
   }
 
   /**
@@ -121,29 +109,10 @@ class FileSecureStoreMetadata implements SecureStoreMetadata {
    * @throws IOException
    */
   byte[] serialize() throws IOException {
+    Gson gson = new Gson();
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    try (JsonWriter writer = new JsonWriter(
-      new OutputStreamWriter(buffer, Charsets.UTF_8))) {
-      writer.beginObject();
-      if (name != null) {
-        writer.name(NAME_FIELD).value(name);
-      }
-      if (created != null) {
-        writer.name(CREATED_FIELD).value(created.getTime());
-      }
-      if (description != null) {
-        writer.name(DESCRIPTION_FIELD).value(description);
-      }
-      if (properties != null && properties.size() > 0) {
-        writer.name(PROPERTIES_FIELD).beginObject();
-        for (Map.Entry<String, String> property : properties.entrySet()) {
-          writer.name(property.getKey()).value(property.getValue());
-        }
-        writer.endObject();
-      }
-      writer.endObject();
-      writer.flush();
-    }
+    OutputStreamWriter out = new OutputStreamWriter(buffer, Charsets.UTF_8);
+    gson.toJson(this, out);
     return buffer.toByteArray();
   }
 
