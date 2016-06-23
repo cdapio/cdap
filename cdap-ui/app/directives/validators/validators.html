@@ -39,7 +39,7 @@
           <div class="list-group">
             <a href=""
                 class="list-group-item"
-                ng-repeat="field in inputSchema"
+                ng-repeat="field in inputSchema.fields"
                 ng-click="!isDisabled && ValidatorsCtrl.addFieldGroup(field.name)">
               {{field.name}}
             </a>
