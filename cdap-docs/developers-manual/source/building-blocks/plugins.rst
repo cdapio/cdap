@@ -126,7 +126,7 @@ the plugins when deploying the artifact. For example, if you are using the RESTf
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
-  -H "Artifact-Plugins: [ { 'name': 'mysql', 'type': 'jdbc', 'className': 'com.mysql.jdbc.Driver' } ]" \
+  -H "Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]" \
   -H "Artifact-Version: 5.1.35" \
   -H "Artifact-Extends: system:cdap-etl-batch[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
   --data-binary @mysql-connector-java-5.1.35.jar
@@ -336,7 +336,7 @@ it needs to be set explicitly, as the JAR contents are uploaded without the file
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
-  -H "Artifact-Plugins: [ { 'name': 'mysql', 'type': 'jdbc', 'className': 'com.mysql.jdbc.Driver' } ]" \
+  -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
   -H "Artifact-Version: 5.1.35" \
   -H "Artifact-Extends: system:cdap-etl-batch[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
   --data-binary @mysql-connector-java-5.1.35.jar
@@ -484,7 +484,7 @@ We then create an application from that artifact:
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/basicwordcount" -H "Content-Type: application/json" \
-  -d "{ 'artifact': { 'name': 'wordcount', 'version': '1.0.0', 'scope': 'user' } }"
+  -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" } }'
     
 This program runs just fine. It counts all words in the input. However, what if we want to count phrases
 instead of words? Or what if we want to filter out common words such as ``'the'`` and ``'a'``? We would not want
@@ -499,14 +499,14 @@ stopwords, we want to be able to create it through a configuration:
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/stopwordcount" -H "Content-Type: application/json" \
-  -d "{ 'artifact': { 'name': 'wordcount', 'version': '1.0.0', 'scope': 'user' }, 'config': { 'tokenizer': 'stopword' } }"
+  -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }, "config": { "tokenizer": "stopword" } }'
   
 Similarly, we want to be able to create an application that counts phrases through a configuration:
 
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/phrasecount" -H "Content-Type: application/json" \
-  -d "{ 'artifact': { 'name': 'wordcount', 'version': '1.0.0', 'scope': 'user' }, 'config': { 'tokenizer': 'phrase' } }"
+  -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }, "config": { "tokenizer": "phrase" } }'
 
 .. highlight:: java
 
@@ -714,7 +714,7 @@ applications that use the tokenizer we want:
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H "Content-Type: application/json" \
-  -d "{ 'artifact': { 'name': 'wordcount', 'version': '1.1.0', 'scope': 'user' }, 'config': { 'tokenizer': 'phrase' } }"
+  -d '{ "artifact": { "name": "wordcount", "version": "1.1.0", "scope": "user" }, "config": { "tokenizer": "phrase" } }'
 
 .. rubric:: Adding a Plugin Configuration to the Application
 
@@ -776,8 +776,8 @@ Now we can create an application that uses a comma instead of a space to split t
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/wordcount2" -H "Content-Type: application/json" \
-    -d "{ 
-      'artifact': { 'name': 'wordcount', 'version': '1.2.0', 'scope': 'user' },
-      'config': { 'tokenizer': 'default', 'tokenizerProperties': { 'delimiter': ',' }
+    -d '{ 
+      "artifact": { "name": "wordcount", "version": "1.2.0", "scope": "user" },
+      "config": { "tokenizer": "default", "tokenizerProperties": { "delimiter": "," }
       }
-    }"
+    }'

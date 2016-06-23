@@ -424,8 +424,8 @@ Or, we can find out how many times the URL ``/home.html`` was accessed from the 
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST -d "/home.html" \
-  "localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count"  
+  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count" \
+  -d "/home.html"
   6
   
   $ cdap-cli.sh call service Wise.WiseService POST ip/255.255.255.249/count body "/home.html"

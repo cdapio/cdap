@@ -17,7 +17,7 @@
 """Simple, inelegant Sphinx extension which adds a directive for a
 tabbed parsed-literals that may be switched between in HTML.
 
-version: 0.3
+version: 0.4
 
 The directive adds these parameters, both optional:
 
@@ -90,7 +90,8 @@ Examples:
 If you pass a single set of commands, without comments, the directive will create a
 two-tabbed "Linux" and "Windows" with a generated Windows-equivalent command set. Check
 the results carefully, and file an issue if it is unable to create the correct command.
-Worst-case is that you have to use the full format and enter the two commands.
+Worst-case: you have to use the full format and enter the two commands. Note that any JSON
+strings in the commands must be on a single line to convert successfully.
 
 .. tabbed-parsed-literal::
 
@@ -247,7 +248,9 @@ def convert(c, state={}):
     - A lone backslash (the Linux line continuation character) becomes a '^'
     - '.sh' commands become '.bat' commands
     - removes a "-w'\n'" option from curl commands
-    - state option allows one command to pass state to the next line to be converted
+    - In curl commands, a JSON string (beginning with "-d '{") is converted to all
+      internal double quotes are escaped and the entire string surrounded in double quotes
+    - state option allows one line to pass state to the next line to be converted
 
     """
     DEBUG = False
@@ -256,22 +259,35 @@ def convert(c, state={}):
     text_list = c.split()
     CLI = 'cdap-cli.sh'
     CURL = 'curl'
+    DATA_OPTIONS = ['-d', '--data', '--data-ascii']
+    # Local states
     IN_CLI = False
     IN_CURL = False
-    for k in ['IN_CLI', 'IN_CURL']:
-        if not state.has_key(k):
-            state[k] = False
+    IN_CURL_DATA = False
+    IN_CURL_DATA_JSON = False
+    STATE_KEYS = ['IN_CLI', 'IN_CURL', 'IN_CURL_DATA', 'IN_CURL_DATA_JSON']
+    JSON_OPEN_CLOSE = {"open":"'{", "open_win": "\"{", "close": "}'", "close_win":"}\""}
+    # Passed state
+    for s in STATE_KEYS:
+        if not state.has_key(s):
+            state[s] = False
     if DEBUG: print "\nconverting: %s\nstate: %s" % (c, state)
     for i, v in enumerate(text_list):
-        if DEBUG: print "v:%s" % v
+        if DEBUG: print "v:%s" % v # v is the parsed snippet, split on spaces
         if v == CLI or state['IN_CLI']:
             IN_CLI = True
-            state['IN_CLI'] =  False
+            state['IN_CLI'] =  True
         if v == CURL or state['IN_CURL']:
             IN_CURL = True
-            state['IN_CURL'] =  False
+            state['IN_CURL'] =  True
+        if state['IN_CURL_DATA']:
+            IN_CURL_DATA = True
+        if state['IN_CURL_DATA_JSON']:
+            IN_CURL_DATA_JSON = True
         if i == 0 and v == '$':
             w.append('>')
+            for s in STATE_KEYS:
+                state[s] = False
             if DEBUG: print "w.append('>')"
             continue
         if v.endswith('.sh'):
@@ -286,6 +302,35 @@ def convert(c, state={}):
             if DEBUG: print "w.append('^')"
             continue
         if IN_CURL and (v in ["-w'\\n'", '-w"\\n"']):
+            continue
+        if IN_CURL and (v in DATA_OPTIONS):
+            if DEBUG: print "IN_CURL and DATA_OPTIONS"
+            IN_CURL_DATA = True
+            state['IN_CURL_DATA'] = True
+            w.append(v)
+            continue
+        if IN_CURL and IN_CURL_DATA:
+            if DEBUG: print "IN_CURL and IN_CURL_DATA"
+            if DEBUG: print "IN_CURL_DATA_JSON: %s" % IN_CURL_DATA_JSON
+            state['IN_CURL'] = True
+            if v.startswith(JSON_OPEN_CLOSE["open"]):
+                if DEBUG: print "Start of json"
+                IN_CURL_DATA_JSON = True
+                state['IN_CURL_DATA_JSON'] =  True
+                w.append("\"%s" % v.replace('"', '\\"')[1:])
+            elif v.endswith(JSON_OPEN_CLOSE["close"]):
+                if DEBUG: print "End of json"
+                w.append("%s\"" % v.replace('"', '\\"')[:1])
+                IN_CURL_DATA = False
+                state['IN_CURL_DATA'] =  False
+                IN_CURL_DATA_JSON = False
+                state['IN_CURL_DATA_JSON'] =  False
+            elif IN_CURL_DATA_JSON:
+                if DEBUG: print "json..."
+                w.append(v.replace('"', '\\"'))
+            else:
+                if DEBUG: print "data..."
+                w.append(v)
             continue
         if (IN_CLI or IN_CURL) and v.startswith('"'):
             if DEBUG: print "v.startswith('\"')"
@@ -308,7 +353,7 @@ def convert(c, state={}):
         else:
             if DEBUG: print "didn't find slash"
             w.append(v)
-            
+    
     if DEBUG: print "converted to: %s\nstate: %s" % (' '.join(w), state)
     return ' '.join(w), state
 

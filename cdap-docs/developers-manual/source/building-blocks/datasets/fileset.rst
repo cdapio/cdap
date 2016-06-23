@@ -112,8 +112,7 @@ this is only possible by specifying them as runtime arguments when the MapReduce
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "http://example.com:10000/v3/namespaces/default/apps/FileSetExample/mapreduce/WordCount/start" \
-    -d "{ 'dataset.lines.input.paths':  'monday/my.txt', \
-          'dataset.counts.output.path': 'monday/counts.out' }"
+  -d '{ "dataset.lines.input.paths": "monday/my.txt", "dataset.counts.output.path": "monday/counts.out" }'
           
 Using the CDAP CLI:
 
@@ -124,7 +123,7 @@ Using the CDAP CLI:
 
 Note that for the input you can specify multiple paths separated by commas::
 
-      'dataset.lines.input.paths':  'monday/lines.txt,tuesday/lines.txt'
+      "dataset.lines.input.paths": "monday/lines.txt,tuesday/lines.txt"
 
 If you do not specify both the input and output paths, your MapReduce program will fail with an error.
 
