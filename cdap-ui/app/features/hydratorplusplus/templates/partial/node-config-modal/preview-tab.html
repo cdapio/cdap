@@ -24,14 +24,21 @@
 
 <div class="row" ng-if="HydratorPlusPlusNodeConfigCtrl.previewData">
   <!-- INPUT RECORDS -->
-  <div class="col-xs-6 preview-input-records">
+  <div class="col-xs-6 preview-records input">
+    <h4>Input Records</h4>
+
     <!-- INPUT SCHEMA -->
-    <div class="schema-toggle">
-      <span class="fa fa-caret-down"></span>
+    <div class="schema-toggle"
+         ng-click="HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.input = !HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.input">
+      <span class="fa"
+            ng-class="{'fa-caret-right': !HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.input,
+                       'fa-caret-down': HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.input }">
+      </span>
       <span>Schema</span>
     </div>
 
-    <div class="schema-table">
+    <div class="schema-table"
+         ng-if="HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.input">
       <table class="table table-bordered">
         <thead>
           <th>Name</th>
@@ -39,10 +46,12 @@
           <th>Null</th>
         </thead>
         <tbody>
-          <tr ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.inputSchema.fields">
+          <tr ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewInputSchema">
             <td>{{ ::field.name }}</td>
             <td>{{ ::field.type }}</td>
-            <td></td>
+            <td>
+              <input type="checkbox" ng-model="::field.null" disabled>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -67,14 +76,21 @@
   </div>
 
   <!-- OUTPUT RECORDS -->
-  <div class="col-xs-6 preview-input-records">
+  <div class="col-xs-6 preview-records output">
+    <h4>Output Records</h4>
+
     <!-- OUTPUT SCHEMA -->
-    <div class="schema-toggle">
-      <span class="fa fa-caret-down"></span>
+    <div class="schema-toggle"
+         ng-click="HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.output = !HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.output">
+      <span class="fa"
+            ng-class="{'fa-caret-right': !HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.output,
+                       'fa-caret-down': HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.output }">
+      </span>
       <span>Schema</span>
     </div>
 
-    <div class="schema-table">
+    <div class="schema-table"
+         ng-if="HydratorPlusPlusNodeConfigCtrl.previewSchemaExpanded.output">
       <table class="table table-bordered">
         <thead>
           <th>Name</th>
@@ -82,10 +98,12 @@
           <th>Null</th>
         </thead>
         <tbody>
-          <tr ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.outputSchema.fields">
+          <tr ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewOutputSchema">
             <td>{{ ::field.name }}</td>
             <td>{{ ::field.type }}</td>
-            <td></td>
+            <td>
+              <input type="checkbox" ng-model="::field.null" disabled>
+            </td>
           </tr>
         </tbody>
       </table>
