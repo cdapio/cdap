@@ -25,6 +25,7 @@ import co.cask.cdap.etl.common.ExternalDatasets;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Default implementation of {@link BatchSinkContext} for spark contexts.
@@ -46,17 +47,25 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
 
   @Override
   public void addOutput(String datasetName, Map<String, String> arguments) {
-    sinkFactory.addOutput(getStageName(), datasetName, arguments);
+    sinkFactory.addOutput(getStageName(), suffixOutput(Output.ofDataset(datasetName, arguments)));
   }
 
   @Override
   public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
-    sinkFactory.addOutput(getStageName(), outputName, outputFormatProvider);
+    sinkFactory.addOutput(getStageName(), suffixOutput(Output.of(outputName, outputFormatProvider)));
   }
 
   @Override
   public void addOutput(Output output) {
-    Output trackableOutput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), output);
+    Output trackableOutput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), suffixOutput(output));
     sinkFactory.addOutput(getStageName(), trackableOutput);
+  }
+
+  /**
+   * Suffix the alias of {@link Output} so that aliases of outputs are unique.
+   */
+  private Output suffixOutput(Output output) {
+    String suffixedAlias = String.format("%s-%s", output.getAlias(), UUID.randomUUID());
+    return output.alias(suffixedAlias);
   }
 }

@@ -16,12 +16,10 @@
 
 package co.cask.cdap.etl.batch.spark;
 
-import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
@@ -36,7 +34,6 @@ import javax.annotation.Nullable;
  * Default implementation of {@link BatchSourceContext} for spark contexts.
  */
 public class SparkBatchSourceContext extends AbstractSparkBatchContext implements BatchSourceContext {
-
   private SparkBatchSourceFactory sourceFactory;
 
   public SparkBatchSourceContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
@@ -50,17 +47,17 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
 
   @Override
   public void setInput(String datasetName) {
-    sourceFactory = SparkBatchSourceFactory.create(datasetName);
+    setInput(datasetName, Collections.<String, String>emptyMap());
   }
 
   @Override
   public void setInput(String datasetName, Map<String, String> arguments) {
-    sourceFactory = SparkBatchSourceFactory.create(datasetName, arguments);
+    setInput(datasetName, arguments, null);
   }
 
   @Override
   public void setInput(String datasetName, List<Split> splits) {
-    sourceFactory = SparkBatchSourceFactory.create(datasetName, Collections.<String, String>emptyMap(), splits);
+    setInput(datasetName, Collections.<String, String>emptyMap(), splits);
   }
 
   @Override

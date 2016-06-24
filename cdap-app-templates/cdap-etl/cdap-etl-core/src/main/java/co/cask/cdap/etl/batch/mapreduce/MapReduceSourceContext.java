@@ -28,12 +28,13 @@ import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * MapReduce Source Context.
+ * MapReduce Source Context. Delegates operations to MapReduce Context.
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
 
@@ -61,35 +62,17 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
 
   @Override
   public void setInput(final String datasetName) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.addInput(Input.ofDataset(datasetName));
-        return null;
-      }
-    });
+    setInput(datasetName, Collections.<String, String>emptyMap());
   }
 
   @Override
   public void setInput(final String datasetName, final Map<String, String> arguments) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.addInput(Input.ofDataset(datasetName, arguments));
-        return null;
-      }
-    });
+    setInput(datasetName, arguments, null);
   }
 
   @Override
   public void setInput(final String datasetName, final List<Split> splits) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.addInput(Input.ofDataset(datasetName, splits));
-        return null;
-      }
-    });
+    setInput(datasetName, Collections.<String, String>emptyMap(), splits);
   }
 
   @Override
