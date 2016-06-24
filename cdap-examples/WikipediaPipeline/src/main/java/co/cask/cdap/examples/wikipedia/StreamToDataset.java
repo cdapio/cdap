@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.examples.wikipedia;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -78,7 +78,7 @@ public class StreamToDataset extends AbstractMapReduce {
     }
     LOG.info("Using '{}' as the input stream and '{}' as the output dataset.", inputStream, outputDataset);
     job.setMapperClass(mapper);
-    StreamBatchReadable.useStreamInput(context, inputStream);
+    context.addInput(Input.ofStream(inputStream));
     context.addOutput(outputDataset);
   }
 
