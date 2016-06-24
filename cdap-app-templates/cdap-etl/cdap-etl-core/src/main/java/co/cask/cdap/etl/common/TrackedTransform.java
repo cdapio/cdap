@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -37,17 +38,23 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
   private final StageMetrics metrics;
   private final String metricInName;
   private final String metricOutName;
+  private final Debugger debugger;
+  private final String stageName;
 
-  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics) {
-    this(transform, metrics, RECORDS_IN, RECORDS_OUT);
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, String stageName,
+                          Debugger debugger) {
+    this(transform, metrics, RECORDS_IN, RECORDS_OUT, stageName, debugger);
   }
 
   public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics,
-                          @Nullable String metricInName, @Nullable String metricOutName) {
+                          @Nullable String metricInName, @Nullable String metricOutName,
+                          String stageName, Debugger debugger) {
     this.transform = transform;
     this.metrics = metrics;
     this.metricInName = metricInName;
     this.metricOutName = metricOutName;
+    this.stageName = stageName;
+    this.debugger = debugger;
   }
 
 
@@ -56,7 +63,11 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
     if (metricInName != null) {
       metrics.count(metricInName, 1);
     }
-    transform.transform(input, metricOutName == null ? emitter : new TrackedEmitter<>(emitter, metrics, metricOutName));
+    if (debugger.isPreviewEnabled()) {
+      debugger.getPreviewLogger(stageName).log("input.records", input);
+    }
+    transform.transform(input, metricOutName == null ? emitter :
+      new TrackedEmitter<>(emitter, metrics, metricOutName, stageName, debugger));
   }
 
   @Override

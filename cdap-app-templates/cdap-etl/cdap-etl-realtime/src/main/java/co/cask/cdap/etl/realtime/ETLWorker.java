@@ -262,7 +262,7 @@ public class ETLWorker extends AbstractWorker {
       TrackedTransform trackedTransform = new TrackedTransform(identityTransformation,
                                                                new DefaultStageMetrics(metrics, sinkName),
                                                                TrackedTransform.RECORDS_IN,
-                                                               null);
+                                                               null, sinkName, getContext());
       transformationMap.put(sinkInfo.getName(), new TransformDetail(trackedTransform, new HashSet<String>()));
       sinks.put(sinkInfo.getName(), sink);
     }
@@ -286,7 +286,7 @@ public class ETLWorker extends AbstractWorker {
         transform.initialize(transformContext);
         StageMetrics stageMetrics = new DefaultStageMetrics(metrics, transformName);
         transformDetailMap.put(transformName, new TransformDetail(
-          new TrackedTransform<>(transform, stageMetrics),
+          new TrackedTransform<>(transform, stageMetrics, transformName, context),
           pipeline.getStageOutputs(transformName)));
         if (transformInfo.getErrorDatasetName() != null) {
           tranformIdToDatasetName.put(transformName, transformInfo.getErrorDatasetName());
@@ -324,7 +324,7 @@ public class ETLWorker extends AbstractWorker {
     TrackedEmitter<Object> trackedSourceEmitter =
       new TrackedEmitter<>(sourceEmitter,
                            new DefaultStageMetrics(metrics, sourceStageName),
-                           TrackedTransform.RECORDS_OUT);
+                           TrackedTransform.RECORDS_OUT, sourceStageName, getContext());
     while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {
