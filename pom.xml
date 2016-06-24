@@ -1515,7 +1515,6 @@
                   <exclude>**/grok/patterns/**</exclude>
                   <exclude>conf/**</exclude>
                   <exclude>data/**</exclude>
-                  <exclude>preview/**</exclude>
                   <exclude>plugins/**</exclude>
                   <exclude>**/Apache-LICENSE-2.0</exclude>
                   <exclude>**/VERSION</exclude>

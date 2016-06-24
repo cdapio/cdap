@@ -63,7 +63,7 @@
 
   <property>
     <name>local.preview.dir</name>
-    <value>preview</value>
+    <value>data/preview</value>
     <description>
       Data directory for preview mode in standalone.
     </description>

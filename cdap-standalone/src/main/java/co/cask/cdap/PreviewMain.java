@@ -240,7 +240,7 @@ public class PreviewMain {
                                                   final StreamConsumerFactory streamConsumerFactory,
                                                   final InMemoryTransactionService transactionService,
                                                   final TransactionManager transactionManager) {
-    cConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, "preview");
+    cConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, "data/preview");
 
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
