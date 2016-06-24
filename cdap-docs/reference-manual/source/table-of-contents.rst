@@ -7,7 +7,7 @@ CDAP Reference Manual Table of Contents
 =================================================
 
 .. toctree::
-   :maxdepth: 5
+   :maxdepth: 4
 
     Introduction <index>
     Supported Characters <characters>

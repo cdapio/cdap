@@ -346,11 +346,12 @@ Details on completing this form are described in CDAP's documentation on
 Tracker HTTP RESTful API
 ========================
 
-Tracker supports searching of the *_auditLog* dataset through an HTTP RESTful API. To
-search for audit log entries for a particular dataset, stream, or stream view, submit an
-HTTP GET request::
+Tracker supports searching of the *_auditLog* dataset through an HTTP RESTful API. (See
+the :ref:`Reference Manual: HTTP RESTful API <http-restful-api-introduction>` for details
+on the conventions used for this API.) To search for audit log entries for a particular
+dataset, stream, or stream view, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
     [?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
 
 where:
@@ -361,22 +362,22 @@ where:
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``dataset``, ``stream``, or ``stream_view``
-   * - ``<name>``
-     - Name of the ``<entity-type>``
-   * - ``<time>`` *(Optional)*
+   * - ``name``
+     - Name of the ``entity-type``
+   * - ``time`` *(optional)*
      - Time range defined by start (*startTime*, default ``0``) and end (*endTime*,
        default ``now``) times, where the times are either in milliseconds since the start of
        the Epoch, or a relative time, using ``now`` and times added to it. You can apply
        simple math, using ``now`` for the current time, ``s`` for seconds, ``m`` for
        minutes, ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days
        and 12 hours ago.
-   * - ``<offset>`` *(Optional)*
+   * - ``offset`` *(optional)*
      - The offset to start the results at for paging; default is ``0``.
-   * - ``<limit>`` *(Optional)*
+   * - ``limit`` *(optional)*
      - The maximum number of results to return in the results; default is ``10``.
      
 A successful query will return with the results as a field along with a count of the total

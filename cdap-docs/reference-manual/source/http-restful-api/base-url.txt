@@ -1,0 +1,4 @@
+
+All methods or endpoints described in this API have a base URL (typically
+``http://<host>:10000`` or ``https://<host>:10443``) that precedes the resource
+identifier, as described in the :ref:`RESTful API Conventions <http-restful-api-conventions-base-url>`.

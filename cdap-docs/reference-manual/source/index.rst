@@ -24,10 +24,10 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 .. |http| replace:: **HTTP RESTful API:**
 .. _http: http-restful-api/index.html
 
-- |http|_ CDAP has an HTTP interface for a multitude of purposes: everything from 
-  sending data events to a stream or to inspect the contents of a stream through checking
-  the status of various system and custom CDAP services. V3 of the API includes the
-  namespacing of applications, data and metadata to achieve application and data
+- |http|_ CDAP has an HTTP RESTful interface for a multitude of purposes: from 
+  sending data events and inspecting the contents of a stream through checking
+  the status of system and custom CDAP services. V3 of the API includes the
+  namespacing of applications, data, and metadata to achieve application and data
   isolation. This is an inital step towards introducing `multi-tenancy
   <http://en.wikipedia.org/wiki/Multitenancy>`__ into CDAP.
 
