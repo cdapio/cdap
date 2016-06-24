@@ -92,6 +92,7 @@ public class FileSecureStoreTest {
     List<SecureStoreMetadata> expectedList = new ArrayList<>();
     expectedList.add(secureStore.get(KEY2).getMetadata());
     expectedList.add(secureStore.get(KEY1).getMetadata());
+    List<SecureStoreMetadata> storedList = secureStore.list();
     Assert.assertEquals(expectedList, secureStore.list());
   }
 
@@ -117,12 +118,13 @@ public class FileSecureStoreTest {
   }
 
   @Test
-  public void testOverwrite() throws IOException {
+  public void testOverwrite() throws IOException, InterruptedException {
     secureStoreManager.put(KEY1, VALUE1.getBytes(Charsets.UTF_8), PROPERTIES_1);
     SecureStoreData oldData = secureStore.get(KEY1);
     long oldCreateTime = oldData.getMetadata().getLastModifiedTime();
     Assert.assertArrayEquals(VALUE1.getBytes(Charsets.UTF_8), oldData.get());
     String newVal = "New value";
+    Thread.sleep(1000);
     secureStoreManager.put(KEY1, newVal.getBytes(Charsets.UTF_8), PROPERTIES_1);
     long newCreateTime = secureStore.get(KEY1).getMetadata().getLastModifiedTime();
     Assert.assertArrayEquals(newVal.getBytes(Charsets.UTF_8), secureStore.get(KEY1).get());

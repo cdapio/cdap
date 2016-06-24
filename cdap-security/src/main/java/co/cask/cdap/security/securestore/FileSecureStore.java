@@ -45,7 +45,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -89,11 +88,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   */
   private static final String ALGORITHM_PROXY = "none";
 
-  /*
-   A cache for metadata.
-   The assumption is that the number of entries won't be large enough to worry about memory.
-  */
-  private final Map<String, SecureStoreMetadata> cache = new HashMap<>();
   private final char[] password;
   private final Path path;
   private final Lock readLock;
@@ -134,7 +128,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     String metaKey = constructMetadataKey(name);
     writeLock.lock();
     try {
-      if (keyStore.containsAlias(name) || cache.containsKey(metaKey)) {
+      if (keyStore.containsAlias(name)) {
         // Clear the existing key so that we can write the new one.
         delete(name);
       }
@@ -151,7 +145,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
         keyStore.deleteEntry(name);
         throw k;
       }
-      cache.put(metaKey, meta);
     } catch (KeyStoreException e) {
       throw new IOException("Failed to store the key. ", e);
     } finally {
@@ -174,9 +167,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   public void delete(String name) throws IOException {
     String metaKey = constructMetadataKey(name);
     writeLock.lock();
-    if (cache.containsKey(metaKey)) {
-      cache.remove(metaKey);
-    }
     try {
       if (keyStore.containsAlias(name)) {
         keyStore.deleteEntry(name);
@@ -252,19 +242,13 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     String metaKey = constructMetadataKey(name);
     readLock.lock();
     try {
-      if (cache.containsKey(metaKey)) {
-        return cache.get(metaKey);
+      if (!keyStore.containsAlias(metaKey)) {
+        throw new IOException("Metadata for " + name + " not found in the secure store.");
       }
-      try {
-        if (!keyStore.containsAlias(metaKey)) {
-          throw new IOException("Metadata for " + name + " not found in the secure store.");
-        }
-        SecureStoreMetadata meta = ((KeyMetadata) keyStore.getKey(metaKey, password)).metadata;
-        cache.put(metaKey, meta);
-        return meta;
-      } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
-        throw new IOException("Unable to retrieve the metadata for " + name, e);
-      }
+      Key key = keyStore.getKey(metaKey, password);
+      return ((KeyMetadata) key).metadata;
+    } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
+      throw new IOException("Unable to retrieve the metadata for " + name, e);
     } finally {
       readLock.unlock();
     }
@@ -475,9 +459,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
 
   private void resetKeyStoreState(Path path) {
     LOG.debug("Could not flush Keystore attempting to reset to previous state.");
-    // 1) flush cache
-    cache.clear();
-    // 2) load keyStore from previous path
+    // load keyStore from previous path
     try {
       loadFromPath(keyStore, path, password);
       LOG.debug("KeyStore resetting to previously flushed state.");

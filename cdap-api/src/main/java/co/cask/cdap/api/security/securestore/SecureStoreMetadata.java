@@ -99,6 +99,36 @@ public final class SecureStoreMetadata {
       '}';
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SecureStoreMetadata that = (SecureStoreMetadata) o;
+    if (!name.equals(that.name)) {
+      return false;
+    }
+    if (!description.equals(that.description)) {
+      return false;
+    }
+    if (!created.equals(that.created)) {
+      return false;
+    }
+    return properties != null ? properties.equals(that.properties) : that.properties == null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + description.hashCode();
+    result = 31 * result + created.hashCode();
+    result = 31 * result + (properties != null ? properties.hashCode() : 0);
+    return result;
+  }
+
   /**
    * Serialize the metadata to a byte array.
    *
@@ -109,6 +139,7 @@ public final class SecureStoreMetadata {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     OutputStreamWriter out = new OutputStreamWriter(buffer, Charset.forName("UTF-8"));
     GSON.toJson(this, out);
+    out.flush();
     return buffer.toByteArray();
   }
 
@@ -131,7 +162,7 @@ public final class SecureStoreMetadata {
         if (NAME_FIELD.equals(field)) {
           name = reader.nextString();
         } else if (CREATED_FIELD.equals(field)) {
-          created = new Date(reader.nextLong());
+          created = new Date(reader.nextString());
         } else if (DESCRIPTION_FIELD.equals(field)) {
           description = reader.nextString();
         } else if (PROPERTIES_FIELD.equalsIgnoreCase(field)) {
