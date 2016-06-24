@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
+import co.cask.cdap.api.preview.PreviewLogger
 import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
@@ -146,6 +147,9 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
        .mapPartitions(createStreamMap(decoderClass))
   }
 
+  override def isPreviewEnabled: Boolean = ???
+
+  override def getPreviewLogger(loggerName: String): PreviewLogger = ???
 }
 
 /**

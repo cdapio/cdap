@@ -33,6 +33,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import org.apache.twill.api.RunId;
@@ -283,5 +284,15 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public Admin getAdmin() {
     return delegate.getAdmin();
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return false;
+  }
+
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return null;
   }
 }

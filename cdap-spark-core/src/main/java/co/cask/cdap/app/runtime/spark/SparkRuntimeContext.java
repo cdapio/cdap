@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
@@ -311,5 +312,15 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
       .add("id", getProgram().getId())
       .add("runId", getRunId())
       .toString();
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return false;
+  }
+
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return null;
   }
 }

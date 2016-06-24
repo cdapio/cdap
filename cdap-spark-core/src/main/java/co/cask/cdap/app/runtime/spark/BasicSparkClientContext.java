@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -225,5 +226,15 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return sparkRuntimeContext.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return false;
+  }
+
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return null;
   }
 }

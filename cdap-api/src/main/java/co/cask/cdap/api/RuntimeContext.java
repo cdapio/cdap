@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * This interface represents a context for a processor or elements of a processor.
  */
-public interface RuntimeContext {
+public interface RuntimeContext extends Debugger {
 
   /**
    * @return The application specification
