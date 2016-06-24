@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _http-restful-api-views:
 
@@ -10,6 +10,8 @@ Views HTTP RESTful API
 ======================
 
 .. highlight:: console
+
+Use the CDAP Views HTTP RESTful API to create, list, detail, and delete stream views.
 
 Views are a read-only source from where data can be read. They are similar to a
 :ref:`stream <streams>` or :ref:`dataset <datasets-index>`.
@@ -24,8 +26,15 @@ attribute to complete the mapping of data to fields.
 Hive table can be created for each view. (See the :ref:`CDAP installation instructions 
 <installation-index>` for your particular Hadoop distribution for details.)
 
-Currently, views are only supported for streams. Support for datasets will be added in a
+Currently, views are **only** supported for streams. Support for datasets will be added in a
 later version of CDAP.
+
+Additional details are found in the :ref:`Developers' Manual: Views <developers:views>`.
+
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
 
 
 .. _http-restful-api-view-creating-stream-view:
@@ -34,7 +43,7 @@ Creating a Stream View
 ======================
 A view can be added to an existing stream with an HTTP POST request to the URL::
 
-  PUT <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>
+  PUT /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>
 
 .. list-table::
    :widths: 20 80
@@ -42,11 +51,11 @@ A view can be added to an existing stream with an HTTP POST request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream (must be already existing)
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the view to be created, or, if already existing, updated
 
 The request body is a JSON object specifying the :ref:`read format <stream-exploration-stream-format>` to be used. 
@@ -56,33 +65,35 @@ An existing stream view can be modified with the same command; only the response
 .. rubric:: Example
 
 For example, to create a stream view *logStreamView* on an existing stream
-*logStream*, using the format *clf* and a schema, you could use (reformatted for display)::
+*logStream*, using the format *clf* and a schema, you could use (reformatted for display):
  
-  $ curl -w'\n' -X PUT 'http://localhost:10000/v3/namespaces/default/streams/logStream/views/logStreamView' \
-    -H "Content-Type: application/json" -d \
-    '{
-      "format": {
-        "name": "clf",
-        "schema": 
-          "{
-            \"type\":\"record\",
-            \"name\":\"event\",
-            \"fields\":[
-              {\"name\":\"remotehost\",\"type\":\"string\"},
-              {\"name\":\"rfc931\",\"type\":\"string\"},
-              {\"name\":\"authuser\",\"type\":\"string\"},
-              {\"name\":\"date\",\"type\":\"date\"},
-              {\"name\":\"request\",\"type\":\"string\"},
-              {\"name\":\"status\",\"type\":\"string\"},
-              {\"name\":\"bytes\",\"type\":\"int\"}     
-          ]}",
-        "settings": {
-          "key1":"val1",
-          "key2":"val2"
+.. tabbed-parsed-literal::
+	 
+  $ curl -w"\n" -X PUT "http://example.com:10000/v3/namespaces/default/streams/logStream/views/logStreamView" \
+    -H 'Content-Type: application/json' -d \
+    "{
+      'format': {
+        'name': 'clf',
+        'schema': 
+          '{
+            \'type\':\'record\',
+            \'name\':\'event\',
+            \'fields\':[
+              {\'name\':\'remotehost\',\'type\':\'string\'},
+              {\'name\':\'rfc931\',\'type\':\'string\'},
+              {\'name\':\'authuser\',\'type\':\'string\'},
+              {\'name\':\'date\',\'type\':\'date\'},
+              {\'name\':\'request\',\'type\':\'string\'},
+              {\'name\':\'status\',\'type\':\'string\'},
+              {\'name\':\'bytes\',\'type\':\'int\'}     
+          ]}',
+        'settings': {
+          'key1':'val1',
+          'key2':'val2'
         }
       }
-    }'
-
+    }"
+    
 .. rubric:: HTTP Responses
 
 .. list-table::
@@ -99,12 +110,12 @@ For example, to create a stream view *logStreamView* on an existing stream
 
 .. _http-restful-api-view-listing-stream-view:
 
-Listing Existing Stream Views
-=============================
+Listing Stream Views
+====================
 To list all of the existing stream views of an existing stream, issue an HTTP GET request
 to the URL::
 
-  GET <base-url>/namespaces/<namespace>/streams/<stream-id>/views
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views
 
 .. list-table::
    :widths: 20 80
@@ -112,9 +123,9 @@ to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream (must be already existing)
 
 The response body is a JSON object with a list of all the views currently existing for the
@@ -122,11 +133,13 @@ specified stream.
 
 .. rubric:: Example
 
-For example, to see all the stream views on an existing stream *logStream*, you could use::
- 
-  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/streams/logStream/views'
+For example, to see all the stream views on an existing stream *logStream*, you could use:
+
+.. tabbed-parsed-literal::
+	 
+  $ curl -w"\n" -X GET "http://example.com:10000/v3/namespaces/default/streams/logStream/views"
     
-    ["logStreamView1", "logStreamView2", ...]
+  ["logStreamView1", "logStreamView2", ...]
 
 .. rubric:: HTTP Responses
 
@@ -149,7 +162,7 @@ Details of a Stream View
 For detailed information on an existing stream view, issue an HTTP GET request
 to the URL::
 
-  GET <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>
 
 .. list-table::
    :widths: 20 80
@@ -157,19 +170,21 @@ to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the existing view
      
 .. rubric:: Example
 
 For example, to see the details of the stream view *logStreamView* on the stream
-*logStream*, you could use (pretty-printed for display)::
+*logStream*, you could use (results pretty-printed for display):
  
-  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/streams/logStream/view/logStreamView'
+.. tabbed-parsed-literal::
+	 
+  $ curl -w"\n" -X GET "http://example.com:10000/v3/namespaces/default/streams/logStream/view/logStreamView"
     
   {"id":"logStreamView",
    "format":
@@ -205,7 +220,7 @@ Deleting a Stream View
 ========================
 To delete an existing stream view, issue an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>
+  DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>
 
 .. list-table::
    :widths: 20 80
@@ -213,19 +228,21 @@ To delete an existing stream view, issue an HTTP DELETE request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the existing view
      
 .. rubric:: Example
 
 For example, to delete the stream view *logStreamView* on the stream
-*logStream*, you could use::
+*logStream*, you could use:
  
-  $ curl -w'\n' -X DELETE 'http://localhost:10000/v3/namespaces/default/streams/logStream/view/logStreamView'
+.. tabbed-parsed-literal::
+	 
+  $ curl -w"\n" -X DELETE "http://example.com:10000/v3/namespaces/default/streams/logStream/view/logStreamView"
      
 .. rubric:: HTTP Responses
 

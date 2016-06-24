@@ -121,7 +121,7 @@ A ``user`` endpoint to add a user's profile information to the system:
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
-    "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+    '{"id":"Alice","firstName":"Alice","lastName":"Bernard","categories":["fruits"]}'
 
 A ``user/{id}`` endpoint to obtain profile information for a specified user:
 
@@ -177,7 +177,7 @@ CDAP SDK directory, using the Command Line Interface:
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
-    "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+    '{"id":"Alice","firstName":"Alice","lastName":"Bernard","categories":["fruits"]}'
     
   Successfully connected to CDAP instance at http://localhost:10000/default
   < 200 OK
@@ -280,7 +280,7 @@ First, submit the query for execution:
 
   .. Windows
   
-  > curl -X POST -d "{'query': 'SELECT * FROM dataset_history WHERE customer IN (\'Alice\',\'Bob\')'}" ^
+  > curl -X POST -d "{\"query\": \"SELECT * FROM dataset_history WHERE customer IN (\'Alice\',\'Bob\')\"}" ^
   "http://localhost:10000/v3/namespaces/default/data/explore/queries"
   
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes

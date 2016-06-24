@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _http-restful-api-metrics:
 
@@ -11,19 +11,24 @@ Metrics HTTP RESTful API
 
 .. highlight:: console
 
+Use the CDAP Metrics HTTP RESTful API to retrieve the metrics created and saved by CDAP.
+
 As applications process data, CDAP collects metrics about the application’s behavior and
-performance. Some of these metrics are the same for every application |---| how many events are
+performance. Some of these metrics are similar for every application |---| how many events are
 processed, how many data operations are performed, etc. |---| and are thus called **system** or CDAP
 metrics.
 
 Other metrics are **user-defined** and differ from application to application. 
-For details on how to add metrics to your application, see the section on 
-:ref:`User-Defined Metrics <operations-metrics>` in
-the :ref:`CDAP Administration Manual. <admin-index>`
+For details on how to add metrics to your application, see the section  
+:ref:`Administration Manual: User-Defined Metrics <operations-metrics>`.
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
 
 
 Metrics Data
-------------
+============
 
 Metrics data is identified by a combination of **context** and **name**.
 
@@ -61,7 +66,7 @@ available metrics.
 
 
 Available Contexts
-..................
+------------------
 The context of a metric is typically enclosed into a hierarchy of contexts. For example,
 the flowlet context is enclosed in the flow context, which in turn is enclosed in the
 application context. A metric can always be queried (and aggregated) relative to any
@@ -82,39 +87,39 @@ These are the available application contexts of CDAP:
    * - System Metric
      - Context
    * - One Run of a flowlet
-     - ``namespace:<namespace> app:<app-id> flow:<flow-id> flowlet:<flowlet-id> run:<run-id>``
+     - ``namespace:<namespace-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id> run:<run-id>``
    * - One flowlet of a flow
-     - ``namespace:<namespace> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
+     - ``namespace:<namespace-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
    * - All flowlets of a flow
-     - ``namespace:<namespace> app:<app-id> flow:<flow-id>``
+     - ``namespace:<namespace-id> app:<app-id> flow:<flow-id>``
    * - All flowlets of all flows of an application
-     - ``namespace:<namespace> app:<app-id> flow:*``
+     - ``namespace:<namespace-id> app:<app-id> flow:*``
    * - All Mappers of a MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:m``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:<mapreduce-id> tasktype:m``
    * - All Reducers of a MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:r``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:<mapreduce-id> tasktype:r``
    * - One Run of a MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> run:<run-id>``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:<mapreduce-id> run:<run-id>``
    * - One MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id>``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:<mapreduce-id>``
    * - All MapReduce of an application
-     - ``namespace:<namespace> app:<app-id> mapreduce:*``
+     - ``namespace:<namespace-id> app:<app-id> mapreduce:*``
    * - One service
-     - ``namespace:<namespace> app:<app-id> service:<service-id>``
+     - ``namespace:<namespace-id> app:<app-id> service:<service-id>``
    * - All services of an application
-     - ``namespace:<namespace> app:<app-id> service:*``
+     - ``namespace:<namespace-id> app:<app-id> service:*``
    * - One Spark program
-     - ``namespace:<namespace> app:<app-id> spark:<spark-id>``
+     - ``namespace:<namespace-id> app:<app-id> spark:<spark-id>``
    * - All Spark programs of an application
-     - ``namespace:<namespace> app:<app-id> spark:*``
+     - ``namespace:<namespace-id> app:<app-id> spark:*``
    * - One worker
-     - ``namespace:<namespace> app:<app-id> worker:<worker-id>``
+     - ``namespace:<namespace-id> app:<app-id> worker:<worker-id>``
    * - All workers of an application
-     - ``namespace:<namespace> app:<app-id> workers:*``
+     - ``namespace:<namespace-id> app:<app-id> workers:*``
    * - All components of an application
-     - ``namespace:<namespace> app:<app-id>``
+     - ``namespace:<namespace-id> app:<app-id>``
    * - All components of all applications
-     - ``namespace:<namespace> app:*``
+     - ``namespace:<namespace-id> app:*``
 
 Stream metrics are only available at the stream level and the only available context is:
 
@@ -125,7 +130,7 @@ Stream metrics are only available at the stream level and the only available con
    * - Stream Metric
      - Context
    * - A single stream
-     - ``namespace:<namespace> stream:<stream-id>``
+     - ``namespace:<namespace-id> stream:<stream-id>``
 
 Dataset metrics are available at the dataset level, but they can also be queried down to the
 flowlet, worker, service, Mapper, or Reducer level:
@@ -137,20 +142,20 @@ flowlet, worker, service, Mapper, or Reducer level:
    * - Dataset Metric
      - Context
    * - A single dataset in the context of a single flowlet
-     - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
+     - ``namespace:<namespace-id> dataset:<dataset-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
    * - A single dataset in the context of a single flow
-     - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id>``
+     - ``namespace:<namespace-id> dataset:<dataset-id> app:<app-id> flow:<flow-id>``
    * - A single dataset in the context of a specific application
-     - ``namespace:<namespace> dataset:<dataset-id> app:<app-id>``
+     - ``namespace:<namespace-id> dataset:<dataset-id> app:<app-id>``
    * - A single dataset
-     - ``namespace:<namespace> dataset:<dataset-id>``
+     - ``namespace:<namespace-id> dataset:<dataset-id>``
    * - All datasets
-     - ``namespace:<namespace> dataset:*``
+     - ``namespace:<namespace-id> dataset:*``
 
 .. _available-system-metrics:
 
 Available System Metrics
-........................
+------------------------
 **Note:** A user metric may have the same name as a system metric; they are distinguished 
 by prepending the respective prefix when querying: ``user`` or ``system``.
 
@@ -272,7 +277,7 @@ These metrics are available in a stream context:
 
 
 Searches and Queries
---------------------
+====================
 
 The process of retrieving a metric involves these steps:
 
@@ -283,11 +288,11 @@ The process of retrieving a metric involves these steps:
 .. _http-restful-api-metrics-search-for-contexts:
 
 Search for Contexts
-...................
+-------------------
 
 To search for the available contexts, perform an HTTP request::
 
-  POST '<base-url>/metrics/search?target=tag[&tag=<context>]'
+  POST /v3/metrics/search?target=tag[&tag=<context>]
 
 The optional ``<context>`` defines a metrics context to search within. If it is not
 provided, the search is performed across all data. The available contexts that are returned
@@ -300,7 +305,7 @@ examples below for its use.
 **Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
 should be replaced, as it will be removed in a later version of CDAP::
 
-  POST '<base-url>/metrics/search?target=childContext[&context=<context>]'
+  POST /v3/metrics/search?target=childContext[&context=<context>]
 
 .. list-table::
    :widths: 20 80
@@ -308,7 +313,7 @@ should be replaced, as it will be removed in a later version of CDAP::
 
    * - Parameter
      - Description
-   * - ``<context>`` *[Optional]*
+   * - ``context`` *[Optional]*
      - Metrics context to search within. If not provided, the search is provided across
        all contexts. Consists of a collection of tags.
        
@@ -319,7 +324,7 @@ should be replaced, as it will be removed in a later version of CDAP::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=tag'``
+     - ``POST /v3/metrics/search?target=tag``
    * - Returns
      - ``[{"name":"namespace","value":"default"},{"name":"namespace","value":"system"}]``
    * - Description
@@ -327,7 +332,7 @@ should be replaced, as it will be removed in a later version of CDAP::
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=tag&tag=namespace:default'``
+     - ``POST /v3/metrics/search?target=tag&tag=namespace:default``
    * - Returns
      - | ``[{"name":"app","value":"HelloWorld"},{"name":"app","value":"PurchaseHistory"},``
        | `` {"name":"component","value":"gateway"},{"name":"dataset","value":"frequentCustomers"},``
@@ -339,8 +344,8 @@ should be replaced, as it will be removed in a later version of CDAP::
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=tag&tag=``
-       ``namespace:default&tag=app:PurchaseHistory&tag=flow:PurchaseFlow&tag=run:*'``
+     - ``POST /v3/metrics/search?target=tag&tag=``
+       ``namespace:default&tag=app:PurchaseHistory&tag=flow:PurchaseFlow&tag=run:*``
    * - Returns
      - ``[{"name":"flowlet","value":"collector"},{"name":"flowlet","value":"reader"}]``
    * - Description
@@ -350,11 +355,11 @@ should be replaced, as it will be removed in a later version of CDAP::
 .. _http-restful-api-metrics-search-for-metrics:
 
 Search for Metrics
-..................
+------------------
 
 To search for the available metrics within a given context, perform an HTTP POST request::
 
-  POST '<base-url>/metrics/search?target=metric&tag=<context>'
+  POST /v3/metrics/search?target=metric&tag=<context>
 
 
 .. list-table::
@@ -363,13 +368,13 @@ To search for the available metrics within a given context, perform an HTTP POST
 
    * - Parameter
      - Description
-   * - ``<context>``
+   * - ``context``
      - Metrics context to search within. Consists of a collection of tags.
      
 **Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
 should be replaced, as it will be removed in a later version of CDAP::
 
-  POST '<base-url>/metrics/search?target=metric&context=<context>'
+  POST /v3/metrics/search?target=metric&context=<context>
 
 .. rubric:: Example
 
@@ -378,7 +383,7 @@ should be replaced, as it will be removed in a later version of CDAP::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=metric&tag=namespace:default&tag=app:PurchaseHistory'``
+     - ``POST /v3/metrics/search?target=metric&tag=namespace:default&tag=app:PurchaseHistory``
    * - Returns
      - | ``["system.process.events.in","system.process.events.processed","system.process.instance",``
        | `` "system.process.tuples.attempt.read","system.process.tuples.read"]``
@@ -388,7 +393,7 @@ should be replaced, as it will be removed in a later version of CDAP::
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting'``
+     - ``POST /v3/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting``
    * - Returns
      - | ``["system.dataset.store.ops","system.dataset.store.reads","system.requests.count",``
        | `` "system.response.successful.count",``
@@ -399,7 +404,7 @@ should be replaced, as it will be removed in a later version of CDAP::
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver'``
+     - ``POST /v3/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver``
    * - Returns
      - | ``["system.dataset.store.bytes","system.dataset.store.ops","system.dataset.store.writes",``
        | `` "system.process.events.in","system.process.events.processed","system.process.instance",``
@@ -411,8 +416,8 @@ should be replaced, as it will be removed in a later version of CDAP::
 
 .. _http-restful-api-metrics-querying-a-metric:
 
-Querying A Metric
------------------
+Querying a Metric
+=================
 
 Once you know the context and the metric to query, you can formulate a request for the
 metrics data. 
@@ -430,7 +435,7 @@ Metric parameters include:
 
 To query a metric within a given context, perform an HTTP POST request::
 
-  POST '<base-url>/metrics/query?tag=<context>&metric=<metric>&<time-range>[&groupBy=<tags>]'
+  POST /v3/metrics/query?tag=<context>&metric=<metric>&<time-range>[&groupBy=<tags>]
 
 .. list-table::
    :widths: 20 80
@@ -438,31 +443,31 @@ To query a metric within a given context, perform an HTTP POST request::
 
    * - Parameter
      - Description
-   * - ``<context>``
+   * - ``context``
      - Metrics context to search within, a collection of tags
-   * - ``<metric>``
+   * - ``metric``
      - Metric(s) being queried, a collection of metric names
-   * - ``<time-range>``
+   * - ``time-range``
      - A :ref:`time range <http-restful-api-metrics-time-range>` or ``aggregate=true`` for 
        all since the application was deployed
-   * - ``<tags>`` *[Optional]*
+   * - ``tags`` *(optional)*
      - :ref:`Tag list <http-restful-api-metrics-groupby>` by which to group results (optional)
 
 **Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
 should be replaced, as it will be removed in a later version of CDAP::
 
-  POST '<base-url>/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>'
+  POST /v3/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>
 
 Query Examples
-..............
+--------------
 
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow``
-       ``&tag=flowlet:saver&metric=system.process.events.processed&aggregate=true'``
+     - ``POST /v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow``
+       ``&tag=flowlet:saver&metric=system.process.events.processed&aggregate=true``
    * - Returns
      - ``{"startTime":0,"endTime":1429327964,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":1}]}]}``
    * - Description
@@ -470,8 +475,8 @@ Query Examples
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow.WhoFlow``
-       ``&tag=run:13ac3a50-a435-49c8-a752-83b3c1e1b9a8&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'``
+     - ``POST /v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow.WhoFlow``
+       ``&tag=run:13ac3a50-a435-49c8-a752-83b3c1e1b9a8&tag=flowlet:saver&metric=user.names.bytes&aggregate=true``
    * - Returns
      - ``{"startTime":0,"endTime":1429328212,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":8}]}]}``
    * - Description
@@ -479,7 +484,7 @@ Query Examples
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&metric=user.names.bytes'``
+     - ``POST /v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&metric=user.names.bytes``
    * - Returns
      - ``{"startTime":0,"endTime":1429475995,"series":[]}``
    * - Description
@@ -487,7 +492,7 @@ Query Examples
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&metric=user.names.bytes'``
+     - ``POST /v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&metric=user.names.bytes``
    * - Returns
      - ``{"startTime":0,"endTime":1429477901,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":44}]}]}``
    * - Description
@@ -495,7 +500,7 @@ Query Examples
 
 
 Query Results
-.............
+-------------
 
 Results from a query are returned as a JSON string, in the format::
 
@@ -507,11 +512,11 @@ Results from a query are returned as a JSON string, in the format::
 
    * - Name
      - Description
-   * - ``<start-time>``
+   * - ``start-time``
      - Start time, in seconds, with 0 being from the beginning of the query records
-   * - ``<metric>``
+   * - ``metric``
      - End time, in seconds
-   * - ``<series-array>``
+   * - ``series-array``
      - An array of metric results, which can be one series, a multiple time series, or
        none (an empty array)
 
@@ -534,20 +539,20 @@ will return the empty result, as the metric name will be interpreted as
 .. _http-restful-api-metrics-multiple:
 
 Querying for Multiple Metrics
-.............................
+-----------------------------
 
 Retrieving multiple metrics at once can be accomplished by issuing an HTTP POST request
 with a JSON list as the request body that enumerates the name and attributes for each
 metric. The format of the request and the JSON body depends on whether the metrics share
 the same context or are being called for different contexts. 
 
-.. rubric:: Multiple Metrics with the Same Context
-
+Multiple Metrics with the Same Context
+......................................
 Retrieving multiple metrics at once for the same contexts can be accomplished by issuing a
 request as in previous examples, but providing the additional metrics. For example::
 
-  POST '<base-url>/metrics/query?tag=flow:CountRandom&metric=system.process.events.processed
-    &metric=system.dataset.store.bytes&start=now-5s&count=5'
+  POST /v3/metrics/query?tag=flow:CountRandom&metric=system.process.events.processed
+    &metric=system.dataset.store.bytes&start=now-5s&count=5
 
 The result (pretty-printed to fit) would be::
 
@@ -570,13 +575,13 @@ The result (pretty-printed to fit) would be::
               }]
   }
 
-.. rubric:: Multiple Metrics with Different Contexts
-
+Multiple Metrics with Different Contexts
+........................................
 Retrieving multiple metrics at once for different contexts can be accomplished by issuing
 a request with a JSON list as the request body that enumerates the name, attributes and
 context for each metric. Use an HTTP POST request:: 
 
-  POST 'http://<host>:<port>/v3/metrics/query'
+  POST /v3/metrics/query
 
 with the arguments as a JSON string in the body. The format of the JSON follows this
 structure (pretty-printed)::
@@ -636,7 +641,7 @@ status 200 (OK) with JSON formed following the above description, with an empty 
 .. _http-restful-api-metrics-groupby:
 
 Querying for Multiple Time-series
-.................................
+---------------------------------
 
 In a query, the optional ``groupBy`` parameter defines a list of tags whose values are
 used to build multiple timeseries. All data points that have the same values in tags
@@ -656,10 +661,10 @@ multiple tags for grouping by providing a list, similar to a tag combination lis
    * - ``groupBy=app&groupBy=flow``
      - Retrieves a time series for each App and flow combination
 
-An example method::
+An example method (re-formatted to fit)::
 
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&
-    groupBy=flow&metric=user.customers.count&start=now-2s&end=now'
+  POST /v3/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&
+    groupBy=flow&metric=user.customers.count&start=now-2s&end=now
 
 returns the *user.customers.count* metric in the context of the application
 *PurchaseHistory* of the *default* namespace, for the specified time range, and grouped by
@@ -691,8 +696,7 @@ returns the *user.customers.count* metric in the context of the application
 .. _http-restful-api-metrics-time-range:
 
 Querying by a Time Range
-........................
-
+------------------------
 The time range of a metric query can be specified in various ways: either
 ``aggregate=true`` to retrieve the total aggregated since the application was deployed
 or |---| in the case of dataset metrics |---| since a dataset was created; 
@@ -754,8 +758,8 @@ difference calculated between the start and end times:
 
 Example::
 
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&
-    metric=system.process.events.processed&start=now-1h&end=now&resolution=1m'
+  POST /v3/metrics/query?tag=namespace:default&tag=app:CountRandom&
+    metric=system.process.events.processed&start=now-1h&end=now&resolution=1m
 
 This will return the value of the metric *system.process.events.processed* for the last
 hour at one-minute intervals.
@@ -764,15 +768,15 @@ For aggregates, you cannot specify a time range. As an example, to return the to
 of input objects processed since the application *CountRandom* was deployed, assuming that
 CDAP has not been stopped or restarted::
 
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom
-    &metric=system.process.events.processed&aggregate=true'
+  POST /v3/metrics/query?tag=namespace:default&tag=app:CountRandom
+    &metric=system.process.events.processed&aggregate=true
 
 If a metric is a gauge type, the aggregate will return the latest value set for the metric.
 For example, this request will retrieve the completion percentage for the map-stage of the MapReduce
 ``PurchaseHistoryBuilder`` (reformatted to fit)::
 
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
-    &tag=mapreduce:PurchaseHistoryBuilder&tage=tasktype:m&metric=system.process.completion&aggregate=true'
+  POST /v3/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
+    &tag=mapreduce:PurchaseHistoryBuilder&tage=tasktype:m&metric=system.process.completion&aggregate=true
     
   {"startTime":0,"endTime":1429497700,"series":[{"metricName":"system.process.completion",
    "grouping":{},"data":[{"time":0,"value":100}]}]} 
@@ -781,8 +785,7 @@ For example, this request will retrieve the completion percentage for the map-st
 .. _http-restful-api-metrics-querying-by-run-id:
 
 Querying by Run-ID
-..................
-
+------------------
 Each execution of an program (flow, MapReduce, Spark, service, worker) has an :ref:`associated 
 run-ID <rest-program-runs>` that uniquely identifies that program's run. We can query 
 metrics for a program by its run-ID to retrieve the metrics for a particular run. Please see 
@@ -796,21 +799,21 @@ after the ``program-id`` with the tag ``run``::
 
 Examples of using a run-ID (with both commands and results reformatted to fit)::
 
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=flow:PurchaseFlow
-      &tag=run:364-789-1636765&metric=system.process.events.processed'
+  POST /v3/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=flow:PurchaseFlow
+      &tag=run:364-789-1636765&metric=system.process.events.processed
   
   {"startTime":0,"endTime":1429498228,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":10}]}]}
   
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=mapreduce:
-      PurchaseHistoryBuilder&tag=run:453-454-447683&tag=tasktype:m&metric=system.process.completion'
+  POST /v3/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=mapreduce:
+      PurchaseHistoryBuilder&tag=run:453-454-447683&tag=tasktype:m&metric=system.process.completion
 
   {"startTime":0,"endTime":1429498425,"series":[{"metricName":"system.process.completion",
    "grouping":{},"data":[{"time":0,"value":100}]}]}
    
   
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom&tag=run:
-    bca50436-9650-448e-9ab1-f1d186eb2285&tag=flowlet:splitter&metric=system.process.events.processed&aggregate=true'
+  POST /v3/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom&tag=run:
+    bca50436-9650-448e-9ab1-f1d186eb2285&tag=flowlet:splitter&metric=system.process.events.processed&aggregate=true
 
 The last example will return (where ``"time"=0`` means aggregated total number, and ``endTime`` is
 the time of the query) something similar to::
@@ -819,14 +822,14 @@ the time of the query) something similar to::
    "grouping":{},"data":[{"time":0,"value":11188}]}]}
 
 Query Tips
-..........
+----------
 
 - To retrieve the number of input data objects (“events”) processed by the flowlet named *splitter*,
   in the flow *CountRandom* of the example application *CountRandom*, over the last 5 seconds, you can issue an HTTP
   POST method::
 
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
-      &tag=flowlet:splitter&metric=system.process.events.processed&start=now-5s&count=5'
+    POST /v3/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
+      &tag=flowlet:splitter&metric=system.process.events.processed&start=now-5s&count=5
 
   This returns a JSON response that has one entry for every second in the requested time interval. It will have
   values only for the times where the metric was actually emitted (shown here "pretty-printed")::
@@ -881,8 +884,8 @@ Query Tips
   flowlet and with the returned value being the number of events processed (command and
   result reformatted to fit)::
 
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
-      &tag=flow:PurchaseFlow&groupBy=flowlet&metric=system.process.events.processed'
+    POST /v3/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
+      &tag=flow:PurchaseFlow&groupBy=flowlet&metric=system.process.events.processed
 
     {"startTime":0,
      "endTime":1429756509,
@@ -901,8 +904,8 @@ Query Tips
   For example, to request the user-defined metric *names.byte* for the *HelloWorld*
   application's *WhoFlow* flow::
 
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld
-      &tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'
+    POST /v3/metrics/query?tag=namespace:default&tag=app:HelloWorld
+      &tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true
 
 .. _http-restful-api-metrics-pending:
 
@@ -915,5 +918,5 @@ Query Tips
   By default, metrics are aggregated across all available time. Your query (using the CDAP example
   :ref:`Count Random <examples-count-random>`) could look like::
 
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
-      &tag=consumer:counter&tag=producer:splitter&tag=queue:queue&metric=system.queue.pending'
+    POST /v3/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
+      &tag=consumer:counter&tag=producer:splitter&tag=queue:queue&metric=system.queue.pending

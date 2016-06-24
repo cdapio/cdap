@@ -127,7 +127,7 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
     Artifact added successfully
 
     $ curl -w"\n" -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/<app name> \
-      -d "{ 'artifact': { 'name': '|example|', 'version': '|release|', 'scope': 'user' }, 'config': {} }"
+      -d '{ "artifact": { "name": "|example|", "version": "|release|", "scope": "user" }, "config": {} }'
     Deploy Complete
 
 

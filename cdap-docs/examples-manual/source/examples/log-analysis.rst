@@ -125,13 +125,13 @@ Querying the Results
   
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh call service |example|.\ |example-service1| POST "hitcount" body "{'url':'/index.html'}"
+    $ cdap-cli.sh call service |example|.\ |example-service1| POST "hitcount" body '{"url":"/index.html"}'
 
   You can also use the ``curl`` command and an HTTP request:
   
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST -d "{'url':'/index.html'}" "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/methods/hitcount"
+    $ curl -w"\n" -X POST -d '{"url":"/index.html"}' "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/methods/hitcount"
 
   On success, this command will return the hit count for the above URL, such as ``4``.
 
@@ -164,9 +164,9 @@ Querying the Results
 
   .. tabbed-parsed-literal::
 
-      $ cdap-cli.sh call service |example|.\ |example-service2| POST "reqfile" body "{'time':'7/29/15 7:47 PM'}"
+      $ cdap-cli.sh call service |example|.\ |example-service2| POST "reqfile" body '{"time":"7/29/15 7:47 PM"}'
 
-      $ curl -w"\n" -X POST -d "{'time':'7/29/15 7:47 PM'}" \
+      $ curl -w"\n" -X POST -d '{"time":"7/29/15 7:47 PM"}' \
       "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/reqfile"
 
   A possible successful response::

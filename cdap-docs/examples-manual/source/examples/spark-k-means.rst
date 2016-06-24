@@ -103,7 +103,7 @@ There are three ways to start the Spark program:
 
    .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST -d "{args='3'}" \
+    $ curl -w"\n" -X POST -d '{args="3"}' \
     "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
     
 

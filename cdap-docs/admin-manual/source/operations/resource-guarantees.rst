@@ -49,7 +49,7 @@ Configurations for submitting to non-default YARN queues can be specified in two
    For example, to set ``A`` as the queue name to be used for the namespace
    *<namespace-id>*, you use this HTTP PUT method::
    
-      PUT <base-url>/namespaces/<namespace-id>/properties
+      PUT /v3/namespaces/<namespace-id>/properties
    
    with the property as a JSON string in the body::
    

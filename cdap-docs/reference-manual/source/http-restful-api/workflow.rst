@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _http-restful-api-workflow:
 
@@ -11,6 +11,17 @@ Workflow HTTP RESTful API
 
 .. highlight:: console
 
+Use the CDAP Workflow HTTP RESTful API to access workflow tokens; list and delete local
+datasets used in a workflow; retrieve the state of nodes that were executed; and retrieve
+statistics across *successful* runs of a workflow.
+
+Additional details and examples are found in the :ref:`Developers' Manual: Workflows <developers:workflows>`.
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
+
+
 Workflow Tokens
 ===============
 This interface supports accessing the value of workflow tokens set during runs of a workflow.
@@ -18,10 +29,10 @@ Returned values can be specified for a particular scope, node or key.
 
 Obtaining a Token's Values
 --------------------------
-To get the values that were put into the workflow token for a particular run, 
+To retrieve the values that were put into the workflow token for a particular run, 
 use an HTTP GET request to the query's URL::
 
-  GET <base-url>/namespaces/<namespace>/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}[/nodes/{node-id}]/token
+  GET /v3/namespaces/<namespace-id>/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}[/nodes/{node-id}]/token
   
 The request can (optionally) contain a *node-id* to limit the request to a particular node in workflow.
 
@@ -31,15 +42,15 @@ The request can (optionally) contain a *node-id* to limit the request to a parti
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
-   * - ``<node-id>``
+   * - ``node-id``
      - Name of a node in the workflow (optional)
      
 .. rubric:: Extending the Request
@@ -97,14 +108,14 @@ run, such as::
    * - ``500``
      - Internal server error
 
-Examples
---------
+.. rubric:: Examples
+
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
-     - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token``
+     - ``GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token``
    * - HTTP Response
      - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
@@ -112,7 +123,7 @@ Examples
        |
 
    * - HTTP Request
-     - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token?scope=system``
+     - ``GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token?scope=system``
    * - HTTP Response
      - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
@@ -120,7 +131,7 @@ Examples
        |
 
    * - HTTP Request
-     - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/token?key=key1``
+     - ``GET /v3/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/token?key=key1``
    * - HTTP Response
      - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
@@ -128,7 +139,7 @@ Examples
        |
        
    * - HTTP Request
-     - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/nodes/MyExitNode/token?key=key1``
+     - ``GET /v3/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/nodes/MyExitNode/token?key=key1``
    * - HTTP Response
      - ``{"key1":[{"nodeName": "MyExitNode", "value":"1"}]}``
    * - Description
@@ -143,7 +154,7 @@ Listing Local Datasets
 ----------------------
 To retrieve the local datasets associated with a particular run, use an HTTP GET request to the query's URL::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
 
 where
 
@@ -153,20 +164,20 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
 
 Deleting Local Datasets
 -----------------------
 To delete the local datasets associated with a particular run, use an HTTP DELETE request to the query's URL::
 
-  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
 
 where
 
@@ -176,13 +187,13 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
 
 Workflow State
@@ -192,7 +203,7 @@ a part of a given workflow run.
 
 To retrieve the state of a particular workflow run, use an HTTP GET request to the query's URL::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/nodes/state
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/nodes/state
 
 where
 
@@ -202,20 +213,20 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
      
-Example
--------
+.. rubric:: Example
+
 The query::
 
-  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/53280521-0ce3-11e6-873e-da6a50dd7318/nodes/state
+  GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/53280521-0ce3-11e6-873e-da6a50dd7318/nodes/state
 
 would return results similar to these, pretty-printed for display::
 
@@ -234,16 +245,16 @@ would return results similar to these, pretty-printed for display::
 
 Workflow Statistics
 ===================
-These requests provide statistics across *successful* runs of a Workflow, in a time
+These requests provide statistics across *successful* runs of a workflow, in a time
 interval, for a succession of runs, or between two specific runs. These requests will help
-in detecting which jobs might be responsible for delays or problems.
+in determining which jobs are responsible for delays or problems.
 
 Statistics of Successful Runs
 -----------------------------
 This request returns general statistics about all *successful* workflow runs in a particular time interval, 
 with an analysis based on a series of (optionally) provided percentiles::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/statistics?
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/statistics?
     start=<start-time>&end=<end-time>&percentile=<percentile-1>&percentile=<percentile-2>...
     
 where
@@ -254,17 +265,17 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<start-time>``
+   * - ``start-time``
      - Start time of runs (in seconds); if not provided, defaults to ``now`` (optional) 
-   * - ``<end-time>``
+   * - ``end-time``
      - End time of runs (in seconds); if not provided, defaults to ``now-1d`` (optional) 
-   * - ``<percentile-1>``
+   * - ``percentile-1``
      - List of percentiles (each greater than zero and less than 100) to be used for generating statistics;
        if not provided, defaults to 90 (optional) 
 
@@ -289,11 +300,11 @@ Examples: ``now-<n>s``, ``now-<n>m``,  ``now-<n>h``, or ``now-<n>d``.
    * - ``500``
      - Internal server error
 
-Example
--------
+.. rubric:: Example
+
 The query::
 
-  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/statistics?
+  GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/statistics?
     start=1441918778&end=1442005182&percentile=80&percentile=90&percentile=95&percentile=99
   
 would return results similar to these, pretty-printed for display::
@@ -352,7 +363,7 @@ This request returns a list of workflow metrics, based on a workflow run and a s
 number of *successful* runs of the workflow that are spaced apart by a time interval from
 each other::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/statistics?
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/statistics?
     limit=<limit>&interval=<interval>
     
 where
@@ -363,17 +374,17 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
-   * - ``<limit>``
+   * - ``limit``
      - The number of the records to compare against (before and after) the run; if not provided, defaults to ``10`` (optional) 
-   * - ``<interval>``
+   * - ``interval``
      - The time interval with which to space out the runs before and after, with units; if not provided, defaults to ``10s`` (optional) 
 
 If the query was successful, the body will contain a JSON structure of statistics.
@@ -393,11 +404,11 @@ If the query was successful, the body will contain a JSON structure of statistic
    * - ``500``
      - Internal server error
 
-Example
--------
+.. rubric:: Example
+
 The query::
 
-  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/
+  GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/
     1873ade0-58d9-11e5-b79d-8cae4cfd0e64/statistics?limit=10&interval=10s'  
   
 would return results similar to these, pretty-printed for display::
@@ -448,7 +459,7 @@ Comparing Two Runs
 ------------------
 This request compares the metrics of two runs of a workflow::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/compare?
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/compare?
     other-run-id=<other-run-id>
     
 where
@@ -459,15 +470,15 @@ where
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``workflow-id``
      - Name of the workflow
-   * - ``<run-id>``
+   * - ``run-id``
      - UUID of the workflow run
-   * - ``<other-run-id>``
+   * - ``other-run-id``
      - UUID of the other workflow run to be used in the comparison
 
 If the query was successful, the body will contain a JSON structure of statistics. Note that if either of
@@ -490,11 +501,11 @@ the run-ids is from an *unsuccessful* run, an error message will be returned::
    * - ``500``
      - Internal server error
 
-Example
--------
+.. rubric:: Example
+
 Comparing two runs (``14b8710a-58cd-11e5-98ca-8cae4cfd0e64`` and ``e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64``)::
 
-  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/
+  GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/
     runs/14b8710a-58cd-11e5-98ca-8cae4cfd0e64/compare?other-run-id=e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64
   
 would return results similar to these, pretty-printed for display::

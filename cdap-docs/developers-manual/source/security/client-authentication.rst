@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _client-authentication:
 
@@ -63,10 +63,15 @@ Obtaining an Access Token
 Obtain a new access token by calling::
 
    GET <base-auth-url>/token
+   
+The ``<base-auth-url>`` can be found either by making a request and retrieving the
+authentication URI (``auth_uri``) in the response body or by knowing the configuration of
+the CDAP server for the ``security.auth.server.bind.address`` and port, as described in the
+:ref:`Administration Manual: Security <admin:admin-security>`.
 
-The required header and request parameters may vary according to the
-external authentication mechanism that has been configured.  For username and password based mechanisms, the
-``Authorization`` header may be used::
+The required header and request parameters may vary according to the external
+authentication mechanism that has been configured.  For username and password based
+mechanisms, the ``Authorization`` header may be used::
 
    Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
 
@@ -135,20 +140,24 @@ Comments
 
 Authentication with RESTful Endpoints
 -------------------------------------
-When security is enabled on a CDAP cluster, only requests with a valid access token will be
-allowed by CDAP.  Clients accessing CDAP RESTful endpoints will first need to obtain an access token
-from the authentication server, as described above, which will be passed to the Router daemon on
-subsequent HTTP requests.
+When security is enabled on a CDAP cluster, only requests with a valid access token will
+be allowed by CDAP.  Clients accessing CDAP HTTP RESTful endpoints will first need to
+obtain an access token from the authentication server, as described above, which will be
+passed to the router daemon on subsequent HTTP requests.
 
-The following request and response descriptions apply to all CDAP RESTful endpoints::
+The following request and response descriptions apply to all CDAP HTTP RESTful endpoints::
 
    GET <base-url>/<resource> HTTP/1.1
+
+The ``<base-url>`` is typically ``http://<host>:10000`` or
+``https://<host>:10443``, as described in the :ref:`RESTful API Conventions
+<reference:http-restful-api-conventions-base-url>`.
 
 In order to authenticate, all client requests must supply the ``Authorization`` header::
 
    Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
 
-For CDAP issued access tokens, the authentication scheme must always be ``Bearer``.
+For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
 
 HTTP Responses
