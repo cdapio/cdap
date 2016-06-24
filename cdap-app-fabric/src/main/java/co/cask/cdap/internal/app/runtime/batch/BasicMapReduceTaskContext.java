@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.BatchReadable;
@@ -103,10 +104,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    Transaction transaction,
                                    DatasetFramework dsFramework,
                                    @Nullable PluginInstantiator pluginInstantiator,
-                                   Map<String, File> localizedResources) {
+                                   Map<String, File> localizedResources, Debugger debugger) {
     super(program, runId, runtimeArguments, ImmutableSet.<String>of(),
           createMetricsContext(program, runId.getId(), metricsCollectionService, taskId, type, workflowProgramInfo),
-          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator, debugger);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
     this.userMetrics = new ProgramUserMetrics(getProgramMetrics());

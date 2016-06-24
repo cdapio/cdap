@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
@@ -57,6 +58,8 @@ import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import co.cask.cdap.internal.app.preview.DefaultDebugger;
+import co.cask.cdap.internal.app.preview.NoopDebugger;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
@@ -286,6 +289,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
+      bind(Debugger.class).to(NoopDebugger.class);
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
 

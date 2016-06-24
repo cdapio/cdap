@@ -29,24 +29,24 @@ public interface PreviewStore {
 
   /**
    * Add the preview data.
-   * @param programId the id of the program which is logging the preview data
-   * @param propertyName the name of the property for which value is being added
+   * @param rowKey
+   * @param columnKey
    * @param value the value to be added
    */
-  void put(ProgramId programId, String propertyName, Object value);
+  void add(String rowKey, String columnKey, Object value);
 
   /**
    * Get the preview data associated with the given program id.
-   * @param programId the id of the program for which preview data to be fetched
+   * @param rowKey
    * @return the {@link Map} of property and associated values logged for the program
    */
-  Map<String, List<Object>> get(ProgramId programId);
+  Map<String, List<Object>> get(String rowKey);
 
   /**
    * Removes the preview data logged by specified programId
-   * @param programId the id of the program for which the data to be removed
+   * @param rowKey
    */
-  void remove(ProgramId programId);
+  void remove(String rowKey);
 
   /**
    * Clears the preview data store.

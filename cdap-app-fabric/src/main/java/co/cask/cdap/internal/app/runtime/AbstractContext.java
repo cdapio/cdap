@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -71,6 +72,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final PluginContext pluginContext;
   private final Admin admin;
   private final long logicalStartTime;
+  private final Debugger debugger;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -79,9 +81,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, TransactionSystemClient txClient,
-                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded) {
+                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded, Debugger debugger) {
     this(program, runId, arguments, datasets, metricsContext,
-         dsFramework, txClient, discoveryServiceClient, multiThreaded, null);
+         dsFramework, txClient, discoveryServiceClient, multiThreaded, null, debugger);
   }
 
   /**
@@ -91,7 +93,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator, Debugger debugger) {
     super(program.getId().toEntityId());
     this.program = program;
     this.runId = runId;
@@ -118,6 +120,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId());
+    this.debugger = debugger;
   }
 
   private List<Id> createOwners(Id.Program programId) {
@@ -178,16 +181,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
     throws DatasetInstantiationException {
     return datasetCache.getDataset(name, arguments, accessType);
-  }
-
-  @Override
-  public boolean isPreviewEnabled() {
-    return false;
-  }
-
-  @Override
-  public PreviewLogger getPreviewLogger(String loggerName) {
-    return null;
   }
 
   @Override
@@ -272,5 +265,15 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public Admin getAdmin() {
     return admin;
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return debugger.isPreviewEnabled();
+  }
+
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return debugger.getPreviewLogger(loggerName);
   }
 }

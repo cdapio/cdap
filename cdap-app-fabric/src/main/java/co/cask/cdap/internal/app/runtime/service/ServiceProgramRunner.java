@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -57,12 +58,13 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
+  private final Debugger debugger;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory) {
+                              DataFabricFacadeFactory dataFabricFacadeFactory, Debugger debugger) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -70,6 +72,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
+    this.debugger = debugger;
   }
 
   @Override
@@ -108,7 +111,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           instanceId, instanceCount, serviceAnnouncer,
                                                           metricsCollectionService, datasetFramework,
                                                           dataFabricFacadeFactory, txClient, discoveryServiceClient,
-                                                          pluginInstantiator);
+                                                          pluginInstantiator, debugger);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
       component.addListener(new ServiceListenerAdapter() {

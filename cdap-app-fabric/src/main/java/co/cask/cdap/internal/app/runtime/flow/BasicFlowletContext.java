@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.metrics.Metrics;
@@ -67,10 +68,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       MetricsCollectionService metricsCollectionService,
                       DiscoveryServiceClient discoveryServiceClient,
                       TransactionSystemClient txClient,
-                      DatasetFramework dsFramework) {
+                      DatasetFramework dsFramework, Debugger debugger) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
-          dsFramework, txClient, discoveryServiceClient, false);
+          dsFramework, txClient, discoveryServiceClient, false, debugger);
     this.flowId = program.getName();
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId);

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -58,17 +59,20 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
+  private final Debugger debugger;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
+                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
+                             Debugger debugger) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
+    this.debugger = debugger;
   }
 
   @Override
@@ -114,7 +118,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       BasicWorkerContext context = new BasicWorkerContext(
         newWorkerSpec, program, runId, instanceId, instanceCount,
         options.getUserArguments(), metricsCollectionService, datasetFramework,
-        txClient, discoveryServiceClient, streamWriterFactory, pluginInstantiator);
+        txClient, discoveryServiceClient, streamWriterFactory, pluginInstantiator, debugger);
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.

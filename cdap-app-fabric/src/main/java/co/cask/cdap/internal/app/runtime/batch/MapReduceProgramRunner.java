@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -171,7 +172,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
                                   workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
-                                  getPluginArchive(options), pluginInstantiator);
+                                  getPluginArchive(options), pluginInstantiator,
+                                  injector.getInstance(Debugger.class));
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

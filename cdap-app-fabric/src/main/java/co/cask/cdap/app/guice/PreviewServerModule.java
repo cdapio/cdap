@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.preview.PreviewApplicationManager;
@@ -30,7 +31,9 @@ import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.PreviewHttpHandler;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.preview.DefaultDebugger;
 import co.cask.cdap.internal.app.preview.DefaultPreviewManager;
+import co.cask.cdap.internal.app.preview.NoopDebugger;
 import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
@@ -82,6 +85,7 @@ public class PreviewServerModule {
       bind(PreviewServer.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
+      bind(Debugger.class).to(DefaultDebugger.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));

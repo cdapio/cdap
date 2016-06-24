@@ -303,9 +303,9 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     }
   }
 
-  override def isPreviewEnabled: Boolean = ???
+  override def isPreviewEnabled: Boolean = runtimeContext.isPreviewEnabled
 
-  override def getPreviewLogger(loggerName: String): PreviewLogger = ???
+  override def getPreviewLogger(loggerName: String): PreviewLogger = runtimeContext.getPreviewLogger(loggerName)
 }
 
 /**

@@ -31,17 +31,17 @@ public class InMemoryPreviewStore implements PreviewStore {
   private Map<ProgramId, Map<String, List<Object>>> store = new HashMap<>();
 
   @Override
-  public synchronized void put(ProgramId programId, String propertyName, Object value) {
+  public synchronized void add(String programId, String propertyName, Object value) {
 
   }
 
   @Override
-  public Map<String, List<Object>> get(ProgramId programId) {
+  public Map<String, List<Object>> get(String programId) {
     return null;
   }
 
   @Override
-  public void remove(ProgramId programId) {
+  public void remove(String programId) {
 
   }
 

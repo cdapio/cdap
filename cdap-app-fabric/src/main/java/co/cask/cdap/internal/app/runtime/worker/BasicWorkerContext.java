@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
@@ -74,10 +75,11 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             TransactionSystemClient transactionSystemClient,
                             DiscoveryServiceClient discoveryServiceClient,
                             StreamWriterFactory streamWriterFactory,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            Debugger debugger) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService),
-          datasetFramework, transactionSystemClient, discoveryServiceClient, true, pluginInstantiator);
+          datasetFramework, transactionSystemClient, discoveryServiceClient, true, pluginInstantiator, debugger);
     this.specification = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

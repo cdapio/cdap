@@ -230,11 +230,11 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   @Override
   public boolean isPreviewEnabled() {
-    return false;
+    return sparkRuntimeContext.isPreviewEnabled();
   }
 
   @Override
   public PreviewLogger getPreviewLogger(String loggerName) {
-    return null;
+    return sparkRuntimeContext.getPreviewLogger(loggerName);
   }
 }

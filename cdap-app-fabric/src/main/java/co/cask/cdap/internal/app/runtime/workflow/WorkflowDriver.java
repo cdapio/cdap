@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -137,13 +138,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
   @Nullable
   private final PluginInstantiator pluginInstantiator;
+  private final Debugger debugger;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                  TransactionSystemClient txClient, Store store, CConfiguration cConf,
-                 @Nullable PluginInstantiator pluginInstantiator) {
+                 @Nullable PluginInstantiator pluginInstantiator, Debugger debugger) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -170,7 +172,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs),
                                                          basicWorkflowToken, program, RunIds.fromString(runId),
                                                          metricsCollectionService, datasetFramework, txClient,
-                                                         discoveryServiceClient, nodeStates, pluginInstantiator);
+                                                         discoveryServiceClient, nodeStates,
+                                                         pluginInstantiator, debugger);
+    this.debugger = debugger;
     this.pluginInstantiator = pluginInstantiator;
   }
 
@@ -468,7 +472,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs), token,
                                                        program, RunIds.fromString(workflowRunId.getRun()),
                                                        metricsCollectionService, datasetFramework, txClient,
-                                                       discoveryServiceClient, nodeStates, pluginInstantiator);
+                                                       discoveryServiceClient, nodeStates,
+                                                       pluginInstantiator, debugger);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -575,7 +580,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                     new BasicArguments(runtimeArgs), token, program,
                                     RunIds.fromString(workflowRunId.getRun()), metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
-                                    pluginInstantiator);
+                                    pluginInstantiator, debugger);
   }
 
   private Map<String, String> createRuntimeArgs(Arguments args) {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
@@ -135,6 +136,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final DatasetFramework dsFramework;
   private final UsageRegistry usageRegistry;
+  private final Debugger debugger;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -146,7 +148,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient,
                               DatasetFramework dsFramework,
-                              UsageRegistry usageRegistry) {
+                              UsageRegistry usageRegistry,
+                              Debugger debugger) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -157,6 +160,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.dsFramework = dsFramework;
     this.usageRegistry = usageRegistry;
+    this.debugger = debugger;
   }
 
   @SuppressWarnings("unused")
@@ -216,7 +220,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, discoveryServiceClient, txClient, dsFramework);
+                                               metricsCollectionService, discoveryServiceClient, txClient, dsFramework,
+                                               debugger);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

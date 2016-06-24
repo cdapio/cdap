@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
@@ -180,7 +181,9 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           contextConfig.getArguments(), spec,
           workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
-          contextConfig.getLocalizedResources()
+          contextConfig.getLocalizedResources(),
+          //todo - have to check if this injector will have debugger
+          injector.getInstance(Debugger.class)
         );
       }
     };

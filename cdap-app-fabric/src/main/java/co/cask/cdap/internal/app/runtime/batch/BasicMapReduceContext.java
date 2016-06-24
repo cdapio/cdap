@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
@@ -104,10 +105,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DatasetFramework dsFramework,
                                StreamAdmin streamAdmin,
                                @Nullable File pluginArchive,
-                               @Nullable PluginInstantiator pluginInstantiator) {
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               Debugger debugger) {
     super(program, runId, runtimeArguments, Collections.<String>emptySet(),
           createMetricsContext(program, runId.getId(), metricsCollectionService, workflowProgramInfo),
-          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator, debugger);
     this.workflowProgramInfo = workflowProgramInfo;
     this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
     this.loggingContext = createLoggingContext(program.getId(), runId, workflowProgramInfo);

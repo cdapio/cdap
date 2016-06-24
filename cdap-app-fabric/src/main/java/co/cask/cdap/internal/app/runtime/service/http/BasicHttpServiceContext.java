@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -68,10 +69,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
                                  Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator) {
+                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
+                                 Debugger debugger) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator, debugger);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -62,11 +63,11 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
                        DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
-                       @Nullable PluginInstantiator pluginInstantiator) {
+                       @Nullable PluginInstantiator pluginInstantiator, Debugger debugger) {
     super(program, runId, arguments,
           (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+          datasetFramework, txClient, discoveryServiceClient, false, pluginInstantiator, debugger);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.programWorkflowRunner = programWorkflowRunner;

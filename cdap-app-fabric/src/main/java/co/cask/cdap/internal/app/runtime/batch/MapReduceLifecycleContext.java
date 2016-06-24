@@ -288,11 +288,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
 
   @Override
   public boolean isPreviewEnabled() {
-    return false;
+    return delegate.isPreviewEnabled();
   }
 
   @Override
   public PreviewLogger getPreviewLogger(String loggerName) {
-    return null;
+    return delegate.getPreviewLogger(loggerName);
   }
 }
