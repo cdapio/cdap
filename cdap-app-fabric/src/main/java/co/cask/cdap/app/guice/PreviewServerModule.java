@@ -33,14 +33,14 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.preview.DefaultPreviewManager;
 import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.http.HttpHandler;
-import com.google.inject.AbstractModule;
+import com.google.inject.Exposed;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -63,10 +63,11 @@ public class PreviewServerModule {
                            new ConfigStoreModule().getStandaloneModule());
   }
 
-  private static final class PreviewServiceModule extends AbstractModule {
+  private static final class PreviewServiceModule extends PrivateModule {
     @Override
     protected void configure() {
       bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
+      expose(PipelineFactory.class);
 
       install(
         new FactoryModuleBuilder()
@@ -79,19 +80,29 @@ public class PreviewServerModule {
       );
 
       bind(Store.class).to(DefaultStore.class);
-      bind(PreviewServer.class).in(Scopes.SINGLETON);
+      expose(Store.class);
+
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
+
+      bind(PreviewServer.class).in(Scopes.SINGLETON);
+      expose(PreviewServer.class);
+
       bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
+      expose(PreviewManager.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));
 
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(PreviewHttpHandler.class);
+
+
       bind(Scheduler.class).to(NoopScheduler.class);
+      expose(Scheduler.class);
     }
 
     @Provides
+    @Exposed
     @Named(Constants.AppFabric.SERVER_ADDRESS)
     @SuppressWarnings("unused")
     public InetAddress providesHostname(CConfiguration cConf) {

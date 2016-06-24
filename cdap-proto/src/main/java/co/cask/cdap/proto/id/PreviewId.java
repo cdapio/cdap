@@ -64,7 +64,7 @@ public class PreviewId extends EntityId implements NamespacedId, ParentedId<Name
 
   @Override
   public Id toId() {
-    return null;
+    throw new UnsupportedOperationException("PreviewId.toId() not supported, should not be used");
   }
 
   @Override

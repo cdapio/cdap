@@ -104,12 +104,10 @@ public class PreviewServer extends AbstractIdleService {
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.PREVIEW_HTTP));
     Futures.allAsList(
-      ImmutableList.of(
-        applicationLifecycleService.start(),
-        systemArtifactLoader.start(),
-        programRuntimeService.start(),
-        programLifecycleService.start()
-      )
+      applicationLifecycleService.start(),
+      systemArtifactLoader.start(),
+      programRuntimeService.start(),
+      programLifecycleService.start()
     ).get();
 
     // Create handler hooks
