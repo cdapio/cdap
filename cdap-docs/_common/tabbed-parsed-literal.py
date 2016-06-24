@@ -262,6 +262,7 @@ def convert(c, state={}):
     CURL = 'curl'
     DATA_OPTIONS = ['-d', '--data', '--data-ascii']
     HEADER_OPTIONS = ['-H', '--header']
+    TRAILING_OPTIONS = ["-w'\\n'", '-w"\\n"']
     # Local states
     IN_CLI = False
     IN_CURL = False
@@ -315,7 +316,8 @@ def convert(c, state={}):
                 state['IN_CURL'] = True
             if DEBUG: print "w.append('^')"
             continue
-        if IN_CURL and (v in ["-w'\\n'", '-w"\\n"']):
+        if IN_CURL and (v in TRAILING_OPTIONS):
+            if DEBUG: print "IN_CURL and TRAILING_OPTIONS"
             continue
         if IN_CURL and (v in DATA_OPTIONS):
             if DEBUG: print "IN_CURL and DATA_OPTIONS"
@@ -364,8 +366,8 @@ def convert(c, state={}):
                 w.append("\"%s" % v.replace('"', '\\"')[1:])
                 continue
             elif IN_CURL_HEADER_ARTIFACT:
-                if DEBUG: print "json..."
-                w.append(v.replace('"', '\\"'))
+                if DEBUG: print "json...escaping double-quotes and replacing single-quotes"
+                w.append(v.replace('"', '\\"').replace("'", '"'))
             else:
                 # Currently, won't reach this, as once IN_CURL_HEADER_ARTIFACT we never leave until end-of-line 
                 if DEBUG: print "data..."
