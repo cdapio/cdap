@@ -66,9 +66,9 @@ public class FileSecureStoreTest {
   public void setUp() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.Security.Store.FILE_PATH, STORE_PATH);
-    FileSecureStoreProvider fileSecureStoreProvider = new FileSecureStoreProvider(conf);
-    secureStoreManager = fileSecureStoreProvider;
-    secureStore = fileSecureStoreProvider;
+    FileSecureStore fileSecureStore = new FileSecureStore(conf);
+    secureStoreManager = fileSecureStore;
+    secureStore = fileSecureStore;
   }
 
   @After

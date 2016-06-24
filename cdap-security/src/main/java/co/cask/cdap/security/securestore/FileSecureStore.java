@@ -55,10 +55,24 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * File based implementation of secure store. Uses Java JCEKS based keystore.
+ * The data and its metadata are both stored in the keystore separately.
+ * The data is stored with the provided name as the key and the metadata is
+ * stored with the provided name + "_metadata" as the key. They are stored separately
+ * because they are accessed separately most of the time.
+ *
+ * When the client calls a put, the key is put in the keystore, the metadata object
+ * for that key is created and that is put in the store too. The system then flushes
+ *  the keystore to the file system.
+ *  During the flush, the current file is first backed up (_OLD). Then the keystore
+ *  is written to temporary file (_NEW). If that is successful then the temporary
+ *  file is renamed to the secure store file. If anything fails during this process
+ *  then the keystore reverts to the last  successfully written file.
+ *
+ *  The keystore is flushed to the filesystem after every put and delete.
  */
 @Singleton
-class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
-  private static final Logger LOG = LoggerFactory.getLogger(FileSecureStoreProvider.class);
+class FileSecureStore implements SecureStore, SecureStoreManager {
+  private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
   private static final String SCHEME_NAME = "jceks";
   /*
@@ -88,7 +102,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
   private KeyStore keyStore;
   private boolean changed = false;
 
-  public FileSecureStoreProvider(CConfiguration cConf) throws IOException {
+  FileSecureStore(CConfiguration cConf) throws IOException {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH, DEFAULT_FILE_PATH);
     Path dir = Paths.get(pathString);
@@ -143,8 +157,13 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
     } finally {
       writeLock.unlock();
     }
-    // Attempt to persist the store.
-    flush();
+    // Attempt to persist the store. If that fails then remove the element and rethrow the Exception.
+    try {
+      flush();
+    } catch (IOException ioe) {
+      delete(name);
+      throw ioe;
+    }
   }
 
   /**
@@ -173,8 +192,13 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
     } finally {
       writeLock.unlock();
     }
-    // Attempt to persist the store.
-    flush();
+    // Attempt to persist the store. If that fails then remove the element and rethrow the Exception.
+    try {
+      flush();
+    } catch (IOException ioe) {
+      delete(name);
+      throw ioe;
+    }
   }
 
   /**
@@ -226,18 +250,23 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
    */
   private SecureStoreMetadata getSecureStoreMetadata(String name) throws IOException {
     String metaKey = constructMetadataKey(name);
-    if (cache.containsKey(metaKey)) {
-      return cache.get(metaKey);
-    }
+    readLock.lock();
     try {
-      if (!keyStore.containsAlias(metaKey)) {
-        throw new IOException("Metadata for " + name + " not found in the secure store.");
+      if (cache.containsKey(metaKey)) {
+        return cache.get(metaKey);
       }
-      SecureStoreMetadata meta = ((KeyMetadata) keyStore.getKey(metaKey, password)).metadata;
-      cache.put(metaKey, meta);
-      return meta;
-    } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
-      throw new IOException("Unable to retrieve the metadata for " + name, e);
+      try {
+        if (!keyStore.containsAlias(metaKey)) {
+          throw new IOException("Metadata for " + name + " not found in the secure store.");
+        }
+        SecureStoreMetadata meta = ((KeyMetadata) keyStore.getKey(metaKey, password)).metadata;
+        cache.put(metaKey, meta);
+        return meta;
+      } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
+        throw new IOException("Unable to retrieve the metadata for " + name, e);
+      }
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -248,6 +277,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
    * @throws IOException
    */
   private byte[] getData(String name) throws IOException {
+    readLock.lock();
     try {
       if (!keyStore.containsAlias(name)) {
         throw new IOException(name + " not found in the secure store.");
@@ -256,6 +286,8 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
       return key.getEncoded();
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
       throw new IOException("Unable to retrieve the key " + name, e);
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -288,10 +320,6 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
       && (ioe.getMessage() != null)
       && ((ioe.getMessage().contains("Keystore was tampered")) || (ioe
       .getMessage().contains("password was incorrect")));
-  }
-
-  private static void renameOrFail(Path src, Path dest) throws IOException {
-    Files.move(src, src.resolveSibling(dest));
   }
 
   private static String constructMetadataKey(String name) {
@@ -345,10 +373,10 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
       // Try the backup path if the loading failed for any reason other than incorrect password.
       if (!isBadOrWrongPassword(ioe)) {
         // Mark the current file as CORRUPTED
-        renameOrFail(path, Paths.get(path.toString() + "_CORRUPTED_" + System.currentTimeMillis()));
+        Files.move(path, Paths.get(path.toString() + "_CORRUPTED_" + System.currentTimeMillis()));
         // Try loading from the backup path
         loadFromPath(keyStore, backupPath, password);
-        renameOrFail(backupPath, path);
+        Files.move(backupPath, path);
         LOG.warn("Secure store loaded successfully from " + backupPath + " since " + path + " was corrupted.");
       } else {
         // Failed due to bad password.
@@ -374,19 +402,19 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
       loadFromPath(keyStore, oldPath, password);
       loaded = true;
       // Successfully loaded from the old file, rename it.
-      renameOrFail(oldPath, path);
+      Files.move(oldPath, path);
     }
     if (!loaded && Files.exists(newPath)) {
       loadFromPath(keyStore, newPath, password);
       loaded = true;
       // Successfully loaded from the new file, rename it.
-      renameOrFail(newPath, path);
+      Files.move(newPath, path);
     }
     return loaded;
   }
 
   /**
-   * Try to persist the keystore on the file system.
+   * Persist the keystore on the file system.
    * First save the current file as a backup, then store the current data in a new file.
    * If all goes well then renme the new file to current and delete the old file.
    * If anything fails then try to back up from the last successfully written file.
@@ -404,10 +432,10 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
       }
       // Might exist if a backup has been restored etc.
       if (Files.exists(newPath)) {
-        renameOrFail(newPath, Paths.get(newPath.toString() + "_ORPHANED_" + System.currentTimeMillis()));
+        Files.move(newPath, Paths.get(newPath.toString() + "_ORPHANED_" + System.currentTimeMillis()));
       }
       if (Files.exists(oldPath)) {
-        renameOrFail(oldPath, Paths.get(oldPath.toString() + "_ORPHANED_" + System.currentTimeMillis()));
+        Files.move(oldPath, Paths.get(oldPath.toString() + "_ORPHANED_" + System.currentTimeMillis()));
       }
 
       // Create the backup copy
@@ -430,6 +458,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
     } catch (IOException ioe) {
       resetKeyStoreState(resetPath);
       LOG.error("Failed to persist the key store. Secure data may be lost on a restart.", ioe);
+      throw ioe;
     } finally {
       writeLock.unlock();
     }
@@ -438,7 +467,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
   private boolean backupToOld(Path oldPath) throws IOException {
     boolean fileExisted = false;
     if (Files.exists(path)) {
-      renameOrFail(path, oldPath);
+      Files.move(path, oldPath);
       fileExisted = true;
     }
     return fileExisted;
@@ -459,7 +488,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
 
   private void cleanupNewAndOld(Path newPath, Path oldPath) throws IOException {
     // Rename _NEW to CURRENT
-    renameOrFail(newPath, path);
+    Files.move(newPath, path);
     // Delete _OLD
     if (Files.exists(oldPath)) {
       Files.delete(oldPath);
@@ -483,7 +512,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
   private void revertFromOld(Path oldPath, boolean fileExisted)
     throws IOException {
     if (fileExisted) {
-      renameOrFail(oldPath, path);
+      Files.move(oldPath, path);
     }
   }
 
@@ -518,7 +547,7 @@ class FileSecureStoreProvider implements SecureStore, SecureStoreManager {
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-      byte[] serialized = ((SecureStoreMetadata) metadata).serialize();
+      byte[] serialized = metadata.serialize();
       out.writeInt(serialized.length);
       out.write(serialized);
     }
