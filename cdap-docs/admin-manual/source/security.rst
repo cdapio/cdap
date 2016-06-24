@@ -450,12 +450,15 @@ will use ``https`` instead of ``http``.
     {"auth_uri":["http://localhost:10009/token"]}
 
 - Submit a username and password to one of the authentication URIs (``<auth-uri>``) to
-  obtain an ``AccessToken``::
-
-    GET <auth-uri> <username>:<password>
-	
-  such as (assuming a CDAP authentication server at the URI ``localhost:10009`` and that you
-  have defined a *username:password* pair such as ``cdap:bigdata``):
+  obtain an ``AccessToken`` by submitting a `Basic Authorization header
+  <https://en.wikipedia.org/wiki/Basic_access_authentication#Client_side>`__ with the
+  username and password::
+  
+    GET <auth-uri> "Authorization: Basic <encoded_username_password_string>"
+    
+  Using ``curl``, assuming a CDAP authentication server at the URI ``localhost:10009`` and
+  that you have defined a *username:password* pair such as ``cdap:bigdata`` in the
+  realm file, you can use ``curl``'s ``-u`` option to create the header:
   
   .. tabbed-parsed-literal::
 	
