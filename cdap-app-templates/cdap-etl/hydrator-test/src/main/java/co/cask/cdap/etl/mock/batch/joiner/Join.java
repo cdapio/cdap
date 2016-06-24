@@ -124,7 +124,7 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
     Iterable<String> requiredInputs = config.getRequiredInputs();
     for (Map.Entry<String, Schema> entry : inputSchemas.entrySet()) {
       Schema inputSchema = entry.getValue();
-      if (Iterables.contains(requiredInputs, entry.getKey())) {
+      if (config.joinType.equalsIgnoreCase("innerjoin") || Iterables.contains(requiredInputs, entry.getKey())) {
         for (Schema.Field inputField: inputSchema.getFields()) {
           outFields.add(Schema.Field.of(inputField.getName(), inputField.getSchema()));
         }

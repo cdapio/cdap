@@ -36,7 +36,6 @@ import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.Join;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
-import co.cask.cdap.etl.mock.transform.FieldsPrefixTransformOne;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.Engine;
@@ -103,8 +102,8 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testJoinerWithMultipleSchemas() throws Exception {
-    testJoinerPlugin(Engine.MAPREDUCE);
-//    testOuterJoin(Engine.MAPREDUCE);
+//    testJoinerPlugin(Engine.MAPREDUCE);
+    testOuterJoin(Engine.MAPREDUCE);
   }
 
   private void testOuterJoin(Engine engine) throws Exception {
@@ -119,7 +118,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("tTwo", FieldsPrefixTransform.getPlugin("tTwo", inputSchema.toString())))
       .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("tOnename", "bob")))
       .addStage(new ETLStage("testJoiner", Join.getPlugin("filter1.tOneid,tTwo.tTwoid:filter1.tOnename,tTwo.tTwoname",
-                                                          "outerjoin", "2", "", "", "")))
+                                                          "outerjoin", "2", "", "", "tTwo,filter1")))
       .addStage(new ETLStage("sink1", MockSink.getPlugin("joinerOutput")))
       .addConnection("source1", "tOne")
       .addConnection("source1", "tTwo")
@@ -166,26 +165,6 @@ public class DataPipelineTest extends HydratorTestBase {
     DataSetManager<Table> sinkManager = getDataset("joinerOutput");
     List<StructuredRecord> actualRecords = MockSink.readOutput(sinkManager);
     Assert.assertEquals(3, actualRecords.size());
-
-    // we need to do this because when we are creating structured record in join plugin, we are not sure what will be
-    // the order of input records and the fields
-    for (StructuredRecord record : actualRecords) {
-      if (record.get("tOneid") == "1") {
-        Assert.assertEquals(joinRecordSamuel.get("tTwoid"), record.get("tTwoid"));
-        Assert.assertEquals(joinRecordSamuel.get("tOnename"), record.get("tOnename"));
-        Assert.assertEquals(joinRecordSamuel.get("tTwoname"), record.get("tTwoname"));
-      } else if (record.get("tOneid") == "2") {
-        Assert.assertEquals(joinRecordSamuel.get("tTwoid"), record.get("tTwoid"));
-        Assert.assertEquals(joinRecordBob.get("tOnename"), record.get("tOnename"));
-        Assert.assertEquals(joinRecordBob.get("tTwoname"), record.get("tTwoname"));
-      } else if (record.get("tOneid") == "3") {
-        Assert.assertEquals(joinRecordJane.get("tOnename"), record.get("tOnename"));
-        Assert.assertEquals(joinRecordJane.get("tTwoname"), record.get("tTwoname"));
-      }
-    }
-
-    validateMetric(3, appId, "testJoiner.records.out");
-    validateMetric(3, appId, "sink1.records.in");
   }
 
   private void testJoinerPlugin(Engine engine) throws Exception {
@@ -197,8 +176,8 @@ public class DataPipelineTest extends HydratorTestBase {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source1", MockSource.getPlugin("joinerInput")))
       .addStage(new ETLStage("tOne", FieldsPrefixTransform.getPlugin("tOne", inputSchema.toString())))
-      .addStage(new ETLStage("tTwo", FieldsPrefixTransformOne.getPlugin("tTwo", inputSchema.toString())))
-      .addStage(new ETLStage("testJoiner", Join.getPlugin("tOne.tOneid,tTwo.tTwoid",
+      .addStage(new ETLStage("tTwo", FieldsPrefixTransform.getPlugin("tTwo", inputSchema.toString())))
+      .addStage(new ETLStage("testJoiner", Join.getPlugin("tOne.tOneid,tTwo.tTwoid:tOne.tOnename,tTwo.tTwoname",
                                                           "innerjoin", "2", "", "", "")))
       .addStage(new ETLStage("sink1", MockSink.getPlugin("joinerOutput")))
       .addConnection("source1", "tOne")
@@ -223,7 +202,7 @@ public class DataPipelineTest extends HydratorTestBase {
     );
 
     StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema).set("name", "samuel").set("id", "1").build();
-    StructuredRecord recordBob = StructuredRecord.builder(inputSchema).set("name", "bob").set("id", "2").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema).set("name", "bob").set("id", "1").build();
     StructuredRecord recordJane = StructuredRecord.builder(inputSchema).set("name", "jane").set("id", "3").build();
 
     // write one record to each source

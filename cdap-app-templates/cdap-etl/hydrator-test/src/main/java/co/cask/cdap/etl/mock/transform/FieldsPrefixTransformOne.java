@@ -66,16 +66,15 @@ public class FieldsPrefixTransformOne extends Transform<StructuredRecord, Struct
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
-
-    StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema).
-      set("tTwoname", "samuel").set("tTwoid", "1").build();
-    emitter.emit(joinRecordSamuel);
-    StructuredRecord joinRecordManuel = StructuredRecord.builder(outSchema).
-      set("tTwoname", "manuel").set("tTwoid", "1").build();
-    emitter.emit(joinRecordManuel);
-    StructuredRecord joinRecordBob = StructuredRecord.builder(outSchema).
-      set("tTwoname", "bob").set("tTwoid", "2").build();
-    emitter.emit(joinRecordBob);
+      StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema).
+        set("tTwoname", "samuel").set("tTwoid", "1").build();
+      emitter.emit(joinRecordSamuel);
+      StructuredRecord joinRecordManuel = StructuredRecord.builder(outSchema).
+        set("tTwoname", "manuel").set("tTwoid", "1").build();
+      emitter.emit(joinRecordManuel);
+      StructuredRecord joinRecordBob = StructuredRecord.builder(outSchema).
+        set("tTwoname", "bob").set("tTwoid", "2").build();
+      emitter.emit(joinRecordBob);
   }
 
   /**
@@ -111,7 +110,7 @@ public class FieldsPrefixTransformOne extends Transform<StructuredRecord, Struct
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("prefix", new PluginPropertyField("prefix", "", "string", true));
     properties.put("schemaStr", new PluginPropertyField("schemaStr", "", "string", true));
-    return new PluginClass(Transform.PLUGIN_TYPE, "FieldsPrefixTransformOne", "", FieldsPrefixTransform.class.getName(),
-                           "config", properties);
+    return new PluginClass(Transform.PLUGIN_TYPE, "FieldsPrefixTransformOne", "",
+                           FieldsPrefixTransformOne.class.getName(), "config", properties);
   }
 }
