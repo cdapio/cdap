@@ -62,7 +62,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                            PipelinePluginInstantiator pluginInstantiator,
                                            Metrics metrics,
                                            Map<String, Map<String, String>> pluginRuntimeArgs) {
-    super(pluginInstantiator, metrics);
+    super(pluginInstantiator, metrics, taskContext);
     this.taskContext = taskContext;
     this.pluginRuntimeArgs = pluginRuntimeArgs;
     JobContext hadoopContext = (JobContext) taskContext.getHadoopContext();
@@ -94,12 +94,12 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
         return getTrackedGroupStep(new MapperAggregatorTransformation(batchAggregator,
                                                                       mapOutputKeyClassName,
                                                                       mapOutputValClassName),
-                                   stageMetrics);
+                                   stageMetrics, stageName, debugger);
       } else {
         return getTrackedAggregateStep(new ReducerAggregatorTransformation(batchAggregator,
                                                                            mapOutputKeyClassName,
                                                                            mapOutputValClassName),
-                                       stageMetrics);
+                                       stageMetrics, stageName, debugger);
       }
     }
     return super.getTransformation(pluginType, stageName);

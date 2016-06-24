@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.spark;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -54,17 +55,19 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
   private final Map<String, String> runtimeArgs;
   // whether this is before the group step of an aggregator, or before a spark compute stage
   private final boolean isFirstHalf;
+  private final Debugger debugger;
 
   public SparkTransformExecutorFactory(PluginContext pluginContext,
                                        PipelinePluginInstantiator pluginInstantiator,
                                        Metrics metrics, long logicalStartTime,
                                        Map<String, String> runtimeArgs,
-                                       boolean isFirstHalf) {
-    super(pluginInstantiator, metrics);
+                                       boolean isFirstHalf, Debugger debugger) {
+    super(pluginInstantiator, metrics, debugger);
     this.pluginContext = pluginContext;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
     this.isFirstHalf = isFirstHalf;
+    this.debugger = debugger;
   }
 
   @Override
@@ -79,21 +82,27 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
+
       batchAggregator.initialize(runtimeContext);
       if (isFirstHalf) {
-        return getTrackedGroupStep(new PreGroupAggregatorTransformation(batchAggregator), stageMetrics);
+        return getTrackedGroupStep(new PreGroupAggregatorTransformation(batchAggregator),
+                                   stageMetrics, stageName, debugger);
       } else {
-        return getTrackedAggregateStep(new PostGroupAggregatorTransformation(batchAggregator), stageMetrics);
+        return getTrackedAggregateStep(new PostGroupAggregatorTransformation(batchAggregator),
+                                       stageMetrics, stageName, debugger);
       }
     } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
       // if this plugin type is a SparkSink or SparkCompute, substitute in an IDENTITY_TRANSFORMATION
-      return  new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics, TrackedTransform.RECORDS_IN, null);
+      return  new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics, TrackedTransform.RECORDS_IN, null,
+                                   stageName, debugger);
     } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
       // if this is source -> sparkcompute, then its before the break. In that case, we only want to emit records in
       // if this is sparkcompute -> sink, then its after the break. In that case, we only want to emit records out
       return isFirstHalf ?
-        new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics, TrackedTransform.RECORDS_IN, null) :
-        new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics, TrackedTransform.RECORDS_OUT, null);
+        new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics,
+                             TrackedTransform.RECORDS_IN, null, stageName, debugger) :
+        new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics,
+                             TrackedTransform.RECORDS_OUT, null, stageName, debugger);
     }
     return super.getTransformation(pluginType, stageName);
   }

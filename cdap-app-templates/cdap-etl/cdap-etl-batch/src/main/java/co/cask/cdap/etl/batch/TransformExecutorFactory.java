@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.StageLifecycle;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -39,16 +40,19 @@ import java.util.Map;
 public abstract class TransformExecutorFactory<T> {
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
+  protected final Debugger debugger;
 
-  public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics) {
+  public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics, Debugger debugger) {
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
+    this.debugger = debugger;
   }
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
 
   protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
-    return new TrackedTransform(getInitializedTransformation(stageName), new DefaultStageMetrics(metrics, stageName));
+    return new TrackedTransform(getInitializedTransformation(stageName), new DefaultStageMetrics(metrics, stageName),
+                                stageName, debugger);
   }
 
   /**
@@ -91,14 +95,17 @@ public abstract class TransformExecutorFactory<T> {
   }
 
   protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedGroupStep(Transformation<IN, OUT> transform,
-                                                                              StageMetrics stageMetrics) {
-    return new TrackedTransform<>(transform, stageMetrics, TrackedTransform.RECORDS_IN, null);
+                                                                           StageMetrics stageMetrics, String stageName,
+                                                                           Debugger debugger) {
+    return new TrackedTransform<>(transform, stageMetrics, TrackedTransform.RECORDS_IN, null, stageName, debugger);
   }
 
   protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedAggregateStep(Transformation<IN, OUT> transform,
-                                                                               StageMetrics stageMetrics) {
+                                                                               StageMetrics stageMetrics,
+                                                                               String stageName, Debugger debugger) {
     // 'aggregator.groups' is the number of groups output by the aggregator
-    return new TrackedTransform<>(transform, stageMetrics, "aggregator.groups", TrackedTransform.RECORDS_OUT);
+    return new TrackedTransform<>(transform, stageMetrics, "aggregator.groups",
+                                  TrackedTransform.RECORDS_OUT, stageName, debugger);
   }
 
 }
