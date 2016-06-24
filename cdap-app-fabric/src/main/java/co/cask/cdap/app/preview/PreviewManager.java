@@ -51,7 +51,7 @@ public interface PreviewManager {
    * @param previewId the id associated with the preview
    * @return the {@link Map} of stage to properties associated with the stage for a given preview
    */
-  Map<String, Map<String, List<Object>>> getData(PreviewId previewId);
+  Map<String, Map<String, List<String>>> getData(PreviewId previewId);
 
   /**
    * Get the data associated with the specified stage of the preview.
@@ -59,7 +59,7 @@ public interface PreviewManager {
    * @param stageName the name of the stage for which data is to be returned
    * @return the {@link Map} of property name to property value associated with the given stage for a given preview
    */
-  Map<String, List<Object>> getData(PreviewId previewId, String stageName);
+  Map<String, List<String>> getData(PreviewId previewId, String stageName);
 
   /**
    * Get metric associated with the preview.

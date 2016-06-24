@@ -70,4 +70,14 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendString(HttpResponseStatus.OK,
                          GSON.toJson(previewManager.getStatus(new PreviewId(namespaceId, previewId))));
   }
+
+  @GET
+  @Path("/previews/{preview-id}/stages/{stage-name}")
+  public void getPreviewData(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("preview-id") String previewId,
+                             @PathParam("stage-name") String stageName) throws NotFoundException {
+    responder.sendString(HttpResponseStatus.OK,
+                         GSON.toJson(previewManager.getData(new PreviewId(namespaceId, previewId), stageName)));
+  }
 }
