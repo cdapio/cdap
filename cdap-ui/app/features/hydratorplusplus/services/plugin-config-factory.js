@@ -85,7 +85,7 @@ class HydratorPlusPlusPluginConfigFactory {
     config.inputs = {};
     if (typeof nodeConfig.inputs === 'object') {
       if (nodeConfig.inputs.multipleInputs) {
-        config.input.multipleInputs = true;
+        config.inputs.multipleInputs = true;
       }
     }
     return config;
