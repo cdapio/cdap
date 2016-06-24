@@ -30,6 +30,7 @@ angular.module(PKG.name + '.commons')
       controller: function ($scope, myLogsApi, MyCDAPDataSource) {
         var dataSrc = new MyCDAPDataSource($scope);
         $scope.model = [];
+        var loadTimeout = null;
 
         $scope.filters = 'all,info,warn,error,debug,other'.split(',')
           .map(function (key) {
@@ -181,6 +182,7 @@ angular.module(PKG.name + '.commons')
 
         var termEl = angular.element(element[0].querySelector('.terminal')),
             QPARAM = 'filter';
+        var filterTimeout = null;
 
         scope.setFilter = function (k) {
           var f = filterFilter(scope.filters, {key:k});
