@@ -161,6 +161,24 @@ angular.module(PKG.name + '.feature.tracker')
                 });
 
               return defer.promise;
+            },
+            rSystemTags: function ($q, myTrackerApi, $stateParams) {
+              if ($stateParams.entityType !== 'datasets') {
+                return null;
+              }
+
+              let defer = $q.defer();
+
+              let params = {
+                namespace: $stateParams.namespace,
+                entityType: $stateParams.entityType,
+                entityId: $stateParams.entityId
+              };
+              myTrackerApi.getSystemTags(params)
+                .$promise
+                .then( defer.resolve, defer.reject);
+
+              return defer.promise;
             }
           }
         })
@@ -189,6 +207,16 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/audit.html',
             controller: 'TrackerAuditController',
             controllerAs: 'AuditController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
+          })
+          .state('tracker.detail.entity.preview', {
+            url: '/preview',
+            templateUrl: '/assets/features/tracker/templates/preview.html',
+            controller: 'TrackerPreviewController',
+            controllerAs: 'PreviewController',
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'
