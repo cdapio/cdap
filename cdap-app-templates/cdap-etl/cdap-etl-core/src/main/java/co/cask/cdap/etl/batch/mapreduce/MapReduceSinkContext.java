@@ -24,7 +24,6 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
-import com.google.common.base.Strings;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,10 +36,8 @@ import java.util.concurrent.Callable;
  * were written to.
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
-  private final String aliasSuffix;
   private final Set<String> outputNames;
-
-  private Output externalOutput;
+  private final String aliasSuffix;
 
   public MapReduceSinkContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName,
                               Map<String, String> runtimeArgs, String aliasSuffix) {
@@ -56,28 +53,28 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
 
   @Override
   public void addOutput(final String datasetName, final Map<String, String> arguments) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
       @Override
-      public Void call() throws Exception {
-        externalOutput = suffixOutput(Output.ofDataset(datasetName, arguments));
-        mrContext.addOutput(externalOutput);
-        return null;
+      public String call() throws Exception {
+        Output output = suffixOutput(Output.ofDataset(datasetName, arguments));
+        mrContext.addOutput(output);
+        return output.getAlias();
       }
     });
-    outputNames.add(datasetName);
+    outputNames.add(alias);
   }
 
   @Override
   public void addOutput(final String outputName, final OutputFormatProvider outputFormatProvider) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
       @Override
-      public Void call() throws Exception {
-        externalOutput = suffixOutput(Output.of(outputName, outputFormatProvider));
-        mrContext.addOutput(externalOutput);
-        return null;
+      public String call() throws Exception {
+        Output output = suffixOutput(Output.of(outputName, outputFormatProvider));
+        mrContext.addOutput(output);
+        return output.getAlias();
       }
     });
-    outputNames.add(outputName);
+    outputNames.add(alias);
   }
 
   @Override
@@ -85,8 +82,7 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
     Output trackableOutput = LogContext.runWithoutLoggingUnchecked(new Callable<Output>() {
       @Override
       public Output call() throws Exception {
-        externalOutput = suffixOutput(output);
-        Output trackableOutput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), externalOutput);
+        Output trackableOutput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixOutput(output));
         mrContext.addOutput(trackableOutput);
         return trackableOutput;
       }
@@ -102,17 +98,12 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
   }
 
   private Output suffixOutput(Output output) {
-    if (Strings.isNullOrEmpty(aliasSuffix)) {
-      return output;
-    }
-
+    // Create a unique local suffix string for alias
+    String uniqueSuffixCount = String.format("%s.%d", aliasSuffix, outputNames.size());
+    // If alias is null then, set it to uniqueSuffixCount, else suffix it with uniqueSuffixCount
     String suffixedAlias = (output.getAlias() != null) ?
-      String.format("%s.%s", output.getAlias(), aliasSuffix) : aliasSuffix;
+      String.format("%s.%s", output.getAlias(), uniqueSuffixCount) : uniqueSuffixCount;
     return output.alias(suffixedAlias);
   }
 
-  @Override
-  protected String getAlias() {
-    return externalOutput.getAlias();
-  }
 }
