@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.metrics.Metrics;
@@ -25,6 +26,7 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -67,10 +69,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       MetricsCollectionService metricsCollectionService,
                       DiscoveryServiceClient discoveryServiceClient,
                       TransactionSystemClient txClient,
-                      DatasetFramework dsFramework) {
+                      DatasetFramework dsFramework, PreviewStore previewStore) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
-          dsFramework, txClient, discoveryServiceClient, false);
+          dsFramework, txClient, discoveryServiceClient, false, previewStore, null /* No PreviewID for flow */);
     this.flowId = program.getName();
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId);

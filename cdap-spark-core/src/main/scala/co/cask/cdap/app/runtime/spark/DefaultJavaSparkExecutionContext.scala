@@ -147,9 +147,9 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
        .mapPartitions(createStreamMap(decoderClass))
   }
 
-  override def isPreviewEnabled: Boolean = ???
+  override def isPreviewEnabled: Boolean = sec.isPreviewEnabled
 
-  override def getPreviewLogger(loggerName: String): PreviewLogger = ???
+  override def getPreviewLogger(loggerName: String): PreviewLogger = sec.getPreviewLogger(loggerName)
 }
 
 /**

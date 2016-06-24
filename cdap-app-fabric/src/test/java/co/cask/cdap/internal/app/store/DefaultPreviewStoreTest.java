@@ -25,8 +25,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,7 +36,6 @@ import java.util.Map;
  */
 public class DefaultPreviewStoreTest {
   private static DefaultPreviewStore store;
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewStoreTest.class);
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -59,19 +56,19 @@ public class DefaultPreviewStoreTest {
     String secondPreview = RunIds.generate().toString();
     PreviewId secondPreviewId = new PreviewId(NamespaceMeta.DEFAULT.getName(), secondPreview);
 
-    store.put(firstPreviewId, "key1", "value1");
-    store.put(firstPreviewId, "key1", 2);
-    store.put(firstPreviewId, "key2", 3);
-    store.put(firstPreviewId, "key2", 3);
+    store.put(firstPreviewId, "mylogger", "key1", "value1");
+    store.put(firstPreviewId, "mylogger", "key1", 2);
+    store.put(firstPreviewId, "mylogger", "key2", 3);
+    store.put(firstPreviewId, "myanotherlogger", "key2", 3);
     Map<Object, Object> propertyMap = new HashMap<>();
     propertyMap.put("key1", "value1");
     propertyMap.put(1, "value2");
-    store.put(firstPreviewId, "key2", propertyMap);
+    store.put(firstPreviewId, "myanotherlogger", "key2", propertyMap);
 
-    store.put(secondPreviewId, "key1", "value1");
-    store.put(secondPreviewId, "key2", 400);
+    store.put(secondPreviewId, "mylogger", "key1", "value1");
+    store.put(secondPreviewId, "myanotherlogger", "key2", 400);
 
-    Map<String, List<String>> firstPreviewData = store.get(firstPreviewId);
+    Map<String, List<String>> firstPreviewData = store.get(firstPreviewId, "mylogger");
     Assert.assertTrue(2 == firstPreviewData.size()); // key1 and key2 are two keys inserted for the firstPreviewId
     Assert.assertEquals(Arrays.asList("\"value1\"", "2"), firstPreviewData.get("key1"));
   }

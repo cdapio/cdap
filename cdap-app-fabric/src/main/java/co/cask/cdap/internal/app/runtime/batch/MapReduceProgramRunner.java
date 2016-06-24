@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -49,12 +50,14 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -79,7 +82,7 @@ import javax.annotation.Nullable;
  */
 public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
-
+  private static final Gson GSON = new Gson();
   private final Injector injector;
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
@@ -91,6 +94,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final UsageRegistry usageRegistry;
+  private final PreviewStore previewStore;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -100,7 +104,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient, Store store,
-                                UsageRegistry usageRegistry) {
+                                UsageRegistry usageRegistry, PreviewStore previewStore) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -113,6 +117,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.store = store;
     this.usageRegistry = usageRegistry;
+    this.previewStore = previewStore;
   }
 
   @Inject (optional = true)
@@ -167,11 +172,13 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
+      String previewIdJson = arguments.getOption(ProgramOptionConstants.PREVIEW_ID);
+      PreviewId previewId = previewIdJson == null ? null : GSON.fromJson(previewIdJson, PreviewId.class);
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
                                   workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
-                                  getPluginArchive(options), pluginInstantiator);
+                                  getPluginArchive(options), pluginInstantiator, previewStore, previewId);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

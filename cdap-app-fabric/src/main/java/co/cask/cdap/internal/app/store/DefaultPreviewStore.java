@@ -103,23 +103,24 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public synchronized void put(final PreviewId previewId, final String propertyName, final Object value) {
+  public synchronized void put(final PreviewId previewId, final String loggerName, final String propertyName,
+                               final Object value) {
     previewDatasetTx.get().executeUnchecked(new TransactionExecutor.Function<PreviewDataset, Void>() {
       @Override
       public Void apply(PreviewDataset previewDS) throws Exception {
-        previewDS.put(previewId, propertyName, value);
+        previewDS.put(previewId, loggerName, propertyName, value);
         return null;
       }
     }, previewDatasetSupplier.get());
   }
 
   @Override
-  public Map<String, List<String>> get(final PreviewId previewId) {
+  public Map<String, List<String>> get(final PreviewId previewId, final String loggerName) {
     return previewDatasetTx.get().executeUnchecked(new TransactionExecutor.Function<PreviewDataset,
       Map<String, List<String>>>() {
       @Override
       public Map<String, List<String>> apply(PreviewDataset previewDS) throws Exception {
-        return previewDS.get(previewId);
+        return previewDS.get(previewId, loggerName);
       }
     }, previewDatasetSupplier.get());
   }

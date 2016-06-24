@@ -17,6 +17,7 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.Metrics;
@@ -85,6 +86,7 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
   private final PluginContext pluginContext;
   private final Admin admin;
   private final LoggingContext loggingContext;
+  private final Debugger debugger;
 
   SparkRuntimeContext(Configuration hConf, Program program, RunId runId, Map<String, String> runtimeArguments,
                       TransactionSystemClient txClient,
@@ -93,7 +95,7 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
                       MetricsCollectionService metricsCollectionService,
                       StreamAdmin streamAdmin,
                       @Nullable WorkflowProgramInfo workflowProgramInfo,
-                      @Nullable PluginInstantiator pluginInstantiator) {
+                      @Nullable PluginInstantiator pluginInstantiator, Debugger debugger) {
     super(program.getId().toEntityId());
 
     this.hConf = hConf;
@@ -122,6 +124,7 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(datasetFramework, programId.getNamespaceId());
     this.loggingContext = createLoggingContext(programId, runId, workflowProgramInfo);
+    this.debugger = debugger;
   }
 
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
@@ -316,11 +319,11 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
 
   @Override
   public boolean isPreviewEnabled() {
-    return false;
+    return debugger.isPreviewEnabled();
   }
 
   @Override
   public PreviewLogger getPreviewLogger(String loggerName) {
-    return null;
+    return debugger.getPreviewLogger(loggerName);
   }
 }

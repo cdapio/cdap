@@ -24,6 +24,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -115,7 +116,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
                            DiscoveryServiceClient discoveryServiceClient,
-                           @Nullable PluginInstantiator pluginInstantiator) {
+                           @Nullable PluginInstantiator pluginInstantiator, PreviewStore previewStore) {
     this.program = program;
     this.runId = runId;
     this.instanceId = instanceId;
@@ -126,7 +127,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     BasicHttpServiceContextFactory contextFactory = createContextFactory(program, runId, instanceId, this.instanceCount,
                                                                          runtimeArgs, metricsCollectionService,
                                                                          datasetFramework, discoveryServiceClient,
-                                                                         txClient, pluginInstantiator);
+                                                                         txClient, pluginInstantiator, previewStore);
     this.handlerContexts = createHandlerDelegatorContexts(program, spec, contextFactory);
     this.service = createNettyHttpService(program, host, handlerContexts, metricsContext);
   }
@@ -204,13 +205,15 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                               final DatasetFramework datasetFramework,
                                                               final DiscoveryServiceClient discoveryServiceClient,
                                                               final TransactionSystemClient txClient,
-                                                              @Nullable final PluginInstantiator pluginInstantiator) {
+                                                              @Nullable final PluginInstantiator pluginInstantiator,
+                                                              final PreviewStore previewStore) {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
         return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount,
                                            runtimeArgs, metricsCollectionService,
-                                           datasetFramework, discoveryServiceClient, txClient, pluginInstantiator);
+                                           datasetFramework, discoveryServiceClient, txClient, pluginInstantiator,
+                                           previewStore);
       }
     };
   }

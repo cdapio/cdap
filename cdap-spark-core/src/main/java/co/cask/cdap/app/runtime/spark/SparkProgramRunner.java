@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.spark.Spark;
@@ -92,11 +93,13 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
   private final Store store;
+  private final Debugger debugger;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, TransactionSystemClient txClient,
                      DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
-                     DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store) {
+                     DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store,
+                     Debugger debugger) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -106,6 +109,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
     this.store = store;
+    this.debugger = debugger;
   }
 
   @Override
@@ -153,7 +157,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
-                                                                   pluginInstantiator);
+                                                                   pluginInstantiator, debugger);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

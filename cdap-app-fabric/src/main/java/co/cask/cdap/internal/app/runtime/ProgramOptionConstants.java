@@ -68,4 +68,6 @@ public final class ProgramOptionConstants {
    * Option to a local file path of a JAR file containing plugins artifacts.
    */
   public static final String PLUGIN_ARCHIVE = "pluginArchive";
+
+  public static final String PREVIEW_ID = "previewId";
 }

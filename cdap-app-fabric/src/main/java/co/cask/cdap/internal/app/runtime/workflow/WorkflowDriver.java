@@ -42,6 +42,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -63,6 +64,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowNodeThrowable;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionContext;
@@ -78,6 +80,7 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.gson.Gson;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,6 +115,7 @@ import javax.annotation.Nullable;
 final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
+  private static final Gson GSON = new Gson();
 
   private final Program program;
   private final InetAddress hostname;
@@ -137,13 +141,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
   @Nullable
   private final PluginInstantiator pluginInstantiator;
+  private final PreviewStore previewStore;
+  private final PreviewId previewId;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                  TransactionSystemClient txClient, Store store, CConfiguration cConf,
-                 @Nullable PluginInstantiator pluginInstantiator) {
+                 @Nullable PluginInstantiator pluginInstantiator, PreviewStore previewStore) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -167,10 +173,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                          program, options);
 
     this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+
+    String previewIdJson = options.getArguments().getOption(ProgramOptionConstants.PREVIEW_ID);
+    this.previewId = previewIdJson == null ? null : GSON.fromJson(previewIdJson, PreviewId.class);
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs),
                                                          basicWorkflowToken, program, RunIds.fromString(runId),
                                                          metricsCollectionService, datasetFramework, txClient,
-                                                         discoveryServiceClient, nodeStates, pluginInstantiator);
+                                                         discoveryServiceClient, nodeStates,
+                                                         pluginInstantiator, previewStore, previewId);
+    this.previewStore = previewStore;
     this.pluginInstantiator = pluginInstantiator;
   }
 
@@ -468,7 +479,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs), token,
                                                        program, RunIds.fromString(workflowRunId.getRun()),
                                                        metricsCollectionService, datasetFramework, txClient,
-                                                       discoveryServiceClient, nodeStates, pluginInstantiator);
+                                                       discoveryServiceClient, nodeStates,
+                                                       pluginInstantiator, previewStore, previewId);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -575,7 +587,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                     new BasicArguments(runtimeArgs), token, program,
                                     RunIds.fromString(workflowRunId.getRun()), metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
-                                    pluginInstantiator);
+                                    pluginInstantiator, previewStore, previewId);
   }
 
   private Map<String, String> createRuntimeArgs(Arguments args) {

@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -59,13 +60,14 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final TransactionSystemClient txClient;
   private final Store store;
   private final CConfiguration cConf;
+  private final PreviewStore previewStore;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                               Store store, CConfiguration cConf) {
+                               Store store, CConfiguration cConf, PreviewStore previewStore) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -76,6 +78,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.txClient = txClient;
     this.store = store;
     this.cConf = cConf;
+    this.previewStore = previewStore;
   }
 
   @Override
@@ -103,8 +106,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
     WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                               txClient, store, cConf,
-                                               pluginInstantiator);
+                                               txClient, store, cConf, pluginInstantiator, previewStore);
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.
     ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);

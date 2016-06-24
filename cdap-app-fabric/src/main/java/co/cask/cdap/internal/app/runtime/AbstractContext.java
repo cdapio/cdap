@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -32,6 +33,7 @@ import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -39,9 +41,12 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.internal.app.preview.DefaultPreviewLogger;
+import co.cask.cdap.internal.app.preview.NoopPreviewLogger;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -71,6 +76,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final PluginContext pluginContext;
   private final Admin admin;
   private final long logicalStartTime;
+  private final PreviewId previewId;
+  private final PreviewStore previewStore;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -79,9 +86,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, TransactionSystemClient txClient,
-                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded) {
+                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
+                            PreviewStore previewStore, @Nullable PreviewId previewId) {
     this(program, runId, arguments, datasets, metricsContext,
-         dsFramework, txClient, discoveryServiceClient, multiThreaded, null);
+         dsFramework, txClient, discoveryServiceClient, multiThreaded, null, previewStore, previewId);
   }
 
   /**
@@ -91,7 +99,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator, PreviewStore previewStore,
+                            @Nullable PreviewId previewId) {
     super(program.getId().toEntityId());
     this.program = program;
     this.runId = runId;
@@ -118,6 +127,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId());
+    this.previewId = previewId;
+    this.previewStore = previewStore;
   }
 
   private List<Id> createOwners(Id.Program programId) {
@@ -178,16 +189,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
     throws DatasetInstantiationException {
     return datasetCache.getDataset(name, arguments, accessType);
-  }
-
-  @Override
-  public boolean isPreviewEnabled() {
-    return false;
-  }
-
-  @Override
-  public PreviewLogger getPreviewLogger(String loggerName) {
-    return null;
   }
 
   @Override
@@ -272,5 +273,20 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public Admin getAdmin() {
     return admin;
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return previewId != null;
+  }
+
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return previewId == null ? new NoopPreviewLogger() : new DefaultPreviewLogger(previewStore, previewId, loggerName);
+  }
+
+  @Nullable
+  public PreviewId getPreviewId() {
+    return previewId;
   }
 }

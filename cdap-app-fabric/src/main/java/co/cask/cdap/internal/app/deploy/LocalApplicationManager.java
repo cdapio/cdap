@@ -102,7 +102,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository));
+    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, false));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework,
                                                    inMemoryDatasetFramework));

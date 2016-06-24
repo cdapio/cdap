@@ -24,6 +24,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -68,10 +69,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
                                  Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator) {
+                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
+                                 PreviewStore previewStore) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator, previewStore, null);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

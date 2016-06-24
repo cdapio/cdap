@@ -27,11 +27,13 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -62,11 +64,12 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
                        DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
-                       @Nullable PluginInstantiator pluginInstantiator) {
+                       @Nullable PluginInstantiator pluginInstantiator, PreviewStore previewStore,
+                       PreviewId previewId) {
     super(program, runId, arguments,
           (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+          datasetFramework, txClient, discoveryServiceClient, false, pluginInstantiator, previewStore, previewId);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.programWorkflowRunner = programWorkflowRunner;

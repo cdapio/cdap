@@ -43,6 +43,7 @@ import co.cask.cdap.app.queue.QueueSpecificationGenerator.Node;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.async.ExecutorUtils;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
@@ -135,6 +136,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final DatasetFramework dsFramework;
   private final UsageRegistry usageRegistry;
+  private final PreviewStore previewStore;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -146,7 +148,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient,
                               DatasetFramework dsFramework,
-                              UsageRegistry usageRegistry) {
+                              UsageRegistry usageRegistry,
+                              PreviewStore previewStore) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -157,6 +160,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.dsFramework = dsFramework;
     this.usageRegistry = usageRegistry;
+    this.previewStore = previewStore;
   }
 
   @SuppressWarnings("unused")
@@ -216,7 +220,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, discoveryServiceClient, txClient, dsFramework);
+                                               metricsCollectionService, discoveryServiceClient, txClient, dsFramework,
+                                               previewStore);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

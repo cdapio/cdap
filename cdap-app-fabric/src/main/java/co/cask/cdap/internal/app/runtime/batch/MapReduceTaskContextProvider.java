@@ -22,6 +22,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
@@ -180,7 +181,9 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           contextConfig.getArguments(), spec,
           workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
-          contextConfig.getLocalizedResources()
+          contextConfig.getLocalizedResources(),
+          //todo - have to check if this injector will have debugger
+          injector.getInstance(PreviewStore.class), contextConfig.getPreviewId()
         );
       }
     };

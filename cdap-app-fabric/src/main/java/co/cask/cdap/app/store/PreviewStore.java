@@ -32,17 +32,19 @@ public interface PreviewStore {
   /**
    * Add the preview data.
    * @param previewId the id of the program which is logging the preview data
+   * @param loggerName the name of the logger used to log the preview data
    * @param propertyName the name of the property for which value is being added
    * @param value the value to be added
    */
-  void put(PreviewId previewId, String propertyName, Object value);
+  void put(PreviewId previewId, String loggerName, String propertyName, Object value);
 
   /**
    * Get the preview data associated with the given program id.
    * @param previewId the id of the preview for which preview data to be fetched
+   * @param loggerName the name of the logger used to log the preview data
    * @return the {@link Map} of property and associated values logged for the program
    */
-  Map<String, List<String>> get(PreviewId previewId);
+  Map<String, List<String>> get(PreviewId previewId, String loggerName);
 
   /**
    * Removes the preview data logged by specified programId

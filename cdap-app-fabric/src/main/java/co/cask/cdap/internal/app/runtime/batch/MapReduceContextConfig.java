@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Charsets;
@@ -71,6 +72,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
   private static final String HCONF_ATTR_LOCAL_FILES = "hconf.program.local.files";
+  private static final String HCONF_ATTR_PREVIEW_ID = "hconf.preview.id";
 
   private final Configuration hConf;
 
@@ -103,6 +105,8 @@ public final class MapReduceContextConfig {
     setConf(conf);
     setTx(tx);
     setLocalizedResources(localizedUserResources);
+    setPreviewId(context.getPreviewId());
+
   }
 
   private void setArguments(Map<String, String> arguments) {
@@ -275,5 +279,20 @@ public final class MapReduceContextConfig {
    */
   public Transaction getTx() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
+  }
+
+  private void setPreviewId(@Nullable PreviewId previewId) {
+    if (previewId != null) {
+      hConf.set(HCONF_ATTR_PREVIEW_ID, GSON.toJson(previewId));
+    }
+  }
+
+  @Nullable
+  public PreviewId getPreviewId() {
+    String previewIdJson = hConf.get(HCONF_ATTR_PREVIEW_ID);
+    if (previewIdJson == null) {
+      return null;
+    }
+    return GSON.fromJson(previewIdJson, PreviewId.class);
   }
 }

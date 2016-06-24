@@ -34,6 +34,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -44,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
@@ -103,10 +105,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    Transaction transaction,
                                    DatasetFramework dsFramework,
                                    @Nullable PluginInstantiator pluginInstantiator,
-                                   Map<String, File> localizedResources) {
+                                   Map<String, File> localizedResources, PreviewStore previewStore,
+                                   @Nullable PreviewId previewId) {
     super(program, runId, runtimeArguments, ImmutableSet.<String>of(),
           createMetricsContext(program, runId.getId(), metricsCollectionService, taskId, type, workflowProgramInfo),
-          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator, previewStore, previewId);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
     this.userMetrics = new ProgramUserMetrics(getProgramMetrics());

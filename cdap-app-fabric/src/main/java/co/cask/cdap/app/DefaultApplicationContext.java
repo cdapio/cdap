@@ -26,13 +26,20 @@ import co.cask.cdap.api.app.ApplicationContext;
  */
 public class DefaultApplicationContext<T extends Config> implements ApplicationContext<T> {
   private final T appConfig;
+  private final boolean previewEnabled;
 
   public DefaultApplicationContext() {
     this.appConfig = null;
+    this.previewEnabled = false;
   }
 
   public DefaultApplicationContext(T appConfig) {
+    this(appConfig, false);
+  }
+
+  public DefaultApplicationContext(T appConfig, boolean previewEnabled) {
     this.appConfig = appConfig;
+    this.previewEnabled = previewEnabled;
   }
 
   @Override
@@ -42,6 +49,6 @@ public class DefaultApplicationContext<T extends Config> implements ApplicationC
 
   @Override
   public boolean isPreviewEnabled() {
-    return false;
+    return previewEnabled;
   }
 }

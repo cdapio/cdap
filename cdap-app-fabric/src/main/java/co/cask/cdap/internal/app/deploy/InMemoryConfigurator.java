@@ -75,6 +75,7 @@ public final class InMemoryConfigurator implements Configurator {
   // this is the namespace that the app will be in, which may be different than the namespace of the artifact.
   // if the artifact is a system artifact, the namespace will be the system namespace.
   private final Id.Namespace appNamespace;
+  private final boolean isPreviewRun;
 
   private ArtifactRepository artifactRepository;
 
@@ -87,6 +88,14 @@ public final class InMemoryConfigurator implements Configurator {
                               String appClassName, Location artifact,
                               @Nullable String applicationName, @Nullable String configString,
                               ArtifactRepository artifactRepository) {
+    this(cConf, appNamespace, artifactId, appClassName, artifact, applicationName, configString,
+         artifactRepository, false);
+  }
+
+  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
+                              String appClassName, Location artifact,
+                              @Nullable String applicationName, @Nullable String configString,
+                              ArtifactRepository artifactRepository, boolean isPreviewRun) {
     Preconditions.checkNotNull(artifact);
     this.cConf = cConf;
     this.appNamespace = appNamespace;
@@ -98,6 +107,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.artifactRepository = artifactRepository;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.isPreviewRun = isPreviewRun;
   }
 
   /**
@@ -181,7 +191,7 @@ public final class InMemoryConfigurator implements Configurator {
         }
       }
 
-      app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+      app.configure(configurer, new DefaultApplicationContext<>(appConfig, isPreviewRun));
     } finally {
       try {
         DirUtils.deleteDirectoryContents(tempDir);

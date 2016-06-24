@@ -29,6 +29,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -37,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -74,10 +76,12 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             TransactionSystemClient transactionSystemClient,
                             DiscoveryServiceClient discoveryServiceClient,
                             StreamWriterFactory streamWriterFactory,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            PreviewStore previewStore) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService),
-          datasetFramework, transactionSystemClient, discoveryServiceClient, true, pluginInstantiator);
+          datasetFramework, transactionSystemClient, discoveryServiceClient, true, pluginInstantiator, previewStore,
+          null);
     this.specification = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

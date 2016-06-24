@@ -33,6 +33,7 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.stream.StreamInputFormatProvider;
@@ -52,6 +53,7 @@ import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
@@ -104,10 +106,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DatasetFramework dsFramework,
                                StreamAdmin streamAdmin,
                                @Nullable File pluginArchive,
-                               @Nullable PluginInstantiator pluginInstantiator) {
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               PreviewStore previewStore, @Nullable PreviewId previewId) {
     super(program, runId, runtimeArguments, Collections.<String>emptySet(),
           createMetricsContext(program, runId.getId(), metricsCollectionService, workflowProgramInfo),
-          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator, previewStore, previewId);
     this.workflowProgramInfo = workflowProgramInfo;
     this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
     this.loggingContext = createLoggingContext(program.getId(), runId, workflowProgramInfo);

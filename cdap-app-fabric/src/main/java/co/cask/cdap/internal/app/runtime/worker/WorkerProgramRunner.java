@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -25,6 +26,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -58,17 +60,20 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
+  private final PreviewStore previewStore;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
+                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
+                             PreviewStore previewStore) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
+    this.previewStore = previewStore;
   }
 
   @Override
@@ -114,7 +119,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       BasicWorkerContext context = new BasicWorkerContext(
         newWorkerSpec, program, runId, instanceId, instanceCount,
         options.getUserArguments(), metricsCollectionService, datasetFramework,
-        txClient, discoveryServiceClient, streamWriterFactory, pluginInstantiator);
+        txClient, discoveryServiceClient, streamWriterFactory, pluginInstantiator, previewStore);
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
