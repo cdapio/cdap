@@ -151,10 +151,10 @@ public final class SparkRuntimeUtils {
   };
 
   /**
-   * Creates a {@link ProgramClassLoader} that have Spark classes visible.
+   * Creates a program {@link ClassLoader} that have Spark classes visible.
    */
-  public static ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir,
-                                                            ClassLoader unfilteredClassLoader) {
+  public static ClassLoader createProgramClassLoader(CConfiguration cConf, File dir,
+                                                     ClassLoader unfilteredClassLoader) {
     ClassLoader parent = new FilterClassLoader(unfilteredClassLoader, SPARK_PROGRAM_CLASS_LOADER_FILTER);
     return new ProgramClassLoader(cConf, dir, parent);
   }

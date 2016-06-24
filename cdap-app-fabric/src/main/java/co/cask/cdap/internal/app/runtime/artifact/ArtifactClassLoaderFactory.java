@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,48 +54,68 @@ final class ArtifactClassLoaderFactory {
   }
 
   /**
-   * Create a classloader that uses the artifact at the specified location to load classes, with access to
+   * Create a classloader that loads classes from a directory where an artifact jar has been expanded, with access to
    * packages that all program type has access to. The classloader created is only for artifact inspection purpose
    * and shouldn't be used for program execution as it doesn't have the proper class filtering for the specific
    * program type for the program being executed.
    *
-   * @param artifactLocation the location of the artifact to create the classloader from
+   * @param unpackDir the directory where the artifact jar has been expanded
    * @return a closeable classloader based off the specified artifact; on closing the returned {@link ClassLoader},
    *         all temporary resources created for the classloader will be removed
    * @throws IOException if there was an error copying or unpacking the artifact
    */
-  CloseableClassLoader createClassLoader(Location artifactLocation) throws IOException {
-    final File unpackDir = BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
-
+  CloseableClassLoader createClassLoader(File unpackDir) throws IOException {
     ProgramRunner programRunner = null;
-    ProgramClassLoader programClassLoader = null;
     try {
       // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
       // It is needed because we don't know what program types that an artifact might have.
       // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
       programRunner = programRunnerFactory.create(ProgramType.SPARK);
-      if (programRunner instanceof ProgramClassLoaderProvider) {
-        programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackDir);
-      }
     } catch (Exception e) {
       // If Spark is not supported, exception is expected. We'll use the default filter.
       LOG.trace("Spark is not supported. Not using ProgramClassLoader from Spark", e);
     }
-    if (programClassLoader == null) {
+
+    ProgramClassLoader programClassLoader;
+    if (programRunner instanceof ProgramClassLoaderProvider) {
+      programClassLoader = new ProgramClassLoader(
+        cConf, unpackDir, ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent());
+    } else {
       programClassLoader = new ProgramClassLoader(cConf, unpackDir,
                                                   FilterClassLoader.create(getClass().getClassLoader()));
     }
 
-    final ProgramClassLoader finalProgramClassLoader = programClassLoader;
+    final ClassLoader finalProgramClassLoader = programClassLoader;
     final ProgramRunner finalProgramRunner = programRunner;
     return new CloseableClassLoader(programClassLoader, new Closeable() {
       @Override
       public void close() {
+        Closeables.closeQuietly((Closeable) finalProgramClassLoader);
+        if (finalProgramRunner instanceof Closeable) {
+          Closeables.closeQuietly((Closeable) finalProgramRunner);
+        }
+      }
+    });
+  }
+
+  /**
+   * Unpack the given {@code artifactLocation} to a temporary directory and call
+   * {@link #createClassLoader(File)} to create the {@link ClassLoader}.
+   *
+   * @param artifactLocation the location of the artifact to create the classloader from
+   * @return a closeable classloader based off the specified artifact; on closing the returned {@link ClassLoader},
+   *         all temporary resources created for the classloader will be removed
+   * @throws IOException if there was an error copying or unpacking the artifact
+   * @see #createClassLoader(File)
+   */
+  CloseableClassLoader createClassLoader(Location artifactLocation) throws IOException {
+    final File unpackDir = BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
+    final CloseableClassLoader classLoader = createClassLoader(unpackDir);
+    return new CloseableClassLoader(classLoader, new Closeable() {
+      @Override
+      public void close() throws IOException {
         try {
-          Closeables.closeQuietly(finalProgramClassLoader);
-          if (finalProgramRunner instanceof Closeable) {
-            Closeables.closeQuietly((Closeable) finalProgramRunner);
-          }
+          Closeables.closeQuietly(classLoader);
           DirUtils.deleteDirectoryContents(unpackDir);
         } catch (IOException e) {
           LOG.warn("Failed to delete directory {}", unpackDir, e);

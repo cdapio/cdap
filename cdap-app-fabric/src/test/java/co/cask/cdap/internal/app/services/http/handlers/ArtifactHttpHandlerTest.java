@@ -18,8 +18,6 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
@@ -48,6 +46,7 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -64,6 +63,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -71,8 +71,6 @@ import org.apache.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
@@ -108,14 +106,12 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
   private static ArtifactRepository artifactRepository;
-  private static LocationFactory locationFactory;
   private static MetadataClient metadataClient;
   protected static ClientConfig clientConfig;
 
   @BeforeClass
   public static void setup() throws IOException {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
     ServiceDiscovered metadataHttpDiscovered = discoveryClient.discover(Constants.Service.METADATA_SERVICE);
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(metadataHttpDiscovered);
@@ -151,17 +147,23 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testAddAndGet() throws Exception {
+    File wordCountArtifact = buildAppArtifact(WordCountApp.class, "wordcount.jar");
+    File configTestArtifact = buildAppArtifact(ConfigTestApp.class, "cfgtest.jar");
+
     // add 2 versions of the same app that doesn't use config
     Id.Artifact wordcountId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
     Id.Artifact wordcountId2 = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "2.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
-                        addAppArtifact(wordcountId1, WordCountApp.class).getStatusLine().getStatusCode());
+                        addArtifact(wordcountId1, Files.newInputStreamSupplier(wordCountArtifact), null)
+                          .getStatusLine().getStatusCode());
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
-                        addAppArtifact(wordcountId2, WordCountApp.class).getStatusLine().getStatusCode());
+                        addArtifact(wordcountId2, Files.newInputStreamSupplier(wordCountArtifact), null)
+                          .getStatusLine().getStatusCode());
     // and 1 version of another app that uses a config
     Id.Artifact configTestAppId = Id.Artifact.from(Id.Namespace.DEFAULT, "cfgtest", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
-                        addAppArtifact(configTestAppId, ConfigTestApp.class).getStatusLine().getStatusCode());
+                        addArtifact(configTestAppId, Files.newInputStreamSupplier(configTestArtifact), null)
+                          .getStatusLine().getStatusCode());
 
     // test get /artifacts endpoint
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
@@ -182,13 +184,13 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
     // test get /artifacts/cfgtest/versions/1.0.0 endpoint
     Schema appConfigSchema = schemaGenerator.generate(ConfigTestApp.ConfigClass.class);
-    ArtifactClasses classes = ArtifactClasses.builder()
-      .addApp(new ApplicationClass(ConfigTestApp.class.getName(), "", appConfigSchema))
-      .build();
-    ArtifactInfo expectedInfo = new ArtifactInfo("cfgtest", "1.0.0", ArtifactScope.USER,
-                                                 classes, ImmutableMap.<String, String>of());
     ArtifactInfo actualInfo = getArtifact(configTestAppId);
-    Assert.assertEquals(expectedInfo, actualInfo);
+
+    Assert.assertEquals("cfgtest", actualInfo.getName());
+    Assert.assertEquals("1.0.0", actualInfo.getVersion());
+
+    ApplicationClass appClass = new ApplicationClass(ConfigTestApp.class.getName(), "", appConfigSchema);
+    Assert.assertTrue(actualInfo.getClasses().getApps().contains(appClass));
   }
 
   @Test
@@ -244,13 +246,16 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testSystemArtifacts() throws Exception {
     // add the app in the default namespace
+    File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
+
     Id.Artifact defaultId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
-                        addAppArtifact(defaultId, WordCountApp.class).getStatusLine().getStatusCode());
+                        addArtifact(defaultId, Files.newInputStreamSupplier(systemArtifact), null)
+                          .getStatusLine().getStatusCode());
     // add a system artifact. currently can't do this through the rest api (by design)
     // so bypass it and use the repository directly
     Id.Artifact systemId = Id.Artifact.from(Id.Namespace.SYSTEM, "wordcount", "1.0.0");
-    File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
+
     artifactRepository.addArtifact(systemId, systemArtifact, new HashSet<ArtifactRange>());
 
     // test get /artifacts
@@ -290,19 +295,14 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=user
-    ArtifactClasses classes = ArtifactClasses.builder()
-      .addApp(new ApplicationClass(WordCountApp.class.getName(), "", null))
-      .build();
-    ArtifactInfo expectedInfo = new ArtifactInfo("wordcount", "1.0.0", ArtifactScope.USER,
-                                                 classes, ImmutableMap.<String, String>of());
     ArtifactInfo actualInfo = getArtifact(defaultId, ArtifactScope.USER);
-    Assert.assertEquals(expectedInfo, actualInfo);
+    Assert.assertEquals("wordcount", actualInfo.getName());
+    Assert.assertEquals("1.0.0", actualInfo.getVersion());
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=system
-    expectedInfo = new ArtifactInfo("wordcount", "1.0.0", ArtifactScope.SYSTEM,
-                                    classes, ImmutableMap.<String, String>of());
     actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);
-    Assert.assertEquals(expectedInfo, actualInfo);
+    Assert.assertEquals("wordcount", actualInfo.getName());
+    Assert.assertEquals("1.0.0", actualInfo.getVersion());
   }
 
   @Test

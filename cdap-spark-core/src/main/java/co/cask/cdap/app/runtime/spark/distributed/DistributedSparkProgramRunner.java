@@ -27,7 +27,7 @@ import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractDistributedProgramRunner;
@@ -98,7 +98,7 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
   }
 
   @Override
-  public ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir) {
-    return SparkRuntimeUtils.createProgramClassLoader(cConf, dir, getClass().getClassLoader());
+  public ClassLoader createProgramClassLoaderParent() {
+    return new FilterClassLoader(getClass().getClassLoader(), SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
   }
 }

@@ -24,7 +24,12 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.app.customds.CustomDatasetApp;
+import co.cask.cdap.app.customds.DefaultTopLevelExtendsDataset;
+import co.cask.cdap.app.customds.TopLevelDataset;
+import co.cask.cdap.app.customds.TopLevelDirectDataset;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -49,6 +54,7 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.DatasetClass;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -62,6 +68,7 @@ import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -97,8 +104,9 @@ public class ArtifactRepositoryTest {
   private static File systemArtifactsDir1;
   private static File systemArtifactsDir2;
   private static ArtifactRepository artifactRepository;
-  private static ClassLoader appClassLoader;
+  private static ProgramClassLoader appClassLoader;
   private static MetadataStore metadataStore;
+  private static File appArtifactFile;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -113,15 +121,27 @@ public class ArtifactRepositoryTest {
     Injector injector =  AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     metadataStore = injector.getInstance(MetadataStore.class);
+
+    appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
+                                   createManifest(ManifestFields.EXPORT_PACKAGE,
+                                                  PluginTestRunnable.class.getPackage().getName()));
   }
 
   @Before
   public void setupData() throws Exception {
     artifactRepository.clear(NamespaceId.DEFAULT);
-    File appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
-      createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
     appClassLoader = createAppClassLoader(appArtifactFile);
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    File unpackedDir = appClassLoader.getDir();
+    try {
+      appClassLoader.close();
+    } finally {
+      DirUtils.deleteDirectoryContents(unpackedDir);
+    }
   }
 
   @Test
@@ -490,7 +510,28 @@ public class ArtifactRepositoryTest {
     }
   }
 
-  private static ClassLoader createAppClassLoader(File jarFile) throws IOException {
+  @Test
+  public void testArtifactDataset() throws IOException, ArtifactNotFoundException {
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+
+    // The artifact being created in the setupData method is using dependency tracing
+    // hence it will pick all classes under the cdap-app-fabric/src/test/main
+
+    Set<DatasetClass> expectedDatasets = ImmutableSet.of(
+      new DatasetClass(CustomDatasetApp.InnerStaticInheritDataset.class.getName()),
+      new DatasetClass(CustomDatasetApp.InnerDataset.class.getName()),
+      new DatasetClass(TopLevelDataset.class.getName()),
+      new DatasetClass(TopLevelDirectDataset.class.getName()),
+      new DatasetClass(DefaultTopLevelExtendsDataset.class.getName())
+    );
+
+    Set<DatasetClass> artifactDatasets = artifactDetail.getMeta().getClasses().getDatasets();
+    for (DatasetClass datasetClass : expectedDatasets) {
+      Assert.assertTrue(artifactDatasets.contains(datasetClass));
+    }
+  }
+
+  private static ProgramClassLoader createAppClassLoader(File jarFile) throws IOException {
     final File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
     BundleJarUtil.unJar(Files.newInputStreamSupplier(jarFile), unpackDir);
     return new ProgramClassLoader(cConf, unpackDir,
