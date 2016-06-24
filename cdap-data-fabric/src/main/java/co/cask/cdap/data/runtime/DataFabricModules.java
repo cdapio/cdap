@@ -42,6 +42,8 @@ public class DataFabricModules extends RuntimeModule {
     return Modules.override(new DataFabricLocalModule()).with(new AbstractModule() {
       @Override
       protected void configure() {
+        // InMemorySystemTxClient uses TransactionManager directly, so sharing TransactionService is not enought and
+        // we need to share TransactionManager.
         bind(TransactionManager.class).toInstance(transactionManager);
       }
     });

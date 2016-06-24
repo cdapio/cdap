@@ -79,9 +79,10 @@ public class PreviewDatasetFramework implements DatasetFramework {
                           DatasetProperties props) throws DatasetManagementException, IOException {
     if (datasetInstanceId.getNamespace().equals(Id.Namespace.SYSTEM)) {
       localDatasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
+    } else {
+      // Create the dataset instances corresponding to the Source and Sink during preview
+      actualDatasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
     }
-    // Create the dataset instances corresponding to the Source and Sink during preview
-    actualDatasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
   }
 
 
@@ -137,24 +138,27 @@ public class PreviewDatasetFramework implements DatasetFramework {
   public void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
     if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
       localDatasetFramework.truncateInstance(datasetInstanceId);
+    } else {
+      actualDatasetFramework.truncateInstance(datasetInstanceId);
     }
-    actualDatasetFramework.truncateInstance(datasetInstanceId);
   }
 
   @Override
   public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
     if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
       localDatasetFramework.deleteInstance(datasetInstanceId);
+    } else {
+      actualDatasetFramework.deleteInstance(datasetInstanceId);
     }
-    actualDatasetFramework.deleteInstance(datasetInstanceId);
   }
 
   @Override
   public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
     if (Id.Namespace.SYSTEM.equals(namespaceId)) {
       localDatasetFramework.deleteAllInstances(namespaceId);
+    } else {
+      actualDatasetFramework.deleteAllInstances(namespaceId);
     }
-    actualDatasetFramework.deleteAllInstances(namespaceId);
   }
 
   @Nullable
@@ -236,11 +240,11 @@ public class PreviewDatasetFramework implements DatasetFramework {
 
   @Override
   public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
-    //TODO: verify this
     if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
       localDatasetFramework.writeLineage(datasetInstanceId, accessType);
+    } else {
+      actualDatasetFramework.writeLineage(datasetInstanceId, accessType);
     }
-    actualDatasetFramework.writeLineage(datasetInstanceId, accessType);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
-import co.cask.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -86,8 +85,6 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory,
                                                 authorizerInstantiator.get()));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
-    // not sure if we need this meta data writer stage.
-    pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
     return pipeline.execute(input);
   }
 }

@@ -138,10 +138,10 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(DatasetFramework.class).
           annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK)).
-          toProvider(HybridDatasetProvider.class).in(Scopes.SINGLETON);
+          toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
 
         bind(DatasetFramework.class).
-          toProvider(HybridDatasetProvider.class).in(Scopes.SINGLETON);
+          toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
         expose(DatasetFramework.class);
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
@@ -150,20 +150,19 @@ public class DataSetsModules extends RuntimeModule {
         bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageRegistry.class);
 
-
         bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
         expose(MetadataChangePublisher.class);
       }
     };
   }
 
-  private static final class HybridDatasetProvider implements Provider<DatasetFramework> {
+  private static final class PreviewDatasetFrameworkProvider implements Provider<DatasetFramework> {
     private final DatasetFramework inMemoryDatasetFramework;
     private final DatasetFramework remoteDatasetFramework;
 
     @Inject
-    public HybridDatasetProvider(@Named("localDatasetFramework")DatasetFramework inMemoryDatasetFramework,
-                                 @Named("actualDatasetFramework")DatasetFramework remoteDatasetFramework) {
+    public PreviewDatasetFrameworkProvider(@Named("localDatasetFramework")DatasetFramework inMemoryDatasetFramework,
+                                           @Named("actualDatasetFramework")DatasetFramework remoteDatasetFramework) {
       this.inMemoryDatasetFramework = inMemoryDatasetFramework;
       this.remoteDatasetFramework = remoteDatasetFramework;
     }

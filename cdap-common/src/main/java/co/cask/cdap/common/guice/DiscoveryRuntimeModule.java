@@ -48,6 +48,8 @@ public final class DiscoveryRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
+        // we want to share the actual discovery service, so preview http service can register when it starts up
+        // and router can route directly to preview service. for other services we want to use local discovery service.
         bind(DiscoveryService.class).annotatedWith(
           Names.named("shared-discovery-service")).toInstance(discoveryService);
         bind(InMemoryDiscoveryService.class).in(Singleton.class);

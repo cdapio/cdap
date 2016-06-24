@@ -81,7 +81,6 @@ public class PreviewServerModule {
       bind(Store.class).to(DefaultStore.class);
       bind(PreviewServer.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
-      // bind(ApplicationLifecycleService.class).in(Scopes.SINGLETON);
       bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(

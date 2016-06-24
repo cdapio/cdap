@@ -39,7 +39,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * {@link co.cask.http.HttpHandler} to manage program lifecycle for v3 REST APIs
+ * {@link co.cask.http.HttpHandler} to manage preview lifecycle for v3 REST APIs
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
