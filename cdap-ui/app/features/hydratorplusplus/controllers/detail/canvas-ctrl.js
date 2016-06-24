@@ -65,6 +65,12 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               rDisabled: function() {
                 return true;
               },
+              rIsPreviewMode: function () {
+                return false;
+              },
+              rIsStudioMode: function () {
+                return false;
+              },
               rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore, GLOBALS) {
                 let pluginId = pluginNode.name;
                 let appType = HydratorPlusPlusDetailNonRunsStore.getAppType();

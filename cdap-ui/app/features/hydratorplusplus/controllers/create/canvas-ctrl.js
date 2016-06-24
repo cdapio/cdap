@@ -93,6 +93,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
             rIsPreviewMode: function () {
               return previewMode;
             },
+            rIsStudioMode: function () {
+              return true;
+            },
             rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusConfigStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusConfigStore, GLOBALS) {
               let pluginId = pluginNode.name;
               let appType = HydratorPlusPlusConfigStore.getAppType();
