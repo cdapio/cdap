@@ -24,7 +24,9 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
+import com.google.common.base.Strings;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -35,24 +37,21 @@ import java.util.concurrent.Callable;
  * were written to.
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
+  private final String aliasSuffix;
   private final Set<String> outputNames;
 
+  private Output externalOutput;
+
   public MapReduceSinkContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName,
-                              Map<String, String> runtimeArgs) {
+                              Map<String, String> runtimeArgs, String aliasSuffix) {
     super(context, metrics, lookup, stageName, runtimeArgs);
     this.outputNames = new HashSet<>();
+    this.aliasSuffix = aliasSuffix;
   }
 
   @Override
   public void addOutput(final String datasetName) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.addOutput(datasetName);
-        return null;
-      }
-    });
-    outputNames.add(datasetName);
+    addOutput(datasetName, new HashMap<String, String>());
   }
 
   @Override
@@ -60,7 +59,8 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.addOutput(datasetName, arguments);
+        externalOutput = suffixOutput(Output.ofDataset(datasetName, arguments));
+        mrContext.addOutput(externalOutput);
         return null;
       }
     });
@@ -72,7 +72,8 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.addOutput(outputName, outputFormatProvider);
+        externalOutput = suffixOutput(Output.of(outputName, outputFormatProvider));
+        mrContext.addOutput(externalOutput);
         return null;
       }
     });
@@ -84,7 +85,8 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
     Output trackableOutput = LogContext.runWithoutLoggingUnchecked(new Callable<Output>() {
       @Override
       public Output call() throws Exception {
-        Output trackableOutput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), output);
+        externalOutput = suffixOutput(output);
+        Output trackableOutput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), externalOutput);
         mrContext.addOutput(trackableOutput);
         return trackableOutput;
       }
@@ -97,5 +99,20 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
    */
   public Set<String> getOutputNames() {
     return outputNames;
+  }
+
+  private Output suffixOutput(Output output) {
+    if (Strings.isNullOrEmpty(aliasSuffix)) {
+      return output;
+    }
+
+    String suffixedAlias = (output.getAlias() != null) ?
+      String.format("%s.%s", output.getAlias(), aliasSuffix) : aliasSuffix;
+    return output.alias(suffixedAlias);
+  }
+
+  @Override
+  protected String getAlias() {
+    return externalOutput.getAlias();
   }
 }

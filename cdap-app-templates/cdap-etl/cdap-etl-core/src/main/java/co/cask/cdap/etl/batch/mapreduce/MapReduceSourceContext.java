@@ -27,19 +27,30 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
+import com.google.common.base.Strings;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
- * MapReduce Source Context.
+ * MapReduce Source Context. Delegates operations to MapReduce Context.
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
+  private final String aliasSuffix;
+  private Input externalInput;
 
   public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName,
                                 Map<String, String> runtimeArgs) {
+    this(context, metrics, lookup, stageName, runtimeArgs, null);
+  }
+
+  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName,
+                                Map<String, String> runtimeArgs, @Nullable String aliasSuffix) {
     super(context, metrics, lookup, stageName, runtimeArgs);
+    this.aliasSuffix = aliasSuffix;
   }
 
   @Override
@@ -49,10 +60,13 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
       public Void call() throws Exception {
         FormatSpecification formatSpec = stream.getFormatSpecification();
         if (formatSpec == null) {
-          mrContext.addInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime()));
+          externalInput = suffixInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(),
+                                                     stream.getEndTime()));
+          mrContext.addInput(externalInput);
         } else {
-          mrContext.addInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(),
-                                            stream.getEndTime(), formatSpec));
+          externalInput = suffixInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime(),
+                                                     formatSpec));
+          mrContext.addInput(externalInput);
         }
         return null;
       }
@@ -61,35 +75,17 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
 
   @Override
   public void setInput(final String datasetName) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.addInput(Input.ofDataset(datasetName));
-        return null;
-      }
-    });
+    setInput(datasetName, new HashMap<String, String>());
   }
 
   @Override
   public void setInput(final String datasetName, final Map<String, String> arguments) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.addInput(Input.ofDataset(datasetName, arguments));
-        return null;
-      }
-    });
+    setInput(datasetName, arguments, null);
   }
 
   @Override
   public void setInput(final String datasetName, final List<Split> splits) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.addInput(Input.ofDataset(datasetName, splits));
-        return null;
-      }
-    });
+    setInput(datasetName, new HashMap<String, String>(), splits);
   }
 
   @Override
@@ -97,7 +93,8 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.addInput(Input.ofDataset(datasetName, arguments, splits));
+        externalInput = suffixInput(Input.ofDataset(datasetName, arguments, splits));
+        mrContext.addInput(externalInput);
         return null;
       }
     });
@@ -108,7 +105,8 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.addInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
+        externalInput = suffixInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
+        mrContext.addInput(externalInput);
         return null;
       }
     });
@@ -119,10 +117,26 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        Input trackableInput =  ExternalDatasets.makeTrackable(mrContext.getAdmin(), input);
+        externalInput = suffixInput(input);
+        Input trackableInput =  ExternalDatasets.makeTrackable(mrContext.getAdmin(), externalInput);
         mrContext.addInput(trackableInput);
         return null;
       }
     });
+  }
+
+  private Input suffixInput(Input input) {
+    if (Strings.isNullOrEmpty(aliasSuffix)) {
+      return input;
+    }
+
+    String suffixedAlias = (input.getAlias() != null) ?
+      String.format("%s.%s", input.getAlias(), aliasSuffix) : aliasSuffix;
+    return input.alias(suffixedAlias);
+  }
+
+  @Override
+  protected String getAlias() {
+    return externalInput.getAlias();
   }
 }

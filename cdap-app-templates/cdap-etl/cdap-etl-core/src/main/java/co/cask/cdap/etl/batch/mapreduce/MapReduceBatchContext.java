@@ -29,7 +29,7 @@ import java.util.concurrent.Callable;
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
-public class MapReduceBatchContext extends AbstractBatchContext {
+public abstract class MapReduceBatchContext extends AbstractBatchContext {
   protected final MapReduceContext mrContext;
 
   public MapReduceBatchContext(MapReduceContext context, Metrics metrics,
@@ -47,4 +47,9 @@ public class MapReduceBatchContext extends AbstractBatchContext {
       }
     });
   }
+
+  /**
+   * Returns the name of the alias of the input or output set for this {@link MapReduceBatchContext}
+   */
+  protected abstract String getAlias();
 }
