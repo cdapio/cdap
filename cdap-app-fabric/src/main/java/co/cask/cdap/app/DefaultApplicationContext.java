@@ -39,4 +39,9 @@ public class DefaultApplicationContext<T extends Config> implements ApplicationC
   public T getConfig() {
     return appConfig;
   }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return false;
+  }
 }

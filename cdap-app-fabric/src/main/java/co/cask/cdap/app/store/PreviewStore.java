@@ -16,9 +16,11 @@
 
 package co.cask.cdap.app.store;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.preview.PreviewLogger;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.PreviewId;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -29,27 +31,27 @@ public interface PreviewStore {
 
   /**
    * Add the preview data.
-   * @param programId the id of the program which is logging the preview data
+   * @param previewId the id of the program which is logging the preview data
    * @param propertyName the name of the property for which value is being added
    * @param value the value to be added
    */
-  void put(ProgramId programId, String propertyName, Object value);
+  void put(PreviewId previewId, String propertyName, Object value);
 
   /**
    * Get the preview data associated with the given program id.
-   * @param programId the id of the program for which preview data to be fetched
+   * @param previewId the id of the preview for which preview data to be fetched
    * @return the {@link Map} of property and associated values logged for the program
    */
-  Map<String, List<Object>> get(ProgramId programId);
+  Map<String, List<String>> get(PreviewId previewId);
 
   /**
    * Removes the preview data logged by specified programId
-   * @param programId the id of the program for which the data to be removed
+   * @param previewId the id of the preview for which the data to be removed
    */
-  void remove(ProgramId programId);
+  void remove(PreviewId previewId);
 
   /**
    * Clears the preview data store.
    */
-  void clear();
+  void clear() throws IOException, DatasetManagementException;
 }

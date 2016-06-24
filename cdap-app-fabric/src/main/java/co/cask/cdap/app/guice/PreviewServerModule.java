@@ -21,6 +21,7 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.preview.PreviewApplicationManager;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewServer;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -35,6 +36,7 @@ import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.store.DefaultPreviewStore;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -79,6 +81,7 @@ public class PreviewServerModule {
       );
 
       bind(Store.class).to(DefaultStore.class);
+      bind(PreviewStore.class).to(DefaultPreviewStore.class);
       bind(PreviewServer.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
