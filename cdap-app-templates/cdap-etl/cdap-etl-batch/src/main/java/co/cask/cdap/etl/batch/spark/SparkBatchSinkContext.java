@@ -32,11 +32,14 @@ import java.util.Map;
 public class SparkBatchSinkContext extends AbstractSparkBatchContext implements BatchSinkContext {
 
   private final SparkBatchSinkFactory sinkFactory;
+  private final String aliasSuffix;
+  private int outputCount = 0;
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
-                               LookupProvider lookupProvider, String stageId) {
+                               LookupProvider lookupProvider, String stageId, String aliasSuffix) {
     super(sparkContext, lookupProvider, stageId);
     this.sinkFactory = sinkFactory;
+    this.aliasSuffix = aliasSuffix;
   }
 
   @Override
@@ -46,17 +49,27 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
 
   @Override
   public void addOutput(String datasetName, Map<String, String> arguments) {
-    sinkFactory.addOutput(getStageName(), datasetName, arguments);
+    sinkFactory.addOutput(getStageName(), suffixOutput(Output.ofDataset(datasetName, arguments)));
+    outputCount++;
   }
 
   @Override
   public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
-    sinkFactory.addOutput(getStageName(), outputName, outputFormatProvider);
+    sinkFactory.addOutput(getStageName(), suffixOutput(Output.of(outputName, outputFormatProvider)));
+    outputCount++;
   }
 
   @Override
   public void addOutput(Output output) {
-    Output trackableOutput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), output);
+    Output trackableOutput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), suffixOutput(output));
     sinkFactory.addOutput(getStageName(), trackableOutput);
+    outputCount++;
+  }
+
+  private Output suffixOutput(Output output) {
+    String uniqueSuffixCount = String.format("%s_%d", aliasSuffix, outputCount);
+    String suffixedAlias = (output.getAlias() != null) ?
+      String.format("%s_%s", output.getAlias(), uniqueSuffixCount) : uniqueSuffixCount;
+    return output.alias(suffixedAlias);
   }
 }

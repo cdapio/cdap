@@ -108,9 +108,8 @@ public class ETLSpark extends AbstractSpark {
 
     BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
     DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
-    SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context,
-                                                                        lookProvider,
-                                                                        sourceName);
+    SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context, lookProvider, sourceName,
+                                                                        Integer.toString(0));
     batchSource.prepareRun(sourceContext);
 
     SparkBatchSourceFactory sourceFactory = sourceContext.getSourceFactory();
@@ -122,6 +121,7 @@ public class ETLSpark extends AbstractSpark {
     finishers.add(batchSource, sourceContext);
 
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
+    int sinkCount = 0;
     for (String sinkName : phaseSpec.getPhase().getSinks()) {
       BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName);
       if (batchSink instanceof SparkSink) {
@@ -129,7 +129,9 @@ public class ETLSpark extends AbstractSpark {
         ((SparkSink) batchSink).prepareRun(sparkPluginContext);
         finishers.add((SparkSink) batchSink, sparkPluginContext);
       } else {
-        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkName);
+        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkName,
+                                                                 Integer.toString(sinkCount));
+        sinkCount++;
         batchSink.prepareRun(sinkContext);
         finishers.add(batchSink, sinkContext);
       }

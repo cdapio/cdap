@@ -16,16 +16,16 @@
 
 package co.cask.cdap.etl.batch.spark;
 
-import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
+import com.google.common.base.Strings;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,50 +37,80 @@ import javax.annotation.Nullable;
  */
 public class SparkBatchSourceContext extends AbstractSparkBatchContext implements BatchSourceContext {
 
+  private final String aliasSuffix;
   private SparkBatchSourceFactory sourceFactory;
+  private Input externalInput;
 
-  public SparkBatchSourceContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
+  public SparkBatchSourceContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId,
+                                 String aliasSuffix) {
     super(sparkContext, lookupProvider, stageId);
+    this.aliasSuffix = aliasSuffix;
   }
 
   @Override
   public void setInput(StreamBatchReadable stream) {
-    sourceFactory = SparkBatchSourceFactory.create(stream);
+    FormatSpecification formatSpec = stream.getFormatSpecification();
+    Input streamInput;
+    if (formatSpec == null) {
+      streamInput = Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime());
+    } else {
+      streamInput = Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime(), formatSpec);
+    }
+    externalInput = suffixInput(streamInput);
+    sourceFactory = SparkBatchSourceFactory.create(externalInput);
   }
 
   @Override
   public void setInput(String datasetName) {
-    sourceFactory = SparkBatchSourceFactory.create(datasetName);
+    setInput(datasetName, Collections.<String, String>emptyMap());
   }
 
   @Override
   public void setInput(String datasetName, Map<String, String> arguments) {
-    sourceFactory = SparkBatchSourceFactory.create(datasetName, arguments);
+    setInput(datasetName, arguments, null);
   }
 
   @Override
   public void setInput(String datasetName, List<Split> splits) {
-    sourceFactory = SparkBatchSourceFactory.create(datasetName, Collections.<String, String>emptyMap(), splits);
+    externalInput = suffixInput(Input.ofDataset(datasetName, Collections.<String, String>emptyMap(), splits));
+    sourceFactory = SparkBatchSourceFactory.create(externalInput);
   }
 
   @Override
   public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
-    sourceFactory = SparkBatchSourceFactory.create(datasetName, arguments, splits);
+    externalInput = suffixInput(Input.ofDataset(datasetName, arguments, splits));
+    sourceFactory = SparkBatchSourceFactory.create(externalInput);
   }
 
   @Override
   public void setInput(InputFormatProvider inputFormatProvider) {
-    sourceFactory = SparkBatchSourceFactory.create(inputFormatProvider);
+    externalInput = suffixInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
+    sourceFactory = SparkBatchSourceFactory.create(externalInput);
   }
 
   @Override
   public void setInput(Input input) {
-    Input trackableInput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), input);
+    externalInput = suffixInput(input);
+    Input trackableInput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), externalInput);
     sourceFactory = SparkBatchSourceFactory.create(trackableInput);
   }
 
   @Nullable
   SparkBatchSourceFactory getSourceFactory() {
     return sourceFactory;
+  }
+
+  public String getAlias() {
+    return externalInput.getAlias();
+  }
+
+  private Input suffixInput(Input input) {
+    if (Strings.isNullOrEmpty(aliasSuffix)) {
+      return input;
+    }
+
+    String suffixedAlias = (input.getAlias() != null) ?
+      String.format("%s_%s", input.getAlias(), aliasSuffix) : aliasSuffix;
+    return input.alias(suffixedAlias);
   }
 }
