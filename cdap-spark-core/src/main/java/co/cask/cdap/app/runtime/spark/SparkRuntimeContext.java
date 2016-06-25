@@ -17,7 +17,6 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.Metrics;
@@ -30,6 +29,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -37,6 +37,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.preview.DefaultPreviewLogger;
+import co.cask.cdap.internal.app.preview.NoopPreviewLogger;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.internal.app.runtime.DefaultPluginContext;
@@ -47,6 +49,7 @@ import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
@@ -86,7 +89,8 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
   private final PluginContext pluginContext;
   private final Admin admin;
   private final LoggingContext loggingContext;
-  private final Debugger debugger;
+  private final PreviewStore previewStore;
+  private final PreviewId previewId;
 
   SparkRuntimeContext(Configuration hConf, Program program, RunId runId, Map<String, String> runtimeArguments,
                       TransactionSystemClient txClient,
@@ -95,7 +99,8 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
                       MetricsCollectionService metricsCollectionService,
                       StreamAdmin streamAdmin,
                       @Nullable WorkflowProgramInfo workflowProgramInfo,
-                      @Nullable PluginInstantiator pluginInstantiator, Debugger debugger) {
+                      @Nullable PluginInstantiator pluginInstantiator, PreviewStore previewStore,
+                      @Nullable PreviewId previewId) {
     super(program.getId().toEntityId());
 
     this.hConf = hConf;
@@ -124,7 +129,8 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(datasetFramework, programId.getNamespaceId());
     this.loggingContext = createLoggingContext(programId, runId, workflowProgramInfo);
-    this.debugger = debugger;
+    this.previewStore = previewStore;
+    this.previewId = previewId;
   }
 
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
@@ -319,11 +325,16 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
 
   @Override
   public boolean isPreviewEnabled() {
-    return debugger.isPreviewEnabled();
+    return previewId != null;
   }
 
   @Override
   public PreviewLogger getPreviewLogger(String loggerName) {
-    return debugger.getPreviewLogger(loggerName);
+    return previewId == null ? new NoopPreviewLogger() : new DefaultPreviewLogger(previewStore, previewId, loggerName);
+  }
+
+  @Nullable
+  public PreviewId getPreviewId() {
+    return previewId;
   }
 }

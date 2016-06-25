@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.spark.Spark;
@@ -29,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -52,6 +52,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -59,6 +60,7 @@ import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -84,6 +86,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                implements ProgramClassLoaderProvider, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
+  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -93,13 +96,13 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
   private final Store store;
-  private final Debugger debugger;
+  private final PreviewStore previewStore;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, TransactionSystemClient txClient,
                      DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store,
-                     Debugger debugger) {
+                     PreviewStore previewStore) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -109,7 +112,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
     this.store = store;
-    this.debugger = debugger;
+    this.previewStore = previewStore;
   }
 
   @Override
@@ -152,12 +155,14 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         closeables.addFirst(pluginInstantiator);
       }
 
+      String previewIdJson = arguments.getOption(ProgramOptionConstants.PREVIEW_ID);
+      PreviewId previewId = previewIdJson == null ? null : GSON.fromJson(previewIdJson, PreviewId.class);
       SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, runId,
                                                                    options.getUserArguments().asMap(),
                                                                    txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
-                                                                   pluginInstantiator, debugger);
+                                                                   pluginInstantiator, previewStore, previewId);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

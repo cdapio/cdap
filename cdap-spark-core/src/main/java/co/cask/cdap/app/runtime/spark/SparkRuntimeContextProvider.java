@@ -16,11 +16,11 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -192,7 +192,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(StreamAdmin.class),
         contextConfig.getWorkflowProgramInfo(),
         pluginInstantiator,
-        injector.getInstance(Debugger.class)
+        injector.getInstance(PreviewStore.class),
+        contextConfig.getPreviewId()
       );
       return sparkRuntimeContext;
     } catch (Exception e) {

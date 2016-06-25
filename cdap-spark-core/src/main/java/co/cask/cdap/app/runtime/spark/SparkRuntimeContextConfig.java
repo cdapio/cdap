@@ -21,6 +21,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -54,6 +55,7 @@ public class SparkRuntimeContextConfig {
   private static final String HCONF_ATTR_ARGS = "cdap.spark.program.args";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "cdap.spark.program.workflow.info";
   private static final String HCONF_ATTR_LOCAL_RESOURCES = "cdap.spark.local.resources";
+  private static final String HCONF_ATTR_PREVIEW_ID = "cdap.spark.preview.id";
 
   private final Configuration hConf;
 
@@ -97,7 +99,7 @@ public class SparkRuntimeContextConfig {
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setLocalizedResourceNames(localizeResourceNames);
     setPluginArchive(pluginArchive);
-
+    setPreviewId(context.getPreviewId());
     return this;
   }
 
@@ -208,5 +210,20 @@ public class SparkRuntimeContextConfig {
     if (pluginArchive != null) {
       hConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
     }
+  }
+
+  private void setPreviewId(@Nullable PreviewId previewId) {
+    if (previewId != null) {
+      hConf.set(HCONF_ATTR_PREVIEW_ID, GSON.toJson(previewId));
+    }
+  }
+
+  @Nullable
+  public PreviewId getPreviewId() {
+    String previewIdJson = hConf.get(HCONF_ATTR_PREVIEW_ID);
+    if (previewIdJson == null) {
+      return null;
+    }
+    return GSON.fromJson(previewIdJson, PreviewId.class);
   }
 }
