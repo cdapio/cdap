@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state, MyCDAPDataSource, GLOBALS) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state, MyCDAPDataSource, GLOBALS, myAlertOnValium) {
     'ngInject';
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -32,6 +32,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.$scope = $scope;
     this.dataSrc = new MyCDAPDataSource($scope);
     this.GLOBALS = GLOBALS;
+    this.myAlertOnValium = myAlertOnValium;
 
     this.canvasOperations = [
       {
@@ -203,7 +204,7 @@ class HydratorPlusPlusTopPanelCtrl{
         this.startPollPreviewStatus(res.preview);
       }, (err) => {
         this.stopTimer();
-        this.HydratorPlusPlusConsoleActions.addMessage({
+        this.myAlertOnValium.show({
           type: 'danger',
           content: err.data
         });
@@ -216,15 +217,8 @@ class HydratorPlusPlusTopPanelCtrl{
       interval: 5000
     }, (res) => {
       if (res.status !== 'RUNNING') {
-        // this.stopTimer();
-        // this.dataSrc.stopPoll(res.__pollId__);
-
-
-        /* THIS IS ONLY FOR DEMO. REMOVE and uncomment the above */
-        setTimeout(() => {
-          this.stopTimer();
-          this.dataSrc.stopPoll(res.__pollId__);
-        }, 5000);
+        this.stopTimer();
+        this.dataSrc.stopPoll(res.__pollId__);
       }
     });
   }
