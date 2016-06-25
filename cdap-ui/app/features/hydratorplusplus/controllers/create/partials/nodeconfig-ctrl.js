@@ -277,8 +277,52 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.myPipelineApi.getStagePreview(params)
       .$promise
       .then((res) => {
-        this.previewData = res;
+        this.previewData = {
+          input: {},
+          output: {}
+        };
+
+        if (!this.state.isSource) {
+          this.previewData.input = this.formatRecords(res['input.records']);
+        }
+        if (!this.state.isSink) {
+          this.previewData.output = this.formatRecords(res['output.records']);
+        }
+
       });
+  }
+
+  formatRecords(records) {
+    if (!records) {
+      return {
+        schema: [],
+        records: []
+      };
+    }
+
+    let jsonRecords = records.map( (record) => {
+      let json = {};
+      try {
+        json = JSON.parse(record);
+      } catch (e) {
+        console.log('ERROR', e);
+        return json;
+      }
+      return json;
+    });
+
+    let schema = jsonRecords[0].schema.fields.map( (field) => {
+      return field.name;
+    });
+
+    let data = jsonRecords.map( (record) => {
+      return record.fields;
+    });
+
+    return {
+      schema: schema,
+      records: data
+    };
   }
 
   validateSchema() {
