@@ -171,7 +171,7 @@ class HydratorPlusPlusTopPanelCtrl{
       startStages: [],
       endStages: [],
       // useSinks: [], // we are not using sinks for now
-      numOfRecords: 10
+      numOfRecords: 25
     };
 
     // Get start stages and end stages
@@ -219,6 +219,18 @@ class HydratorPlusPlusTopPanelCtrl{
       if (res.status !== 'RUNNING') {
         this.stopTimer();
         this.dataSrc.stopPoll(res.__pollId__);
+
+        if (res.status === 'COMPLETED') {
+          this.myAlertOnValium.show({
+            type: 'success',
+            content: 'Pipeline preview is finished.'
+          });
+        } else {
+          this.myAlertOnValium.show({
+            type: 'danger',
+            content: 'Pipeline preview failed with status: ' + res.status
+          });
+        }
       }
     });
   }

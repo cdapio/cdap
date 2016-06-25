@@ -14,10 +14,19 @@
   the License.
 -->
 
-<div class="row" ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData">
+<div class="row" ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData && !HydratorPlusPlusNodeConfigCtrl.previewLoading">
   <div class="col-xs-12">
     <h3 class="text-center">
       No preview data.
+    </h3>
+  </div>
+</div>
+
+<div class="row" ng-if="HydratorPlusPlusNodeConfigCtrl.previewLoading">
+  <div class="col-xs-12">
+    <h3 class="text-center">
+      <span class="fa fa-spin fa-refresh"></span>
+      <span>Fetching preview data</span>
     </h3>
   </div>
 </div>

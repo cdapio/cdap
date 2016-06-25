@@ -64,6 +64,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.isStudioMode = rIsStudioMode;
 
     if (rIsStudioMode) {
+      this.previewLoading = false;
       this.previewData = null;
       this.fetchPreview();
     }
@@ -265,6 +266,7 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 
   fetchPreview() {
+    this.previewLoading = true;
     let previewId = this.previewStore.getState().preview.previewId;
 
     if (!previewId) { return; }
@@ -288,7 +290,9 @@ class HydratorPlusPlusNodeConfigCtrl {
         if (!this.state.isSink) {
           this.previewData.output = this.formatRecords(res['output.records']);
         }
-
+        this.previewLoading = false;
+      }, (err) => {
+        this.previewLoading = false;
       });
   }
 
