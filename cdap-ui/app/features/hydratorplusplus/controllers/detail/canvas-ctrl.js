@@ -55,6 +55,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       let pluginNode = this.HydratorPlusPlusDetailNonRunsStore.getPluginObject(nodeId);
       this.$uibModal
           .open({
+            windowTemplateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover-template.html',
             templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
             size: 'lg',
             backdrop: 'static',

@@ -106,14 +106,46 @@
           white-space: nowrap;
         }
       }
+      a.btn {
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 0;
+        background-clip: padding-box;
+        color: #3c4355;
+        font-size: 18px;
+        outline: none;
+        padding: 0;
+        white-space: normal;
+        border-left: 1px solid #c9ccd6;
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+
+        &:hover {
+          background-color: #3c4355;
+          border: 1px solid #3c4355;
+          color: white;
+          background-clip: padding-box;
+        }
+      }
     }
     .modal-dialog {
       width: 80%;
       overflow-y: hidden;
-      margin: 0;
-      transform: translate(19vw, 14vh);
+      margin-left: 200px;
+      margin-top: 90px;
+      margin-bottom: 0;
+
+      &.expand {
+        margin-left: 0;
+        width: 100%;
+        height: ~"calc(100vh - 90px)";
+        margin-bottom: 0;
+      }
 
       .modal-content {
+        height: inherit;
+
         .modal-body {
           padding: 0 10px;
           overflow: auto;
@@ -137,7 +169,7 @@
               .bottompanel-body {
                 padding: 0 10px 10px 10px;
                 overflow-y: auto;
-                height: 59vh;
+                height: ~"calc(100vh - 220px)";
 
                 .reference-tab {
                   padding: 0 10px;
@@ -209,6 +241,33 @@
             border: 0;
             .control-label {
               font-weight: bold;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+body.theme-cdap {
+  &.state-hydratorplusplus-detail {
+    .modal.cdap-modal {
+      &.node-config-modal {
+        .modal-dialog {
+          margin-top: 120px;
+          &.expand {
+            margin-bottom: 0;
+            height: ~"calc(100vh - 120px)";
+          }
+          .modal-content {
+            .modal-body {
+              .console-type {
+                .node-config {
+                  .bottompanel-body {
+                    height: ~"calc(100vh - 250px)";
+                  }
+                }
+              }
             }
           }
         }

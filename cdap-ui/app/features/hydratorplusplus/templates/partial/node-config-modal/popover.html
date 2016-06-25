@@ -25,10 +25,24 @@
       <small>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</small>
     </p>
   </h4>
-  <a class="btn pull-right" ng-click="$close()">
-    <span class="fa fa-remove"></span>
-    <span class="sr-only"> Close </span>
-  </a>
+  <div class="btn-group pull-right">
+    <a class="btn"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.windowMode === 'regular'"
+        ng-click="HydratorPlusPlusNodeConfigCtrl.toggleMaximizedView(true)">
+      <span class="fa fa-expand"></span>
+      <span class="sr-only"> Expand </span>
+    </a>
+    <a class="btn"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.windowMode === 'expand'"
+        ng-click="HydratorPlusPlusNodeConfigCtrl.toggleMaximizedView(false)">
+      <span class="fa fa-compress"></span>
+      <span class="sr-only"> Compress </span>
+    </a>
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+  </div>
 </div>
 <div class="modal-body config-modal">
   <div class="console-type">
