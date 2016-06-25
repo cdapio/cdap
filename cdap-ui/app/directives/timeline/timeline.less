@@ -14,8 +14,37 @@
  * the License.
  */
 
+@blue-theme-color: #2397e8;
+@red-circle-color: #fa5143;
+@yellow-circle-color: #f8b154;
+@search-circle-color: #5eb3fa;
+
 my-timeline {
   .timeline-container {
+    color: white;
+
+    .fill-bar {
+      stroke: #171717;
+      stroke-opacity: 0.75;
+      stroke-width: 100%;
+    }
+
+    .scroll-pin {
+      cursor: pointer;
+      fill: #fefefe;
+    }
+
+    .left-handle {
+      fill: #068af9;
+      cursor: pointer;
+    }
+
+    .resize path {
+      fill: black;
+      fill-opacity: 0.2;
+      stroke: @blue-theme-color;
+      stroke-width: 1.5px;
+    }
 
     color: white;
 
@@ -32,7 +61,16 @@ my-timeline {
       .timeline-log-chart {
         color: grey;
 
-        .xaxis path,
+        .xaxis-bottom text {
+          font: 9px sans-serif;
+        }
+
+        .xaxis path {
+          fill: none;
+          stroke: none;
+          shape-rendering: crispEdges;
+        }
+
         .xaxis line {
           fill: none;
           stroke: red;
@@ -51,13 +89,23 @@ my-timeline {
         }
 
         .yellow-circle {
-          fill: yellow;
-          stroke: yellow;
+          fill: @yellow-circle-color;
+          stroke: @yellow-circle-color;
         }
 
         .red-circle {
-          fill: red;
-          stroke: red;
+          fill: @red-circle-color;
+          stroke: @red-circle-color;
+        }
+
+        .other-circle {
+          fill: none;
+          stroke: none;
+        }
+
+        .search-circle {
+          fill: @search-circle-color;
+          stroke: @search-circle-color;
         }
       }
     }
