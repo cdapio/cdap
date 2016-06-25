@@ -18,8 +18,6 @@ package co.cask.cdap.proto;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.Objects;
-
 /**
  * Represents the configuration of a namespace. This class needs to be GSON serializable.
  */
@@ -28,12 +26,28 @@ public class NamespaceConfig {
   @SerializedName("scheduler.queue.name")
   private final String schedulerQueueName;
 
-  public NamespaceConfig(String schedulerQueueName) {
+  @SerializedName("principal")
+  private final String principal;
+
+  @SerializedName("keytab.path")
+  private final String keytabPath;
+
+  public NamespaceConfig(String schedulerQueueName, String principal, String keytabPath) {
     this.schedulerQueueName = schedulerQueueName;
+    this.principal = principal;
+    this.keytabPath = keytabPath;
   }
 
   public String getSchedulerQueueName() {
     return schedulerQueueName;
+  }
+
+  public String getPrincipal() {
+    return principal;
+  }
+
+  public String getKeytabPath() {
+    return keytabPath;
   }
 
   @Override
@@ -44,19 +58,33 @@ public class NamespaceConfig {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    NamespaceConfig other = (NamespaceConfig) o;
-    return Objects.equals(schedulerQueueName, other.schedulerQueueName);
+
+    NamespaceConfig that = (NamespaceConfig) o;
+
+    if (!schedulerQueueName.equals(that.schedulerQueueName)) {
+      return false;
+    }
+    if (!principal.equals(that.principal)) {
+      return false;
+    }
+    return keytabPath.equals(that.keytabPath);
+
   }
 
   @Override
   public int hashCode() {
-    return schedulerQueueName.hashCode();
+    int result = schedulerQueueName.hashCode();
+    result = 31 * result + principal.hashCode();
+    result = 31 * result + keytabPath.hashCode();
+    return result;
   }
 
   @Override
   public String toString() {
     return "NamespaceConfig{" +
-      "scheduler.queue.name='" + schedulerQueueName + '\'' +
+      "schedulerQueueName='" + schedulerQueueName + '\'' +
+      ", principal='" + principal + '\'' +
+      ", keytabPath='" + keytabPath + '\'' +
       '}';
   }
 }

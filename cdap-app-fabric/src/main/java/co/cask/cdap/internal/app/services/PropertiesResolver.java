@@ -35,11 +35,13 @@ public class PropertiesResolver {
 
   private final PreferencesStore prefStore;
   private final SchedulerQueueResolver queueResolver;
+  private final ImpersonationUserResolver impersonationUserResolver;
 
   @Inject
   PropertiesResolver(PreferencesStore prefStore, NamespaceStore store, CConfiguration cConf) {
     this.prefStore = prefStore;
     this.queueResolver = new SchedulerQueueResolver(cConf, store);
+    this.impersonationUserResolver = new ImpersonationUserResolver(cConf, store);
   }
 
   public Map<String, String> getUserProperties(Id.Program id) {
@@ -52,6 +54,8 @@ public class PropertiesResolver {
   public Map<String, String> getSystemProperties(Id.Program id) {
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
+    systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationUserResolver.getPrincipal(id));
+    systemArgs.put(ProgramOptionConstants.KEYTAB_PATH, impersonationUserResolver.getKeytabPath(id));
     return systemArgs;
   }
 }

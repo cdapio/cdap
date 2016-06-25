@@ -58,34 +58,50 @@ public final class NamespaceMeta {
     private String name;
     private String description;
     private String schedulerQueueName;
+    private String principal;
+    private String keytabPath;
 
     public Builder() {
-     // No-Op
+      // No-Op
     }
 
     public Builder(NamespaceMeta meta) {
       this.name = meta.getName();
       this.description = meta.getDescription();
-      this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
+
+      NamespaceConfig config = meta.getConfig();
+      this.schedulerQueueName = config.getSchedulerQueueName();
+      this.principal = config.getPrincipal();
+      this.keytabPath = config.getKeytabPath();
     }
 
-    public Builder setName(final Id.Namespace id) {
+    public Builder setName(Id.Namespace id) {
       this.name = id.getId();
       return this;
     }
 
-    public Builder setName(final String name) {
+    public Builder setName(String name) {
       this.name = name;
       return this;
     }
 
-    public Builder setDescription(final String description) {
+    public Builder setDescription(String description) {
       this.description = description;
       return this;
     }
 
-    public Builder setSchedulerQueueName(final String schedulerQueueName) {
+    public Builder setSchedulerQueueName(String schedulerQueueName) {
       this.schedulerQueueName = schedulerQueueName;
+      return this;
+    }
+
+    public Builder setPrincipal(String principal) {
+      this.principal = principal;
+      return this;
+    }
+
+    public Builder setKeytabPath(String keytabPath) {
+      this.keytabPath = keytabPath;
       return this;
     }
 
@@ -100,7 +116,15 @@ public final class NamespaceMeta {
       if (schedulerQueueName == null) {
         schedulerQueueName = "";
       }
-      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName));
+
+      if (principal == null) {
+        principal = "";
+      }
+
+      if (keytabPath == null) {
+        keytabPath = "";
+      }
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, principal, keytabPath));
     }
   }
 

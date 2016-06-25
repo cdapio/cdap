@@ -113,8 +113,17 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       NamespaceConfig config = metadata.getConfig();
-      if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
-        builder.setSchedulerQueueName(config.getSchedulerQueueName());
+      if (config != null) {
+        if (!Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
+          builder.setSchedulerQueueName(config.getSchedulerQueueName());
+        }
+        // both or none of the following two must be set
+        if (!Strings.isNullOrEmpty(config.getPrincipal())) {
+          builder.setPrincipal(config.getPrincipal());
+        }
+        if (!Strings.isNullOrEmpty(config.getKeytabPath())) {
+          builder.setKeytabPath(config.getKeytabPath());
+        }
       }
     }
 

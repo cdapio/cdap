@@ -64,6 +64,22 @@ public final class ProgramRunners {
   }
 
   /**
+   * Impersonates as a particular UGI to execute a callable.
+   *
+   * @param ugi the UGI to execute the callable as
+   * @param callable the callable to execute
+   */
+  public static <T> T runAsUGI(UserGroupInformation ugi,
+                               final Callable<T> callable) throws IOException, InterruptedException {
+    return ugi.doAs(new PrivilegedExceptionAction<T>() {
+      @Override
+      public T run() throws Exception {
+        return callable.call();
+      }
+    });
+  }
+
+  /**
    * Updates the given arguments to always have the logical start time set.
    *
    * @param arguments the runtime arguments

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.program.Program;
@@ -22,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -32,6 +34,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
@@ -39,10 +42,13 @@ import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -61,21 +67,26 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -157,19 +168,46 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     return new AbortOnTimeoutEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE));
   }
 
+  // returns the path of the file, if its a local URI. If it's an HDFS URI, copy it to local file system first.
+  private String getKeytabPath(URI keytabURI, File tempDir) throws IOException {
+    if (!"hdfs".equals(keytabURI.getScheme())) {
+      return keytabURI.getPath();
+    }
+
+    // create a local file with restricted permissions
+    File localKeytabFile = new File(tempDir, "keytab.localized");
+    Preconditions.checkState(localKeytabFile.createNewFile(), "Failed to create local keytab file.");
+
+    // only allow the owner to read/write, since it contains credentials
+    java.nio.file.Files.setPosixFilePermissions(localKeytabFile.toPath(),
+                                                ImmutableSet.of(PosixFilePermission.OWNER_WRITE,
+                                                                PosixFilePermission.OWNER_READ));
+
+    // copy from HDFS to this local file
+    LocationFactory locationFactory = new FileContextLocationFactory(hConf);
+    final Location location = locationFactory.create(keytabURI);
+    LOG.info("Copying keytab file from {} to {}", location, localKeytabFile);
+    try (InputStream is = location.getInputStream()) {
+      ByteStreams.copy(is, Files.newOutputStreamSupplier(localKeytabFile));
+    }
+
+    return localKeytabFile.getPath(); // /var/tmp/cdap/data/tmp/1466730158980-0/new.keytab
+  }
+
   @Override
   public final ProgramController run(final Program program, final ProgramOptions oldOptions) {
-    final String schedulerQueueName = oldOptions.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
+      final String schedulerQueueName = oldOptions.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
       if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
         hConf.set(JobContext.QUEUE_NAME, schedulerQueueName);
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 
-      Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      final Map<String, LocalizeResource> localizeResources = new HashMap<>();
       final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
+                                                            // this call to createTempDir seems unnecessary
                                                             DirUtils.createTempDir(tempDir));
 
       // Copy config files to local temp, and ask Twill to localize it to container.
@@ -196,100 +234,127 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
       // Twill would also ignore it if it is not running in secure mode.
       // The HDFS token should already obtained by Twill.
-      return launch(program, options, localizeResources, tempDir, new ApplicationLauncher() {
+
+      Callable<ProgramController> callable = new Callable<ProgramController>() {
         @Override
-        public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths,
-                                      Iterable<? extends Class<?>> extraDependencies) {
-          TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
-          // TODO: CDAP-5506. It's a bit hacky to set a Spark environment here. However, we always launch
-          // Spark using YARN and it is needed for both Workflow and Spark runner. We need to set it
-          // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
-          // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
-          // so it can't be unset by Spark
-          twillPreparer.withEnv(Collections.singletonMap("SPARK_YARN_MODE", "true"));
-          if (options.isDebug()) {
-            LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
-                     program.getId(), programOptions, logbackURI);
-            twillPreparer.enableDebugging();
-          }
-          // Add scheduler queue name if defined
-          if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
-            LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
-            twillPreparer.setSchedulerQueue(schedulerQueueName);
-          }
-          if (logbackURI != null) {
-            twillPreparer.withResources(logbackURI);
-          }
+        public ProgramController call() throws Exception {
 
-          String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
-          if ("OFF".equals(logLevelConf)) {
-            twillPreparer.addJVMOptions("-Dtwill.disable.kafka=true");
-          } else {
-            LogEntry.Level logLevel = LogEntry.Level.ERROR;
-            if ("ALL".equals(logLevelConf)) {
-              logLevel = LogEntry.Level.TRACE;
-            } else {
+          return launch(program, options, localizeResources, tempDir, new ApplicationLauncher() {
+            @Override
+            public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths,
+                                          Iterable<? extends Class<?>> extraDependencies) {
+              TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+              // TODO: CDAP-5506. It's a bit hacky to set a Spark environment here. However, we always launch
+              // Spark using YARN and it is needed for both Workflow and Spark runner. We need to set it
+              // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
+              // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
+              // so it can't be unset by Spark
+              twillPreparer.withEnv(Collections.singletonMap("SPARK_YARN_MODE", "true"));
+              if (options.isDebug()) {
+                twillPreparer.enableDebugging();
+              }
+              LOG.info("Starting {} with debugging enabled: {}, programOptions: {}, and logback: {}",
+                       program.getId(), options.isDebug(), programOptions, logbackURI);
+              // Add scheduler queue name if defined
+              if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
+                LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
+                twillPreparer.setSchedulerQueue(schedulerQueueName);
+              }
+              if (logbackURI != null) {
+                twillPreparer.withResources(logbackURI);
+              }
+
+              String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
+              if ("OFF".equals(logLevelConf)) {
+                twillPreparer.addJVMOptions("-Dtwill.disable.kafka=true");
+              } else {
+                LogEntry.Level logLevel = LogEntry.Level.ERROR;
+                if ("ALL".equals(logLevelConf)) {
+                  logLevel = LogEntry.Level.TRACE;
+                } else {
+                  try {
+                    logLevel = LogEntry.Level.valueOf(logLevelConf.toUpperCase());
+                  } catch (Exception e) {
+                    LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", logLevelConf);
+                  }
+                }
+                twillPreparer.addLogHandler(
+                  new ApplicationLogHandler(new PrinterLogHandler(new PrintWriter(System.out)), logLevel));
+              }
+
+              String yarnAppClassPath =
+                hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                          Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+              // Add secure tokens
+              if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
+                // TokenSecureStoreUpdater.update() ignores parameters
+                twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
+              }
+
+              Iterable<Class<?>> dependencies = Iterables.concat(
+                Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()), extraDependencies
+              );
+              twillPreparer
+                .withDependencies(dependencies)
+                .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
+                  .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
+                .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
+                .withBundlerClassAcceptor(new HadoopClassExcluder() {
+                  @Override
+                  public boolean accept(String className, URL classUrl, URL classPathUrl) {
+                    // Exclude both hadoop and spark classes.
+                    return super.accept(className, classUrl, classPathUrl)
+                      && !className.startsWith("org.apache.spark.");
+                  }
+                })
+                .withApplicationArguments(
+                  "--" + RunnableOptions.JAR, programJarName,
+                  "--" + RunnableOptions.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME,
+                  "--" + RunnableOptions.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
+                  "--" + RunnableOptions.APP_SPEC_FILE, APP_SPEC_FILE_NAME,
+                  "--" + RunnableOptions.PROGRAM_OPTIONS, programOptions,
+                  "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId().toEntityId())
+                );
+
+              TwillController twillController;
+              // Change the context classloader to the combine classloader of this ProgramRunner and
+              // all the classloaders of the dependencies classes so that Twill can trace classes.
+              ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+                AbstractDistributedProgramRunner.this.getClass().getClassLoader(),
+                Iterables.transform(dependencies, new Function<Class<?>, ClassLoader>() {
+                  @Override
+                  public ClassLoader apply(Class<?> input) {
+                    return input.getClassLoader();
+                  }
+                })));
               try {
-                logLevel = LogEntry.Level.valueOf(logLevelConf.toUpperCase());
-              } catch (Exception e) {
-                LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", logLevelConf);
+                twillController = twillPreparer.start();
+              } finally {
+                ClassLoaders.setContextClassLoader(oldClassLoader);
               }
+              return addCleanupListener(twillController, program, tempDir);
             }
-            twillPreparer.addLogHandler(new ApplicationLogHandler(new PrinterLogHandler(new PrintWriter(System.out)),
-                                                                  logLevel));
-          }
-
-          String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                                           Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-          // Add secure tokens
-          if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
-            // TokenSecureStoreUpdater.update() ignores parameters
-            twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
-          }
-
-          Iterable<Class<?>> dependencies = Iterables.concat(
-            Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()), extraDependencies
-          );
-          twillPreparer
-            .withDependencies(dependencies)
-            .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
-              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
-            .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
-            .withBundlerClassAcceptor(new HadoopClassExcluder() {
-              @Override
-              public boolean accept(String className, URL classUrl, URL classPathUrl) {
-                // Exclude both hadoop and spark classes.
-                return super.accept(className, classUrl, classPathUrl) && !className.startsWith("org.apache.spark.");
-              }
-            })
-            .withApplicationArguments(
-              "--" + RunnableOptions.JAR, programJarName,
-              "--" + RunnableOptions.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME,
-              "--" + RunnableOptions.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
-              "--" + RunnableOptions.APP_SPEC_FILE, APP_SPEC_FILE_NAME,
-              "--" + RunnableOptions.PROGRAM_OPTIONS, programOptions,
-              "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId().toEntityId())
-            );
-
-          TwillController twillController;
-          // Change the context classloader to the combine classloader of this ProgramRunner and
-          // all the classloaders of the dependencies classes so that Twill can trace classes.
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-            AbstractDistributedProgramRunner.this.getClass().getClassLoader(),
-            Iterables.transform(dependencies, new Function<Class<?>, ClassLoader>() {
-              @Override
-              public ClassLoader apply(Class<?> input) {
-                return input.getClassLoader();
-              }
-            })));
-          try {
-            twillController = twillPreparer.start();
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
-          return addCleanupListener(twillController, program, tempDir);
+          });
         }
-      });
+      };
+
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
+        String principal = options.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+        String keytabPath = options.getArguments().getOption(ProgramOptionConstants.KEYTAB_PATH);
+        LOG.info("Configured principal={}, keytab={}", principal, keytabPath);
+
+        String expandedPrincipal = SecurityUtil.expandPrincipal(principal);
+        String localizedKeytabPath = getKeytabPath(URI.create(keytabPath), tempDir);
+        LOG.info("Logging in as: principal={}, keytab={}", expandedPrincipal, localizedKeytabPath);
+
+        UserGroupInformation aliUGI =
+          UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localizedKeytabPath);
+        return ProgramRunners.runAsUGI(aliUGI, callable);
+      } else {
+        // otherwise, simply launch as the current user
+        return callable.call();
+      }
+
     } catch (Exception e) {
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
@@ -362,7 +427,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   }
 
   private File saveCConf(CConfiguration conf, File file) throws IOException {
-    // Unsettting the runtime extension directory as the necessary extension jars should be shipped to the container
+    // Unsetting the runtime extension directory as the necessary extension jars should be shipped to the container
     // by the distributed ProgramRunner.
     CConfiguration copied = CConfiguration.copy(conf);
     copied.unset(Constants.AppFabric.RUNTIME_EXT_DIR);
