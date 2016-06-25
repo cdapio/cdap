@@ -291,7 +291,7 @@ class HydratorPlusPlusNodeConfigCtrl {
           this.previewData.output = this.formatRecords(res['output.records']);
         }
         this.previewLoading = false;
-      }, (err) => {
+      }, () => {
         this.previewLoading = false;
       });
   }
