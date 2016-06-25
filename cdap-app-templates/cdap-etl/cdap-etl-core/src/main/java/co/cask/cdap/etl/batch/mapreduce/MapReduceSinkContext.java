@@ -99,10 +99,10 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
 
   private Output suffixOutput(Output output) {
     // Create a unique local suffix string for alias
-    String uniqueSuffixCount = String.format("%s.%d", aliasSuffix, outputNames.size());
+    String uniqueSuffixCount = String.format("%s_%d", aliasSuffix, outputNames.size());
     // If alias is null then, set it to uniqueSuffixCount, else suffix it with uniqueSuffixCount
     String suffixedAlias = (output.getAlias() != null) ?
-      String.format("%s.%s", output.getAlias(), uniqueSuffixCount) : uniqueSuffixCount;
+      String.format("%s_%s", output.getAlias(), uniqueSuffixCount) : uniqueSuffixCount;
     return output.alias(suffixedAlias);
   }
 

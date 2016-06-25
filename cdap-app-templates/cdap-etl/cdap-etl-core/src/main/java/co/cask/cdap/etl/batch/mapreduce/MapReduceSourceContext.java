@@ -135,7 +135,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     }
 
     String suffixedAlias = (input.getAlias() != null) ?
-      String.format("%s.%s", input.getAlias(), aliasSuffix) : aliasSuffix;
+      String.format("%s_%s", input.getAlias(), aliasSuffix) : aliasSuffix;
     return input.alias(suffixedAlias);
   }
 }
