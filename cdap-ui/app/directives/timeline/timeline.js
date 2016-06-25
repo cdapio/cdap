@@ -131,19 +131,36 @@ function link (scope, element) {
           maxDate = filteredEvents[filteredEvents.length-1];
 
       //Global Variables
-      let width = element.parent()[0].offsetWidth;
-      let height = 60;
+      var width = element.parent()[0].offsetWidth;
+      var height = 60;
+      var paddingLeft = 15;
+      var paddingRight = 15;
+      var maxRange = width - paddingLeft - paddingRight;
+      var sliderLimit = maxRange + 15;
 
       //Plot function call
       plot();
 
       function plot() {
 
-        //Define SVG
-        let svg = d3.select('.timeline-log-chart')
+        // -----------------Define SVG and Plot Circles-------------------------- //
+        var svg = d3.select('.timeline-log-chart')
                     .append('svg')
                     .attr('width', width)
                     .attr('height', height);
+
+        //Set the Range and Domain
+        var xScale = d3.time.scale().range([0, (maxRange)]);
+        xScale.domain(d3.extent(timelineData, function(d) {
+          return d.time;
+        }));
+
+        //Define the axes and ticks
+        var xAxis = d3.svg.axis().scale(xScale)
+            .orient('bottom')
+            .innerTickSize(-40)
+            .tickPadding(10)
+            .ticks(10);
 
         //Generate circles from the filtered events
         let circles = svg.selectAll('circle')
@@ -172,13 +189,145 @@ function link (scope, element) {
                   }
                   else if(d.level === 'WARN'){
                     return 'yellow-circle';
+                  } else {
+                    return 'other-circle';
                   }
                 });
 
+        // -------------------------Build Brush / Sliders------------------------- //
+
+        //X-Axis
         svg.append('g')
-          .attr('class', 'xaxis')
-          .attr('transform', 'translate(0,' + (height - 15) + ')')
+          .attr('class', 'xaxisBottom')
+          .attr('transform', 'translate(' + ( (paddingLeft + paddingRight) / 2) + ',' + (height - 20) + ')')
           .call(xAxis);
+
+        //Left Slider Implementation
+        var leftVal = 10;
+
+        function leftBrushed() {
+          if(d3.event.sourceEvent) {
+            var v = xScale.invert(d3.mouse(this)[0]);
+            var index = d3.mouse(this)[0];
+
+            if(v !== leftVal){
+              leftVal = v;
+            }
+
+            update(index);
+          }
+        }
+
+        var brush = d3.svg.brush()
+            .x(xScale)
+            .extent([0,0])
+            .on('brush', leftBrushed);
+
+        //Create the 3 bars used to represent the slider
+        var sliderBar = svg.append('g')
+            .attr('class', 'slider leftSlider')
+            .call(d3.svg.axis()
+              .scale(xScale)
+              .tickSize(0)
+              .tickFormat(''))
+            .select('.domain')
+            .select(function() {
+              return this.parentNode.appendChild(this.cloneNode(true));
+            })
+          .attr('class', 'inner-bar')
+          .select(function () {
+            return this.parentNode.appendChild(this.cloneNode(true));
+          })
+        .attr('class', 'fill-bar');
+
+        sliderBar.attr('d', 'M0,0V0H' + xScale(0) + 'V0');
+
+        var slide = svg.append('g')
+              .attr('class', 'slider sliderGroup')
+              .attr('transform' , 'translate(0,10)')
+              .call(brush);
+
+        var leftHandle = slide.append('rect')
+            .attr('height', 60)
+            .attr('width', 15)
+            .attr('x', 0)
+            .attr('y', -10)
+            .attr('class', 'leftHandle');
+
+        function update(val) {
+          //Update the brush position
+          if(val < 0){
+            val = 0;
+          }
+
+          //Testing
+          if(val > sliderLimit){
+            val = sliderLimit;
+          }
+
+          brush.extent([val, val]);
+
+          //Move the slider to the correct location
+          leftHandle.attr('x', val);
+
+          //Move the filled bar to the slider location by modifying the path
+          sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
+        }
+
+        //Append the top slider
+        //Define second brush
+        var brush2 = d3.svg.brush()
+            .x(xScale)
+            .extent([0,0])
+            .on('brush', slidePin);
+
+        var svg2 = d3.select('.top-bar').append('svg')
+            .attr('width', width)
+            .attr('height', 20)
+          .append('g');
+
+        svg2.append('g')
+            .attr('class', 'xaxisTop')
+            .attr('transform', 'translate(0,' + 15 / 2 + ')')
+            .call(d3.svg.axis()
+              .scale(xScale)
+              .orient('bottom'))
+          .select('.domain')
+          .select(function(){ return this.parentNode.appendChild(this.cloneNode(true));})
+            .attr('class', 'halo');
+
+        var slider = svg2.append('g')
+            .attr('class', 'slider')
+            .attr('width', width)
+            .call(brush2);
+
+        slider.select('.background')
+          .attr('height', 15);
+
+        var pinHandle = slider.append('rect')
+            .attr('width', 15)
+            .attr('height', 15)
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('class', 'scrollPin');
+
+        function slidePin() {
+          var value = brush2.extent()[0];
+
+          if (d3.extent.sourceEvent) {
+            value = xScale.invert(d3.mouse(this)[0]);
+            brush2.extent([value,value]);
+          }
+          if(value < 0){
+            value = 0;
+          }
+
+          if(d3.mouse(this)[0] > sliderLimit){
+            pinHandle.attr('x', sliderLimit);
+          } else {
+            pinHandle.attr('x', xScale(value));
+          }
+        }
       }
 }
 

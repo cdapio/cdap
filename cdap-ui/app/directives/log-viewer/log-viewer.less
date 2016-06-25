@@ -31,9 +31,63 @@
 my-log-viewer {
   .log-viewer-container {
 
+    .slider .background {
+      cursor: pointer !important;
+    }
+
+    .fill-bar {
+      background-color: green;
+    }
+
+    .domain {
+      fill: none;
+      stroke: none;
+      display: none;
+    }
+
+    .axis {
+      shape-rendering: crispEdges;
+    }
+
+    .slider .domain {
+      fill: none;
+      stroke: #000000;
+      stroke-opacity: 0.3;
+      stroke-width: 10px;
+      stroke-linecap: round;
+    }
+
+    .fill-bar {
+      fill: green;
+      stroke: #171717;
+      stroke-opacity: 0.75;
+      stroke-width: 100%;
+    }
+
+    .leftHandle {
+      fill: #068af9;
+      cursor: pointer;
+    }
+
+    .xaxisTop {
+      stroke: none;
+      fill: none;
+    }
+
+    .xaxisBottom {
+      stroke: white;
+      fill: white;
+      stroke-width: 0.2;
+      shape-rendering: crispEdges;
+    }
+
+    .xaxisBottom line {
+      stroke-width: 0.6;
+      shape-rendering: crispEdges;
+    }
+
     .logs-headerbar {
       background-color: @headerbar-background-color;
-
       height: 50px;
       .flexbox();
       .flex-wrap(@wrap: wrap);

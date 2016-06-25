@@ -16,6 +16,18 @@
 
 my-timeline {
   .timeline-container {
+    color: white;
+
+    .scrollPin {
+      cursor: pointer;
+    }
+
+    .resize path {
+      fill: black;
+      fill-opacity: 0.2;
+      stroke: #2397e8;
+      stroke-width: 1.5px;
+    }
 
     color: white;
 
@@ -51,13 +63,23 @@ my-timeline {
         }
 
         .yellow-circle {
-          fill: yellow;
-          stroke: yellow;
+          fill: #f8b154;
+          stroke: #f8b154;
         }
 
         .red-circle {
-          fill: red;
-          stroke: red;
+          fill: #fa5143;
+          stroke: #fa5143;
+        }
+
+        .other-circle {
+          fill: none;
+          stroke: none;
+        }
+
+        .search-circle {
+          fill: #5eb3fa;
+          stroke: #5eb3fa;
         }
       }
     }
