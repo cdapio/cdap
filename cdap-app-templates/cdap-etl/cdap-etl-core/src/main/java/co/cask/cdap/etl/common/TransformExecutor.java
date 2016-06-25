@@ -19,12 +19,14 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transformation;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 
 /**
@@ -38,14 +40,28 @@ public class TransformExecutor<IN> implements Destroyable {
 
   private final Set<String> startingPoints;
   private final Map<String, TransformDetail> transformDetailMap;
+  private final String sourceStageName;
 
   public TransformExecutor(Map<String, TransformDetail> transformDetailMap, Set<String> startingPoints) {
+    this(transformDetailMap, startingPoints, null);
+  }
+
+  public TransformExecutor(Map<String, TransformDetail> transformDetailMap, Set<String> startingPoints,
+                           @Nullable String sourceStageName) {
     this.transformDetailMap = transformDetailMap;
     this.startingPoints = startingPoints;
+    this.sourceStageName = sourceStageName;
   }
 
   public TransformResponse runOneIteration(IN input) throws Exception {
     for (String stageName : startingPoints) {
+      // If we have a non-null sourceStageName to match with stageName (in case of multi-inputs) then
+      // executeTransformation only if the both are equal
+      if (!Strings.isNullOrEmpty(sourceStageName)) {
+        if (!stageName.equals(sourceStageName)) {
+          continue;
+        }
+      }
       executeTransformation(stageName, ImmutableList.of(input));
     }
 

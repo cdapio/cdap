@@ -37,10 +37,18 @@ import java.util.Map;
  * @param <T> the type of input for the created transform executors
  */
 public abstract class TransformExecutorFactory<T> {
+  private final String sourceStageName;
+
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
 
   public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics) {
+    this(pluginInstantiator, metrics, null);
+  }
+
+  public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics,
+                                  String sourceStageName) {
+    this.sourceStageName = sourceStageName;
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
   }
@@ -65,13 +73,12 @@ public abstract class TransformExecutorFactory<T> {
     for (String pluginType : pipeline.getPluginTypes()) {
       for (StageInfo stageInfo : pipeline.getStagesOfType(pluginType)) {
         String stageName = stageInfo.getName();
-        transformations.put(stageName,
-                            new TransformDetail(getTransformation(pluginType, stageName),
-                                                pipeline.getStageOutputs(stageName)));
+        transformations.put(stageName, new TransformDetail(getTransformation(pluginType, stageName),
+                                                           pipeline.getStageOutputs(stageName)));
       }
     }
 
-    return new TransformExecutor<>(transformations, pipeline.getSources());
+    return new TransformExecutor<>(transformations, pipeline.getSources(), sourceStageName);
   }
 
   /**

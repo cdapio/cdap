@@ -75,10 +75,12 @@ import java.util.Set;
 public class ETLMapReduce extends AbstractMapReduce {
   public static final String NAME = ETLMapReduce.class.getSimpleName();
   static final String RUNTIME_ARGS_KEY = "cdap.etl.runtime.args";
+  static final String ALIAS_STAGE_KEY = "cdap.etl.alias.stage";
   static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
   static final String GROUP_KEY_CLASS = "cdap.etl.aggregator.group.key.class";
   static final String GROUP_VAL_CLASS = "cdap.etl.aggregator.group.val.class";
   static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
+  static final Type ALIAS_STAGE_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new GsonBuilder()
@@ -105,12 +107,11 @@ public class ETLMapReduce extends AbstractMapReduce {
     setMapperResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getResources());
 
-    // These should never happen unless there is a bug in the planner. The planner is supposed to ensure this.
     Set<String> sources = phaseSpec.getPhase().getSources();
-    if (sources.size() != 1) {
+    // Planner should make sure this never happens
+    if (sources.isEmpty()) {
       throw new IllegalArgumentException(String.format(
-        "Pipeline phase '%s' must contain exactly one source but it has sources '%s'.",
-        phaseSpec.getPhaseName(), Joiner.on(',').join(sources)));
+        "Pipeline phase '%s' must contain at least one source but it has no sources.", phaseSpec.getPhaseName()));
     }
     if (phaseSpec.getPhase().getSinks().isEmpty()) {
       throw new IllegalArgumentException(String.format(
@@ -161,20 +162,21 @@ public class ETLMapReduce extends AbstractMapReduce {
     PipelinePhase phase = phaseSpec.getPhase();
     PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
 
-    // we checked at configure time that there is exactly one source
-    String sourceName = phaseSpec.getPhase().getSources().iterator().next();
-
-    BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
-    batchSource = new LoggedBatchConfigurable<>(sourceName, batchSource);
-    BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics,
-                                                                  new DatasetContextLookupProvider(context),
-                                                                  sourceName, context.getRuntimeArguments());
-    batchSource.prepareRun(sourceContext);
-    runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
-    finishers.add(batchSource, sourceContext);
+    Map<String, String> aliasToStageNames = new HashMap<>();
+    for (String sourceName : phaseSpec.getPhase().getSources()) {
+      BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+      batchSource = new LoggedBatchConfigurable<>(sourceName, batchSource);
+      BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics,
+                                                                    new DatasetContextLookupProvider(context),
+                                                                    sourceName, context.getRuntimeArguments());
+      batchSource.prepareRun(sourceContext);
+      runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
+      aliasToStageNames.put(((MapReduceSourceContext) sourceContext).getAlias(), sourceName);
+      finishers.add(batchSource, sourceContext);
+    }
+    hConf.set(ALIAS_STAGE_KEY, GSON.toJson(aliasToStageNames));
 
     Map<String, SinkOutput> sinkOutputs = new HashMap<>();
-
     for (StageInfo stageInfo : Sets.union(phase.getStagesOfType(Constants.CONNECTOR_TYPE),
                                           phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
       String sinkName = stageInfo.getName();

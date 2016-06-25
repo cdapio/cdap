@@ -78,7 +78,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
     // Execution the whole pipeline in one long transaction. This is because the Spark execution
     // currently share the same contract and API as the MapReduce one.
-    // The API need to expose DatasetContext, hence it needs to be exeucted inside a transaction
+    // The API need to expose DatasetContext, hence it needs to be executed inside a transaction
     sec.execute(this);
   }
 

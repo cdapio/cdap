@@ -127,9 +127,8 @@ public class ConnectorDag extends Dag {
 
     /*
         Find nodes that have input from multiple sources and add them to the connectors set.
-        We can probably remove this part once we support multiple sources. Even though we don't support
-        multiple sources today, the fact that we support forks means we have to deal with the multi-input case
-        and break it down into separate phases. For example:
+        We can probably remove this part once we support multiple sources. The fact that we support forks
+        means we have to deal with the multi-input case and break it down into separate phases. For example:
 
                 |---> reduce1 ---|
           n1 ---|                |---> n2
@@ -140,12 +139,6 @@ public class ConnectorDag extends Dag {
                 |---> reduce1.connector               reduce1.connector ---> reduce1 ---|
           n1 ---|                              =>                                       |---> n2
                 |---> reduce2.connector               reduce2.connector ---> reduce2 ---|
-
-        Since we don't support multi-input yet, we need to convert that further into 3 phases:
-
-          reduce1.connector ---> reduce1 ---> n2.connector
-                                                                    =>       sink.connector ---> n2
-          reduce2.connector ---> reduce2 ---> n2.connector
 
         To find these nodes, we traverse the graph in order and keep track of sources that have a path to each node
         with a map of node -> [ sources that have a path to the node ]
@@ -177,14 +170,7 @@ public class ConnectorDag extends Dag {
         connectedSources.add(node);
         nodeSources.replaceValues(node, connectedSources);
       }
-      // if more than one source is connected to this node, then we need to insert a connector in front of this node.
-      // its source should then be changed to the connector that was inserted in front of it.
-      if (connectedSources.size() > 1) {
-        String connectorNode = addConnectorInFrontOf(node, addedAlready);
-        connectedSources = new HashSet<>();
-        connectedSources.add(connectorNode);
-        nodeSources.replaceValues(node, connectedSources);
-      }
+
       for (String nodeOutput : getNodeOutputs(node)) {
         // propagate the source connected to me to all my outputs
         nodeSources.putAll(nodeOutput, connectedSources);
@@ -296,13 +282,10 @@ public class ConnectorDag extends Dag {
    */
   public List<Dag> splitOnConnectors() {
     List<Dag> dags = new ArrayList<>();
-    for (String source : sources) {
-      dags.add(subsetFrom(source, connectors));
-    }
+    dags.add(subsetFrom(sources, connectors));
     for (String connector : connectors) {
       dags.add(subsetFrom(connector, connectors));
     }
-
     return dags;
   }
 
