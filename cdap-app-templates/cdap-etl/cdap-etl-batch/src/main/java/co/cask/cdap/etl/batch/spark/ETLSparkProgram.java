@@ -54,6 +54,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -93,17 +94,23 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
       aggregatorName = aggregators.iterator().next().getName();
     }
 
-    SparkBatchSourceFactory sourceFactory;
+    List<SparkBatchSourceFactory> sourceFactories = new ArrayList<>();
     SparkBatchSinkFactory sinkFactory;
     Integer numPartitions;
     try (InputStream is = new FileInputStream(sec.getLocalizationContext().getLocalFile("ETLSpark.config"))) {
-      sourceFactory = SparkBatchSourceFactory.deserialize(is);
+      Integer sourceCount = new DataInputStream(is).readInt();
+      for (int i = 0; i < sourceCount; i++) {
+        sourceFactories.add(SparkBatchSourceFactory.deserialize(is));
+      }
       sinkFactory = SparkBatchSinkFactory.deserialize(is);
       numPartitions = new DataInputStream(is).readInt();
     }
 
-    JavaPairRDD<Object, Object> rdd = sourceFactory.createRDD(sec, jsc, Object.class, Object.class);
-    JavaPairRDD<String, Object> resultRDD = doTransform(sec, jsc, datasetContext, phaseSpec, rdd,
+    Map<String, JavaPairRDD<Object, Object>> inputRDDs = new HashMap<>();
+    for (SparkBatchSourceFactory sourceFactory : sourceFactories) {
+      inputRDDs.put(sourceFactory.getSourceStageName(), sourceFactory.createRDD(sec, jsc, Object.class, Object.class));
+    }
+    JavaPairRDD<String, Object> resultRDD = doTransform(sec, jsc, datasetContext, phaseSpec, inputRDDs,
                                                         aggregatorName, numPartitions);
 
     Set<StageInfo> stagesOfTypeSparkSink = phaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE);
@@ -146,20 +153,38 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
   private JavaPairRDD<String, Object> doTransform(JavaSparkExecutionContext sec, JavaSparkContext jsc,
                                                   DatasetContext datasetContext, BatchPhaseSpec phaseSpec,
-                                                  JavaPairRDD<Object, Object> input,
+                                                  Map<String, JavaPairRDD<Object, Object>> inputRDDs,
                                                   String aggregatorName, int numPartitions) throws Exception {
 
     Set<StageInfo> sparkComputes = phaseSpec.getPhase().getStagesOfType(SparkCompute.PLUGIN_TYPE);
     if (sparkComputes.isEmpty()) {
       // if this is not a phase with SparkCompute, do regular transform logic
       if (aggregatorName != null) {
-        JavaPairRDD<Object, Object> preGroupRDD =
-          input.flatMapToPair(new PreGroupFunction(sec, aggregatorName));
+        List<JavaPairRDD<Object, Object>> resultRDDList = new ArrayList<>();
+        for (Map.Entry<String, JavaPairRDD<Object, Object>> rddEntry : inputRDDs.entrySet()) {
+          JavaPairRDD<Object, Object> rdd = rddEntry.getValue();
+          resultRDDList.add(rdd.flatMapToPair(new PreGroupFunction(sec, aggregatorName, rddEntry.getKey())));
+        }
+        JavaPairRDD<Object, Object> preGroupRDD = resultRDDList.remove(0);
+        for (JavaPairRDD<Object, Object> rdd : resultRDDList) {
+          preGroupRDD.union(rdd);
+        }
+
         JavaPairRDD<Object, Iterable<Object>> groupedRDD =
           numPartitions < 0 ? preGroupRDD.groupByKey() : preGroupRDD.groupByKey(numPartitions);
-        return groupedRDD.flatMapToPair(new MapFunction<Iterable<Object>>(sec, null, aggregatorName, false)).cache();
+        return groupedRDD.flatMapToPair(
+          new MapFunction<Iterable<Object>>(sec, null, aggregatorName, false, null)).cache();
       } else {
-        return input.flatMapToPair(new MapFunction<>(sec, null, null, false)).cache();
+        List<JavaPairRDD<String, Object>> resultRDDList = new ArrayList<>();
+        for (Map.Entry<String, JavaPairRDD<Object, Object>> rddEntry : inputRDDs.entrySet()) {
+          JavaPairRDD<Object, Object> rdd = rddEntry.getValue();
+          resultRDDList.add(rdd.flatMapToPair(new MapFunction<>(sec, null, null, false, rddEntry.getKey())).cache());
+        }
+        JavaPairRDD<String, Object> resultRDD = resultRDDList.remove(0);
+        for (JavaPairRDD<String, Object> rdd : resultRDDList) {
+          resultRDD.union(rdd);
+        }
+        return resultRDD;
       }
     }
 
@@ -177,20 +202,15 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
     String sparkComputeName = Iterables.getOnlyElement(sparkComputes).getName();
 
+    for (String sourceStageName : phaseSpec.getPhase().getSources()) {
+      Set<String> sourceNextStages = phaseSpec.getPhase().getStageOutputs(sourceStageName);
+      Preconditions.checkArgument(sourceNextStages.size() == 1,
+                                  "Expected only 1 stage after source stage: %s", sourceNextStages);
 
-    Set<String> sourceStages = phaseSpec.getPhase().getSources();
-    Preconditions.checkArgument(sourceStages.size() == 1, "Expected only 1 source stage: %s", sourceStages);
-
-    String sourceStageName = Iterables.getOnlyElement(sourceStages);
-
-    Set<String> sourceNextStages = phaseSpec.getPhase().getStageOutputs(sourceStageName);
-    Preconditions.checkArgument(sourceNextStages.size() == 1,
-                                "Expected only 1 stage after source stage: %s", sourceNextStages);
-
-    Preconditions.checkArgument(sparkComputeName.equals(Iterables.getOnlyElement(sourceNextStages)),
-                                "Expected the single stage after the source stage to be the spark compute: %s",
-                                sparkComputeName);
-
+      Preconditions.checkArgument(sparkComputeName.equals(Iterables.getOnlyElement(sourceNextStages)),
+                                  "Expected the single stage after the source stage to be the spark compute: %s",
+                                  sparkComputeName);
+    }
 
     // phase starting from source to SparkCompute
     PipelinePhase sourcePhase = phaseSpec.getPhase().subsetTo(ImmutableSet.of(sparkComputeName));
@@ -198,8 +218,16 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
       GSON.toJson(new BatchPhaseSpec(phaseSpec.getPhaseName(), sourcePhase, phaseSpec.getResources(),
                                      phaseSpec.isStageLoggingEnabled(), phaseSpec.getConnectorDatasets()));
 
-    JavaPairRDD<String, Object> sourceTransformed =
-      input.flatMapToPair(new MapFunction<>(sec, sourcePipelineStr, null, true)).cache();
+    List<JavaPairRDD<String, Object>> resultRDDList = new ArrayList<>();
+    for (Map.Entry<String, JavaPairRDD<Object, Object>> rddEntry : inputRDDs.entrySet()) {
+      JavaPairRDD<Object, Object> rdd = rddEntry.getValue();
+      resultRDDList.add(rdd.flatMapToPair(new MapFunction<>(sec, sourcePipelineStr, null, true,
+                                                            rddEntry.getKey())).cache());
+    }
+    JavaPairRDD<String, Object> sourceTransformed = resultRDDList.remove(0);
+    for (JavaPairRDD<String, Object> rdd : resultRDDList) {
+      sourceTransformed.union(rdd);
+    }
 
     SparkCompute sparkCompute =
       new PipelinePluginInstantiator(sec.getPluginContext(), phaseSpec).newPluginInstance(sparkComputeName);
@@ -214,7 +242,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
                                      phaseSpec.isStageLoggingEnabled(), phaseSpec.getConnectorDatasets()));
 
     JavaPairRDD<String, Object> sinkTransformedValues =
-      sparkComputed.flatMapToPair(new SingleTypeRDDMapFunction(sec, sinkPipelineStr)).cache();
+      sparkComputed.flatMapToPair(new SingleTypeRDDMapFunction(sec, sinkPipelineStr, null)).cache();
     return sinkTransformedValues;
   }
 
@@ -280,10 +308,12 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
   public static final class PreGroupFunction
     extends TransformExecutorFunction<Tuple2<Object, Object>, KeyValue<Object, Object>, Object, Object> {
     private final String aggregatorName;
+    private final String sourceName;
 
-    public PreGroupFunction(JavaSparkExecutionContext sec, @Nullable String aggregatorName) {
+    public PreGroupFunction(JavaSparkExecutionContext sec, @Nullable String aggregatorName, String sourceName) {
       super(sec, null);
       this.aggregatorName = aggregatorName;
+      this.sourceName = sourceName;
     }
 
     @Override
@@ -304,7 +334,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
       TransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, true);
+                                            logicalStartTime, runtimeArgs, true, sourceName);
       PipelinePhase pipelinePhase = phaseSpec.getPhase().subsetTo(ImmutableSet.of(aggregatorName));
       return transformExecutorFactory.create(pipelinePhase);
     }
@@ -327,12 +357,14 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
     @Nullable
     private final String aggregatorName;
     private final boolean isBeforeBreak;
+    private final String sourceStageName;
 
     public MapFunction(JavaSparkExecutionContext sec, String pipelineStr, String aggregatorName,
-                       boolean isBeforeBreak) {
-      super(sec, pipelineStr);
+                       boolean isBeforeBreak, String sourceStageName) {
+      super(sec, pipelineStr, sourceStageName);
       this.aggregatorName = aggregatorName;
       this.isBeforeBreak = isBeforeBreak;
+      this.sourceStageName = sourceStageName;
     }
 
     @Override
@@ -341,7 +373,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
       throws Exception {
       TransformExecutorFactory<KeyValue<Object, T>> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, isBeforeBreak);
+                                            logicalStartTime, runtimeArgs, isBeforeBreak, sourceStageName);
 
       PipelinePhase pipelinePhase = phaseSpec.getPhase();
       if (aggregatorName != null) {
@@ -369,9 +401,11 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
    */
   public static class SingleTypeRDDMapFunction<IN, EXECUTOR_IN>
     extends TransformExecutorFunction<IN, EXECUTOR_IN, String, Object> {
+    private final String sourceStageName;
 
-    public SingleTypeRDDMapFunction(JavaSparkExecutionContext sec, String pipelineStr) {
+    public SingleTypeRDDMapFunction(JavaSparkExecutionContext sec, String pipelineStr, String sourceStageName) {
       super(sec, pipelineStr);
+      this.sourceStageName = sourceStageName;
     }
 
     @Override
@@ -393,7 +427,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
       TransformExecutorFactory<EXECUTOR_IN> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, false);
+                                            logicalStartTime, runtimeArgs, false, sourceStageName);
 
       PipelinePhase pipelinePhase = phaseSpec.getPhase();
       return transformExecutorFactory.create(pipelinePhase);

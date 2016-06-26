@@ -74,59 +74,64 @@ final class SparkBatchSourceFactory {
   private final StreamBatchReadable streamBatchReadable;
   private final InputFormatProvider inputFormatProvider;
   private final DatasetInfo datasetInfo;
+  private final String sourceStageName;
 
-  private static SparkBatchSourceFactory create(StreamBatchReadable streamBatchReadable) {
-    return new SparkBatchSourceFactory(streamBatchReadable, null, null);
+  private static SparkBatchSourceFactory create(StreamBatchReadable streamBatchReadable, String sourceStageName) {
+    return new SparkBatchSourceFactory(streamBatchReadable, null, null, sourceStageName);
   }
 
   private static SparkBatchSourceFactory create(String datasetName, Map<String, String> datasetArgs,
-                                        @Nullable List<Split> splits) {
-    return new SparkBatchSourceFactory(null, null, new DatasetInfo(datasetName, datasetArgs, splits));
+                                        @Nullable List<Split> splits, String sourceStageName) {
+    return new SparkBatchSourceFactory(null, null, new DatasetInfo(datasetName, datasetArgs, splits), sourceStageName);
   }
 
-  static SparkBatchSourceFactory create(Input input) {
+  static SparkBatchSourceFactory create(Input input, String sourceStageName) {
     if (input instanceof Input.DatasetInput) {
       // Note if input format provider is trackable then it comes in as DatasetInput
       Input.DatasetInput datasetInput = (Input.DatasetInput) input;
-      return create(datasetInput.getName(), datasetInput.getArguments(), datasetInput.getSplits());
+      return create(datasetInput.getName(), datasetInput.getArguments(), datasetInput.getSplits(), sourceStageName);
     } else if (input instanceof Input.StreamInput) {
       Input.StreamInput streamInput = (Input.StreamInput) input;
-      return create(streamInput.getStreamBatchReadable());
+      return create(streamInput.getStreamBatchReadable(), sourceStageName);
     } else if (input instanceof Input.InputFormatProviderInput) {
       Input.InputFormatProviderInput ifpInput = (Input.InputFormatProviderInput) input;
-      return new SparkBatchSourceFactory(null, ifpInput.getInputFormatProvider(), null);
+      return new SparkBatchSourceFactory(null, ifpInput.getInputFormatProvider(), null, sourceStageName);
     }
     throw new IllegalArgumentException("Unknown input format type: " + input.getClass().getCanonicalName());
   }
 
   static SparkBatchSourceFactory deserialize(InputStream inputStream) throws IOException {
     DataInput input = new DataInputStream(inputStream);
-
+    String sourceStageName = input.readUTF();
     // Deserialize based on the type
     switch (SourceType.from(input.readByte())) {
       case STREAM:
-        return new SparkBatchSourceFactory(new StreamBatchReadable(URI.create(input.readUTF())), null, null);
+        return new SparkBatchSourceFactory(new StreamBatchReadable(URI.create(input.readUTF())), null, null,
+                                           sourceStageName);
       case PROVIDER:
         return new SparkBatchSourceFactory(
           null, new BasicInputFormatProvider(
-          input.readUTF(), Serializations.deserializeMap(input, Serializations.createStringObjectReader())), null
-        );
+          input.readUTF(), Serializations.deserializeMap(input, Serializations.createStringObjectReader())),
+          null, sourceStageName);
       case DATASET:
-        return new SparkBatchSourceFactory(null, null, DatasetInfo.deserialize(input));
+        return new SparkBatchSourceFactory(null, null, DatasetInfo.deserialize(input), sourceStageName);
     }
     throw new IllegalArgumentException("Invalid input. Failed to decode SparkBatchSourceFactory.");
   }
 
   private SparkBatchSourceFactory(@Nullable StreamBatchReadable streamBatchReadable,
                                   @Nullable InputFormatProvider inputFormatProvider,
-                                  @Nullable DatasetInfo datasetInfo) {
+                                  @Nullable DatasetInfo datasetInfo,
+                                  String sourceStageName) {
     this.streamBatchReadable = streamBatchReadable;
     this.inputFormatProvider = inputFormatProvider;
     this.datasetInfo = datasetInfo;
+    this.sourceStageName = sourceStageName;
   }
 
   public void serialize(OutputStream outputStream) throws IOException {
     DataOutput output = new DataOutputStream(outputStream);
+    output.writeUTF(sourceStageName);
     if (streamBatchReadable != null) {
       output.writeByte(SourceType.STREAM.id);
       output.writeUTF(streamBatchReadable.toURI().toString());
@@ -147,6 +152,10 @@ final class SparkBatchSourceFactory {
     // This should never happen since the constructor is private and it only get calls from static create() methods
     // which make sure one and only one of those source type will be specified.
     throw new IllegalStateException("Unknown source type");
+  }
+
+  public String getSourceStageName() {
+    return sourceStageName;
   }
 
   @SuppressWarnings("unchecked")

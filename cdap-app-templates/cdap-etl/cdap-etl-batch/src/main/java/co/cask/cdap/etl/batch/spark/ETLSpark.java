@@ -77,8 +77,8 @@ public class ETLSpark extends AbstractSpark {
     setExecutorResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getResources());
 
-    if (phaseSpec.getPhase().getSources().size() != 1) {
-      throw new IllegalArgumentException("Pipeline must contain exactly one source.");
+    if (phaseSpec.getPhase().getSources().isEmpty()) {
+      throw new IllegalArgumentException("Pipeline must contain at least one source.");
     }
     if (phaseSpec.getPhase().getSinks().isEmpty()) {
       throw new IllegalArgumentException("Pipeline must contain at least one sink.");
@@ -103,29 +103,30 @@ public class ETLSpark extends AbstractSpark {
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePluginInstantiator pluginInstantiator =
       new PipelinePluginInstantiator(context, phaseSpec);
-    // we checked at configure time that there is exactly one source
-    String sourceName = phaseSpec.getPhase().getSources().iterator().next();
+    DatasetContextLookupProvider lookupProvider = new DatasetContextLookupProvider(context);
 
-    BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
-    DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
-    SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context, lookProvider, sourceName,
-                                                                        Integer.toString(0));
-    batchSource.prepareRun(sourceContext);
-
-    SparkBatchSourceFactory sourceFactory = sourceContext.getSourceFactory();
-    if (sourceFactory == null) {
-      // TODO: Revisit what exception to throw
-      throw new IllegalArgumentException("No input was set. Please make sure the source plugin calls setInput when " +
-                                           "preparing the run.");
+    int sourceCount = 0;
+    List<SparkBatchSourceFactory> batchSourceFactories = new ArrayList<>();
+    for (String sourceName : phaseSpec.getPhase().getSources()) {
+      BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+      SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context, lookupProvider, sourceName,
+                                                                          Integer.toString(sourceCount));
+      batchSource.prepareRun(sourceContext);
+      SparkBatchSourceFactory sourceFactory = sourceContext.getSourceFactory();
+      if (sourceFactory == null) {
+        throw new IllegalArgumentException("No input was set. Please make sure the source plugin calls setInput when" +
+                                             "preparing the run.");
+      }
+      finishers.add(batchSource, sourceContext);
+      batchSourceFactories.add(sourceFactory);
     }
-    finishers.add(batchSource, sourceContext);
 
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     int sinkCount = 0;
     for (String sinkName : phaseSpec.getPhase().getSinks()) {
       BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName);
       if (batchSink instanceof SparkSink) {
-        BasicSparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, sinkName);
+        BasicSparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookupProvider, sinkName);
         ((SparkSink) batchSink).prepareRun(sparkPluginContext);
         finishers.add((SparkSink) batchSink, sparkPluginContext);
       } else {
@@ -157,9 +158,13 @@ public class ETLSpark extends AbstractSpark {
     File configFile = File.createTempFile("ETLSpark", ".config");
     cleanupFiles.add(configFile);
     try (OutputStream os = new FileOutputStream(configFile)) {
-      sourceFactory.serialize(os);
-      sinkFactory.serialize(os);
       DataOutput dataOutput = new DataOutputStream(os);
+      // Number of batch inputs in this spark job
+      dataOutput.writeInt(batchSourceFactories.size());
+      for (SparkBatchSourceFactory sourceFactory : batchSourceFactories) {
+        sourceFactory.serialize(os);
+      }
+      sinkFactory.serialize(os);
       dataOutput.writeInt(numPartitions == null ? -1 : numPartitions);
     }
 

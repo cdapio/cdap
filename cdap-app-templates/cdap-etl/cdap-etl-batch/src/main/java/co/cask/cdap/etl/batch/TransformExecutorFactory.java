@@ -42,10 +42,6 @@ public abstract class TransformExecutorFactory<T> {
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
 
-  public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics) {
-    this(pluginInstantiator, metrics, null);
-  }
-
   public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics,
                                   String sourceStageName) {
     this.sourceStageName = sourceStageName;

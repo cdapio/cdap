@@ -57,7 +57,7 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
       streamInput = Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime(), formatSpec);
     }
     externalInput = suffixInput(streamInput);
-    sourceFactory = SparkBatchSourceFactory.create(externalInput);
+    sourceFactory = SparkBatchSourceFactory.create(externalInput, getStageName());
   }
 
   @Override
@@ -73,26 +73,26 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
   @Override
   public void setInput(String datasetName, List<Split> splits) {
     externalInput = suffixInput(Input.ofDataset(datasetName, Collections.<String, String>emptyMap(), splits));
-    sourceFactory = SparkBatchSourceFactory.create(externalInput);
+    sourceFactory = SparkBatchSourceFactory.create(externalInput, getStageName());
   }
 
   @Override
   public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
     externalInput = suffixInput(Input.ofDataset(datasetName, arguments, splits));
-    sourceFactory = SparkBatchSourceFactory.create(externalInput);
+    sourceFactory = SparkBatchSourceFactory.create(externalInput, getStageName());
   }
 
   @Override
   public void setInput(InputFormatProvider inputFormatProvider) {
     externalInput = suffixInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
-    sourceFactory = SparkBatchSourceFactory.create(externalInput);
+    sourceFactory = SparkBatchSourceFactory.create(externalInput, getStageName());
   }
 
   @Override
   public void setInput(Input input) {
     externalInput = suffixInput(input);
     Input trackableInput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), externalInput);
-    sourceFactory = SparkBatchSourceFactory.create(trackableInput);
+    sourceFactory = SparkBatchSourceFactory.create(trackableInput, getStageName());
   }
 
   @Nullable
