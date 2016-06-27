@@ -182,14 +182,12 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
           JavaPairRDD<Object, Object> rdd = rddEntry.getValue();
           JavaPairRDD<String, Object> localResultRDD = rdd.flatMapToPair(new MapFunction<>(sec, null, null, false,
                                                                                            rddEntry.getKey())).cache();
-          resultRDDList.add(localResultRDD.cache());
+          resultRDDList.add(localResultRDD);
         }
-        JavaPairRDD<String, Object> resultRDD = resultRDDList.remove(0).cache();
 
+        JavaPairRDD<String, Object> resultRDD = null;
         for (JavaPairRDD<String, Object> rdd : resultRDDList) {
-          LOG.info("Size of the ResultRDD : {}", resultRDD.count());
-          resultRDD.union(rdd).cache();
-          LOG.info("Size of the ResultRDD : {}", resultRDD.count());
+          resultRDD = (resultRDD == null) ? rdd : resultRDD.union(rdd);
         }
         return resultRDD.cache();
       }
