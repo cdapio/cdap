@@ -132,11 +132,11 @@ function link (scope, element) {
 
       //Global Variables
       var width = element.parent()[0].offsetWidth;
-      var height = 60;
+      var height = 50;
       var paddingLeft = 15;
       var paddingRight = 15;
       var maxRange = width - paddingLeft - paddingRight;
-      var sliderLimit = maxRange + 15;
+      var sliderLimit = maxRange + 24;
 
       //Plot function call
       plot();
@@ -150,7 +150,8 @@ function link (scope, element) {
                     .attr('height', height);
 
         //Set the Range and Domain
-        var xScale = d3.time.scale().range([0, (maxRange)]);
+        //var xScale = d3.time.scale().range([0, (maxRange)]);
+        var xScale = d3.time.scale().range([0, (width)]);
         xScale.domain(d3.extent(timelineData, function(d) {
           return d.time;
         }));
@@ -159,8 +160,8 @@ function link (scope, element) {
         var xAxis = d3.svg.axis().scale(xScale)
             .orient('bottom')
             .innerTickSize(-40)
-            .tickPadding(10)
-            .ticks(10);
+            .tickPadding(7)
+            .ticks(8);
 
         //Generate circles from the filtered events
         let circles = svg.selectAll('circle')
@@ -173,26 +174,30 @@ function link (scope, element) {
                              .nice(d3.time.minute)
                              .range([0,width]);
 
-        let xAxis = d3.svg.axis()
-          .orient('bottom')
-          .scale(xScale);
-
-        //Initially renders circles uniformally across timeline
-        circles.attr('cx', function(d, i) {
-                  return i*50 + 25;
-                })
-                .attr('cy', height-height/3)
-                .attr('r', 3)
-                .attr('class', function(d) {
-                  if(d.level === 'ERROR'){
-                    return 'red-circle';
-                  }
-                  else if(d.level === 'WARN'){
-                    return 'yellow-circle';
-                  } else {
-                    return 'other-circle';
-                  }
-                });
+        circles.attr('cx', function(d) {
+          let xVal = Math.floor(xScale(d.time));
+          if(timelineStack[xVal] === undefined){
+            timelineStack[xVal] = 0;
+          } else {
+            timelineStack[xVal]++;
+          }
+          return xScale(d.time);
+        })
+        .attr('cy', function(d) {
+          let numDots = timelineStack[Math.floor(xScale(d.time))]--;
+          return height-height/2.5 - (numDots * 6);
+        })
+        .attr('r', 2)
+        .attr('class', function(d) {
+          if(d.level === 'ERROR'){
+            return 'red-circle';
+          }
+          else if(d.level === 'WARN'){
+            return 'yellow-circle';
+          } else {
+            return 'other-circle';
+          }
+        });
 
         // -------------------------Build Brush / Sliders------------------------- //
 
@@ -203,7 +208,7 @@ function link (scope, element) {
           .call(xAxis);
 
         //Left Slider Implementation
-        var leftVal = 10;
+        var leftVal = 0;//10;
 
         function leftBrushed() {
           if(d3.event.sourceEvent) {
@@ -248,8 +253,8 @@ function link (scope, element) {
               .call(brush);
 
         var leftHandle = slide.append('rect')
-            .attr('height', 60)
-            .attr('width', 15)
+            .attr('height', 50)
+            .attr('width', 7)
             .attr('x', 0)
             .attr('y', -10)
             .attr('class', 'leftHandle');
@@ -259,23 +264,19 @@ function link (scope, element) {
           if(val < 0){
             val = 0;
           }
-
           //Testing
           if(val > sliderLimit){
             val = sliderLimit;
           }
-
           brush.extent([val, val]);
-
           //Move the slider to the correct location
           leftHandle.attr('x', val);
-
+          console.log('Left slider is at : ' + xScale.invert(val));
           //Move the filled bar to the slider location by modifying the path
           sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
         }
 
-        //Append the top slider
-        //Define second brush
+        //Append the Top slider
         var brush2 = d3.svg.brush()
             .x(xScale)
             .extent([0,0])
@@ -288,7 +289,6 @@ function link (scope, element) {
 
         svg2.append('g')
             .attr('class', 'xaxisTop')
-            .attr('transform', 'translate(0,' + 15 / 2 + ')')
             .call(d3.svg.axis()
               .scale(xScale)
               .orient('bottom'))
@@ -307,26 +307,34 @@ function link (scope, element) {
         var pinHandle = slider.append('rect')
             .attr('width', 15)
             .attr('height', 15)
-            .attr('x', 0)
+            //Container width - width of rectangle
+            .attr('x', width - 15)
             .attr('y', 0)
             .attr('class', 'scrollPin');
 
+        pinHandle.append('rect')
+          .attr('width', 3)
+          .attr('height', 25)
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr('class', 'scrollNeedle');
+
         function slidePin() {
-          var value = brush2.extent()[0];
 
-          if (d3.extent.sourceEvent) {
-            value = xScale.invert(d3.mouse(this)[0]);
-            brush2.extent([value,value]);
-          }
-          if(value < 0){
-            value = 0;
+          var pinX = d3.mouse(this)[0];
+          if(pinX < 0){
+            pinX = 0;
           }
 
-          if(d3.mouse(this)[0] > sliderLimit){
-            pinHandle.attr('x', sliderLimit);
-          } else {
-            pinHandle.attr('x', xScale(value));
+          if(pinX > width-15){
+            pinX = width-15;
           }
+
+          updatePin(pinX);
+        }
+
+        function updatePin (val) {
+          pinHandle.attr('x', val);
         }
       }
 }
