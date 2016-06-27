@@ -15,7 +15,7 @@
  */
 
 class TrackerEntityController{
-  constructor($state, myJumpFactory, rDatasetType) {
+  constructor($state, myJumpFactory, rDatasetType, rSystemTags) {
     this.$state = $state;
     this.myJumpFactory = myJumpFactory;
 
@@ -23,6 +23,7 @@ class TrackerEntityController{
     let entitySplit = entityParams.split(':');
 
     this.datasetType = rDatasetType;
+    this.datasetExplorable = Array.isArray(rSystemTags) && rSystemTags.indexOf('explore') !== -1;
 
     switch (entitySplit[0]) {
       case 'streams':
@@ -55,7 +56,7 @@ class TrackerEntityController{
   }
 }
 
-TrackerEntityController.$inject = ['$state', 'myJumpFactory', 'rDatasetType'];
+TrackerEntityController.$inject = ['$state', 'myJumpFactory', 'rDatasetType', 'rSystemTags'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerEntityController', TrackerEntityController);
