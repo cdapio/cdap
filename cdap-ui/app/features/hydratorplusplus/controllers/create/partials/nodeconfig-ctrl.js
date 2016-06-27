@@ -254,7 +254,7 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 
   toggleMaximizedView(isExpanded) {
-    this.state.windowMode = (isExpanded) ? 'expand': 'regular';
+    this.state.windowMode = (isExpanded) ? 'expand' : 'regular';
   }
   validateSchema() {
     this.state.errors = [];
