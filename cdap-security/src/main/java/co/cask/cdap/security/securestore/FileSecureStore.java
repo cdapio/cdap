@@ -22,7 +22,6 @@ import co.cask.cdap.api.security.securestore.SecureStoreManager;
 import co.cask.cdap.api.security.securestore.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,15 +60,14 @@ import javax.crypto.spec.SecretKeySpec;
  *
  * When the client calls a put, the key is put in the keystore, the metadata object
  * for that key is created and that is put in the store too. The system then flushes
- *  the keystore to the file system.
- *  During the flush, the current file is first backed up (_OLD). Then the keystore
- *  is written to temporary file (_NEW). If that is successful then the temporary
- *  file is renamed to the secure store file. If anything fails during this process
- *  then the keystore reverts to the last  successfully written file.
+ * the keystore to the file system.
+ * During the flush, the current file is first backed up (_OLD). Then the keystore
+ * is written to temporary file (_NEW). If that is successful then the temporary
+ * file is renamed to the secure store file. If anything fails during this process
+ * then the keystore reverts to the last successfully written file.
  *
  *  The keystore is flushed to the filesystem after every put and delete.
  */
-@Singleton
 class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
@@ -79,9 +77,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    metadata for existing entries unreachable.
    */
   private static final String METADATA_SUFFIX = "_metadata";
-  private static final String DEFAULT_FILE_PATH = "/tmp";
-  private static final String DEFAULT_FILE_NAME = "securestore";
-  private static final char[] DEFAULT_PASSWORD = "cdapsecret".toCharArray();
   /*
    Java Keystore needs an algorithm name to store a key, it is not used for any checks, only stored,
    since we are not handling the encryption we don't care about this.
@@ -92,25 +87,19 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   private final Path path;
   private final Lock readLock;
   private final Lock writeLock;
-
-  private KeyStore keyStore;
+  private final KeyStore keyStore;
   private boolean changed = false;
 
   FileSecureStore(CConfiguration cConf) throws IOException {
     // Get the path to the keystore file
-    String pathString = cConf.get(Constants.Security.Store.FILE_PATH, DEFAULT_FILE_PATH);
+    String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
-    path = dir.resolve(DEFAULT_FILE_NAME);
+    path = dir.resolve(Constants.Security.Store.FILE_NAME);
 
     // Get the keystore password
-    String passwordString = cConf.get(Constants.Security.Store.FILE_PASSWORD);
-    if (passwordString == null || passwordString.isEmpty()) {
-      password = DEFAULT_PASSWORD;
-    } else {
-      password = passwordString.toCharArray();
-    }
+    password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
 
-    locateKeystore();
+    keyStore = locateKeystore(path, password);
     ReadWriteLock lock = new ReentrantReadWriteLock(true);
     readLock = lock.readLock();
     writeLock = lock.writeLock();
@@ -145,17 +134,12 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
         keyStore.deleteEntry(name);
         throw k;
       }
+      // Attempt to persist the store. If that fails then remove the element and rethrow the Exception.
+      flush();
     } catch (KeyStoreException e) {
       throw new IOException("Failed to store the key. ", e);
     } finally {
       writeLock.unlock();
-    }
-    // Attempt to persist the store. If that fails then remove the element and rethrow the Exception.
-    try {
-      flush();
-    } catch (IOException ioe) {
-      delete(name);
-      throw ioe;
     }
   }
 
@@ -177,23 +161,18 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       if (keyStore.containsAlias(metaKey)) {
         keyStore.deleteEntry(metaKey);
       }
+      // Attempt to persist the store. If that fails then remove the element and rethrow the Exception.
+      flush();
     } catch (KeyStoreException e) {
       LOG.error("Failed to delete the key " + name, e);
     } finally {
       writeLock.unlock();
     }
-    // Attempt to persist the store. If that fails then remove the element and rethrow the Exception.
-    try {
-      flush();
-    } catch (IOException ioe) {
-      delete(name);
-      throw ioe;
-    }
   }
 
   /**
    * List of all the entries in the secure store.
-   * @return A map of name -> description
+   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
    * @throws IOException
    */
   @Override
@@ -217,7 +196,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
         throw new IOException("Failed to get the list of elements from the secure store.", e);
       }
       return list;
-
     } finally {
       readLock.unlock();
     }
@@ -315,11 +293,12 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    *
    * @throws IOException If there is a problem reading or creating the keystore.
    */
-  private void locateKeystore() throws IOException {
+  private static KeyStore locateKeystore(Path path, final char[] password) throws IOException {
     Path oldPath = constructOldPath(path);
     Path newPath = constructNewPath(path);
+    KeyStore ks;
     try {
-      keyStore = KeyStore.getInstance(SCHEME_NAME);
+      ks = KeyStore.getInstance(SCHEME_NAME);
       if (Files.exists(path)) {
         // If the main file exists then the new path should not exist.
         // Both existing means there is an inconsistency.
@@ -328,15 +307,16 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
             String.format("Secure Store not loaded due to an inconsistency "
                             + "('%s' and '%s' should not exist together)!!", path, newPath));
         }
-        tryLoadFromPath(path, oldPath);
-      } else if (!tryLoadIncompleteFlush(newPath, oldPath)) {
+        tryLoadFromPath(ks, path, oldPath, password);
+      } else if (!tryLoadIncompleteFlush(ks, path, newPath, oldPath, password)) {
         // We were not able to load an existing key store. Create a new one.
-        keyStore.load(null, password);
+        ks.load(null, password);
         LOG.info("New Secure Store initialized successfully.");
       }
     } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
-      LOG.error("Can't create Secure Store. " + e);
+      throw new IOException("Can't create Secure Store. ", e);
     }
+    return ks;
   }
 
   /**
@@ -347,7 +327,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param backupPath Backup path (_OLD)
    * @throws IOException
    */
-  private void tryLoadFromPath(Path path, Path backupPath) throws IOException {
+  private static void tryLoadFromPath(KeyStore keyStore, Path path, Path backupPath, char[] password) throws IOException {
     try {
       loadFromPath(keyStore, path, password);
       // Successfully loaded the keystore. No need to keep the old file.
@@ -377,7 +357,8 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param newPath the _NEW file created during flush
    * @return If the file was successfully loaded
    */
-  private boolean tryLoadIncompleteFlush(Path oldPath, Path newPath)
+  private static boolean tryLoadIncompleteFlush(KeyStore keyStore, Path path, Path oldPath, Path newPath,
+                                                final char[] password)
     throws IOException {
     // Check if _NEW exists (in case flush had finished writing but not
     // completed the re-naming)

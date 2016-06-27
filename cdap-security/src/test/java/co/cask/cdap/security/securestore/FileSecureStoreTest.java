@@ -124,7 +124,6 @@ public class FileSecureStoreTest {
     long oldCreateTime = oldData.getMetadata().getLastModifiedTime();
     Assert.assertArrayEquals(VALUE1.getBytes(Charsets.UTF_8), oldData.get());
     String newVal = "New value";
-    Thread.sleep(1000);
     secureStoreManager.put(KEY1, newVal.getBytes(Charsets.UTF_8), PROPERTIES_1);
     long newCreateTime = secureStore.get(KEY1).getMetadata().getLastModifiedTime();
     Assert.assertArrayEquals(newVal.getBytes(Charsets.UTF_8), secureStore.get(KEY1).get());

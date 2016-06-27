@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents the metadata for the data stored in the Secure Store.
@@ -36,20 +37,20 @@ public final class SecureStoreMetadata {
 
   private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
-  private static final String CREATED_FIELD = "created";
+  private static final String CREATED_FIELD = "createdEpochMs";
   private static final String PROPERTIES_FIELD = "properties";
   private static final String DESCRIPTION_DEFAULT = "";
   private static final Gson GSON = new Gson();
 
   private final String name;
   private final String description;
-  private final Date created;
+  private final long createdEpochMs;
   private final Map<String, String> properties;
 
   private SecureStoreMetadata(String name, String description, Date created, Map<String, String> properties) {
     this.name = name;
     this.description = description;
-    this.created = created;
+    this.createdEpochMs = created.getTime();
     this.properties = properties;
   }
 
@@ -71,7 +72,7 @@ public final class SecureStoreMetadata {
    * @return Last time, in epoch, this element was modified.
    */
   public long getLastModifiedTime() {
-    return created.getTime();
+    return createdEpochMs;
   }
 
   /**
@@ -85,16 +86,12 @@ public final class SecureStoreMetadata {
     return description;
   }
 
-  public Date getCreated() {
-    return created;
-  }
-
   @Override
   public String toString() {
     return "SecureStoreMetadata{" +
       "name='" + name + '\'' +
       ", description='" + description + '\'' +
-      ", created=" + created +
+      ", createdEpochMs=" + createdEpochMs +
       ", properties=" + properties +
       '}';
   }
@@ -108,25 +105,13 @@ public final class SecureStoreMetadata {
       return false;
     }
     SecureStoreMetadata that = (SecureStoreMetadata) o;
-    if (!name.equals(that.name)) {
-      return false;
-    }
-    if (!description.equals(that.description)) {
-      return false;
-    }
-    if (!created.equals(that.created)) {
-      return false;
-    }
-    return properties != null ? properties.equals(that.properties) : that.properties == null;
+    return name.equals(that.name) && description.equals(that.description) && createdEpochMs == that.createdEpochMs
+      && (properties != null ? properties.equals(that.properties) : that.properties == null);
   }
 
   @Override
   public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + description.hashCode();
-    result = 31 * result + created.hashCode();
-    result = 31 * result + (properties != null ? properties.hashCode() : 0);
-    return result;
+    return Objects.hashCode(this);
   }
 
   /**
@@ -151,7 +136,7 @@ public final class SecureStoreMetadata {
    */
   public SecureStoreMetadata(byte[] bytes) throws IOException {
     String name = null;
-    Date created = null;
+    long created = 0;
     String description = null;
     Map<String, String> properties = null;
     try (JsonReader reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(bytes),
@@ -162,7 +147,7 @@ public final class SecureStoreMetadata {
         if (NAME_FIELD.equals(field)) {
           name = reader.nextString();
         } else if (CREATED_FIELD.equals(field)) {
-          created = new Date(reader.nextString());
+          created = reader.nextLong();
         } else if (DESCRIPTION_FIELD.equals(field)) {
           description = reader.nextString();
         } else if (PROPERTIES_FIELD.equalsIgnoreCase(field)) {
@@ -177,7 +162,7 @@ public final class SecureStoreMetadata {
       reader.endObject();
     }
     this.name = name;
-    this.created = created;
+    this.createdEpochMs = created;
     this.description = description;
     this.properties = properties;
   }
