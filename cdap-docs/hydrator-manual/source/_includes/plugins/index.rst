@@ -13,8 +13,8 @@ Hydrator Plugins
 .. toctree::
    :maxdepth: 2
    
-    Plugins for Batch <batch/index>
-    Plugins for Real-time <realtime/index>
+    Batch Plugins <batch/index>
+    Real-time Plugins <realtime/index>
     Shared Plugins <shared-plugins/index>
     Post-Action Plugins <postactions/index>
     Adding Third-Party Plugins <third-party>
@@ -22,7 +22,7 @@ Hydrator Plugins
     Installing Plugins <installing>
 
 
-- :doc:`Plugins for Batch <batch/index>`
+- :doc:`Batch Plugins <batch/index>`
 
   - :doc:`Source Plugins <batch/sources/index>`
   - :doc:`Transform Plugins <batch/transforms/index>`
@@ -32,7 +32,7 @@ Hydrator Plugins
 ..   - :doc:`Compute Plugins <batch/computes/index>`
 ..   - :doc:`Model Plugins <batch/models/index>`
 
-- :doc:`Plugins for Real-time <realtime/index>`
+- :doc:`Real-time Plugins<realtime/index>`
 
   - :doc:`Source Plugins <realtime/sources/index>`
   - :doc:`Transform Plugins <realtime/transforms/index>`
@@ -76,32 +76,6 @@ should not collide with existing names for ease of use in the CDAP UI.
 Shipped with CDAP, the :doc:`batch <batch/index>` and :doc:`real-time <realtime/index>`
 plugins (Hydrator Version |cdap-hydrator-version|) are available for creating ETL
 applications.
-
-.. 
-.. .. toctree::
-..    :maxdepth: 2
-..    
-..     Batch Sources <batchsources/index>
-..     Real-time Sources <realtimesources/index>
-..     Transformations <transforms/index>
-..     Batch Sinks <batchsinks/index>
-..     Real-time Sinks <realtimesinks/index>
-..     Shared Plugins <shared-plugins/index>
-..     Third-Party Jars <third-party>
-
-.. 
-.. .. toctree::
-..    :maxdepth: 2
-..    
-..     Batch Sources <batch/sources/index>
-..     Batch Transforms <transforms/index>
-..     Batch Sinks <batch/sinks/index>
-..     Real-time Sources <realtime/sources/index>
-..     Real-time Transforms <transforms/index>
-..     Real-time Sinks <realtime/sinks/index>
-
-..     Shared Plugins <shared-plugins/index>
-..     Third-Party Jars <third-party>
  
 .. rubric:: Exploring Plugin Details
 

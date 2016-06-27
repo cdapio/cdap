@@ -244,8 +244,8 @@ function download_includes() {
   download_md_file mongodb-plugins MongoDB-realtimesink.md
   
   # Currently only for batch
-  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "batch" "transform"
-  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md '' "batch" "transform"
+  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "batch" "compute"
+  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md '' "batch" "model"
   
   download_md_file transform-plugins CSVFormatter-transform.md
   download_md_file transform-plugins CSVParser-transform.md

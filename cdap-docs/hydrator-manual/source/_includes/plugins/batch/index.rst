@@ -4,19 +4,21 @@
 
 .. _cask-hydrator-plugins-batch:
 
-=================
-Plugins for Batch
-=================
+=============
+Batch Plugins
+=============
 
 Hydrator Version |cdap-hydrator-version|
 
 .. toctree::
     :maxdepth: 2
 
-    Batch Source Plugins <sources/index>
-    Batch Transformation Plugins <transforms/index>
-    Batch Aggregator Plugins <aggregators/index>
-    Batch Sink Plugins <sinks/index>
+    Source Plugins <sources/index>
+    Transformation Plugins <transforms/index>
+    Aggregator Plugins <aggregators/index>
+    Compute Plugins <compute/index>
+    Model Plugins <model/index>
+    Sink Plugins <sinks/index>
 
 ..     Compute Plugins <computes/index>
 ..     Model Plugins <models/index>

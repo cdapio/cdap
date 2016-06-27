@@ -4,15 +4,15 @@
 
 .. _cask-hydrator-plugins-real-time:
 
-=====================
-Plugins for Real-time
-=====================
+=================
+Real-time Plugins
+=================
 
 Hydrator Version |cdap-hydrator-version|
 
 .. toctree::
     :maxdepth: 2
 
-    Real-time Source Plugins <sources/index>
-    Real-time Transformation Plugins <transforms/index>
-    Real-time Sink Plugins <sinks/index>
+    Source Plugins <sources/index>
+    Transformation Plugins <transforms/index>
+    Sink Plugins <sinks/index>
