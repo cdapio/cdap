@@ -21,151 +21,134 @@ class TrackerUsageController {
     this.$scope = $scope;
     this.myTrackerApi = myTrackerApi;
 
-    this.auditLogCounts = {
-      'bucket_interval' : 'day',
-      'results' : [
-        {
-          'timestamp' : 1451606400,
-          'log_count' : 25
-        },
-        {
-          'timestamp' : 1451692800,
-          'log_count' : 26
-        },
-        {
-          'timestamp' : 1451779200,
-          'log_count' : 27
-        },
-        {
-          'timestamp' : 1451865600,
-          'log_count' : 22
-        },
-        {
-          'timestamp' : 1451952000,
-          'log_count' : 29
-        },
-        {
-          'timestamp' : 1452038400,
-          'log_count' : 0
-        },
-        {
-          'timestamp' : 1452124800,
-          'log_count' : 32
-        },
-        {
-          'timestamp' : 1452211200,
-          'log_count' : 33
-        },
-        {
-          'timestamp' : 1452297600,
-          'log_count' : 1
-        },
-        {
-          'timestamp' : 1452384000,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1452470400,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1452556800,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1452643200,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1452729600,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1452816000,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1452902400,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1452988800,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1453075200,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1453161600,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1453248000,
-          'log_count' : 0
-        },
-        {
-          'timestamp' : 1453334400,
-          'log_count' : 0
-        },
-        {
-          'timestamp' : 1453420800,
-          'log_count' : 5
-        },
-        {
-          'timestamp' : 1453507200,
-          'log_count' : 7
-        },
-        {
-          'timestamp' : 1453593600,
-          'log_count' : 12
-        },
-        {
-          'timestamp' : 1453680000,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1453766400,
-          'log_count' : 2
-        },
-        {
-          'timestamp' : 1453852800,
-          'log_count' : 1
-        },
-        {
-          'timestamp' : 1453939200,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1454025600,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1454112000,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1454198400,
-          'log_count' : 7
-        },
-        {
-          'timestamp' : 1454284800,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1454371200,
-          'log_count' : 4
-        },
-        {
-          'timestamp' : 1454457600,
-          'log_count' : 9
-        },
-        {
-          'timestamp' : 1454544000,
-          'log_count' : 7
-        }
-      ]
+    let entitySplit = this.$state.params.entityType.split(':');
+
+    this.entityType = entitySplit;
+
+
+    this.timeRangeOptions = [
+      {
+        label: 'Last 7 days',
+        start: 'now-7d',
+        end: 'now'
+      },
+      {
+        label: 'Last 14 days',
+        start: 'now-14d',
+        end: 'now'
+      },
+      {
+        label: 'Last month',
+        start: 'now-30d',
+        end: 'now'
+      },
+      {
+        label: 'Last 6 months',
+        start: 'now-180d',
+        end: 'now'
+      },
+      {
+        label: 'Last 12 months',
+        start: 'now-365d',
+        end: 'now'
+      }
+    ];
+
+    this.timeRange = {
+      start: $state.params.start || 'now-7d',
+      end: $state.params.end || 'now'
     };
+
+    this.customTimeRange = {
+      startTime: null,
+      endTime: null
+    };
+
+    this.selectedTimeRange = this.findTimeRange();
+
+    this.fetchAuditHistogram();
+    this.fetchTopDatasets();
+    this.fetchTimeSince();
+  }
+
+  findTimeRange() {
+    let match = this.timeRangeOptions.filter( (option) => {
+      return option.start === this.timeRange.start && option.end === this.timeRange.end;
+    });
+
+    if (match.length === 0) {
+      this.isCustom = true;
+      this.customTimeRange.startTime = new Date(parseInt(this.$state.params.start, 10) * 1000);
+      this.customTimeRange.endTime = new Date(parseInt(this.$state.params.end, 10) * 1000);
+    }
+
+    return match.length > 0 ? match[0] : { label: 'Custom' };
+  }
+
+  goCustomDate() {
+    let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000, 10);
+    let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000, 10);
+
+    this.$state.go('tracker.detail.entity.usage', { start: startTime, end: endTime });
+  }
+
+  fetchAuditHistogram() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      // startTime: this.timeRange.start,
+      // endTime: this.timeRange.end,
+      scope: this.$scope
+    };
+
+    this.myTrackerApi.getAuditHistogram(params)
+      .$promise
+      .then((response) => {
+        this.auditHistogram = response;
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  fetchTopDatasets() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      limit: 5,
+      // startTime: 'now-7d',
+      // endTime: 'now',
+      scope: this.$scope,
+      entity: 'datasets'
+    };
+
+    this.myTrackerApi.getTopEntities(params)
+      .$promise
+      .then((response) => {
+        this.topDatasets = response;
+        this.emptyRows = false;
+        if (this.topDatasets.length >= 3) {
+          this.emptyRows = true;
+          this.totalEmptyRows = Array.apply(null, {length: 5 - this.topDatasets.length}).map(Number.call, Number);
+        }
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  fetchTimeSince() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope,
+      entityName: this.$state.params.entityId,
+      entityType: this.$state.params.entityType
+    };
+
+    this.myTrackerApi.getTimeSince(params)
+      .$promise
+      .then((response) => {
+        this.timeSince = response;
+        console.log('this.timeSince: ', this.timeSince);
+      }, (err) => {
+        console.log('Error', err);
+      });
   }
 }
 

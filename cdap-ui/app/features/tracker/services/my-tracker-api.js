@@ -24,7 +24,9 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId,
       propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties',
       // FIXME: This service name needs to come from UI_CONFIG. Need to figure out how to do this.
-      topEntitiesPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/topEntities/:entity';
+      topEntitiesPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/top-entities/:entity',
+      auditHistogramPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/audit-histogram',
+      timeSincePath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/time-since';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -50,7 +52,9 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     deployTrackerApp: myHelpers.getConfig('PUT', 'REQUEST', trackerApp),
     startTrackerProgram: myHelpers.getConfig('POST', 'REQUEST', trackerApp + '/:programType/:programId/start', false, { suppressErrors: true }),
     trackerProgramStatus: myHelpers.getConfig('GET', 'REQUEST', trackerApp + '/:programType/:programId/status', false, { suppressErrors: true }),
-    getTopEntities: myHelpers.getConfig('GET', 'REQUEST', topEntitiesPath, false, { suppressErrors: true }),
+    getTopEntities: myHelpers.getConfig('GET', 'REQUEST', topEntitiesPath, true, { suppressErrors: true }),
+    getAuditHistogram: myHelpers.getConfig('GET', 'REQUEST', auditHistogramPath, false, { suppressErrors: true }),
+    getTimeSince: myHelpers.getConfig('GET', 'REQUEST', timeSincePath, false, { suppressErrors: true }),
 
     // METADATA PROPERTIES CONTROL
     deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true }),

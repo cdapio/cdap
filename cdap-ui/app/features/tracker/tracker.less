@@ -109,7 +109,6 @@ body.state-tracker-detail-entity-usage {
         border-bottom-width: 1px;
         color: @title-font-color;
         font-size: 14px;
-        line-height: 1;
         vertical-align: top;
         &:hover,
         &:focus { cursor: default; }
@@ -156,8 +155,8 @@ body.state-tracker-detail-entity-usage {
     }
   }
   div.metric-container {
-    width: 92%;
     margin: 0 auto;
+    max-width: 340px;
   }
 }
 
@@ -205,6 +204,7 @@ body.state-tracker-home.state-tracker {
     table.table {
       tr {
         th {
+          line-height: 1;
           padding: 6px 10px;
         }
       }
@@ -945,9 +945,8 @@ body.state-tracker-detail-entity-usage {
       tr {
         background-color: white;
         th,
-        td {
-          text-align: center;
-        }
+        td { text-align: center; }
+        th { padding: 11px; }
         > td {
           &:first-child {
             font-weight: 600;

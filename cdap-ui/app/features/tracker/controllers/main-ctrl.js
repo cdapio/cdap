@@ -21,11 +21,6 @@ class TrackerMainController{
     this.searchQuery = '';
     this.myTrackerApi = myTrackerApi;
 
-    this.timeRange = {
-      start: $state.params.start || 'now-7d',
-      end: $state.params.end || 'now'
-    };
-
     this.fetchTopDatasets();
   }
 
@@ -33,6 +28,8 @@ class TrackerMainController{
     let params = {
       namespace: this.$state.params.namespace,
       limit: 5,
+      // startTime: 'now-7d',
+      // endTime: 'now',
       scope: this.$scope,
       entity: 'datasets'
     };
@@ -42,9 +39,9 @@ class TrackerMainController{
       .then((response) => {
         this.topDatasets = response;
         this.emptyRows = false;
-        if (this.topDatasets.total >= 3) {
+        if (this.topDatasets.length >= 3) {
           this.emptyRows = true;
-          this.totalEmptyRows = Array.apply(null, {length: 5 - this.topDatasets.total}).map(Number.call, Number);
+          this.totalEmptyRows = Array.apply(null, {length: 5 - this.topDatasets.length}).map(Number.call, Number);
         }
       }, (err) => {
         console.log('Error', err);

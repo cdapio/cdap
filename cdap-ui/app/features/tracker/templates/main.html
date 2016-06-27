@@ -37,14 +37,14 @@
       <div class="col-md-4">
         <p class="metric-heading">Top Applications</p>
         <p class="metric-timeframe">Last 7 days</p>
-        <div class="metric-container">
+        <div class="metric-container" style="width:100%;">
           <my-top-entity-graph type="applications"></my-top-entity-graph>
         </div>
       </div>
       <div class="col-md-4">
         <p class="metric-heading">Top Programs</p>
         <p class="metric-timeframe">Last 7 days</p>
-        <div class="metric-container">
+        <div class="metric-container" style="width:100%;">
           <my-top-entity-graph type="programs"></my-top-entity-graph>
         </div>
       </div>
@@ -52,7 +52,7 @@
         <p class="metric-heading">Top Datasets</p>
         <p class="metric-timeframe">Last 7 days</p>
         <div class="metric-container">
-          <table ng-if="MainController.topDatasets.total >= 3"
+          <table ng-if="MainController.topDatasets.length >= 3"
             class="table">
             <thead>
               <th class="text-center">Dataset</th>
@@ -66,19 +66,19 @@
               </th>
             </thead>
             <tbody>
-              <tr ng-repeat="metric in MainController.topDatasets.results">
+              <tr ng-repeat="metric in MainController.topDatasets">
                 <td class="text-left">
-                  <span uib-tooltip="{{ metric.columnValues.label }}"
-                    tooltip-ellipsis="{{ metric.columnValues.label }}"
-                    tooltip-enable="metric.columnValues.label.length > 15"
+                  <span uib-tooltip="{{ metric.entityName }}"
+                    tooltip-ellipsis="{{ metric.entityName }}"
+                    tooltip-enable="metric.entityName.length > 15"
                     tooltip-append-to-body="true"
                     tooltip-class="tracker-tooltip"
                     tooltip-placement="top">
-                    {{ metric.columnValues.label }}
+                    {{ metric.entityName }}
                   </span>
                 </td>
-                <td class="text-center">{{ metric.columnValues.read }}</td>
-                <td class="text-center">{{ metric.columnValues.write }}</td>
+                <td class="text-center">{{ metric.read }}</td>
+                <td class="text-center">{{ metric.write }}</td>
               </tr>
               <tr ng-if="MainController.emptyRows === true"
                 ng-repeat="row in MainController.totalEmptyRows"
@@ -89,7 +89,7 @@
               </tr>
             </tbody>
           </table>
-          <div ng-if="MainController.topDatasets.total < 3"
+          <div ng-if="MainController.topDatasets.length < 3"
               class="well">
             <p>Not enough data</p>
           </div>

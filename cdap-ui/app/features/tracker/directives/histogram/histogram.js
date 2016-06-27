@@ -25,7 +25,7 @@ angular.module(PKG.name + '.feature.tracker')
         left: 45
       };
 
-      let parentHeight = 300;
+      let parentHeight = 200;
 
       let container = d3.select(element[0].parentNode).node().getBoundingClientRect();
       let width = container.width - margin.left - margin.right;
@@ -36,7 +36,7 @@ angular.module(PKG.name + '.feature.tracker')
       let data = scope.model.results.map((d) => {
         return {
           time: new Date(d.timestamp * 1000),
-          count: d['log_count']
+          count: d['value']
         };
       });
 
