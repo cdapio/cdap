@@ -104,7 +104,7 @@ public class SSHAction extends AbstractWorkflowAction {
       StringBuilder errBuilder = new StringBuilder();
 
       String line = outBuffer.readLine();
-      while(line != null) {
+      while (line != null) {
         outBuilder.append(line + "\n");
         line = outBuffer.readLine();
       }
