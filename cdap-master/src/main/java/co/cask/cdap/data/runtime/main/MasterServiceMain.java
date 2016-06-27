@@ -33,6 +33,8 @@ import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
@@ -62,6 +64,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -75,6 +78,7 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -345,7 +349,8 @@ public class MasterServiceMain extends DaemonMain {
     return instanceCountMap;
   }
 
-  private Injector createBaseInjector(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  static Injector createBaseInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -354,7 +359,6 @@ public class MasterServiceMain extends DaemonMain {
       new IOModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
@@ -363,11 +367,27 @@ public class MasterServiceMain extends DaemonMain {
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuditModule().getDistributedModules(),
       new AuthorizationModule()
+    );
+  }
+
+  @VisibleForTesting
+  static Injector createChildInjector(Injector parentInjector) {
+    return parentInjector.createChildInjector(
+      new DataSetServiceModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(),
+      new TwillModule(),
+      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new ProgramRunnerRuntimeModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
+        }
+      }
     );
   }
 
@@ -389,11 +409,7 @@ public class MasterServiceMain extends DaemonMain {
       public void leader() {
         LOG.info("Became leader for master services");
 
-        final Injector injector = baseInjector.createChildInjector(
-          new TwillModule(),
-          new AppFabricServiceRuntimeModule().getDistributedModules(),
-          new ProgramRunnerRuntimeModule().getDistributedModules()
-        );
+        final Injector injector = createChildInjector(baseInjector);
 
         twillRunner = injector.getInstance(TwillRunnerService.class);
         twillRunner.start();

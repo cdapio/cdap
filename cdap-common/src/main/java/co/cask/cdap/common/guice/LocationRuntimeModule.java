@@ -84,11 +84,8 @@ public final class LocationRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
-
       expose(LocationFactory.class);
       expose(RootLocationFactory.class);
-      expose(NamespacedLocationFactory.class);
     }
 
     @Provides

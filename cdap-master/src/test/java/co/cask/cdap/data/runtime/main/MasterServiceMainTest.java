@@ -16,10 +16,19 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.guice.TwillModule;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -29,7 +38,10 @@ public class MasterServiceMainTest {
 
   @Test
   public void testInjector() {
-    new MasterServiceMain();
+    Injector baseInjector = MasterServiceMain.createBaseInjector(CConfiguration.create(), new Configuration());
+    Injector injector = MasterServiceMain.createChildInjector(baseInjector);
+    
+    Assert.assertNotNull(injector.getInstance(DatasetService.class));
   }
 
   @Test
