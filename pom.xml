@@ -1432,6 +1432,26 @@
         <version>${mockftp.version}</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>com.hierynomus</groupId>
+        <artifactId>sshj</artifactId>
+        <version>0.15.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk15on</artifactId>
+        <version>1.50</version>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcpkix-jdk15on</artifactId>
+        <version>1.50</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.ethz.ganymed</groupId>
+        <artifactId>ganymed-ssh2</artifactId>
+        <version>262</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
