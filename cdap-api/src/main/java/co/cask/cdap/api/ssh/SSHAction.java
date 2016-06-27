@@ -35,48 +35,65 @@ import java.io.InputStreamReader;
 public class SSHAction extends AbstractWorkflowAction {
 
   private class SSHConfig {
-    private static final boolean AUTHENTICATE_WITH_PASSWORD = false;
+    // Server information
+    private String host;
+    private int port;
 
-    private static final String HOST = "realtimekvtablesinktest10391-1000.dev.continuuity.net";
-    private static final int PORT = 22;
-    private static final String USER = "kashif";
-    private static final String PASSWORD = "";
+    // Authentication information
+    private boolean usePasswordSSH;
+    private String user;
+    private String password;
+    private String privateKeyFile;
+    private String privateKeyPassphrase;
+    private String knownHostsFile;
 
-    private static final String PRIVATE_KEY_FILE = "/Users/Kashif/.ssh/backup/id_rsa";
-    private static final String PRIVATE_KEY_PASSPHRASE = "tjrnuj8k";
-    private static final String KNOWN_HOSTS_FILE = "/Users/Kashif/.ssh/known_hosts";
+    private String cmd;
 
-    private static final String CMD = "uptime";
+    public SSHConfig(boolean usePasswordSSH, String host, int port, String user, String password, String privateKeyFile,
+                     String privateKeyPassphrase, String cmd) {
+      this.usePasswordSSH = usePasswordSSH;
+      this.host = host;
+      this.port = port;
+      this.user = user;
+      this.password = password;
+      this.privateKeyFile = privateKeyFile;
+      this.privateKeyPassphrase = privateKeyPassphrase;
+      this.cmd = cmd;
+    }
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(SSHAction.class);
 
+  private SSHConfig config;
   private boolean establishedConnection = false;
-  private String stdout = null;
-  private String stderr = null;
+
+  public SSHAction(boolean usePasswordSSH, String host, int port, String user, String password, String privateKeyFile,
+                   String privateKeyPassphrase, String cmd) {
+    this.config = new SSHConfig(usePasswordSSH, host, port, user, password, privateKeyFile, privateKeyPassphrase, cmd);
+  }
 
   @Override
   public void run() {
     try {
-      Connection connection = new Connection(SSHConfig.HOST);
+      Connection connection = new Connection(config.host);
       connection.connect();
 
       // Authenticate with password or private key file
-      if (SSHConfig.AUTHENTICATE_WITH_PASSWORD) {
-        establishedConnection = connection.authenticateWithPassword(SSHConfig.USER, SSHConfig.PASSWORD);
+      if (config.usePasswordSSH) {
+        establishedConnection = connection.authenticateWithPassword(config.user, config.password);
       } else {
-        File privateKey = new File(SSHConfig.PRIVATE_KEY_FILE);
-        establishedConnection = connection.authenticateWithPublicKey(SSHConfig.USER, privateKey,
-                                                                     SSHConfig.PRIVATE_KEY_PASSPHRASE);
+        File privateKey = new File(config.privateKeyFile);
+        establishedConnection = connection.authenticateWithPublicKey(config.user, privateKey,
+                                                                     config.privateKeyPassphrase);
       }
 
       if (!establishedConnection()) {
         throw new IOException(String.format("Unable to establish SSH connection for %s@%s on port %d",
-                                            SSHConfig.USER, SSHConfig.HOST, SSHConfig.PORT));
+                                            config.user, config.host, config.port));
       }
 
       Session session = connection.openSession();
-      session.execCommand(SSHConfig.CMD);
+      session.execCommand(config.cmd);
 
       // Read stdout and stderr
       InputStream stdout = new StreamGobbler(session.getStdout());
@@ -98,6 +115,8 @@ public class SSHAction extends AbstractWorkflowAction {
         line = errBuffer.readLine();
       }
 
+      LOG.info("Finished running command {} for {}@{} on port {}.", config.cmd, config.user, config.host,
+               config.port);
       LOG.info("Output:");
       LOG.info(outBuilder.toString());
       LOG.info("Errors:");
@@ -105,7 +124,7 @@ public class SSHAction extends AbstractWorkflowAction {
 
       session.close();
     } catch (IOException e) {
-      e.printStackTrace();
+      LOG.error("Unable to establish connection.", e);
     }
   }
 

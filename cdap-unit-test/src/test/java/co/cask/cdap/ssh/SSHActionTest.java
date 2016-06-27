@@ -21,9 +21,20 @@ import co.cask.cdap.api.ssh.SSHAction;
 import org.junit.Test;
 
 public class SSHActionTest {
+
+  private static final boolean usePasswordSSH = false;
+  private static final String host = "10.150.2.127";
+  private static final int port = 22;
+  private static final String user = "Kashif";
+  private static final String password = "";
+  private static final String privateKeyFile = "/Users/Kashif/.ssh/id_rsa";
+  private static final String privateKeyPassphrase = "";
+  private static final String cmd = "uptime";
+
   @Test
   public void testSSHAction() {
-    SSHAction sshAction = new SSHAction();
+    SSHAction sshAction = new SSHAction(usePasswordSSH, host, port, user, password, privateKeyFile,
+                                        privateKeyPassphrase, cmd);
     sshAction.run();
     assert(sshAction.establishedConnection());
   }
