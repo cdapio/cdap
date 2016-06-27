@@ -1,0 +1,183 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<!--
+  if input schemas?
+    if mutiple input schemas enabled?
+      for each input schema
+        if input schema?
+          show table
+        else
+          show 'no input schema'
+    else
+      if input schemas[0]?
+        show single table
+      else
+        show 'no input schemas'
+  else
+    show 'no input schemas'
+-->
+
+<!-- Section that shows input schema(s) -->
+<div ng-if="::(MyInputSchemaCtrl.inputSchemas.length > 0)">
+
+  <!-- Section that shows multiple inputs -->
+  <div ng-if="::(MyInputSchemaCtrl.multipleInputs)">
+    <div ng-repeat="inputschema in ::MyInputSchemaCtrl.inputSchemas">
+      <div ng-click="MyInputSchemaCtrl.currentIndex = $index" style="cursor:pointer" class="title">
+        <i class="fa" ng-class="{'fa-arrow-right': MyInputSchemaCtrl.currentIndex !== $index, 'fa-arrow-down': MyInputSchemaCtrl.currentIndex === $index}"></i>
+        <span>{{::inputschema.name}}</span>
+      </div>
+      <div class="content"
+          ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index, '': MyInputSchemaCtrl.currentIndex === $index}">
+        <table class="table" ng-if="::(inputschema.schema.fields.length > 0)">
+          <thead>
+            <th>
+              <label class="control-label">Name</label>
+            </th>
+            <th>
+              <label class="control-label">Type</label>
+            </th>
+            <th>
+              <label class="control-label">Null</label>
+            </th>
+          </thead>
+          <!--
+            This is bad. If we change the container's css class then infinite scroll is not going to work.
+            The reason we are doing this today is because we need to have one scroll bar for all the three
+            sections of the node config modal (input-schema, config & output-schema) and that is technically
+            the container for the inifinite scroll here.
+
+            So container = bottompanel-body & element = table/tbody. As we scroll in the container
+            the ng-inifinite scroll is going to check whether the difference between element bottom & container
+            bottom is less than the scroll distance, if yes then its going to add additional elements.
+
+            The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
+          -->
+          <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
+                 infinite-scroll-container="'.modal.hydrator-modal.node-config-modal .bottompanel-body'"
+                 infinite-scroll-disabled="inputschema.schema.fields <= MyInputSchemaCtrl.inputSchemaRowLimit">
+            <tr ng-repeat="field in ::inputschema.schema.fields | limitTo: 10 track by $index">
+              <td class="name">
+                <span uib-tooltip="{{ ::field.name }}"
+                      tooltip-ellipsis="{{ ::field.name }}"
+                      data-ellipsis="isEllipsis"
+                      data-offset-value="20"
+                      tooltip-enable="isEllipsis"
+                      tooltip-append-to-body="true">
+                  {{::field.name}}
+                </span>
+              </td>
+              <td class="type">
+                <span ng-if="field.type.type !== 'map'">{{::field.type}}</span>
+                <span ng-if="field.type.type === 'map'">map&lt;string, string&gt; </span>
+              </td>
+              <td class="nullable text-center" >
+                <input type="checkbox" ng-model="field.nullable" disabled="disabled">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div ng-if="::(inputschema.schema.fields.length === 0)">
+          <p>There is no input schema</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End of section that shows multiple inputs -->
+
+  <!-- Section that shows single input schema-->
+
+  <div ng-if="::(!MyInputSchemaCtrl.multipleInputs)">
+    <!-- Section that shows single input schema table-->
+
+    <table class="table"
+      ng-if="::(MyInputSchemaCtrl.inputSchemas[0].schema.fields.length > 0)">
+      <thead>
+        <th>
+          <label class="control-label">Name</label>
+        </th>
+        <th>
+          <label class="control-label">Type</label>
+        </th>
+        <th>
+          <label class="control-label">Null</label>
+        </th>
+      </thead>
+      <!--
+        This is bad. If we change the container's css class then infinite scroll is not going to work.
+        The reason we are doing this today is because we need to have one scroll bar for all the three
+        sections of the node config modal (input-schema, config & output-schema) and that is technically
+        the container for the inifinite scroll here.
+
+        So container = bottompanel-body & element = table/tbody. As we scroll in the container
+        the ng-inifinite scroll is going to check whether the difference between element bottom & container
+        bottom is less than the scroll distance, if yes then its going to add additional elements.
+
+        The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
+      -->
+      <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
+             infinite-scroll-container="'.modal.hydrator-modal.node-config-modal .bottompanel-body'"
+             infinite-scroll-disabled="MyInputSchemaCtrl.inputSchemas[0].schema.fields.length <= MyInputSchemaCtrl.inputSchemaRowLimit">
+        <tr ng-repeat="field in MyInputSchemaCtrl.inputSchemas[0].schema.fields | limitTo: MyInputSchemaCtrl.inputSchemaRowLimit track by $index">
+          <td class="name">
+            <span uib-tooltip="{{ ::field.name }}"
+                  tooltip-ellipsis="{{ ::field.name }}"
+                  data-ellipsis="isEllipsis"
+                  data-offset-value="20"
+                  tooltip-enable="isEllipsis"
+                  tooltip-append-to-body="true">
+              {{::field.name}}
+            </span>
+          </td>
+          <td class="type">
+            <span ng-if="field.type.type !== 'map'">{{::field.type}}</span>
+            <span ng-if="field.type.type === 'map'">map&lt;string, string&gt; </span>
+          </td>
+          <td class="nullable text-center" >
+            <input type="checkbox" ng-model="field.nullable" disabled="disabled">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- End of section that shows single input schema table-->
+
+    <!-- Section that shows no input schema -->
+
+    <div ng-if="::(MyInputSchemaCtrl.inputSchemas[0].schema.fields.length === 0)">
+      <p>There is no input schema</p>
+    </div>
+
+    <!-- End of section that shows no input schema-->
+
+  </div>
+
+  <!-- End of section that shows single input schema-->
+
+</div>
+
+<!-- End of section that shows input schema(s) -->
+
+<!-- Section that shows no input schema -->
+
+<div ng-if="::(MyInputSchemaCtrl.inputSchemas.length === 0)">
+  <p>There is no input schema</p>
+</div>
+
+<!-- End of section that shows no input schema -->

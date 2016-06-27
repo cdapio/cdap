@@ -54,8 +54,7 @@ angular.module(PKG.name + '.commons')
         vm.openModal = function () {
           var modal = $uibModal.open({
             templateUrl: 'plugin-functions/functions/output-schema/output-schema-modal.html',
-            size: 'lg',
-            windowTopClass: 'hydrator-modal output-schema-modal',
+            windowClass: 'hydrator-modal node-config-modal',
             keyboard: true,
             controller: function ($scope, nodeInfo, $state, HydratorPlusPlusHydratorService) {
               var mvm = this;
@@ -65,7 +64,15 @@ angular.module(PKG.name + '.commons')
               mvm.fetchSchema = function () {
                 var config = mvm.node.plugin.properties;
                 // This is lame where we stringify the input schema from the formatOutputSchema function but again parse it here to send it as an object to the backend.
-                config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(nodeInfo.inputSchema));
+                var firstNode = nodeInfo.inputSchema[0];
+                var fields;
+                try {
+                  fields = JSON.parse(firstNode.schema).fields || [];
+                  config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(fields));
+                } catch(e) {
+                  config.inputSchema = '';
+                }
+
                 mvm.showLoading = true;
 
                 var params = {
