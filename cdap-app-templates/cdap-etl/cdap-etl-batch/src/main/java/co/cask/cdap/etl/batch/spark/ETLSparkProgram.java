@@ -47,6 +47,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.io.DataInputStream;
@@ -65,7 +67,7 @@ import javax.annotation.Nullable;
  * Spark program to run an ETL pipeline.
  */
 public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ETLSparkProgram.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
 
@@ -178,13 +180,18 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
         List<JavaPairRDD<String, Object>> resultRDDList = new ArrayList<>();
         for (Map.Entry<String, JavaPairRDD<Object, Object>> rddEntry : inputRDDs.entrySet()) {
           JavaPairRDD<Object, Object> rdd = rddEntry.getValue();
-          resultRDDList.add(rdd.flatMapToPair(new MapFunction<>(sec, null, null, false, rddEntry.getKey())).cache());
+          JavaPairRDD<String, Object> localResultRDD = rdd.flatMapToPair(new MapFunction<>(sec, null, null, false,
+                                                                                           rddEntry.getKey())).cache();
+          resultRDDList.add(localResultRDD.cache());
         }
-        JavaPairRDD<String, Object> resultRDD = resultRDDList.remove(0);
+        JavaPairRDD<String, Object> resultRDD = resultRDDList.remove(0).cache();
+
         for (JavaPairRDD<String, Object> rdd : resultRDDList) {
-          resultRDD.union(rdd);
+          LOG.info("Size of the ResultRDD : {}", resultRDD.count());
+          resultRDD.union(rdd).cache();
+          LOG.info("Size of the ResultRDD : {}", resultRDD.count());
         }
-        return resultRDD;
+        return resultRDD.cache();
       }
     }
 
