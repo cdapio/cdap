@@ -137,6 +137,8 @@ function link (scope, element) {
       var paddingRight = 15;
       var maxRange = width - paddingLeft - paddingRight;
       var sliderLimit = maxRange + 24;
+      var pinX = width-8;
+      var sliderX = 0;
 
       //Plot function call
       plot();
@@ -269,6 +271,14 @@ function link (scope, element) {
             val = sliderLimit;
           }
           brush.extent([val, val]);
+
+          sliderX = val;
+
+          if(sliderX > pinX){
+            updatePin(sliderX);
+          }
+          //changeStart(xScale.invert(val)) - change the start of the logs
+
           //Move the slider to the correct location
           leftHandle.attr('x', val);
           console.log('Left slider is at : ' + xScale.invert(val));
@@ -307,8 +317,8 @@ function link (scope, element) {
         var pinHandle = slider.append('rect')
             .attr('width', 15)
             .attr('height', 15)
-            //Container width - width of rectangle
-            .attr('x', width - 15)
+            //Container width - width of pin
+            .attr('x', width - 8)
             .attr('y', 0)
             .attr('class', 'scrollPin');
 
@@ -320,20 +330,26 @@ function link (scope, element) {
           .attr('class', 'scrollNeedle');
 
         function slidePin() {
+          var xPos = d3.mouse(this)[0];
 
-          var pinX = d3.mouse(this)[0];
-          if(pinX < 0){
-            pinX = 0;
+          if(xPos < 0){
+            xPos = 0;
           }
 
-          if(pinX > width-15){
-            pinX = width-15;
+          if(xPos > width-8){
+            xPos = width-8;
           }
 
-          updatePin(pinX);
+          if(xPos >= sliderX){
+            updatePin(xPos);
+          } else {
+            update(xPos);
+            updatePin(xPos);
+          }
         }
 
         function updatePin (val) {
+          pinX = val;
           pinHandle.attr('x', val);
         }
       }
@@ -343,6 +359,9 @@ angular.module(PKG.name + '.commons')
 .directive('myTimeline', function() {
   return {
     templateUrl: 'timeline/timeline.html',
+    scope: {
+      timelineData: '=?'
+    },
     link: link
   };
 });
