@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,31 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.log;
+package co.cask.cdap.logging.gateway.handlers;
 
 import co.cask.cdap.logging.read.LogOffset;
-import com.google.common.base.Objects;
 
 /**
-* Test Log object.
+* Handles formatting of log event to send
 */
-class LogLine extends OffsetLine {
+public final class FormattedTextLogEvent extends FormattedLogOffset {
+
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String log;
 
-  LogLine(LogOffset offset, String log) {
+  public FormattedTextLogEvent(String log, LogOffset offset) {
     super(offset);
     this.log = log;
-  }
-
-  public String getLog() {
-    return log;
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-      .add("offset", getOffset())
-      .add("log", log)
-      .toString();
   }
 }
