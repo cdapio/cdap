@@ -16,7 +16,6 @@
 
 class HydratorPlusPlusNodeConfigCtrl {
   constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled) {
-
     this.$scope = $scope;
     this.$timeout = $timeout;
     this.$state = $state;
@@ -31,6 +30,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.$uibModal = $uibModal;
     this.ConfigStore = HydratorPlusPlusConfigStore;
     this.$scope.isDisabled = rDisabled;
+
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -93,6 +93,8 @@ class HydratorPlusPlusNodeConfigCtrl {
       noproperty: true,
       config: {},
       groupsConfig: {},
+
+      windowMode: 'regular',
 
       isValidPlugin: config.isValidPlugin || false,
       node: angular.copy(config.node) || {},
@@ -251,6 +253,9 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.EventPipe.emit('schema.export');
   }
 
+  toggleMaximizedView(isExpanded) {
+    this.state.windowMode = (isExpanded) ? 'expand' : 'regular';
+  }
   validateSchema() {
     this.state.errors = [];
     var schema;
