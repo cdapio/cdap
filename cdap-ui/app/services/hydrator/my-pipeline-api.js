@@ -30,7 +30,8 @@ angular.module(PKG.name + '.services')
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
         postActionDetailFetch = pluginFetchBase + '/plugins/:pluginName',
         artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
-        pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName';
+        pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName',
+        previewPath = '/namespaces/:namespace/previews';
 
 
     return $resource(
@@ -76,7 +77,11 @@ angular.module(PKG.name + '.services')
         postPluginMethod: myHelpers.getConfig('POST', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
         getPluginMethod: myHelpers.getConfig('GET', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
         putPluginMethod: myHelpers.getConfig('PUT', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
-        deletePluginMethod: myHelpers.getConfig('DELETE', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true })
+        deletePluginMethod: myHelpers.getConfig('DELETE', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+
+        // PREVIEW
+        runPreview: myHelpers.getConfig('POST', 'REQUEST', '/namespaces/:namespace/preview', false, { suppressErrors: true }),
+        getStagePreview: myHelpers.getConfig('GET', 'REQUEST', previewPath + '/:previewId/stages/:stage', false, { suppressErrors: true })
       }
     );
   });

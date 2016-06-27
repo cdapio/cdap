@@ -14,4 +14,81 @@
   the License.
 -->
 
-<p> Preview Coming soon....</p>
+<div class="row" ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData && !HydratorPlusPlusNodeConfigCtrl.previewLoading">
+  <div class="col-xs-12">
+    <h3 class="text-center">
+      No preview data.
+    </h3>
+  </div>
+</div>
+
+<div class="row" ng-if="HydratorPlusPlusNodeConfigCtrl.previewLoading">
+  <div class="col-xs-12">
+    <h3 class="text-center">
+      <span class="fa fa-spin fa-refresh"></span>
+      <span>Fetching preview data</span>
+    </h3>
+  </div>
+</div>
+
+<div class="row" ng-if="HydratorPlusPlusNodeConfigCtrl.previewData">
+  <!-- INPUT RECORDS -->
+  <div class="col-xs-6 preview-records input">
+    <h4>Input Records</h4>
+
+    <div ng-if="HydratorPlusPlusNodeConfigCtrl.previewData.input.records.length > 0">
+      <!-- INPUT RECORDS -->
+      <table class="table table-bordered">
+        <thead>
+          <th ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.input.schema">
+            {{ ::field }}
+          </th>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="row in ::HydratorPlusPlusNodeConfigCtrl.previewData.input.records">
+            <td ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.input.schema">
+              {{ ::row[field] }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-center"
+         ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData.input.records || HydratorPlusPlusNodeConfigCtrl.previewData.input.records.length === 0">
+      <h4>No input records</h4>
+    </div>
+
+  </div>
+
+  <!-- OUTPUT RECORDS -->
+  <div class="col-xs-6 preview-records output">
+    <h4>Output Records</h4>
+
+    <div ng-if="HydratorPlusPlusNodeConfigCtrl.previewData.output.records.length > 0">
+      <!-- OUTPUT RECORDS -->
+      <table class="table table-bordered">
+        <thead>
+          <th ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.output.schema">
+            {{ ::field }}
+          </th>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="row in ::HydratorPlusPlusNodeConfigCtrl.previewData.output.records">
+            <td ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.output.schema">
+              {{ ::row[field] }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-center"
+         ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData.output.records || HydratorPlusPlusNodeConfigCtrl.previewData.output.records.length === 0">
+      <h4>No output records</h4>
+    </div>
+
+  </div>
+</div>

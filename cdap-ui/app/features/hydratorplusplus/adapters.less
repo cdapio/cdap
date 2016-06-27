@@ -142,11 +142,6 @@ body.theme-cdap {
     }
   }
 
-  &.state-hydratorplusplus-create {
-    background-image: url('../img/grid.png');
-    height: 100%;
-  }
-
   &.state-hydratorplusplus-create,
   &.state-hydratorplusplus-list,
   &.state-hydratorplusplus-create {
@@ -168,6 +163,9 @@ body.theme-cdap {
 
   &.state-hydratorplusplus-create {
     background-color: #e2e3e5;
+    background-image: url('../img/grid.png');
+    height: 100%;
+
     main.container {
       background-color: transparent;
       background-image: none;
@@ -193,6 +191,20 @@ body.theme-cdap {
           font-size: 14px;
           letter-spacing: 0.3px;
         }
+      }
+    }
+
+    .preview-max-records {
+      background-color: rgba(241, 196, 15, 0.3);
+      position: absolute;
+      top: 58px;
+      left: 25px;
+      padding: 7px 15px;
+
+      .max-records {
+        margin-left: 10px;
+        background-color: rgba(241, 196, 15, 0.9);
+        padding: 0 5px;
       }
     }
 

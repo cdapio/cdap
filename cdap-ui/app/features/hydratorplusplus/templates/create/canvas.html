@@ -14,6 +14,14 @@
   the License.
 -->
 
+<!-- PREVIEW -->
+<!-- <div class="preview-max-records"
+     ng-if="CanvasCtrl.previewMode">
+  <span>Max Records</span>
+  <span class="max-records">5</span>
+</div> -->
+
+<!-- DAG -->
 <my-dag-plus ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"
   nodes="CanvasCtrl.nodes"
   connections="CanvasCtrl.connections"
@@ -22,4 +30,5 @@
   template-popover="/assets/features/hydratorplusplus/templates/partial/schema-popover.html"
   connection-popover-data="CanvasCtrl.generateSchemaOnEdge"
   separation="100"
+  preview-mode="CanvasCtrl.previewMode"
 ></my-dag-plus>

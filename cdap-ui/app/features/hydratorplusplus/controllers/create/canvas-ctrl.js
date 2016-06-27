@@ -15,12 +15,15 @@
  */
 
 class HydratorPlusPlusCreateCanvasCtrl {
-  constructor(HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesStore, HydratorPlusPlusConfigStore, HydratorPlusPlusHydratorService, $uibModal, GLOBALS, DAGPlusPlusNodesActionsFactory) {
+  constructor(HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesStore, HydratorPlusPlusConfigStore, HydratorPlusPlusHydratorService, $uibModal, GLOBALS, DAGPlusPlusNodesActionsFactory, $scope, HydratorPlusPlusPreviewStore) {
+    'ngInject';
+
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.GLOBALS = GLOBALS;
+    this.previewStore = HydratorPlusPlusPreviewStore;
 
     this.setState = () => {
       this.state = {
@@ -37,6 +40,18 @@ class HydratorPlusPlusCreateCanvasCtrl {
       this.setActiveNode();
       this.setStateAndUpdateConfigStore();
     });
+
+    this.previewMode = false;
+
+    let sub = this.previewStore.subscribe(() => {
+      let state = this.previewStore.getState().preview;
+      this.previewMode = state.isPreviewModeEnabled;
+    });
+
+    $scope.$on('$destroy', () => {
+      sub();
+    });
+
   }
 
   setStateAndUpdateConfigStore() {
@@ -48,19 +63,22 @@ class HydratorPlusPlusCreateCanvasCtrl {
   }
 
   setActiveNode() {
-    var nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
+    let nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
     if (!nodeId) {
       return;
     }
-    var pluginNode;
-    var nodeFromNodesStore;
-    var nodeFromConfigStore = this.HydratorPlusPlusConfigStore.getNodes().filter( node => node.name === nodeId );
+    let pluginNode;
+    let nodeFromNodesStore;
+    let nodeFromConfigStore = this.HydratorPlusPlusConfigStore.getNodes().filter( node => node.name === nodeId );
     if (nodeFromConfigStore.length) {
       pluginNode = nodeFromConfigStore[0];
     } else {
       nodeFromNodesStore = this.DAGPlusPlusNodesStore.getNodes().filter(node => node.name === nodeId);
       pluginNode = nodeFromNodesStore[0];
     }
+
+    let previewMode = this.previewMode;
+
     this.$uibModal
         .open({
           templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
@@ -71,6 +89,12 @@ class HydratorPlusPlusCreateCanvasCtrl {
           resolve: {
             rDisabled: function() {
               return false;
+            },
+            rIsPreviewMode: function () {
+              return previewMode;
+            },
+            rIsStudioMode: function () {
+              return true;
             },
             rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusConfigStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusConfigStore, GLOBALS) {
               let pluginId = pluginNode.name;
@@ -108,7 +132,5 @@ class HydratorPlusPlusCreateCanvasCtrl {
   }
 }
 
-
-HydratorPlusPlusCreateCanvasCtrl.$inject = ['HydratorPlusPlusBottomPanelStore', 'DAGPlusPlusNodesStore', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusHydratorService', '$uibModal', 'GLOBALS', 'DAGPlusPlusNodesActionsFactory'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusCreateCanvasCtrl', HydratorPlusPlusCreateCanvasCtrl);

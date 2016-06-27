@@ -128,8 +128,26 @@ body.theme-cdap {
       left: 130px;
       .transition(all 0.2s ease);
 
+      .action-buttons {
+        display: flex;
+        flex-wrap: nowrap;
+      }
+
       div.btn {
-        width: 25%;
+        flex-grow: 1;
+
+        &.active {
+          background-color: #cdcdcd;
+        }
+
+        &.run-time {
+          cursor: default;
+          flex-grow: 2;
+          color: @hydrator-blue;
+          font-size: 22px;
+          font-weight: 500;
+          &:hover { background-color: white; }
+        }
       }
       div.hydrator-metadata {
         @media (min-width: @screen-lg-min) {

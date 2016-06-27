@@ -31,21 +31,35 @@
     <div class="node-config">
       <div>
         <ul class="nav nav-tabs" role="tablist">
-          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 1" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 1}">
+          <li role="presentation"
+              ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 1"
+              ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 1}">
             {{::HydratorPlusPlusNodeConfigCtrl.tabs[0].label}}
           </li>
-          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 2" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 2}">
+          <li role="presentation"
+              ng-if="HydratorPlusPlusNodeConfigCtrl.isStudioMode"
+              ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 2"
+              ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 2}">
             {{::HydratorPlusPlusNodeConfigCtrl.tabs[1].label}}
           </li>
-          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 3" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 3}">
+          <li role="presentation"
+              ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 3"
+              ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 3}">
             {{::HydratorPlusPlusNodeConfigCtrl.tabs[2].label}}
           </li>
         </ul>
-        <div ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[0].templateUrl" class="bottompanel-body">
+        <div class="bottompanel-body"
+             ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
+             ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[0].templateUrl">
         </div>
-        <div ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 2" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[1].templateUrl" class="bottompanel-body">
+        <div class="bottompanel-body"
+             ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 2"
+             ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[1].templateUrl">
         </div>
-        <div ng-init="node=HydratorPlusPlusNodeConfigCtrl.state.node" ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 3" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[2].templateUrl" class="bottompanel-body">
+        <div class="bottompanel-body"
+             ng-init="node=HydratorPlusPlusNodeConfigCtrl.state.node"
+             ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 3"
+             ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[2].templateUrl">
         </div>
       </div>
     </div>

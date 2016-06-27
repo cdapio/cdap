@@ -121,6 +121,30 @@
                 overflow-y: auto;
                 height: 59vh;
               }
+
+              .preview-records {
+                h4 {
+                  padding-left: 5px;
+                  margin-top: 20px;
+                  font-size: 18px;
+                }
+                .schema-toggle {
+                  padding-left: 15px;
+                  cursor: pointer;
+                }
+
+                table.table {
+                  margin-top: 15px;
+                  th {
+                    &.th:hover,
+                    &.th:focus { cursor: default; }
+
+                    font-size: 13px;
+                    padding-left: 5px;
+                    padding-bottom: 5px;
+                  }
+                }
+              }
             }
           }
           .control-label {
