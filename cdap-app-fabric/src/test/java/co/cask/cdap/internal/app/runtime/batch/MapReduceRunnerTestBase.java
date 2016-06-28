@@ -185,6 +185,10 @@ public class MapReduceRunnerTestBase {
     return AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
   }
 
+  protected ApplicationWithPrograms deployApp(Id.Namespace namespace, Class<?> appClass) throws Exception {
+    return AppFabricTestHelper.deployApplicationWithManager(namespace, appClass, TEMP_FOLDER_SUPPLIER);
+  }
+
   // returns true if the program ran successfully
   protected boolean runProgram(ApplicationWithPrograms app, Class<?> programClass, Arguments args) throws Exception {
     return waitForCompletion(submit(app, programClass, args));

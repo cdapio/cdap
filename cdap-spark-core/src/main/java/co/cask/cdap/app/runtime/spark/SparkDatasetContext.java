@@ -40,4 +40,16 @@ public interface SparkDatasetContext extends DatasetContext {
   <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
                                    AccessType accessType) throws DatasetInstantiationException;
 
+  /**
+   * Get an instance of the specified dataset, with the specified access type.
+   *
+   * @param namespace the namespace of the dataset
+   * @param name the name of the dataset
+   * @param arguments arguments for the dataset
+   * @param <T> the type of the dataset
+   * @param accessType the accessType
+   */
+  <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
+                                   AccessType accessType) throws DatasetInstantiationException;
+
 }

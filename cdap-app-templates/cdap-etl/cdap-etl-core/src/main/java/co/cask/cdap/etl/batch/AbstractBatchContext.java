@@ -92,12 +92,34 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   }
 
   @Override
+  public <T extends Dataset> T getDataset(final String namespace, final String name)
+    throws DatasetInstantiationException {
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return datasetContext.getDataset(namespace, name);
+      }
+    });
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
     return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
       @Override
       public T call() throws Exception {
         return datasetContext.getDataset(name, arguments);
+      }
+    });
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(final String namespace, final String name,
+                                          final Map<String, String> arguments) throws DatasetInstantiationException {
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return datasetContext.getDataset(namespace, name, arguments);
       }
     });
   }

@@ -18,11 +18,14 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -89,8 +92,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       @Override
       @ParametersAreNonnullByDefault
       public Dataset load(DatasetCacheKey key) throws Exception {
-        Dataset dataset = instantiator.getDataset(namespace.dataset(key.getName()).toId(), key.getArguments(),
-                                                  key.getAccessType());
+        Dataset dataset = instantiator.getDataset(Id.DatasetInstance.from(key.getNamespace(), key.getName()),
+                                                  key.getArguments(), key.getAccessType());
         if (dataset instanceof MeteredDataset && metricsContext != null) {
           ((MeteredDataset) dataset).setMetricsCollector(
             metricsContext.childContext(Constants.Metrics.Tag.DATASET, key.getName()));
@@ -115,7 +118,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     // also the javadoc of this c'tor, which states that all static datasets get loaded right away.
     if (staticDatasets != null) {
       for (Map.Entry<String, Map<String, String>> entry : staticDatasets.entrySet()) {
-        this.staticDatasets.put(new DatasetCacheKey(entry.getKey(), entry.getValue()),
+        this.staticDatasets.put(new DatasetCacheKey(namespace.getNamespace(), entry.getKey(), entry.getValue()),
                                 getDataset(entry.getKey(), entry.getValue()));
       }
     }
@@ -174,7 +177,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       }
     } catch (Throwable t) {
       throw new DatasetInstantiationException(
-        String.format("Could not instantiate dataset '%s'", key.getName()), t);
+        String.format("Could not instantiate dataset '%s:%s'", key.getNamespace(), key.getName()), t);
     }
     // make sure the dataset exists and is of the right type
     if (dataset == null) {
