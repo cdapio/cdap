@@ -80,18 +80,21 @@ body.state-tracker-enable {
 body.state-tracker-home,
 body.state-tracker-detail-entity-usage {
   div.tracker-metrics {
-    p {
-      line-height: 1;
-      &.metric-heading {
-        color: @title-font-color;
-        font-size: 16px;
-        font-weight: 500;
-        margin: 35px auto 5px;
-      }
-      &.metric-timeframe {
-        color: @tracker-grey;
-        font-size: 12px;
-        margin-bottom: 20px;
+    div.metric-heading {
+      height: 33px;
+      margin: 35px auto 20px;
+      p {
+        line-height: 1;
+        &:last-child {
+          color: @tracker-grey;
+          font-size: 12px;
+        }
+        &:first-child {
+          color: @title-font-color;
+          font-size: 16px;
+          font-weight: 500;
+          margin-bottom: 5px;
+        }
       }
     }
     table.table {

@@ -25,7 +25,6 @@ class TrackerUsageController {
 
     this.entityType = entitySplit;
 
-
     this.timeRangeOptions = [
       {
         label: 'Last 7 days',
@@ -95,8 +94,8 @@ class TrackerUsageController {
   fetchAuditHistogram() {
     let params = {
       namespace: this.$state.params.namespace,
-      // startTime: this.timeRange.start,
-      // endTime: this.timeRange.end,
+      start: this.timeRange.start,
+      end: this.timeRange.end,
       scope: this.$scope
     };
 
@@ -113,8 +112,6 @@ class TrackerUsageController {
     let params = {
       namespace: this.$state.params.namespace,
       limit: 5,
-      // startTime: 'now-7d',
-      // endTime: 'now',
       scope: this.$scope,
       entity: 'datasets'
     };
@@ -138,14 +135,13 @@ class TrackerUsageController {
       namespace: this.$state.params.namespace,
       scope: this.$scope,
       entityName: this.$state.params.entityId,
-      entityType: this.$state.params.entityType
+      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset'
     };
 
     this.myTrackerApi.getTimeSince(params)
       .$promise
       .then((response) => {
         this.timeSince = response;
-        console.log('this.timeSince: ', this.timeSince);
       }, (err) => {
         console.log('Error', err);
       });

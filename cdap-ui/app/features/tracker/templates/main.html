@@ -35,22 +35,32 @@
   <div class="tracker-metrics">
     <div class="row text-center">
       <div class="col-md-4">
-        <p class="metric-heading">Top Applications</p>
-        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-heading">
+          <p>Top Applications</p>
+          <p>Last 7 days</p>
+        </div>
         <div class="metric-container" style="width:100%;">
-          <my-top-entity-graph type="applications"></my-top-entity-graph>
+          <my-top-entity-graph type="applications"
+                              start="'now-7d'"
+                              end="'now'"></my-top-entity-graph>
         </div>
       </div>
       <div class="col-md-4">
-        <p class="metric-heading">Top Programs</p>
-        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-heading">
+          <p>Top Programs</p>
+          <p>Last 7 days</p>
+        </div>
         <div class="metric-container" style="width:100%;">
-          <my-top-entity-graph type="programs"></my-top-entity-graph>
+          <my-top-entity-graph type="programs"
+                              start="'now-7d'"
+                              end="'now'"></my-top-entity-graph>
         </div>
       </div>
       <div class="col-md-4">
-        <p class="metric-heading">Top Datasets</p>
-        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-heading">
+          <p>Top Datasets</p>
+          <p>Last 7 days</p>
+        </div>
         <div class="metric-container">
           <table ng-if="MainController.topDatasets.length >= 3"
             class="table">
@@ -68,14 +78,28 @@
             <tbody>
               <tr ng-repeat="metric in MainController.topDatasets">
                 <td class="text-left">
-                  <span uib-tooltip="{{ metric.entityName }}"
-                    tooltip-ellipsis="{{ metric.entityName }}"
-                    tooltip-enable="metric.entityName.length > 15"
-                    tooltip-append-to-body="true"
-                    tooltip-class="tracker-tooltip"
-                    tooltip-placement="top">
-                    {{ metric.entityName }}
-                  </span>
+                  <a ng-if="metric.entityType === 'dataset'"
+                    ui-sref="datasets.detail.overview.status({datasetId: metric.entityName })">
+                    <span uib-tooltip="{{ metric.entityName }}"
+                      tooltip-ellipsis="{{ metric.entityName }}"
+                      tooltip-enable="metric.entityName.length > 15"
+                      tooltip-append-to-body="true"
+                      tooltip-class="tracker-tooltip"
+                      tooltip-placement="top">
+                      {{ metric.entityName }}
+                    </span>
+                  </a>
+                  <a ng-if="metric.entityType === 'stream'"
+                    ui-sref="streams.detail.overview.status({streamId: metric.entityName })">
+                    <span uib-tooltip="{{ metric.entityName }}"
+                      tooltip-ellipsis="{{ metric.entityName }}"
+                      tooltip-enable="metric.entityName.length > 15"
+                      tooltip-append-to-body="true"
+                      tooltip-class="tracker-tooltip"
+                      tooltip-placement="top">
+                      {{ metric.entityName }}
+                    </span>
+                  </a>
                 </td>
                 <td class="text-center">{{ metric.read }}</td>
                 <td class="text-center">{{ metric.write }}</td>

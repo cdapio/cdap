@@ -28,8 +28,8 @@ class TrackerMainController{
     let params = {
       namespace: this.$state.params.namespace,
       limit: 5,
-      // startTime: 'now-7d',
-      // endTime: 'now',
+      start: 'now-7d',
+      end: 'now',
       scope: this.$scope,
       entity: 'datasets'
     };

@@ -32,6 +32,13 @@ angular.module(PKG.name + '.feature.tracker')
           limit: 5
         };
 
+        if(scope.start) {
+          params.start = scope.start;
+        }
+        if(scope.end) {
+          params.end = scope.end;
+        }
+
         myTrackerApi.getTopEntities(params)
           .$promise
           .then((response) => {
@@ -41,8 +48,13 @@ angular.module(PKG.name + '.feature.tracker')
 
             if(response.length >= 1) {
               renderEntityGraph();
+            } else {
+              let metricContainer = d3.select(element[0]).select('.graph-container');
+              metricContainer.append('div')
+              .attr('class', 'well')
+              .append('p')
+              .text('Not enough data');
             }
-
           }, (err) => {
             console.log('ERROR', err);
           });
@@ -56,6 +68,13 @@ angular.module(PKG.name + '.feature.tracker')
           limit: 5
         };
 
+        if(scope.start) {
+          params.start = scope.start;
+        }
+        if(scope.end) {
+          params.end = scope.end;
+        }
+
         myTrackerApi.getTopEntities(params)
           .$promise
           .then((response) => {
@@ -65,8 +84,13 @@ angular.module(PKG.name + '.feature.tracker')
 
             if(response.length >= 1) {
               renderEntityGraph();
+            } else {
+              let metricContainer = d3.select(element[0]).select('.graph-container');
+              metricContainer.append('div')
+              .attr('class', 'well')
+              .append('p')
+              .text('Not enough data');
             }
-
           }, (err) => {
             console.log('ERROR', err);
           });
@@ -181,7 +205,7 @@ angular.module(PKG.name + '.feature.tracker')
           angular.forEach(scope.model.results, (result) => {
             let link = angular.element('<a></a>')
               .attr('class', 'entity-link')
-              .attr('ui-sref', 'apps.detail.overview.programs({ appId: "' + result.entityName + '" })')
+              .attr('ui-sref', 'apps.detail.overview.programs({ appId: "' + result.application + '", programId: "' + result.entityName + '" })')
               .attr('uib-tooltip', result.entityName)
               .attr('tooltip-ellipsis', result.entityName)
               .attr('tooltip-append-to-body', 'true')
@@ -200,7 +224,9 @@ angular.module(PKG.name + '.feature.tracker')
     return {
       restrict: 'E',
       scope: {
-        type: '@'
+        type: '@',
+        start: '=?',
+        end: '=?'
       },
       templateUrl: '/assets/features/tracker/directives/top-entity-graph/top-entity-graph.html',
       link: EntityGraphLink
