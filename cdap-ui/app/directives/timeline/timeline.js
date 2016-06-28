@@ -14,14 +14,9 @@
  * the License.
  */
 
-function TimelineController () {
-
-}
-
-
 function link (scope, element) {
 
-      var timelineData = [
+      let timelineData = [
         {
           time: '2016-03-04 16:28:40',
           level: 'INFO',
@@ -124,27 +119,20 @@ function link (scope, element) {
         timelineData[index].time = new Date(timelineData[index].time);
       });
 
-
-
       //Contains only the 'WARN' and 'ERROR' events
-      var filteredEvents = timelineData.filter(function(obj) {
+      let filteredEvents = timelineData.filter(function(obj) {
         if(obj.level === 'WARN' || obj.level === 'ERROR'){
           return true;
         }
         return false;
       });
 
-      scope.test = 'hi!';
-
-      var minDate = filteredEvents[0],
+      let minDate = filteredEvents[0],
           maxDate = filteredEvents[filteredEvents.length-1];
 
-      console.log(minDate);
-      console.log(maxDate);
-
       //Global Variables
-      var width = element.parent()[0].offsetWidth;
-      var height = 60;
+      let width = element.parent()[0].offsetWidth;
+      let height = 60;
 
       //Plot function call
       plot();
@@ -152,39 +140,38 @@ function link (scope, element) {
       function plot() {
 
         //Define SVG
-        var svg = d3.select('.timeline-log-chart')
+        let svg = d3.select('.timeline-log-chart')
                     .append('svg')
                     .attr('width', width)
                     .attr('height', height);
 
         //Generate circles from the filtered events
-        var circles = svg.selectAll('circle')
+        let circles = svg.selectAll('circle')
           .data(filteredEvents)
           .enter()
           .append('circle');
 
-        var xScale = d3.time.scale()
+        let xScale = d3.time.scale()
                              .domain([minDate, maxDate])
                              .nice(d3.time.minute)
                              .range([0,width]);
 
-        var xAxis = d3.svg.axis()
+        let xAxis = d3.svg.axis()
           .orient('bottom')
           .scale(xScale);
 
+        //Initially renders circles uniformally across timeline
         circles.attr('cx', function(d, i) {
                   return i*50 + 25;
-                  // console.log("Time is: " + d.time);
-                  // return xScale(d.time);
                 })
                 .attr('cy', height-height/3)
                 .attr('r', 3)
                 .attr('class', function(d) {
                   if(d.level === 'ERROR'){
-                    return 'redCircle';
+                    return 'red-circle';
                   }
                   else if(d.level === 'WARN'){
-                    return 'yellowCircle';
+                    return 'yellow-circle';
                   }
                 });
 
@@ -199,8 +186,6 @@ angular.module(PKG.name + '.commons')
 .directive('myTimeline', function() {
   return {
     templateUrl: 'timeline/timeline.html',
-    controller: TimelineController,
-    controllerAs: 'Timeline',
     link: link
   };
 });

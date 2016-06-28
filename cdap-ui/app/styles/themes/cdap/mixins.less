@@ -224,22 +224,8 @@
 }
 
 .placeholder-color(@color: white, @font-weight: 500) {
-  &::-webkit-input-placeholder {
     color: @color;
     font-weight: @font-weight;
-  }
-  &:-moz-placeholder { // Firefox 18-
-    color: @color;
-    font-weight: @font-weight;
-  }
-  &::-moz-placeholder { // Firefox 19+
-    color: @color;
-    font-weight: @font-weight;
-  }
-  &:-ms-input-placeholder {
-    color: @color;
-    font-weight: @font-weight;
-  }
 }
 
 .select-wrapper(@background-color: white, @color: @cdap-header, @right: 10px) {
