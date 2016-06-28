@@ -19,11 +19,11 @@
 #
 
 # Arguments supplied by https://raw.githubusercontent.com/hdinsight/Edge-Node-Scripts/release-12-1-2015/edgeNodeSetup.sh
-CLUSTERNAME=${1}
-USERID=${2}
-PASSWD=${3}
-CUSTOMPARAMETER=${4} # Not used
-SSHUSER=${5}
+#CLUSTERNAME=${1}
+#USERID=${2}
+#PASSWD=${3}
+#CUSTOMPARAMETER=${4} # Not used
+#SSHUSER=${5}
 
 # Ambari constants
 AMBARICONFIGS_SH=/var/lib/ambari-server/resources/scripts/configs.sh
@@ -57,17 +57,31 @@ __cleanup_tmpdir() { test -d ${__tmpdir} && rm -rf ${__tmpdir}; };
 __create_tmpdir() { mkdir -p ${__tmpdir}; };
 
 
+checkHostNameAndSetClusterName() {
+    fullHostName=$(hostname -f)
+    echo "fullHostName=$fullHostName"
+    CLUSTERNAME=$(sed -n -e 's/.*\.\(.*\)-ssh.*/\1/p' <<< $fullHostName)
+    if [ -z "$CLUSTERNAME" ]; then
+        CLUSTERNAME=$(echo -e "import hdinsight_common.ClusterManifestParser as ClusterManifestParser\nprint ClusterManifestParser.parse_local_manifest().deployment.cluster_name" | python)
+        if [ $? -ne 0 ]; then
+            echo "[ERROR] Cannot determine cluster name. Exiting!"
+            exit 133
+        fi
+    fi
+    echo "Cluster Name=$CLUSTERNAME"
+}
+
 # HDInsight cluster maintains an /etc/hosts entry 'headnodehost' to designate active master.
 # Here on the edgenode we only have 'headnode0' and 'headnode1', so we can only guess and check
 # Sets ${ACTIVEAMBARIHOST} if successful
-setHeadNodeOrDie() {
-  __validateAmbariConnectivity 'headnode0' || __validateAmbariConnectivity 'headnode1' || die 'Could not determine active headnode'
-}
+#setHeadNodeOrDie() {
+#  __validateAmbariConnectivity 'headnode0' || __validateAmbariConnectivity 'headnode1' || die 'Could not determine active headnode'
+#}
 
 # Given a candidate Ambari host, try to perform an API GET
 # Dies if credentials are bad
 __validateAmbariConnectivity() {
-    ACTIVEAMBARIHOST=${1}
+    ACTIVEAMBARIHOST=headnodehost
     coreSiteContent=$(bash ${AMBARICONFIGS_SH} -u ${USERID} -p ${PASSWD} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site)
     local __ret=$?
     if [[ ${coreSiteContent} == *"[ERROR]"* && ${coreSiteContent} == *"Bad credentials"* ]]; then
@@ -191,8 +205,18 @@ restartCdapDependentClusterServices() {
 
 # Begin Ambari Cluster Prep
 
+USERID=$(echo -e "import hdinsight_common.Constants as Constants\nprint Constants.AMBARI_WATCHDOG_USERNAME" | python)
+
+echo "USERID=$USERID"
+
+PASSWD=$(echo -e "import hdinsight_common.ClusterManifestParser as ClusterManifestParser\nimport hdinsight_common.Constants as Constants\nimport base64\nbase64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password\nprint base64.b64decode(base64pwd)" | python)
+
+checkHostNameAndSetClusterName
+
+__validateAmbariConnectivity
+
 # Find/Validate Ambari connectivity
-setHeadNodeOrDie && echo "Found active Ambari host: ${ACTIVEAMBARIHOST}"
+#setHeadNodeOrDie && echo "Found active Ambari host: ${ACTIVEAMBARIHOST}"
 
 # Update necessary hadoop configuration
 updateFsAzurePageBlobDirForCDAP
