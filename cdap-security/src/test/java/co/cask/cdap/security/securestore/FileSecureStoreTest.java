@@ -92,7 +92,6 @@ public class FileSecureStoreTest {
     List<SecureStoreMetadata> expectedList = new ArrayList<>();
     expectedList.add(secureStore.get(KEY2).getMetadata());
     expectedList.add(secureStore.get(KEY1).getMetadata());
-    List<SecureStoreMetadata> storedList = secureStore.list();
     Assert.assertEquals(expectedList, secureStore.list());
   }
 

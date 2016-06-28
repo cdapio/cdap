@@ -17,16 +17,7 @@
 package co.cask.cdap.api.security.securestore;
 
 import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -112,58 +103,5 @@ public final class SecureStoreMetadata {
   @Override
   public int hashCode() {
     return Objects.hashCode(this);
-  }
-
-  /**
-   * Serialize the metadata to a byte array.
-   *
-   * @return the serialized bytes
-   * @throws IOException
-   */
-  public byte[] serialize() throws IOException {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    OutputStreamWriter out = new OutputStreamWriter(buffer, Charset.forName("UTF-8"));
-    GSON.toJson(this, out);
-    out.flush();
-    return buffer.toByteArray();
-  }
-
-  /**
-   * Deserialize a new metadata object from a byte array.
-   *
-   * @param bytes the serialized metadata
-   * @throws IOException
-   */
-  public SecureStoreMetadata(byte[] bytes) throws IOException {
-    String name = null;
-    long created = 0;
-    String description = null;
-    Map<String, String> properties = null;
-    try (JsonReader reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(bytes),
-                                                                  Charset.forName("UTF-8")))) {
-      reader.beginObject();
-      while (reader.hasNext()) {
-        String field = reader.nextName();
-        if (NAME_FIELD.equals(field)) {
-          name = reader.nextString();
-        } else if (CREATED_FIELD.equals(field)) {
-          created = reader.nextLong();
-        } else if (DESCRIPTION_FIELD.equals(field)) {
-          description = reader.nextString();
-        } else if (PROPERTIES_FIELD.equalsIgnoreCase(field)) {
-          reader.beginObject();
-          properties = new HashMap<>();
-          while (reader.hasNext()) {
-            properties.put(reader.nextName(), reader.nextString());
-          }
-          reader.endObject();
-        }
-      }
-      reader.endObject();
-    }
-    this.name = name;
-    this.createdEpochMs = created;
-    this.description = description;
-    this.properties = properties;
   }
 }
