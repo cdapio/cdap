@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.gson.stream.JsonWriter;
+import kafka.Kafka;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Comment;
@@ -232,6 +233,16 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   private static Map<String, DeprecatedKeyInfo> deprecatedKeyMap = new HashMap<String, DeprecatedKeyInfo>() {
     {
       put(Constants.Security.AUTH_SERVER_ADDRESS, new DeprecatedKeyInfo(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
+      put(KafkaConstants.ConfigKeys.REPLICATION_FACTOR_DEPRECATED,
+          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.REPLICATION_FACTOR));
+      put(KafkaConstants.ConfigKeys.LOG_DIRS_DEPRECATED,
+          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.LOG_DIRS));
+      put(KafkaConstants.ConfigKeys.PORT_CONFIG_DEPRECATED,
+          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.PORT_CONFIG));
+      put(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG_DEPRECATED,
+          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG));
+      put(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED,
+          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG));
     }
   };
 
@@ -241,6 +252,17 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   private static Map<String, String[]> reverseDeprecatedKeyMap = new HashMap<String, String[]>() {
     {
       put(Constants.Security.AUTH_SERVER_BIND_ADDRESS, new String[] { Constants.Security.AUTH_SERVER_ADDRESS });
+      put(KafkaConstants.ConfigKeys.REPLICATION_FACTOR,
+          new String[] {KafkaConstants.ConfigKeys.REPLICATION_FACTOR_DEPRECATED});
+      put(KafkaConstants.ConfigKeys.LOG_DIRS,
+          new String[] {KafkaConstants.ConfigKeys.LOG_DIRS_DEPRECATED});
+      put(KafkaConstants.ConfigKeys.PORT_CONFIG,
+          new String[] {KafkaConstants.ConfigKeys.PORT_CONFIG_DEPRECATED});
+      put(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG,
+          new String[] {KafkaConstants.ConfigKeys.HOSTNAME_CONFIG_DEPRECATED});
+      put(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
+          new String[] {KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED});
+
     }
   };
 
