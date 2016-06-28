@@ -26,7 +26,7 @@ import java.util.List;
 public interface SecureStore {
 
   /**
-   * @return A map of all the elements stored in the store. The map is Name -> Description
+   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
    */
   List<SecureStoreMetadata> list() throws IOException;
 
