@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.ssh;
+package co.cask.cdap.ssh;
 
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.Session;
@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Map;
 
 /**
  *
@@ -67,9 +68,30 @@ public class SSHAction extends AbstractWorkflowAction {
   private SSHConfig config;
   private boolean establishedConnection = false;
 
+  /*
+   * Used only for unit testing
+   */
   public SSHAction(boolean usePasswordSSH, String host, int port, String user, String password, String privateKeyFile,
                    String privateKeyPassphrase, String cmd) {
     this.config = new SSHConfig(usePasswordSSH, host, port, user, password, privateKeyFile, privateKeyPassphrase, cmd);
+  }
+
+  /*
+   * Constructor from runtime arguments
+   */
+  public SSHAction(String privateKeyFile) {
+    Map<String, String> runtimeArguments = getContext().getRuntimeArguments();
+    int parsedPort;
+    boolean parsedUsePasswordSSH = runtimeArguments.equals("true");
+    try {
+      parsedPort = Integer.parseInt(runtimeArguments.get("port"));
+    } catch (NumberFormatException e) {
+      LOG.error("Badly formatted port: {}", runtimeArguments.get("port"));
+      throw new IllegalArgumentException(e);
+    }
+    this.config = new SSHConfig(parsedUsePasswordSSH, runtimeArguments.get("host"), parsedPort,
+                                runtimeArguments.get("user"), runtimeArguments.get("password"), privateKeyFile,
+                                runtimeArguments.get("privateKeyPassphrase"), runtimeArguments.get("cmd"));
   }
 
   @Override

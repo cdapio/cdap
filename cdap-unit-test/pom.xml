@@ -144,6 +144,11 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>ch.ethz.ganymed</groupId>
+      <artifactId>ganymed-ssh2</artifactId>
+    </dependency>
+
   </dependencies>
 
   <build>

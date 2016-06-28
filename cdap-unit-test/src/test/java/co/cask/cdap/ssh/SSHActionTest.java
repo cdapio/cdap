@@ -17,7 +17,6 @@
 
 package co.cask.cdap.ssh;
 
-import co.cask.cdap.api.ssh.SSHAction;
 import org.junit.Test;
 
 public class SSHActionTest {
@@ -29,7 +28,7 @@ public class SSHActionTest {
   private static final String password = "";
   private static final String privateKeyFile = "/Users/Kashif/.ssh/id_rsa";
   private static final String privateKeyPassphrase = "";
-  private static final String cmd = "uptime";
+  private static final String cmd = "cd logging && ~/logging/addSpammers.sh kashif@cask.co Kijoun@hotmail.com";
 
   @Test
   public void testSSHAction() {

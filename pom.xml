@@ -1433,21 +1433,6 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>com.hierynomus</groupId>
-        <artifactId>sshj</artifactId>
-        <version>0.15.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15on</artifactId>
-        <version>1.50</version>
-      </dependency>
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpkix-jdk15on</artifactId>
-        <version>1.50</version>
-      </dependency>
-      <dependency>
         <groupId>ch.ethz.ganymed</groupId>
         <artifactId>ganymed-ssh2</artifactId>
         <version>262</version>
@@ -2056,11 +2041,11 @@
                 <configuration>
                   <source>
                     if (project.version.endsWith("-SNAPSHOT")){
-                      project.properties['deploy.url'] = project.properties['cask.packages.snapshot.repo'];
-                      project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.snapshots";
+                    project.properties['deploy.url'] = project.properties['cask.packages.snapshot.repo'];
+                    project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.snapshots";
                     } else {
-                      project.properties['deploy.url'] = project.properties['cask.packages.release.repo'];
-                      project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.release";
+                    project.properties['deploy.url'] = project.properties['cask.packages.release.repo'];
+                    project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.release";
                     }
                   </source>
                 </configuration>
