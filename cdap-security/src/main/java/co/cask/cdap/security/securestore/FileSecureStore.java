@@ -57,17 +57,17 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
+
 /**
  * File based implementation of secure store. Uses Java JCEKS based keystore.
  *
  * When the client calls a put, the key is put in the keystore. The system then flushes
  * the keystore to the file system.
- * During the flush, the current file is first backed up (_OLD). Then the keystore
- * is written to temporary file (_NEW). If that is successful then the temporary
- * file is renamed to the secure store file. If anything fails during this process
- * then the keystore reverts to the last successfully written file.
- *
- *  The keystore is flushed to the filesystem after every put and delete.
+ * During the flush, the current file is first written to temporary file (_NEW).
+ * If that is successful then the temporary file is renamed atomically to the secure store file.
+ * If anything fails during this process then the keystore reverts to the last successfully written file.
+ * The keystore is flushed to the filesystem after every put and delete.
  */
 class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
@@ -204,10 +204,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     }
   }
 
-  private static Path constructOldPath(Path path) {
-    return Paths.get(path.toString() + "_OLD");
-  }
-
   private static Path constructNewPath(Path path) {
     return Paths.get(path.toString() + "_NEW");
   }
@@ -241,7 +237,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    * @throws IOException If there is a problem reading or creating the keystore.
    */
   private static KeyStore locateKeystore(Path path, final char[] password) throws IOException {
-    Path oldPath = constructOldPath(path);
     Path newPath = constructNewPath(path);
     KeyStore ks;
     try {
@@ -254,8 +249,8 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
             String.format("Secure Store not loaded due to an inconsistency "
                             + "('%s' and '%s' should not exist together)!!", path, newPath));
         }
-        tryLoadFromPath(ks, path, oldPath, password);
-      } else if (!tryLoadIncompleteFlush(ks, path, newPath, oldPath, password)) {
+        tryLoadFromPath(ks, path, newPath, password);
+      } else {
         // We were not able to load an existing key store. Create a new one.
         ks.load(null, password);
         LOG.info("New Secure Store initialized successfully.");
@@ -271,14 +266,14 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    * other than bad password then try loading from the backup path.
    *
    * @param path       Path to load from
-   * @param backupPath Backup path (_OLD)
+   * @param backupPath Backup path (_NEW)
    * @throws IOException
    */
   private static void tryLoadFromPath(KeyStore keyStore, Path path, Path backupPath, char[] password)
     throws IOException {
     try {
       loadFromPath(keyStore, path, password);
-      // Successfully loaded the keystore. No need to keep the old file.
+      // Successfully loaded the keystore. No need to keep the backup file.
       Files.deleteIfExists(backupPath);
       LOG.info("Secure store loaded successfully.");
     } catch (IOException ioe) {
@@ -298,110 +293,35 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   /**
-   * The KeyStore might have gone down during a flush, In which case either the
-   * _NEW or _OLD files might exists. This method tries to load the KeyStore
-   * from one of these intermediate files.
-   * @param oldPath the _OLD file created during flush
-   * @param newPath the _NEW file created during flush
-   * @return If the file was successfully loaded
-   */
-  private static boolean tryLoadIncompleteFlush(KeyStore keyStore, Path path, Path oldPath, Path newPath,
-                                                final char[] password)
-    throws IOException {
-    // Check if _NEW exists (in case flush had finished writing but not
-    // completed the re-naming)
-    boolean loaded = false;
-    if (Files.exists(oldPath)) {
-      loadFromPath(keyStore, oldPath, password);
-      loaded = true;
-      // Successfully loaded from the old file, rename it.
-      Files.move(oldPath, path);
-    }
-    if (!loaded && Files.exists(newPath)) {
-      loadFromPath(keyStore, newPath, password);
-      loaded = true;
-      // Successfully loaded from the new file, rename it.
-      Files.move(newPath, path);
-    }
-    return loaded;
-  }
-
-  /**
    * Persist the keystore on the file system.
    *
    * During the flush the steps are
-   *  1. Mark any existing _OLD or _NEW as orphaned, they will exist only if something had failed in the last run.
-   *  2. Move the current file to _OLD.
-   *  3. Try to write the current keystore in a _NEW file.
-   *  4. If something fails then rename the _OLD back to the main file.
-   *  5. If everything is OK then rename the _NEW to the main file and delete the _OLD file.
+   *  1. Mark existing _NEW as orphaned, it will exist only if something had failed in the last run.
+   *  2. Try to write the current keystore in a _NEW file.
+   *  3. If something fails then revert the key store to the old state and throw IOException.
+   *  4. If everything is OK then rename the _NEW to the main file.
    *
    * @throws IOException
    */
   private void flush() throws IOException {
     Path newPath = constructNewPath(path);
-    Path oldPath = constructOldPath(path);
-    Path resetPath = path;
     writeLock.lock();
     try {
       // Might exist if a backup has been restored etc.
       if (Files.exists(newPath)) {
         Files.move(newPath, Paths.get(newPath.toString() + "_ORPHANED_" + System.currentTimeMillis()));
       }
-      if (Files.exists(oldPath)) {
-        Files.move(oldPath, Paths.get(oldPath.toString() + "_ORPHANED_" + System.currentTimeMillis()));
-      }
 
-      // Create the backup copy
-      boolean fileExisted = backupToOld(oldPath);
-      if (fileExisted) {
-        resetPath = oldPath;
-      }
       // Flush the keystore, write the _NEW file first
-      try {
-        writeToNew(newPath);
-      } catch (IOException ioe) {
-        // rename _OLD back to current and throw Exception
-        revertFromOld(oldPath, fileExisted);
-        throw ioe;
-      }
-      // Rename _NEW to CURRENT and delete _OLD
-      cleanupNewAndOld(newPath, oldPath);
+      writeToNew(newPath);
+      // Do Atomic rename _NEW to CURRENT
+      Files.move(newPath, path, ATOMIC_MOVE);
     } catch (IOException ioe) {
-      resetKeyStoreState(resetPath);
-      LOG.error("Failed to persist the key store. Secure data may be lost on a restart.", ioe);
+      resetKeyStoreState(path);
+      LOG.error("Failed to persist the key store.", ioe);
       throw ioe;
     } finally {
       writeLock.unlock();
-    }
-  }
-
-  private boolean backupToOld(Path oldPath) throws IOException {
-    boolean fileExisted = false;
-    if (Files.exists(path)) {
-      Files.move(path, oldPath);
-      fileExisted = true;
-    }
-    return fileExisted;
-  }
-
-  private void resetKeyStoreState(Path path) {
-    LOG.debug("Could not flush Keystore attempting to reset to previous state.");
-    // load keyStore from previous path
-    try {
-      loadFromPath(keyStore, path, password);
-      LOG.debug("KeyStore resetting to previously flushed state.");
-    } catch (Exception e) {
-      LOG.debug("Could not reset Keystore to previous state.", e);
-    }
-  }
-
-  private void cleanupNewAndOld(Path newPath, Path oldPath) throws IOException {
-    // Rename _NEW to CURRENT
-    Files.move(newPath, path);
-    // Delete _OLD
-    if (Files.exists(oldPath)) {
-      Files.delete(oldPath);
     }
   }
 
@@ -419,10 +339,14 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     }
   }
 
-  private void revertFromOld(Path oldPath, boolean fileExisted)
-    throws IOException {
-    if (fileExisted) {
-      Files.move(oldPath, path);
+  private void resetKeyStoreState(Path path) {
+    LOG.debug("Could not flush Keystore attempting to reset to previous state.");
+    // load keyStore from previous path
+    try {
+      loadFromPath(keyStore, path, password);
+      LOG.debug("KeyStore resetting to previously flushed state.");
+    } catch (Exception e) {
+      LOG.debug("Could not reset Keystore to previous state.", e);
     }
   }
 

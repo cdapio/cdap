@@ -97,6 +97,6 @@ public final class SecureStoreMetadata {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(this);
+    return Objects.hash(name, description, createdEpochMs, properties);
   }
 }
