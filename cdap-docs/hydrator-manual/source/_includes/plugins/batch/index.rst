@@ -16,8 +16,8 @@ Hydrator Version |cdap-hydrator-version|
     Source Plugins <sources/index>
     Transformation Plugins <transforms/index>
     Aggregator Plugins <aggregators/index>
-    Compute Plugins <compute/index>
-    Model Plugins <model/index>
+    Compute Plugins <computes/index>
+    Model Plugins <models/index>
     Sink Plugins <sinks/index>
 
 ..     Compute Plugins <computes/index>

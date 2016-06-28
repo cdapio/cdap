@@ -45,7 +45,7 @@ function download_md_file() {
   local source_file_name="${2}"
   local append_file="${3}"
   local plugin_category="${4}"
-  local plugin_type="${5}"
+  local plugin_type="${5}" # NOTE: singular types: "sink", not "sinks"
   
   local source_url="${HYDRATOR_SOURCE}/${source_dir}/docs/${source_file_name}"
 
@@ -81,6 +81,7 @@ function download_md_file() {
     local target_dir="${plugin_category}/${plugin_type}s"
     local target_dir_extra=''
   elif [[ "${plugin_type}" == "transform" ]]; then
+    # Directories are plural, though types are singular
     local target_dir="batch/${plugin_type}s"
     local target_dir_extra="realtime/${plugin_type}s"
   fi
@@ -122,6 +123,7 @@ function download_md_file() {
       fi
     else
       local m="File does not exist: ${target}"
+      echo_red_bold "From ${source_url}"
       echo_red_bold "${m}"
       set_message "${m}"
     fi
@@ -245,7 +247,7 @@ function download_includes() {
   
   # Currently only for batch
   download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "batch" "compute"
-  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md '' "batch" "model"
+  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "batch" "model"
   
   download_md_file transform-plugins CSVFormatter-transform.md
   download_md_file transform-plugins CSVParser-transform.md
