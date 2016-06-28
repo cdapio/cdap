@@ -64,7 +64,7 @@
               "destinationPort": 9999,
               "accessModes": ["webpage"]
             },
-            "httpsEndpoints": [{
+            {
               "subDomainSuffix": "api",
               "destinationPort": 10000
             }],
