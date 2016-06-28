@@ -688,8 +688,6 @@ public final class Constants {
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
-    /** Location of the encypted file which holds the secure store entries. */
-    //public static final String
     /** Enables SSL */
     public static final String SSL_ENABLED = "ssl.enabled";
 

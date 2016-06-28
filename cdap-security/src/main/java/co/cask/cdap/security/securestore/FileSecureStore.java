@@ -74,7 +74,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
-    path = dir.resolve(Constants.Security.Store.FILE_NAME);
+    path = dir.resolve(cConf.get(Constants.Security.Store.FILE_NAME));
 
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
@@ -194,11 +194,11 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   private static Path constructOldPath(Path path) {
-    return Paths.get(path.toString(), "_OLD");
+    return Paths.get(path.toString() + "_OLD");
   }
 
   private static Path constructNewPath(Path path) {
-    return Paths.get(path.toString(), "_NEW");
+    return Paths.get(path.toString() + "_NEW");
   }
 
   private static void loadFromPath(KeyStore keyStore, Path path, char[] password)
@@ -488,7 +488,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     }
 
     private void readObject(ObjectInputStream in
-    ) throws IOException, ClassNotFoundException {
+    ) throws IOException {
       byte[] buf = new byte[in.readInt()];
       in.readFully(buf);
       byte[] dataBuf = new byte[in.readInt()];

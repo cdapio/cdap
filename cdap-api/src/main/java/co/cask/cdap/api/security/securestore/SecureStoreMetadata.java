@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.security.securestore;
 
-import com.google.gson.Gson;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
@@ -26,12 +25,8 @@ import java.util.Objects;
  */
 public final class SecureStoreMetadata {
 
-  private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
-  private static final String CREATED_FIELD = "createdEpochMs";
-  private static final String PROPERTIES_FIELD = "properties";
   private static final String DESCRIPTION_DEFAULT = "";
-  private static final Gson GSON = new Gson();
 
   private final String name;
   private final String description;
