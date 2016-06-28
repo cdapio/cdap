@@ -1,0 +1,44 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "clusterApiVersion": "2015-03-01-preview"
+  },
+  "resources": [{
+    "name": "[concat(parameters('clusterName'),'/cdap')]",
+    "type": "Microsoft.HDInsight/clusters/applications",
+    "apiVersion": "[variables('clusterApiVersion')]",
+    "properties": {
+      "computeProfile": {
+        "roles": [{
+          "name": "edgenode",
+          "targetInstanceCount": 1,
+          "hardwareProfile": {
+            "vmSize": "Standard_D3"
+          }
+        }]
+      },
+      "installScriptActions": [{
+        "name": "cdap-install",
+        "uri": "https://raw.githubusercontent.com/caskdata/cdap/feature/hdinsight-v2/cdap-distributions/src/hdinsight/install.sh",
+        "roles": ["edgenode"]
+      }],
+      "uninstallScriptActions": [],
+      "httpEndpoints": [{
+        "subDomainSuffix": "ui",
+        "destinationPort": 9999,
+        "accessModes": ["webpage"]
+      },
+      "httpEndpoints": [{
+        "subDomainSuffix": "api",
+        "destinationPort": 10000
+      }],
+      "applicationType": "CustomApplication"
+    }
+  }]
+}
