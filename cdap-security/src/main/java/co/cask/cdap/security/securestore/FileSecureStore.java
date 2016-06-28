@@ -27,7 +27,18 @@ import com.google.gson.stream.JsonReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -263,7 +274,8 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param backupPath Backup path (_OLD)
    * @throws IOException
    */
-  private static void tryLoadFromPath(KeyStore keyStore, Path path, Path backupPath, char[] password) throws IOException {
+  private static void tryLoadFromPath(KeyStore keyStore, Path path, Path backupPath, char[] password)
+    throws IOException {
     try {
       loadFromPath(keyStore, path, password);
       // Successfully loaded the keystore. No need to keep the old file.
