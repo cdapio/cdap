@@ -238,7 +238,9 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.EventPipe.emit('schema.clear');
   }
   importSchema() {
-    document.getElementById('schema-import-link').click();
+    this.$timeout(function() {
+      document.getElementById('schema-import-link').click();
+    });
   }
   importFiles(files) {
     let reader = new FileReader();
