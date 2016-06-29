@@ -32,6 +32,21 @@ angular.module(`${PKG.name}.feature.experimental`)
     // let parsed = avsc.parse(union, { wrapUnions: true });
     // console.log('parsed', parsed);
 
+    const SCHEMA_TYPES = [
+      'string',
+      'int',
+      'long',
+      'float',
+      'double',
+      'boolean',
+      'bytes',
+      'enum',
+      'array',
+      'map',
+      'record',
+      'union'
+    ];
+
 
     let parsed = avsc.parse(schema, { wrapUnions: true }).getFields();
 
@@ -53,6 +68,8 @@ angular.module(`${PKG.name}.feature.experimental`)
       }
 
       console.log(name + ': ' + type);
+
+      console.log(SCHEMA_TYPES);
     });
 
     // function parseSchemaType (field) {
