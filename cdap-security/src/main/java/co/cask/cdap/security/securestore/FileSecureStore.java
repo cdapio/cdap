@@ -113,9 +113,25 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       // Attempt to persist the store.
       flush();
     } catch (KeyStoreException e) {
+      // We failed to store the key in the key store. Throw an IOException.
       throw new IOException("Failed to store the key. ", e);
+    } catch (IOException ioe) {
+      // The key was stored in the keystore successfully but we failed to flush it to the file system.
+      // Remove the key from the keystore and throw an IOException.
+      deleteFromStore(keyStore, name);
+      throw ioe;
     } finally {
       writeLock.unlock();
+    }
+  }
+
+  private static void deleteFromStore(KeyStore keyStore, String name) throws IOException {
+    try {
+      if (keyStore.containsAlias(name)) {
+        keyStore.deleteEntry(name);
+      }
+    } catch (KeyStoreException e) {
+      throw new IOException("Failed to delete the key. " + name, e);
     }
   }
 
@@ -127,13 +143,12 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   public void delete(String name) throws IOException {
     writeLock.lock();
     try {
-      if (keyStore.containsAlias(name)) {
-        keyStore.deleteEntry(name);
-      }
-      // Attempt to persist the store.
+      deleteFromStore(keyStore, name);
+      // Attempt to persist the store. If this fails then the keystore file will have an extra key
+      // that the in-memory store does not. This will be remedied the next time a flush happens.
+      // If another flush does not happen and the system is restarted, the only time that file is read,
+      // then we will have an extra key.
       flush();
-    } catch (KeyStoreException e) {
-      LOG.error("Failed to delete the key " + name, e);
     } finally {
       writeLock.unlock();
     }
@@ -317,7 +332,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       // Do Atomic rename _NEW to CURRENT
       Files.move(newPath, path, ATOMIC_MOVE);
     } catch (IOException ioe) {
-      resetKeyStoreState(path);
       LOG.error("Failed to persist the key store.", ioe);
       throw ioe;
     } finally {
