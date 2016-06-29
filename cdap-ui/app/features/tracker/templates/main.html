@@ -63,7 +63,7 @@
         </div>
         <div class="metric-container">
           <table ng-if="MainController.topDatasets.length >= 3"
-            class="table">
+                class="table">
             <thead>
               <th class="text-center">Dataset</th>
               <th colspan="2"
@@ -76,33 +76,33 @@
               </th>
             </thead>
             <tbody>
-              <tr ng-repeat="metric in MainController.topDatasets">
+              <tr ng-repeat="metric in ::MainController.topDatasets">
                 <td class="text-left">
                   <a ng-if="metric.entityType === 'dataset'"
                     ui-sref="datasets.detail.overview.status({datasetId: metric.entityName })">
-                    <span uib-tooltip="{{ metric.entityName }}"
-                      tooltip-ellipsis="{{ metric.entityName }}"
+                    <span uib-tooltip="{{ ::metric.entityName }}"
+                      tooltip-ellipsis="{{ ::metric.entityName }}"
                       tooltip-enable="metric.entityName.length > 15"
                       tooltip-append-to-body="true"
                       tooltip-class="tracker-tooltip"
                       tooltip-placement="top">
-                      {{ metric.entityName }}
+                      {{ ::metric.entityName }}
                     </span>
                   </a>
                   <a ng-if="metric.entityType === 'stream'"
                     ui-sref="streams.detail.overview.status({streamId: metric.entityName })">
-                    <span uib-tooltip="{{ metric.entityName }}"
-                      tooltip-ellipsis="{{ metric.entityName }}"
+                    <span uib-tooltip="{{ ::metric.entityName }}"
+                      tooltip-ellipsis="{{ ::metric.entityName }}"
                       tooltip-enable="metric.entityName.length > 15"
                       tooltip-append-to-body="true"
                       tooltip-class="tracker-tooltip"
                       tooltip-placement="top">
-                      {{ metric.entityName }}
+                      {{ ::metric.entityName }}
                     </span>
                   </a>
                 </td>
-                <td class="text-center">{{ metric.read }}</td>
-                <td class="text-center">{{ metric.write }}</td>
+                <td class="text-center">{{ ::metric.read }}</td>
+                <td class="text-center">{{ ::metric.write }}</td>
               </tr>
               <tr ng-if="MainController.emptyRows === true"
                 ng-repeat="row in MainController.totalEmptyRows"
@@ -116,6 +116,10 @@
           <div ng-if="MainController.topDatasets.length < 3"
               class="well">
             <p>Not enough data</p>
+          </div>
+          <div ng-if="MainController.serviceUnavailable === true"
+              class="well">
+            <p>Service unavailable</p>
           </div>
         </div>
       </div>

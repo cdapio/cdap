@@ -19,7 +19,8 @@
   <div class="row">
     <div class="col-xs-12">
       <h2 class="pull-left">Audit Messages</h2>
-      <div class="btn-group time-range-picker-group" uib-dropdown>
+      <div ng-if="UsageController.serviceUnavailable === false"
+          class="btn-group time-range-picker-group" uib-dropdown>
         <button class="btn" uib-dropdown-toggle>
           {{ UsageController.selectedTimeRange.label }} <span class="caret"></span>
         </button>
@@ -35,15 +36,21 @@
       <my-datetime-range
         date-range="UsageController.customTimeRange"
         on-done="UsageController.goCustomDate()"
-        ng-if="UsageController.isCustom">
+        ng-if="UsageController.serviceUnavailable === false && UsageController.isCustom">
       </my-datetime-range>
     </div>
   </div>
 
-  <div style="width:100%;">
-    <my-histogram
-      model="UsageController.auditHistogram">
-    </my-histogram>
+  <div ng-if="UsageController.serviceUnavailable === false">
+    <div style="width:100%;">
+      <my-histogram
+        model="UsageController.auditHistogram">
+      </my-histogram>
+    </div>
+  </div>
+  <div ng-if="UsageController.serviceUnavailable === true"
+      class="well">
+    <p>Service unavailable</p>
   </div>
 
   <div class="tracker-metrics">
@@ -71,7 +78,8 @@
           <p>Top Datasets</p>
         </div>
         <div class="metric-container">
-          <table class="table">
+          <table ng-if="UsageController.serviceUnavailable === false"
+                class="table">
             <thead>
               <th>Dataset</th>
               <th>Time Since</th>
@@ -114,6 +122,10 @@
               </tr>
             </tbody>
           </table>
+          <div ng-if="UsageController.serviceUnavailable === true"
+              class="well">
+            <p>Service unavailable</p>
+          </div>
         </div>
       </div>
     </div>

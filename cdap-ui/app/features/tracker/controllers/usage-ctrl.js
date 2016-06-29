@@ -103,7 +103,11 @@ class TrackerUsageController {
       .$promise
       .then((response) => {
         this.auditHistogram = response;
+        this.serviceUnavailable = false;
       }, (err) => {
+        if (err.statusCode === 503) {
+          this.serviceUnavailable = true;
+        }
         console.log('Error', err);
       });
   }
@@ -120,11 +124,6 @@ class TrackerUsageController {
       .$promise
       .then((response) => {
         this.topDatasets = response;
-        this.emptyRows = false;
-        if (this.topDatasets.length >= 3) {
-          this.emptyRows = true;
-          this.totalEmptyRows = Array.apply(null, {length: 5 - this.topDatasets.length}).map(Number.call, Number);
-        }
       }, (err) => {
         console.log('Error', err);
       });
@@ -142,7 +141,11 @@ class TrackerUsageController {
       .$promise
       .then((response) => {
         this.timeSince = response;
+        this.serviceUnavailable = false;
       }, (err) => {
+        if (err.statusCode === 503) {
+          this.serviceUnavailable = true;
+        }
         console.log('Error', err);
       });
   }
