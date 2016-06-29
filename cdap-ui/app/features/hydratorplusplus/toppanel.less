@@ -260,73 +260,43 @@ body.theme-cdap {
   &.state-hydratorplusplus-detail {
     div.side-panel.top {
       left: 0;
-      max-width: 100vw;
-      height: 70px;
+      width: 100vw;
+      display: flex;
 
-      div.tbl {
-        display: table;
-        height: @height-of-toppanel;
-        width: 100%;
-      }
-      div.tbl-cell {
-        display: table-cell;
+      > div {
+        flex-grow: 1;
+        padding: 10px 0;
         border-left: 1px solid @table-border-color;
-        padding: 0 10px;
-        vertical-align: middle;
-        text-align: left;
-        &:first-child,
-        &:last-child {
+        &.next-run {
+          flex-grow: 0.5;
+        }
+        &:first-child {
           border-left: 0;
         }
-        &:last-child {
-          padding-right: 0;
-        }
-      }
-      div.batch div.tbl-cell {
-        &:first-child {
-          width: 24%;
-        }
-        &:nth-child(2) {
-          width: 6%;
-        }
-        &:nth-child(3) {
-          width: 20%;
-        }
-        &:nth-child(4) {
-          width: 15%;
-        }
-        &:nth-child(5) {
-          width: 14%;
-        }
-        &:last-child {
-          width: 21%;
-        }
-      }
-      div.realtime div.tbl-cell {
-        &:first-child {
-          width: 24%;
-        }
-        &:nth-child(2) {
-          width: 6%;
-        }
-        &:nth-child(3) {
-          width: 27%;
-        }
-        &:nth-child(4) {
-          width: 22%;
-        }
-        &:last-child {
-          width: 21%;
+        &.btn {
+          flex-grow: 0.1;
+          padding: inherit;
+          padding: 5px;
+          display: block;
+          align-items: center;
+          span {
+            line-height: 50px;
+          }
         }
       }
       .hydrator-detail-metadata {
+        display: flex;
+        overflow: hidden;
+        flex-basis: 15%;
+        padding: 10px;
         div.pipeline-type {
           text-decoration: none;
-          padding: 0 10px 0 5px;
+          padding: 0 10px 0 0;
         }
         div.pipeline-name {
           text-align: left;
           padding-top: 4px;
+          overflow: hidden;
         }
         h1,
         p {
@@ -350,6 +320,7 @@ body.theme-cdap {
         }
       }
       div.app-status {
+        flex-grow: 0.3;
         .metric-value {
           font-size: 20px;
           line-height: 20px;
@@ -365,32 +336,15 @@ body.theme-cdap {
           line-height: inherit;
         }
       }
-      div.last-run {
-        div.metric {
-          &:first-child {
-            padding-right: 5px;
-            width: 62%;
-          }
-          &:last-child {
-            width: 38%;
-          }
-        }
-      }
-      div.all-runs {
-        div.metric {
-          &:first-child {
-            padding-right: 5px;
-            width: 60%;
-          }
-          &:last-child {
-            width: 40%;
-          }
-        }
+      .last-run-container,
+      .all-runs-container,
+      .next-runs-container {
+        display: flex;
+        justify-content: space-around;
       }
       strong {
         display: block;
         font-size: 12px;
-        margin-bottom: 2px;
       }
       span {
         display: block;
