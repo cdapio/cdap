@@ -1,4 +1,4 @@
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -21,3 +21,11 @@
 
 # Ensure SPARK_HOME is set for Spark support.
 # export SPARK_HOME="/usr/lib/spark"
+
+# LOCAL_DIR sets the JVM -Duser.dir property of the CDAP processes, and provides a
+# local working directory for application jars during startup if needed
+LOCAL_DIR="/var/tmp/cdap"
+
+# TEMP_DIR sets the JVM -Djava.io.tmpdir property of the CDAP processes, and provides
+# temporary storage for Apache Twill
+TEMP_DIR="/tmp"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -48,7 +48,10 @@ export IDENT_STRING=${USER}
 export PID_DIR=/var/cdap/run
 
 # The directory serving as the user directory for master
-export LOCAL_DIR=/var/tmp/cdap
+export LOCAL_DIR=${LOCAL_DIR:-/var/tmp/cdap}
+
+# The directory serving as the java.io.tmpdir directory for master
+export TEMP_DIR=${TEMP_DIR:-/tmp}
 
 # Specifies the JAVA_HEAPMAX
 export JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx128m}
