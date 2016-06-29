@@ -27,7 +27,7 @@ end
 
 template '/etc/init.d/cdap-auth-server' do
   source 'cdap-service.erb'
-  mode 0755
+  mode 0o755
   owner 'root'
   group 'root'
   action :create
@@ -90,7 +90,7 @@ if node['cdap']['security']['manage_realmfile'].to_s == 'true' &&
   # Create the realmfile
   template realmfile do
     source 'generic-kv-colon.erb'
-    mode 0644
+    mode 0o644
     owner 'cdap'
     group 'cdap'
     variables options: node['cdap']['security']['realmfile']

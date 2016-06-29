@@ -74,7 +74,7 @@ svcs.each do |svc|
   attrib = svc.gsub('cdap-', '').tr('-', '_')
   template "/etc/init.d/#{svc}" do
     source 'cdap-service.erb'
-    mode 0755
+    mode 0o755
     owner 'root'
     group 'root'
     action :create

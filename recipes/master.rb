@@ -107,7 +107,7 @@ end
 
 template '/etc/init.d/cdap-master' do
   source 'cdap-service.erb'
-  mode 0755
+  mode 0o755
   owner 'root'
   group 'root'
   action :create

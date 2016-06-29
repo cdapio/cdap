@@ -57,7 +57,7 @@ else
 
   template '/etc/init.d/cdap-web-app' do
     source 'cdap-service.erb'
-    mode 0755
+    mode 0o755
     owner 'root'
     group 'root'
     action :create

@@ -33,7 +33,7 @@ if node['cdap'].key?('cdap_site')
 
   template "#{cdap_conf_dir}/cdap-site.xml" do
     source 'generic-site.xml.erb'
-    mode 0644
+    mode 0o644
     owner 'cdap'
     group 'cdap'
     variables my_vars
@@ -47,7 +47,7 @@ if node['cdap'].key?('cdap_security')
 
   template "#{cdap_conf_dir}/cdap-security.xml" do
     source 'generic-site.xml.erb'
-    mode 0600
+    mode 0o600
     owner 'cdap'
     group 'cdap'
     variables my_vars
@@ -61,7 +61,7 @@ if node['cdap'].key?('cdap_env') && node['cdap']['version'].to_f >= 2.7
 
   template "#{cdap_conf_dir}/cdap-env.sh" do
     source 'generic-env.sh.erb'
-    mode 0644
+    mode 0o644
     owner 'cdap'
     group 'cdap'
     variables my_vars

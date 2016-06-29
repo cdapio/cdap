@@ -22,9 +22,15 @@ maj_min = node['cdap']['version'].to_f
 case node['platform_family']
 when 'debian'
   include_recipe 'apt'
+  codename = node['lsb']['codename']
+  case codename
+  when 'raring', 'saucy', 'trusty'
+    codename = 'precise'
+    Chef::Log.warn('Overriding repository distribution to Precise')
+  end
   apt_repository "cdap-#{maj_min}" do
     uri node['cdap']['repo']['apt_repo_url']
-    distribution node['lsb']['codename']
+    distribution codename
     components node['cdap']['repo']['apt_components']
     action :add
     arch 'amd64'
