@@ -83,14 +83,6 @@ final class SparkBatchSourceFactory {
     return new SparkBatchSourceFactory(null, inputFormatProvider, null);
   }
 
-  static SparkBatchSourceFactory create(String datasetName) {
-    return create(datasetName, ImmutableMap.<String, String>of());
-  }
-
-  static SparkBatchSourceFactory create(String datasetName, Map<String, String> datasetArgs) {
-    return create(datasetName, datasetArgs, null);
-  }
-
   static SparkBatchSourceFactory create(String datasetName, Map<String, String> datasetArgs,
                                         @Nullable List<Split> splits) {
     return new SparkBatchSourceFactory(null, null, new DatasetInfo(datasetName, datasetArgs, splits));

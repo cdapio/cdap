@@ -98,16 +98,6 @@ final class SparkBatchSinkFactory {
     }
   }
 
-  void addOutput(String stageName, String alias, OutputFormatProvider outputFormatProvider) {
-    addOutput(stageName, alias,
-              new BasicOutputFormatProvider(outputFormatProvider.getOutputFormatClassName(),
-                                            outputFormatProvider.getOutputFormatConfiguration()));
-  }
-
-  void addOutput(String stageName, String datasetName, Map<String, String> datasetArgs) {
-    addOutput(stageName, datasetName, datasetName, datasetArgs);
-  }
-
   private void addOutput(String stageName, String alias,
                          BasicOutputFormatProvider outputFormatProvider) {
     if (outputFormatProviders.containsKey(alias) || datasetInfos.containsKey(alias)) {
