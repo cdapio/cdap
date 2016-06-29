@@ -105,9 +105,17 @@ class TrackerEnableController{
       scope: this.$scope
     };
 
+    let auditMetricsParams = {
+      namespace: this.$state.params.namespace,
+      programType: 'services',
+      programId: this.UI_CONFIG.tracker.metricProgramId,
+      scope: this.$scope
+    };
+
     this.$q.all([
       this.myTrackerApi.startTrackerProgram(auditServiceParams, {}).$promise,
-      this.myTrackerApi.startTrackerProgram(auditFlowParams, {}).$promise
+      this.myTrackerApi.startTrackerProgram(auditFlowParams, {}).$promise,
+      this.myTrackerApi.startTrackerProgram(auditMetricsParams, {}).$promise
     ]).then( () => {
       this.$state.go('tracker.home');
       this.enableTrackerLoading = false;
