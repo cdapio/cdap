@@ -11,19 +11,27 @@ Service HTTP RESTful API
 
 .. highlight:: console
 
-This interface supports listing all services and making requests to the methods of an application’s services.
-See the :ref:`http-restful-api-lifecycle` for how to control the lifecycle of services.
+Use the CDAP Service HTTP RESTful API to list all services and making requests to the
+methods of an application’s services. See the :ref:`http-restful-api-lifecycle` for how to
+control the lifecycle of services.
 
 For system services, see the :ref:`http-restful-api-monitor` and its methods.
+
+Additional details and examples are found in the :ref:`Developers' Manual: Services <developers:user-services>`.
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
+
 
 .. _http-restful-api-service-listing:
 
 Listing all Services
---------------------
+====================
 
 You can list all services in a namespace in CDAP by issuing an HTTP GET request to the URL::
 
-  GET <base-url>/namespaces/<namespace>/services
+  GET /v3/namespaces/<namespace-id>/services
 
 .. list-table::
    :widths: 20 80
@@ -31,7 +39,7 @@ You can list all services in a namespace in CDAP by issuing an HTTP GET request 
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
      
 The response body will contain a JSON-formatted list of the existing services::
@@ -48,11 +56,11 @@ The response body will contain a JSON-formatted list of the existing services::
   ]
 
 Checking Service Availability
------------------------------
+=============================
 Once a service is started, you can can check whether the service is ready to accept service method requests by issuing
 an HTTP GET request to the URL::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/available
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/available
 
 .. list-table::
    :widths: 20 80
@@ -60,11 +68,11 @@ an HTTP GET request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<service-id>``
+   * - ``service-id``
      - Name of the service whose availability needs to be checked
 
 .. rubric:: HTTP Responses
@@ -86,13 +94,13 @@ service fails just after the availability call returns. It is highly recommended
 (a ``503`` status code) be handled when making requests to service methods simply by retrying the request.
 
 Requesting Service Methods
---------------------------
+==========================
 To make a request to a service's method, send the value of the method's ``@Path`` annotation
 as part of the request URL along with any additional headers, body, and query parameters.
 
 The request type is defined by the service's method::
 
-  <request-type> <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
+  <request-type> /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
   
 **Note:** Any reserved or unsafe characters in the path parameters should be encoded using 
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`. See the
@@ -105,15 +113,15 @@ encoding parameters.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<request-type>``
-     - One of GET, POST, PUT and DELETE. This is defined by the handler method.
-   * - ``<app-id>``
+   * - ``request-type``
+     - One of GET, POST, PUT, or DELETE. This is defined by the handler method.
+   * - ``app-id``
      - Name of the application being called
-   * - ``<service-id>``
+   * - ``service-id``
      - Name of the service being called
-   * - ``<endpoint-path>``
+   * - ``endpoint-path``
      - Endpoint path of the method being called
 
 .. rubric:: HTTP Responses
@@ -134,7 +142,7 @@ Other responses are defined by the service's method.
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/Cask?limit=2``
+     - ``GET /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/Cask?limit=2``
    * - Description
      - Make a request to the ``count/{word}`` endpoint of the ``RetrieveCounts`` service
        in the application ``WordCount`` in the namespace *default* to get a count of the

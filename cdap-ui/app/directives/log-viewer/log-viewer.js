@@ -31,6 +31,8 @@ angular.module(PKG.name + '.commons')
         var dataSrc = new MyCDAPDataSource($scope);
         $scope.model = [];
 
+        var loadTimeout = null;
+
         $scope.filters = 'all,info,warn,error,debug,other'.split(',')
           .map(function (key) {
             var p;
@@ -60,7 +62,10 @@ angular.module(PKG.name + '.commons')
 
         var params = {};
         var pollPromise = null;
-
+        var infiniteScrollDOMElement,
+            offsetDOMElement,
+            container,
+            logItem;
 
         function pollForLogs(params) {
           var path = '/namespaces/' + params.namespace +
@@ -157,13 +162,26 @@ angular.module(PKG.name + '.commons')
               $scope.model = _.uniq(res.concat($scope.model));
               $scope.loadingPrev = false;
 
-              $timeout(function() {
-                var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
-                var logItem = angular.element(document.getElementById(params.fromOffset))[0];
+              if (loadTimeout) {
+                $timeout.cancel(loadTimeout);
+              }
+
+              loadTimeout = $timeout(function() {
+                infiniteScrollDOMElement =  document.querySelector('[infinite-scroll]');
+                offsetDOMElement = document.getElementById(params.fromOffset);
+                container = angular.element(infiniteScrollDOMElement)[0];
+                logItem = angular.element(offsetDOMElement)[0];
                 container.scrollTop = logItem.offsetTop;
               });
             });
         };
+
+        $scope.$on('$destroy', function () {
+          infiniteScrollDOMElement = offsetDOMElement = container = logItem = null;
+          if (loadTimeout) {
+            $timeout.cancel(loadTimeout);
+          }
+        });
 
       },
 
@@ -172,11 +190,17 @@ angular.module(PKG.name + '.commons')
         var termEl = angular.element(element[0].querySelector('.terminal')),
             QPARAM = 'filter';
 
+        var filterTimeout = null;
+
         scope.setFilter = function (k) {
           var f = filterFilter(scope.filters, {key:k});
           scope.activeFilter = f.length ? f[0] : scope.filters[0];
 
-          $timeout(function(){
+          if (filterTimeout) {
+            $timeout.cancel(filterTimeout);
+          }
+
+          filterTimeout = $timeout(function(){
             termEl.prop('scrollTop', termEl.prop('scrollHeight'));
 
             if(false === $state.current.reloadOnSearch) {
@@ -189,7 +213,13 @@ angular.module(PKG.name + '.commons')
         };
 
         scope.setFilter($state.params[QPARAM]);
+
+        scope.$on('$destroy', function () {
+          termEl = null;
+          if (filterTimeout) {
+            $timeout.cancel(filterTimeout);
+          }
+        });
       }
     };
   });
-

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _http-restful-api-metadata:
 .. _http-restful-api-v3-metadata:
@@ -34,8 +34,9 @@ metadata object associated with a single entity is limited to 10K bytes in size.
 There is one reserved word for property keys and values: *tags*, either as ``tags`` or
 ``TAGS``. Tags themselves have no reserved words.
 
-In this API, ``<base-url>`` is as described under :ref:`Conventions
-<http-restful-api-conventions>`. 
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
 
 
 .. _http-restful-api-metadata-properties:
@@ -47,19 +48,19 @@ Annotating Properties
 ---------------------
 To annotate user metadata properties for an application, dataset, or stream, submit an HTTP POST request::
 
-  POST <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
+  POST /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties
   
 or, for a particular program of a specific application::
 
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
 
 or, for a particular version of an artifact::
 
-  POST <base-url>/namespaces/<namespace>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/properties
+  POST /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/properties
 
 or, for a particular view of a stream::
 
-  POST <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>/metadata/properties
+  POST /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties
 
 with the metadata properties as a JSON string map of string-string pairs, passed in the
 request body::
@@ -79,25 +80,25 @@ updated. Existing keys not in the properties map will not be deleted.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
 
 .. rubric:: HTTP Responses
@@ -121,19 +122,19 @@ Retrieving Properties
 ---------------------
 To retrieve user metadata properties for an application, dataset, or stream, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties[?scope=<scope>]
   
 or, for a particular program of a specific application::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/properties[?scope=<scope>]
 
 or, for a particular version of an artifact::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/properties[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/properties[?scope=<scope>]
 
 or, for a particular view of a stream::
 
-  GET <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>/metadata/properties[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties[?scope=<scope>]
 
 with the metadata properties returned as a JSON string map of string-string pairs, passed
 in the response body (pretty-printed)::
@@ -150,27 +151,27 @@ in the response body (pretty-printed)::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, properties in the ``user`` and
        ``system`` scopes are returned. Otherwise, only properties in the specified scope are returned.
 
@@ -193,36 +194,36 @@ Deleting Properties
 To delete **all** user metadata properties for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
-  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
+  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties
   
 or, for all user metadata properties of a particular program of a specific application::
 
-  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
 
 or, for a particular version of an artifact::
 
-  DELETE <base-url>/namespaces/<namespace>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/properties
+  DELETE /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/properties
 
 or, for a particular view of a stream::
 
-  DELETE <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>/metadata/properties
+  DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties
 
 To delete **a specific property** for an application, dataset, or stream, submit
 an HTTP DELETE request with the property key::
 
-  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties/<key>
+  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties/<key>
   
 or, for a particular property of a program of a specific application::
 
-  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<key>
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<key>
 
 or, for a particular version of an artifact::
 
-  DELETE <base-url>/namespaces/<namespace>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/properties/<key>
+  DELETE /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/properties/<key>
 
 or, for a particular view of a stream::
 
-  DELETE <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>/metadata/properties/<key>
+  DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties/<key>
 
 .. list-table::
    :widths: 20 80
@@ -230,27 +231,27 @@ or, for a particular view of a stream::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
-   * - ``<key>``
+   * - ``key``
      - Metadata property key
 
 .. rubric:: HTTP Responses
@@ -278,19 +279,19 @@ Adding Tags
 -----------
 To add user metadata tags for an application, dataset, or stream, submit an HTTP POST request::
 
-  POST <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
+  POST /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags
   
 or, for a particular program of a specific application::
 
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
 
 or, for a particular version of an artifact::
 
-  POST <base-url>/namespaces/<namespace>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags
+  POST /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags
 
 or, for a particular view of a stream::
 
-  POST <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>/metadata/tags
+  POST /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/tags
 
 with the metadata tags, as a list of strings, passed in the JSON request body::
 
@@ -302,25 +303,25 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
 
 .. rubric:: HTTP Responses
@@ -343,19 +344,19 @@ Retrieving Tags
 ---------------
 To retrieve user metadata tags for an application, dataset, or stream, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags[?scope=<scope>
   
 or, for a particular program of a specific application::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags[?scope=<scope>
 
 or, for a particular version of an artifact::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags[?scope=<scope>
 
 or, for a particular view of a stream::
 
-  GET <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/tags[?scope=<scope>
 
 with the metadata tags returned as a JSON string in the return body::
 
@@ -367,27 +368,27 @@ with the metadata tags returned as a JSON string in the return body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, properties in the ``user`` and
        ``system`` scopes are returned. Otherwise, only properties in the specified scope are returned.
 
@@ -410,36 +411,36 @@ Removing Tags
 To delete all user metadata tags for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
-  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
+  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags
   
 or, for all user metadata tags of a particular program of a specific application::
 
-  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
 
 or, for a particular version of an artifact::
 
-  DELETE <base-url>/namespaces/<namespace>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags
+  DELETE /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags
 
 or, for a particular view of a stream::
 
-  DELETE <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>/metadata/tags
+  DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/tags
 
 To delete a specific user metadata tag for an application, dataset, or stream, submit
 an HTTP DELETE request with the tag::
 
-  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags/<tag>
+  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags/<tag>
   
 or, for a particular user metadata tag of a program of a specific application::
 
-  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags/<tag>
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags/<tag>
 
 or, for a particular version of an artifact::
 
-  DELETE <base-url>/namespaces/<namespace>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags/<tag>
+  DELETE /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags/<tag>
 
 or, for a particular view of a stream::
 
-  DELETE <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>/metadata/tags/<tag>
+  DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/tags/<tag>
 
 .. list-table::
    :widths: 20 80
@@ -447,27 +448,27 @@ or, for a particular view of a stream::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the entity
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<artifact-id>``
+   * - ``artifact-id``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<stream-id>``
+   * - ``stream-id``
      - Name of the stream
-   * - ``<view-id>``
+   * - ``view-id``
      - Name of the stream view
-   * - ``<tag>``
+   * - ``tag``
      - Metadata tag
 
 .. rubric:: HTTP Responses
@@ -494,7 +495,7 @@ Searching for Metadata
 CDAP supports searching metadata of entities. To find which applications, datasets, streams, etc. have a particular
 metadata property or metadata tag, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...]
+  GET /v3/namespaces/<namespace-id>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...]
 
 Entities that match the specified query and entity type are returned in the body of the response in JSON format::
 
@@ -553,12 +554,12 @@ Entities that match the specified query and entity type are returned in the body
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
        ``program``, ``stream``, or ``view``
-   * - ``<term>``
+   * - ``term``
      - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive
 
 .. rubric:: HTTP Responses
@@ -606,11 +607,11 @@ Since CDAP also annotates *system* metadata to entities by default as mentioned 
 
 - datasets, streams or views with schema field:
 
-  - field name only: ``<field-name>``
-  - field name with a type: ``<field-name>:<field-type>``, where ``field-type`` can be
+  - field name only: ``field-name``
+  - field name with a type: ``<field-name>:<field-type>``, where ``field-type`` can be:
 
-    - simple types - ``int``, ``long``, ``boolean``, ``float``, ``double``, ``bytes``, ``string``, ``enum``
-    - ``array``, ``map``, ``record`` or ``union``
+    - simple types: ``int``, ``long``, ``boolean``, ``float``, ``double``, ``bytes``, ``string``, ``enum``
+    - complex types: ``array``, ``map``, ``record``, ``union``
 
 ::
 
@@ -641,7 +642,7 @@ Viewing Lineages
 ================
 To view the lineage of a dataset or stream, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>[&levels=<levels>][&collapse=<collapse>&collapse=<collapse>...]
+  GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>[&levels=<levels>][&collapse=<collapse>&collapse=<collapse>...]
 
 where:
 
@@ -651,20 +652,20 @@ where:
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<entity-type>``
+   * - ``entity-type``
      - One of ``datasets`` or ``streams``
-   * - ``<entity-id>``
+   * - ``entity-id``
      - Name of the ``dataset`` or ``stream``
-   * - ``<start-ts>``
+   * - ``start-ts``
      - Starting time-stamp of lineage (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
-   * - ``<end-ts>``
+   * - ``end-ts``
      - Ending time-stamp of lineage (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
-   * - ``<levels>``
+   * - ``levels``
      - Number of levels of lineage output to return. Defaults to 10. Determines how far back the provenance
        of the data in the lineage chain is calculated.
-   * - ``<collapse>``
+   * - ``collapse``
      - An optional set of ``collapse`` types (any of ``access``, ``run`` or ``component``) by which to 
        :ref:`collapse the lineage output <http-restful-api-metadata-lineage-collapse>`. 
        By default, lineage output is not collapsed. Multiple collapse parameters is supported.
@@ -677,7 +678,7 @@ For more information about collapsing lineage output, please refer to the sectio
 
 The lineage will be returned as a JSON string in the body of the response. The JSON describes lineage as a graph
 of connections between programs and datasets (or streams) in the specified time range. The number of
-levels of the request (``<levels>``) determines the depth of the graph. This impacts how far back the provenance of the
+levels of the request (``levels``) determines the depth of the graph. This impacts how far back the provenance of the
 data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage-lineage>`.
 
 Lineage JSON consists of three main sections:
@@ -1024,7 +1025,7 @@ Retrieving Metadata for a Program Run
 At every run of a program, the metadata associated with the program, the application it is part of, and any datasets
 and streams used by the program run are recorded. To retrieve the metadata for a program run, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata
 
 with the metadata returned as a JSON string in the return body::
 
@@ -1101,15 +1102,15 @@ with the metadata returned as a JSON string in the return body::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<app-id>``
+   * - ``app-id``
      - Name of the application
-   * - ``<program-type>``
+   * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
-   * - ``<program-id>``
+   * - ``program-id``
      - Name of the program
-   * - ``<run-id>``
+   * - ``run-id``
      - Program run id
 
 .. rubric:: HTTP Responses

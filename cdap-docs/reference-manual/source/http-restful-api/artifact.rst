@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _http-restful-api-artifact:
 
@@ -9,10 +9,18 @@
 Artifact HTTP RESTful API 
 =========================
 
-Use the CDAP Artifact HTTP API to deploy artifacts, list available artifacts, and retrieve
-information about plugins available to artifacts.
-
 .. highlight:: console
+
+Use the CDAP Artifact HTTP RESTful API to deploy artifacts, list available artifacts, and
+retrieve information about plugins available to artifacts. Artifacts, their use, and
+examples of using them, are described in the
+:ref:`Developers' Manual: Artifacts <artifacts>`.
+
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
+
 
 .. _http-restful-api-artifact-add:
 
@@ -20,7 +28,7 @@ Add an Artifact
 ===============
 An artifact can be added (loaded) with an HTTP POST method to the URL::
 
-  POST <base-url>/namespaces/<namespace>/artifacts/<artifact-name>
+  POST /v3/namespaces/<namespace-id>/artifacts/<artifact-name>
 
 The request body must contain the binary contents of the artifact.
 
@@ -30,9 +38,9 @@ The request body must contain the binary contents of the artifact.
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact to be created
 
 Several optional headers may also be specified:
@@ -64,7 +72,7 @@ List Available Artifacts
 ========================
 To retrieve a list of available artifacts, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts[?scope=<scope>]
 
 .. list-table::
    :widths: 20 80
@@ -72,9 +80,9 @@ To retrieve a list of available artifacts, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, artifacts in the ``user`` and
        ``system`` scopes are returned. Otherwise, only artifacts in the specified scope are returned.
 
@@ -84,7 +92,7 @@ Example output (pretty-printed):
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifacts
+    |$| GET /v3/namespaces/default/artifacts
     [
       {
         "name": "cdap-etl-batch",
@@ -109,7 +117,7 @@ List Artifact Versions
 ======================
 To list all versions of a specific artifact, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/artifact/<artifact-name>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifact/<artifact-name>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -117,11 +125,11 @@ To list all versions of a specific artifact, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to ``user``.
 
 This will return a JSON array that lists each version of the specified artifact with
@@ -130,7 +138,7 @@ its name, version, and scope. Example output for the ``cdap-etl-batch`` artifact
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifacts/cdap-etl-batch?scope=system
+    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch?scope=system
     [
       {
         "name": "cdap-etl-batch",
@@ -141,11 +149,11 @@ its name, version, and scope. Example output for the ``cdap-etl-batch`` artifact
 
 .. _http-restful-api-artifact-detail:
 
-Retrieve an Artifact Detail
-===========================
-To retrieve detail about a specific version of an artifact, submit an HTTP GET request::
+Retrieve Artifact Details
+=========================
+To retrieve details about a specific version of an artifact, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -153,24 +161,24 @@ To retrieve detail about a specific version of an artifact, submit an HTTP GET r
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
 
 This will return a JSON object that contains information about: classes in the artifact;
 the schema of the config object supported by the ``Application`` class; and the artifact name,
-version, and scope. Example output for version |release| of the ``WordCount``
+version, and scope. Example output for version |literal-release| of the ``WordCount``
 artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifact/WordCount/versions/|release|?scope=system
+    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|?scope=system
     {
       "classes": {
         "apps": [
@@ -203,7 +211,7 @@ Set Artifact Properties
 =======================
 To set properties for a specific version of an artifact, submit an HTTP PUT request::
 
-  PUT <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties
+  PUT /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties
 
 .. list-table::
    :widths: 20 80
@@ -211,11 +219,11 @@ To set properties for a specific version of an artifact, submit an HTTP PUT requ
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
 
 The request body must be a JSON object that contains the properties for the artifact.
@@ -225,7 +233,7 @@ defined, they will be overwritten.
 .. container:: highlight
 
   .. parsed-literal::
-    |$| PUT <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties -d 
+    |$| PUT /v3/namespaces/default/artifact/WordCount/versions/|release|/properties -d 
     {
         "author": "samuel",
         "company": "cask"
@@ -237,7 +245,7 @@ Set an Artifact Property
 ========================
 To set a specific property for a specific version of an artifact, submit an HTTP PUT request::
 
-  PUT <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  PUT /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
   
 .. list-table::
    :widths: 20 80
@@ -245,13 +253,13 @@ To set a specific property for a specific version of an artifact, submit an HTTP
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<property>``
+   * - ``property``
      - Property to set
 
 The request body must contain the value to set for the property. If the property already exists,
@@ -260,7 +268,7 @@ the previous value will be overwritten.
 .. container:: highlight
 
   .. parsed-literal::
-    |$| PUT <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties/author -d
+    |$| PUT /v3/namespaces/default/artifact/WordCount/versions/|release|/properties/author -d
     samuel
 
 .. _http-restful-api-artifact-retrieve-properties:
@@ -269,7 +277,7 @@ Retrieve Artifact Properties
 ============================
 To retrieve properties for a specific version of an artifact, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties[?scope=<scope>&keys=<keys>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties[?scope=<scope>&keys=<keys>]
   
 .. list-table::
    :widths: 20 80
@@ -277,15 +285,15 @@ To retrieve properties for a specific version of an artifact, submit an HTTP GET
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
-   * - ``<keys>``
+   * - ``keys``
      - Optional comma-separated list of property keys to return. If not specified, all keys are returned. 
 
 This will return a JSON object that contains the properties of the artifact.
@@ -293,7 +301,7 @@ This will return a JSON object that contains the properties of the artifact.
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties?keys=author,company
+    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|/properties?keys=author,company
     { "author": "samuel", "company": "cask" }
 
 .. _http-restful-api-artifact-retrieve-property:
@@ -302,7 +310,7 @@ Retrieve an Artifact Property
 =============================
 To retrieve a specific property for a specific version of an artifact, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
   
 .. list-table::
    :widths: 20 80
@@ -310,19 +318,19 @@ To retrieve a specific property for a specific version of an artifact, submit an
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<property>``
+   * - ``property``
      - Property to retrieve
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties/author
+    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|/properties/author
     samuel
 
 .. _http-restful-api-artifact-delete-properties:
@@ -331,7 +339,7 @@ Delete Artifact Properties
 ==========================
 To delete all properties for a specific version of an artifact, submit an HTTP DELETE request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties
   
 .. list-table::
    :widths: 20 80
@@ -339,17 +347,17 @@ To delete all properties for a specific version of an artifact, submit an HTTP D
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| DELETE <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties
+    |$| DELETE /v3/namespaces/default/artifact/WordCount/versions/|release|/properties
 
 .. _http-restful-api-artifact-delete-property:
 
@@ -357,7 +365,7 @@ Delete an Artifact Property
 ===========================
 To delete a specific property for a specific version of an artifact, submit an HTTP DELETE request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
   
 .. list-table::
    :widths: 20 80
@@ -365,28 +373,28 @@ To delete a specific property for a specific version of an artifact, submit an H
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<property>``
+   * - ``property``
      - Property key to delete
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| DELETE <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties/author
+    |$| DELETE /v3/namespaces/default/artifact/WordCount/versions/|release|/properties/author
 
 .. _http-restful-api-artifact-extensions:
 
-List Extensions (Plugin Types) Available to an Artifact
+List Extensions (Plugin Types) available to an Artifact
 =======================================================
 To list the extensions (plugin types) available to an artifact, submit
 an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/extensions[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -394,33 +402,32 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
   
 This will return a JSON array that lists the extensions (plugin types) available to the artifact.
-Example output for version |release| of the ``cdap-etl-batch``
-artifact (pretty-printed and reformatted to fit):
+Example output for version |literal-release| of the ``cdap-etl-batch`` artifact:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifact/WordCount/versions/|release|/extensions?scope=system
-    [ "transform", "validator", "batchsource", "batchsink" ]{
+    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions?scope=system
+    "postaction","transform","batchaggregator","validator","realtimesource","batchsource","realtimesink","batchsink"]
 
 .. _http-restful-api-artifact-available-plugins:
 
-List Plugins Available to an Artifact
+List Plugins available to an Artifact
 =====================================
 To list plugins of a specific type available to an artifact, submit
 an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -428,52 +435,50 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<plugin-type>``
+   * - ``plugin-type``
      - Type of plugins to list
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
 
 This will return a JSON array that lists the plugins of the specified type
 available to the artifact. Each element in the array is a JSON object containing
 the artifact that the plugin originated from, and the plugin's class name, description, 
-name, and type. Example output for plugins of type ``transform`` available to version |release|
+name, and type. Note that the details provided are a summary compared to those provided by
+the endpoint :ref:`http-restful-api-artifact-plugin-detail`.
+
+Example output for plugins of type ``transform`` available to version |literal-release|
 of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform?scope=system
+    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform?scope=system
 
     [
-      {
-        "artifact": {
-          "name": "cdap-etl-lib",
-          "scope": "SYSTEM",
-          "version": "|release|-batch"
+        {
+            "name": "LogParser",
+            "type": "transform",
+            "description": "Parses logs from any input source for relevant information such as 
+                URI, IP, browser, device, HTTP status code, and timestamp.",
+            "className": "co.cask.hydrator.plugin.transform.LogParserTransform",
+            "artifact": {
+                "name": "core-plugins",
+                "version": "|cask-hydrator-version|",
+                "scope": "SYSTEM"
+            }
         },
-        "className": "co.cask.cdap.etl.transform.LogParserTransform",
-        "description": "Parses logs from any input source for relevant information such as URI, IP, Browser, Device, HTTP status code, and timestamp.",
-        "name": "LogParser",
-        "type": "transform"
-      },
-      {
-        "artifact": {
-            "name": "cdap-etl-lib",
-            "scope": "SYSTEM",
-            "version": "|release|-batch"
+        {
+            "name": "JavaScript",
+            "type": "transform",
+            ...
         },
-        "className": "co.cask.cdap.etl.transform.ProjectionTransform",
-        "description": "Projection transform that lets you drop, rename, and cast fields to a different type.",
-        "name": "Projection",
-        "type": "transform"
-      },
-      ...
+        ...
     ]
 
 .. _http-restful-api-artifact-plugin-detail:
@@ -483,7 +488,7 @@ Retrieve Plugin Details
 To retrieve details about a specific plugin available to an artifact, submit
 an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>/plugins/<plugin-name>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>/plugins/<plugin-name>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -491,51 +496,75 @@ an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
-   * - ``<plugin-type>``
+   * - ``plugin-type``
      - Type of the plugin
-   * - ``<plugin-name>``
+   * - ``plugin-name``
      - Name of the plugin
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
 
 This will return a JSON array that lists the plugins of the specified type and name
-available to the artifact. Each element in the array is a JSON object containing
-the artifact that the plugin originated from, and the plugin's class name, description, name, type, and properties.
-Example output for the ``ScriptFilter`` plugin available to version |release|
+available to the artifact. As can been seen compared with the endpoint
+:ref:`http-restful-api-artifact-available-plugins`, this provides all details
+on the specified plugin. Each element in the array is a JSON object containing the
+artifact that the plugin originated from, and the plugin's class name, description, name,
+type, and properties.
+
+Example output for the ``ScriptFilter`` plugin available to version |literal-release|
 of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform/plugins/ScriptFilter?scope=system
+    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform/plugins/ScriptFilter?scope=system
 
     [
-      {
-        "artifact": {
-            "name": "cdap-etl-lib",
-            "scope": "SYSTEM",
-            "version": "|release|-batch"
-        },
-        "className": "co.cask.cdap.etl.transform.ScriptFilterTransform",
-        "description": "A transform plugin that filters records using a custom JavaScript provided in the plugin's config.",
-        "name": "ScriptFilter",
-        "properties": {
-            "script": {
-                "description": "JavaScript that must implement a function 'shouldFilter' that takes a JSON object representation of the input record, and returns true if the input record should be filtered and false if not. For example: 'function shouldFilter(input) { return input.count > 100; }' will filter out any records whose 'count' field is greater than 100.",
-                "name": "script",
-                "required": true,
-                "type": "string"
+        {
+            "properties": {
+                "lookup": {
+                    "name": "lookup",
+                    "description": "Lookup tables to use during transform. Currently supports KeyValueTable.",
+                    "type": "string",
+                    "required": false
+                },
+                "script": {
+                    "name": "script",
+                    "description": "JavaScript that must implement a function
+                      'shouldFilter' that takes a JSON object representation of the input
+                      record and a context object (which encapsulates CDAP metrics and
+                      logger) and returns true if the input record should be filtered and
+                      false if not. For example:\n'function shouldFilter(input, context)
+                      {\nif (input.count < 0) {\ncontext.getLogger().info(\"Got input record
+                      with negative
+                      count\");\ncontext.getMetrics().count(\"negative.count\",
+                      1);\n}\nreturn input.count > 100;\n}\n' will filter out any records
+                      whose 'count' field is greater than 100.",
+                    "type": "string",
+                    "required": true
+                }
+            },
+            "endpoints": [
+
+            ],
+            "name": "ScriptFilter",
+            "type": "transform",
+            "description": "A transform plugin that filters records using a custom
+                JavaScript provided in the plugin's config.",
+            "className": "co.cask.hydrator.plugin.transform.ScriptFilterTransform",
+            "artifact": {
+                "name": "core-plugins",
+                "version": "|cask-hydrator-version|",
+                "scope": "SYSTEM"
             }
-        },
-        "type": "transform"
-      }
+        }
     ]
+
 
 .. _http-restful-api-artifact-delete:
 
@@ -543,7 +572,7 @@ Delete an Artifact
 ==================
 To delete an artifact, submit an HTTP DELETE request::
 
-  DELETE <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>
+  DELETE /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>
 
 .. list-table::
    :widths: 20 80
@@ -551,11 +580,11 @@ To delete an artifact, submit an HTTP DELETE request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
 
 Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
@@ -568,7 +597,7 @@ Load System Artifacts
 =====================
 To load all system artifacts on the CDAP Master node(s), submit an HTTP POST request::
 
-  POST <base-url>/namespaces/system/artifacts
+  POST /v3/namespaces/system/artifacts
 
 This call will make the CDAP master scan the artifacts directly and add any new artifacts
 that it finds. Any snapshot artifacts will be re-loaded.
@@ -579,7 +608,7 @@ Delete a System Artifact
 ========================
 To delete a system artifact, submit an HTTP DELETE request::
 
-  DELETE <base-url>/namespaces/system/artifacts/<artifact-name>/versions/<artifact-version>
+  DELETE /v3/namespaces/system/artifacts/<artifact-name>/versions/<artifact-version>
 
 .. list-table::
    :widths: 20 80
@@ -587,9 +616,9 @@ To delete a system artifact, submit an HTTP DELETE request::
 
    * - Parameter
      - Description
-   * - ``<artifact-name>``
+   * - ``artifact-name``
      - Name of the artifact
-   * - ``<artifact-version>``
+   * - ``artifact-version``
      - Version of the artifact
 
 Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
@@ -602,7 +631,7 @@ List Application Classes
 ========================
 To list application classes, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/classes/apps[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/classes/apps[?scope=<scope>]
 
 .. list-table::
    :widths: 20 80
@@ -610,9 +639,9 @@ To list application classes, submit an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, classes from artifacts in the ``user`` and
        ``system`` scopes are returned. Otherwise, only classes from artifacts in the specified scope are returned.
 
@@ -623,7 +652,7 @@ as well as the class name. Example output for the ``ScriptFilter`` (pretty-print
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/classes/apps
+    |$| GET /v3/namespaces/default/classes/apps
 
     [
       {
@@ -654,11 +683,11 @@ as well as the class name. Example output for the ``ScriptFilter`` (pretty-print
 
 .. _http-restful-api-artifact-appclass-detail:
 
-Retrieve Application Class Detail
-=================================
-To retrieve detail about a specific application class, submit an HTTP GET request::
+Retrieve Application Class Details
+==================================
+To retrieve details about a specific application class, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/classes/apps/<class-name>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/classes/apps/<class-name>[?scope=<scope>]
 
 .. list-table::
    :widths: 20 80
@@ -666,11 +695,11 @@ To retrieve detail about a specific application class, submit an HTTP GET reques
 
    * - Parameter
      - Description
-   * - ``<namespace>``
+   * - ``namespace-id``
      - Namespace ID
-   * - ``<class-name>``
+   * - ``class-name``
      - Application class name
-   * - ``<scope>``
+   * - ``scope``
      - Optional scope filter. If not specified, defaults to ``user``.
 
 This will return a JSON array that lists each application class with that class name.
@@ -682,7 +711,7 @@ Example output for the ``WordCount`` application (pretty-printed and reformatted
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET <base-url>/namespaces/default/classes/apps/co.cask.cdap.examples.wordcount.WordCount
+    |$| GET /v3/namespaces/default/classes/apps/co.cask.cdap.examples.wordcount.WordCount
     [
       {
         "artifact": {

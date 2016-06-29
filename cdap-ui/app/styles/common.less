@@ -27,7 +27,10 @@ body {
   visibility: hidden; // themes start the show
   margin-bottom: 80px;
   .dropdown-menu {
-    > li > a, > li.dropdown-header { padding-left: 14px; }
+    > li > a,
+    > li.dropdown-header {
+      padding-left: 14px;
+    }
     > li > a > span.fa-fw { margin-right: 5px; }
     &.typeahead {
       cursor: default;
@@ -46,7 +49,10 @@ body {
         &.abstract {
           &.pull-left { width: 80%; }
           // Create namespace "+"
-          + a { display: inline-block; width: 20%; }
+          + a {
+            display: inline-block;
+            width: 20%;
+          }
         }
       }
     }
@@ -116,11 +122,12 @@ span.fa-asterisk {
 .form-control {
   &.ng-dirty.ng-invalid {
     border-color: #a94442;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
     &:focus {
       border-color: #843534;
-      box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 6px #ce8483;
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 6px #ce8483;
     }
+
     @media (max-width: @screen-xs-max) { margin-bottom: 1px; }
   }
 }
@@ -136,7 +143,10 @@ footer {
   bottom: 0;
   z-index: 1400;
   width: 100%;
-  > .container { padding-right: 15px; padding-left: 15px; }
+  > .container {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
   div.text-muted {
     margin: 10px 0;
 
@@ -145,6 +155,7 @@ footer {
         &:first-child { text-align: left; }
         &:last-child { text-align: right; }
       }
+
       @media (max-width: @screen-md-max) { text-align: center; }
     }
   }
@@ -153,8 +164,16 @@ footer {
     width: 26px;
     margin-right: 8px;
   }
-  p, ul { height: 32px; margin: 0; }
-  span, li { line-height: 32px; vertical-align: middle; }
+  p,
+  ul {
+    height: 32px;
+    margin: 0;
+  }
+  span,
+  li {
+    line-height: 32px;
+    vertical-align: middle;
+  }
 }
 
 .mapreduce-components {
@@ -166,7 +185,7 @@ footer {
     border-radius: 4px;
 
     .item {
-      border-right: 1px solid #93969F;
+      border-right: 1px solid #93969f;
       min-height: 60px;
       padding-top: 15px;
       text-align: left;

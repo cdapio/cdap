@@ -17,7 +17,7 @@
 <div ng-controller="HydratorPlusPlusDetailConfigCtrl as PipelineConfigCtrl">
   <button class="btn btn-grey pull-right"
           ng-click="PipelineConfigCtrl.exportConfig()">Export</button>
-  <pre>{{ PipelineConfigCtrl.config | json: 4 }}</pre>
+  <pre>{{ ::PipelineConfigCtrl.config | json: 4 }}</pre>
 
   <a class="sr-only" id="pipeline-export-config-link" href="{{PipelineConfigCtrl.url}}" download="{{PipelineConfigCtrl.exportFileName}}.json">Export</a>
 </div>

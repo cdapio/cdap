@@ -25,6 +25,7 @@ import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
 import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
+import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.ReadRange;
@@ -79,7 +80,7 @@ public class LogHandler extends AbstractHttpHandler {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              ProgramType.valueOfCategoryName(programType));
-    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null);
+    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null, "text");
   }
 
   @GET
@@ -90,18 +91,19 @@ public class LogHandler extends AbstractHttpHandler {
                            @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
                            @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
-                           @QueryParam("filter") @DefaultValue("") String filterStr) {
+                           @QueryParam("filter") @DefaultValue("") String filterStr,
+                           @QueryParam("format") @DefaultValue("text") String format) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 
-    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord);
+    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord, format);
   }
 
   private void doGetLogs(HttpResponder responder, LoggingContext loggingContext,
                          long fromTimeSecsParam, long toTimeSecsParam, boolean escape, String filterStr,
-                         @Nullable RunRecordMeta runRecord) {
+                         @Nullable RunRecordMeta runRecord, String format) {
     try {
       TimeRange timeRange = parseTime(fromTimeSecsParam, toTimeSecsParam, responder);
       if (timeRange == null) {
@@ -114,7 +116,7 @@ public class LogHandler extends AbstractHttpHandler {
                                           LogOffset.INVALID_KAFKA_OFFSET);
       readRange = adjustReadRange(readRange, runRecord, fromTimeSecsParam != -1);
 
-      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
+      Callback logCallback = getFullLogsCallback(format, responder, escape);
       logReader.getLog(loggingContext, readRange.getFromMillis(), readRange.getToMillis(), filter, logCallback);
       logCallback.close();
     } catch (SecurityException e) {
@@ -135,7 +137,7 @@ public class LogHandler extends AbstractHttpHandler {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
                                              programId, ProgramType.valueOfCategoryName(programType));
-    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null);
+    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, "text");
   }
 
   @GET
@@ -146,23 +148,23 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("max") @DefaultValue("50") int maxEvents,
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
-                        @QueryParam("filter") @DefaultValue("") String filterStr) {
+                        @QueryParam("filter") @DefaultValue("") String filterStr,
+                        @QueryParam("format") @DefaultValue("text") String format) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 
-    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
+    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format);
   }
 
   private void doNext(HttpResponder responder, LoggingContext loggingContext, int maxEvents,
-                      String fromOffsetStr, boolean escape, String filterStr, @Nullable RunRecordMeta runRecord) {
+                      String fromOffsetStr, boolean escape, String filterStr, @Nullable RunRecordMeta runRecord,
+                      String format) {
     try {
       Filter filter = FilterParser.parse(filterStr);
-
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-
-      LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
+      Callback logCallback = getNextOrPrevLogsCallback(format, responder, escape);
+      LogOffset logOffset = FormattedTextLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createFromRange(logOffset);
       readRange = adjustReadRange(readRange, runRecord, true);
       logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
@@ -224,7 +226,7 @@ public class LogHandler extends AbstractHttpHandler {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              ProgramType.valueOfCategoryName(programType));
-    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null);
+    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, "text");
   }
 
   @GET
@@ -235,26 +237,26 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("max") @DefaultValue("50") int maxEvents,
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
-                        @QueryParam("filter") @DefaultValue("") String filterStr) {
+                        @QueryParam("filter") @DefaultValue("") String filterStr,
+                        @QueryParam("format") @DefaultValue("text") String format) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 
-    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
+    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format);
   }
 
   private void doPrev(HttpResponder responder, LoggingContext loggingContext, int maxEvents, String fromOffsetStr,
-                      boolean escape, String filterStr, @Nullable RunRecordMeta runRecord) {
+                      boolean escape, String filterStr, @Nullable RunRecordMeta runRecord, String format) {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
+      Callback logCallback = getNextOrPrevLogsCallback(format, responder, escape);
+      LogOffset logOffset = FormattedTextLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createToRange(logOffset);
       readRange = adjustReadRange(readRange, runRecord, true);
-      logReader.getLogPrev(loggingContext, readRange,
-                           maxEvents, filter, logCallback);
+      logReader.getLogPrev(loggingContext, readRange, maxEvents, filter, logCallback);
       logCallback.close();
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -270,7 +272,8 @@ public class LogHandler extends AbstractHttpHandler {
                       @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
                       @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr) {
+                      @QueryParam("filter") @DefaultValue("") String filterStr,
+                      @QueryParam("format") @DefaultValue("text") String format) {
     try {
       TimeRange timeRange = parseTime(fromTimeSecsParam, toTimeSecsParam, responder);
       if (timeRange == null) {
@@ -280,7 +283,7 @@ public class LogHandler extends AbstractHttpHandler {
       Filter filter = FilterParser.parse(filterStr);
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                              serviceId);
-      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
+      Callback logCallback = getFullLogsCallback(format, responder, escape);
       logReader.getLog(loggingContext, timeRange.getFromMillis(), timeRange.getToMillis(), filter, logCallback);
       logCallback.close();
     } catch (IllegalArgumentException e) {
@@ -294,17 +297,16 @@ public class LogHandler extends AbstractHttpHandler {
                       @PathParam("service-id") String serviceId, @QueryParam("max") @DefaultValue("50") int maxEvents,
                       @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr) {
+                      @QueryParam("filter") @DefaultValue("") String filterStr,
+                      @QueryParam("format") @DefaultValue("text") String format) {
     try {
       Filter filter = FilterParser.parse(filterStr);
-
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                              serviceId);
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
+      Callback logCallback = getNextOrPrevLogsCallback(format, responder, escape);
+      LogOffset logOffset = FormattedTextLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createFromRange(logOffset);
-      logReader.getLogNext(loggingContext, readRange,
-                           maxEvents, filter, logCallback);
+      logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
       logCallback.close();
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -317,17 +319,16 @@ public class LogHandler extends AbstractHttpHandler {
                       @PathParam("service-id") String serviceId, @QueryParam("max") @DefaultValue("50") int maxEvents,
                       @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr) {
+                      @QueryParam("filter") @DefaultValue("") String filterStr,
+                      @QueryParam("format") @DefaultValue("text") String format) {
     try {
       Filter filter = FilterParser.parse(filterStr);
-
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                              serviceId);
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
+      Callback logCallback = getNextOrPrevLogsCallback(format, responder, escape);
+      LogOffset logOffset = FormattedTextLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createToRange(logOffset);
-      logReader.getLogPrev(loggingContext, readRange,
-                           maxEvents, filter, logCallback);
+      logReader.getLogPrev(loggingContext, readRange, maxEvents, filter, logCallback);
       logCallback.close();
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -365,5 +366,34 @@ public class LogHandler extends AbstractHttpHandler {
     }
 
     return new TimeRange(fromMillis, toMillis);
+  }
+
+  private enum LogFormatType {
+    TEXT,
+    JSON
+  }
+
+  private Callback getFullLogsCallback(String format, HttpResponder responder, boolean escape) {
+    LogFormatType formatType = getFormatType(format);
+    switch (formatType) {
+      case JSON:
+        return new LogDataOffsetCallback(responder);
+      default:
+        return new TextCallback(responder, logPattern, escape);
+    }
+  }
+
+  private Callback getNextOrPrevLogsCallback(String format, HttpResponder responder, boolean escape) {
+    LogFormatType formatType = getFormatType(format);
+    switch (formatType) {
+      case JSON:
+        return new LogDataOffsetCallback(responder);
+      default:
+        return new TextOffsetCallback(responder, logPattern, escape);
+    }
+  }
+
+  private static LogFormatType getFormatType(String format) {
+    return LogFormatType.valueOf(format.toUpperCase());
   }
 }

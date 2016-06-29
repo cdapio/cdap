@@ -148,7 +148,7 @@ class HydratorPlusPlusHydratorService {
         } else {
           let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
           let pluginProperties = (match.length? match[0].properties: {});
-          if (res.length && this.myHelpers.objectQuery(node, 'description', 'length')) {
+          if (res.length && !this.myHelpers.objectQuery(node, 'description', 'length')) {
             node.description = res[0].description;
           }
           node._backendProperties = pluginProperties;

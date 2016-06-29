@@ -205,7 +205,7 @@ angular.module(PKG.name+'.commons')
 
       if (isWorkflow) {
         scope.svg
-          .selectAll('text.token-label')
+          .selectAll('g.token')
           .on('click', scope.toggleToken);
       }
 

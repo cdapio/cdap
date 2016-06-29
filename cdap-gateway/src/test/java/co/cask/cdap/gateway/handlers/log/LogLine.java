@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,17 +22,12 @@ import com.google.common.base.Objects;
 /**
 * Test Log object.
 */
-class LogLine {
-  private final LogOffset offset;
+class LogLine extends OffsetLine {
   private final String log;
 
   LogLine(LogOffset offset, String log) {
-    this.offset = offset;
+    super(offset);
     this.log = log;
-  }
-
-  public LogOffset getOffset() {
-    return offset;
   }
 
   public String getLog() {
@@ -42,7 +37,7 @@ class LogLine {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("offset", offset)
+      .add("offset", getOffset())
       .add("log", log)
       .toString();
   }

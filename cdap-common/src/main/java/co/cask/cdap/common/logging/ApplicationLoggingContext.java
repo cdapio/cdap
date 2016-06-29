@@ -21,7 +21,7 @@ package co.cask.cdap.common.logging;
  */
 public abstract class ApplicationLoggingContext extends NamespaceLoggingContext {
   public static final String TAG_APPLICATION_ID = ".applicationId";
-  public static final String TAG_RUNID_ID = ".runId";
+  public static final String TAG_RUN_ID = ".runId";
   public static final String TAG_INSTANCE_ID = ".instanceId";
 
   /**
@@ -33,7 +33,7 @@ public abstract class ApplicationLoggingContext extends NamespaceLoggingContext 
   public ApplicationLoggingContext(String namespaceId, String applicationId, String runId) {
     super(namespaceId);
     setSystemTag(TAG_APPLICATION_ID, applicationId);
-    setSystemTag(TAG_RUNID_ID, runId);
+    setSystemTag(TAG_RUN_ID, runId);
   }
 
   protected void setInstanceId(String instanceId) {

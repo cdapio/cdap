@@ -20,6 +20,11 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
@@ -29,6 +34,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -46,6 +52,7 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -85,6 +92,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -105,6 +113,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static String namespaceDir;
   private static KafkaLogAppender appender;
   private static Gson gson;
+  private static MetricStore metricStore;
+  private static MetricsCollectionService metricsCollectionService;
 
   @BeforeClass
   public static void initialize() throws IOException {
@@ -117,12 +127,22 @@ public class LogSaverPluginTest extends KafkaTestBase {
     CountingLogAppender countingLogAppender = new CountingLogAppender(appender);
     new LogAppenderInitializer(countingLogAppender).initialize("LogSaverPluginTest");
     gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    metricStore = injector.getInstance(MetricStore.class);
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+    metricsCollectionService.startAndWait();
+  }
+
+  @AfterClass
+  public static void shutdown() {
+    appender.stop();
+    metricsCollectionService.stopAndWait();
+    txManager.stopAndWait();
   }
 
   public void startLogSaver() throws Exception {
-    txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
-
     LogSaverFactory factory = injector.getInstance(LogSaverFactory.class);
     logSaver = factory.create(ImmutableSet.of(0));
     logSaver.startAndWait();
@@ -176,6 +196,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       Assert.assertEquals(60, logCallback.getEvents().size());
       // Checkpoint should read 60 for both processor
       verifyCheckpoint();
+      verifyMetricsPlugin();
     } catch (Throwable t) {
       try {
         final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
@@ -185,6 +206,28 @@ public class LogSaverPluginTest extends KafkaTestBase {
       }
       throw t;
     }
+  }
+
+  private void verifyMetricsPlugin() throws Exception {
+    final long timeInSecs = System.currentTimeMillis() / 1000;
+    final Map<String, String> sliceByTags = new HashMap<>();
+    sliceByTags.put(Constants.Metrics.Tag.NAMESPACE, "NS_1");
+    sliceByTags.put(Constants.Metrics.Tag.APP, "APP_1");
+    sliceByTags.put(Constants.Metrics.Tag.FLOW, "FLOW_1");
+
+    // Metrics aggregation may take some time
+    Tasks.waitFor(60L, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        // Since we are querying from Integer.MAX_VALUE metrics table,
+        // there is only one data point so time range in query does not matter
+        Collection<MetricTimeSeries> metricTimeSeries = metricStore.query(
+          new MetricDataQuery(0, timeInSecs, Integer.MAX_VALUE, "system.app.log.warn", AggregationFunction.SUM,
+                              sliceByTags, ImmutableList.<String>of()));
+        return metricTimeSeries.isEmpty() ? 0L : metricTimeSeries.iterator().next().getTimeValues().get(0).getValue();
+
+      }
+    }, 120, TimeUnit.SECONDS);
   }
 
   private void resetLogSaverPluginCheckpoint() throws Exception {
@@ -201,12 +244,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
         plugin.init(partitions);
       }
     }
-  }
-
-  @AfterClass
-  public static void shutdown() {
-    appender.stop();
-    txManager.stopAndWait();
   }
 
   public void verifyCheckpoint() throws Exception {

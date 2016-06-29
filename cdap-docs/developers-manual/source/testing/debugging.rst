@@ -44,7 +44,7 @@ This is supported for each flowlet of a flow and each instance of a service. In 
 to debug a container, you need to start the component with debugging enabled by making
 an HTTP request to the component’s URL. For example, the following will start a flow for debugging::
 
-  POST <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/debug
+  POST /v3/namespaces/default/apps/WordCount/flows/WordCounter/debug
   
 Using ``curl``:
 
@@ -61,7 +61,7 @@ and open that port for attaching a debugger.
 To find out the address of a container’s host and the container’s debug port, you can query
 the CDAP for a flow or service’s live info via HTTP::
 
-  GET <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/live-info
+  GET /v3/namespaces/default/apps/WordCount/flows/WordCounter/live-info
   
 or, using the CDAP CLI:
 
@@ -109,8 +109,8 @@ attach your debugger to the container’s JVM (see `Attaching a Debugger`_).
 
 The corresponding HTTP requests for the ``RetrieveCounts`` service of this application would be::
 
-  POST <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/debug
-  GET <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/live-info
+  POST /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/debug
+  GET /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/live-info
 
 Analysis of the response would give you the host names and debugging ports for all instances of the service.
 

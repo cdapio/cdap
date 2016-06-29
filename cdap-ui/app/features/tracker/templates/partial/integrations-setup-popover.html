@@ -31,8 +31,7 @@
       <label class="control-label col-xs-4">Hostname</label>
       <div class="col-xs-8">
         <input type="text" class="form-control"
-               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.navigatorHostName"
-               required>
+               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.navigatorHostName">
       </div>
     </div>
 
@@ -40,8 +39,7 @@
       <label class="control-label col-xs-4">Username</label>
       <div class="col-xs-8">
         <input type="text" class="form-control"
-               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.username"
-               required>
+               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.username">
       </div>
     </div>
 
@@ -49,18 +47,17 @@
       <label class="control-label col-xs-4">Password</label>
       <div class="col-xs-8">
         <input type="password" class="form-control"
-               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.password"
-               required>
+               ng-model="IntegrationsController.navigatorInfo.navigatorConfig.password">
       </div>
     </div>
 
     <h5 class="optional-settings-toggle"
         ng-click="IntegrationsController.optionalSettings.navigator = !IntegrationsController.optionalSettings.navigator">
       <span class="fa fa-caret-right"
-            ng-if="!IntegrationsController.optionalSettings.navigator">
+            ng-show="!IntegrationsController.optionalSettings.navigator">
       </span>
       <span class="fa fa-caret-down"
-            ng-if="IntegrationsController.optionalSettings.navigator">
+            ng-show="IntegrationsController.optionalSettings.navigator">
       </span>
       <span>Optional Settings</span>
     </h5>
@@ -131,18 +128,17 @@
       <label class="control-label col-xs-4">Zookeeper String</label>
       <div class="col-xs-8">
         <input type="text" class="form-control"
-               ng-model="IntegrationsController.navigatorInfo.auditKafkaConfig.zookeeperString"
-               required>
+               ng-model="IntegrationsController.navigatorInfo.auditKafkaConfig.zookeeperString">
       </div>
     </div>
 
     <h5 class="optional-settings-toggle"
         ng-click="IntegrationsController.optionalSettings.kafka = !IntegrationsController.optionalSettings.kafka">
       <span class="fa fa-caret-right"
-            ng-if="!IntegrationsController.optionalSettings.kafka">
+            ng-show="!IntegrationsController.optionalSettings.kafka">
       </span>
       <span class="fa fa-caret-down"
-            ng-if="IntegrationsController.optionalSettings.kafka">
+            ng-show="IntegrationsController.optionalSettings.kafka">
       </span>
       <span>Optional Settings</span>
     </h5>
@@ -160,7 +156,7 @@
         <label class="control-label col-xs-4">Num Partitions</label>
         <div class="col-xs-8">
           <input type="text" class="form-control"
-                 ng-model="IntegrationsController.navigatorInfo.auditKafkaConfig.zookeeperString.numPartitions">
+                 ng-model="IntegrationsController.navigatorInfo.auditKafkaConfig.numPartitions">
         </div>
       </div>
 
@@ -168,20 +164,21 @@
         <label class="control-label col-xs-4">Offset Dataset</label>
         <div class="col-xs-8">
           <input type="text" class="form-control"
-                 ng-model="IntegrationsController.navigatorInfo.auditKafkaConfig.zookeeperString.offsetDataset">
+                 ng-model="IntegrationsController.navigatorInfo.auditKafkaConfig.offsetDataset">
         </div>
       </div>
     </div>
   </fieldset>
 
-  <div ng-if="IntegrationsController.navigatorSetup.popoverEnabled">
+  <div class="configurations-buttons"
+    ng-if="IntegrationsController.navigatorSetup.popoverEnabled">
     <button class="btn btn-default pull-left"
             ng-disabled="IntegrationsController.saving"
             ng-click="IntegrationsController.cancelSetup()">
       Cancel
     </button>
     <button class="btn btn-success pull-right"
-            ng-disabled="navigatorConfiguration.$invalid || IntegrationsController.saving"
+            ng-disabled="!IntegrationsController.validateFields() || IntegrationsController.saving"
             ng-click="IntegrationsController.saveNavigatorSetup()">
       <span ng-if="!IntegrationsController.saving">Save</span>
       <span ng-if="IntegrationsController.saving">

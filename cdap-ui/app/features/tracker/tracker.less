@@ -124,7 +124,8 @@ body.state-tracker-detail-entity-usage {
         }
       }
       tr {
-        > td, > td span {
+        > td,
+        > td span {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -162,7 +163,6 @@ body.state-tracker-detail-entity-usage {
     max-width: 340px;
   }
 }
-
 
 body.state-tracker-home.state-tracker {
   background-color: white;
@@ -693,6 +693,14 @@ body.state-tracker-detail-entity-audit {
   }
 }
 
+body.state-tracker-detail-entity-preview {
+  .preview-table-container {
+    overflow-x: auto;
+
+    .table td { word-break: normal; }
+  }
+}
+
 body.state-tracker-integrations {
   background-color: white;
 
@@ -782,7 +790,11 @@ body.state-tracker-integrations {
         user-select: none;
         cursor: pointer;
         color: #888888;
+        margin-bottom: 25px;
+        padding-left: 15px;
       }
+
+      .configurations-buttons { margin-top: 10px; }
 
       div.arrow { display: none; }
     }

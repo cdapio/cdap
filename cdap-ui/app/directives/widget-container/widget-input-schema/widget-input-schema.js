@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.tx;
-
-/**
- * Function executed within transaction
- * @param <CONTEXT_TYPE> type of the {@link TxContext} given to the function {@link #call(TxContext)} method
- * @param <RETURN_TYPE> return type of the {@link #call(TxContext)} method
- */
-public interface TxCallable<CONTEXT_TYPE extends TxContext, RETURN_TYPE> {
-  RETURN_TYPE call(CONTEXT_TYPE context) throws Exception;
-}
+angular.module(PKG.name + '.commons')
+  .directive('myInputSchema', function() {
+    return {
+      restrict: 'EA',
+      scope: {
+        inputSchema: '@',
+        multipleInputs: '@'
+      },
+      templateUrl: 'widget-container/widget-input-schema/widget-input-schema.html',
+      controller: 'MyInputSchemaCtrl',
+      controllerAs: 'MyInputSchemaCtrl'
+    };
+  });

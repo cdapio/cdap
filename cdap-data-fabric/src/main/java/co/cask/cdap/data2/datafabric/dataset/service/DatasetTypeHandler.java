@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,19 +60,19 @@ import javax.ws.rs.PathParam;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetTypeHandler extends AbstractHttpHandler {
-  public static final String HEADER_CLASS_NAME = "X-Class-Name";
+  private static final String HEADER_CLASS_NAME = "X-Class-Name";
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
-  private final DatasetTypeManager manager;
+  private final DatasetTypeManager typeManager;
   private final CConfiguration cConf;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final NamespaceStore namespaceStore;
 
   @Inject
-  public DatasetTypeHandler(DatasetTypeManager manager, CConfiguration conf,
-                            NamespacedLocationFactory namespacedLocationFactory, NamespaceStore namespaceStore) {
-    this.manager = manager;
+  DatasetTypeHandler(DatasetTypeManager typeManager, CConfiguration conf,
+                     NamespacedLocationFactory namespacedLocationFactory, NamespaceStore namespaceStore) {
+    this.typeManager = typeManager;
     this.cConf = conf;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.namespaceStore = namespaceStore;
@@ -96,7 +96,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     // Throws NamespaceNotFoundException if the namespace does not exist
     ensureNamespaceExists(namespace);
     // Sorting by name for convenience
-    List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules(namespace));
+    List<DatasetModuleMeta> list = Lists.newArrayList(typeManager.getModules(namespace));
     Collections.sort(list, new Comparator<DatasetModuleMeta>() {
       @Override
       public int compare(DatasetModuleMeta o1, DatasetModuleMeta o2) {
@@ -119,7 +119,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     // Throws NamespaceNotFoundException if the namespace does not exist
     ensureNamespaceExists(namespace);
     try {
-      manager.deleteModules(namespace);
+      typeManager.deleteModules(namespace);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (DatasetModuleConflictException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
@@ -202,7 +202,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
                                                 tmpLocation, archive));
           }
 
-          manager.addModule(datasetModuleId, className, archive);
+          typeManager.addModule(datasetModuleId, className, archive);
           // todo: response with DatasetModuleMeta of just added module (and log this info)
           LOG.info("Added module {}", datasetModuleId);
           responder.sendStatus(HttpResponseStatus.OK);
@@ -239,7 +239,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     ensureNamespaceExists(namespace);
     boolean deleted;
     try {
-      deleted = manager.deleteModule(Id.DatasetModule.from(namespace, name));
+      deleted = typeManager.deleteModule(Id.DatasetModule.from(namespace, name));
     } catch (DatasetModuleConflictException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -261,7 +261,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     // Throws NamespaceNotFoundException if the namespace does not exist
     ensureNamespaceExists(namespace);
-    DatasetModuleMeta moduleMeta = manager.getModule(Id.DatasetModule.from(namespace, name));
+    DatasetModuleMeta moduleMeta = typeManager.getModule(Id.DatasetModule.from(namespace, name));
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -277,7 +277,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     // Throws NamespaceNotFoundException if the namespace does not exist
     ensureNamespaceExists(namespace);
     // Sorting by name for convenience
-    List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes(namespace));
+    List<DatasetTypeMeta> list = Lists.newArrayList(typeManager.getTypes(namespace));
     Collections.sort(list, new Comparator<DatasetTypeMeta>() {
       @Override
       public int compare(DatasetTypeMeta o1, DatasetTypeMeta o2) {
@@ -295,7 +295,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     // Throws NamespaceNotFoundException if the namespace does not exist
     ensureNamespaceExists(namespace);
-    DatasetTypeMeta typeMeta = manager.getTypeInfo(Id.DatasetType.from(namespace, name));
+    DatasetTypeMeta typeMeta = typeManager.getTypeInfo(Id.DatasetType.from(namespace, name));
     if (typeMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -313,7 +313,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     if (cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE)) {
       return;
     }
-    DatasetModuleMeta existing = manager.getModule(datasetModuleId);
+    DatasetModuleMeta existing = typeManager.getModule(datasetModuleId);
     if (existing != null) {
       String message = String.format("Cannot add module %s: module with same name already exists: %s",
                                      datasetModuleId, existing);

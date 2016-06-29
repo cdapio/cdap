@@ -29,14 +29,14 @@
           <td>
             <a ui-sref="datasets.detail.overview.status({ datasetId: data.name })"
               ng-if="data.type === 'Dataset'">
-              {{ data.name }}
+              {{ ::data.name }}
             </a>
             <a ui-sref="streams.detail.overview.status({ streamId: data.name})"
               ng-if="data.type === 'Stream'">
-              {{ data.name }}
+              {{ ::data.name }}
             </a>
           </td>
-          <td>{{ data.type }}</td>
+          <td>{{ ::data.type }}</td>
         </tr>
       </tbody>
     </table>

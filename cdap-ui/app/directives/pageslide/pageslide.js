@@ -24,6 +24,8 @@ angular.module(PKG.name+ '.commons')
         width: '@'
       },
       link: function pageslide(scope, elem) {
+        var pageSlideTimeout = null;
+
         scope.width = scope.width || '600';
 
         var slide = elem[0];
@@ -43,7 +45,7 @@ angular.module(PKG.name+ '.commons')
         slide.style.boxShadow = '-3px 0px 5px 0px rgba(0,0,0,0.25)';
 
         // The calculation of the offset top needs to happen after the template is rendered
-        $timeout(function () {
+        pageSlideTimeout = $timeout(function () {
           var anchor = angular.element(document.getElementById('sidepanel-anchor'));
           var offset = anchor[0].offsetTop + 2;
           slide.style.top = offset + 'px';
@@ -71,6 +73,7 @@ angular.module(PKG.name+ '.commons')
 
         scope.$on('$destroy', function () {
           close(slide);
+          $timeout.cancel(pageSlideTimeout);
         });
 
         scope.$on('$locationChangeStart', function () {

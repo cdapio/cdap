@@ -20,13 +20,17 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import kafka.common.Topic;
 import org.apache.kafka.common.errors.InvalidTopicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -51,6 +55,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
 
     Set<String> problemKeys = new HashSet<>();
     checkServiceResources(problemKeys);
+    checkBindAddresses();
     checkPotentialPortConflicts();
     checkKafkaTopic(problemKeys);
 
@@ -96,6 +101,31 @@ class ConfigurationCheck extends AbstractMasterCheck {
                     serviceResourceKeys.getMaxInstancesKey(), maxInstances);
           problemKeys.add(serviceResourceKeys.getInstancesKey());
         }
+      }
+    }
+  }
+
+  private void checkBindAddresses() {
+    // check if service bind addresses are loopback addresses
+    Set<String> bindAddressKeys = ImmutableSet.of(
+      Constants.AppFabric.SERVER_ADDRESS,
+      Constants.Dataset.Executor.ADDRESS,
+      Constants.Stream.ADDRESS,
+      Constants.Router.ADDRESS,
+      Constants.Metrics.ADDRESS,
+      Constants.LogSaver.ADDRESS,
+      Constants.Explore.SERVER_ADDRESS,
+      Constants.Metadata.SERVICE_BIND_ADDRESS);
+
+    for (String bindAddressKey : bindAddressKeys) {
+      String bindAddress = cConf.get(bindAddressKey);
+      try {
+        if (InetAddress.getByName(bindAddress).isLoopbackAddress()) {
+          LOG.warn("{} is set to {}. The service may not be discoverable on a multinode Hadoop cluster.",
+                   bindAddressKey, bindAddress);
+        }
+      } catch (UnknownHostException e) {
+        LOG.warn("Unable to resolve {}.", bindAddressKey, e);
       }
     }
   }

@@ -41,20 +41,11 @@ class HydratorPlusPlusConfigActions {
   setConfig(config) {
     this.dispatcher.dispatch('onConfigSave', config);
   }
-  savePlugin(plugin, type) {
-    this.dispatcher.dispatch('onPluginSave', {plugin: plugin, type: type});
-  }
   saveAsDraft(config) {
     this.dispatcher.dispatch('onSaveAsDraft', config);
   }
-  setArtifact(artifact) {
-    this.dispatcher.dispatch('onArtifactSave', artifact);
-  }
   setEngine(engine) {
     this.dispatcher.dispatch('onEngineChange', engine);
-  }
-  addPlugin (plugin, type) {
-    this.dispatcher.dispatch('onPluginAdd', plugin, type);
   }
   editPlugin(pluginId, pluginProperties) {
     this.dispatcher.dispatch('onPluginEdit', pluginId, pluginProperties);

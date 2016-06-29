@@ -1,0 +1,18 @@
+/*
+ * cdap-intro.css_t
+ * ~~~~~~~~~~~~~~~~~
+ *
+ * Sphinx stylesheet -- CDAP theme for Intro manual.
+ *
+ *
+ */
+
+@import url("cdap.css");
+
+body {
+  background-color: white;
+}
+
+div.footer {
+  background-color: #4B5258;
+}

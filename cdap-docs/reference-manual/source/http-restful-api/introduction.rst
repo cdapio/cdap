@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _http-restful-api-introduction:
 
-===========================================================
+============
 Introduction
-===========================================================
+============
 
 .. highlight:: console
 
@@ -19,11 +19,13 @@ Conventions
 In this API, *client* refers to an external application that is calling CDAP using the HTTP interface.
 *application* refers to a user application that has been deployed into CDAP.
 
-.. rubric:: Base URL
+.. _http-restful-api-conventions-base-url:
 
-All URLs referenced in this API have this base URL::
+Base URL
+--------
+All URLs referenced in these APIs have this base URL::
 
-  http://<host>:<port>/v3
+  http://<host>:<port>
 
 where:
 
@@ -33,62 +35,48 @@ where:
 
    * - Parameter
      - Description
-   * - ``<host>``
+   * - ``host``
      - Host name of the CDAP server
-   * - ``<port>``
-     - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: ``10000``)
+   * - ``port``
+     - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: **10000**)
 
 
-**Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
+**Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` instead and ``port`` becomes the port that is set
 as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
 
-In this API, the base URL is represented as::
+In this API, each endpoint is documented with the HTTP method for the request and a
+resource identifier. The base URL is assumed to precede each API's resource identifier.
+For example, the endpoint documentation for creating a stream is::
 
-  <base-url>
+  PUT /v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
-For example::
+This means you would use::
 
-  PUT <base-url>/namespaces/<namespace>/streams/<new-stream-id>
+  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
-means::
+If you are using the CDAP SDK, running on your local machine, you might make a ``curl`` call such as:
 
-  PUT http://<host>:<port>/v3/namespaces/<namespace>/streams/<new-stream-id>
+.. tabbed-parsed-literal::
 
+  $ curl -w"\n" -X PUT "http://localhost:10000/v3/namespaces/default/streams/who"
 
-.. rubric:: Variable Replacement
-
+Variable Replacement
+--------------------
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
-  PUT <base-url>/namespaces/<namespace>/streams/<new-stream-id>
+  PUT /v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
-indicates that |---| in addition to the ``<base-url>`` |---| text such as ``<namespace>`` and
-``<new-stream-id>`` are variables and that you are to replace them with your values,
-perhaps in this case *default* and *mystream*::
+indicates that text such as ``<namespace-id>`` and ``<new-stream-id>`` are variables and that
+you are to replace them with your values, perhaps in this case the namespace *default* and
+the stream *mystream*::
 
-  PUT <base-url>/namespaces/default/streams/mystream
+  PUT /v3/namespaces/default/streams/mystream
 
-
-Converting from V2 APIs
-=======================
-
-If you are converting code from the  earlier HTTP RESTful API v2, the
-simplest way to convert your code is to use the ``default`` namespace, which is pre-existing
-in CDAP. Example::
-
-  PUT http://<host>:<port>/v2/streams/<new-stream-id>
-
-can be replaced with::
-
-  PUT http://<host>:<port>/v3/namespaces/default/streams/<new-stream-id>
-  
-However, you will need to test your code, as many APIs have changed as a result of the 
-addition of namespaces.
 
 .. _http-restful-api-conventions-reserved-unsafe-characters:
 
 Reserved and Unsafe Characters
-==============================
-
+------------------------------
 In path parameters, reserved and unsafe characters must be replaced with their equivalent
 percent-encoded format, using the "``%hh``" syntax, as described in 
 `RFC3986: Uniform Resource Identifier (URI): Generic Syntax <http://tools.ietf.org/html/rfc3986#section-2.1>`__.
@@ -105,8 +93,7 @@ namespaces.
 .. _http-restful-api-namespace-characters:
 
 Names and Characters for Namespace Identifiers
-==============================================
-
+----------------------------------------------
 Namespaces have a limited set of characters allowed in their identifier; they are
 restricted to letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is
 no size limit on the length of a namespace identifier nor on the number of namespaces.
@@ -122,9 +109,7 @@ All reserved namespaces cannot be deleted.
 
 Status Codes
 ============
-
 `Common status codes <http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html>`__ returned for all HTTP calls:
-
 
 .. list-table::
    :widths: 10 30 60
@@ -165,6 +150,22 @@ Status Codes
 but a request may return any of these.
 
 
+Converting from V2 APIs
+=======================
+If you are converting code from the earlier HTTP RESTful API v2, the
+simplest way to convert your code is to use the ``default`` namespace, which is pre-existing
+in CDAP. Example::
+
+  PUT http://<host>:<port>/v2/streams/<new-stream-id>
+
+can be replaced with::
+
+  PUT http://<host>:<port>/v3/namespaces/default/streams/<new-stream-id>
+  
+However, you will need to test your code, as many APIs have changed as a result of the 
+addition of namespaces.
+
+
 Working with CDAP Security
 ==========================
 When working with a CDAP cluster with security enabled (``security.enabled=true`` in
@@ -177,4 +178,3 @@ In order to authenticate, all client requests must supply this access token in t
    Authorization: Bearer <token>
 
 For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
-

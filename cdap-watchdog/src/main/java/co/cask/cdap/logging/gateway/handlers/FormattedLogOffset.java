@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,19 +23,16 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
 /**
-* Handles formatting of log event to send
-*/
-public final class FormattedLogEvent {
+ * Formatted LogOffset
+ */
+public class FormattedLogOffset {
   private static final char SEPARATOR = '.';
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-  private final String log;
-  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String offset;
 
-  public FormattedLogEvent(String log, LogOffset offset) {
-    this.log = log;
-    this.offset = formatLogOffset(offset);
+  public FormattedLogOffset(LogOffset logOffset) {
+    this.offset = formatLogOffset(logOffset);
   }
 
   public static String formatLogOffset(LogOffset logOffset) {

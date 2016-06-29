@@ -21,6 +21,7 @@
     "del": "2.2.0",
     "es6-promise": "3.0.2",
     "gulp": "3.9.0",
+    "gulp-header": "1.8.2",
     "gulp-angular-templatecache": "1.8.0",
     "gulp-babel": "6.1.1",
     "gulp-concat": "2.6.0",
@@ -36,15 +37,17 @@
     "gulp-postcss": "6.1.0",
     "gulp-replace": "0.5.4",
     "gulp-rev": "7.0.0",
+    "gulp-stylelint": "2.0.2",
     "gulp-uglify": "1.5.1",
     "gulp-util": "3.0.7",
     "gulp-wrapper": "1.0.0",
-    "main-bower-files": "2.11.1",
-    "merge-stream": "1.0.0",
+    "jshint": "2.9.2",
     "karma": "0.12.31",
     "karma-chrome-launcher": "0.1.7",
     "karma-jasmine": "0.1.6",
-    "karma-mocha-reporter": "1.1.1"
+    "karma-mocha-reporter": "1.1.1",
+    "main-bower-files": "2.11.1",
+    "merge-stream": "1.0.0"
   },
   "dependencies": {
     "body-parser": "1.14.2",

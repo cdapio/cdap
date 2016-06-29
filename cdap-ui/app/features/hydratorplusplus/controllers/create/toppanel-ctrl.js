@@ -104,6 +104,8 @@ class HydratorPlusPlusTopPanelCtrl{
       keyboard: true,
       windowTopClass: 'hydrator-modal',
       controller: ['$scope', 'config', '$timeout', 'exportConfig', function($scope, config, $timeout, exportConfig) {
+        var exportTimeout = null;
+
         $scope.config = JSON.stringify(config);
         $scope.export = function () {
           var blob = new Blob([JSON.stringify(exportConfig, null, 4)], { type: 'application/json'});
@@ -112,10 +114,16 @@ class HydratorPlusPlusTopPanelCtrl{
           $scope.$on('$destroy', function () {
             URL.revokeObjectURL($scope.url);
           });
-          $timeout(function() {
+
+          $timeout.cancel(exportTimeout);
+          exportTimeout = $timeout(function() {
             document.getElementById('pipeline-export-config-link').click();
           });
         };
+
+        $scope.$on('$destroy', () => {
+          $timeout.cancel(exportTimeout);
+        });
       }],
       resolve: {
         config: () => config,

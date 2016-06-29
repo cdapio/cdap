@@ -47,7 +47,7 @@ angular.module(PKG.name + '.services')
       }
     },
     pluginConvert: {
-      'batchaggregator': 'batchaggregator',
+      'batchaggregator': 'transform',
       'batchsource': 'source',
       'realtimesource': 'source',
       'batchsink': 'sink',

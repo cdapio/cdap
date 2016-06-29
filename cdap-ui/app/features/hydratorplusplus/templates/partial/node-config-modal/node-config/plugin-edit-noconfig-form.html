@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -25,15 +25,13 @@
               <span class="fa fa-asterisk"></span>
               <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{::HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
             </label>
-            <input type="text"
-                    class="form-control"
-                    ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label"/>
+            <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
           </div>
           <div ng-repeat="(name, value) in HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties track by $index">
             <div class="form-group">
               <label ng-init="title='info';description=HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].description"
                       class="control-label">
-                <span>{{name}}</span>
+                <span>{{::name}}</span>
                 <span class="fa fa-info-circle"
                       uib-tooltip="{{description}}"
                       tooltip-placement="right"
@@ -42,10 +40,7 @@
                 <span class="fa fa-asterisk" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required"></span>
                 <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
               </label>
-              <input type="text"
-                      class="form-control"
-                      ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]"
-                      ng-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && plugin.lock[name]" />
+              <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]" ng-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && plugin.lock[name]">
             </div>
           </div>
         </div>
@@ -56,6 +51,6 @@
 
 <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Validator'">
   <div class="col-lg-12">
-    <div ng-include="'/assets/features/hydratorplusplus/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
+    <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-validator-transform.html'"></div>
   </div>
 </div>

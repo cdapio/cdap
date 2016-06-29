@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,27 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.tx;
+package co.cask.cdap.logging.gateway.handlers;
 
-import co.cask.cdap.api.dataset.Dataset;
-
-import java.util.Map;
+import co.cask.cdap.logging.read.LogOffset;
 
 /**
- * Provides access to transactional resources, e.g. {@link Dataset}s.
+ * Formatted {@link LogData} event.
  */
-public abstract class TxContext {
-  private final Map<String, ? extends Dataset> datasets;
+public final class FormattedLogDataEvent extends FormattedLogOffset {
 
-  protected TxContext(Map<String, ? extends Dataset> datasets) {
-    this.datasets = datasets;
-  }
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private final LogData log;
 
-  protected <T extends Dataset> T getDataset(String name) {
-    return (T) datasets.get(name);
-  }
-
-  Map<String, ? extends Dataset> getDatasets() {
-    return datasets;
+  public FormattedLogDataEvent(LogData log, LogOffset offset) {
+    super(offset);
+    this.log = log;
   }
 }

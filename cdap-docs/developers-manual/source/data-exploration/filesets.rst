@@ -91,9 +91,9 @@ For example::
 
 These dataset properties map directly to table properties in Hive. In the case of the
 ``setBasePath`` method, the partial-path given will be a sub-directory of
-``<CDAP-home>/namespaces/<namespace>/data/``.
+``<CDAP-home>/namespaces/<namespace-id>/data/``.
 
-For example, if ``<CDAP-home>`` is */cdap*, and ``<namespace>`` is *default*, 
+For example, if ``<CDAP-home>`` is */cdap*, and ``<namespace-id>`` is *default*, 
 the first Dataset example above would result in this "create table" statement being generated::
 
   CREATE EXTERNAL TABLE dataset_myfiles(

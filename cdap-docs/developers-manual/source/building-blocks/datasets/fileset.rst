@@ -107,15 +107,23 @@ Whether they are FileSets or another type of dataset is handled by the CDAP runt
 .. highlight:: console
 
 However, you do need to tell CDAP the relative paths of the input and output files. Currently,
-this is only possible by specifying them as runtime arguments when the MapReduce program is started::
+this is only possible by specifying them as runtime arguments when the MapReduce program is started:
 
-  curl -v <base-url>/apps/FileSetExample/mapreduce/WordCount/start -d '{ \
-      "dataset.lines.input.paths":  "monday/my.txt", \
-      "dataset.counts.output.path": "monday/counts.out" }'
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST "http://example.com:10000/v3/namespaces/default/apps/FileSetExample/mapreduce/WordCount/start" \
+  -d '{ "dataset.lines.input.paths": "monday/my.txt", "dataset.counts.output.path": "monday/counts.out" }'
+          
+Using the CDAP CLI:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+    
+    |cdap >| start mapreduce FileSetExample.WordCount "dataset.lines.input.paths=monday/my.txt dataset.counts.output.path=monday/counts.out"
 
 Note that for the input you can specify multiple paths separated by commas::
 
-      "dataset.lines.input.paths":  "monday/lines.txt,tuesday/lines.txt"
+      "dataset.lines.input.paths": "monday/lines.txt,tuesday/lines.txt"
 
 If you do not specify both the input and output paths, your MapReduce program will fail with an error.
 

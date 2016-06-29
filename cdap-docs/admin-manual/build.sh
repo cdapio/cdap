@@ -19,7 +19,7 @@
 source ../_common/common-build.sh
 
 DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
-DEFAULT_XML_MD5_HASH="a972cff7c79e00149bdb1ca4fe6d003e"
+DEFAULT_XML_MD5_HASH="412edc8ed1a844b1c9f8226c732ea9d4"
 
 DEFAULT_TOOL="../tools/doc-cdap-default.py"
 DEFAULT_RST="cdap-default-table.rst"
@@ -48,12 +48,20 @@ function download_includes() {
   local pattern="\|distribution\|"  
   local distributions="cloudera ambari mapr packages"
   local types="installation configuration starting"
+  local type
   for dist in ${distributions}; do
     for type in ${types}; do
       rewrite_references_sed "${source_rst}/${type}.txt" "${target_includes_dir}/${dist}-${type}.rst" "${pattern}" "${dist}"
     done
     echo
   done
+
+  distributions="mapr packages"
+  for dist in ${distributions}; do
+    type="ha-installation"
+    rewrite_references_sed "${source_rst}/${type}.txt" "${target_includes_dir}/${dist}-${type}.rst" "${pattern}" "${dist}"
+  done
+  echo
 }
 
 run_command ${1}

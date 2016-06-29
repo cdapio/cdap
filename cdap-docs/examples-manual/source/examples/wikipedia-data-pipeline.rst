@@ -201,7 +201,7 @@ You can also do this from a terminal:
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST -d "{'min.pages.threshold':'0', 'mode':'online'}" \
+    $ curl -w"\n" -X POST -d '{"min.pages.threshold":"0", "mode":"online"}' \
     "http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start"
 
 

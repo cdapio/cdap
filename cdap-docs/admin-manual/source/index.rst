@@ -146,4 +146,3 @@ installation and its security configuration.
   - :ref:`Minimal cdap-site.xml <appendix-minimal-cdap-site.xml>`
   - :ref:`Complete list of cdap-site.xml properties <appendix-cdap-site.xml>`
   - :ref:`List of cdap-security.xml properties <appendix-cdap-security.xml>`
-

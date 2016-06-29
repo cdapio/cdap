@@ -1,9 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
-
-.. highlight:: console
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _http-restful-api-configuration:
 .. _http-restful-api-v3-configuration:
@@ -12,26 +10,36 @@
 Configuration HTTP RESTful API
 ==============================
 
-The version of CDAP and configurations of CDAP and HBase are exposed via HTTP RESTful endpoints.
+.. highlight:: console
+
+Use the CDAP Configuration HTTP RESTful API to retrieve the version of CDAP and the
+configurations of CDAP and HBase. 
+Configurations and their settings are described in the
+:ref:`Administration Manual: Installation <installation-index>` instructions.
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
+
 
 .. _http-restful-api-configuration-version-cdap:
 
 CDAP Version
-------------
+============
 
 To retrieve the version of CDAP, issue an HTTP GET request::
 
-  GET <base-url>/version
+  GET /v3/version
 
 
 .. _http-restful-api-configuration-cdap:
 
 CDAP Configurations
--------------------
+===================
 
 To retrieve all the configurations used by CDAP, issue an HTTP GET request::
 
-  GET <base-url>/config/cdap?format=<type>
+  GET /v3/config/cdap?format=<type>
   
 .. list-table::
    :widths: 20 80
@@ -39,7 +47,7 @@ To retrieve all the configurations used by CDAP, issue an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<type>``
+   * - ``type``
      - Format for returned type, either ``json`` (default) or ``xml``
 
 .. highlight:: json
@@ -67,11 +75,11 @@ format, the output would be similar to (showing the first portion, reformatted t
 .. _http-restful-api-configuration-hbase:
 
 HBase Configurations
---------------------
+====================
 
 To retrieve all the configurations used by HBase, issue an HTTP GET request::
 
-  GET <base-url>/config/hbase?format=<type>
+  GET /v3/config/hbase?format=<type>
   
 .. list-table::
    :widths: 20 80
@@ -79,7 +87,7 @@ To retrieve all the configurations used by HBase, issue an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<type>``
+   * - ``type``
      - Format for returned type, either ``json`` (default) or ``xml``
 
 .. highlight:: xml

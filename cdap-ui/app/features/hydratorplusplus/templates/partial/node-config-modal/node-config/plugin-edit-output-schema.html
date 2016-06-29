@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -63,9 +63,9 @@
       <my-schema-editor
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
         ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
-        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
+        data-disabled="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
         plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
+        config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
     <div ng-if="!isDisabled">
@@ -73,15 +73,15 @@
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
         data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
         plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
-        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Stream'">
+        config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
+        ng-if="::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Stream'">
       </my-schema-editor>
       <my-schema-editor-stream
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
         data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
         plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
-        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Stream'">
+        config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
+        ng-if="::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Stream'">
       </my-schema-editor-stream>
     </div>
   </fieldset>
@@ -93,9 +93,5 @@
   </div>
 </div>
 
-<my-file-select class="sr-only"
-                id="schema-import-link"
-                data-button-icon="fa-upload"
-                on-file-select="HydratorPlusPlusNodeConfigCtrl.importFiles($files)"
-                data-button-label="Import">
+<my-file-select class="sr-only" id="schema-import-link" data-button-icon="fa-upload" on-file-select="HydratorPlusPlusNodeConfigCtrl.importFiles($files)" data-button-label="Import">
 </my-file-select>

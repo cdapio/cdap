@@ -26,7 +26,9 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       // FIXME: This service name needs to come from UI_CONFIG. Need to figure out how to do this.
       topEntitiesPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/top-entities/:entity',
       auditHistogramPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/audit-histogram',
-      timeSincePath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/time-since';
+      timeSincePath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/time-since',
+      exploreQueryPath = '/namespaces/:namespace/data/explore/queries',
+      baseQueryPath = '/data/explore/queries/:handle';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -42,6 +44,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     getAuditLogs: myHelpers.getConfig('GET', 'REQUEST', auditPath, false, { suppressErrors: true }),
     getStreamProperties: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/streams/:entityId'),
     getDatasetSystemProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?scope=SYSTEM'),
+    getSystemTags: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/tags?scope=SYSTEM', true),
     getDatasetDetail: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/data/datasets/:entityId'),
     deployNavigator: myHelpers.getConfig('PUT', 'REQUEST', navigatorPath, false, { contentType: 'application/json' }),
     getCDAPConfig: myHelpers.getConfig('GET', 'REQUEST', '/config/cdap', true),
@@ -58,7 +61,12 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
 
     // METADATA PROPERTIES CONTROL
     deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true }),
-    addEntityProperty: myHelpers.getConfig('POST', 'REQUEST', propertyPath, false, { suppressErrors: true })
+    addEntityProperty: myHelpers.getConfig('POST', 'REQUEST', propertyPath, false, { suppressErrors: true }),
+
+    // EXPLORE QUERY
+    postQuery: myHelpers.getConfig('POST', 'REQUEST', exploreQueryPath),
+    getQueryResults: myHelpers.getConfig('POST', 'REQUEST', baseQueryPath + '/next', true),
+    getQuerySchema: myHelpers.getConfig('GET', 'REQUEST', baseQueryPath + '/schema', true),
   });
 }
 

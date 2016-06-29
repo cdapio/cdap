@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium) {
+  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService) {
     var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
 
@@ -202,63 +202,71 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     }
 
     vm.deleteDraft = function(draftId) {
-      let draftName;
-      mySettings.get('hydratorDrafts')
-        .then(function(res) {
-          let draft = myHelpers.objectQuery(res, $stateParams.namespace, draftId);
-          if (draft) {
-            draftName = draft.name;
-            delete res[$stateParams.namespace][draftId];
-          }
-          return mySettings.set('hydratorDrafts', res);
-        })
-        .then(
-          function success() {
-            $state.reload()
-              .then(function() {
-                myAlertOnValium.show({
-                  type: 'success',
-                  content: 'Pipeline draft ' + draftName + ' deleted successfully'
-                });
+      myLoadingService.showLoadingIcon()
+      .then(function(){
+        let draftName;
+        mySettings.get('hydratorDrafts')
+          .then(function(res){
+            let draft = myHelpers.objectQuery(res, $stateParams.namespace, draftId);
+            if(draft){
+              draftName = draft.name;
+              delete res[$stateParams.namespace][draftId];
+            }
+            return mySettings.set('hydratorDrafts', res);
+          })
+          .then(
+              function success() {
+                myLoadingService.hideLoadingIconImmediate();
+                $state.reload()
+                  .then(function() {
+                    myAlertOnValium.show({
+                      type: 'success',
+                      content: 'Pipeline draft ' + draftName + ' deleted successfully'
+                    });
+                  });
+              },
+              function error() {
+                myLoadingService.hideLoadingIconImmediate();
+                $state.reload()
+                  .then(function() {
+                    myAlertOnValium.show({
+                      type: 'danger',
+                      content: 'Pipeline draft ' + draftName + ' delete failed'
+                    });
+                  });
               });
-          },
-          function error() {
-            $state.reload()
-              .then(function() {
-                myAlertOnValium.show({
-                  type: 'danger',
-                  content: 'Pipeline draft ' + draftName + ' delete failed'
-                });
-              });
-          });
+      });
     };
-
 
     vm.deleteApp = function (appId) {
-      var deleteParams = {
-        namespace: $state.params.namespace,
-        appId: appId,
-        scope: $scope
-      };
-      myAppsApi.delete(deleteParams)
-        .$promise
-        .then(function success () {
-          $state.reload()
-            .then(function() {
-              myAlertOnValium.show({
-                type: 'success',
-                content: 'Pipeline ' + appId + ' deleted successfully'
-              });
+      myLoadingService.showLoadingIcon()
+      .then(function(){
+        var deleteParams = {
+          namespace: $state.params.namespace,
+          appId: appId,
+          scope: $scope
+        };
+        return myAppsApi.delete(deleteParams)
+          .$promise;
+      })
+      .then(function success () {
+        myLoadingService.hideLoadingIconImmediate();
+        $state.reload()
+          .then(function() {
+            myAlertOnValium.show({
+              type: 'success',
+              content: 'Pipeline ' + appId + ' deleted successfully'
             });
-        }, function error () {
-          $state.reload()
-            .then(function() {
-              myAlertOnValium.show({
-                type: 'danger',
-                content:  'Pipeline ' + appId + ' delete failed'
-              });
+          });
+      }, function error () {
+        myLoadingService.hideLoadingIconImmediate();
+        $state.reload()
+          .then(function() {
+            myAlertOnValium.show({
+              type: 'danger',
+              content:  'Pipeline ' + appId + ' delete failed'
             });
-        });
+          });
+      });
     };
-
   });

@@ -33,7 +33,6 @@ import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
@@ -65,7 +64,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -356,9 +354,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // whatever happens we want to call this
       try {
         if (mapReduce instanceof ProgramLifecycle) {
-          destroy(success, failureInfo);
+          destroy(success, failureInfo, job.getConfiguration().getClassLoader());
         }
-        onFinish(success);
+        onFinish(success, job.getConfiguration().getClassLoader());
       } finally {
         context.close();
         cleanupTask.run();
@@ -476,7 +474,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Transactions.execute(txContext, "initialize", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
         try {
           context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
           if (mapReduce instanceof ProgramLifecycle) {
@@ -529,12 +527,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
-  private void onFinish(final boolean succeeded) throws TransactionFailureException {
+  private void onFinish(final boolean succeeded,
+                        final ClassLoader mapReduceClassLoader) throws TransactionFailureException {
     TransactionContext txContext = context.getTransactionContext();
     Transactions.execute(txContext, "onFinish", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(mapReduceClassLoader);
         try {
           // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
           // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
@@ -569,13 +568,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the destroy method of {@link ProgramLifecycle}.
    */
-  private void destroy(final boolean succeeded, final String failureInfo) {
+  private void destroy(final boolean succeeded, final String failureInfo, final ClassLoader mapReduceClassLoader) {
     TransactionContext txContext = context.getTransactionContext();
     try {
       Transactions.execute(txContext, "destroy", new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
+          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(mapReduceClassLoader);
           try {
             // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
             // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
@@ -1129,11 +1128,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         conf.setInt(vcoreConfKey, resources.getVirtualCores());
       }
     }
-  }
-
-  private ClassLoader setContextCombinedClassLoader(BasicMapReduceContext context) {
-    return ClassLoaders.setContextClassLoader(new CombineClassLoader(
-      null, ImmutableList.of(context.getProgram().getClassLoader(), getClass().getClassLoader())));
   }
 
   /**
