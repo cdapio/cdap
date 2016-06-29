@@ -181,8 +181,10 @@ public abstract class AbstractProgramController implements ProgramController {
    * Children call this method to signal the program is completed.
    */
   protected void complete() {
-    if (!state.compareAndSet(State.ALIVE, State.COMPLETED)) {
-      LOG.debug("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), name);
+    if (!state.compareAndSet(State.STARTING, State.COMPLETED)
+      && !state.compareAndSet(State.ALIVE, State.COMPLETED)
+      && !state.compareAndSet(State.SUSPENDED, State.COMPLETED)) {
+      LOG.warn("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), name);
       return;
     }
     executor.execute(new Runnable() {
