@@ -78,6 +78,16 @@ angular.module(PKG.name+'.feature.experimental')
             label: 'Log',
             parent: 'experimental.home'
           }
+        })
+        .state('experimental.complexSchema', {
+          url: '/complex-schema',
+          templateUrl: '/assets/features/experimental/templates/complex-schema.html',
+          controller: 'ComplexSchemaController',
+          controllerAs: 'vm',
+          ncyBreadcrumb: {
+            label: 'Complex Schema',
+            parent: 'experimental.home'
+          }
         });
 
   });
