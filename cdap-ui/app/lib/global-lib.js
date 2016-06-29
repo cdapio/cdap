@@ -32,4 +32,7 @@ angular.module(`${PKG.name}.commons`)
   })
   .factory('esprima', function ($window) {
     return $window.esprima;
+  })
+  .factory('avsc', function ($window) {
+    return $window.avsc;
   });

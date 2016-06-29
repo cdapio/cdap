@@ -1,2 +1,3 @@
 ./app/features/foo
 ./app/lib/c3
+./app/lib/avsc-bundle.js
