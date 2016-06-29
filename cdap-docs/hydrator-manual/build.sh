@@ -23,7 +23,8 @@ CHECK_INCLUDES=${TRUE}
 
 EXTRACT_TABLE_TOOL="../tools/docs-extract-table.py"
 
-RETURN_STRING="\
+DOUBLE_RETURN_STRING="\
+
 "
 
 VERSION_STRING="Hydrator Version "
@@ -110,13 +111,13 @@ function download_md_file() {
         local m="Markdown file missing initial title: ${source_file_name}: ${source_name} ${type_capital}"
         echo_red_bold "${m}"
         set_message "${m}"
-        echo "# ${source_name} ${type_capital}${RETURN_STRING}$(cat ${target})" > ${target}
+        echo "# ${source_name} ${type_capital}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
       fi
       if [[ "x${append_file}" != "x" ]]; then
         echo "  Appending ${append_file} to ${target_file_name}"
         cat ${BASE_TARGET}/_includes/${append_file} >> ${target}
       fi
-      echo "${RETURN_STRING}${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
+      echo "${DOUBLE_RETURN_STRING}${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
       if [[ "x${target_dir_extra}" != "x" ]]; then
         cp ${target} ${target_extra}
         echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
