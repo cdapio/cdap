@@ -55,13 +55,6 @@ angular.module(PKG.name + '.feature.tracker')
               .text('Not enough data');
             }
           }, (err) => {
-            if (err.statusCode === 503) {
-              let metricContainer = d3.select(element[0]).select('.graph-container');
-              metricContainer.append('div')
-              .attr('class', 'well')
-              .append('p')
-              .text('Service unavailable');
-            }
             console.log('ERROR', err);
           });
       }
@@ -97,13 +90,6 @@ angular.module(PKG.name + '.feature.tracker')
               .text('Not enough data');
             }
           }, (err) => {
-            if (err.statusCode === 503) {
-              let metricContainer = d3.select(element[0]).select('.graph-container');
-              metricContainer.append('div')
-              .attr('class', 'well')
-              .append('p')
-              .text('Service unavailable');
-            }
             console.log('ERROR', err);
           });
       }

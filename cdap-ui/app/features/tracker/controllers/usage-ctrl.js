@@ -103,11 +103,7 @@ class TrackerUsageController {
       .$promise
       .then((response) => {
         this.auditHistogram = response;
-        this.serviceUnavailable = false;
       }, (err) => {
-        if (err.statusCode === 503) {
-          this.serviceUnavailable = true;
-        }
         console.log('Error', err);
       });
   }
@@ -141,11 +137,7 @@ class TrackerUsageController {
       .$promise
       .then((response) => {
         this.timeSince = response;
-        this.serviceUnavailable = false;
       }, (err) => {
-        if (err.statusCode === 503) {
-          this.serviceUnavailable = true;
-        }
         console.log('Error', err);
       });
   }

@@ -144,23 +144,23 @@ body.state-tracker-detail-entity-usage {
         &.empty-row > td { height: 38px; }
       }
     }
-    div.well { height: 234px; }
+    div.well {
+      background-color: #d3d3d3;
+      height: 234px;
+      margin-bottom: 0;
+      p {
+        color: @tracker-grey;
+        font-size: 14px;
+        line-height: 1.2;
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
   }
   div.metric-container {
     margin: 0 auto;
     max-width: 340px;
-  }
-  div.well {
-    background-color: #d3d3d3;
-    margin-bottom: 0;
-    p {
-      color: @tracker-grey;
-      font-size: 14px;
-      line-height: 1.2;
-      position: relative;
-      top: 50%;
-      transform: translateY(-50%);
-    }
   }
 }
 
@@ -953,7 +953,6 @@ body.state-tracker-detail-entity-usage {
   main {
     div.btn-group { margin: 14px 0 9px 10px; }
   }
-  div.usage-container > div.well { height: 100px; }
   div.tracker-metrics {
     table.table {
       tr {
