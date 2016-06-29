@@ -33,7 +33,6 @@ body.theme-cdap {
 
       div.pipeline-type {
         color: #397cf1;
-        float: left;
         text-decoration: none;
         span {
           display: inline-block;
@@ -46,25 +45,21 @@ body.theme-cdap {
         }
       }
 
-      div.action-buttons {
-        width: 100%;
-      }
       div.btn {
-        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 0);
+        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 6px 15px);
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
-        height: @height-of-toppanel;
-        padding: 0;
         .transition(all 0.2s ease);
         span {
-          line-height: @height-of-toppanel;
+          line-height: 29px;
         }
         &:hover,
         &:focus {
           background-color: #ebebeb;
           border-right: 1px solid #ebebeb;
           border-left: 1px solid @table-border-color;
+          border-bottom: 1px solid @table-border-color;
         }
         &:active {
           background-color: #828da0;
@@ -80,12 +75,6 @@ body.theme-cdap {
         @media (max-width: @screen-xs-max) {
           display: none;
         }
-      }
-      .nopadding {
-        padding: 0;
-      }
-      .nomargin {
-        margin: 0;
       }
     }
     .toppanel-tooltip {
@@ -127,17 +116,15 @@ body.theme-cdap {
       max-width: ~"calc(100% - 130px)";
       left: 130px;
       .transition(all 0.2s ease);
+      display: flex;
 
-      div.btn {
-        width: 25%;
-      }
       div.hydrator-metadata {
-        @media (min-width: @screen-lg-min) {
-          max-width: 650px;
-        }
-
+        flex-grow: 3;
+        flex-basis: 50%;
+        flex-wrap: wrap;
+        display: flex;
         background-color: transparent;
-        position: relative;
+        min-width: 0;
         z-index: 1021;
         .box-shadow(none);
         .transition(all 0.2s ease);
@@ -151,40 +138,23 @@ body.theme-cdap {
         }
         div.pipeline-name {
           margin-left: 10px;
-          min-width: 135px;
-          max-width: 85%;
-          position: relative;
-          &:after {
-            position: absolute;
-            font-family: FontAwesome;
-            top: 5px;
-            right: -30px;
-            content: "\f040";
-            .opacity(0);
-            .transition(opacity 0.2s ease);
-          }
-          &:hover,
-          &:focus {
-            &:after {
-              .opacity(1);
-            }
-          }
+          width: ~"calc(100% - 50px)";
           > div {
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+
             &:before {
               content: none;
               color: gray;
             }
-            &:first-child,
-            &:last-child {
-              max-width: 100%;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-              overflow: hidden;
-            }
+
             &:first-child {
               font-size: 14px;
               margin-top: 5px;
               line-height: 17px;
+
               &.placeholder {
                 &:before {
                   content: "Name your pipeline";
@@ -254,15 +224,13 @@ body.theme-cdap {
             }
           }
           div.pipeline-name {
-            width: 85%;
-            padding-top: 10px;
+            padding: 10px;
 
             &:after {
               content: none;
             }
           }
           div.btn-group {
-            margin: 10px 0;
             padding-right: 10px;
             .btn {
               display: inline-block;
