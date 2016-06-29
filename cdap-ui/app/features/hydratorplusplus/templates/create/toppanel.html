@@ -25,19 +25,30 @@
       <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlRealtime"
             class="icon-ETLRealtime"></span>
     </div>
-    <div class="pipeline-name text-left">
-      <div ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length}"
+    <div class="metadata text-left">
+      <div class="pipeline-name"
+           ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length}"
            ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
-           ng-bind="HydratorPlusPlusTopPanelCtrl.state.metadata['name']">
+           ng-bind="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
+           uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.state.metadata['name'] }}"
+           tooltip-placement="bottom-left"
+           tooltip-append-to-body="true"
+           tooltip-class="toppanel-tooltip">
       </div>
       <input type="text"
              ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"
              ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
              placeholder="Name your pipeline"
              ng-keyup="HydratorPlusPlusTopPanelCtrl.onEnterOnMetadata($event)" />
-      <div ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata['description'].length}"
+      <div class="pipeline-description"
+           ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata['description'].length}"
            ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
-           ng-bind="HydratorPlusPlusTopPanelCtrl.parsedDescription"></div>
+           ng-bind="HydratorPlusPlusTopPanelCtrl.parsedDescription"
+           uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.parsedDescription }}"
+           tooltip-placement="bottom-left"
+           tooltip-append-to-body="true"
+           tooltip-class="toppanel-tooltip"
+           ></div>
       <textarea ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['description']"
                 placeholder="Enter a description for your pipeline."
                 ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"></textarea>
@@ -54,7 +65,7 @@
          ng-click="action.fn()"
          uib-tooltip="{{action.name}}"
          tooltip-placement="bottom"
-         
+
          tooltip-class="toppanel-tooltip">
       <span class="fa {{action.icon}}"></span>
     </div>

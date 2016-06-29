@@ -74,7 +74,7 @@
         </thead>
         <tbody>
           <tr ng-repeat="pipeline in ListController.pipelineList | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
-            <td>
+            <td class="pipeline-name">
               <a ui-sref="hydratorplusplus.detail({ pipelineId: pipeline.name })" ng-if="::!pipeline.isDraft">
                 {{::pipeline.name}}
               </a>

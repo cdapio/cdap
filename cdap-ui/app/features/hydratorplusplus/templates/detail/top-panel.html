@@ -20,26 +20,24 @@
       <span ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1"
             class="icon-ETLBatch"
             uib-tooltip="Type: Batch"
-            tooltip-placement="right"
+            tooltip-placement="bottom-left"
             tooltip-append-to-body="true"
             tooltip-class="toppanel-tooltip"></span>
       <span ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime"
             class="icon-ETLRealtime"
             uib-tooltip="Type: Realtime"
-            tooltip-placement="right"
+            tooltip-placement="bottom-left"
             tooltip-append-to-body="true"
             tooltip-class="toppanel-tooltip"></span>
     </div>
     <div class="pipeline-name text-left">
       <h1 uib-tooltip="{{ TopPanelCtrl.app.name }}"
-          tooltip-placement="right"
-          tooltip-enable="TopPanelCtrl.app.name.length > 25"
+          tooltip-placement="bottom-left"
           tooltip-append-to-body="true"
           tooltip-class="toppanel-tooltip">
         {{ ::TopPanelCtrl.app.name }}
       </h1>
-      <p tooltip-placement="right"
-         tooltip-enable="TopPanelCtrl.app.description.length > 48"
+      <p tooltip-placement="bottom"
          tooltip-append-to-body="true"
          tooltip-class="toppanel-tooltip"
          uib-tooltip-html="TopPanelCtrl.tooltipDescription">
