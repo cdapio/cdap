@@ -46,7 +46,8 @@ angular.module(PKG.name + '.feature.tracker')
       scope: {
         entityType: '=',
         entityId: '=',
-        datasetType: '=?'
+        datasetType: '=?',
+        datasetExplorable: '='
       },
       templateUrl: '/assets/features/tracker/directives/jump/jump.html',
       controller: JumpController,

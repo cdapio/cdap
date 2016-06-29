@@ -150,6 +150,9 @@ class TrackerResultsController {
         createDate: entity.metadata.SYSTEM.properties['creation-time'],
         datasetType: entity.metadata.SYSTEM.properties.type
       });
+      if(entity.metadata.SYSTEM.tags.indexOf('explore') !== -1) {
+        obj.datasetExplorable = true;
+      }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;
     } else if (entity.entityId.type === 'stream') {
@@ -176,7 +179,6 @@ class TrackerResultsController {
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[2].count++;
     }
-
     return obj;
   }
 

@@ -41,6 +41,9 @@
     <li>
       <a ui-sref="datasets.detail.overview.status({ datasetId: entityId })">View in CDAP</a>
     </li>
+    <li ng-if="datasetExplorable === true">
+      <a ui-sref="datasets.detail.overview.explore({ datasetId: entityId })">Explore</a>
+    </li>
     <li class="divider"></li>
     <li class="dropdown-header">Add as:</li>
     <li>
@@ -55,6 +58,9 @@
       ng-if="entityType === 'datasets' && !Jump.isAvailableDataset">
     <li>
       <a ui-sref="datasets.detail.overview.status({ datasetId: entityId })">View in CDAP</a>
+    </li>
+    <li ng-if="datasetExplorable === true">
+      <a ui-sref="datasets.detail.overview.explore({ datasetId: entityId })">Explore</a>
     </li>
   </ul>
 
