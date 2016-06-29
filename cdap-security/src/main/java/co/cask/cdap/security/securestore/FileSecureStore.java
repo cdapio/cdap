@@ -118,21 +118,24 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     } catch (IOException ioe) {
       // The key was stored in the keystore successfully but we failed to flush it to the file system.
       // Remove the key from the keystore and throw an IOException.
-      deleteFromStore(keyStore, name);
+      deleteFromStore(keyStore, name, password);
       throw ioe;
     } finally {
       writeLock.unlock();
     }
   }
 
-  private static void deleteFromStore(KeyStore keyStore, String name) throws IOException {
+  private static Key deleteFromStore(KeyStore keyStore, String name, char[] password) throws IOException {
+    Key key = null;
     try {
       if (keyStore.containsAlias(name)) {
+        key = keyStore.getKey(name, password);
         keyStore.deleteEntry(name);
       }
-    } catch (KeyStoreException e) {
+    } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
       throw new IOException("Failed to delete the key. " + name, e);
     }
+    return key;
   }
 
   /**
@@ -141,14 +144,23 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public void delete(String name) throws IOException {
+    Key key = null;
     writeLock.lock();
     try {
-      deleteFromStore(keyStore, name);
+      key = deleteFromStore(keyStore, name, password);
       // Attempt to persist the store. If this fails then the keystore file will have an extra key
       // that the in-memory store does not. This will be remedied the next time a flush happens.
       // If another flush does not happen and the system is restarted, the only time that file is read,
       // then we will have an extra key.
       flush();
+    } catch (IOException ioe) {
+      if (key != null) {
+        try {
+          keyStore.setKeyEntry(name, key, password, null);
+        } catch (KeyStoreException e) {
+          throw new IOException("Failed to put back the key after a flush failure.", e);
+        }
+      }
     } finally {
       writeLock.unlock();
     }
@@ -350,17 +362,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     } catch (CertificateException e) {
       throw new IOException(
         "Certificate exception storing keystore " + this, e);
-    }
-  }
-
-  private void resetKeyStoreState(Path path) {
-    LOG.debug("Could not flush Keystore attempting to reset to previous state.");
-    // load keyStore from previous path
-    try {
-      loadFromPath(keyStore, path, password);
-      LOG.debug("KeyStore resetting to previously flushed state.");
-    } catch (Exception e) {
-      LOG.debug("Could not reset Keystore to previous state.", e);
     }
   }
 
