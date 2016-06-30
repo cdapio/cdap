@@ -36,6 +36,22 @@ function link (scope, element) {
         },
         {
           time: '2016-03-04 16:28:45',
+          level: 'ERROR',
+          source: 'leader-election-election-metrics-processor-part-0',
+          message: {
+            content: 'Some Other log data that is irrelevant for this demo.'
+          }
+        },
+        {
+          time: '2016-03-04 16:28:45',
+          level: 'ERROR',
+          source: 'leader-election-election-metrics-processor-part-0',
+          message: {
+            content: 'Some Other log data that is irrelevant for this demo.'
+          }
+        },
+        {
+          time: '2016-03-04 16:28:45',
           level: 'WARN',
           source: 'leader-election-election-metrics-processor-part-0',
           message: {
@@ -119,66 +135,240 @@ function link (scope, element) {
         timelineData[index].time = new Date(timelineData[index].time);
       });
 
-      //Contains only the 'WARN' and 'ERROR' events
-      let filteredEvents = timelineData.filter(function(obj) {
-        if(obj.level === 'WARN' || obj.level === 'ERROR'){
-          return true;
-        }
-        return false;
-      });
-
-      let minDate = filteredEvents[0],
-          maxDate = filteredEvents[filteredEvents.length-1];
-
       //Global Variables
-      let width = element.parent()[0].offsetWidth;
-      let height = 60;
+      var width = element.parent()[0].offsetWidth;
+      var height = 50;
+      var paddingLeft = 15;
+      var paddingRight = 15;
+      var maxRange = width - paddingLeft - paddingRight;
+      var sliderLimit = maxRange + 24;
+      var pinX = width-8;
+      var sliderX = 0;
+      var timelineStack = {};
 
       //Plot function call
       plot();
 
       function plot() {
 
-        //Define SVG
-        let svg = d3.select('.timeline-log-chart')
+        // -----------------Define SVG and Plot Circles-------------------------- //
+        var svg = d3.select('.timeline-log-chart')
                     .append('svg')
                     .attr('width', width)
                     .attr('height', height);
 
+        //Set the Range and Domain
+        var xScale = d3.time.scale().range([0, (maxRange)]);
+        //var xScale = d3.time.scale().range([0, (width)]);
+        xScale.domain(d3.extent(timelineData, function(d) {
+          return d.time;
+        }));
+
+        // add the tooltip area to the webpage
+        var tooltip = d3.select('body').append('div')
+            .attr('class', 'tooltip')
+            .style('opacity', 0);
+
+        //Define the axes and ticks
+        var xAxis = d3.svg.axis().scale(xScale)
+            .orient('bottom')
+            .innerTickSize(-40)
+            .tickPadding(7)
+            .ticks(8);
+
         //Generate circles from the filtered events
         let circles = svg.selectAll('circle')
-          .data(filteredEvents)
+          .data(timelineData)
           .enter()
           .append('circle');
 
-        let xScale = d3.time.scale()
-                             .domain([minDate, maxDate])
-                             .nice(d3.time.minute)
-                             .range([0,width]);
+        circles.attr('cx', function(d) {
+          let xVal = Math.floor(xScale(d.time));
+          if(timelineStack[xVal] === undefined){
+            timelineStack[xVal] = 0;
+          } else {
+            timelineStack[xVal]++;
+          }
+          return xScale(d.time) + 15;
+        })
+        .on('mouseover', function(d) {
+            tooltip.transition()
+                 .duration(200)
+                 .style('opacity', 1)
+                 .style('background-color', '#fefefe');
+            tooltip.html(d['level'] + ': ' + xScale.invert(d.time))
+                 .style('left', (d3.event.pageX + 5) + 'px')
+                 .style('top', (d3.event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+            tooltip.transition()
+                 .duration(650)
+                 .style('opacity', 0);
+        })
+        .attr('cy', function(d) {
+          let numDots = timelineStack[Math.floor(xScale(d.time))]--;
+          return height-height/2.5 - (numDots * 6);
+        })
+        .attr('r', 2)
+        .attr('class', function(d) {
+          if(d.level === 'ERROR'){
+            return 'red-circle';
+          }
+          else if(d.level === 'WARN'){
+            return 'yellow-circle';
+          } else {
+            return 'other-circle';
+          }
+        });
 
-        let xAxis = d3.svg.axis()
-          .orient('bottom')
-          .scale(xScale);
+        // -------------------------Build Brush / Sliders------------------------- //
 
-        //Initially renders circles uniformally across timeline
-        circles.attr('cx', function(d, i) {
-                  return i*50 + 25;
-                })
-                .attr('cy', height-height/3)
-                .attr('r', 3)
-                .attr('class', function(d) {
-                  if(d.level === 'ERROR'){
-                    return 'red-circle';
-                  }
-                  else if(d.level === 'WARN'){
-                    return 'yellow-circle';
-                  }
-                });
-
+        //X-Axis
         svg.append('g')
-          .attr('class', 'xaxis')
-          .attr('transform', 'translate(0,' + (height - 15) + ')')
+          .attr('class', 'xaxisBottom')
+          .attr('transform', 'translate(' + ( (paddingLeft + paddingRight) / 2) + ',' + (height - 20) + ')')
           .call(xAxis);
+
+        //Left Slider Implementation
+        var leftVal = 0;//10;
+
+        function leftBrushed() {
+          if(d3.event.sourceEvent) {
+            var v = xScale.invert(d3.mouse(this)[0]);
+            var index = d3.mouse(this)[0];
+            if(v !== leftVal){
+              leftVal = v;
+            }
+            update(index);
+          }
+        }
+
+        var brush = d3.svg.brush()
+            .x(xScale)
+            .extent([0,0])
+            .on('brush', leftBrushed);
+
+        //Create the 3 bars used to represent the slider
+        var sliderBar = svg.append('g')
+            .attr('class', 'slider leftSlider')
+            .call(d3.svg.axis()
+              .scale(xScale)
+              .tickSize(0)
+              .tickFormat(''))
+            .select('.domain')
+            .select(function() {
+              return this.parentNode.appendChild(this.cloneNode(true));
+            })
+          .attr('class', 'inner-bar')
+          .select(function () {
+            return this.parentNode.appendChild(this.cloneNode(true));
+          })
+        .attr('class', 'fill-bar');
+
+        sliderBar.attr('d', 'M0,0V0H' + xScale(0) + 'V0');
+
+        var slide = svg.append('g')
+              .attr('class', 'slider sliderGroup')
+              .attr('transform' , 'translate(0,10)')
+              .call(brush);
+
+        var leftHandle = slide.append('rect')
+            .attr('height', 50)
+            .attr('width', 7)
+            .attr('x', 0)
+            .attr('y', -10)
+            .attr('class', 'leftHandle');
+
+        function update(val) {
+          //Update the brush position
+          if(val < 0){
+            val = 0;
+          }
+          //Testing
+          if(val > sliderLimit){
+            val = sliderLimit;
+          }
+          brush.extent([val, val]);
+
+          sliderX = val;
+
+          if(sliderX > pinX){
+            updatePin(sliderX);
+          }
+
+          //Move the slider to the correct location
+          leftHandle.attr('x', val);
+          console.log('Left slider is at : ' + xScale.invert(val));
+          //Move the filled bar to the slider location by modifying the path
+          sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
+        }
+
+        //Append the Top slider
+        var brush2 = d3.svg.brush()
+            .x(xScale)
+            .extent([0,0])
+            .on('brush', slidePin);
+
+        var svg2 = d3.select('.top-bar').append('svg')
+            .attr('width', width)
+            .attr('height', 20)
+          .append('g');
+
+        svg2.append('g')
+            .attr('class', 'xaxisTop')
+            .call(d3.svg.axis()
+              .scale(xScale)
+              .orient('bottom'))
+          .select('.domain')
+          .select(function(){ return this.parentNode.appendChild(this.cloneNode(true));})
+            .attr('class', 'halo');
+
+        var slider = svg2.append('g')
+            .attr('class', 'slider')
+            .attr('width', width)
+            .call(brush2);
+
+        slider.select('.background')
+          .attr('height', 15);
+
+        var pinHandle = slider.append('rect')
+            .attr('width', 15)
+            .attr('height', 15)
+            //Container width - width of pin
+            .attr('x', width - 8)
+            .attr('y', 0)
+            .attr('class', 'scrollPin');
+
+        pinHandle.append('rect')
+          .attr('width', 3)
+          .attr('height', 25)
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr('class', 'scrollNeedle');
+
+        function slidePin() {
+          var xPos = d3.mouse(this)[0];
+
+          if(xPos < 0){
+            xPos = 0;
+          }
+
+          if(xPos > width-8){
+            xPos = width-8;
+          }
+
+          if(xPos >= sliderX){
+            updatePin(xPos);
+          } else {
+            update(xPos);
+            updatePin(xPos);
+          }
+        }
+
+        function updatePin (val) {
+          pinX = val;
+          pinHandle.attr('x', val);
+        }
       }
 }
 
@@ -186,6 +376,9 @@ angular.module(PKG.name + '.commons')
 .directive('myTimeline', function() {
   return {
     templateUrl: 'timeline/timeline.html',
+    scope: {
+      timelineData: '=?'
+    },
     link: link
   };
 });

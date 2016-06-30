@@ -16,6 +16,26 @@
 
 my-timeline {
   .timeline-container {
+    color: white;
+
+    .scrollPin {
+      cursor: pointer;
+      fill: #fefefe;
+    }
+
+    .scrollNeedle {
+      cursor: pointer;
+      fill: blue;
+      stroke: #2397e8;
+      stroke-width: 1;
+    }
+
+    .resize path {
+      fill: black;
+      fill-opacity: 0.2;
+      stroke: #2397e8;
+      stroke-width: 1.5px;
+    }
 
     color: white;
 
@@ -27,12 +47,21 @@ my-timeline {
     .timescale {
       background-color: #393939;
       width: 100%;
-      height: 60px;
+      height: 50px;
 
       .timeline-log-chart {
         color: grey;
 
-        .xaxis path,
+        .xaxisBottom text {
+          font: 9px sans-serif;
+        }
+
+        .xaxis path {
+          fill: none;
+          stroke: none;
+          shape-rendering: crispEdges;
+        }
+
         .xaxis line {
           fill: none;
           stroke: red;
@@ -51,13 +80,23 @@ my-timeline {
         }
 
         .yellow-circle {
-          fill: yellow;
-          stroke: yellow;
+          fill: #f8b154;
+          stroke: #f8b154;
         }
 
         .red-circle {
-          fill: red;
-          stroke: red;
+          fill: #fa5143;
+          stroke: #fa5143;
+        }
+
+        .other-circle {
+          fill: none;
+          stroke: none;
+        }
+
+        .search-circle {
+          fill: #5eb3fa;
+          stroke: #5eb3fa;
         }
       }
     }
