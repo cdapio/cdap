@@ -26,7 +26,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.3.2"
+                        "version": "1.3.3"
                     },
                     "properties": {
                         "region": "",
@@ -45,7 +45,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.3.2"
+                        "version": "1.3.3"
                     },
                     "properties": {
                         "name": "",
