@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.preview;
 
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -64,23 +65,18 @@ public class PreviewStatus {
       return true;
     }
 
-    if (!(o instanceof PreviewStatus)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
 
     PreviewStatus that = (PreviewStatus) o;
 
-    if (failureMessage != null ? !failureMessage.equals(that.failureMessage) : that.failureMessage != null) {
-      return false;
-    }
-
-    return status == that.status;
+    return Objects.equals(this.status, that.status) &&
+      Objects.equals(this.failureMessage, that.failureMessage);
   }
 
   @Override
   public int hashCode() {
-    int result = status.hashCode();
-    result = 31 * result + (failureMessage != null ? failureMessage.hashCode() : 0);
-    return result;
+    return Objects.hash(status, failureMessage);
   }
 }

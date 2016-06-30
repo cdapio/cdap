@@ -33,22 +33,18 @@ import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -66,10 +62,8 @@ public class PreviewServer extends AbstractIdleService {
   private final ProgramLifecycleService programLifecycleService;
   private final SystemArtifactLoader systemArtifactLoader;
 
-  private NettyHttpService httpService;
-  private Set<HttpHandler> handlers;
-  private MetricsCollectionService metricsCollectionService;
-  private CConfiguration configuration;
+  private final NettyHttpService httpService;
+  private Cancellable cancellable;
 
   /**
    * Construct the PreviewServer with configuration coming from guice injection.
@@ -86,13 +80,26 @@ public class PreviewServer extends AbstractIdleService {
                        SystemArtifactLoader systemArtifactLoader) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
-    this.configuration = configuration;
-    this.handlers = handlers;
-    this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programLifecycleService = programLifecycleService;
     this.systemArtifactLoader = systemArtifactLoader;
+    // Create handler hooks
+    ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
+    builder.add(new MetricsReporterHook(metricsCollectionService, Constants.Service.PREVIEW_HTTP));
+    this.httpService = new CommonNettyHttpServiceBuilder(configuration)
+      .setHost(hostname.getCanonicalHostName())
+      .setHandlerHooks(builder.build())
+      .addHttpHandlers(handlers)
+      .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
+                                                 Constants.AppFabric.DEFAULT_BACKLOG))
+      .setExecThreadPoolSize(configuration.getInt(Constants.AppFabric.EXEC_THREADS,
+                                                  Constants.AppFabric.DEFAULT_EXEC_THREADS))
+      .setBossThreadPoolSize(configuration.getInt(Constants.AppFabric.BOSS_THREADS,
+                                                  Constants.AppFabric.DEFAULT_BOSS_THREADS))
+      .setWorkerThreadPoolSize(configuration.getInt(Constants.AppFabric.WORKER_THREADS,
+                                                    Constants.AppFabric.DEFAULT_WORKER_THREADS))
+      .build();
   }
 
   /**
@@ -110,78 +117,29 @@ public class PreviewServer extends AbstractIdleService {
       programLifecycleService.start()
     ).get();
 
-    // Create handler hooks
-    ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
-    builder.add(new MetricsReporterHook(metricsCollectionService, Constants.Service.PREVIEW_HTTP));
-
-
     // Run http service on random port
-    httpService = new CommonNettyHttpServiceBuilder(configuration)
-      .setHost(hostname.getCanonicalHostName())
-      .setHandlerHooks(builder.build())
-      .addHttpHandlers(handlers)
-      .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
-                                                 Constants.AppFabric.DEFAULT_BACKLOG))
-      .setExecThreadPoolSize(configuration.getInt(Constants.AppFabric.EXEC_THREADS,
-                                                  Constants.AppFabric.DEFAULT_EXEC_THREADS))
-      .setBossThreadPoolSize(configuration.getInt(Constants.AppFabric.BOSS_THREADS,
-                                                  Constants.AppFabric.DEFAULT_BOSS_THREADS))
-      .setWorkerThreadPoolSize(configuration.getInt(Constants.AppFabric.WORKER_THREADS,
-                                                    Constants.AppFabric.DEFAULT_WORKER_THREADS))
-      .build();
 
     // Add a listener so that when the service started, register with service discovery.
     // Remove from service discovery when it is stopped.
-    httpService.addListener(new ServiceListenerAdapter() {
-
-      private List<Cancellable> cancellables = Lists.newArrayList();
-
-      @Override
-      public void running() {
-        final InetSocketAddress socketAddress = httpService.getBindAddress();
-        LOG.info("Preview HTTP Service started at {}", socketAddress);
-        // When it is running, register it with service discovery
-
-        cancellables.add(discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-          @Override
-          public String getName() {
-            return Constants.Service.PREVIEW_HTTP;
-          }
-
-          @Override
-          public InetSocketAddress getSocketAddress() {
-            return socketAddress;
-          }
-        })));
-
-      }
-
-      @Override
-      public void terminated(State from) {
-        LOG.info("Preview HTTP service stopped.");
-        for (Cancellable cancellable : cancellables) {
-          if (cancellable != null) {
-            cancellable.cancel();
-          }
-        }
-      }
-
-      @Override
-      public void failed(State from, Throwable failure) {
-        LOG.info("Preview HTTP service stopped with failure.", failure);
-        for (Cancellable cancellable : cancellables) {
-          if (cancellable != null) {
-            cancellable.cancel();
-          }
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
     httpService.startAndWait();
+
+    cancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
+      @Override
+      public String getName() {
+        return Constants.Service.PREVIEW_HTTP;
+      }
+
+      @Override
+      public InetSocketAddress getSocketAddress() {
+        return httpService.getBindAddress();
+      }
+    }));
+
   }
 
   @Override
   protected void shutDown() throws Exception {
+    cancellable.cancel();
     httpService.stopAndWait();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();

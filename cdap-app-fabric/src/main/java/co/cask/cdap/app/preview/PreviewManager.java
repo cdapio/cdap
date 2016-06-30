@@ -26,8 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Interface used by the Preview REST handler to start the preview and also retrieve the information associated with
- * preview.
+ * Interface used to start preview and also retrieve the information associated with a preview.
  */
 public interface PreviewManager {
 
@@ -49,17 +48,17 @@ public interface PreviewManager {
   /**
    * Get the data associated with the preview.
    * @param previewId the id associated with the preview
-   * @return the {@link Map} of stage to properties associated with the stage for a given preview
+   * @return the {@link Map} of logger name to properties associated with the logger for a given preview
    */
   Map<String, Map<String, List<Object>>> getData(PreviewId previewId);
 
   /**
-   * Get the data associated with the specified stage of the preview.
+   * Get the data associated with the specified logger name of the preview.
    * @param previewId id of the preview
-   * @param stageName the name of the stage for which data is to be returned
-   * @return the {@link Map} of property name to property value associated with the given stage for a given preview
+   * @param loggerName the name of the logger for which data is to be returned
+   * @return the {@link Map} of property name to property value associated with the given logger for a given preview
    */
-  Map<String, List<Object>> getData(PreviewId previewId, String stageName);
+  Map<String, List<Object>> getData(PreviewId previewId, String loggerName);
 
   /**
    * Get metric associated with the preview.
