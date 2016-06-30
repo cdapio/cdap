@@ -105,9 +105,7 @@ public class ETLSpark extends AbstractSpark {
 
     BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
     DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
-    SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context,
-                                                                        lookProvider,
-                                                                        sourceName);
+    SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context, lookProvider, sourceName);
     batchSource.prepareRun(sourceContext);
 
     SparkBatchSourceFactory sourceFactory = sourceContext.getSourceFactory();
