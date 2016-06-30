@@ -27,9 +27,12 @@ import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.planner.StageInfo;
+import com.google.common.collect.Sets;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Helps create {@link TransformExecutor TransformExecutors}.
@@ -37,12 +40,15 @@ import java.util.Map;
  * @param <T> the type of input for the created transform executors
  */
 public abstract class TransformExecutorFactory<T> {
+  private final String sourceStageName;
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
 
-  public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics) {
+  public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics,
+                                  @Nullable String sourceStageName) {
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
+    this.sourceStageName = sourceStageName;
   }
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
@@ -71,7 +77,9 @@ public abstract class TransformExecutorFactory<T> {
       }
     }
 
-    return new TransformExecutor<>(transformations, pipeline.getSources());
+    // sourceStageName will be null in reducers, so need to handle that case
+    Set<String> startingPoints = (sourceStageName == null) ? pipeline.getSources() : Sets.newHashSet(sourceStageName);
+    return new TransformExecutor<>(transformations, startingPoints);
   }
 
   /**

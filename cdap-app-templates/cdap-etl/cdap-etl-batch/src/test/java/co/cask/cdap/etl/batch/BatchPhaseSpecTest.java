@@ -51,6 +51,6 @@ public class BatchPhaseSpecTest {
 
     BatchPhaseSpec phaseSpec =
       new BatchPhaseSpec("phase-1", builder.build(), new Resources(), false, Collections.<String, String>emptyMap());
-    Assert.assertEquals("Sources 'source2', 'source1' to sinks 'sink.connector'.", phaseSpec.getDescription());
+    Assert.assertEquals("Sources 'source1', 'source2' to sinks 'sink.connector'.", phaseSpec.getDescription());
   }
 }

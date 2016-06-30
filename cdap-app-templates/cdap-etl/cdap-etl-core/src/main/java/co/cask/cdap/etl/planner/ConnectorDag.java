@@ -17,9 +17,7 @@
 package co.cask.cdap.etl.planner;
 
 import co.cask.cdap.etl.proto.Connection;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
@@ -122,72 +120,6 @@ public class ConnectorDag extends Dag {
         for (String reduceNodeConnector : Sets.intersection(sinksAndReduceNodes, reduceNodes)) {
           addConnectorInFrontOf(reduceNodeConnector, addedAlready);
         }
-      }
-    }
-
-    /*
-        Find nodes that have input from multiple sources and add them to the connectors set.
-        We can probably remove this part once we support multiple sources. Even though we don't support
-        multiple sources today, the fact that we support forks means we have to deal with the multi-input case
-        and break it down into separate phases. For example:
-
-                |---> reduce1 ---|
-          n1 ---|                |---> n2
-                |---> reduce2 ---|
-
-        From the previous section, both reduces will get a connector inserted in front:
-
-                |---> reduce1.connector               reduce1.connector ---> reduce1 ---|
-          n1 ---|                              =>                                       |---> n2
-                |---> reduce2.connector               reduce2.connector ---> reduce2 ---|
-
-        Since we don't support multi-input yet, we need to convert that further into 3 phases:
-
-          reduce1.connector ---> reduce1 ---> n2.connector
-                                                                    =>       sink.connector ---> n2
-          reduce2.connector ---> reduce2 ---> n2.connector
-
-        To find these nodes, we traverse the graph in order and keep track of sources that have a path to each node
-        with a map of node -> [ sources that have a path to the node ]
-        if we find that a node is accessible by more than one source, we insert a connector in front of it and
-        reset all sources for that node to its connector
-     */
-    SetMultimap<String, String> nodeSources = HashMultimap.create();
-    for (String source : sources) {
-      nodeSources.put(source, source);
-    }
-    for (String node : getTopologicalOrder()) {
-      Set<String> connectedSources = nodeSources.get(node);
-      /*
-          If this node is a connector, replace all sources for this node with itself, since a connector is a source
-          Taking the example above, we end up with:
-
-            reduce1.connector ---> reduce1 ---|
-                                              |---> n2
-            reduce2.connector ---> reduce2 ---|
-
-          When we get to n2, we need it to see that it has 2 sources: reduce1.connector and reduce2.connector
-          So when get to reduce1.connector, we need to replace its source (n1) with itself.
-          Similarly, when we get to reduce2.connector, we need to replaces its source (n1) with itself.
-          If we didn't, when we got to n2, it would think its only source is n1, and we would
-          miss the connector that should be inserted in front of it.
-       */
-      if (connectors.contains(node)) {
-        connectedSources = new HashSet<>();
-        connectedSources.add(node);
-        nodeSources.replaceValues(node, connectedSources);
-      }
-      // if more than one source is connected to this node, then we need to insert a connector in front of this node.
-      // its source should then be changed to the connector that was inserted in front of it.
-      if (connectedSources.size() > 1) {
-        String connectorNode = addConnectorInFrontOf(node, addedAlready);
-        connectedSources = new HashSet<>();
-        connectedSources.add(connectorNode);
-        nodeSources.replaceValues(node, connectedSources);
-      }
-      for (String nodeOutput : getNodeOutputs(node)) {
-        // propagate the source connected to me to all my outputs
-        nodeSources.putAll(nodeOutput, connectedSources);
       }
     }
 
@@ -296,13 +228,10 @@ public class ConnectorDag extends Dag {
    */
   public List<Dag> splitOnConnectors() {
     List<Dag> dags = new ArrayList<>();
-    for (String source : sources) {
-      dags.add(subsetFrom(source, connectors));
-    }
+    dags.add(subsetFrom(sources, connectors));
     for (String connector : connectors) {
       dags.add(subsetFrom(connector, connectors));
     }
-
     return dags;
   }
 

@@ -139,18 +139,31 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testSimpleMultiSource() throws Exception {
+  public void testMapRedSimpleMultipleSource() throws Exception {
+    testSimpleMultiSource(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testSparkSimpleMultipleSource() throws Exception {
+    testSimpleMultiSource(Engine.SPARK);
+  }
+
+  private void testSimpleMultiSource(Engine engine) throws Exception {
     /*
      * source1 --|
      *           |--> sink
      * source2 --|
      */
+    String source1Name = String.format("simpleMSInput1-%s", engine);
+    String source2Name = String.format("simpleMSInput2-%s", engine);
+    String sinkName = String.format("simpleMSOutput-%s", engine);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin("simpleMSInput1")))
-      .addStage(new ETLStage("source2", MockSource.getPlugin("simpleMSInput2")))
-      .addStage(new ETLStage("sink", MockSink.getPlugin("simpleMSOutput")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
       .addConnection("source1", "sink")
       .addConnection("source2", "sink")
+      .setEngine(engine)
       .build();
 
 
@@ -158,6 +171,8 @@ public class DataPipelineTest extends HydratorTestBase {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SimpleMultiSourceApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    // there should be only two programs - one workflow and one mapreduce/spark
+    Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
     Schema schema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
@@ -166,9 +181,9 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "simpleMSInput1");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "simpleMSInput2");
+    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -176,7 +191,7 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // check sink
-    DataSetManager<Table> sinkManager = getDataset("simpleMSOutput");
+    DataSetManager<Table> sinkManager = getDataset(sinkName);
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
@@ -187,7 +202,16 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testMultiSource() throws Exception {
+  public void testMapRedMultiSource() throws Exception {
+    testMultiSource(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testSparkMultiSource() throws Exception {
+    testMultiSource(Engine.SPARK);
+  }
+
+  private void testMultiSource(Engine engine) throws Exception {
     /*
      * source1 --|                 |--> sink1
      *           |--> transform1 --|
@@ -197,26 +221,34 @@ public class DataPipelineTest extends HydratorTestBase {
      *                                     |
      * source3 ----------------------------|
      */
+    String source1Name = String.format("msInput1-%s", engine);
+    String source2Name = String.format("msInput2-%s", engine);
+    String source3Name = String.format("msInput3-%s", engine);
+    String sink1Name = String.format("msOutput1-%s", engine);
+    String sink2Name = String.format("msOutput2-%s", engine);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin("msInput1")))
-      .addStage(new ETLStage("source2", MockSource.getPlugin("msInput2")))
-      .addStage(new ETLStage("source3", MockSource.getPlugin("msInput3")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(source3Name)))
       .addStage(new ETLStage("transform1", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("transform2", IdentityTransform.getPlugin()))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin("msOutput1")))
-      .addStage(new ETLStage("sink2", MockSink.getPlugin("msOutput2")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
       .addConnection("source1", "transform1")
       .addConnection("source2", "transform1")
       .addConnection("transform1", "sink1")
       .addConnection("transform1", "transform2")
       .addConnection("transform2", "sink2")
       .addConnection("source3", "transform2")
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MultiSourceApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    // there should be only two programs - one workflow and one mapreduce/spark
+    Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
     Schema schema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
@@ -227,11 +259,11 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "msInput1");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "msInput2");
+    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "msInput3");
+    inputManager = getDataset(Id.Namespace.DEFAULT, source3Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -239,13 +271,13 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // sink1 should get records from source1 and source2
-    DataSetManager<Table> sinkManager = getDataset("msOutput1");
+    DataSetManager<Table> sinkManager = getDataset(sink1Name);
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
     // sink2 should get all records
-    sinkManager = getDataset("msOutput2");
+    sinkManager = getDataset(sink2Name);
     expected = ImmutableSet.of(recordSamuel, recordBob, recordJane);
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
@@ -342,23 +374,27 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   private void testParallelAggregators(Engine engine) throws Exception {
-    String sourceName = "pAggInput-" + engine.name();
+    String source1Name = "pAggInput1-" + engine.name();
+    String source2Name = "pAggInput2-" + engine.name();
     String sink1Name = "pAggOutput1-" + engine.name();
     String sink2Name = "pAggOutput2-" + engine.name();
     /*
-                 |--> agg1 --> sink1
-        source --|
-                 |--> agg2 --> sink2
+       source1 --|--> agg1 --> sink1
+                 |
+       source1 --|--> agg2 --> sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .setEngine(engine)
-      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
       .addStage(new ETLStage("agg1", FieldCountAggregator.getPlugin("user", "string")))
       .addStage(new ETLStage("agg2", FieldCountAggregator.getPlugin("item", "long")))
-      .addConnection("source", "agg1")
-      .addConnection("source", "agg2")
+      .addConnection("source1", "agg1")
+      .addConnection("source1", "agg2")
+      .addConnection("source2", "agg1")
+      .addConnection("source2", "agg2")
       .addConnection("agg1", "sink1")
       .addConnection("agg2", "sink2")
       .build();
@@ -366,22 +402,26 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ParallelAggApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
-
+    // total programs = 4; 1 workflow, 1 job for source1,source2 -> agg1.connector,agg2.connector
+    // 1 job for agg1.connector -> sink1 and another job for agg2.connector -> sink2
+    Assert.assertEquals(4, appManager.getInfo().getPrograms().size());
     Schema inputSchema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("item", Schema.of(Schema.Type.LONG))
     );
 
-    // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceName);
+    // write few records to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 1L).build(),
-      StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build(),
+      StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build()));
+
+    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
+    MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 3L).build(),
       StructuredRecord.builder(inputSchema).set("user", "john").set("item", 4L).build(),
-      StructuredRecord.builder(inputSchema).set("user", "john").set("item", 3L).build()
-    ));
+      StructuredRecord.builder(inputSchema).set("user", "john").set("item", 3L).build()));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
@@ -417,7 +457,8 @@ public class DataPipelineTest extends HydratorTestBase {
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    validateMetric(5, appId, "source.records.out");
+    validateMetric(2, appId, "source1.records.out");
+    validateMetric(3, appId, "source2.records.out");
     validateMetric(5, appId, "agg1.records.in");
     // 2 users, but FieldCountAggregator always emits an 'all' group
     validateMetric(3, appId, "agg1.aggregator.groups");
@@ -476,10 +517,13 @@ public class DataPipelineTest extends HydratorTestBase {
 
   private void testSinglePhaseWithSparkSink() throws Exception {
     /*
-     * source --> sparksink
+     * source1 ---|
+     *            |--> sparksink
+     * source2 ---|
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin("messages")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin("messages1")))
+      .addStage(new ETLStage("source2", MockSource.getPlugin("messages2")))
       .addStage(new ETLStage("customsink",
                              new ETLPlugin(NaiveBayesTrainer.PLUGIN_NAME, SparkSink.PLUGIN_TYPE,
                                            ImmutableMap.of("fileSetName", "modelFileSet",
@@ -487,7 +531,8 @@ public class DataPipelineTest extends HydratorTestBase {
                                                            "fieldToClassify", SpamMessage.TEXT_FIELD,
                                                            "predictionField", SpamMessage.SPAM_PREDICTION_FIELD),
                                            null)))
-      .addConnection("source", "customsink")
+      .addConnection("source1", "customsink")
+      .addConnection("source2", "customsink")
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -502,14 +547,20 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("earn money for free", 1.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("this is definitely not spam", 1.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("you won the lottery", 1.0).toStructuredRecord());
+
+    // write records to source1
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "messages1");
+    MockSource.writeInput(inputManager, messagesToWrite);
+
+    messagesToWrite.clear();
     messagesToWrite.add(new SpamMessage("how was your day", 0.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("what are you up to", 0.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("this is a genuine message", 0.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("this is an even more genuine message", 0.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("could you send me the report", 0.0).toStructuredRecord());
 
-    // write records to source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "messages");
+    // write records to source2
+    inputManager = getDataset(Id.Namespace.DEFAULT, "messages2");
     MockSource.writeInput(inputManager, messagesToWrite);
 
     // ingest in some messages to be classified
@@ -533,7 +584,8 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("what are you doing today")), 0.01d);
     Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("genuine report")), 0.01d);
 
-    validateMetric(10, appId, "source.records.out");
+    validateMetric(5, appId, "source1.records.out");
+    validateMetric(5, appId, "source2.records.out");
     validateMetric(10, appId, "customsink.records.in");
   }
 

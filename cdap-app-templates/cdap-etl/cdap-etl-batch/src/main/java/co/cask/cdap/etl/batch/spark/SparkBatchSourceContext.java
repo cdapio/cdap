@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch.spark;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
@@ -28,21 +29,32 @@ import co.cask.cdap.etl.common.ExternalDatasets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.UUID;
 
 /**
  * Default implementation of {@link BatchSourceContext} for spark contexts.
  */
 public class SparkBatchSourceContext extends AbstractSparkBatchContext implements BatchSourceContext {
-  private SparkBatchSourceFactory sourceFactory;
 
-  public SparkBatchSourceContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
+  private final SparkBatchSourceFactory sourceFactory;
+
+  public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
+                                 LookupProvider lookupProvider, String stageId) {
     super(sparkContext, lookupProvider, stageId);
+    this.sourceFactory = sourceFactory;
   }
 
   @Override
   public void setInput(StreamBatchReadable stream) {
-    sourceFactory = SparkBatchSourceFactory.create(stream);
+    FormatSpecification formatSpec = stream.getFormatSpecification();
+    Input input;
+    if (formatSpec == null) {
+      input = suffixInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime()));
+    } else {
+      input = suffixInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(),
+                                         stream.getEndTime(), formatSpec));
+    }
+    sourceFactory.addInput(getStageName(), input);
   }
 
   @Override
@@ -62,22 +74,23 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
 
   @Override
   public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
-    sourceFactory = SparkBatchSourceFactory.create(datasetName, arguments, splits);
+    sourceFactory.addInput(getStageName(), suffixInput(Input.ofDataset(datasetName, arguments, splits)));
   }
 
   @Override
   public void setInput(InputFormatProvider inputFormatProvider) {
-    sourceFactory = SparkBatchSourceFactory.create(inputFormatProvider);
+    sourceFactory.addInput(getStageName(), suffixInput(Input.of(inputFormatProvider.getInputFormatClassName(),
+                                                                inputFormatProvider)));
   }
 
   @Override
   public void setInput(Input input) {
-    Input trackableInput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), input);
-    sourceFactory = SparkBatchSourceFactory.create(trackableInput);
+    Input trackableInput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), suffixInput(input));
+    sourceFactory.addInput(getStageName(), trackableInput);
   }
 
-  @Nullable
-  SparkBatchSourceFactory getSourceFactory() {
-    return sourceFactory;
+  private Input suffixInput(Input input) {
+    String suffixedAlias = String.format("%s-%s", input.getAlias(), UUID.randomUUID());
+    return input.alias(suffixedAlias);
   }
 }

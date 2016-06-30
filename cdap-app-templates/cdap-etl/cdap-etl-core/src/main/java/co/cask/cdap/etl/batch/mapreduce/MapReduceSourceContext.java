@@ -29,35 +29,44 @@ import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 /**
  * MapReduce Source Context. Delegates operations to MapReduce Context.
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
+  private final Set<String> inputNames;
 
   public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName,
                                 Map<String, String> runtimeArgs) {
     super(context, metrics, lookup, stageName, runtimeArgs);
+    this.inputNames = new HashSet<>();
   }
 
   @Override
   public void setInput(final StreamBatchReadable stream) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
       @Override
-      public Void call() throws Exception {
+      public String call() throws Exception {
         FormatSpecification formatSpec = stream.getFormatSpecification();
+        Input input;
         if (formatSpec == null) {
-          mrContext.addInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime()));
+          input = suffixInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime()));
+          mrContext.addInput(input);
         } else {
-          mrContext.addInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(),
-                                            stream.getEndTime(), formatSpec));
+          input = suffixInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(),
+                                             stream.getEndTime(), formatSpec));
+          mrContext.addInput(input);
         }
-        return null;
+        return input.getAlias();
       }
     });
+    inputNames.add(alias);
   }
 
   @Override
@@ -77,35 +86,55 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
 
   @Override
   public void setInput(final String datasetName, final Map<String, String> arguments, final List<Split> splits) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
       @Override
-      public Void call() throws Exception {
-        mrContext.addInput(Input.ofDataset(datasetName, arguments, splits));
-        return null;
+      public String call() throws Exception {
+        Input input = suffixInput(Input.ofDataset(datasetName, arguments, splits));
+        mrContext.addInput(input);
+        return input.getAlias();
       }
     });
+    inputNames.add(alias);
   }
 
   @Override
   public void setInput(final InputFormatProvider inputFormatProvider) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
       @Override
-      public Void call() throws Exception {
-        mrContext.addInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
-        return null;
+      public String call() throws Exception {
+        Input input = suffixInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
+        mrContext.addInput(input);
+        return input.getAlias();
       }
     });
+    inputNames.add(alias);
   }
 
   @Override
   public void setInput(final Input input) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    Input trackableInput = LogContext.runWithoutLoggingUnchecked(new Callable<Input>() {
       @Override
-      public Void call() throws Exception {
-        Input trackableInput =  ExternalDatasets.makeTrackable(mrContext.getAdmin(), input);
+      public Input call() throws Exception {
+        Input trackableInput =  ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixInput(input));
         mrContext.addInput(trackableInput);
-        return null;
+        return trackableInput;
       }
     });
+    inputNames.add(trackableInput.getAlias());
+  }
+
+  /**
+   * @return set of inputs that were added
+   */
+  public Set<String> getInputNames() {
+    return inputNames;
+  }
+
+  /**
+   * Suffix the alias of {@link Input} so that aliases of inputs are unique.
+   */
+  private Input suffixInput(Input input) {
+    String suffixedAlias = String.format("%s-%s", input.getAlias(), UUID.randomUUID());
+    return input.alias(suffixedAlias);
   }
 }
