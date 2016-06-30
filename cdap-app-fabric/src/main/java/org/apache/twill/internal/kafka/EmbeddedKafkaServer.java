@@ -53,7 +53,8 @@ public final class EmbeddedKafkaServer extends AbstractIdleService {
   public EmbeddedKafkaServer(Properties properties) {
     this.startTimeoutRetries = Integer.parseInt(properties.getProperty(START_TIMEOUT_RETRIES,
                                                                        DEFAULT_START_TIMEOUT_RETRIES));
-    this.properties = new Properties(properties);
+    this.properties = new Properties();
+    this.properties.putAll(properties);
   }
 
   @Override
