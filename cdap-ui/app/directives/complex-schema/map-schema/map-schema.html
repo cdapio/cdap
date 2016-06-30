@@ -15,32 +15,48 @@
 -->
 
 <div class="map-schema-container">
-  <div class="key-field">
+  <div class="key-field clearfix">
     <div class="col-xs-2">
       Keys:
     </div>
     <div class="col-xs-9">
       <select class="form-control"
               ng-model="MapSchema.fields.keys.displayType"
-              ng-options="option as option for option in MapSchema.SCHEMA_TYPES">
+              ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
+              ng-change="MapSchema.fields.keys.type = MapSchema.fields.keys.displayType">
       </select>
     </div>
     <div class="col-xs-1">
       <input type="checkbox" ng-model="MapSchema.fields.keys.nullable">
     </div>
   </div>
-  <div class="key-field">
+
+  <my-embedded-schema-selector
+    type="MapSchema.fields.keys.type"
+    display-type="MapSchema.fields.keys.displayType">
+  </my-embedded-schema-selector>
+
+
+  <div class="value-field clearfix">
     <div class="col-xs-2">
       Values:
     </div>
     <div class="col-xs-9">
       <select class="form-control"
               ng-model="MapSchema.fields.values.displayType"
-              ng-options="option as option for option in MapSchema.SCHEMA_TYPES">
+              ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
+              ng-change="MapSchema.fields.values.type = MapSchema.fields.values.displayType">
       </select>
     </div>
     <div class="col-xs-1">
       <input type="checkbox" ng-model="MapSchema.fields.values.nullable">
     </div>
   </div>
+
+  <my-embedded-schema-selector
+    type="MapSchema.fields.values.type"
+    display-type="MapSchema.fields.values.displayType">
+  </my-embedded-schema-selector>
+
+  <pre>{{ MapSchema.model | json:4 }}</pre>
 </div>

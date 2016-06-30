@@ -15,16 +15,28 @@
 -->
 
 <div class="array-schema-container">
-  <div class="col-xs-10">
-    <select class="form-control"
-            ng-model="ArraySchema.items.displayType"
-            ng-options="option as option for option in ArraySchema.SCHEMA_TYPES">
-    </select>
+  <div class="clearfix">
+    <div class="col-xs-10">
+      <select class="form-control"
+              ng-model="ArraySchema.items.displayType"
+              ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
+              ng-change="ArraySchema.items.type = ArraySchema.items.displayType">
+      </select>
+    </div>
+    <div class="col-xs-1 text-center">
+      <input type="checkbox" ng-model="ArraySchema.items.nullable">
+    </div>
   </div>
-  <div class="col-xs-1 text-center">
-    <input type="checkbox" ng-model="ArraySchema.items.nullable">
-  </div>
-  <div class="col-xs-1 text-center">
-    <i class="text-danger fa fa-trash"></i>
-  </div>
+
+  <!-- <div ng-switch="ArraySchema.items.displayType">
+    <div class="col-xs-12"
+         ng-switch-when="enum">
+      <my-enum-schema-wrapper ng-model="ArraySchema.items.type" type="COMPLEX"></my-enum-schema-wrapper>
+    </div>
+  </div> -->
+
+  <my-embedded-schema-selector
+    type="ArraySchema.items.type"
+    display-type="ArraySchema.items.displayType">
+  </my-embedded-schema-selector>
 </div>

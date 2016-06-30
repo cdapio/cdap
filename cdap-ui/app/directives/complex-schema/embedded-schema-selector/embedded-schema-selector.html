@@ -14,23 +14,20 @@
   the License.
 -->
 
-<div class="enum-schema-container">
-  <div class="clearfix"
-       ng-repeat="symbol in EnumSchema.symbols">
-    <div class="col-xs-10">
-      <input type="text"
-        class="form-control"
-        ng-model="symbol.name"
-        ng-blur="EnumSchema.formatOutput()"
-        ng-keypress="$event.keyCode === 13 && EnumSchema.addSymbol($index)">
-    </div>
-    <div class="col-xs-2 text-center">
-      <i class="text-danger fa fa-trash"
-         ng-click="EnumSchema.removeSymbol($index)">
-      </i>
-      <i class="fa fa-plus"
-         ng-click="EnumSchema.addSymbol($index)">
-      </i>
-    </div>
+<div class="clearfix"
+     ng-switch="Embedded.displayType">
+  <div class="col-xs-12"
+       ng-switch-when="enum">
+    <my-enum-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-enum-schema-wrapper>
   </div>
+
+  <div class="col-xs-12"
+       ng-switch-when="array">
+    <my-array-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-array-schema-wrapper>
+  </div>
+
+  <!-- <div class="col-xs-12"
+       ng-switch-when="array">
+    <my-map-schema-wrapper ng-model="type" type="COMPLEX"></my-array-schema-wrapper>
+  </div> -->
 </div>

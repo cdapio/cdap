@@ -14,7 +14,7 @@
  * the License.
  */
 
-function ArraySchemaController (avsc, SCHEMA_TYPES) {
+function ArraySchemaController (avsc, SCHEMA_TYPES, $scope) {
   'ngInject';
 
   var vm = this;
@@ -22,7 +22,26 @@ function ArraySchemaController (avsc, SCHEMA_TYPES) {
 
   vm.items = {};
 
+  vm.formatOutput = () => {
+    let obj = {
+      type: 'array',
+      items: vm.items.nullable ? [vm.items.type, 'null'] : vm.items.type
+    };
+
+    vm.model = obj;
+  };
+
   function init(strJson) {
+    if (!strJson || strJson === 'array') {
+      vm.items = {
+        displayType: 'string',
+        type: 'string',
+        nullable: false
+      };
+      vm.formatOutput();
+      return;
+    }
+
     let parsed = avsc.parse(strJson, { wrapUnions: true });
 
     let type = parsed.getItemsType();
@@ -49,10 +68,13 @@ function ArraySchemaController (avsc, SCHEMA_TYPES) {
       nullable: nullable
     };
 
+    vm.formatOutput();
     console.log('ARRAY_ITEMS', vm.items);
   }
 
+  $scope.$watch('ArraySchema.items', vm.formatOutput, true);
   init(vm.model);
+
 }
 
 angular.module(PKG.name+'.commons')
@@ -65,6 +87,23 @@ angular.module(PKG.name+'.commons')
     bindToController: true,
     scope: {
       model: '=ngModel'
+    }
+  };
+})
+.directive('myArraySchemaWrapper', function ($compile) {
+  return {
+    restrict: 'E',
+    replace: true,
+    scope: {
+      model: '=ngModel',
+      type: '@'
+    },
+    link: (scope, element) => {
+      if (scope.type === 'COMPLEX') {
+        $compile('<my-array-schema ng-model="model"></my-array-schema')(scope, (cloned) => {
+          element.append(cloned);
+        });
+      }
     }
   };
 });

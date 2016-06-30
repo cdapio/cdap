@@ -14,7 +14,7 @@
  * the License.
  */
 
-function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper) {
+function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
   'ngInject';
 
   var vm = this;
@@ -27,16 +27,39 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper) {
   };
 
   function init(strJson) {
+    if (!strJson || strJson === 'map') {
+      vm.fields.keys = {
+        type: 'string',
+        displayType: 'string',
+        nullable: false
+      };
+
+      vm.fields.values = {
+        type: 'string',
+        displayType: 'string',
+        nullable: false
+      };
+
+      return;
+    }
+
     let parsed = avsc.parse(strJson, { wrapUnions: true });
 
     vm.fields.keys = SchemaHelper.parseType(parsed.getKeysType());
     vm.fields.values = SchemaHelper.parseType(parsed.getValuesType());
-
-    console.log('keys', vm.fields.keys);
-
   }
-  console.log('MAP', vm.model);
 
+  function formatOutput() {
+    let obj = {
+      type: 'map',
+      keys: vm.fields.keys.nullable ? [vm.fields.keys.type, 'null'] : vm.fields.keys.type,
+      values: vm.fields.values.nullable ? [vm.fields.values.type, 'null'] : vm.fields.values.type
+    };
+
+    vm.model = JSON.stringify(obj);
+  }
+
+  $scope.$watch('MapSchema.fields', formatOutput, true);
   init(vm.model);
 }
 
