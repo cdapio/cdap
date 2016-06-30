@@ -50,19 +50,19 @@ function EnumSchemaController (avsc) {
       type: 'enum',
       symbols: symbols
     };
-    vm.model = JSON.stringify(obj);
+    vm.model = obj;
   };
 
   init(vm.model);
 
   function init(strJson) {
-    if (!strJson) {
+    if (!strJson || strJson === 'enum') {
       vm.addSymbol();
+      vm.formatOutput();
       return;
     }
 
     let parsed = avsc.parse(strJson, { wrapUnions: true });
-
     vm.symbols = parsed.getSymbols().map( (symbol) => { return { name: symbol }; });
     vm.formatOutput();
   }
@@ -79,6 +79,23 @@ angular.module(PKG.name+'.commons')
     bindToController: true,
     scope: {
       model: '=ngModel',
+    }
+  };
+})
+.directive('myEnumSchemaWrapper', function ($compile) {
+  return {
+    restrict: 'E',
+    replace: true,
+    scope: {
+      model: '=ngModel',
+      type: '@'
+    },
+    link: (scope, element) => {
+      if (scope.type === 'COMPLEX') {
+        $compile('<my-enum-schema ng-model="model"></my-enum-schema')(scope, (cloned) => {
+          element.append(cloned);
+        });
+      }
     }
   };
 });
