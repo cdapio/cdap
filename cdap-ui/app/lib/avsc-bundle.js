@@ -36,6 +36,12 @@
  * SOFTWARE.
  */
 
+ /**
+  * Modification by Edwin Elia
+  * Avro specification does not support MapType with key that is non string type.
+  * However, CDAP does not enforce this, therefore I am annotating avsc library to support it
+  **/
+
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.avsc = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict'
 
@@ -9543,6 +9549,13 @@ function MapType(attrs, opts) {
     throw new Error(f('missing map values: %j', attrs));
   }
   this._values = createType(attrs.values, opts);
+
+  // Addition by Edwin Elia
+  var keys = attrs.keys;
+  if (!keys) {
+    keys = 'string';
+  }
+  this._keys = createType(keys, opts);
 }
 util.inherits(MapType, Type);
 
@@ -9658,6 +9671,9 @@ MapType.prototype.compare = MapType.prototype._match;
 MapType.prototype.getTypeName = function () { return 'map'; };
 
 MapType.prototype.getValuesType = function () { return this._values; };
+
+// Addition by Edwin Elia
+MapType.prototype.getKeysType = function () { return this._keys; };
 
 MapType.prototype.random = function () {
   var val = {};
