@@ -22,9 +22,7 @@ function EnumSchemaController (avsc) {
   vm.symbols = [];
 
   vm.addSymbol = (index) => {
-
-    // need to add index is 0
-    let placement = index ? index + 1 : 0;
+    let placement = index === undefined ? 0 : index + 1;
     vm.symbols.splice(placement, 0, {name: ''});
   };
 
@@ -67,8 +65,6 @@ function EnumSchemaController (avsc) {
 
     vm.symbols = parsed.getSymbols().map( (symbol) => { return { name: symbol }; });
     vm.formatOutput();
-
-    console.log('SYMBOLS', vm.symbols);
   }
 }
 
