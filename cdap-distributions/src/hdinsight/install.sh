@@ -186,20 +186,20 @@ restartCdapDependentClusterServices() {
     stopServiceViaRest MAPREDUCE2
     stopServiceViaRest HDFS
 
-    __waitForServiceState HBASE INSTALLED || die "Could not stop service HBASE"
-    __waitForServiceState YARN INSTALLED || die "Could not stop service YARN"
-    __waitForServiceState MAPREDUCE2 INSTALLED || die "Could not stop service MAPREDUCE2"
-    __waitForServiceState HDFS INSTALLED || die "Could not stop service HDFS"
+#    __waitForServiceState HBASE INSTALLED || die "Could not stop service HBASE"
+#    __waitForServiceState YARN INSTALLED || die "Could not stop service YARN"
+#    __waitForServiceState MAPREDUCE2 INSTALLED || die "Could not stop service MAPREDUCE2"
+#    __waitForServiceState HDFS INSTALLED || die "Could not stop service HDFS"
 
     startServiceViaRest HDFS
     startServiceViaRest MAPREDUCE2
     startServiceViaRest YARN
     startServiceViaRest HBASE
 
-    __waitForServiceState HDFS STARTED || die "Could not start service HDFS"
-    __waitForServiceState MAPREDUCE2 STARTED || die "Could not start service MAPREDUCE2"
-    __waitForServiceState YARN STARTED || die "Could not start service YARN"
-    __waitForServiceState HBASE STARTED || die "Could not start service HBASE"
+#    __waitForServiceState HDFS STARTED || die "Could not start service HDFS"
+#    __waitForServiceState MAPREDUCE2 STARTED || die "Could not start service MAPREDUCE2"
+#    __waitForServiceState YARN STARTED || die "Could not start service YARN"
+#    __waitForServiceState HBASE STARTED || die "Could not start service HBASE"
 }
 
 
