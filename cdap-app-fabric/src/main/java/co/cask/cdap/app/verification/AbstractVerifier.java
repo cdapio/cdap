@@ -18,31 +18,22 @@ package co.cask.cdap.app.verification;
 
 import co.cask.cdap.error.Err;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.CharMatcher;
+import co.cask.cdap.proto.id.EntityId;
+
 
 /**
  * @param <T> Type of thing to get verified.
  */
 public abstract class AbstractVerifier<T> implements Verifier<T> {
 
-  public static boolean isId(final String name) {
-    return !name.isEmpty() && CharMatcher.inRange('A', 'Z')
-             .or(CharMatcher.inRange('a', 'z'))
-             .or(CharMatcher.is('-'))
-             .or(CharMatcher.is('_'))
-             .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
-  }
-
   @Override
   public VerifyResult verify(Id.Application appId, T input) {
     // Checks if DataSet name is an ID
     String name = getName(input);
-    if (!isId(name)) {
+    if (!EntityId.isValidId(name)) {
       return VerifyResult.failure(Err.NOT_AN_ID, name);
     }
     return VerifyResult.success();
-
   }
-
   protected abstract String getName(T input);
 }
