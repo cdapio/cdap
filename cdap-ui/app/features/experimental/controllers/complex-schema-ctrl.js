@@ -15,66 +15,9 @@
  */
 
 angular.module(`${PKG.name}.feature.experimental`)
-  .controller('ComplexSchemaController', function(avsc) {
-    var schema = '{"type":"record","name":"rec","fields":[{"name":"bool_field","type":["boolean","null"]},{"name":"int_field","type":"int"},{"name":"long_field","type":"long"},{"name":"float_field","type":"float"},{"name":"double_field","type":"double"},{"name":"bytes_field","type":"bytes"},{"name":"array_field","type":{"type":"array","items":["string","null"]}},{"name":"enum_field","type":{"type":"enum","symbols":["Monday","Tuesday","Wednesday"]}},{"name":"union_field","type":["double","float","bytes"]},{"name":"map_field","type":{"type":"map","keys":["string","null"],"values":["int","null"]}},{"name":"record_field","type":[{"type":"record","name":"rec1","fields":[{"name":"x","type":["int","null"]},{"name":"y","type":["double","null"]}]},"null"]},{"name":"string_field","type":["string","null"]}]}';
+  .controller('ComplexSchemaController', function() {
+    this.schema = '{"type":"record","name":"rec","fields":[{"name":"bool_field","type":["boolean","null"]},{"name":"int_field","type":"int"},{"name":"long_field","type":"long"},{"name":"float_field","type":"float"},{"name":"double_field","type":"double"},{"name":"bytes_field","type":"bytes"},{"name":"array_field","type":{"type":"array","items":["string","null"]}},{"name":"enum_field","type":{"type":"enum","symbols":["Monday","Tuesday","Wednesday"]}},{"name":"union_field","type":["double","float","bytes"]},{"name":"map_field","type":{"type":"map","keys":["string","null"],"values":["int","null"]}},{"name":"record_field","type":[{"type":"record","name":"rec1","fields":[{"name":"x","type":["int","null"]},{"name":"y","type":["double","null"]}]},"null"]},{"name":"string_field","type":["string","null"]}]}';
 
-
-    // let union = {
-    //   name: 'test',
-    //   type: 'record',
-    //   fields: [
-    //     {
-    //       name: 'string_field',
-    //       type: ['float', 'int']
-    //     }
-    //   ]
-    // };
-    // let parsed = avsc.parse(union, { wrapUnions: true });
-    // console.log('parsed', parsed);
-
-    const SCHEMA_TYPES = [
-      'string',
-      'int',
-      'long',
-      'float',
-      'double',
-      'boolean',
-      'bytes',
-      'enum',
-      'array',
-      'map',
-      'record',
-      'union'
-    ];
-
-
-    let parsed = avsc.parse(schema, { wrapUnions: true }).getFields();
-
-    angular.forEach(parsed, (field) => {
-      let name = field.getName();
-      let type = field.getType();
-
-      if (type.getTypeName() === 'union:wrapped') {
-        let temp = '';
-
-        type = type.getTypes();
-        angular.forEach(type, (tempType) => {
-          temp = temp + tempType.getTypeName() + ' ';
-        });
-        type = temp;
-
-      } else {
-        type = type.getTypeName();
-      }
-
-      console.log(name + ': ' + type);
-
-      console.log(SCHEMA_TYPES);
-    });
-
-    // function parseSchemaType (field) {
-
-    // }
 
 
   });
