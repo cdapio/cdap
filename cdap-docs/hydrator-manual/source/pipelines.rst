@@ -8,20 +8,36 @@
 Creating and Running Pipelines
 ==============================
 
-- Creating pipeline
+Creating a Pipeline
+===================
+ 
+Creating a logical pipeline 
+----------------------------
 
-  - Creating a logical pipeline 
-  
-    - Structured Record
-    - Input/Output schema
+    - Structured Records
+    - Input and Output schemas
     
-  - Data flow 
-  
-- Configuring plugins 
+Data Flow 
+----------
 
-  - Plugin properties
+Configuring Plugins 
+====================
+
+  - Plugin Properties
   - Reference 
   
-- Publishing
+Publishing a Pipeline
+=====================
+Pipelines can be published two different ways:
 
--  Running
+- Using the Cask Hydrator UI
+- Using the Application Lifecycle RESTful API
+
+
+Running a Pipeline
+==================
+Once a pipeline has been published, it can be run either by:
+
+- Using the Cask Hydrator UI
+- Using the Program Lifecycle RESTful API
+

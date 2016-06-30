@@ -115,7 +115,7 @@ function download_md_file() {
       fi
       if [[ "x${append_file}" != "x" ]]; then
         echo "  Appending ${append_file} to ${target_file_name}"
-        cat ${BASE_TARGET}/_includes/${append_file} >> ${target}
+        cat ${BASE_TARGET}/${append_file} >> ${target}
       fi
       echo "${DOUBLE_RETURN_STRING}${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
       if [[ "x${target_dir_extra}" != "x" ]]; then
@@ -220,8 +220,8 @@ function download_includes() {
   download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
 
-  download_md_file database-plugins Database-batchsink.md database-batchsink-append.md.txt
-  download_md_file database-plugins Database-batchsource.md database-batchsource-append.md.txt
+  download_md_file database-plugins Database-batchsink.md _includes/database-batchsink-append.md.txt
+  download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt
   download_md_file database-plugins DatabaseQuery-postaction.md
 
   download_md_file elasticsearch-plugins Elasticsearch-batchsink.md
@@ -262,7 +262,7 @@ function download_includes() {
   download_md_file transform-plugins JSONParser-transform.md
   download_md_file transform-plugins StreamFormatter-transform.md
 
-  extract_table ${BASE_TARGET} "batch/transforms/validator.md" validator-extract.txt
+  extract_table ${BASE_TARGET} "batch/transforms/validator.md" _includes/validator-extract.txt
 }
 
 run_command ${1}

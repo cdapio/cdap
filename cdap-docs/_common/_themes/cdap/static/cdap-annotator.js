@@ -4,6 +4,12 @@
  * Adding Annotator JavaScript utilities for all documentation.
  *
  * FIXME: Hard-coded server
+ * FIXME: To get this to work, I altered cdap-annotator-full.js (a replacement for annotator-full.js)
+ *       AnnotateItPermissions.prototype.options.userAuthorize to always returns true (line 2562).
+ *       However, this seems to have introduced a bug of multiple checkboxes in the popup window
+ *       and the name 'alice' is always used for the user...
+ * I also altered lines 1659 & 1660 to fix a window-sizing issue
+ * 
  */
 
 $(document).ready(function() {
