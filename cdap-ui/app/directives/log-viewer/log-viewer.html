@@ -87,7 +87,8 @@
                   'fa-arrow-right': LogViewer.isMessageExpanded}"
                 ng-click="LogViewer.isMessageExpanded = !LogViewer.isMessageExpanded"></span>
           <span>Message</span>
-          <div class="expand-all-btn text-center">Expand All</div>
+          <div class="expand-all-btn text-center"
+               ng-click="LogViewer.toggleExpandAll = !LogViewer.toggleExpandAll">Expand All</div>
         </th>
       </thead>
 
@@ -122,7 +123,7 @@
                    ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded">
                 <span class="fa"
                       ng-class="{'fa-plus': !log.isStackTraceExpanded,
-                        'fa-minus': log.isStackTraceExpanded }">
+                        'fa-minus': LogViewer.toggleExpandAll || log.isStackTraceExpanded }">
                 </span>
               </div>
               <div class="message-column">
@@ -132,7 +133,7 @@
 
             <div class="stack-trace"
                  ng-class="{'expanded': LogViewer.isMessageExpanded}"
-                 ng-if="log.isStackTraceExpanded">
+                 ng-if="LogViewer.toggleExpandAll || log.isStackTraceExpanded">
               <pre>{{ log.message.stackTrace }}</pre>
             </div>
 
