@@ -98,7 +98,7 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
       // We check if all the dataset names used are ids
       for (String dataSet : defn.getDatasets()) {
-        if (!isId(dataSet)) {
+        if (!isValidDatasetId(dataSet)) {
           return VerifyResult.failure(Err.NOT_AN_ID, flowName + ":" + flowletName + ":" + dataSet);
         }
       }

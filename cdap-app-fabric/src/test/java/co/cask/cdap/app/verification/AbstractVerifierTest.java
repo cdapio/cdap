@@ -50,6 +50,11 @@ public class AbstractVerifierTest {
     Assert.assertFalse(v.verify(appId, "foo^name").isSuccess());
     Assert.assertFalse(v.verify(appId, "foo/name").isSuccess());
     Assert.assertFalse(v.verify(appId, "foo$name").isSuccess());
+    Assert.assertTrue(v.isValidDatasetId("foo$name"));
+    Assert.assertTrue(v.isValidDatasetId("foo.name"));
+    Assert.assertFalse(v.isValidDatasetId("foo$*name"));
+
+
   }
 
 }

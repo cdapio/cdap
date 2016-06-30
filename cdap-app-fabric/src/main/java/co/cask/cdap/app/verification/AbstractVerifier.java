@@ -18,19 +18,26 @@ package co.cask.cdap.app.verification;
 
 import co.cask.cdap.error.Err;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.CharMatcher;
+import java.util.regex.Pattern;
 
 /**
  * @param <T> Type of thing to get verified.
  */
 public abstract class AbstractVerifier<T> implements Verifier<T> {
 
+  // Only allow alphanumeric and _ character for namespace
+  private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
+  // Allow hyphens for other ids.
+  private static final Pattern idPattern = Pattern.compile("[a-zA-Z0-9_-]+");
+  // Allow '.' and '$' for dataset ids since they can be fully qualified class names
+  private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
+
+  public static boolean isValidDatasetId(String datasetId) {
+    return datasetIdPattern.matcher(datasetId).matches();
+  }
+
   public static boolean isId(final String name) {
-    return !name.isEmpty() && CharMatcher.inRange('A', 'Z')
-             .or(CharMatcher.inRange('a', 'z'))
-             .or(CharMatcher.is('-'))
-             .or(CharMatcher.is('_'))
-             .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
+    return idPattern.matcher(name).matches();
   }
 
   @Override
@@ -41,7 +48,6 @@ public abstract class AbstractVerifier<T> implements Verifier<T> {
       return VerifyResult.failure(Err.NOT_AN_ID, name);
     }
     return VerifyResult.success();
-
   }
 
   protected abstract String getName(T input);
