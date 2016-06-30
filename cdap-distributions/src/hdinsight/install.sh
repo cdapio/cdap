@@ -137,7 +137,7 @@ __waitForServiceState() {
     local __svc=${1}
     local __state=${2}
 
-    for i in {1..60} ; do
+    for i in {1..120} ; do
       __currState=$(curl -s -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X GET http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${__svc} | grep \"state\" | awk '{ print $3}' | sed -e 's/"\(.*\)"[,]*/\1/')
       if [ "${__state}" == "${__currState}" ]; then
         return 0
