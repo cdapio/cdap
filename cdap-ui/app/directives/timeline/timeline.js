@@ -135,16 +135,16 @@ function link (scope, element) {
         timelineData[index].time = new Date(timelineData[index].time);
       });
 
-      //Global Variables
-      var width = element.parent()[0].offsetWidth;
-      var height = 50;
-      var paddingLeft = 15;
-      var paddingRight = 15;
-      var maxRange = width - paddingLeft - paddingRight;
-      var sliderLimit = maxRange + 24;
-      var pinX = width-8;
-      var sliderX = 0;
-      var timelineStack = {};
+      //Globals
+      let width = element.parent()[0].offsetWidth;
+      let height = 50;
+      let paddingLeft = 15;
+      let paddingRight = 15;
+      let maxRange = width - paddingLeft - paddingRight;
+      let sliderLimit = maxRange + 24;
+      let pinX = width-8;
+      let sliderX = 0;
+      let timelineStack = {};
 
       //Plot function call
       plot();
@@ -152,25 +152,24 @@ function link (scope, element) {
       function plot() {
 
         // -----------------Define SVG and Plot Circles-------------------------- //
-        var svg = d3.select('.timeline-log-chart')
+        let svg = d3.select('.timeline-log-chart')
                     .append('svg')
                     .attr('width', width)
                     .attr('height', height);
 
         //Set the Range and Domain
-        var xScale = d3.time.scale().range([0, (maxRange)]);
-        //var xScale = d3.time.scale().range([0, (width)]);
+        let xScale = d3.time.scale().range([0, (maxRange)]);
         xScale.domain(d3.extent(timelineData, function(d) {
           return d.time;
         }));
 
         // add the tooltip area to the webpage
-        var tooltip = d3.select('body').append('div')
+        let tooltip = d3.select('body').append('div')
             .attr('class', 'tooltip')
             .style('opacity', 0);
 
         //Define the axes and ticks
-        var xAxis = d3.svg.axis().scale(xScale)
+        let xAxis = d3.svg.axis().scale(xScale)
             .orient('bottom')
             .innerTickSize(-40)
             .tickPadding(7)
@@ -225,17 +224,17 @@ function link (scope, element) {
 
         //X-Axis
         svg.append('g')
-          .attr('class', 'xaxisBottom')
+          .attr('class', 'xaxis-bottom')
           .attr('transform', 'translate(' + ( (paddingLeft + paddingRight) / 2) + ',' + (height - 20) + ')')
           .call(xAxis);
 
         //Left Slider Implementation
-        var leftVal = 0;//10;
+        let leftVal = 0;//10;
 
         function leftBrushed() {
           if(d3.event.sourceEvent) {
-            var v = xScale.invert(d3.mouse(this)[0]);
-            var index = d3.mouse(this)[0];
+            let v = xScale.invert(d3.mouse(this)[0]);
+            let index = d3.mouse(this)[0];
             if(v !== leftVal){
               leftVal = v;
             }
@@ -243,13 +242,13 @@ function link (scope, element) {
           }
         }
 
-        var brush = d3.svg.brush()
+        let brush = d3.svg.brush()
             .x(xScale)
             .extent([0,0])
             .on('brush', leftBrushed);
 
         //Create the 3 bars used to represent the slider
-        var sliderBar = svg.append('g')
+        let sliderBar = svg.append('g')
             .attr('class', 'slider leftSlider')
             .call(d3.svg.axis()
               .scale(xScale)
@@ -267,17 +266,17 @@ function link (scope, element) {
 
         sliderBar.attr('d', 'M0,0V0H' + xScale(0) + 'V0');
 
-        var slide = svg.append('g')
+        let slide = svg.append('g')
               .attr('class', 'slider sliderGroup')
               .attr('transform' , 'translate(0,10)')
               .call(brush);
 
-        var leftHandle = slide.append('rect')
+        let leftHandle = slide.append('rect')
             .attr('height', 50)
             .attr('width', 7)
             .attr('x', 0)
             .attr('y', -10)
-            .attr('class', 'leftHandle');
+            .attr('class', 'left-handle');
 
         function update(val) {
           //Update the brush position
@@ -304,18 +303,18 @@ function link (scope, element) {
         }
 
         //Append the Top slider
-        var brush2 = d3.svg.brush()
+        let brush2 = d3.svg.brush()
             .x(xScale)
             .extent([0,0])
             .on('brush', slidePin);
 
-        var svg2 = d3.select('.top-bar').append('svg')
+        let svg2 = d3.select('.top-bar').append('svg')
             .attr('width', width)
             .attr('height', 20)
           .append('g');
 
         svg2.append('g')
-            .attr('class', 'xaxisTop')
+            .attr('class', 'xaxis-top')
             .call(d3.svg.axis()
               .scale(xScale)
               .orient('bottom'))
@@ -323,7 +322,7 @@ function link (scope, element) {
           .select(function(){ return this.parentNode.appendChild(this.cloneNode(true));})
             .attr('class', 'halo');
 
-        var slider = svg2.append('g')
+        let slider = svg2.append('g')
             .attr('class', 'slider')
             .attr('width', width)
             .call(brush2);
@@ -331,23 +330,16 @@ function link (scope, element) {
         slider.select('.background')
           .attr('height', 15);
 
-        var pinHandle = slider.append('rect')
+        let pinHandle = slider.append('rect')
             .attr('width', 15)
             .attr('height', 15)
             //Container width - width of pin
             .attr('x', width - 8)
             .attr('y', 0)
-            .attr('class', 'scrollPin');
-
-        pinHandle.append('rect')
-          .attr('width', 3)
-          .attr('height', 25)
-          .attr('x', 0)
-          .attr('y', 0)
-          .attr('class', 'scrollNeedle');
+            .attr('class', 'scroll-pin');
 
         function slidePin() {
-          var xPos = d3.mouse(this)[0];
+          let xPos = d3.mouse(this)[0];
 
           if(xPos < 0){
             xPos = 0;

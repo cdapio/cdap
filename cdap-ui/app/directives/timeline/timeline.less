@@ -14,26 +14,26 @@
  * the License.
  */
 
+@blue-theme-color: #2397e8;
+
 my-timeline {
   .timeline-container {
     color: white;
 
-    .scrollPin {
+    .scroll-pin {
       cursor: pointer;
       fill: #fefefe;
     }
 
-    .scrollNeedle {
+    .left-handle {
+      fill: #068af9;
       cursor: pointer;
-      fill: blue;
-      stroke: #2397e8;
-      stroke-width: 1;
     }
 
     .resize path {
       fill: black;
       fill-opacity: 0.2;
-      stroke: #2397e8;
+      stroke: @blue-theme-color;
       stroke-width: 1.5px;
     }
 
@@ -52,7 +52,7 @@ my-timeline {
       .timeline-log-chart {
         color: grey;
 
-        .xaxisBottom text {
+        .xaxis-bottom text {
           font: 9px sans-serif;
         }
 
