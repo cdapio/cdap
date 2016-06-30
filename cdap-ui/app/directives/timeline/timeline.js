@@ -194,10 +194,14 @@ function link (scope, element) {
             tooltip.transition()
                  .duration(200)
                  .style('opacity', 1)
-                 .style('background-color', '#fefefe');
-            tooltip.html(d['level'] + ': ' + xScale.invert(d.time))
-                 .style('left', (d3.event.pageX + 5) + 'px')
-                 .style('top', (d3.event.pageY - 28) + 'px');
+                 .style('background-color', '#fefefe')
+                 .style('height', '26px')
+                 // .style('line-height', '15px')
+                 .style('position', 'inline-block')
+                 .style('width', '270px');
+            tooltip.html('<div class="tooltip-body" style="width: 0; height: 0; border-bottom: 14px solid transparent; border-top: 14px solid transparent; position: relative; border-right: 16px solid white; display: inline-block; right: 15px;">&nbsp;</div>' + '<span style="position: relative; bottom: 7px; right: 8px;">' + d['level'] + ': ' + d.time + '</span>')
+                 .style('left', (d3.event.pageX + 30) + 'px')
+                 .style('top', (d3.event.pageY - 15) + 'px');
         })
         .on('mouseout', function() {
             tooltip.transition()
