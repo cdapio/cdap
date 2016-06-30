@@ -74,11 +74,11 @@ public abstract class EntityId implements IdCompatible {
     return namespacePattern.matcher(name).matches();
   }
 
-  protected static boolean isValidId(String name) {
+  public static boolean isValidId(String name) {
     return idPattern.matcher(name).matches();
   }
 
-  protected static boolean isValidDatasetId(String datasetId) {
+  public static boolean isValidDatasetId(String datasetId) {
     return datasetIdPattern.matcher(datasetId).matches();
   }
 

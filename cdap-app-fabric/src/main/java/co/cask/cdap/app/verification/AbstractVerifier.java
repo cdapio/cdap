@@ -18,33 +18,19 @@ package co.cask.cdap.app.verification;
 
 import co.cask.cdap.error.Err;
 import co.cask.cdap.proto.Id;
-import java.util.regex.Pattern;
+import co.cask.cdap.proto.id.EntityId;
+
 
 /**
  * @param <T> Type of thing to get verified.
  */
 public abstract class AbstractVerifier<T> implements Verifier<T> {
 
-  // Only allow alphanumeric and _ character for namespace
-  private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
-  // Allow hyphens for other ids.
-  private static final Pattern idPattern = Pattern.compile("[a-zA-Z0-9_-]+");
-  // Allow '.' and '$' for dataset ids since they can be fully qualified class names
-  private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
-
-  public static boolean isValidDatasetId(String datasetId) {
-    return datasetIdPattern.matcher(datasetId).matches();
-  }
-
-  public static boolean isId(final String name) {
-    return idPattern.matcher(name).matches();
-  }
-
   @Override
   public VerifyResult verify(Id.Application appId, T input) {
     // Checks if DataSet name is an ID
     String name = getName(input);
-    if (!isId(name)) {
+    if (!EntityId.isValidId(name)) {
       return VerifyResult.failure(Err.NOT_AN_ID, name);
     }
     return VerifyResult.success();
