@@ -232,7 +232,8 @@ function getEs6Directives(isNegate) {
     'my-global-navbar',
     'datetime-picker',
     'datetime-range',
-    'log-viewer'
+    'log-viewer',
+    'complex-schema'
   ];
 
   return es6directives.map(function (directive) {

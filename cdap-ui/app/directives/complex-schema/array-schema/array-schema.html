@@ -14,4 +14,17 @@
   the License.
 -->
 
-<my-complex-schema ng-model="vm.schema"></my-complex-schema>
+<div class="array-schema-container">
+  <div class="col-xs-10">
+    <select class="form-control"
+            ng-model="ArraySchema.items.displayType"
+            ng-options="option as option for option in ArraySchema.SCHEMA_TYPES">
+    </select>
+  </div>
+  <div class="col-xs-1 text-center">
+    <input type="checkbox" ng-model="ArraySchema.items.nullable">
+  </div>
+  <div class="col-xs-1 text-center">
+    <i class="text-danger fa fa-trash"></i>
+  </div>
+</div>

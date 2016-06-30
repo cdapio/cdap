@@ -1,0 +1,46 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="map-schema-container">
+  <div class="key-field">
+    <div class="col-xs-2">
+      Keys:
+    </div>
+    <div class="col-xs-9">
+      <select class="form-control"
+              ng-model="MapSchema.fields.keys.displayType"
+              ng-options="option as option for option in MapSchema.SCHEMA_TYPES">
+      </select>
+    </div>
+    <div class="col-xs-1">
+      <input type="checkbox" ng-model="MapSchema.fields.keys.nullable">
+    </div>
+  </div>
+  <div class="key-field">
+    <div class="col-xs-2">
+      Values:
+    </div>
+    <div class="col-xs-9">
+      <select class="form-control"
+              ng-model="MapSchema.fields.values.displayType"
+              ng-options="option as option for option in MapSchema.SCHEMA_TYPES">
+      </select>
+    </div>
+    <div class="col-xs-1">
+      <input type="checkbox" ng-model="MapSchema.fields.values.nullable">
+    </div>
+  </div>
+</div>
