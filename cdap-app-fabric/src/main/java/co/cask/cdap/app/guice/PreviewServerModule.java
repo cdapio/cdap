@@ -67,7 +67,6 @@ public class PreviewServerModule {
     @Override
     protected void configure() {
       bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
-      expose(PipelineFactory.class);
 
       install(
         new FactoryModuleBuilder()
@@ -88,7 +87,6 @@ public class PreviewServerModule {
       expose(PreviewServer.class);
 
       bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
-      expose(PreviewManager.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));
@@ -96,9 +94,7 @@ public class PreviewServerModule {
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(PreviewHttpHandler.class);
 
-
       bind(Scheduler.class).to(NoopScheduler.class);
-      expose(Scheduler.class);
     }
 
     @Provides
