@@ -36,6 +36,22 @@ function link (scope, element) {
         },
         {
           time: '2016-03-04 16:28:45',
+          level: 'ERROR',
+          source: 'leader-election-election-metrics-processor-part-0',
+          message: {
+            content: 'Some Other log data that is irrelevant for this demo.'
+          }
+        },
+        {
+          time: '2016-03-04 16:28:45',
+          level: 'ERROR',
+          source: 'leader-election-election-metrics-processor-part-0',
+          message: {
+            content: 'Some Other log data that is irrelevant for this demo.'
+          }
+        },
+        {
+          time: '2016-03-04 16:28:45',
           level: 'WARN',
           source: 'leader-election-election-metrics-processor-part-0',
           message: {
@@ -119,17 +135,6 @@ function link (scope, element) {
         timelineData[index].time = new Date(timelineData[index].time);
       });
 
-      //Contains only the 'WARN' and 'ERROR' events
-      let filteredEvents = timelineData.filter(function(obj) {
-        if(obj.level === 'WARN' || obj.level === 'ERROR'){
-          return true;
-        }
-        return false;
-      });
-
-      let minDate = filteredEvents[0],
-          maxDate = filteredEvents[filteredEvents.length-1];
-
       //Global Variables
       var width = element.parent()[0].offsetWidth;
       var height = 50;
@@ -139,6 +144,7 @@ function link (scope, element) {
       var sliderLimit = maxRange + 24;
       var pinX = width-8;
       var sliderX = 0;
+      var timelineStack = {};
 
       //Plot function call
       plot();
@@ -152,11 +158,16 @@ function link (scope, element) {
                     .attr('height', height);
 
         //Set the Range and Domain
-        //var xScale = d3.time.scale().range([0, (maxRange)]);
-        var xScale = d3.time.scale().range([0, (width)]);
+        var xScale = d3.time.scale().range([0, (maxRange)]);
+        //var xScale = d3.time.scale().range([0, (width)]);
         xScale.domain(d3.extent(timelineData, function(d) {
           return d.time;
         }));
+
+        // add the tooltip area to the webpage
+        var tooltip = d3.select('body').append('div')
+            .attr('class', 'tooltip')
+            .style('opacity', 0);
 
         //Define the axes and ticks
         var xAxis = d3.svg.axis().scale(xScale)
@@ -167,14 +178,9 @@ function link (scope, element) {
 
         //Generate circles from the filtered events
         let circles = svg.selectAll('circle')
-          .data(filteredEvents)
+          .data(timelineData)
           .enter()
           .append('circle');
-
-        let xScale = d3.time.scale()
-                             .domain([minDate, maxDate])
-                             .nice(d3.time.minute)
-                             .range([0,width]);
 
         circles.attr('cx', function(d) {
           let xVal = Math.floor(xScale(d.time));
@@ -183,7 +189,21 @@ function link (scope, element) {
           } else {
             timelineStack[xVal]++;
           }
-          return xScale(d.time);
+          return xScale(d.time) + 15;
+        })
+        .on('mouseover', function(d) {
+            tooltip.transition()
+                 .duration(200)
+                 .style('opacity', 1)
+                 .style('background-color', 'white');
+            tooltip.html(d['level'] + ': ' + xScale.invert(d.time))
+                 .style('left', (d3.event.pageX + 5) + 'px')
+                 .style('top', (d3.event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+            tooltip.transition()
+                 .duration(650)
+                 .style('opacity', 0);
         })
         .attr('cy', function(d) {
           let numDots = timelineStack[Math.floor(xScale(d.time))]--;
@@ -216,11 +236,9 @@ function link (scope, element) {
           if(d3.event.sourceEvent) {
             var v = xScale.invert(d3.mouse(this)[0]);
             var index = d3.mouse(this)[0];
-
             if(v !== leftVal){
               leftVal = v;
             }
-
             update(index);
           }
         }
@@ -277,7 +295,6 @@ function link (scope, element) {
           if(sliderX > pinX){
             updatePin(sliderX);
           }
-          //changeStart(xScale.invert(val)) - change the start of the logs
 
           //Move the slider to the correct location
           leftHandle.attr('x', val);
