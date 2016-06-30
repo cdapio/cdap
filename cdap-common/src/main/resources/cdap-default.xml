@@ -749,7 +749,8 @@
     <name>kafka.num.partitions</name>
     <value>${kafka.server.num.partitions}</value>
     <description>
-      Default number of partitions for a topic
+      Default number of partitions for a topic (deprecated: replaced with
+      kafka.server.num.partitions)
     </description>
   </property>
 
