@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-batch",
         "scope": "SYSTEM",
-        "version": "3.4.2"
+        "version": "3.4.3"
     },
     "config": {
         "source": {
