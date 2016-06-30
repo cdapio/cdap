@@ -264,120 +264,110 @@ body.theme-cdap {
       display: flex;
 
       > div {
-        flex-grow: 1;
-        padding: 10px 0;
+        padding: 5px 10px;
         border-left: 1px solid @table-border-color;
-        &.next-run {
-          flex-grow: 0.5;
+        &.next-run,
+        &.last-run,
+        &.all-runs {
+          flex-grow: 0.1;
+
+          .last-run-container,
+          .all-runs-container,
+          .next-runs-container {
+            display: flex;
+            justify-content: space-between;
+          }
         }
         &:first-child {
           border-left: 0;
         }
         &.btn {
-          flex-grow: 0.1;
+          flex-grow: 0;
           padding: inherit;
-          padding: 5px;
+          padding: 7px 15px 0 15px;
           display: block;
           align-items: center;
           span {
-            line-height: 50px;
+            line-height: 48px;
           }
         }
-      }
-      .hydrator-detail-metadata {
-        display: flex;
-        overflow: hidden;
-        flex-basis: 15%;
-        padding: 10px;
-        div.pipeline-type {
-          text-decoration: none;
-          padding: 0 10px 0 0;
-        }
-        div.pipeline-name {
-          text-align: left;
-          padding-top: 4px;
+
+        &.hydrator-detail-metadata {
+          display: flex;
+          flex-grow: 0.7;
           overflow: hidden;
+          flex-basis: 15%;
+          padding: 5px 10px;
+          div.pipeline-type {
+            text-decoration: none;
+            padding: 0 10px 0 0;
+          }
+          div.pipeline-name {
+            text-align: left;
+            padding-top: 4px;
+            overflow: hidden;
+          }
+          h1,
+          p {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+          }
+          h1 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 0;
+            line-height: 20px;
+            display: inline-block;
+          }
+          p {
+            color: #666666;
+            font-size: 12px;
+            font-weight: 400;
+            margin: 0;
+          }
         }
-        h1,
-        p {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 100%;
+        &.app-status {
+          flex-grow: 0.05;
+          display: flex;
+          align-items: center;
+          flex-direction: column;
+          .metric-value {
+            font-size: 20px;
+          }
+          &.status-green span {
+            color: @brand-success;
+          }
+          &.status-red span {
+            color: @brand-danger;
+          }
+          span {
+            line-height: inherit;
+          }
+
         }
-        h1 {
-          font-size: 16px;
-          font-weight: 500;
-          margin-top: 0;
-          margin-bottom: 0;
-          line-height: 20px;
-          display: inline-block;
-        }
-        p {
-          color: #666666;
+        strong {
+          display: block;
           font-size: 12px;
-          font-weight: 400;
-          margin: 0;
-        }
-      }
-      div.app-status {
-        flex-grow: 0.3;
-        .metric-value {
-          font-size: 20px;
-          line-height: 20px;
-          padding-bottom: 2px;
-        }
-        &.status-green span {
-          color: @brand-success;
-        }
-        &.status-red span {
-          color: @brand-danger;
         }
         span {
-          line-height: inherit;
+          display: block;
         }
-      }
-      .last-run-container,
-      .all-runs-container,
-      .next-runs-container {
-        display: flex;
-        justify-content: space-around;
-      }
-      strong {
-        display: block;
-        font-size: 12px;
-      }
-      span {
-        display: block;
-      }
-      span.metric-value {
-        color: #636363;
-        font-size: 13px;
-        font-weight: 500;
-        line-height: 1;
-        small {
-          font-size: 10px;
-          font-weight: 400;
-        }
-      }
-      span.metric-label {
-        font-size: 10px;
-        color: rgba(0, 0, 0, 0.4);
-        font-weight: 600;
-      }
-      div.action-buttons {
-        &.batch > div {
-          width: 20%;
-        }
-        &.realtime > div {
-          width: 25%;
-        }
-        div.btn {
-          width: 100%;
-          height: 70px;
-          span {
-            line-height: 70px;
+        span.metric-value {
+          color: #636363;
+          font-size: 13px;
+          font-weight: 500;
+          small {
+            font-size: 10px;
+            font-weight: 400;
           }
+        }
+        span.metric-label {
+          font-size: 10px;
+          color: rgba(0, 0, 0, 0.4);
+          font-weight: 600;
         }
       }
     }
