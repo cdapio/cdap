@@ -15,7 +15,7 @@
 # the License.
 
 #
-# Install CDAP for Azure HDInsight cluster
+# Configure HDFS Pageblob support for CDAP HDInsight cluster
 #
 
 # Arguments supplied by https://raw.githubusercontent.com/hdinsight/Edge-Node-Scripts/release-12-1-2015/edgeNodeSetup.sh
@@ -219,64 +219,6 @@ __validateAmbariConnectivity
 #setHeadNodeOrDie && echo "Found active Ambari host: ${ACTIVEAMBARIHOST}"
 
 # Update necessary hadoop configuration
-#updateFsAzurePageBlobDirForCDAP
+updateFsAzurePageBlobDirForCDAP
 
-
-# Begin CDAP Prep/Install
-
-# Install git
-apt-get install --yes git || die "Failed to install git"
-
-# Install chef
-curl -L https://www.chef.io/chef/install.sh | sudo bash -s -- -v ${CHEF_VERSION} || die "Failed to install chef"
-
-# Clone CDAP repo
-__create_tmpdir
-git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git ${__gitdir}
-
-# Check out to specific tag if specified
-if [ -n "${CDAP_TAG}" ]; then
-  git -C ${__gitdir} checkout tags/${CDAP_TAG}
-fi
-
-# Setup cookbook repo
-test -d /var/chef/cookbooks && rm -rf /var/chef/cookbooks
-${__packerdir}/cookbook-dir.sh || die "Failed to setup cookbook dir"
-
-# Install cookbooks via knife
-${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
-
-# CDAP cli install, ensures package dependencies are present
-# We must specify the cdap version
-echo "{\"cdap\": \"version\": \"${CDAP_VERSION}\"}}" > ${__tmpdir}/cli-conf.json
-chef-solo -o 'recipe[cdap::cli]' -j ${__tmpdir}/cli-conf.json
-
-# Read zookeeper quorum from hbase-site.xml, using sourced init script function
-source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source CDAP common script"
-__zk_quorum=$(cdap_get_conf 'hbase.zookeeper.quorum' '/etc/hbase/conf/hbase-site.xml') || die "Cannot determine zookeeper quorum"
-
-# Get HDP version, allow for the future addition hdp-select "current" directory
-__hdp_version=$(ls /usr/hdp | grep "^[0-9]*\.") || die "Cannot determine HDP version"
-
-# Create chef json configuration
-sed \
-  -e "s/{{ZK_QUORUM}}/${__zk_quorum}/" \
-  -e "s/{{HDP_VERSION}}/${__hdp_version}/" \
-  -e "s/{{CDAP_VERSION}}/${CDAP_VERSION}/" \
-  -e "s/{{EXPLORE_ENABLED}}/${EXPLORE_ENABLED}/" \
-  ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
-
-# Install/Configure ntp, CDAP
-chef-solo -o 'recipe[ntp::default],recipe[ulimit::default],recipe[cdap::fullstack],recipe[cdap::init]' -j ${__tmpdir}/generated-conf.json
-
-# Temporary Hack to workaround CDAP-4089
-rm -f /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
-
-# Start CDAP Services
-for i in /etc/init.d/cdap-*
-do
-  ${i} start || die "Failed to start ${i}"
-done
-
-__cleanup_tmpdir
 exit 0
