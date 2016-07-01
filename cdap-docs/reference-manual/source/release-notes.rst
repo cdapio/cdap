@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc 
     :description: Release notes for the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
@@ -22,6 +22,16 @@ Cask Data Application Platform Release Notes
    :class: faq
    :backlinks: none
    :depth: 2
+
+`Release 3.3.5 <http://docs.cask.co/cdap/3.3.5/index.html>`__
+=============================================================
+
+Bug Fix
+-------
+
+- `CDAP-6311 <https://issues.cask.co/browse/CDAP-6311>`__ - Fixed a bug that the program run record
+  was not correctly reflected in CDAP if the corresponding YARN application failed to start.
+
 
 `Release 3.3.4 <http://docs.cask.co/cdap/3.3.4/index.html>`__
 =============================================================
