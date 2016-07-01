@@ -14,20 +14,44 @@
  * the License.
  */
 
-function ComplexSchemaController (avsc, SCHEMA_TYPES) {
+function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid) {
   'ngInject';
   var vm = this;
 
   vm.SCHEMA_TYPES = SCHEMA_TYPES.types;
 
   vm.parsedSchema = [];
+  let recordName;
+
+  vm.addField = (index) => {
+    let placement = index === undefined ? 0 : index + 1;
+    vm.parsedSchema.splice(placement, 0, {
+      name: '',
+      type: 'string',
+      displayType: 'string',
+      nullable: false
+    });
+  };
+
+  vm.removeField = (index) => {
+    vm.parsedSchema.splice(index, 1);
+    if (vm.parsedSchema.length === 0) {
+      vm.addField();
+    }
+  };
 
   function init(strJson) {
-    let parsed = avsc.parse(strJson, { wrapUnions: true }).getFields();
+    if (!strJson || strJson === 'record') {
+      recordName = uuid.v4();
+      vm.addField();
+      formatOutput();
+      return;
+    }
 
-    console.info('init', parsed);
+    let parsed = avsc.parse(strJson, { wrapUnions: true });
+    recordName = parsed._name;
 
-    vm.parsedSchema = parsed.map((field) => {
+    vm.parsedSchema = parsed.getFields().map((field) => {
       let type = field.getType();
       let storedType = type;
       let nullable = false;
@@ -53,8 +77,31 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES) {
         nullable: nullable
       };
     });
+
+    formatOutput();
   }
 
+  function formatOutput() {
+    let outputFields = vm.parsedSchema.filter((field) => {
+      return field.name ? true : false;
+    }).map( (field) => {
+      let obj = {
+        name: field.name,
+        type: field.nullable ? [field.type, 'null'] : field.type
+      };
+      return obj;
+    });
+
+    let obj = {
+      type: 'record',
+      name: recordName || uuid.v4(),
+      fields: outputFields
+    };
+
+    vm.model = obj;
+  }
+
+  $scope.$watch('ComplexSchema.parsedSchema', formatOutput, true);
   init(vm.model);
 
 }
@@ -69,7 +116,26 @@ angular.module(PKG.name+'.commons')
     bindToController: true,
     scope: {
       model: '=ngModel',
+      recordName: '=',
       hideHeader: '='
+    }
+  };
+})
+.directive('myRecordSchema', function ($compile) {
+  return {
+    restrict: 'E',
+    replace: true,
+    scope: {
+      model: '=ngModel',
+      type: '@',
+      recordName: '='
+    },
+    link: (scope, element) => {
+      if (scope.type === 'COMPLEX') {
+        $compile('<my-complex-schema ng-model="model" record-name="recordName" hide-header="true"></my-complex-schema')(scope, (cloned) => {
+          element.append(cloned);
+        });
+      }
     }
   };
 });

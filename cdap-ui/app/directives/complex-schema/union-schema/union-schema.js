@@ -14,7 +14,7 @@
  * the License.
  */
 
-function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper) {
+function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
   'ngInject';
 
   var vm = this;
@@ -22,14 +22,45 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper) {
 
   vm.types = [];
 
+  vm.addType = (index) => {
+    let placement = index === undefined ? 0 : index + 1;
+    vm.types.splice(placement, 0, {
+      type: 'string',
+      displayType: 'string',
+      nullable: false
+    });
+  };
+
+  vm.removeType = (index) => {
+    vm.types.splice(index, 1);
+    if (vm.types.length === 0) {
+      vm.addType();
+    }
+  };
+
   function init(strJson) {
+    if (!strJson || strJson === 'union') {
+      vm.addType();
+      formatOutput();
+      return;
+    }
+
     let parsed = avsc.parse(strJson, { wrapUnions: true });
 
     vm.types = parsed.getTypes().map(SchemaHelper.parseType);
 
-    console.log('UNION_TYPES', vm.types);
+    formatOutput();
   }
 
+  function formatOutput () {
+    let outputArr = vm.types.map((item) => {
+      return item.nullable ? [item.type, 'null'] : item.type;
+    });
+
+    vm.model = outputArr;
+  }
+
+  $scope.$watch('UnionSchema.types', formatOutput, true);
   init(vm.model);
 }
 
@@ -43,6 +74,23 @@ angular.module(PKG.name+'.commons')
     bindToController: true,
     scope: {
       model: '=ngModel',
+    }
+  };
+})
+.directive('myUnionSchemaWrapper', function ($compile) {
+  return {
+    restrict: 'E',
+    replace: true,
+    scope: {
+      model: '=ngModel',
+      type: '@'
+    },
+    link: (scope, element) => {
+      if (scope.type === 'COMPLEX') {
+        $compile('<my-union-schema ng-model="model"></my-union-schema')(scope, (cloned) => {
+          element.append(cloned);
+        });
+      }
     }
   };
 });

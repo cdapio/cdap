@@ -39,7 +39,7 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
         displayType: 'string',
         nullable: false
       };
-
+      formatOutput();
       return;
     }
 
@@ -47,6 +47,8 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
 
     vm.fields.keys = SchemaHelper.parseType(parsed.getKeysType());
     vm.fields.values = SchemaHelper.parseType(parsed.getValuesType());
+
+    formatOutput();
   }
 
   function formatOutput() {
@@ -56,7 +58,7 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
       values: vm.fields.values.nullable ? [vm.fields.values.type, 'null'] : vm.fields.values.type
     };
 
-    vm.model = JSON.stringify(obj);
+    vm.model = obj;
   }
 
   $scope.$watch('MapSchema.fields', formatOutput, true);
@@ -73,6 +75,23 @@ angular.module(PKG.name+'.commons')
     bindToController: true,
     scope: {
       model: '=ngModel'
+    }
+  };
+})
+.directive('myMapSchemaWrapper', function ($compile) {
+  return {
+    restrict: 'E',
+    replace: true,
+    scope: {
+      model: '=ngModel',
+      type: '@'
+    },
+    link: (scope, element) => {
+      if (scope.type === 'COMPLEX') {
+        $compile('<my-map-schema ng-model="model"></my-map-schema')(scope, (cloned) => {
+          element.append(cloned);
+        });
+      }
     }
   };
 });

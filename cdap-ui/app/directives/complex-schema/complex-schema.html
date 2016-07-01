@@ -15,78 +15,57 @@
 -->
 
 <div class="complex-schema-container">
-  <table class="table">
-    <thead ng-if="::!ComplexSchema.hideHeader">
-      <th>Name</th>
-      <th>Type</th>
-      <th class="text-center">Null</th>
-      <th></th>
-    </thead>
 
-    <tbody>
-      <tr ng-repeat="field in ComplexSchema.parsedSchema track by $index">
-        <td colspan="4">
-          <table class="table">
-            <tr>
-              <td>
-                <input type="text"
-                       class="form-control"
-                       ng-model="field.name">
-              </td>
-              <td>
-                <select class="form-control"
-                        ng-model="field.displayType"
-                        ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES">
-                </select>
-              </td>
-              <td class="text-center">
-                <input type="checkbox" ng-model="field.nullable">
-              </td>
-              <td class="text-center">
-                <i class="text-danger fa fa-trash"></i>
-                <i class="fa fa-plus"></i>
-              </td>
-            </tr>
+  <div class="clearfix"
+       ng-if="::!ComplexSchema.hideHeader">
+    <div class="col-xs-6">
+      <h3>Name</h3>
+    </div>
 
-            <tr ng-if="field.displayType === 'record'">
-              <td colspan="4">
-                <my-record-schema ng-model="field.type"
-                                  type="COMPLEX">
-                </my-record-schema>
-              </td>
-            </tr>
+    <div class="col-xs-4">
+      <h3>Type</h3>
+    </div>
 
-            <tr ng-if="field.displayType === 'enum'">
-              <td colspan="4">
-                <my-enum-schema ng-model="field.type">
-                </my-enum-schema>
-              </td>
-            </tr>
+    <div class="col-xs-1 text-center">
+      <h3>Null</h3>
+    </div>
+  </div>
 
-            <tr ng-if="field.displayType === 'union'">
-              <td colspan="4">
-                <my-union-schema ng-model="field.type">
-                </my-union-schema>
-              </td>
-            </tr>
+  <div ng-repeat="field in ComplexSchema.parsedSchema track by $index">
+    <div class="clearfix">
+      <div class="col-xs-6">
+        <input type="text"
+               class="form-control"
+               ng-model="field.name">
+      </div>
 
-            <tr ng-if="field.displayType === 'array'">
-              <td colspan="4">
-                <my-array-schema ng-model="field.type">
-                </my-array-schema>
-              </td>
-            </tr>
+      <div class="col-xs-4">
+        <select class="form-control"
+                ng-model="field.displayType"
+                ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
+                ng-change="field.type = field.displayType">
+        </select>
+      </div>
 
-            <tr ng-if="field.displayType === 'map'">
-              <td colspan="4">
-                <my-map-schema ng-model="field.type">
-                </my-map-schema>
-              </td>
-            </tr>
+      <div class="col-xs-1 text-center">
+        <input type="checkbox" ng-model="field.nullable">
+      </div>
 
-          </table>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+      <div class="col-xs-1 text-center">
+        <i class="text-danger fa fa-trash"
+           ng-click="ComplexSchema.removeField($index)">
+        </i>
+        <i class="fa fa-plus"
+           ng-click="ComplexSchema.addField($index)">
+        </i>
+      </div>
+    </div>
+
+    <my-embedded-schema-selector
+      type="field.type"
+      display-type="field.displayType">
+    </my-embedded-schema-selector>
+  </div>
+
+  <pre>{{ ComplexSchema.model | json: 4 }}</pre>
 </div>
