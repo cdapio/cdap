@@ -19,7 +19,7 @@
 #   number must be passed in as an option.
 # export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800"
 
-# Ensure SPARK_HOME is set for Spark support.
+# Override detected SPARK_HOME for Spark support
 # export SPARK_HOME="/usr/lib/spark"
 
 # LOCAL_DIR sets the JVM -Duser.dir property of the CDAP processes, and provides a
@@ -29,3 +29,9 @@ LOCAL_DIR="/var/tmp/cdap"
 # TEMP_DIR sets the JVM -Djava.io.tmpdir property of the CDAP processes, and provides
 # temporary storage for Apache Twill
 TEMP_DIR="/tmp"
+
+# Service-specific Java heap settings (overrides defaults)
+# export AUTH_JAVA_HEAPMAX="-Xmx1024m"
+# export KAFKA_JAVA_HEAPMAX="-Xmx1024m"
+# export MASTER_JAVA_HEAPMAX="-Xmx1024m"
+# export ROUTER_JAVA_HEAPMAX="-Xmx1024m"
