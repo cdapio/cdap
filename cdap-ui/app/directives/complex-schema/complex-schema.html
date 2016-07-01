@@ -18,28 +18,30 @@
 
   <div class="clearfix"
        ng-if="::!ComplexSchema.hideHeader">
-    <div class="col-xs-6">
-      <h3>Name</h3>
+    <div class="input-column">
+      <h4>Name</h4>
     </div>
 
-    <div class="col-xs-4">
-      <h3>Type</h3>
+    <div class="type-column">
+      <h4>Type</h4>
     </div>
 
-    <div class="col-xs-1 text-center">
-      <h3>Null</h3>
+    <div class="fields-actions">
+      <div class="nullable-header text-center">
+        <h4>Null</h4>
+      </div>
     </div>
   </div>
 
   <div ng-repeat="field in ComplexSchema.parsedSchema track by $index">
     <div class="clearfix">
-      <div class="col-xs-6">
+      <div class="input-column">
         <input type="text"
                class="form-control"
                ng-model="field.name">
       </div>
 
-      <div class="col-xs-4">
+      <div class="type-column">
         <select class="form-control"
                 ng-model="field.displayType"
                 ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
@@ -47,17 +49,19 @@
         </select>
       </div>
 
-      <div class="col-xs-1 text-center">
-        <input type="checkbox" ng-model="field.nullable">
-      </div>
+      <div class="fields-actions">
+        <div class="checkbox text-center">
+          <input type="checkbox" ng-model="field.nullable">
+        </div>
 
-      <div class="col-xs-1 text-center">
-        <i class="text-danger fa fa-trash"
-           ng-click="ComplexSchema.removeField($index)">
-        </i>
-        <i class="fa fa-plus"
-           ng-click="ComplexSchema.addField($index)">
-        </i>
+        <div class="actions-buttons text-right">
+          <i class="text-danger fa fa-trash"
+             ng-click="ComplexSchema.removeField($index)">
+          </i>
+          <i class="fa fa-plus"
+             ng-click="ComplexSchema.addField($index)">
+          </i>
+        </div>
       </div>
     </div>
 
@@ -66,6 +70,4 @@
       display-type="field.displayType">
     </my-embedded-schema-selector>
   </div>
-
-  <pre>{{ ComplexSchema.model | json: 4 }}</pre>
 </div>

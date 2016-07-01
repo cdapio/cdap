@@ -14,15 +14,52 @@
  * the License.
  */
 
+@type-column-width: 80px;
+@fields-right-offset: 70px;
+
 my-complex-schema {
   .complex-schema-container {
-    margin-left: 15px;
-    .table {
-      margin-top: 0;
-      margin-bottom: 0;
+    [class*="col-"] {
+      padding-right: 0;
+    }
 
-      td {
-        padding: 0;
+    .type-column {
+      width: @type-column-width;
+      float: left;
+    }
+
+    .input-column {
+      float: left;
+      width: ~"-moz-calc(100% - 80px - 70px)";
+      width: ~"-webkit-calc(100% - 80px - 70px)";
+      width: ~"calc(100% - 80px - 70px)";
+
+      &.no-type {
+        width: ~"-moz-calc(100% - 70px)";
+        width: ~"-webkit-calc(100% - 70px)";
+        width: ~"calc(100% - 70px)";
+      }
+    }
+
+    .map-fields {
+      width: @type-column-width;
+    }
+
+    .fields-actions {
+      float: right;
+
+      .nullable-header {
+        margin-right: 30px;
+        width: 35px;
+      }
+
+      .checkbox {
+        width: 35px;
+        &.no-trash { margin-right: 15px; }
+      }
+
+      .actions-buttons {
+        width: 50px;
       }
     }
   }
