@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -24,7 +25,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -57,7 +58,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
-  private final Store store;
+  private final RuntimeStore runtimeStore;
   private final CConfiguration cConf;
 
   @Inject
@@ -65,7 +66,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                               Store store, CConfiguration cConf) {
+                               RuntimeStore runtimeStore, CConfiguration cConf) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -74,7 +75,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.store = store;
+    this.runtimeStore = runtimeStore;
     this.cConf = cConf;
   }
 
@@ -103,7 +104,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
     WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                               txClient, store, cConf,
+                                               txClient, runtimeStore, cConf,
                                                pluginInstantiator);
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.

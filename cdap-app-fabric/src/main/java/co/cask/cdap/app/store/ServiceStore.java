@@ -51,7 +51,7 @@ public interface ServiceStore extends Service {
    * @param instanceId The instance Id to be restarted.
    */
   void setRestartInstanceRequest(String serviceName, long startTime, long endTime, boolean isSuccess,
-                                  int instanceId);
+                                 int instanceId);
 
   /**
    * Update the service instances restart request.

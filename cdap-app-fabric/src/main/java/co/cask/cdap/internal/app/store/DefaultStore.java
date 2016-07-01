@@ -48,6 +48,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -210,9 +211,9 @@ public class DefaultStore implements Store {
 
   @Override
   public void compareAndSetStatus(final Id.Program id, final String pid, final ProgramRunStatus expectedStatus,
-                                  final ProgramRunStatus updateStatus) {
+                                  final ProgramRunStatus newStatus) {
     Preconditions.checkArgument(expectedStatus != null, "Expected of program run should be defined");
-    Preconditions.checkArgument(updateStatus != null, "Updated state of program run should be defined");
+    Preconditions.checkArgument(newStatus != null, "New state of program run should be defined");
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override
       public Void apply(AppMetadataStore mds) throws Exception {
@@ -220,7 +221,7 @@ public class DefaultStore implements Store {
         if (target.getStatus() == expectedStatus) {
           long now = System.currentTimeMillis();
           long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-          switch (updateStatus) {
+          switch (newStatus) {
             case RUNNING:
               Map<String, String> runtimeArgs = GSON.fromJson(target.getProperties().get("runtimeArgs"),
                                                               STRING_MAP_TYPE);
@@ -240,9 +241,10 @@ public class DefaultStore implements Store {
             case COMPLETED:
             case KILLED:
             case FAILED:
-              Throwable failureCause = updateStatus == ProgramRunStatus.FAILED
-                ? new Throwable("Marking run record as failed since no running program found.") : null;
-              mds.recordProgramStop(id, pid, nowSecs, updateStatus, failureCause);
+              BasicThrowable failureCause = newStatus == ProgramRunStatus.FAILED
+                ? new BasicThrowable(new Throwable("Marking run record as failed since no running program found."))
+                : null;
+              mds.recordProgramStop(id, pid, nowSecs, newStatus, failureCause);
               break;
             default:
               break;
@@ -278,7 +280,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus,
-                      final Throwable failureCause) {
+                      final BasicThrowable failureCause) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override

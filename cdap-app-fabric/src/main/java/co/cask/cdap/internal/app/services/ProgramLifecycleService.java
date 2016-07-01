@@ -41,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
@@ -327,7 +328,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         public void error(Throwable cause) {
           LOG.info("Program stopped with error {}, {}", programId, runId, cause);
           store.setStop(programId.toId(), runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.ERROR.getRunStatus(), cause);
+                        ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
         }
       }, Threads.SAME_THREAD_EXECUTOR);
     }

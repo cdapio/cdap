@@ -32,7 +32,8 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.WorkflowNodeThrowable;
+import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.codec.BasicThrowableCodec;
 import co.cask.cdap.proto.codec.FlowSpecificationCodec;
 import co.cask.cdap.proto.codec.FlowletSpecificationCodec;
 import co.cask.cdap.proto.codec.MapReduceSpecificationCodec;
@@ -41,7 +42,6 @@ import co.cask.cdap.proto.codec.SparkSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkerSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowNodeCodec;
-import co.cask.cdap.proto.codec.WorkflowNodeThrowableCodec;
 import co.cask.cdap.proto.codec.WorkflowSpecificationCodec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -94,7 +94,7 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
       .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
       .registerTypeAdapter(WorkerSpecification.class, new WorkerSpecificationCodec())
-      .registerTypeAdapter(WorkflowNodeThrowable.class, new WorkflowNodeThrowableCodec())
+      .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 
