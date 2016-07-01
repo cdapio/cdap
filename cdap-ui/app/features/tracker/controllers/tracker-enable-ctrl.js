@@ -58,7 +58,7 @@ class TrackerEnableController{
         })[0].value;
 
         let numPartitions = res.filter( (c) => {
-          return c.name === 'kafka.num.partitions';
+          return c.name === 'kafka.server.num.partitions';
         })[0].value;
 
         let topic = res.filter( (c) => {
