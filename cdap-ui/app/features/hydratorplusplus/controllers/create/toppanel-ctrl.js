@@ -26,6 +26,11 @@ class HydratorPlusPlusTopPanelCtrl{
 
     this.canvasOperations = [
       {
+        name: 'Settings',
+        icon: 'fa-sliders',
+        fn: this.showSettings.bind(this)
+      },
+      {
         name: 'Export',
         icon: 'icon-export',
         fn: this.onExport.bind(this)
@@ -59,6 +64,7 @@ class HydratorPlusPlusTopPanelCtrl{
         name: this.HydratorPlusPlusConfigStore.getName(),
         description: this.HydratorPlusPlusConfigStore.getDescription()
       },
+      viewSettings: false,
       artifact: this.HydratorPlusPlusConfigStore.getArtifact()
     };
   }
@@ -150,6 +156,9 @@ class HydratorPlusPlusTopPanelCtrl{
   }
   onPublish() {
     this.HydratorPlusPlusConfigActions.publishPipeline();
+  }
+  showSettings() {
+    this.state.viewSettings = !this.state.viewSettings;
   }
 }
 

@@ -72,3 +72,11 @@
   </div>
 
 </div>
+<div class="pipeline-settings-backdrop"
+     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings"
+     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings = false"></div>
+<div class="pipeline-settings">
+  <div ng-include="'/assets/features/hydratorplusplus/templates/partial/settings.html'"
+       ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings && HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusTopPanelCtrl.state.artifact.name) !== -1">
+  </div>
+</div>
