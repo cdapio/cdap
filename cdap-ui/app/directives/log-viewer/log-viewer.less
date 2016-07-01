@@ -19,7 +19,9 @@
 
 @border-color: #cccccc;
 @headerbar-background-color: #525252;
-@headerbar-text-color: #d6d6d6;
+@headerbar-stat-color: #000000;
+@headerbar-stat-name-color: #ffffff;
+@headerbar-font-size: 12px;
 @table-background-color: white;
 @stack-trace-background-color: lighten(black, 35%);
 @stack-trace-font-color: #cccccc;
@@ -27,13 +29,14 @@
 @searchbar-placeholder-color: #787878;
 @searchbar-input-color: blue;
 @timeline-buffer-color: #a6a6a6;
+@error-color: #f65454;
+@warning-color: #f6b354;
 
 my-log-viewer {
   .log-viewer-container {
 
     .logs-headerbar {
       background-color: @headerbar-background-color;
-
       height: 50px;
       .flexbox();
       .flex-wrap(@wrap: wrap);
@@ -42,26 +45,29 @@ my-log-viewer {
 
       .log-stats-container {
         width: 40%;
-        color: white;
         background-color: @headerbar-background-color;
         margin: 0;
         div {
           display: inline-block;
-          font-weight: bold;
+          font-weight: normal;
+        }
+        .log-stats {
+          font-size: @headerbar-font-size;
         }
         .stat-name {
-          color: @headerbar-text-color;
+          color: @headerbar-stat-name-color;
           margin-left: 10px;
           margin-right: 4px;
         }
         .stat-count {
           min-width: 30px;
           border-radius: 8px;
-          color: black;
+          color: @headerbar-stat-color;
+          font-size: @headerbar-font-size;
         }
-        .total-num { background-color: #dfdfdf; }
-        .errors-num { background-color: #fa4347; }
-        .warnings-num { background-color: #f4b400; }
+        .total-num { background-color: @headerbar-stat-name-color; }
+        .errors-num { background-color: @error-color; }
+        .warnings-num { background-color: @warning-color; }
       }
 
       .log-actions {
@@ -131,56 +137,78 @@ my-log-viewer {
     .logs-table {
 
       th {
-        line-height: 30px;
+        line-height: 25px;
       }
 
       .expand-all-btn {
         width: 75px;
         height: 20px;
         line-height: 20px;
-        background-color: #5eb3fa;
+        background-color: #9cd0fc;
         border-radius: 5px;
         float: right;
-        color: white;
+        color: #ffffff;
         margin-top: 3px;
         margin-bottom: 3px;
         margin-right: 2px;
         font-weight: normal;
-        font-size: 85%;
+        font-size: 11px;
         cursor: pointer;
       }
 
+      td {
+        line-height: 12px;
+        height: 10px;
+        overflow: hidden;
+        font-size: 12px;
+      }
       .table {
         margin-top: 0;
         background-color: @table-background-color;
+        overflow: hidden;
+        font-size: 12px;
 
         th,
         th:hover,
         th:focus {
           cursor: default;
-          font-size: 13px;
-
           ul.dropdown-menu { width: 40px; }
 
           li {
             input { margin: 5px 5px 5px 8px; }
           }
         }
-
         td {
-          padding: 7px 7px 7px 10px;
-          font-size: 13px;
+          padding: 0 7px 0 10px;
+          height: 18px;
+          line-height: 18px;
         }
+        .table-text-content {
+          display: inline-block;
+          height: 20px;
+          padding-top: 3px;
+          overflow: hidden;
+        }
+        .table-text-content-message {
+          display: inline-block;
+          height: 20px;
+          width: calc(~'100% - 40px');
+          padding-top: 3px;
+          overflow: hidden;
+        }
+
       }
 
       .time { width: 15%; }
-      .level { width: 10%; }
+      .level { width: 25px; }
       .source { width: 28%; }
+      .log-header {
+        font-size: 14px;
+      }
 
       tbody {
         .message {
-          padding-left: 0;
-          padding-right: 0;
+          padding: 0;
         }
       }
 
@@ -189,9 +217,9 @@ my-log-viewer {
       .message {
         width: 50%;
         clear: both;
+        cursor: pointer;
 
         .message-main {
-          padding-left: 10px;
           padding-right: 10px;
         }
 
@@ -203,14 +231,36 @@ my-log-viewer {
         }
 
         .icon-column {
-          width: 20px;
-          float: left;
           cursor: pointer;
+          width: 23px;
+          height: 30px;
+          position: relative;
+          top: -8px;
+          display: inline-block;
+          background-color: #cccccc;
         }
 
-        .message-column { word-wrap: break-word; }
+        .icon-column .fa {
+          color: #7f7f7f;
+          position: relative;
+          left: 7px;
+          top: 6px;
+        }
+
+        .message-column {
+          word-wrap: break-word;
+          padding-left: 5px;
+        }
+
         .stack-trace {
+          position: relative;
+          padding-bottom: 20px;
+          bottom: 10px;
+          height: 100%;
+          background-color: @stack-trace-background-color;
           pre {
+            position: relative;
+            top: 8px;
             background-color: @stack-trace-background-color;
             color: @stack-trace-font-color;
             white-space: pre-wrap;
@@ -223,6 +273,8 @@ my-log-viewer {
 
         &.stack-trace-expanded {
           background-color: @message-expanded-color;
+          padding-top: 0;
+          padding-left: 0;
           padding-bottom: 0;
           .message-column { padding-bottom: 10px; }
         }

@@ -20,7 +20,7 @@
   <div class="logs-headerbar">
     <div class="log-stats-container">
       <div class="log-stats-total log-stats text-center">
-          <span class="stat-name log-stats-total-text">Total Messages</span>
+          <span class="stat-name">Total Messages</span>
           <div class="stat-count total-num">
             <span class="stat-count-number">{{LogViewer.totalCount}}</span></div>
       </div>
@@ -57,12 +57,12 @@
   <div class="logs-table">
     <table class="table table-bordered">
       <thead>
-        <th class="time"
+        <th class="time log-header"
             ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.time">
           Time
         </th>
 
-        <th class="level"
+        <th class="level log-header"
             ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.level">
           <span uib-dropdown>
             <span uib-dropdown-toggle>Level <span class="fa fa-caret-down"></span></span>
@@ -74,19 +74,19 @@
           </span>
         </th>
 
-        <th class="source"
+        <th class="source log-header"
             ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.source">
           Source
         </th>
 
-        <th class="message"
+        <th class="message-header"
             ng-if="LogViewer.configOptions.message"
             ng-class="{'expanded': LogViewer.isMessageExpanded }">
           <span class="fa"
                 ng-class="{ 'fa-arrow-left': !LogViewer.isMessageExpanded,
                   'fa-arrow-right': LogViewer.isMessageExpanded}"
                 ng-click="LogViewer.isMessageExpanded = !LogViewer.isMessageExpanded"></span>
-          <span>Message</span>
+          <span class="log-header">Message</span>
           <div class="expand-all-btn text-center">Expand All</div>
         </th>
       </thead>
@@ -96,37 +96,38 @@
           <!-- TIME -->
           <td class="time"
               ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.time">
-            <span>{{ ::log.time }}</span>
+            <div class="table-text-content">{{ ::log.time }}</div>
           </td>
 
           <!-- LEVEL -->
           <td class="level"
               ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.level">
-            <span>{{ ::log.level }}</span>
+            <div class="table-text-content">{{ ::log.level }}</div>
           </td>
 
           <!-- SOURCE -->
           <td class="source"
               ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.source">
-            <span>{{ ::log.source }}</span>
+            <div class="table-text-content">{{ ::log.source }}</div>
           </td>
 
           <!-- MESSAGE -->
           <td class="message"
+              ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded"
               ng-if="LogViewer.configOptions.message"
               ng-class="{'stack-trace-expanded': log.isStackTraceExpanded,
                 'stack-trace-available': log.message.stackTrace }">
-            <div class="message-main">
-              <div class="icon-column"
-                   ng-if="log.message.stackTrace"
-                   ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded">
-                <span class="fa"
-                      ng-class="{'fa-plus': !log.isStackTraceExpanded,
-                        'fa-minus': log.isStackTraceExpanded }">
-                </span>
-              </div>
+            <div class="icon-column"
+                 ng-show="log.isStackTraceExpanded"
+                 ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded">
+              <span class="fa"
+                    ng-class="{'fa-minus': log.isStackTraceExpanded }"
+                    ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded">
+              </span>
+            </div>                
+            <div class="table-text-content-message message-main">
               <div class="message-column">
-                {{ ::log.message.content }}
+                &nbsp;&nbsp;{{ ::log.message.content }}
               </div>
             </div>
 
