@@ -21,7 +21,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
@@ -46,13 +45,12 @@ import com.google.inject.name.Named;
 public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final PipelineFactory pipelineFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
-  private final CConfiguration configuration;
+  private final CConfiguration cConf;
   private final Store store;
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
-  private final MetadataStore metadataStore;
   private final AuthorizerInstantiator authorizerInstantiator;
 
   @Inject
@@ -61,8 +59,8 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
                             Store store, DatasetFramework datasetFramework,
                             @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                             UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                            MetadataStore metadataStore, AuthorizerInstantiator authorizerInstantiator) {
-    this.configuration = configuration;
+                            AuthorizerInstantiator authorizerInstantiator) {
+    this.cConf = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -70,19 +68,18 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
-    this.metadataStore = metadataStore;
     this.authorizerInstantiator = authorizerInstantiator;
   }
 
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository));
+    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework));
-    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework,
+    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework,
                                                    inMemoryDatasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
-    pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory,
+    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework));
+    pipeline.addLast(new ProgramGenerationStage(cConf, namespacedLocationFactory,
                                                 authorizerInstantiator.get()));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     return pipeline.execute(input);

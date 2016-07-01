@@ -19,6 +19,8 @@ package co.cask.cdap.proto.id;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -44,7 +46,7 @@ public class PreviewId extends EntityId implements NamespacedId, ParentedId<Name
 
   @Override
   protected Iterable<String> toIdParts() {
-    return null;
+    return Collections.unmodifiableList(Arrays.asList(namespace, preview));
   }
 
   @Override

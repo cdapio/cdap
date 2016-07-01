@@ -22,6 +22,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -56,19 +57,19 @@ public class NoopScheduler implements Scheduler {
   @Override
   public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program,
                                                          SchedulableProgramType programType) throws SchedulerException {
-    return null;
+    return new ArrayList<>();
   }
 
   @Override
   public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program,
                                                      SchedulableProgramType programType) throws SchedulerException {
-    return null;
+    return new ArrayList<>();
   }
 
   @Override
   public List<String> getScheduleIds(Id.Program program,
                                      SchedulableProgramType programType) throws SchedulerException {
-    return null;
+    return new ArrayList<>();
   }
 
   @Override

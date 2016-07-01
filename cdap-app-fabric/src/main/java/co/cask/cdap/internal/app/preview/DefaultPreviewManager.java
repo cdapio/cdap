@@ -32,6 +32,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -41,6 +42,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Threads;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -69,15 +71,15 @@ public class DefaultPreviewManager implements PreviewManager {
     final PreviewId previewId = new PreviewId(namespaceId.getNamespace(), RunIds.generate().getId());
     AppRequest<?> appRequest = GSON.fromJson(config, AppRequest.class);
     ArtifactSummary artifactSummary = appRequest.getArtifact();
-    Id.Namespace artifactNamespace =
-      ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ? Id.Namespace.SYSTEM : namespaceId.toId();
-    Id.Artifact artifactId =
-      Id.Artifact.from(artifactNamespace, artifactSummary.getName(), artifactSummary.getVersion());
+    NamespaceId artifactNamespace =
+       ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ? NamespaceId.SYSTEM : namespaceId;
+    ArtifactId artifactId =
+      new ArtifactId(artifactNamespace.getNamespace(), artifactSummary.getName(), artifactSummary.getVersion());
 
     // if we don't null check, it gets serialized to "null"
     String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
     try {
-      applicationLifecycleService.deployApp(namespaceId.toId(), previewId.getPreview(), artifactId, configString,
+      applicationLifecycleService.deployApp(namespaceId.toId(), previewId.getPreview(), artifactId.toId(), configString,
                                             new ProgramTerminator() {
                                               @Override
                                               public void stop(Id.Program programId) throws Exception {
@@ -128,21 +130,21 @@ public class DefaultPreviewManager implements PreviewManager {
 
   @Override
   public Map<String, Map<String, List<Object>>> getData(PreviewId previewId) {
-    return null;
+    return new HashMap<>();
   }
 
   @Override
   public Map<String, List<Object>> getData(PreviewId previewId, String stageName) {
-    return null;
+    return new HashMap<>();
   }
 
   @Override
   public Collection<MetricTimeSeries> getMetrics(PreviewId previewId) {
-    return null;
+    return new ArrayList<>();
   }
 
   @Override
   public List<LogEntry> getLogs(PreviewId previewId) {
-    return null;
+    return new ArrayList<>();
   }
 }
