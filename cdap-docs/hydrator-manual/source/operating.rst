@@ -10,14 +10,16 @@ Operating Hydrator
 
 Metrics
 =======
-
+*[To Be Completed]*
 
 Logs
 ====
+*[To Be Completed]*
 
 
 Scheduling
 ==========
+*[To Be Completed]*
 
 
 Runtime Arguments and Macro Substitution
@@ -27,10 +29,12 @@ Runtime Arguments and Macro Substitution
 
 Configuring Pre- and Post-Actions 
 =================================
+*[To Be Completed]*
 
 
 Running in MapReduce versus Spark
 =================================
+*[To Be Completed]*
 
 
 Configuring Resources

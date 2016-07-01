@@ -10,18 +10,27 @@ Creating and Running Pipelines
 
 Creating a Pipeline
 ===================
- 
+*[To Be Completed]*
+
+
+
 Creating a logical pipeline 
 ----------------------------
+*[To Be Completed]*
+
 
     - Structured Records
     - Input and Output schemas
     
 Data Flow 
 ----------
+*[To Be Completed]*
+
 
 Configuring Plugins 
 ====================
+*[To Be Completed]*
+
 
   - Plugin Properties
   - Reference 
@@ -29,6 +38,8 @@ Configuring Plugins
 
 Publishing a Pipeline
 =====================
+*[To Be Completed]*
+
 Pipelines can be published two different ways:
 
 - Using the Cask Hydrator UI
@@ -37,6 +48,8 @@ Pipelines can be published two different ways:
 
 Running a Pipeline
 ==================
+*[To Be Completed]*
+
 Once a pipeline has been published, it can be run either by:
 
 - Using the Cask Hydrator UI

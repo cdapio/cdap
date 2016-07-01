@@ -242,6 +242,8 @@ creating a new pipeline in Hydrator Studio:
 
 Creating Plugin Templates
 =========================
+*[To Be Completed]*
+
 
 
 Pre-configured Pipelines
@@ -281,14 +283,20 @@ as the starting point for either your own pipeline or your own pipeline template
 
 Version Management
 ==================
+*[To Be Completed]*
+
 
 
 Importing Pipelines
 ===================
+*[To Be Completed]*
+
 
 
 Plugin Drafts
 =============
+*[To Be Completed]*
+
 *[Is this "Pipeline Drafts"?]*
 
 

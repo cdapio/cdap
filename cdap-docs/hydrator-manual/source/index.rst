@@ -19,27 +19,32 @@ to enable the building, deploying, and managing of data pipelines.
 .. |introduction| replace:: **Introduction to Hydrator:**
 .. _introduction: introduction.html
 
-- |introduction|_ Lorem ipsum dolor sit amet, consectetur adipiscing elit
+- |introduction|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
 
 .. |pipelines| replace:: **Creating and Running Pipelines:**
 .. _pipelines: pipelines.html
 
-- |pipelines|_ Lorem ipsum dolor sit amet, consectetur adipiscing elit
+- |pipelines|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
 
 .. |plugins| replace:: **Hydrator Plugins:**
 .. _plugins: plugins/index.html
 
-- |plugins|_ Lorem ipsum dolor sit amet, consectetur adipiscing elit
+- |plugins|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
 
 .. |operating| replace:: **Operating Hydrator:**
 .. _operating: operating.html
 
-- |operating|_ Lorem ipsum dolor sit amet, consectetur adipiscing elit
+- |operating|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
 
 .. |advanced| replace:: **Advanced Topics:**
 .. _advanced: advanced.html
 
-- |advanced|_ Lorem ipsum dolor sit amet, consectetur adipiscing elit
+- |advanced|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
+
+.. |faqs| replace:: **FAQs:**
+.. _faqs: faqs.html
+
+- |faqs|_ FAQs relevant to Cask Hydrator and pipelines
 
 .. |glossary| replace:: **Glossary:**
 .. _glossary: glossary.html
