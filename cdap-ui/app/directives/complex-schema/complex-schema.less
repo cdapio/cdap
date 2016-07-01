@@ -14,11 +14,15 @@
  * the License.
  */
 
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
 @type-column-width: 80px;
 @fields-right-offset: 70px;
 
 my-complex-schema {
   .complex-schema-container {
+    background-color: white;
+
     [class*="col-"] {
       padding-right: 0;
     }
@@ -30,19 +34,20 @@ my-complex-schema {
 
     .input-column {
       float: left;
-      width: ~"-moz-calc(100% - 80px - 70px)";
-      width: ~"-webkit-calc(100% - 80px - 70px)";
-      width: ~"calc(100% - 80px - 70px)";
+      width: ~"-moz-calc(100% - 90px - 80px)";
+      width: ~"-webkit-calc(100% - 90px - 80px)";
+      width: ~"calc(100% - 80px - 90px)";
 
       &.no-type {
-        width: ~"-moz-calc(100% - 70px)";
-        width: ~"-webkit-calc(100% - 70px)";
-        width: ~"calc(100% - 70px)";
+        width: ~"-moz-calc(100% - 90px)";
+        width: ~"-webkit-calc(100% - 90px)";
+        width: ~"calc(100% - 90px)";
       }
     }
 
     .map-fields {
       width: @type-column-width;
+      line-height: 32px;
     }
 
     .fields-actions {
@@ -55,12 +60,22 @@ my-complex-schema {
 
       .checkbox {
         width: 35px;
-        &.no-trash { margin-right: 15px; }
+        margin-top: 7px;
+        &.no-trash { margin-right: 25px; }
       }
 
       .actions-buttons {
-        width: 50px;
+        margin-top: -2px;
+        width: 60px;
+        padding-right: 10px;
       }
+    }
+  }
+
+  my-embedded-schema-selector {
+    > div > [class*="col-"] {
+      background-color: white;
+      box-shadow: 0 -3px 5px 0 rgba(1, 0, 0, 0.25);
     }
   }
 }
