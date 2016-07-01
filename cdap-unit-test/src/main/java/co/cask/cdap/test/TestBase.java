@@ -70,6 +70,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -230,6 +231,7 @@ public class TestBase {
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
+      new LogReaderRuntimeModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),

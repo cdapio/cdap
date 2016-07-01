@@ -18,6 +18,9 @@ package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.logging.save.KafkaLogProcessor;
+import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
+import co.cask.cdap.logging.save.LogMetricsPlugin;
 import co.cask.cdap.logging.save.LogSaverFactory;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.http.HttpHandler;
@@ -34,6 +37,11 @@ public class LogSaverServiceModule extends PrivateModule {
 
   @Override
   protected void configure() {
+    Multibinder<KafkaLogProcessor> logProcessorBinder = Multibinder.newSetBinder
+      (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
+    logProcessorBinder.addBinding().to(KafkaLogWriterPlugin.class);
+    logProcessorBinder.addBinding().to(LogMetricsPlugin.class);
+
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
       (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER));
     CommonHandlers.add(handlerBinder);

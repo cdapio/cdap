@@ -16,10 +16,18 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -29,7 +37,14 @@ public class MasterServiceMainTest {
 
   @Test
   public void testInjector() {
-    new MasterServiceMain();
+    Injector baseInjector = MasterServiceMain.createProcessInjector(CConfiguration.create(), new Configuration());
+    Injector injector = MasterServiceMain.createLeaderInjector(baseInjector.getInstance(CConfiguration.class),
+                                                               baseInjector.getInstance(Configuration.class),
+                                                               baseInjector.getInstance(ZKClientService.class));
+
+    Assert.assertNotNull(injector.getInstance(AuthorizerInstantiator.class));
+    Assert.assertNotNull(injector.getInstance(DatasetService.class));
+    Assert.assertNotNull(injector.getInstance(AppFabricServer.class));
   }
 
   @Test
