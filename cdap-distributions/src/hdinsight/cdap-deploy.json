@@ -54,13 +54,18 @@
                 }]
             },
             "installScriptActions": [{
+                "name": "[concat('cdap-configure-pageblob-v0','-' ,uniquestring(variables('applicationName')))]",
+                "uri": "https://raw.githubusercontent.com/caskdata/cdap/feature/hdinsight-v2/cdap-distributions/src/hdinsight/pageblob.sh",
+                "roles": ["edgenode"]
+            },
+            {
                 "name": "[concat('cdap-install-v0','-' ,uniquestring(variables('applicationName')))]",
                 "uri": "https://raw.githubusercontent.com/caskdata/cdap/feature/hdinsight-v2/cdap-distributions/src/hdinsight/install.sh",
                 "roles": ["edgenode"]
             }],
             "uninstallScriptActions": [],
             "httpsEndpoints": [{
-              "subDomainSuffix": "ui",
+              "subDomainSuffix": "gui",
               "destinationPort": 9999,
               "accessModes": ["webpage"]
             },
