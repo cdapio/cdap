@@ -53,9 +53,6 @@ export LOCAL_DIR=${LOCAL_DIR:-/var/tmp/cdap}
 # The directory serving as the java.io.tmpdir directory for master
 export TEMP_DIR=${TEMP_DIR:-/tmp}
 
-# Specifies the JAVA_HEAPMAX
-export JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx128m}
-
 # The options below can be set in the sourced component-specific conf/[component]-env.sh scripts
 
 # Main class to be invoked.
