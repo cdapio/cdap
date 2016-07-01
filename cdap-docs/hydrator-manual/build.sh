@@ -68,8 +68,12 @@ function download_md_file() {
       plugin_category="realtime"
       plugin_type="${type:8}"
     elif [[ "x${type}" == "xpostaction" ]]; then
-      plugin_category=''
-      plugin_type="${type}"
+      plugin_category='pre-post'
+      plugin_type="post-action"
+      local target_dir="${plugin_type}s"
+    elif [[ "x${type}" == "xpreaction" ]]; then
+      plugin_category='pre-post'
+      plugin_type="pre-action"
       local target_dir="${plugin_type}s"
     else
       # assume type transform; to be copied to both batch and realtime

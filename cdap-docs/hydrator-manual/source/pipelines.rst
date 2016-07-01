@@ -25,7 +25,8 @@ Configuring Plugins
 
   - Plugin Properties
   - Reference 
-  
+
+
 Publishing a Pipeline
 =====================
 Pipelines can be published two different ways:

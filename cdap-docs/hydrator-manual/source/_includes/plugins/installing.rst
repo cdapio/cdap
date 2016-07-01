@@ -8,21 +8,22 @@
 Installing Plugins
 ==================
 
-To **package and deploy your plugin,** follow these instructions on:
+To **package, present,** and **deploy** your plugin, see these instructions:
 
-- `Plugin packaging <#plugin-packaging>`__
-- `Deployment <#deploying-a-system-artifact>`__
-- `Verification <#deployment-verification>`__
+- `Plugin Packaging: <#plugin-packaging>`__ packaging in a JAR
+- `Plugin Presentation: <#plugin-presentation>`__ controlling how your plugin appears in the Hydrator Studio
+- `Plugin Deployment: <#deploying-a-system-artifact>`__ deploying as either a system or user *artifact*
+- `Deployment Verification: <#deployment-verification>`__ verifying an artifact was added successfully
 
-To **control how your plugin appears** in the CDAP UI, include an appropriate :ref:`plugin
-widget JSON file <cask-hydrator-creating-custom-plugins-widget-json>`.
+..   - UI
+..   - REST
+..   - CLI 
 
-
-Plugin Deployment
------------------
+.. Plugin Packaging
+.. ----------------
 
 .. include:: /../../developers-manual/source/building-blocks/plugins.rst
-   :start-after: .. _plugins-deployment-artifact:
+   :start-after: .. _plugins-deployment-packaging:
    :end-before:  .. _plugins-deployment-system:
    
 By using one of the ``etl-plugin`` Maven archetypes, your project will be set up to generate
@@ -36,23 +37,21 @@ classes inside the plugin JAR that you have added to the Hadoop Job configuratio
 of those classes to the "Export-Package" as well. This is to ensure those classes are
 visible to the Hadoop MapReduce framework during the plugin execution. Otherwise, the
 execution will typically fail with a ``ClassNotFoundException``.
-   
-.. include:: /../../developers-manual/source/building-blocks/plugins.rst
-   :start-after: .. _plugins-deployment-system:
-   :end-before:  .. _plugins-use-case:
-   
+
+Plugin Presentation
+-------------------
+When a plugin is displayed in the CDAP UI, its properties are represented by widgets in
+the Cask Hydrator Studio. Each property of a plugin is represented, by default, as a
+textbox in the user interface. By including an appropriate plugin widget JSON file, you
+can customize that presentation.
 
 .. _cask-hydrator-creating-custom-plugins-widget-json:
 
 Plugin Widget JSON
--------------------------
-When a plugin is displayed in the CDAP UI, its properties are represented
-by widgets in the :ref:`Cask Hydrator <cdap-apps-cask-hydrator>`. Each property of a
-plugin is represented, by default, as a textbox in the user interface.
-
-To customize the plugin display, a plugin can include a widget JSON file that
-specifies the particular widgets and sets of widget attributes used to display the plugin
-properties in the CDAP UI.
+------------------
+To customize the plugin display, a plugin can include a widget JSON file that specifies
+the particular widgets and sets of widget attributes used to display the plugin properties
+in the CDAP UI.
 
 The widget JSON is composed of two lists:
 
@@ -196,71 +195,70 @@ Cask Hydrator as of version |version|:
      - | ``default``: default value for the widget
        | ``min``: minimum value for the number box
        | ``max``: maximum value for the number box
-     - string
+     - ``string``
    * - ``passwordbox``
      - Default HTML password entry box
      - No attributes
-     - string
-   * - csv
+     - ``string``
+   * - ``csv``
      - Comma-separated values; each value is entered in a separate box
      - No attributes
-     - comma-separated string
-   * - dsv
+     - Comma-separated ``string``
+   * - ``dsv``
      - Delimiter-separated values; each value is entered in a separate box
      - ``delimiter``: delimiter used to separate the values
-     - delimiter-separated string
+     - Delimiter-separated ``string``
    * - ``json-editor``
      - JSON editor that pretty-prints and auto-formats JSON while it is being entered
      - ``default``: default serialized JSON value for the widget
-     - string
+     - ``string``
    * - ``javascript-editor``, ``python-editor``
      - An editor to write JavaScript (``javascript-editor``) or Python (``python-editor``)
        code as a value for a property
-     - ``default``: default string value for the widget
-     - string
+     - ``default``: default ``string`` value for the widget
+     - ``string``
    * - ``keyvalue``
      - A key-value editor for constructing maps of key-value pairs
      - | ``delimiter``: delimiter for the key-value pairs
        | ``kv-delimiter``: delimiter between key and value
-     - string
+     - ``string``
    * - ``keyvalue-dropdown``
      - Similar to *keyvalue* widget, but with a drop-down value list
      - | ``delimiter``: delimiter for the key-value pairs
        | ``kv-delimiter``: delimiter between key and value
        | ``dropdownOptions``: list of drop-down options to display
-     - string
+     - ``string``
    * - ``select``
      - An HTML drop-down with a list of values; allows one choice from the list
      - | ``values``: list of values for the drop-down
        | ``default``: default value from the list
-     - string
+     - ``string``
    * - ``dataset-selector``, ``stream-selector``
      - A type-ahead textbox with a list of datasets (``dataset-selector``) or streams
        (``stream-selector``) from the CDAP instance
      - No attributes
-     - string
+     - ``string``
    * - ``schema``
      - A four-column, editable table to represent a schema of a plugin
      - | ``schema-types``: list of schema types for each field from which the user can chose when setting the schema
        | ``schema-default-type``: default type for each newly-added field in the schema
-     - string
+     - ``string``
    * - ``non-editable-schema-editor``
      - A non-editable widget for displaying a schema
      - ``schema``: schema that will be used as the output schema for the plugin
-     - string
+     - ``string``
    * - ``ds-multiplevalues``
      - A delimiter-separated values widget that allows specifying lists of values separated by delimiters
      - | ``numValues``: number of values (number of delimiter-separated values)
        | ``values-delimiter``: the delimiter between each value
        | ``delimiter``: the delimiter between each *set* of values
        | ``placeholders``: array of placeholders for each value's textbox
-     - string
+     - ``string``
 
 .. _cask-hydrator-creating-custom-plugins-custom-plugin-function:
 
-Plugin Function
-...............
-
+Plugin Functions
+................
 Plugin functions are methods exposed by a particular plugin that can be used to fetch output schema for a plugin.
 These are the fields that need  to be configured to use the plugin functions in the CDAP UI:
 
@@ -364,7 +362,7 @@ Widget types for output properties are limited to ensure that the schema that is
 different plugins in the CDAP UI is consistent.
 
 Example Widget JSON
-..........................
+...................
 Based on the above definitions, we could write the complete widget JSON for our *Batch Source* plugin
 (with the properties of *name*, *basePath*, *duration*, *delay*, and an output *schema*) as::
 
@@ -427,3 +425,13 @@ Based on the above definitions, we could write the complete widget JSON for our 
       }
     ]
   }
+
+Plugin Deployment
+-----------------
+.. include:: /../../developers-manual/source/building-blocks/plugins.rst
+   :start-after: .. _plugins-deployment-artifact:
+   :end-before:  .. _plugins-deployment-packaging:
+   
+.. include:: /../../developers-manual/source/building-blocks/plugins.rst
+   :start-after: .. _plugins-deployment-system:
+   :end-before:  .. _plugins-use-case:

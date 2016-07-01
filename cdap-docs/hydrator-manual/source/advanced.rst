@@ -19,29 +19,32 @@ outside of CDAP, and all pipelines run within a Hadoop cluster.
 
 Architecture
 ------------
-Hydrator allows users to build complex data pipelines, either simple ETL or more
-complicated Data Pipelines on Hadoop. Data pipelines—unlike the linear ETL pipelines—are
-often not linear in nature and require the performing of more complex transformations
-including forks and joins at the record and feed level. They can be configured to perform
-various functions at different times, including machine-learning algorithms and custom
-processing. Pipelines need to support the creation of complex processing workloads that
-are repeatable, high-available and easily maintainable.
+Hydrator allows users to build complex data pipelines, either simple ETL
+(extract-transform-load) or more complicated Data Pipelines on Hadoop. 
+
+Data pipelines |---| unlike the linear ETL pipelines |---| are often not linear in nature
+and require the performing of more complex transformations including forks and joins at
+the record and feed level. They can be configured to perform various functions at
+different times, including machine-learning algorithms and custom processing.
+
+Pipelines need to support the creation of complex processing workloads that are
+repeatable, high-available and easily maintainable.
 
 Logical versus Physical Pipelines
 ---------------------------------
 
 .. figure:: _images/logical-physical-pipelines.png
-   :figwidth: 100%
+   :figwidth: 50%
    :width: 3in
-   :align: center
+   :align: right
    :class: bordered-image-top-margin
 
-   **Logical and Physical Pipelines,** converted by the Planner
+   **Logical** and **Physical** Pipelines, converted by a **Planner**
 
-Within CDAP, there is the concept of logical and physical pipelines, converted by a
+Within CDAP, there is the concept of *logical* and *physical* pipelines, converted by a
 planner, and then run in an execution environment.
 
-A logical pipeline is the view of the pipeline as seen in the Cask Hydrator Studio and the
+**A logical pipeline** is the view of the pipeline as seen in the Cask Hydrator Studio and the
 Cask Hydrator UI. It is the view composed of sources, sinks, and other plugins, and does
 not show the underlying technology used to actually manifest and run the pipeline.
 
@@ -50,7 +53,7 @@ than the physical runtime. It’s closer to the inherent nature of processing as
 user. This view isolates it from the volatile physical pipeline, which can be operated in
 different runtime environments.
 
-A physical pipeline is the manifestation of a logical pipeline as a CDAP application,
+**A physical pipeline** is the manifestation of a logical pipeline as a CDAP application,
 which is a collection of programs and services that read and write through the data
 abstraction layer in CDAP. Physical view elements are those elements that actually run
 during the execution of a data pipeline on a Hadoop cluster. They execute the MapReduce
@@ -58,13 +61,13 @@ Programs, Spark, Spark Streaming, Tigon, Workflows, and so on. The physical pipe
 is based on the particular underlying technologies used and, as such, can be changed
 dynamically.
 
-A planner is responsible for converting the logical pipeline to a physical pipeline. The
+**A planner** is responsible for converting the logical pipeline to a physical pipeline. The
 planner analyzes the logical view of the pipeline and converts it to a physical execution
 plan, performing optimizations, and bundling functions into one or more jobs.
 
 Execution Environment
 ---------------------
-The execution environment is the actual runtime environment where all the components of
+**The execution environment** is the actual runtime environment where all the components of
 the data pipeline are executed on the Hadoop cluster by CDAP. MapReduce, Spark, Spark
 Streaming, Tigon are part of this environment that allows the execution of the data
 pipeline. The planner maps the logical pipeline to physical pipeline using the environment
@@ -84,14 +87,14 @@ These are the different functional components that are utilized within Hydrator:
 
 Application
 ...........
-An application is a standardized container framework for defining all services. It is
+**An application** is a standardized container framework for defining all services. It is
 responsible for managing the lifecycle of programs and datasets within an application.
 Each Hydrator pipeline is converted into a CDAP application, and deployed and managed
 independently.
 
 Application Template
 ....................
-An application template is a user-defined, reusable, reconfigurable pattern of an
+**An application template** is a user-defined, reusable, reconfigurable pattern of an
 application. It is parameterized by a configuration that can be reconfigured upon
 deployment. It provides a generic version of an application which can be repurposed,
 instead of requiring the ongoing creation of specialized applications. The
@@ -117,7 +120,7 @@ an executable pipeline. An application template consists of:
 
 Plugin
 ......
-A plugin is a customizable module, exposed and used by an application template. It
+**A plugin** is a customizable module, exposed and used by an application template. It
 simplifies adding new features or extending the capability of an application. Plugin
 implementations are based on interfaces exposed by the application templates. Current
 Hydrator application templates expose Source, Transform, and Sink interfaces, which have
@@ -126,13 +129,13 @@ Compute, Arbitrary MR, and  Spark in addition to those mentioned above.
 
 Artifact
 ........
-An artifact is a versioned packaging format used to aggregate applications, datasets, and
+**An artifact** is a versioned packaging format used to aggregate applications, datasets, and
 plugins along with associated metadata. It is a JAR (Java Archive) containing Java classes
 and resources.
 
 Cask Hydrator Studio
 ....................
-Cask Hydrator Studio is a visual development environment for building data pipelines on
+**Cask Hydrator Studio** is a visual development environment for building data pipelines on
 Hadoop. It has a drag-and-drop interface for building and configuring data pipelines. It
 also supports the ability to develop, run, automate, and operate pipelines from within
 Hydrator UI. The Hydrator interface integrates with the CDAP interface, allowing
@@ -140,8 +143,8 @@ drill-down debugging of pipelines and can build metrics dashboard to closely mon
 pipelines through CDAP. Hydrator Studio integrates with other extensions such as Cask
 Tracker.
 
-Testing [Automation] Framework
-..............................
+Testing and Automation Framework
+................................
 An end-to-end JUnit (Java) framework is available in CDAP that allows developers to test
 their application templates and plugins during development. It’s built as a modular
 framework that allows for the testing of individual components. It runs in-memory in CDAP,
@@ -158,9 +161,9 @@ Cask Hydrator is built as a CDAP extension, with three major components:
 - **Plugins,** extensions to the application templates, in a variety of different types
   and implementations
 
-The Hydrator Studio interfaces with CDAP using RESTful APIs.
+The **Hydrator Studio** interfaces with CDAP using RESTful APIs.
 
-The application templates ETL Batch, Data Pipeline Batch, and ETL Real-time are available
+The **application templates** ETL Batch, Data Pipeline Batch, and ETL Real-time are available
 by default from within Hydrator. Additional application templates, such as Data Pipeline
 Real-time and Spark Streaming, are being added in upcoming releases.
 
@@ -168,7 +171,7 @@ The ETL Batch and ETL Realtime application templates expose three plugin types: 
 transform, and sink. The Data Pipeline Batch application template exposes three additional
 plugin types: aggregate, compute, and model.
 
-There are many different plugins that implement each of these types available
+There are many **different plugins** that implement each of these types available
 "out-of-the-box" in CDAP and Cask Hydrator. New plugins can be implemented using the
 public APIs exposed by the application templates. When an application template or a plugin
 is deployed within CDAP, it is referred to as an artifact. CDAP provides capabilities to
@@ -249,31 +252,31 @@ as the starting point for either your own pipeline or your own pipeline template
 
 *[These names & descriptions can be extracted from cdap/cdap-ui/templates/apps/predefined/config.json]*
 
-- ETL Batch
+- **ETL Batch**
 
-  - Stream to HBase: Periodically ingest from a stream into an HBase table
+  - **Stream to HBase:** Periodically ingest from a stream into an HBase table
   
-- ETL Real-time
+- **ETL Real-time**
 
-  - Kafka to HBase: Ingests in real time from Kafka into an HBase table
+  - **Kafka to HBase:** Ingests in real time from Kafka into an HBase table
   
-  - Kafka to Stream: Ingests in real time from Kafka into a stream
+  - **Kafka to Stream:** Ingests in real time from Kafka into a stream
   
-  - Kafka to OLAP Cube: Generate an OLAP Cube in real time from Kafka
+  - **Kafka to OLAP Cube:** Generate an OLAP Cube in real time from Kafka
   
-  - Twitter to HBase: Ingest real-time Twitter Stream into an HBase table
+  - **Twitter to HBase:** Ingest real-time Twitter Stream into an HBase table
   
-  - Twitter to Stream: Ingest real-time Twitter Stream into a stream
+  - **Twitter to Stream:** Ingest real-time Twitter Stream into a stream
   
-  - Amazon SQS to HBase: Real-time updates from Amazon Simple Queue Service into an HBase table
+  - **Amazon SQS to HBase:** Real-time updates from Amazon Simple Queue Service into an HBase table
   
-- Data Pipeline
+- **Data Pipeline**
 
-  - Model Trainer: Train model using Naive Bayes classifier
+  - **Model Trainer:** Train model using Naive Bayes classifier
   
-  - Event Classifier: Classify events into spam or non-spam using a Naive Bayes model
+  - **Event Classifier:** Classify events into spam or non-spam using a Naive Bayes model
   
-  - Log Data Aggregator: Aggregate log data by grouping IP and HTTP Status
+  - **Log Data Aggregator:** Aggregate log data by grouping IP and HTTP Status
 
 
 Version Management

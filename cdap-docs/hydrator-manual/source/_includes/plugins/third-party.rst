@@ -10,7 +10,7 @@ Adding Third-Party Plugins
 
 .. highlight:: json  
 
-**Prebuilt JARs:** In a case where you'd like to use prebuilt third-party JARs (such as a
+**Prebuilt JARs:** In a case where you'd like to use pre-built third-party JARs (such as a
 JDBC driver) as a plugin, you will need to create a JSON file to describe the JAR.
 
 For information on the format of the JSON, please refer to the sections on

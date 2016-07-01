@@ -15,4 +15,4 @@ Cask Hydrator Table of Contents
     Hydrator Plugins <plugins/index>
     Operating Hydrator <operating>
     Advanced Topics <advanced>
-    
+    Glossary <glossary>

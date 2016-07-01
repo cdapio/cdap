@@ -13,13 +13,8 @@ Cask Hydrator
 
 Overview
 ========
-Blurb (one paragraph) describing what Hydrator is.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-est laborum.
+Cask Hydrator is an extension of CDAP that combines a user interface with back-end services
+to enable the building, deploying, and managing of data pipelines.
 
 .. |introduction| replace:: **Introduction to Hydrator:**
 .. _introduction: introduction.html
@@ -46,11 +41,16 @@ est laborum.
 
 - |advanced|_ Lorem ipsum dolor sit amet, consectetur adipiscing elit
 
+.. |glossary| replace:: **Glossary:**
+.. _glossary: glossary.html
+
+- |glossary|_ Terms particular to Cask Hydrator and pipelines
+
 
 Hydrator Quick Start
 ====================
 
-A quick introduction demonstrating the use of Cask Hydrator.
+A quick introduction demonstrating how to use Cask Hydrator.
 
 
 ..  youtube::  ezTzYIS88YU
