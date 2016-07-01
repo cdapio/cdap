@@ -29,7 +29,7 @@ Installation and configuration instructions for either **specific distributions*
 
 - :ref:`Installation using Apache Ambari <admin-installation-ambari>`
 
-  - Enabling perimeter security, Kerberos, and CDAP high
+  - Enabling perimeter security and CDAP high
     availability are currently not available for Ambari
 
 ..
