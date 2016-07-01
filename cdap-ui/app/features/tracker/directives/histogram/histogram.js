@@ -42,7 +42,7 @@ angular.module(PKG.name + '.feature.tracker')
 
         let x = d3.time.scale()
           .range([
-            (width * 0.2 / data.length / 2) + (width / data.length),
+            ((width * 0.2) / (data.length / 2)) + (width / data.length),
             width - (width / data.length / 2)
           ]);
 
@@ -107,7 +107,7 @@ angular.module(PKG.name + '.feature.tracker')
             .data(data)
           .enter().append('rect')
             .attr('class', 'bar')
-            .attr('x', (d) => { return x(d.time) - (width / data.length); })
+            .attr('x', d => x(d.time) - (width / data.length))
             .attr('y', (d) => { return y(d.count); })
             .attr('width', width / data.length - (width * 0.2 / data.length ))
             .attr('height', (d) => { return height - y(d.count); })

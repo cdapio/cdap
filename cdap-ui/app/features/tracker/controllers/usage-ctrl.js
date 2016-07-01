@@ -77,14 +77,18 @@ class TrackerUsageController {
 
     if (match.length === 0) {
       this.isCustom = true;
-      this.customTimeRange.startTime = new Date(parseInt(this.$state.params.start, 10) * 1000);
-      this.customTimeRange.endTime = new Date(parseInt(this.$state.params.end, 10) * 1000);
+      if (this.$state.params.start && typeof this.$state.params.start === 'number' && this.$state.params.start !== null) {
+        this.customTimeRange.startTime = new Date(parseInt(this.$state.params.start, 10) * 1000);
+      }
+      if (this.$state.params.end && typeof this.$state.params.end === 'number' && this.$state.params.end !== null) {
+        this.customTimeRange.endTime = new Date(parseInt(this.$state.params.end, 10) * 1000);
+      }
     }
 
     return match.length > 0 ? match[0] : { label: 'Custom' };
   }
 
-  goCustomDate() {
+  goToCustomTimeRangeEntityDetailView() {
     let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000, 10);
     let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000, 10);
 
@@ -103,7 +107,11 @@ class TrackerUsageController {
       .$promise
       .then((response) => {
         this.auditHistogram = response;
+        this.serviceUnavailable = false;
       }, (err) => {
+        if (err.statusCode === 503) {
+          this.serviceUnavailable = true;
+        }
         console.log('Error', err);
       });
   }
@@ -137,7 +145,11 @@ class TrackerUsageController {
       .$promise
       .then((response) => {
         this.timeSince = response;
+        this.serviceUnavailable = false;
       }, (err) => {
+        if (err.statusCode === 503) {
+          this.serviceUnavailable = true;
+        }
         console.log('Error', err);
       });
   }

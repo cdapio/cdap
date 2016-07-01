@@ -18,13 +18,10 @@ angular.module(PKG.name + '.feature.tracker')
   .directive('myTopEntityGraph', function (d3, $compile, $state, myTrackerApi) {
 
     function EntityGraphLink (scope, element) {
-      if (scope.type === 'applications') {
-        fetchTopApps();
-      } else if (scope.type === 'programs') {
-        fetchTopPrograms();
-      }
 
-      function fetchTopApps () {
+      fetchTopEntities();
+
+      function fetchTopEntities () {
         let params = {
           namespace: $state.params.namespace,
           entity: scope.type,
@@ -52,44 +49,16 @@ angular.module(PKG.name + '.feature.tracker')
               metricContainer.append('div')
               .attr('class', 'well')
               .append('p')
-              .text('Not enough data');
+              .text('Not enough ' + scope.type + ' found');
             }
           }, (err) => {
-            console.log('ERROR', err);
-          });
-      }
-
-      function fetchTopPrograms () {
-        let params = {
-          namespace: $state.params.namespace,
-          entity: scope.type,
-          scope: scope,
-          limit: 5
-        };
-
-        if(scope.start) {
-          params.start = scope.start;
-        }
-        if(scope.end) {
-          params.end = scope.end;
-        }
-
-        myTrackerApi.getTopEntities(params)
-          .$promise
-          .then((response) => {
-            scope.model = {
-              results: response
-            };
-            if(response.length >= 1) {
-              renderEntityGraph();
-            } else {
+            if (err.statusCode === 503) {
               let metricContainer = d3.select(element[0]).select('.graph-container');
               metricContainer.append('div')
               .attr('class', 'well')
               .append('p')
-              .text('Not enough data');
+              .text('Service unavailable');
             }
-          }, (err) => {
             console.log('ERROR', err);
           });
       }
@@ -178,32 +147,21 @@ angular.module(PKG.name + '.feature.tracker')
             .attr('height', y.rangeBand())
             .attr('width', (d) => { return Math.abs(x(d.value)) + 3; });
 
-        /* Adding Links */
-        let sidebarElem = angular.element(parentContainer[0]).find('div');
+        addEntityLinks();
 
-        if (scope.type === 'applications') {
+        function addEntityLinks () {
+          let sidebarElem = angular.element(parentContainer[0]).find('div');
+
           angular.forEach(scope.model.results, (result) => {
+            if (scope.type === 'applications') {
+              scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.entityName + '" })';
+            }
+            if (scope.type === 'programs') {
+              scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.application + '", programId: "' + result.entityName + '" })';
+            }
             let link = angular.element('<a></a>')
               .attr('class', 'entity-link')
-              .attr('ui-sref', 'apps.detail.overview.programs({ appId: "' + result.entityName + '" })')
-              .attr('uib-tooltip', result.entityName)
-              .attr('tooltip-ellipsis', result.entityName)
-              .attr('tooltip-append-to-body', 'true')
-              .attr('tooltip-class', 'tracker-tooltip')
-              .text(result.entityName);
-
-            let elem = $compile(link)(scope);
-            elem.css('top', y(result.entityName) + margin.top - 1 + (y.rangeBand()/2) + 'px');
-
-            sidebarElem.append(elem);
-          });
-        }
-        // TODO: Add program link once app name is added to the data returned by backend
-        if (scope.type === 'programs') {
-          angular.forEach(scope.model.results, (result) => {
-            let link = angular.element('<a></a>')
-              .attr('class', 'entity-link')
-              .attr('ui-sref', 'apps.detail.overview.programs({ appId: "' + result.application + '", programId: "' + result.entityName + '" })')
+              .attr('ui-sref', scope.programsPath)
               .attr('uib-tooltip', result.entityName)
               .attr('tooltip-ellipsis', result.entityName)
               .attr('tooltip-append-to-body', 'true')
