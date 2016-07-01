@@ -94,9 +94,9 @@ public class KafkaServerMain extends DaemonMain {
     Preconditions.checkState(port > 0, "Port number is invalid.");
 
     String hostname = kafkaProperties.getProperty("host.name");
-    InetAddress address = Networks.resolve(hostname, null);
-    if (hostname == null) {
-      if (address != null && address.isAnyLocalAddress()) {
+    InetAddress address = Networks.resolve(hostname, new InetSocketAddress("localhost", 0).getAddress());
+    if (hostname != null) {
+      if (address.isAnyLocalAddress()) {
         kafkaProperties.remove("host.name");
       } else {
         hostname = address.getCanonicalHostName();
