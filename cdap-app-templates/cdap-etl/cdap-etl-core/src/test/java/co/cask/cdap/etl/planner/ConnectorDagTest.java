@@ -29,7 +29,7 @@ import java.util.Set;
 public class ConnectorDagTest {
 
   @Test
-  public void testMergeConnectors() {
+  public void testMultipleSourcesIsNoOp() {
     /*
         n1 --|
              |--- n3
@@ -40,12 +40,10 @@ public class ConnectorDagTest {
       .addConnection("n2", "n3")
       .build();
     cdag.insertConnectors();
-    // n3 should have a connector inserted in front of it
+    // no connector should be inserted since we support multiple inputs in a dag
     ConnectorDag expected = ConnectorDag.builder()
-      .addConnection("n1", "n3.connector")
-      .addConnection("n2", "n3.connector")
-      .addConnection("n3.connector", "n3")
-      .addConnectors("n3.connector")
+      .addConnection("n1", "n3")
+      .addConnection("n2", "n3")
       .build();
     Assert.assertEquals(expected, cdag);
 
@@ -60,13 +58,11 @@ public class ConnectorDagTest {
       .addConnection("n3", "n4")
       .build();
     cdag.insertConnectors();
-    // n3 should have a connector inserted in front of it
+    // no connector should have been inserted
     expected = ConnectorDag.builder()
-      .addConnection("n1", "n3.connector")
-      .addConnection("n2", "n3.connector")
+      .addConnection("n1", "n3")
+      .addConnection("n2", "n3")
       .addConnection("n3", "n4")
-      .addConnection("n3.connector", "n3")
-      .addConnectors("n3.connector")
       .build();
     Assert.assertEquals(expected, cdag);
 
@@ -98,29 +94,22 @@ public class ConnectorDagTest {
       .addConnection("n8", "n11")
       .build();
     cdag.insertConnectors();
-    // n4 and n5 should have connectors in front since they have multiple inputs
-    // n6 should also since it has input from n4 and n5
-    // n7 should not since its only input is n5
-    // n8 also should not since its input is n5 and n7, but n7 comes from n5.
+    // since we support multiple inputs, no connectors should be inserted
     expected = ConnectorDag.builder()
-      .addConnection("n1", "n4.connector")
-      .addConnection("n1", "n5.connector")
-      .addConnection("n2", "n4.connector")
-      .addConnection("n2", "n5.connector")
-      .addConnection("n3", "n4.connector")
-      .addConnection("n3", "n5.connector")
-      .addConnection("n4", "n6.connector")
-      .addConnection("n5", "n6.connector")
+      .addConnection("n1", "n4")
+      .addConnection("n1", "n5")
+      .addConnection("n2", "n4")
+      .addConnection("n2", "n5")
+      .addConnection("n3", "n4")
+      .addConnection("n3", "n5")
+      .addConnection("n4", "n6")
+      .addConnection("n5", "n6")
       .addConnection("n5", "n7")
       .addConnection("n5", "n8")
       .addConnection("n6", "n9")
       .addConnection("n7", "n8")
       .addConnection("n7", "n10")
       .addConnection("n8", "n11")
-      .addConnection("n6.connector", "n6")
-      .addConnection("n5.connector", "n5")
-      .addConnection("n4.connector", "n4")
-      .addConnectors("n4.connector", "n5.connector", "n6.connector")
       .build();
     Assert.assertEquals(expected, cdag);
   }
@@ -228,9 +217,8 @@ public class ConnectorDagTest {
              |                    |                                    |-- n11
              |--- n4(r) ----------|
 
-        in this example, n2, n3, n4, n6, and n9 should all have connectors
+        in this example, n2, n3, n4, and n9 should all have connectors
         n2, n3, n4 all have connectors because n1 is writing to multiple reduce nodes
-        n6 has a connector since it has inputs from multiple sources
         n9 has a connector because it is connected to reduce node n7
      */
     cdag = ConnectorDag.builder()
@@ -253,11 +241,12 @@ public class ConnectorDagTest {
       .addConnection("n1", "n2.connector")
       .addConnection("n1", "n3.connector")
       .addConnection("n1", "n4.connector")
-      .addConnection("n2", "n6.connector")
+      .addConnection("n2", "n6")
       .addConnection("n3", "n5")
-      .addConnection("n4", "n6.connector")
-      .addConnection("n5", "n6.connector")
-      .addConnection("n6", "n7")
+      .addConnection("n4", "n6")
+      .addConnection("n5", "n6")
+      .addConnection("n6", "n7.connector")
+      .addConnection("n7.connector", "n7")
       .addConnection("n7", "n8")
       .addConnection("n8", "n9.connector")
       .addConnection("n9", "n10")
@@ -265,10 +254,9 @@ public class ConnectorDagTest {
       .addConnection("n2.connector", "n2")
       .addConnection("n3.connector", "n3")
       .addConnection("n4.connector", "n4")
-      .addConnection("n6.connector", "n6")
       .addConnection("n9.connector", "n9")
       .addReduceNodes("n2", "n3", "n4", "n7", "n9")
-      .addConnectors("n2.connector", "n3.connector", "n4.connector", "n6.connector", "n9.connector")
+      .addConnectors("n2.connector", "n3.connector", "n4.connector", "n7.connector", "n9.connector")
       .build();
     Assert.assertEquals(expected, cdag);
   }
@@ -284,7 +272,6 @@ public class ConnectorDagTest {
 
         in this example, n2, n3, n4, n6, and n9 should all have connectors
         n2, n3, n4 all have connectors because n1 is writing to multiple reduce nodes
-        n6 has a connector since it has inputs from multiple sources
         n9 has a connector because it is connected to reduce node n7
      */
     ConnectorDag cdag = ConnectorDag.builder()
@@ -313,20 +300,22 @@ public class ConnectorDagTest {
     Dag dag2 = new Dag(
       ImmutableSet.of(
         new Connection("n2.connector", "n2"),
-        new Connection("n2", "n6.connector")));
+        new Connection("n2", "n6"),
+        new Connection("n6", "n7.connector")));
     Dag dag3 = new Dag(
       ImmutableSet.of(
         new Connection("n3.connector", "n3"),
         new Connection("n3", "n5"),
-        new Connection("n5", "n6.connector")));
+        new Connection("n5", "n6"),
+        new Connection("n6", "n7.connector")));
     Dag dag4 = new Dag(
       ImmutableSet.of(
         new Connection("n4.connector", "n4"),
-        new Connection("n4", "n6.connector")));
+        new Connection("n4", "n6"),
+        new Connection("n6", "n7.connector")));
     Dag dag5 = new Dag(
       ImmutableSet.of(
-        new Connection("n6.connector", "n6"),
-        new Connection("n6", "n7"),
+        new Connection("n7.connector", "n7"),
         new Connection("n7", "n8"),
         new Connection("n8", "n9.connector")));
     Dag dag6 = new Dag(
@@ -471,19 +460,18 @@ public class ConnectorDagTest {
     cdag.insertConnectors();
     /*
              |--> n2.connector --> n2(i) --> n3.connector --> n3 --|
-        n1 --|                                                     |--> n4.connector --> n4
+        n1 --|                                                     |----> n4
              |-----------------------------------------------------|
      */
     expected = ConnectorDag.builder()
       .addConnection("n1", "n2.connector")
-      .addConnection("n1", "n4.connector")
+      .addConnection("n1", "n4")
       .addConnection("n2.connector", "n2")
       .addConnection("n2", "n3.connector")
       .addConnection("n3.connector", "n3")
-      .addConnection("n3", "n4.connector")
-      .addConnection("n4.connector", "n4")
+      .addConnection("n3", "n4")
       .addIsolationNodes("n2")
-      .addConnectors("n2.connector", "n3.connector", "n4.connector")
+      .addConnectors("n2.connector", "n3.connector")
       .build();
     Assert.assertEquals(expected, cdag);
 

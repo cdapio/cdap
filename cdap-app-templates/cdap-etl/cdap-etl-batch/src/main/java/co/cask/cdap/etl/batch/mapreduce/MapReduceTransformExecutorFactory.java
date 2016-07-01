@@ -61,8 +61,9 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   public MapReduceTransformExecutorFactory(MapReduceTaskContext taskContext,
                                            PipelinePluginInstantiator pluginInstantiator,
                                            Metrics metrics,
-                                           Map<String, Map<String, String>> pluginRuntimeArgs) {
-    super(pluginInstantiator, metrics);
+                                           Map<String, Map<String, String>> pluginRuntimeArgs,
+                                           String sourceStageName) {
+    super(pluginInstantiator, metrics, sourceStageName);
     this.taskContext = taskContext;
     this.pluginRuntimeArgs = pluginRuntimeArgs;
     JobContext hadoopContext = (JobContext) taskContext.getHadoopContext();

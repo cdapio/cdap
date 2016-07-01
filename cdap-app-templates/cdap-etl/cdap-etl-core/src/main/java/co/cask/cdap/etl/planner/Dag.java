@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * A DAG (directed acyclic graph).
@@ -136,11 +137,11 @@ public class Dag {
   }
 
   public Set<String> getSources() {
-    return Collections.unmodifiableSet(sources);
+    return Collections.unmodifiableSet(new TreeSet<>(sources));
   }
 
   public Set<String> getSinks() {
-    return Collections.unmodifiableSet(sinks);
+    return Collections.unmodifiableSet(new TreeSet<>(sinks));
   }
 
   public Set<String> getNodeOutputs(String node) {

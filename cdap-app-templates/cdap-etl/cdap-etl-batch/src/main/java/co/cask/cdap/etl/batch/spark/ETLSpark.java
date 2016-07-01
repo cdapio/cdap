@@ -77,8 +77,8 @@ public class ETLSpark extends AbstractSpark {
     setExecutorResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getResources());
 
-    if (phaseSpec.getPhase().getSources().size() != 1) {
-      throw new IllegalArgumentException("Pipeline must contain exactly one source.");
+    if (phaseSpec.getPhase().getSources().isEmpty()) {
+      throw new IllegalArgumentException("Pipeline must contain at least one source.");
     }
     if (phaseSpec.getPhase().getSinks().isEmpty()) {
       throw new IllegalArgumentException("Pipeline must contain at least one sink.");
@@ -101,23 +101,16 @@ public class ETLSpark extends AbstractSpark {
     context.setSparkConf(sparkConf);
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
-    PipelinePluginInstantiator pluginInstantiator =
-      new PipelinePluginInstantiator(context, phaseSpec);
-    // we checked at configure time that there is exactly one source
-    String sourceName = phaseSpec.getPhase().getSources().iterator().next();
-
-    BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
     DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
-    SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context, lookProvider, sourceName);
-    batchSource.prepareRun(sourceContext);
 
-    SparkBatchSourceFactory sourceFactory = sourceContext.getSourceFactory();
-    if (sourceFactory == null) {
-      // TODO: Revisit what exception to throw
-      throw new IllegalArgumentException("No input was set. Please make sure the source plugin calls setInput when " +
-                                           "preparing the run.");
+    SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
+    for (String sourceName : phaseSpec.getPhase().getSources()) {
+      BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+      BatchSourceContext sourceContext = new SparkBatchSourceContext(sourceFactory, context, lookProvider, sourceName);
+      batchSource.prepareRun(sourceContext);
+      finishers.add(batchSource, sourceContext);
     }
-    finishers.add(batchSource, sourceContext);
 
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     for (String sinkName : phaseSpec.getPhase().getSinks()) {
