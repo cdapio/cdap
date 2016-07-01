@@ -29,8 +29,8 @@ Cask Data Application Platform Release Notes
 Bug Fix
 -------
 
-- `CDAP-6311 <https://issues.cask.co/browse/CDAP-6311>`__ - Fix a bug that the program run record
-  is not correctly reflected in CDAP if the corresponding YARN application failed to start.
+- `CDAP-6311 <https://issues.cask.co/browse/CDAP-6311>`__ - Fixed a bug that the program run record
+  was not correctly reflected in CDAP if the corresponding YARN application failed to start.
 
 
 `Release 3.3.4 <http://docs.cask.co/cdap/3.3.4/index.html>`__
