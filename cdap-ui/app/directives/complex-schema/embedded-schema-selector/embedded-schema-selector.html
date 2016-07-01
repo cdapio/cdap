@@ -26,8 +26,18 @@
     <my-array-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-array-schema-wrapper>
   </div>
 
-  <!-- <div class="col-xs-12"
-       ng-switch-when="array">
-    <my-map-schema-wrapper ng-model="type" type="COMPLEX"></my-array-schema-wrapper>
-  </div> -->
+  <div class="col-xs-12"
+       ng-switch-when="map">
+    <my-map-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-map-schema-wrapper>
+  </div>
+
+  <div class="col-xs-12"
+       ng-switch-when="union">
+    <my-union-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-union-schema-wrapper>
+  </div>
+
+  <div class="col-xs-12"
+       ng-switch-when="record">
+    <my-record-schema ng-model="Embedded.type" type="COMPLEX"></my-record-schema>
+  </div>
 </div>

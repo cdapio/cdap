@@ -15,22 +15,33 @@
 -->
 
 <div class="union-schema-container">
-  <div class="clearfix"
-       ng-repeat="type in UnionSchema.types track by $index">
-    <div class="col-xs-10">
-      <select class="form-control"
-              ng-model="type.displayType"
-              ng-options="option as option for option in UnionSchema.SCHEMA_TYPES">
-      </select>
+  <div ng-repeat="item in UnionSchema.types track by $index">
+    <div class="clearfix">
+      <div class="col-xs-10">
+        <select class="form-control"
+                ng-model="item.displayType"
+                ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
+                ng-change="item.type = item.displayType">
+        </select>
+      </div>
+
+      <div class="col-xs-1 text-center">
+        <input type="checkbox" ng-model="item.nullable">
+      </div>
+
+      <div class="col-xs-1 text-center">
+        <i class="text-danger fa fa-trash"
+           ng-click="UnionSchema.removeType($index)">
+        </i>
+        <i class="fa fa-plus"
+           ng-click="UnionSchema.addType($index)">
+        </i>
+      </div>
     </div>
 
-    <div class="col-xs-1 text-center">
-      <input type="checkbox" ng-model="type.nullable">
-    </div>
-
-    <div class="col-xs-1 text-center">
-      <i class="text-danger fa fa-trash"></i>
-      <i class="fa fa-plus"></i>
-    </div>
+    <my-embedded-schema-selector
+      type="item.type"
+      display-type="item.displayType">
+    </my-embedded-schema-selector>
   </div>
 </div>

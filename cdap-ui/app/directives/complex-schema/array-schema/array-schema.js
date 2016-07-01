@@ -69,7 +69,6 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $scope) {
     };
 
     vm.formatOutput();
-    console.log('ARRAY_ITEMS', vm.items);
   }
 
   $scope.$watch('ArraySchema.items', vm.formatOutput, true);
