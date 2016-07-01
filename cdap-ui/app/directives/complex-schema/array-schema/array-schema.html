@@ -16,15 +16,18 @@
 
 <div class="array-schema-container">
   <div class="clearfix">
-    <div class="col-xs-10">
+    <div class="input-column no-type">
       <select class="form-control"
               ng-model="ArraySchema.items.displayType"
               ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
               ng-change="ArraySchema.items.type = ArraySchema.items.displayType">
       </select>
     </div>
-    <div class="col-xs-1 text-center">
-      <input type="checkbox" ng-model="ArraySchema.items.nullable">
+
+    <div class="fields-actions">
+      <div class="checkbox no-trash text-center">
+        <input type="checkbox" ng-model="ArraySchema.items.nullable">
+      </div>
     </div>
   </div>
 

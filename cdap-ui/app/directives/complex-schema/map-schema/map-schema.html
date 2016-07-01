@@ -16,18 +16,21 @@
 
 <div class="map-schema-container">
   <div class="key-field clearfix">
-    <div class="col-xs-2">
+    <div class="map-fields pull-left">
       Keys:
     </div>
-    <div class="col-xs-9">
+    <div class="input-column">
       <select class="form-control"
               ng-model="MapSchema.fields.keys.displayType"
               ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
               ng-change="MapSchema.fields.keys.type = MapSchema.fields.keys.displayType">
       </select>
     </div>
-    <div class="col-xs-1">
-      <input type="checkbox" ng-model="MapSchema.fields.keys.nullable">
+
+    <div class="fields-actions">
+      <div class="checkbox no-trash text-center">
+        <input type="checkbox" ng-model="MapSchema.fields.keys.nullable">
+      </div>
     </div>
   </div>
 
@@ -38,18 +41,21 @@
 
 
   <div class="value-field clearfix">
-    <div class="col-xs-2">
+    <div class="map-fields pull-left">
       Values:
     </div>
-    <div class="col-xs-9">
+    <div class="input-column">
       <select class="form-control"
               ng-model="MapSchema.fields.values.displayType"
               ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
               ng-change="MapSchema.fields.values.type = MapSchema.fields.values.displayType">
       </select>
     </div>
-    <div class="col-xs-1">
-      <input type="checkbox" ng-model="MapSchema.fields.values.nullable">
+
+    <div class="fields-actions">
+      <div class="checkbox no-trash text-center">
+        <input type="checkbox" ng-model="MapSchema.fields.values.nullable">
+      </div>
     </div>
   </div>
 
