@@ -23,6 +23,29 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.4.3 <http://docs.cask.co/cdap/3.4.3/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+- `CDAP-6238 <https://issues.cask.co/browse/CDAP-6238>`__ - Fixed an issue where configuration of
+  the FileSource was failing while setting the properties for the FileInputFormat.
+
+- `CDAP-6255 <https://issues.cask.co/browse/CDAP-6255>`__ - Fixed a bug in HDFSink where we now emit a
+  null character in a UTF-8 encoding if a field is null.
+
+- `CDAP-6258 <https://issues.cask.co/browse/CDAP-6258>`__ - HDFSSink can now be used alongside other
+  sinks in a Hydrator pipeline.
+
+- `CDAP-6302 <https://issues.cask.co/browse/CDAP-6302>`__ - Release 3.4.0 introduced an infinite-scroll 
+  for the display of input and output schemas and the version (1.2.2) that we used of the infinite scroll
+  component had performance problems. We have downgraded the infinite scroll component we use to restore
+  the performance in Hydrator views.
+
+- `CDAP-6311 <https://issues.cask.co/browse/CDAP-6311>`__ - Fixed a bug that the program run record
+  was not correctly reflected in CDAP if the corresponding YARN application failed to start.
+
+
 `Release 3.4.2 <http://docs.cask.co/cdap/3.4.2/index.html>`__
 =============================================================
 
