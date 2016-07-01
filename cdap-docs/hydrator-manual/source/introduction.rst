@@ -165,4 +165,12 @@ Hydrator Studio Tips
 --------------------
 *[Note: this section may be best elsewhere, but for now this will keep it in a visible location.]*
 
+- After clicking on a node, a dialog comes up to allow for configuring of the node. This
+  dialog can be closed either with the close button or the *escape* key.
+  
+- When a connection has been made from one node to a target node, you can remove the
+  connection by grabbing the end with the arrow symbol and dragging it off the target node.
 
+- All pipelines must have unique names, and a pipeline cannot be saved over an existing
+  one of the same name. Instead, increment the name (from *Demo* to *Demo-1*) with each new
+  cloning of a pipeline.
