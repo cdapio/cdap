@@ -25,9 +25,12 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
+import co.cask.cdap.common.startup.ConfigurationLogger;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.Id;
 import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
@@ -35,6 +38,7 @@ import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
@@ -55,12 +59,16 @@ public class PreviewServer extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviewServer.class);
 
+  private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
-  private final InetAddress hostname;
   private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ProgramLifecycleService programLifecycleService;
   private final SystemArtifactLoader systemArtifactLoader;
+
+  private final MetricsCollectionService metricsCollectionService;
+  private final LogAppenderInitializer logAppenderInitializer;
+  private final DatasetService datasetService;
 
   private final NettyHttpService httpService;
   private Cancellable cancellable;
@@ -77,9 +85,12 @@ public class PreviewServer extends AbstractIdleService {
                        ProgramRuntimeService programRuntimeService,
                        ApplicationLifecycleService applicationLifecycleService,
                        ProgramLifecycleService programLifecycleService,
-                       SystemArtifactLoader systemArtifactLoader) {
-    this.hostname = hostname;
+                       SystemArtifactLoader systemArtifactLoader,
+                       LogAppenderInitializer logAppenderInitializer,
+                       DatasetService datasetService) {
+    this.cConf = configuration;
     this.discoveryService = discoveryService;
+    this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programLifecycleService = programLifecycleService;
@@ -100,13 +111,25 @@ public class PreviewServer extends AbstractIdleService {
       .setWorkerThreadPoolSize(configuration.getInt(Constants.AppFabric.WORKER_THREADS,
                                                     Constants.AppFabric.DEFAULT_WORKER_THREADS))
       .build();
+
+    this.logAppenderInitializer = logAppenderInitializer;
+    this.datasetService = datasetService;
   }
 
   /**
-   * Configures the Preview pre-start.
+   * starts preview services
    */
   @Override
   protected void startUp() throws Exception {
+    ConfigurationLogger.logImportantConfig(cConf);
+
+    metricsCollectionService.startAndWait();
+    datasetService.startAndWait();
+
+    // It is recommended to initialize log appender after datasetService is started,
+    // since log appender instantiates a dataset.
+    logAppenderInitializer.initialize();
+
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.PREVIEW_HTTP));
@@ -118,11 +141,9 @@ public class PreviewServer extends AbstractIdleService {
     ).get();
 
     // Run http service on random port
-
-    // Add a listener so that when the service started, register with service discovery.
-    // Remove from service discovery when it is stopped.
     httpService.startAndWait();
 
+    // cancel service discovery on shutdown
     cancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
@@ -134,7 +155,6 @@ public class PreviewServer extends AbstractIdleService {
         return httpService.getBindAddress();
       }
     }));
-
   }
 
   @Override
@@ -145,5 +165,8 @@ public class PreviewServer extends AbstractIdleService {
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
     programLifecycleService.stopAndWait();
+    logAppenderInitializer.close();
+    datasetService.stopAndWait();
+    metricsCollectionService.stopAndWait();
   }
 }

@@ -19,8 +19,10 @@ package co.cask.cdap;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
+import co.cask.cdap.app.guice.PreviewServerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.app.preview.PreviewServer;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -36,6 +38,7 @@ import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
+import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -50,6 +53,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
+import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
@@ -81,6 +85,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -126,6 +131,8 @@ public class StandaloneMain {
   private final boolean securityEnabled;
   private final boolean sslEnabled;
   private final CConfiguration cConf;
+  private final List<Module> modules;
+  private final Configuration hConf;
   private final DatasetService datasetService;
   private final ExploreClient exploreClient;
   private final ZKClientService zkClient;
@@ -134,14 +141,16 @@ public class StandaloneMain {
   private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
   private final TrackerAppCreationService trackerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
-  private final PreviewMain previewMain;
+  private final PreviewServer previewServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
 
 
-  private StandaloneMain(List<Module> modules, CConfiguration cConf) {
+  private StandaloneMain(List<Module> modules, CConfiguration cConf, Configuration hConf) {
+    this.modules = modules;
     this.cConf = cConf;
+    this.hConf = hConf;
 
     injector = Guice.createInjector(modules);
 
@@ -201,6 +210,12 @@ public class StandaloneMain {
     metadataService = injector.getInstance(MetadataService.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
 
+    if (cConf.getBoolean(Constants.Preview.ENABLED)) {
+      previewServer = getPreviewServer();
+    } else {
+      previewServer = null;
+    }
+
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
@@ -214,20 +229,53 @@ public class StandaloneMain {
         }
       }
     });
+  }
 
+  private PreviewServer getPreviewServer() {
+    // create cConf and hConf and set appropriate settings for preview
+    CConfiguration previewcConf = CConfiguration.copy(cConf);
+    previewcConf.set(Constants.CFG_LOCAL_DATA_DIR, previewcConf.get(Constants.CFG_LOCAL_PREVIEW_DIR));
+    previewcConf.set(Constants.Dataset.DATA_DIR, previewcConf.get(Constants.CFG_LOCAL_PREVIEW_DIR));
+    Configuration previewhConf = new Configuration(hConf);
+    File localPreviewDir = new File(cConf.get(Constants.CFG_LOCAL_PREVIEW_DIR));
+    previewcConf.set(Constants.CFG_LOCAL_DATA_DIR, localPreviewDir.getAbsolutePath());
+    previewcConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, "data/preview");
 
-    previewMain = PreviewMain.createPreviewMain(
-      injector.getInstance(DatasetFramework.class),
-      injector.getInstance(InMemoryDiscoveryService.class),
-      injector.getInstance(ArtifactRepository.class),
-      injector.getInstance(ArtifactStore.class),
-      authorizerInstantiator,
-      injector.getInstance(StreamAdmin.class),
-      injector.getInstance(StreamCoordinatorClient.class),
-      injector.getInstance(StreamConsumerFactory.class),
-      txService,
-      injector.getInstance(TransactionManager.class)
-    );
+    // create preview injector
+    Injector previewInjector = getPreviewInjector(previewcConf, previewhConf);
+    return previewInjector.getInstance(PreviewServer.class);
+  }
+
+  private Injector getPreviewInjector(CConfiguration cConf, Configuration hConf) {
+    return Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new IOModule(),
+      new DiscoveryRuntimeModule().getPreviewModules(injector.getInstance(InMemoryDiscoveryService.class)),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new ConfigStoreModule().getStandaloneModule(),
+      new PreviewServerModule(),
+      new ProgramRunnerRuntimeModule().getStandaloneModules(),
+      new DataFabricModules().getPreviewModules(injector.getInstance(TransactionManager.class)),
+      new DataSetServiceModules().getStandaloneModules(),
+      new DataSetsModules().getPreviewModules(injector.getInstance(DatasetFramework.class)),
+      new MetricsClientRuntimeModule().getStandaloneModules(),
+      new LoggingModules().getStandaloneModules(),
+      new NamespaceStoreModule().getStandaloneModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(ArtifactRepository.class).toInstance(injector.getInstance(ArtifactRepository.class));
+          bind(ArtifactStore.class).toInstance(injector.getInstance(ArtifactStore.class));
+          bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
+          bind(StreamAdmin.class).toInstance(injector.getInstance(StreamAdmin.class));
+          bind(StreamConsumerFactory.class).toInstance(injector.getInstance(StreamConsumerFactory.class));
+          bind(StreamCoordinatorClient.class).
+            toInstance(injector.getInstance(StreamCoordinatorClient.class));
+          bind(InMemoryTransactionService.class).toInstance(txService);
+          // bind explore client to mock.
+          bind(ExploreClient.class).to(MockExploreClient.class);
+        }
+      });
   }
 
   /**
@@ -300,7 +348,14 @@ public class StandaloneMain {
     if (trackerAppCreationService != null) {
       trackerAppCreationService.startAndWait();
     }
-    previewMain.startUp();
+
+    if (previewServer != null) {
+      state = previewServer.startAndWait();
+      if (state != Service.State.RUNNING) {
+        throw new Exception("Failed to start Preview");
+      }
+      System.out.println("CDAP Preview started successfully");
+    }
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -317,7 +372,9 @@ public class StandaloneMain {
     LOG.info("Shutting down Standalone CDAP");
     boolean halt = false;
     try {
-      previewMain.shutDown();
+      if (previewServer != null) {
+        previewServer.stopAndWait();
+      }
 
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
@@ -396,7 +453,16 @@ public class StandaloneMain {
   private void cleanupTempDir() {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    cleanUpTempDir(tmpDir);
 
+    if (previewServer != null) {
+      tmpDir = new File(cConf.get(Constants.CFG_LOCAL_PREVIEW_DIR),
+                        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+      cleanUpTempDir(tmpDir);
+    }
+  }
+
+  private void cleanUpTempDir(File tmpDir) {
     if (!tmpDir.isDirectory()) {
       return;
     }
@@ -477,7 +543,7 @@ public class StandaloneMain {
     //Run dataset service on random port
     List<Module> modules = createPersistentModules(cConf, hConf);
 
-    return new StandaloneMain(modules, cConf);
+    return new StandaloneMain(modules, cConf, hConf);
   }
 
   private static List<Module> createPersistentModules(CConfiguration cConf, Configuration hConf) {

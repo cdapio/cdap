@@ -17,10 +17,17 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.utils.Networks;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Guice module to provide bindings for configurations.
@@ -62,5 +69,13 @@ public final class ConfigModule extends AbstractModule {
     bind(Configuration.class).toInstance(hConf);
     bind(SConfiguration.class).toInstance(sConf);
     bind(YarnConfiguration.class).toInstance(new YarnConfiguration(hConf));
+  }
+
+  @Provides
+  @Named(Constants.AppFabric.SERVER_ADDRESS)
+  @SuppressWarnings("unused")
+  public InetAddress providesHostname(CConfiguration cConf) {
+    return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
+                            new InetSocketAddress("localhost", 0).getAddress());
   }
 }

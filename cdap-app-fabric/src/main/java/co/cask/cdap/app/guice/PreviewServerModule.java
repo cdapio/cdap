@@ -22,10 +22,7 @@ import co.cask.cdap.app.preview.PreviewApplicationManager;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewServer;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.PreviewHttpHandler;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -38,72 +35,47 @@ import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.http.HttpHandler;
-import com.google.inject.Exposed;
-import com.google.inject.Module;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 /**
  * Preview server modules.
  */
-public class PreviewServerModule {
+public class PreviewServerModule extends PrivateModule {
 
-  public Module getPreviewModules() {
-    return Modules.combine(new PreviewServiceModule(),
-                           new ConfigStoreModule().getStandaloneModule());
-  }
+  protected void configure() {
+    bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
 
-  private static final class PreviewServiceModule extends PrivateModule {
-    @Override
-    protected void configure() {
-      bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
+    install(
+      new FactoryModuleBuilder()
+        .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                   },
+                   new TypeLiteral<PreviewApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                   })
+        .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
+        })
+    );
 
-      install(
-        new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
-                     },
-                     new TypeLiteral<PreviewApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
-                     })
-          .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
-          })
-      );
+    bind(Store.class).to(DefaultStore.class);
+    expose(Store.class);
 
-      bind(Store.class).to(DefaultStore.class);
-      expose(Store.class);
+    bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
 
-      bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
+    bind(PreviewServer.class).in(Scopes.SINGLETON);
+    expose(PreviewServer.class);
 
-      bind(PreviewServer.class).in(Scopes.SINGLETON);
-      expose(PreviewServer.class);
+    bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
 
-      bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
+    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
+      binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));
 
-      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-        binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));
+    CommonHandlers.add(handlerBinder);
+    handlerBinder.addBinding().to(PreviewHttpHandler.class);
 
-      CommonHandlers.add(handlerBinder);
-      handlerBinder.addBinding().to(PreviewHttpHandler.class);
-
-      bind(Scheduler.class).to(NoopScheduler.class);
-    }
-
-    @Provides
-    @Exposed
-    @Named(Constants.AppFabric.SERVER_ADDRESS)
-    @SuppressWarnings("unused")
-    public InetAddress providesHostname(CConfiguration cConf) {
-      return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
-                              new InetSocketAddress("localhost", 0).getAddress());
-    }
+    bind(Scheduler.class).to(NoopScheduler.class);
   }
 }

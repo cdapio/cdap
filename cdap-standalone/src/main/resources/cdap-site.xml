@@ -196,4 +196,12 @@
     </description>
   </property>
 
+  <property>
+    <name>preview.enabled</name>
+    <value>true</value>
+    <description>
+      Determines whether to enable preview in standalone
+    </description>
+  </property>
+
 </configuration>
