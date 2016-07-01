@@ -68,7 +68,7 @@
             The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
           -->
           <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
-                 infinite-scroll-container="'.modal.hydrator-modal.node-config-modal .bottompanel-body'"
+                 infinite-scroll-container="'.modal.cdap-modal.node-config-modal .bottompanel-body'"
                  infinite-scroll-disabled="inputschema.schema.fields <= MyInputSchemaCtrl.inputSchemaRowLimit">
             <tr ng-repeat="field in ::inputschema.schema.fields | limitTo: 10 track by $index">
               <td class="name">
@@ -132,7 +132,7 @@
         The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
       -->
       <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
-             infinite-scroll-container="'.modal.hydrator-modal.node-config-modal .bottompanel-body'"
+             infinite-scroll-container="'.modal.cdap-modal.node-config-modal .bottompanel-body'"
              infinite-scroll-disabled="MyInputSchemaCtrl.inputSchemas[0].schema.fields.length <= MyInputSchemaCtrl.inputSchemaRowLimit">
         <tr ng-repeat="field in MyInputSchemaCtrl.inputSchemas[0].schema.fields | limitTo: MyInputSchemaCtrl.inputSchemaRowLimit track by $index">
           <td class="name">

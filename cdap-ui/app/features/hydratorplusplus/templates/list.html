@@ -73,7 +73,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="pipeline in ::ListController.pipelineList | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
+          <tr ng-repeat="pipeline in ListController.pipelineList | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
             <td>
               <a ui-sref="hydratorplusplus.detail({ pipelineId: pipeline.name })" ng-if="::!pipeline.isDraft">
                 {{::pipeline.name}}
@@ -132,8 +132,8 @@
       </table>
     </div>
 
-    <div class="text-center" ng-if="ListController.filtered.length > 10">
-      <uib-pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></uib-pagination>
+    <div class="text-center" ng-if="ListController.pipelineList.length > 10">
+      <uib-pagination total-items="ListController.pipelineList.length" ng-model="ListController.currentPage"></uib-pagination>
     </div>
 
   </div>
