@@ -46,7 +46,7 @@ public class LogDataOffsetCallback extends AbstractJSONCallback {
       lineNumber = first.getLineNumber();
     }
     LogData logData = new LogData(event.getTimeStamp(), event.getLevel().toString(), event.getThreadName(),
-                                  className, simpleClassName, lineNumber, event.getMessage(),
+                                  className, simpleClassName, lineNumber, event.getFormattedMessage(),
                                   ThrowableProxyUtil.asString(event.getThrowableProxy()));
     return new FormattedLogDataEvent(logData, logEvent.getOffset());
   }
