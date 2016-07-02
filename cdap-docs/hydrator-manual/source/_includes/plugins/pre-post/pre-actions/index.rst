@@ -10,8 +10,11 @@ Pre-Action Plugins
 
 Hydrator Version |cdap-hydrator-version|
 
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    **
+.. Disabled as there are no pre-action plugins currently
+.. 
+.. .. toctree::
+..     :maxdepth: 1
+..     :glob:
+.. 
+..     **
+.. 

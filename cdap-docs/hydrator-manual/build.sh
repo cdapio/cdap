@@ -70,13 +70,11 @@ function download_md_file() {
     elif [[ "x${type}" == "xpostaction" ]]; then
       plugin_category='pre-post'
       plugin_type="post-action"
-#       local target_dir="${plugin_type}s"
     elif [[ "x${type}" == "xpreaction" ]]; then
       plugin_category='pre-post'
       plugin_type="pre-action"
-#       local target_dir="${plugin_type}s"
     else
-      # assume type transform; to be copied to both batch and realtime
+      # assume of type transform; to be copied to both batch and realtime
       plugin_category=''
       plugin_type="transform"
     fi

@@ -11,6 +11,27 @@
 Cask Hydrator
 =============
 
+.. SIDEBAR ON ANNOTATION SYSTEM START
+
+.. topic:: Annotation System
+
+  To review this document, I have implemented an annotation system, running on a server in
+  our cloud.
+
+  To add an annotation, select some text, click the popup-button, and enter your comment
+  in the window.
+
+  Enter your name, handle or initials as a tag.
+
+  Ignore the checkboxes (and the bug that causes them to be duplicated!) as the auth
+  system is disabled.
+
+  Annotations are saved using the URL, and so will not appear on subsequent builds in the
+  same branch, which is intended.
+
+.. SIDEBAR ON ANNOTATION SYSTEM END
+
+
 Overview
 ========
 Cask Hydrator is an extension of CDAP that combines a user interface with back-end services
@@ -19,17 +40,17 @@ to enable the building, deploying, and managing of data pipelines.
 .. |introduction| replace:: **Introduction to Hydrator:**
 .. _introduction: introduction.html
 
-- |introduction|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
+- |introduction|_ What are pipelines, plugin and Cask Hydrator Studio
 
 .. |pipelines| replace:: **Creating and Running Pipelines:**
 .. _pipelines: pipelines.html
 
-- |pipelines|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
+- |pipelines|_ Including onfiguring plugins, publishing** and running pipelines
 
 .. |plugins| replace:: **Hydrator Plugins:**
 .. _plugins: plugins/index.html
 
-- |plugins|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
+- |plugins|_ Reference to using plugins included in CDAP, and creating and installing custom plugins
 
 .. |operating| replace:: **Operating Hydrator:**
 .. _operating: operating.html
@@ -37,7 +58,7 @@ to enable the building, deploying, and managing of data pipelines.
 - |operating|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
 
 .. |advanced| replace:: **Advanced Topics:**
-.. _advanced: advanced.html
+.. _advanced: advanced/index.html
 
 - |advanced|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
 

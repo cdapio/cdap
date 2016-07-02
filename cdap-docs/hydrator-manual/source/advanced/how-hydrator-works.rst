@@ -2,23 +2,20 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-advanced:
+.. _cask-hydrator-advanced-how-hydrator-works:
 
-===============
-Advanced Topics
-===============
+===================================
+Advanced Topics: How Hydrator Works
+===================================
 
-How Hydrator Works
-==================
+**A "behind-the-scenes" look at Cask Hydrator**
 
-Behind The Scenes
------------------
 Cask Hydrator is an extension of CDAP and combines a user interface with back-end services
 to enable the building, deploying, and managing of data pipelines. It has no dependencies
 outside of CDAP, and all pipelines run within a Hadoop cluster.
 
 Architecture
-------------
+============
 Hydrator allows users to build complex data pipelines, either simple ETL
 (extract-transform-load) or more complicated Data Pipelines on Hadoop. 
 
@@ -31,9 +28,9 @@ Pipelines need to support the creation of complex processing workloads that are
 repeatable, high-available and easily maintainable.
 
 Logical versus Physical Pipelines
----------------------------------
+=================================
 
-.. figure:: _images/logical-physical-pipelines.png
+.. figure:: /_images/logical-physical-pipelines.png
    :figwidth: 50%
    :width: 3in
    :align: right
@@ -44,7 +41,7 @@ Logical versus Physical Pipelines
 Within CDAP, there is the concept of *logical* and *physical* pipelines, converted by a
 planner, and then run in an execution environment.
 
-**A logical pipeline** is the view of the pipeline as seen in the Cask Hydrator Studio and the
+A **logical pipeline** is the view of the pipeline as seen in the Cask Hydrator Studio and the
 Cask Hydrator UI. It is the view composed of sources, sinks, and other plugins, and does
 not show the underlying technology used to actually manifest and run the pipeline.
 
@@ -53,7 +50,7 @@ than the physical runtime. It’s closer to the inherent nature of processing as
 user. This view isolates it from the volatile physical pipeline, which can be operated in
 different runtime environments.
 
-**A physical pipeline** is the manifestation of a logical pipeline as a CDAP application,
+A **physical pipeline** is the manifestation of a logical pipeline as a CDAP application,
 which is a collection of programs and services that read and write through the data
 abstraction layer in CDAP. Physical view elements are those elements that actually run
 during the execution of a data pipeline on a Hadoop cluster. They execute the MapReduce
@@ -61,23 +58,25 @@ Programs, Spark, Spark Streaming, Tigon, Workflows, and so on. The physical pipe
 is based on the particular underlying technologies used and, as such, can be changed
 dynamically.
 
-**A planner** is responsible for converting the logical pipeline to a physical pipeline. The
+A **planner** is responsible for converting the logical pipeline to a physical pipeline. The
 planner analyzes the logical view of the pipeline and converts it to a physical execution
 plan, performing optimizations, and bundling functions into one or more jobs.
 
+
 Execution Environment
----------------------
-**The execution environment** is the actual runtime environment where all the components of
+=====================
+The **execution environment** is the actual runtime environment where all the components of
 the data pipeline are executed on the Hadoop cluster by CDAP. MapReduce, Spark, Spark
 Streaming, Tigon are part of this environment that allows the execution of the data
 pipeline. The planner maps the logical pipeline to physical pipeline using the environment
 runtimes available.
 
+
 Functional Components
----------------------
+=====================
 These are the different functional components that are utilized within Hydrator:
 
-.. figure:: _images/hydrator-architecture.png
+.. figure:: /_images/hydrator-architecture.png
    :figwidth: 100%
    :width: 6in
    :align: center
@@ -86,15 +85,15 @@ These are the different functional components that are utilized within Hydrator:
    **Functional Architecture of Hydrator**
 
 Application
-...........
-**An application** is a standardized container framework for defining all services. It is
+-----------
+An **application** is a standardized container framework for defining all services. It is
 responsible for managing the lifecycle of programs and datasets within an application.
 Each Hydrator pipeline is converted into a CDAP application, and deployed and managed
 independently.
 
 Application Template
-....................
-**An application template** is a user-defined, reusable, reconfigurable pattern of an
+--------------------
+An **application template** is a user-defined, reusable, reconfigurable pattern of an
 application. It is parameterized by a configuration that can be reconfigured upon
 deployment. It provides a generic version of an application which can be repurposed,
 instead of requiring the ongoing creation of specialized applications. The
@@ -119,8 +118,8 @@ an executable pipeline. An application template consists of:
   supported by the template.
 
 Plugin
-......
-**A plugin** is a customizable module, exposed and used by an application template. It
+------
+A **plugin** is a customizable module, exposed and used by an application template. It
 simplifies adding new features or extending the capability of an application. Plugin
 implementations are based on interfaces exposed by the application templates. Current
 Hydrator application templates expose Source, Transform, and Sink interfaces, which have
@@ -128,13 +127,13 @@ multiple implementations. Future Application Templates will expose more Plugins 
 Compute, Arbitrary MR, and  Spark in addition to those mentioned above.
 
 Artifact
-........
-**An artifact** is a versioned packaging format used to aggregate applications, datasets, and
+--------
+An **artifact** is a versioned packaging format used to aggregate applications, datasets, and
 plugins along with associated metadata. It is a JAR (Java Archive) containing Java classes
 and resources.
 
 Cask Hydrator Studio
-....................
+--------------------
 **Cask Hydrator Studio** is a visual development environment for building data pipelines on
 Hadoop. It has a drag-and-drop interface for building and configuring data pipelines. It
 also supports the ability to develop, run, automate, and operate pipelines from within
@@ -144,16 +143,17 @@ pipelines through CDAP. Hydrator Studio integrates with other extensions such as
 Tracker.
 
 Testing and Automation Framework
-................................
-An end-to-end JUnit (Java) framework is available in CDAP that allows developers to test
-their application templates and plugins during development. It’s built as a modular
-framework that allows for the testing of individual components. It runs in-memory in CDAP,
-as the abstracting to in-memory structures makes for easier debugging (shorter stack
-traces). The tests can be integrated with continuous integration (CI) tools such as
-Bamboo, Jenkins, and TeamCity.
+--------------------------------
+An end-to-end **JUnit framework** (written in Java) is available in CDAP that allows
+developers to test their application templates and plugins during development. It’s built
+as a modular framework that allows for the testing of individual components. It runs
+in-memory in CDAP, as the abstracting to in-memory structures makes for easier debugging
+(shorter stack traces). The tests can be integrated with continuous integration (CI) tools
+such as Bamboo, Jenkins, and TeamCity.
+
 
 Implementation of Hydrator
---------------------------
+==========================
 Cask Hydrator is built as a CDAP extension, with three major components:
 
 - **Cask Hydrator Studio,** the visual editor, running in a browser
@@ -176,6 +176,15 @@ There are many **different plugins** that implement each of these types availabl
 public APIs exposed by the application templates. When an application template or a plugin
 is deployed within CDAP, it is referred to as an artifact. CDAP provides capabilities to
 manage the different versions of both the application templates and the plugins.
+
+.. figure:: /_images/hydrator-internals.png
+   :figwidth: 100%
+   :width: 6in
+   :align: center
+   :class: bordered-image-top-margin
+
+   **Internals of Hydrator**
+
 
 Building of a Pipeline
 ----------------------
@@ -239,123 +248,3 @@ creating a new pipeline in Hydrator Studio:
   As Hydrator pipelines are run as CDAP applications, their logs and metrics are
   aggregated by the CDAP system and available using RESTful APIs.
   
-
-Creating Plugin Templates
-=========================
-*[To Be Completed]*
-
-
-
-Pre-configured Pipelines
-========================
-A variety of predefined and preconfigured pipelines are available from within Hydrator
-Studio through the controls at the top of the left side-bar. These templates can be used
-as the starting point for either your own pipeline or your own pipeline template.
-
-*[These names & descriptions can be extracted from cdap/cdap-ui/templates/apps/predefined/config.json]*
-
-- **ETL Batch**
-
-  - **Stream to HBase:** Periodically ingest from a stream into an HBase table
-  
-- **ETL Real-time**
-
-  - **Kafka to HBase:** Ingests in real time from Kafka into an HBase table
-  
-  - **Kafka to Stream:** Ingests in real time from Kafka into a stream
-  
-  - **Kafka to OLAP Cube:** Generate an OLAP Cube in real time from Kafka
-  
-  - **Twitter to HBase:** Ingest real-time Twitter Stream into an HBase table
-  
-  - **Twitter to Stream:** Ingest real-time Twitter Stream into a stream
-  
-  - **Amazon SQS to HBase:** Real-time updates from Amazon Simple Queue Service into an HBase table
-  
-- **Data Pipeline**
-
-  - **Model Trainer:** Train model using Naive Bayes classifier
-  
-  - **Event Classifier:** Classify events into spam or non-spam using a Naive Bayes model
-  
-  - **Log Data Aggregator:** Aggregate log data by grouping IP and HTTP Status
-
-
-Version Management
-==================
-*[To Be Completed]*
-
-
-
-Importing Pipelines
-===================
-*[To Be Completed]*
-
-
-
-Plugin Drafts
-=============
-*[To Be Completed]*
-
-*[Is this "Pipeline Drafts"?]*
-
-
-.. highlight:: java
-.. _cask-hydrator-advanced-test-framework-for-plugins:
-
-Test Framework for Plugins
-==========================
-
-.. include:: /../../developers-manual/source/testing/testing.rst
-   :start-after: .. _test-framework-strategies-artifacts:
-   :end-before:  .. _test-framework-validating-sql:
-
-Additional information on unit testing with CDAP is in the Developers’ Manual section
-on :ref:`Testing a CDAP Application <test-framework>`.
-
-.. highlight:: xml
-
-In addition, CDAP provides a ``hydrator-test`` module that contains several mock plugins
-for you to use in tests with your custom plugins. To use the module, add a dependency to
-your ``pom.xml``::
-
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>hydrator-test</artifactId>
-      <version>${cdap.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-.. highlight:: java
-
-Then extend the ``HydratorTestBase`` class, and create a method that will setup up the
-application artifact and mock plugins, as well as the artifact containing your custom plugins::
-
-  /**
-   * Unit tests for our plugins.
-   */
-  public class PipelineTest extends HydratorTestBase {
-    private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("data-pipeline", "1.0.0");
-    @ClassRule
-    public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
-
-    @BeforeClass
-    public static void setupTestClass() throws Exception {
-      ArtifactId parentArtifact = NamespaceId.DEFAULT.artifact(APP_ARTIFACT.getName(), APP_ARTIFACT.getVersion());
-
-      // Add the data pipeline artifact and mock plugins.
-      setupBatchArtifacts(parentArtifact, DataPipelineApp.class);
-
-      // Add our plugins artifact with the data pipeline artifact as its parent.
-      // This will make our plugins available to the data pipeline.
-      addPluginArtifact(NamespaceId.DEFAULT.artifact("example-plugins", "1.0.0"),
-                        parentArtifact,
-                        TextFileSetSource.class,
-                        TextFileSetSink.class,
-                        WordCountAggregator.class,
-                        WordCountCompute.class,
-                        WordCountSink.class);
-    }
-
-You can then add test cases as you see fit. The ``cdap-data-pipeline-plugins-archetype``
-includes an example of this unit test.
