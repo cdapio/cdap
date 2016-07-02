@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,38 +14,131 @@
   the License.
 -->
 
-<div class="row">
-  <div class="col-xs-2">
+<div class="log-viewer-container">
 
-    <ul class="nav nav-pills nav-stacked">
-      <li role="presentation"
-          ng-repeat="f in filters"
-          ng-class="{ active:activeFilter.key===f.key, disabled: !f.entries.length}">
-        <a href="#" ng-click="f.entries.length && setFilter(f.key)">
-          <span class="badge pull-right" ng-show="f.entries.length">{{f.entries.length}}</span>
-          <span>{{f.label}}</span>
-        </a>
-      </li>
-    </ul>
+  <!-- LOGS HEADERBAR -->
+  <div class="logs-headerbar">
+    <div class="log-stats-container">
+      <div class="log-stats-total log-stats text-center">
+          <span class="stat-name">Total Messages</span>
+          <div class="stat-count total-num">
+            <span class="stat-count-number">{{LogViewer.totalCount}}</span></div>
+      </div>
+      <div class="log-stats-errors log-stats text-center">
+        <span class="stat-name log-stats-errors-text">Error</span>
+          <div class="stat-count errors-num"><span class="stat-count-number">{{LogViewer.errorCount}}</span></div>
+      </div>
+      <div class="log-stats-warnings log-stats text-center">
+        <span class="stat-name log-stats-warnings-text">Warning</span>
+        <div class="stat-count warnings-num">
+          <span class="stat-count-number">{{LogViewer.warningCount}}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-actions">
+      <div class="log-action-container">
+        <button class="log-action-btn">View Raw</button>
+        <button class="log-action-btn">Download All</button>
+        <div class="search">
+          <input type="text" class="log-searchbar" placeholder="Search" ng-model="searchText">
+          <span class="fa fa-search"></span>
+        </div>
+        <i class="fa fa-expand" aria-hidden="true" ng-click=""></i>
+      </div>
+    </div>
 
   </div>
-  <div class="col-xs-10">
-    <div class="text-center" ng-if="loadingPrev">
-      <span class="fa fa-refresh fa-spin"></span> Loading Logs
-    </div>
-    <div class="terminal" infinite-scroll-next="loadNextLogs()" infinite-scroll-prev="loadPrevLogs()" infinite-scroll>
-      <ul class="list-unstyled" ng-if="activeFilter.entries.length">
-        <li ng-repeat="entry in activeFilter.entries" id="{{entry.offset}}">
-          <pre>{{ ::entry.log }}</pre>
-        </li>
-      </ul>
-      <div ng-if="!activeFilter.entries.length && !(loadingNext || loadingPrev)">
-        No logs to display
-      </div>
-      <div class="text-center" ng-if="loadingNext">
-        <span class="fa fa-refresh fa-spin"></span> Loading Logs
-      </div>
-    </div>
 
+  <!-- LOGS TIMELINE -->
+  <my-timeline></my-timeline>
+
+  <!-- LOGS TABLE -->
+  <div class="logs-table">
+    <table class="table table-bordered">
+      <thead>
+        <th class="time log-header"
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.time">
+          Time
+        </th>
+
+        <th class="level log-header header-level"
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.level">
+          <span uib-dropdown>
+            <span uib-dropdown-toggle>Level <span class="fa fa-caret-down"></span></span>
+            <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
+              <li ng-repeat="option in LogViewer.logEvents">
+                <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span>{{option}}</span></li>
+              </li>
+            </ul>
+          </span>
+        </th>
+
+        <th class="source log-header"
+            ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.source">
+          Source
+        </th>
+
+        <th class="message-header"
+            ng-if="LogViewer.configOptions.message"
+            ng-class="{'expanded': LogViewer.isMessageExpanded }">
+          <span class="fa"
+                ng-class="{ 'fa-arrow-left': !LogViewer.isMessageExpanded,
+                  'fa-arrow-right': LogViewer.isMessageExpanded}"
+                ng-click="LogViewer.isMessageExpanded = !LogViewer.isMessageExpanded"></span>
+          <span class="log-header">Message</span>
+          <div class="expand-all-btn text-center">Expand All</div>
+        </th>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="log in LogViewer.data | filter:LogViewer.eventFilter | filter:searchText">
+          <!-- TIME -->
+          <td class="time"
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.time">
+            <div class="table-text-content">{{ ::log.time }}</div>
+          </td>
+
+          <!-- LEVEL -->
+          <td class="level"
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.level">
+            <div class="table-text-content">{{ ::log.level }}</div>
+          </td>
+
+          <!-- SOURCE -->
+          <td class="source"
+              ng-if="!LogViewer.isMessageExpanded && LogViewer.configOptions.source">
+            <div class="table-text-content">{{ ::log.source }}</div>
+          </td>
+
+          <!-- MESSAGE -->
+          <td class="message"
+              ng-if="LogViewer.configOptions.message"
+              ng-class="{'stack-trace-expanded': log.isStackTraceExpanded,
+                'stack-trace-available': log.message.stackTrace }">
+            <div class="icon-column"
+                 ng-show="log.isStackTraceExpanded"
+                 ng-click=" log.message.stackTrace && (log.isStackTraceExpanded = !log.isStackTraceExpanded)">
+              <span class="fa"
+                    ng-class="{'fa-minus': log.isStackTraceExpanded }">
+              </span>
+            </div>                
+            <div class="table-text-content-message message-main">
+              <div class="message-column"
+                   ng-click=" log.message.stackTrace && (log.isStackTraceExpanded = !log.isStackTraceExpanded)">
+                &nbsp;&nbsp;{{ ::log.message.content }}
+              </div>
+            </div>
+
+            <div class="stack-trace"
+                 ng-class="{'expanded': LogViewer.isMessageExpanded}"
+                 ng-if="log.isStackTraceExpanded && log.message.stackTrace">
+              <pre>{{ log.message.stackTrace }}</pre>
+            </div>
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>

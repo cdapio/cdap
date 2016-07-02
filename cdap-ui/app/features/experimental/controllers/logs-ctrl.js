@@ -14,22 +14,8 @@
  * the License.
  */
 
-angular.module(`${PKG.name}.commons`)
-  .factory('d3', function ($window) {
-    return $window.d3;
-  })
-  .factory('c3', function ($window) {
-    return $window.c3;
-  })
-  .factory('Redux', function($window) {
-    return $window.Redux;
-  })
-  .factory('ReduxThunk', function($window) {
-    return $window.ReduxThunk;
-  })
-  .factory('js_beautify', function ($window) {
-    return $window.js_beautify;
-  })
-  .factory('esprima', function ($window) {
-    return $window.esprima;
+angular.module(`${PKG.name}.feature.experimental`)
+  .controller('LogsController', function() {
+
+    this.test = 'hi!';
   });

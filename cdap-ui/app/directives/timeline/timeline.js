@@ -14,33 +14,11 @@
  * the License.
  */
 
-function LogViewerController ($scope) {
-  'ngInject';
+function link (scope, element) {
 
-  this.configOptions = {
-    time: true,
-    level: true,
-    source: true,
-    message: true
-  };
-
-  angular.forEach($scope.displayOptions, (value, key) => {
-    this.configOptions[key] = value;
-  });
-
-  this.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
-
-  let included = {
-    'ERROR' : false,
-    'WARN' : false,
-    'INFO' : false,
-    'DEBUG' : false,
-    'TRACE' : false
-  };
-
-  this.data = [
+  let timelineData = [
     {
-      time: '2016-03-04 16:28:40, 798',
+      time: '2016-03-04 16:28:40',
       level: 'INFO',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -49,7 +27,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 801',
+      time: '2016-03-04 16:28:43',
       level: 'ERROR',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -57,7 +35,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 900',
+      time: '2016-03-04 16:28:45',
       level: 'WARN',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -66,7 +44,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:40, 798',
+      time: '2016-03-04 16:28:47',
       level: 'DEBUG',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -75,7 +53,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 801',
+      time: '2016-03-04 16:28:51',
       level: 'TRACE',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -83,7 +61,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 900',
+      time: '2016-03-04 16:28:57',
       level: 'INFO',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -92,7 +70,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 801',
+      time: '2016-03-04 16:29:00',
       level: 'ERROR',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -100,7 +78,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 900',
+      time: '2016-03-04 16:29:15',
       level: 'WARN',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -109,7 +87,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:40, 798',
+      time: '2016-03-04 16:29:35',
       level: 'DEBUG',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -118,7 +96,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 801',
+      time: '2016-03-04 16:29:46',
       level: 'TRACE',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -126,7 +104,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 900',
+      time: '2016-03-04 16:29:55',
       level: 'INFO',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -136,50 +114,79 @@ function LogViewerController ($scope) {
     },
   ];
 
-  this.totalCount = this.data.length;
-  let errorCount = 0;
-  let warningCount = 0;
-  let numEvents = 0;
+  //Convert all of the dates to the standard date format
+  timelineData.map( (data) => {
+    data.time = new Date(data.time);
+    return data;
+  });
 
-  //Compute Total
-  for(let k = 0; k < this.data.length; k++){
-    let currentItem = this.data[k].level;
-    if(currentItem === 'ERROR'){
-      errorCount++;
-    } else if(currentItem === 'WARN'){
-      warningCount++;
+  //Contains only the 'WARN' and 'ERROR' events
+  let filteredEvents = timelineData.filter(function(obj) {
+    if(obj.level === 'WARN' || obj.level === 'ERROR'){
+      return true;
     }
+    return false;
+  });
+
+  let minDate = filteredEvents[0],
+      maxDate = filteredEvents[filteredEvents.length-1];
+
+  //Global Variables
+  let width = element.parent()[0].offsetWidth;
+  let height = 50;
+
+  //Plot function call
+  plot();
+
+  function plot() {
+
+    //Define SVG
+    let svg = d3.select('.timeline-log-chart')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+    //Generate circles from the filtered events
+    let circles = svg.selectAll('circle')
+      .data(filteredEvents)
+      .enter()
+      .append('circle');
+
+    let xScale = d3.time.scale()
+                         .domain([minDate, maxDate])
+                         .nice(d3.time.minute)
+                         .range([0,width]);
+
+    let xAxis = d3.svg.axis()
+      .orient('bottom')
+      .scale(xScale);
+
+    //Initially renders circles uniformally across timeline
+    circles.attr('cx', function(d, i) {
+              return i*50 + 25;
+            })
+            .attr('cy', height-height/3)
+            .attr('r', 3)
+            .attr('class', function(d) {
+              if(d.level === 'ERROR'){
+                return 'red-circle';
+              }
+              else if(d.level === 'WARN'){
+                return 'yellow-circle';
+              }
+            });
+
+    svg.append('g')
+      .attr('class', 'xaxis')
+      .attr('transform', 'translate(0,' + (height - 10) + ')')
+      .call(xAxis);
   }
-
-  this.errorCount = errorCount;
-  this.warningCount = warningCount;
-
-  //New 'includeEvent' function
-  this.includeEvent = function(eventType){
-    if(included[eventType]){
-      numEvents--;
-    } else{
-      numEvents++;
-    }
-    included[eventType] = !included[eventType];
-  };
-
-  this.eventFilter = function(log){
-    if(numEvents === 0 || included[log.level]){
-      return log;
-    }
-    return;
-  };
 }
 
 angular.module(PKG.name + '.commons')
-  .directive('myLogViewer', function () {
-    return {
-      templateUrl: 'log-viewer/log-viewer.html',
-      controller: LogViewerController,
-      scope: {
-        displayOptions: '=?'
-      },
-      controllerAs: 'LogViewer'
-    };
-  });
+.directive('myTimeline', function() {
+  return {
+    templateUrl: 'timeline/timeline.html',
+    link: link
+  };
+});

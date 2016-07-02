@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,30 @@
  * the License.
  */
 
-angular.module(`${PKG.name}.commons`)
-  .factory('d3', function ($window) {
-    return $window.d3;
-  })
-  .factory('c3', function ($window) {
-    return $window.c3;
-  })
-  .factory('Redux', function($window) {
-    return $window.Redux;
-  })
-  .factory('ReduxThunk', function($window) {
-    return $window.ReduxThunk;
-  })
-  .factory('js_beautify', function ($window) {
-    return $window.js_beautify;
-  })
-  .factory('esprima', function ($window) {
-    return $window.esprima;
-  });
+@import "../../styles/variables.less";
+
+my-old-log-viewer {
+  .row {
+    border: 1px solid lightgray;
+    padding: 10px 0;
+  }
+  .terminal {
+    background: @cdap-header;
+    color: white;
+    padding: 10px;
+    overflow: auto;
+    border: 1px inset #eeeeee;
+    border-radius: 4px;
+    min-height: 240px;
+    max-height: 600px;
+    pre {
+      background: transparent;
+      color: inherit;
+      border: 0;
+      padding: 0;
+      margin-bottom: 7px;
+      white-space: normal;
+      word-break: normal;
+    }
+  }
+}
