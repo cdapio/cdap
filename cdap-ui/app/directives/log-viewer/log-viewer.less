@@ -178,7 +178,7 @@ my-log-viewer {
         th:hover,
         th:focus {
           cursor: default;
-          ul.dropdown-menu { width: 40px; }
+          ul.dropdown-menu { width: 30px; }
 
           li {
             input { margin: 5px 5px 5px 8px; }
@@ -202,17 +202,35 @@ my-log-viewer {
           width: calc(~'100% - 40px');
           padding-top: 3px;
           overflow: hidden;
+          position: relative;
+          top: 1px;
         }
 
       }
 
-      .time { width: 15%; }
-      .level { width: 25px; }
+      .time {
+        width: 15%;
+      }
+      .time.log-header {
+        padding-left: 20px;
+      }
+      .time div {
+        padding-left: 10px;
+      }
+      .level,
+      .level.log-header {
+        padding-right: 5px;
+        .fa-caret-down {
+          position: relative;
+          top: 6px;
+          float: right;
+        }
+        width: 20px;
+      }
       .source { width: 28%; }
       .log-header {
         font-size: 14px;
       }
-
       tbody {
         .message {
           padding: 0;
@@ -238,19 +256,20 @@ my-log-viewer {
 
         .icon-column {
           cursor: pointer;
-          width: 25px;
+          width: 24px;
           height: 30px;
           position: relative;
           top: -8px;
           display: inline-block;
           background-color: #cccccc;
           cursor: pointer;
+          border-right: solid 1px @border-color;
         }
 
         .icon-column .fa {
           color: #7f7f7f;
           position: relative;
-          left: 8px;
+          left: 7px;
           top: 6px;
         }
 
