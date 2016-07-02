@@ -133,7 +133,7 @@ function link (scope, element) {
 
   //Global Variables
   let width = element.parent()[0].offsetWidth;
-  let height = 60;
+  let height = 50;
 
   //Plot function call
   plot();
@@ -178,7 +178,7 @@ function link (scope, element) {
 
     svg.append('g')
       .attr('class', 'xaxis')
-      .attr('transform', 'translate(0,' + (height - 15) + ')')
+      .attr('transform', 'translate(0,' + (height - 10) + ')')
       .call(xAxis);
   }
 }

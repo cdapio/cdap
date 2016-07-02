@@ -113,27 +113,26 @@
 
           <!-- MESSAGE -->
           <td class="message"
-              ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded"
               ng-if="LogViewer.configOptions.message"
               ng-class="{'stack-trace-expanded': log.isStackTraceExpanded,
                 'stack-trace-available': log.message.stackTrace }">
             <div class="icon-column"
                  ng-show="log.isStackTraceExpanded"
-                 ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded">
+                 ng-click=" log.message.stackTrace && (log.isStackTraceExpanded = !log.isStackTraceExpanded)">
               <span class="fa"
-                    ng-class="{'fa-minus': log.isStackTraceExpanded }"
-                    ng-click="log.isStackTraceExpanded = !log.isStackTraceExpanded">
+                    ng-class="{'fa-minus': log.isStackTraceExpanded }">
               </span>
             </div>                
             <div class="table-text-content-message message-main">
-              <div class="message-column">
+              <div class="message-column"
+                   ng-click=" log.message.stackTrace && (log.isStackTraceExpanded = !log.isStackTraceExpanded)">
                 &nbsp;&nbsp;{{ ::log.message.content }}
               </div>
             </div>
 
             <div class="stack-trace"
                  ng-class="{'expanded': LogViewer.isMessageExpanded}"
-                 ng-if="log.isStackTraceExpanded">
+                 ng-if="log.isStackTraceExpanded && log.message.stackTrace">
               <pre>{{ log.message.stackTrace }}</pre>
             </div>
 

@@ -138,6 +138,7 @@ my-log-viewer {
 
       th {
         line-height: 25px;
+        border-color: @border-color;
       }
 
       .expand-all-btn {
@@ -161,12 +162,17 @@ my-log-viewer {
         height: 10px;
         overflow: hidden;
         font-size: 12px;
+        border-color: @border-color;
       }
       .table {
+        &.table-bordered {
+          border-color: #cccccc;
+        }
         margin-top: 0;
         background-color: @table-background-color;
         overflow: hidden;
         font-size: 12px;
+        border: 1px solid @border-color;
 
         th,
         th:hover,
@@ -190,6 +196,7 @@ my-log-viewer {
           overflow: hidden;
         }
         .table-text-content-message {
+          cursor: pointer;
           display: inline-block;
           height: 20px;
           width: calc(~'100% - 40px');
@@ -217,7 +224,6 @@ my-log-viewer {
       .message {
         width: 50%;
         clear: both;
-        cursor: pointer;
 
         .message-main {
           padding-right: 10px;
@@ -232,18 +238,19 @@ my-log-viewer {
 
         .icon-column {
           cursor: pointer;
-          width: 23px;
+          width: 25px;
           height: 30px;
           position: relative;
           top: -8px;
           display: inline-block;
           background-color: #cccccc;
+          cursor: pointer;
         }
 
         .icon-column .fa {
           color: #7f7f7f;
           position: relative;
-          left: 7px;
+          left: 8px;
           top: 6px;
         }
 
@@ -261,6 +268,8 @@ my-log-viewer {
           pre {
             position: relative;
             top: 8px;
+            left: -10px;
+            font-size: 12px;
             background-color: @stack-trace-background-color;
             color: @stack-trace-font-color;
             white-space: pre-wrap;
