@@ -18,44 +18,14 @@
 # Configure HDFS Pageblob support for CDAP HDInsight cluster
 #
 
-# Arguments supplied by https://raw.githubusercontent.com/hdinsight/Edge-Node-Scripts/release-12-1-2015/edgeNodeSetup.sh
-#CLUSTERNAME=${1}
-#USERID=${2}
-#PASSWD=${3}
-#CUSTOMPARAMETER=${4} # Not used
-#SSHUSER=${5}
-
 # Ambari constants
 AMBARICONFIGS_SH=/var/lib/ambari-server/resources/scripts/configs.sh
 AMBARIPORT=8080
-
-
-# CDAP config
-# The git branch to clone
-CDAP_BRANCH='release/3.4'
-# Optional tag to checkout - All released versions of this script should set this
-CDAP_TAG=''
-# The CDAP package version passed to Chef
-CDAP_VERSION='3.4.2-1'
-# The version of Chef to install
-CHEF_VERSION='12.7.2'
-# cdap-site.xml configuration parameters
-EXPLORE_ENABLED='true'
-
-__tmpdir="/tmp/cdap_install.$$.$(date +%s)"
-__gitdir="${__tmpdir}/cdap"
-
-__packerdir="${__gitdir}/cdap-distributions/src/packer/scripts"
-__cdap_site_template="${__gitdir}/cdap-distributions/src/hdinsight/cdap-conf.json"
-
+ACTIVEAMBARIHOST=headnodehost
 
 # Function definitions
 
 die() { echo "ERROR: ${*}"; exit 1; };
-
-__cleanup_tmpdir() { test -d ${__tmpdir} && rm -rf ${__tmpdir}; };
-__create_tmpdir() { mkdir -p ${__tmpdir}; };
-
 
 checkHostNameAndSetClusterName() {
     fullHostName=$(hostname -f)
@@ -71,23 +41,14 @@ checkHostNameAndSetClusterName() {
     echo "Cluster Name=$CLUSTERNAME"
 }
 
-# HDInsight cluster maintains an /etc/hosts entry 'headnodehost' to designate active master.
-# Here on the edgenode we only have 'headnode0' and 'headnode1', so we can only guess and check
-# Sets ${ACTIVEAMBARIHOST} if successful
-#setHeadNodeOrDie() {
-#  __validateAmbariConnectivity 'headnode0' || __validateAmbariConnectivity 'headnode1' || die 'Could not determine active headnode'
-#}
-
-# Given a candidate Ambari host, try to perform an API GET
+# Try to perform an Ambari API GET
 # Dies if credentials are bad
 __validateAmbariConnectivity() {
-    ACTIVEAMBARIHOST=headnodehost
     coreSiteContent=$(bash ${AMBARICONFIGS_SH} -u ${USERID} -p ${PASSWD} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site)
-    local __ret=$?
     if [[ ${coreSiteContent} == *"[ERROR]"* && ${coreSiteContent} == *"Bad credentials"* ]]; then
-        die '[ERROR] Username and password are invalid. Exiting!'
+        echo '[ERROR] Username and password are invalid. Exiting!'
+        exit 134
     fi
-    return ${__ret}
 }
 
 # Given a config type, name, and value, set the configuration via the Ambari API
@@ -101,17 +62,6 @@ setAmbariConfig() {
     if [[ ${updateResult} != *"Tag:version"* ]] && [[ ${updateResult} == *"[ERROR]"* ]]; then
         die "[ERROR] Failed to update ${__configtype}: ${updateResult}"
     fi
-}
-
-# DANGEROUS! unless you know your input is unique
-# Runs sed -i to update local Hadoop/HBase client configuration
-substituteLocalConfigValue() {
-    local __oldVal=${1}
-    local __newVal=${2}
-
-    for f in $(ls -1 /etc/hadoop/conf/*.xml /etc/hbase/conf/*.xml) ; do
-      sed -i.old -e "s#${__oldVal}#${__newVal}#g" ${f}
-    done
 }
 
 # Fetches value of fs.azure.page.blob.dir, appends '/cdap' to it, updates it via Ambari API, updates the local client configurations, and restarts cluster services
@@ -129,24 +79,7 @@ updateFsAzurePageBlobDirForCDAP() {
     fi
     echo "Updating fs.azure.page.blob.dir to ${newValue}"
     setAmbariConfig 'core-site' 'fs.azure.page.blob.dir' ${newValue} || die "Could not update Ambari config"
-    # substituteLocalConfigValue ${currentValue} ${newValue} || die "Could not update Local Hadoop Client config"
     restartCdapDependentClusterServices
-}
-
-__waitForServiceState() {
-    local __svc=${1}
-    local __state=${2}
-
-    for i in {1..120} ; do
-      __currState=$(curl -s -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X GET http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${__svc} | grep \"state\" | awk '{ print $3}' | sed -e 's/"\(.*\)"[,]*/\1/')
-      if [ "${__state}" == "${__currState}" ]; then
-        return 0
-      else
-        sleep 5
-      fi
-    done
-    echo "ERROR: giving up waiting for ${__svc} state to become ${__state}. Current state: ${__currState}"
-    return 1
 }
 
 # Stop an Ambari cluster service
@@ -179,34 +112,22 @@ startServiceViaRest() {
 }
 
 # Restart Ambari cluster services
-# Ambari API is asynchronous, so this implements polling to make it somewhat synchronous
 restartCdapDependentClusterServices() {
     stopServiceViaRest HBASE
     stopServiceViaRest YARN
     stopServiceViaRest MAPREDUCE2
     stopServiceViaRest HDFS
 
-#    __waitForServiceState HBASE INSTALLED || die "Could not stop service HBASE"
-#    __waitForServiceState YARN INSTALLED || die "Could not stop service YARN"
-#    __waitForServiceState MAPREDUCE2 INSTALLED || die "Could not stop service MAPREDUCE2"
-#    __waitForServiceState HDFS INSTALLED || die "Could not stop service HDFS"
-
     startServiceViaRest HDFS
     startServiceViaRest MAPREDUCE2
     startServiceViaRest YARN
     startServiceViaRest HBASE
-
-#    __waitForServiceState HDFS STARTED || die "Could not start service HDFS"
-#    __waitForServiceState MAPREDUCE2 STARTED || die "Could not start service MAPREDUCE2"
-#    __waitForServiceState YARN STARTED || die "Could not start service YARN"
-#    __waitForServiceState HBASE STARTED || die "Could not start service HBASE"
 }
 
 
 # Begin Ambari Cluster Prep
 
 USERID=$(echo -e "import hdinsight_common.Constants as Constants\nprint Constants.AMBARI_WATCHDOG_USERNAME" | python)
-
 echo "USERID=$USERID"
 
 PASSWD=$(echo -e "import hdinsight_common.ClusterManifestParser as ClusterManifestParser\nimport hdinsight_common.Constants as Constants\nimport base64\nbase64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password\nprint base64.b64decode(base64pwd)" | python)
@@ -214,9 +135,6 @@ PASSWD=$(echo -e "import hdinsight_common.ClusterManifestParser as ClusterManife
 checkHostNameAndSetClusterName
 
 __validateAmbariConnectivity
-
-# Find/Validate Ambari connectivity
-#setHeadNodeOrDie && echo "Found active Ambari host: ${ACTIVEAMBARIHOST}"
 
 # Update necessary hadoop configuration
 updateFsAzurePageBlobDirForCDAP
