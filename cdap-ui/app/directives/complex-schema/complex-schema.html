@@ -33,45 +33,48 @@
     </div>
   </div>
 
-  <div ng-repeat="field in ComplexSchema.parsedSchema track by $index">
-    <div class="clearfix">
-      <div class="input-column">
-        <input type="text"
-               class="form-control"
-               ng-model="field.name"
-               ng-blur="ComplexSchema.formatOutput()">
-      </div>
-
-      <div class="type-column">
-        <select class="form-control"
-                ng-model="field.displayType"
-                ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
-                ng-change="(field.type = field.displayType) && ComplexSchema.formatOutput()">
-        </select>
-      </div>
-
-      <div class="fields-actions">
-        <div class="checkbox text-center">
-          <input type="checkbox"
-                 ng-model="field.nullable"
-                 ng-change="ComplexSchema.formatOutput()">
+  <fieldset ng-disabled="ComplexSchema.isDisabled">
+    <div ng-repeat="field in ComplexSchema.parsedSchema track by $index">
+      <div class="clearfix">
+        <div class="input-column">
+          <input type="text"
+                 class="form-control"
+                 ng-model="field.name"
+                 ng-blur="ComplexSchema.formatOutput()">
         </div>
 
-        <div class="actions-buttons text-right">
-          <i class="text-danger fa fa-trash"
-             ng-click="ComplexSchema.removeField($index)">
-          </i>
-          <i class="fa fa-plus"
-             ng-click="ComplexSchema.addField($index)">
-          </i>
+        <div class="type-column">
+          <select class="form-control"
+                  ng-model="field.displayType"
+                  ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
+                  ng-change="(field.type = field.displayType) && ComplexSchema.formatOutput()">
+          </select>
+        </div>
+
+        <div class="fields-actions">
+          <div class="checkbox text-center">
+            <input type="checkbox"
+                   ng-model="field.nullable"
+                   ng-change="ComplexSchema.formatOutput()">
+          </div>
+
+          <div class="actions-buttons text-right" ng-if="!ComplexSchema.isDisabled">
+            <i class="text-danger fa fa-trash"
+               ng-click="ComplexSchema.removeField($index)">
+            </i>
+            <i class="fa fa-plus"
+               ng-click="ComplexSchema.addField($index)">
+            </i>
+          </div>
         </div>
       </div>
+
+      <my-embedded-schema-selector
+        type="field.type"
+        display-type="field.displayType"
+        parent-format-output="ComplexSchema.formatOutput()"
+        is-disabled="ComplexSchema.isDisabled">
+      </my-embedded-schema-selector>
     </div>
-
-    <my-embedded-schema-selector
-      type="field.type"
-      display-type="field.displayType"
-      parent-format-output="ComplexSchema.formatOutput()">
-    </my-embedded-schema-selector>
-  </div>
+  </fieldset>
 </div>

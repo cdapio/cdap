@@ -15,27 +15,30 @@
 -->
 
 <div class="array-schema-container">
-  <div class="clearfix">
-    <div class="input-column no-type">
-      <select class="form-control"
-              ng-model="ArraySchema.items.displayType"
-              ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
-              ng-change="(ArraySchema.items.type = ArraySchema.items.displayType) && ArraySchema.formatOutput()">
-      </select>
-    </div>
+  <fieldset ng-disabled="ArraySchema.isDisabled">
+    <div class="clearfix">
+      <div class="input-column no-type">
+        <select class="form-control"
+                ng-model="ArraySchema.items.displayType"
+                ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
+                ng-change="(ArraySchema.items.type = ArraySchema.items.displayType) && ArraySchema.formatOutput()">
+        </select>
+      </div>
 
-    <div class="fields-actions">
-      <div class="checkbox no-trash text-center">
-        <input type="checkbox"
-               ng-model="ArraySchema.items.nullable"
-               ng-change="ArraySchema.formatOutput()">
+      <div class="fields-actions">
+        <div class="checkbox no-trash text-center">
+          <input type="checkbox"
+                 ng-model="ArraySchema.items.nullable"
+                 ng-change="ArraySchema.formatOutput()">
+        </div>
       </div>
     </div>
-  </div>
+  </fieldset>
 
   <my-embedded-schema-selector
     type="ArraySchema.items.type"
     display-type="ArraySchema.items.displayType"
-    parent-format-output="ArraySchema.formatOutput()">
+    parent-format-output="ArraySchema.formatOutput()"
+    is-disabled="ArraySchema.isDisabled">
   </my-embedded-schema-selector>
 </div>

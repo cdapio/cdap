@@ -20,7 +20,8 @@
        ng-switch-when="enum">
     <my-enum-schema-wrapper ng-model="Embedded.type"
                             type="COMPLEX"
-                            parent-format-output="Embedded.parentFormatOutput()">
+                            parent-format-output="Embedded.parentFormatOutput()"
+                            is-disabled="Embedded.isDisabled">
     </my-enum-schema-wrapper>
   </div>
 
@@ -28,7 +29,8 @@
        ng-switch-when="array">
     <my-array-schema-wrapper ng-model="Embedded.type"
                              type="COMPLEX"
-                             parent-format-output="Embedded.parentFormatOutput()">
+                             parent-format-output="Embedded.parentFormatOutput()"
+                             is-disabled="Embedded.isDisabled">
     </my-array-schema-wrapper>
   </div>
 
@@ -36,7 +38,8 @@
        ng-switch-when="map">
     <my-map-schema-wrapper ng-model="Embedded.type"
                            type="COMPLEX"
-                           parent-format-output="Embedded.parentFormatOutput()">
+                           parent-format-output="Embedded.parentFormatOutput()"
+                           is-disabled="Embedded.isDisabled">
     </my-map-schema-wrapper>
   </div>
 
@@ -44,7 +47,8 @@
        ng-switch-when="union">
     <my-union-schema-wrapper ng-model="Embedded.type"
                              type="COMPLEX"
-                             parent-format-output="Embedded.parentFormatOutput()">
+                             parent-format-output="Embedded.parentFormatOutput()"
+                             is-disabled="Embedded.isDisabled">
     </my-union-schema-wrapper>
   </div>
 
@@ -52,7 +56,8 @@
        ng-switch-when="record">
     <my-record-schema ng-model="Embedded.type"
                       type="COMPLEX"
-                      parent-format-output="Embedded.parentFormatOutput()">
+                      parent-format-output="Embedded.parentFormatOutput()"
+                      is-disabled="Embedded.isDisabled">
     </my-record-schema>
   </div>
 </div>
