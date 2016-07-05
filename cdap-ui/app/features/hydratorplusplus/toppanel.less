@@ -230,6 +230,8 @@ body.theme-cdap {
           height: 185px;
           cursor: auto;
           padding: 10px;
+          width: 100%;
+          position: absolute;
           @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
           .box-shadow(@box-shadow);
           div.pipeline-type {
@@ -277,8 +279,39 @@ body.theme-cdap {
         > my-card {
           flex: 1;
           margin-right: 10px;
+          &.resources,
+          &.engine {
+            flex-grow: 0.5;
+          }
           &:last-child {
             margin-right: 0;
+          }
+          .select-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            color: #6d6d6d;
+
+            > .cron-select {
+              margin-left: 5px;
+              color: inherit;
+            }
+            .cron-select {
+              transition: none;
+              flex-grow: 1;
+              color: inherit;
+              width: auto;
+            }
+            .select-options {
+              margin-left: 5px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              > * {
+                margin-left: 5px;
+              }
+            }
           }
         }
       }

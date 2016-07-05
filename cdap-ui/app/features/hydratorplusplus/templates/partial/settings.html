@@ -16,13 +16,14 @@
 
 <div ng-controller="HydratorPlusPlusSettingsCtrl as HydratorPlusPlusSettingsCtrl"
      class="pipeline-settings-content">
-  <my-card title="Schema">
-    My Schema Stuff
+  <my-card title="Schedule" class="schedule">
+    <cron-selection class="select-wrapper" output="HydratorPlusPlusSettingsCtrl.cron"
+            init="HydratorPlusPlusSettingsCtrl.initialCron"></cron-selection>
   </my-card>
-  <my-card title="Resources">
+  <my-card title="Resources" class="resources">
     Resources stuff
   </my-card>
-  <my-card title="Engine">
+  <my-card title="Engine" class="engine">
     Engine level stuff
   </my-card>
 </div>
