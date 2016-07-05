@@ -38,20 +38,23 @@
       <div class="input-column">
         <input type="text"
                class="form-control"
-               ng-model="field.name">
+               ng-model="field.name"
+               ng-blur="ComplexSchema.formatOutput()">
       </div>
 
       <div class="type-column">
         <select class="form-control"
                 ng-model="field.displayType"
                 ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
-                ng-change="field.type = field.displayType">
+                ng-change="(field.type = field.displayType) && ComplexSchema.formatOutput()">
         </select>
       </div>
 
       <div class="fields-actions">
         <div class="checkbox text-center">
-          <input type="checkbox" ng-model="field.nullable">
+          <input type="checkbox"
+                 ng-model="field.nullable"
+                 ng-change="ComplexSchema.formatOutput()">
         </div>
 
         <div class="actions-buttons text-right">
@@ -67,7 +70,8 @@
 
     <my-embedded-schema-selector
       type="field.type"
-      display-type="field.displayType">
+      display-type="field.displayType"
+      parent-format-output="ComplexSchema.formatOutput()">
     </my-embedded-schema-selector>
   </div>
 </div>

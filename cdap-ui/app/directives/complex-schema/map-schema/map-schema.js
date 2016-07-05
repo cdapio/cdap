@@ -14,10 +14,11 @@
  * the License.
  */
 
-function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
+function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout) {
   'ngInject';
 
   var vm = this;
+  let timeout;
 
   vm.SCHEMA_TYPES = SCHEMA_TYPES.types;
 
@@ -39,7 +40,7 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
         displayType: 'string',
         nullable: false
       };
-      formatOutput();
+      vm.formatOutput();
       return;
     }
 
@@ -48,10 +49,10 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
     vm.fields.keys = SchemaHelper.parseType(parsed.getKeysType());
     vm.fields.values = SchemaHelper.parseType(parsed.getValuesType());
 
-    formatOutput();
+    vm.formatOutput();
   }
 
-  function formatOutput() {
+  vm.formatOutput = () => {
     let obj = {
       type: 'map',
       keys: vm.fields.keys.nullable ? [vm.fields.keys.type, 'null'] : vm.fields.keys.type,
@@ -59,10 +60,18 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
     };
 
     vm.model = obj;
-  }
 
-  $scope.$watch('MapSchema.fields', formatOutput, true);
+    if (typeof vm.parentFormatOutput === 'function') {
+      timeout = $timeout(vm.parentFormatOutput);
+    }
+
+  };
+
   init(vm.model);
+
+  $scope.$on('$destroy', () => {
+    $timeout.cancel(timeout);
+  });
 }
 
 angular.module(PKG.name+'.commons')
@@ -74,7 +83,8 @@ angular.module(PKG.name+'.commons')
     controllerAs: 'MapSchema',
     bindToController: true,
     scope: {
-      model: '=ngModel'
+      model: '=ngModel',
+      parentFormatOutput: '&'
     }
   };
 })
@@ -84,11 +94,12 @@ angular.module(PKG.name+'.commons')
     replace: true,
     scope: {
       model: '=ngModel',
-      type: '@'
+      type: '@',
+      parentFormatOutput: '&'
     },
     link: (scope, element) => {
       if (scope.type === 'COMPLEX') {
-        $compile('<my-map-schema ng-model="model"></my-map-schema')(scope, (cloned) => {
+        $compile('<my-map-schema ng-model="model" parent-format-output="parentFormatOutput()"></my-map-schema')(scope, (cloned) => {
           element.append(cloned);
         });
       }

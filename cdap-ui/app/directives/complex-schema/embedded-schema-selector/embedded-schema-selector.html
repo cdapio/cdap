@@ -18,26 +18,41 @@
      ng-switch="Embedded.displayType">
   <div class="col-xs-12"
        ng-switch-when="enum">
-    <my-enum-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-enum-schema-wrapper>
+    <my-enum-schema-wrapper ng-model="Embedded.type"
+                            type="COMPLEX"
+                            parent-format-output="Embedded.parentFormatOutput()">
+    </my-enum-schema-wrapper>
   </div>
 
   <div class="col-xs-12"
        ng-switch-when="array">
-    <my-array-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-array-schema-wrapper>
+    <my-array-schema-wrapper ng-model="Embedded.type"
+                             type="COMPLEX"
+                             parent-format-output="Embedded.parentFormatOutput()">
+    </my-array-schema-wrapper>
   </div>
 
   <div class="col-xs-12"
        ng-switch-when="map">
-    <my-map-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-map-schema-wrapper>
+    <my-map-schema-wrapper ng-model="Embedded.type"
+                           type="COMPLEX"
+                           parent-format-output="Embedded.parentFormatOutput()">
+    </my-map-schema-wrapper>
   </div>
 
   <div class="col-xs-12"
        ng-switch-when="union">
-    <my-union-schema-wrapper ng-model="Embedded.type" type="COMPLEX"></my-union-schema-wrapper>
+    <my-union-schema-wrapper ng-model="Embedded.type"
+                             type="COMPLEX"
+                             parent-format-output="Embedded.parentFormatOutput()">
+    </my-union-schema-wrapper>
   </div>
 
   <div class="col-xs-12"
        ng-switch-when="record">
-    <my-record-schema ng-model="Embedded.type" type="COMPLEX"></my-record-schema>
+    <my-record-schema ng-model="Embedded.type"
+                      type="COMPLEX"
+                      parent-format-output="Embedded.parentFormatOutput()">
+    </my-record-schema>
   </div>
 </div>

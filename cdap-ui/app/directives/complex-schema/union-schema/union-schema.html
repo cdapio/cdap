@@ -21,13 +21,15 @@
         <select class="form-control"
                 ng-model="item.displayType"
                 ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
-                ng-change="item.type = item.displayType">
+                ng-change="(item.type = item.displayType) && UnionSchema.formatOutput()">
         </select>
       </div>
 
       <div class="fields-actions">
         <div class="checkbox text-center">
-          <input type="checkbox" ng-model="item.nullable">
+          <input type="checkbox"
+                 ng-model="item.nullable"
+                 ng-change="UnionSchema.formatOutput()">
         </div>
 
         <div class="actions-buttons text-right">
@@ -43,7 +45,8 @@
 
     <my-embedded-schema-selector
       type="item.type"
-      display-type="item.displayType">
+      display-type="item.displayType"
+      parent-format-output="UnionSchema.formatOutput()">
     </my-embedded-schema-selector>
   </div>
 </div>
