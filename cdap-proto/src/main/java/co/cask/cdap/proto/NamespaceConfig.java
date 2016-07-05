@@ -18,6 +18,8 @@ package co.cask.cdap.proto;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Objects;
+
 /**
  * Represents the configuration of a namespace. This class needs to be GSON serializable.
  */
@@ -61,22 +63,15 @@ public class NamespaceConfig {
 
     NamespaceConfig that = (NamespaceConfig) o;
 
-    if (!schedulerQueueName.equals(that.schedulerQueueName)) {
-      return false;
-    }
-    if (!principal.equals(that.principal)) {
-      return false;
-    }
-    return keytabPath.equals(that.keytabPath);
+    return Objects.equals(schedulerQueueName, that.schedulerQueueName)
+      && Objects.equals(principal, that.principal)
+      && Objects.equals(keytabPath, that.keytabPath);
 
   }
 
   @Override
   public int hashCode() {
-    int result = schedulerQueueName.hashCode();
-    result = 31 * result + principal.hashCode();
-    result = 31 * result + keytabPath.hashCode();
-    return result;
+    return Objects.hash(schedulerQueueName, principal, keytabPath);
   }
 
   @Override

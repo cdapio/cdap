@@ -117,7 +117,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
         if (!Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
           builder.setSchedulerQueueName(config.getSchedulerQueueName());
         }
-        // both or none of the following two must be set
         if (!Strings.isNullOrEmpty(config.getPrincipal())) {
           builder.setPrincipal(config.getPrincipal());
         }

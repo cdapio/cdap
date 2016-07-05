@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
@@ -36,12 +37,17 @@ public class PropertiesResolver {
   private final PreferencesStore prefStore;
   private final SchedulerQueueResolver queueResolver;
   private final ImpersonationUserResolver impersonationUserResolver;
+  private final boolean kerberosEnabled;
 
   @Inject
-  PropertiesResolver(PreferencesStore prefStore, NamespaceStore store, CConfiguration cConf) {
+  PropertiesResolver(PreferencesStore prefStore, CConfiguration cConf,
+                     SchedulerQueueResolver schedulerQueueResolver,
+                     ImpersonationUserResolver impersonationUserResolver) {
     this.prefStore = prefStore;
-    this.queueResolver = new SchedulerQueueResolver(cConf, store);
-    this.impersonationUserResolver = new ImpersonationUserResolver(cConf, store);
+    this.queueResolver = schedulerQueueResolver;
+    this.impersonationUserResolver = impersonationUserResolver;
+
+    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
   }
 
   public Map<String, String> getUserProperties(Id.Program id) {
@@ -54,8 +60,10 @@ public class PropertiesResolver {
   public Map<String, String> getSystemProperties(Id.Program id) {
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
-    systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationUserResolver.getPrincipal(id));
-    systemArgs.put(ProgramOptionConstants.KEYTAB_PATH, impersonationUserResolver.getKeytabPath(id));
+    if (kerberosEnabled) {
+      systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationUserResolver.getPrincipal(id.toEntityId()));
+      systemArgs.put(ProgramOptionConstants.KEYTAB_PATH, impersonationUserResolver.getKeytabPath(id.toEntityId()));
+    }
     return systemArgs;
   }
 }

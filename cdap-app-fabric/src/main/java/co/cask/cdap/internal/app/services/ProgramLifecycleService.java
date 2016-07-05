@@ -236,14 +236,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
   public synchronized void start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+    if (isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
+      throw new ConflictException(String.format("Program %s is already running", programId));
+    }
+
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId.toId());
     Map<String, String> userArgs = propertiesResolver.getUserProperties(programId.toId());
     if (overrides != null) {
       userArgs.putAll(overrides);
-    }
-
-    if (isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
-      throw new ConflictException(String.format("Program %s is already running", programId));
     }
 
     ProgramRuntimeService.RuntimeInfo runtimeInfo = start(programId, sysArgs, userArgs, debug);

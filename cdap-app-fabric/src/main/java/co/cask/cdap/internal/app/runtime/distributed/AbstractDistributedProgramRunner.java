@@ -50,6 +50,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -81,11 +82,16 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
@@ -168,30 +174,34 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     return new AbortOnTimeoutEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE));
   }
 
-  // returns the path of the file, if its a local URI. If it's an HDFS URI, copy it to local file system first.
+  // returns the path of the file, if its a local URI. If it's not a local file, copy it to local file system first.
   private String getKeytabPath(URI keytabURI, File tempDir) throws IOException {
-    if (!"hdfs".equals(keytabURI.getScheme())) {
+    // if scheme is not specified, assume its local file
+    if (keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme())) {
       return keytabURI.getPath();
     }
 
     // create a local file with restricted permissions
-    File localKeytabFile = new File(tempDir, "keytab.localized");
-    Preconditions.checkState(localKeytabFile.createNewFile(), "Failed to create local keytab file.");
-
     // only allow the owner to read/write, since it contains credentials
-    java.nio.file.Files.setPosixFilePermissions(localKeytabFile.toPath(),
-                                                ImmutableSet.of(PosixFilePermission.OWNER_WRITE,
-                                                                PosixFilePermission.OWNER_READ));
+    FileAttribute<Set<PosixFilePermission>> ownerOnlyAttrs =
+      PosixFilePermissions.asFileAttribute(ImmutableSet.of(PosixFilePermission.OWNER_WRITE,
+                                                           PosixFilePermission.OWNER_READ));
+    Path localKeytabFile = java.nio.file.Files.createFile(Paths.get(tempDir.getAbsolutePath(), "keytab.localized"),
+                                                          ownerOnlyAttrs);
 
     // copy from HDFS to this local file
     LocationFactory locationFactory = new FileContextLocationFactory(hConf);
     final Location location = locationFactory.create(keytabURI);
     LOG.info("Copying keytab file from {} to {}", location, localKeytabFile);
-    try (InputStream is = location.getInputStream()) {
-      ByteStreams.copy(is, Files.newOutputStreamSupplier(localKeytabFile));
-    }
+    Files.copy(new InputSupplier<InputStream>() {
+      @Override
+      public InputStream getInput() throws IOException {
+        return location.getInputStream();
+      }
+    }, localKeytabFile.toFile());
 
-    return localKeytabFile.getPath(); // /var/tmp/cdap/data/tmp/1466730158980-0/new.keytab
+
+    return localKeytabFile.toFile().getPath();
   }
 
   @Override
@@ -207,7 +217,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
       final Map<String, LocalizeResource> localizeResources = new HashMap<>();
       final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
-                                                            // this call to createTempDir seems unnecessary
                                                             DirUtils.createTempDir(tempDir));
 
       // Copy config files to local temp, and ask Twill to localize it to container.
@@ -338,22 +347,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         }
       };
 
-      if (SecurityUtil.isKerberosEnabled(cConf)) {
-        String principal = options.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
-        String keytabPath = options.getArguments().getOption(ProgramOptionConstants.KEYTAB_PATH);
-        LOG.info("Configured principal={}, keytab={}", principal, keytabPath);
-
-        String expandedPrincipal = SecurityUtil.expandPrincipal(principal);
-        String localizedKeytabPath = getKeytabPath(URI.create(keytabPath), tempDir);
-        LOG.info("Logging in as: principal={}, keytab={}", expandedPrincipal, localizedKeytabPath);
-
-        UserGroupInformation aliUGI =
-          UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localizedKeytabPath);
-        return ProgramRunners.runAsUGI(aliUGI, callable);
-      } else {
-        // otherwise, simply launch as the current user
+      if (!SecurityUtil.isKerberosEnabled(cConf)) {
+        // simply launch as the current user, if security isn't enabled
         return callable.call();
       }
+
+      // otherwise, execute as the configured user
+      String principal = options.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+      String keytabPath = options.getArguments().getOption(ProgramOptionConstants.KEYTAB_PATH);
+      LOG.info("Configured principal={}, keytab={}", principal, keytabPath);
+
+      String expandedPrincipal = SecurityUtil.expandPrincipal(principal);
+      String localizedKeytabPath = getKeytabPath(URI.create(keytabPath), tempDir);
+      LOG.info("Logging in as: principal={}, keytab={}", expandedPrincipal, localizedKeytabPath);
+
+      UserGroupInformation impersonatedUGI =
+        UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localizedKeytabPath);
+      return ProgramRunners.runAsUGI(impersonatedUGI, callable);
 
     } catch (Exception e) {
       deleteDirectory(tempDir);

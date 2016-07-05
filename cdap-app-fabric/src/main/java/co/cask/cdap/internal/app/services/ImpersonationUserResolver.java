@@ -18,12 +18,16 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
+
+import javax.annotation.Nullable;
 
 /**
  * Helper class to resolve the principal which CDAP will launch programs as.
@@ -34,46 +38,45 @@ class ImpersonationUserResolver {
   private final String defaultPrincipal;
   private final String defaultKeytabPath;
 
-  /**
-   * Construct SchedulerQueueResolver with CConfiguration and Store.
-   */
+  @Inject
   ImpersonationUserResolver(CConfiguration cConf, NamespaceStore store) {
-    this.defaultPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    this.defaultKeytabPath = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+    this.defaultPrincipal = cConf.get(Constants.Security.CFG_CDAP_PROGRAMS_KRB_PRINCIPAL);
+    this.defaultKeytabPath = cConf.get(Constants.Security.CFG_CDAP_PROGRAMS_KRB_KEYTAB_PATH);
     this.store = store;
   }
 
   /**
    * Get Impersonated user at namespace level. If it is empty, returns the default principal.
    *
-   * @param programId NamespaceId
    * @return configured principal.
    */
-  String getPrincipal(Id.Program programId) {
-    String namespaceUserSetting = getNamespaceConfig(programId.getNamespace()).getPrincipal();
+  String getPrincipal(ProgramId programId) {
+    String namespaceUserSetting = getNamespaceConfig(programId.getNamespaceId()).getPrincipal();
     if (!Strings.isNullOrEmpty(namespaceUserSetting)) {
       return namespaceUserSetting;
     }
+    Preconditions.checkNotNull(defaultPrincipal, "Configured principal is null.");
     return defaultPrincipal;
   }
 
   /**
    * Get configured keytab path at namespace level. If it is empty, returns the default keytab path.
    *
-   * @param programId NamespaceId
    * @return configured keytab path.
    */
-  String getKeytabPath(Id.Program programId) {
-    String keytabPathSetting = getNamespaceConfig(programId.getNamespace()).getKeytabPath();
+  String getKeytabPath(ProgramId programId) {
+    String keytabPathSetting = getNamespaceConfig(programId.getNamespaceId()).getKeytabPath();
     if (!Strings.isNullOrEmpty(keytabPathSetting)) {
       return keytabPathSetting;
     }
+    Preconditions.checkNotNull(defaultKeytabPath, "Configured keytab path is null.");
     return defaultKeytabPath;
   }
 
-  private NamespaceConfig getNamespaceConfig(Id.Namespace namespaceId) {
-    NamespaceMeta meta = store.get(namespaceId);
-    Preconditions.checkNotNull(meta, "Failed to retrieve namespace meta for namespace id {}", namespaceId.getId());
+  private NamespaceConfig getNamespaceConfig(NamespaceId namespaceId) {
+    NamespaceMeta meta = store.get(namespaceId.toId());
+    Preconditions.checkNotNull(meta,
+                               "Failed to retrieve namespace meta for namespace id {}", namespaceId.getNamespace());
     return meta.getConfig();
   }
 }

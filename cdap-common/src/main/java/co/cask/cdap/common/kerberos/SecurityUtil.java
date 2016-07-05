@@ -153,7 +153,7 @@ public final class SecurityUtil {
 
     if (UserGroupInformation.isSecurityEnabled()) {
       validateKeytabPath(keytabPath);
-      String expandedPrincipal = SecurityUtil.expandPrincipal(principal);
+      String expandedPrincipal = expandPrincipal(principal);
       LOG.info("Logging in as: principal={}, keytab={}", principal, keytabPath);
       UserGroupInformation.loginUserFromKeytab(expandedPrincipal, keytabPath);
 
