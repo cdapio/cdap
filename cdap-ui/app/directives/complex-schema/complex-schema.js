@@ -14,7 +14,7 @@
  * the License.
  */
 
-function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid) {
+function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
   'ngInject';
   var vm = this;
 
@@ -22,6 +22,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid) {
 
   vm.parsedSchema = [];
   let recordName;
+  let timeout;
 
   vm.addField = (index) => {
     let placement = index === undefined ? 0 : index + 1;
@@ -31,6 +32,8 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid) {
       displayType: 'string',
       nullable: false
     });
+
+    vm.formatOutput();
   };
 
   vm.removeField = (index) => {
@@ -38,13 +41,15 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid) {
     if (vm.parsedSchema.length === 0) {
       vm.addField();
     }
+
+    vm.formatOutput();
   };
 
   function init(strJson) {
     if (!strJson || strJson === 'record') {
       recordName = uuid.v4();
       vm.addField();
-      formatOutput();
+      vm.formatOutput();
       return;
     }
 
@@ -78,10 +83,10 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid) {
       };
     });
 
-    formatOutput();
+    vm.formatOutput();
   }
 
-  function formatOutput() {
+  vm.formatOutput = () => {
     let outputFields = vm.parsedSchema.filter((field) => {
       return field.name ? true : false;
     }).map( (field) => {
@@ -99,10 +104,17 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid) {
     };
 
     vm.model = obj;
-  }
 
-  $scope.$watch('ComplexSchema.parsedSchema', formatOutput, true);
+    if (typeof vm.parentFormatOutput === 'function') {
+      timeout = $timeout(vm.parentFormatOutput);
+    }
+  };
+
   init(vm.model);
+
+  $scope.$on('$destroy', () => {
+    $timeout.cancel(timeout);
+  });
 
 }
 
@@ -117,7 +129,8 @@ angular.module(PKG.name+'.commons')
     scope: {
       model: '=ngModel',
       recordName: '=',
-      hideHeader: '='
+      hideHeader: '=',
+      parentFormatOutput: '&'
     }
   };
 })
@@ -128,11 +141,12 @@ angular.module(PKG.name+'.commons')
     scope: {
       model: '=ngModel',
       type: '@',
-      recordName: '='
+      recordName: '=',
+      parentFormatOutput: '&'
     },
     link: (scope, element) => {
       if (scope.type === 'COMPLEX') {
-        $compile('<my-complex-schema ng-model="model" record-name="recordName" hide-header="true"></my-complex-schema')(scope, (cloned) => {
+        $compile('<my-complex-schema ng-model="model" record-name="recordName" hide-header="true" parent-format-output="parentFormatOutput()"></my-complex-schema')(scope, (cloned) => {
           element.append(cloned);
         });
       }

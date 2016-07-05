@@ -21,7 +21,8 @@ angular.module(PKG.name+'.commons')
     templateUrl: 'complex-schema/embedded-schema-selector/embedded-schema-selector.html',
     scope: {
       type: '=',
-      displayType: '='
+      displayType: '=',
+      parentFormatOutput: '&'
     },
     bindToController: true,
     controller: function () {},

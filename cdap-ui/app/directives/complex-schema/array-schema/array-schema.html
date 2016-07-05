@@ -20,19 +20,22 @@
       <select class="form-control"
               ng-model="ArraySchema.items.displayType"
               ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
-              ng-change="ArraySchema.items.type = ArraySchema.items.displayType">
+              ng-change="(ArraySchema.items.type = ArraySchema.items.displayType) && ArraySchema.formatOutput()">
       </select>
     </div>
 
     <div class="fields-actions">
       <div class="checkbox no-trash text-center">
-        <input type="checkbox" ng-model="ArraySchema.items.nullable">
+        <input type="checkbox"
+               ng-model="ArraySchema.items.nullable"
+               ng-change="ArraySchema.formatOutput()">
       </div>
     </div>
   </div>
 
   <my-embedded-schema-selector
     type="ArraySchema.items.type"
-    display-type="ArraySchema.items.displayType">
+    display-type="ArraySchema.items.displayType"
+    parent-format-output="ArraySchema.formatOutput()">
   </my-embedded-schema-selector>
 </div>

@@ -14,12 +14,13 @@
  * the License.
  */
 
-function EnumSchemaController (avsc) {
+function EnumSchemaController (avsc, $timeout, $scope) {
   'ngInject';
 
   var vm = this;
 
   vm.symbols = [];
+  let timeout;
 
   vm.addSymbol = (index) => {
     let placement = index === undefined ? 0 : index + 1;
@@ -51,6 +52,10 @@ function EnumSchemaController (avsc) {
       symbols: symbols
     };
     vm.model = obj;
+
+    if (typeof vm.parentFormatOutput === 'function') {
+      timeout = $timeout(vm.formatOutput);
+    }
   };
 
   init(vm.model);
@@ -66,6 +71,10 @@ function EnumSchemaController (avsc) {
     vm.symbols = parsed.getSymbols().map( (symbol) => { return { name: symbol }; });
     vm.formatOutput();
   }
+
+  $scope.$on('$destroy', () => {
+    $timeout.cancel(timeout);
+  });
 }
 
 
@@ -79,6 +88,7 @@ angular.module(PKG.name+'.commons')
     bindToController: true,
     scope: {
       model: '=ngModel',
+      parentFormatOutput: '&'
     }
   };
 })
@@ -88,11 +98,12 @@ angular.module(PKG.name+'.commons')
     replace: true,
     scope: {
       model: '=ngModel',
-      type: '@'
+      type: '@',
+      parentFormatOutput: '&'
     },
     link: (scope, element) => {
       if (scope.type === 'COMPLEX') {
-        $compile('<my-enum-schema ng-model="model"></my-enum-schema')(scope, (cloned) => {
+        $compile('<my-enum-schema ng-model="model" parent-format-output="parentFormatOutput()"></my-enum-schema')(scope, (cloned) => {
           element.append(cloned);
         });
       }

@@ -14,13 +14,14 @@
  * the License.
  */
 
-function ArraySchemaController (avsc, SCHEMA_TYPES, $scope) {
+function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope) {
   'ngInject';
 
   var vm = this;
   vm.SCHEMA_TYPES = SCHEMA_TYPES.types;
 
   vm.items = {};
+  let timeout;
 
   vm.formatOutput = () => {
     let obj = {
@@ -29,6 +30,10 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $scope) {
     };
 
     vm.model = obj;
+
+    if (typeof vm.parentFormatOutput === 'function') {
+      timeout = $timeout(vm.parentFormatOutput);
+    }
   };
 
   function init(strJson) {
@@ -71,9 +76,11 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $scope) {
     vm.formatOutput();
   }
 
-  $scope.$watch('ArraySchema.items', vm.formatOutput, true);
   init(vm.model);
 
+  $scope.$on('$destroy', () => {
+    $timeout.cancel(timeout);
+  });
 }
 
 angular.module(PKG.name+'.commons')
@@ -85,7 +92,8 @@ angular.module(PKG.name+'.commons')
     controllerAs: 'ArraySchema',
     bindToController: true,
     scope: {
-      model: '=ngModel'
+      model: '=ngModel',
+      parentFormatOutput: '&'
     }
   };
 })
@@ -95,11 +103,12 @@ angular.module(PKG.name+'.commons')
     replace: true,
     scope: {
       model: '=ngModel',
-      type: '@'
+      type: '@',
+      parentFormatOutput: '&'
     },
     link: (scope, element) => {
       if (scope.type === 'COMPLEX') {
-        $compile('<my-array-schema ng-model="model"></my-array-schema')(scope, (cloned) => {
+        $compile('<my-array-schema ng-model="model" parent-format-output="parentFormatOutput()"></my-array-schema')(scope, (cloned) => {
           element.append(cloned);
         });
       }

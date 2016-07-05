@@ -14,11 +14,12 @@
  * the License.
  */
 
-function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
+function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout) {
   'ngInject';
 
   var vm = this;
   vm.SCHEMA_TYPES = SCHEMA_TYPES.types;
+  let timeout;
 
   vm.types = [];
 
@@ -29,6 +30,7 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
       displayType: 'string',
       nullable: false
     });
+    vm.formatOutput();
   };
 
   vm.removeType = (index) => {
@@ -36,12 +38,13 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
     if (vm.types.length === 0) {
       vm.addType();
     }
+    vm.formatOutput();
   };
 
   function init(strJson) {
     if (!strJson || strJson === 'union') {
       vm.addType();
-      formatOutput();
+      vm.formatOutput();
       return;
     }
 
@@ -49,19 +52,26 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope) {
 
     vm.types = parsed.getTypes().map(SchemaHelper.parseType);
 
-    formatOutput();
+    vm.formatOutput();
   }
 
-  function formatOutput () {
+  vm.formatOutput = () => {
     let outputArr = vm.types.map((item) => {
       return item.nullable ? [item.type, 'null'] : item.type;
     });
 
     vm.model = outputArr;
-  }
 
-  $scope.$watch('UnionSchema.types', formatOutput, true);
+    if (typeof vm.parentFormatOutput === 'function') {
+      timeout = $timeout(vm.formatOutput);
+    }
+  };
+
   init(vm.model);
+
+  $scope.$on('$destroy', () => {
+    $timeout.cancel(timeout);
+  });
 }
 
 angular.module(PKG.name+'.commons')
@@ -74,6 +84,7 @@ angular.module(PKG.name+'.commons')
     bindToController: true,
     scope: {
       model: '=ngModel',
+      parentFormatOutput: '&'
     }
   };
 })
@@ -83,11 +94,12 @@ angular.module(PKG.name+'.commons')
     replace: true,
     scope: {
       model: '=ngModel',
-      type: '@'
+      type: '@',
+      parentFormatOutput: '&'
     },
     link: (scope, element) => {
       if (scope.type === 'COMPLEX') {
-        $compile('<my-union-schema ng-model="model"></my-union-schema')(scope, (cloned) => {
+        $compile('<my-union-schema ng-model="model" parent-format-output=""></my-union-schema')(scope, (cloned) => {
           element.append(cloned);
         });
       }
