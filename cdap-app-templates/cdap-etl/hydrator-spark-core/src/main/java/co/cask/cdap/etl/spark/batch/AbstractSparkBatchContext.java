@@ -16,27 +16,32 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
+import co.cask.cdap.etl.spark.NoLookupProvider;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link SparkClientContext}.
  */
 public abstract class AbstractSparkBatchContext extends AbstractBatchContext implements BatchContext {
+  protected final Admin admin;
 
-  protected final SparkClientContext sparkContext;
-
-  public AbstractSparkBatchContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
+  protected AbstractSparkBatchContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
     super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
           sparkContext.getLogicalStartTime(), sparkContext.getRuntimeArguments(), sparkContext.getAdmin());
-    this.sparkContext = sparkContext;
+    this.admin = sparkContext.getAdmin();
   }
 
-  @Override
-  public long getLogicalStartTime() {
-    return sparkContext.getLogicalStartTime();
+  protected AbstractSparkBatchContext(JavaSparkExecutionContext sec, DatasetContext datasetContext,
+                                      String stageName, long logicalStartTime) {
+    super(sec.getPluginContext(), datasetContext, sec.getMetrics(), NoLookupProvider.INSTANCE,
+          stageName, logicalStartTime, sec.getRuntimeArguments(), sec.getAdmin());
+    admin = sec.getAdmin();
   }
 
   @Override

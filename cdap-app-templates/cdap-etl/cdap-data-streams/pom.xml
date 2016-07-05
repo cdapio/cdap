@@ -26,25 +26,29 @@
     <version>3.5.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-data-pipeline</artifactId>
-  <name>CDAP Data Pipeline Application</name>
+  <artifactId>cdap-data-streams</artifactId>
+  <name>CDAP Data Streams Application</name>
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.datapipeline.DataPipelineApp</app.main.class>
+    <app.main.class>co.cask.cdap.datastreams.DataStreamsApp</app.main.class>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-etl-batch</artifactId>
-      <version>${project.version}</version>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api-spark</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -54,6 +58,16 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-api-spark</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-etl-proto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-etl-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -69,19 +83,8 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
+      <artifactId>spark-streaming_2.10</artifactId>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-mllib_2.10</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-streaming_2.10</artifactId>
-        </exclusion>
-      </exclusions>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -107,7 +110,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <_exportcontents>co.cask.cdap.etl.api.*;org.apache.avro.*</_exportcontents>
+              <_exportcontents>co.cask.cdap.etl.api.*</_exportcontents>
             </instructions>
           </configuration>
           <executions>
