@@ -247,7 +247,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   private static Path constructNewPath(Path path) {
-    return path.resolveSibling("_NEW");
+    return path.resolveSibling(path + "_NEW");
   }
 
   private static void loadFromPath(KeyStore keyStore, Path path, char[] password)
