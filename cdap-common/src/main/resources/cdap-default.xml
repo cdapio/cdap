@@ -737,6 +737,38 @@
   <!-- Kafka Server Configuration -->
 
   <property>
+    <name>kafka.bind.address</name>
+    <value>${kafka.server.host.name}</value>
+    <description>
+      CDAP Kafka service bind port (deprecated: replaced with kafka.server.host.name)
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.bind.port</name>
+    <value>${kafka.server.port}</value>
+    <description>
+      CDAP Kafka service bind port (deprecated: replaced with kafka.server.port)
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.default.replication.factor</name>
+    <value>${kafka.server.default.replication.factor}</value>
+    <description>
+      CDAP Kafka service replication factor (deprecated: replaced with kafka.server.default.replication.factor)
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.log.dir</name>
+    <value>${kafka.server.log.dirs}</value>
+    <description>
+      CDAP Kafka service log storage directory (deprecated: replaced with kafka.server.log.dirs)
+    </description>
+  </property>
+
+  <property>
     <name>kafka.log.retention.hours</name>
     <value>${kafka.server.log.retention.hours}</value>
     <description>
@@ -788,7 +820,7 @@
     <name>kafka.server.log.dirs</name>
     <value>/tmp/kafka-logs</value>
     <description>
-      CDAP Kafka service log storage directory
+      Comma-separated list of CDAP Kafka service log storage directories
     </description>
   </property>
 
