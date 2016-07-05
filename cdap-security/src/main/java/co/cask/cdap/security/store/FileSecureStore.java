@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.security.securestore;
+package co.cask.cdap.security.store;
 
-import co.cask.cdap.api.security.securestore.SecureStore;
-import co.cask.cdap.api.security.securestore.SecureStoreData;
-import co.cask.cdap.api.security.securestore.SecureStoreManager;
-import co.cask.cdap.api.security.securestore.SecureStoreMetadata;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.gson.Gson;
@@ -100,12 +100,12 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
    * Stores an element in the secure store.
    * @param name Name of the element to store
    * @param data The data that needs to be securely stored
-   * @param properties Metadata associated with the data
-   * @throws IOException
+   * @param description User provided description of the entry.
+   *@param properties Metadata associated with the data  @throws IOException
    */
   @Override
-  public void put(String name, byte[] data, Map<String, String> properties) throws IOException {
-    SecureStoreMetadata meta = SecureStoreMetadata.of(name, properties);
+  public void put(String name, byte[] data, String description, Map<String, String> properties) throws IOException {
+    SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data);
     writeLock.lock();
     try {
@@ -161,6 +161,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
           throw new IOException("Failed to put back the key after a flush failure.", e);
         }
       }
+      throw ioe;
     } finally {
       writeLock.unlock();
     }

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.security.securestore;
+package co.cask.cdap.security.store;
 
-import co.cask.cdap.api.security.securestore.SecureStore;
-import co.cask.cdap.api.security.securestore.SecureStoreData;
-import co.cask.cdap.api.security.securestore.SecureStoreManager;
-import co.cask.cdap.api.security.securestore.SecureStoreMetadata;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import org.apache.commons.io.Charsets;
@@ -50,13 +50,13 @@ public class FileSecureStoreTest {
   private static final String DESCRIPTION2 = "This is the second key.";
 
   static {
-    PROPERTIES_1.put(DESCRIPTION_KEY, DESCRIPTION1);
+    PROPERTIES_1.put("Prop1", "Val1");
   }
 
   private static final Map<String, String> PROPERTIES_2 = new HashMap<>();
 
   static {
-    PROPERTIES_2.put(DESCRIPTION_KEY, DESCRIPTION2);
+    PROPERTIES_2.put("Prop2", "Val2");
   }
 
   private SecureStoreManager secureStoreManager;
@@ -77,8 +77,8 @@ public class FileSecureStoreTest {
   }
 
   private void populateStore() throws IOException {
-    secureStoreManager.put(KEY1, VALUE1.getBytes(Charsets.UTF_8), PROPERTIES_1);
-    secureStoreManager.put(KEY2, VALUE2.getBytes(Charsets.UTF_8), PROPERTIES_2);
+    secureStoreManager.put(KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    secureStoreManager.put(KEY2, VALUE2.getBytes(Charsets.UTF_8), DESCRIPTION2, PROPERTIES_2);
   }
 
   @Test
@@ -98,7 +98,7 @@ public class FileSecureStoreTest {
   @Test
   public void testGet() throws IOException {
     populateStore();
-    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, PROPERTIES_1);
+    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
     Assert.assertArrayEquals(secureStoreData.get(), secureStore.get(KEY1).get());
     Assert.assertEquals(metadata.getDescription(), secureStore.get(KEY1).getMetadata().getDescription());
@@ -108,22 +108,22 @@ public class FileSecureStoreTest {
   @Test
   public void testGetMetadata() throws IOException {
     populateStore();
-    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, PROPERTIES_1);
+    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     Assert.assertEquals(metadata.getDescription(), secureStore.get(KEY1).getMetadata().getDescription());
     Assert.assertEquals(metadata.getName(), secureStore.get(KEY1).getMetadata().getName());
-    SecureStoreMetadata metadata2 = SecureStoreMetadata.of(KEY2, PROPERTIES_2);
+    SecureStoreMetadata metadata2 = SecureStoreMetadata.of(KEY2, DESCRIPTION2, PROPERTIES_2);
     Assert.assertEquals(metadata2.getDescription(), secureStore.get(KEY2).getMetadata().getDescription());
     Assert.assertEquals(metadata2.getName(), secureStore.get(KEY2).getMetadata().getName());
   }
 
   @Test
   public void testOverwrite() throws IOException, InterruptedException {
-    secureStoreManager.put(KEY1, VALUE1.getBytes(Charsets.UTF_8), PROPERTIES_1);
+    secureStoreManager.put(KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
     SecureStoreData oldData = secureStore.get(KEY1);
     long oldCreateTime = oldData.getMetadata().getLastModifiedTime();
     Assert.assertArrayEquals(VALUE1.getBytes(Charsets.UTF_8), oldData.get());
     String newVal = "New value";
-    secureStoreManager.put(KEY1, newVal.getBytes(Charsets.UTF_8), PROPERTIES_1);
+    secureStoreManager.put(KEY1, newVal.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
     long newCreateTime = secureStore.get(KEY1).getMetadata().getLastModifiedTime();
     Assert.assertArrayEquals(newVal.getBytes(Charsets.UTF_8), secureStore.get(KEY1).get());
     Assert.assertNotEquals(oldCreateTime, newCreateTime);
@@ -137,7 +137,7 @@ public class FileSecureStoreTest {
   @Test(expected = IOException.class)
   public void testDelete() throws IOException {
     populateStore();
-    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, PROPERTIES_1);
+    SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
     Assert.assertArrayEquals(secureStoreData.get(), secureStore.get(KEY1).get());
     secureStoreManager.delete(KEY1);

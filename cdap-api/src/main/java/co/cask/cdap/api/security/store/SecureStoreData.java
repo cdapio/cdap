@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.security.securestore;
+package co.cask.cdap.api.security.store;
 
 /**
  * This represents the entity stored in the Secure Store.

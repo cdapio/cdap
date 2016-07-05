@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.security.securestore;
+package co.cask.cdap.api.security.store;
 
 import java.io.IOException;
 import java.util.List;

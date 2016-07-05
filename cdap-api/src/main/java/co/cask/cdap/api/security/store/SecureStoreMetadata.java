@@ -14,9 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.security.securestore;
+package co.cask.cdap.api.security.store;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -33,18 +35,16 @@ public final class SecureStoreMetadata {
   private final long createdEpochMs;
   private final Map<String, String> properties;
 
-  private SecureStoreMetadata(String name, String description, Date created, Map<String, String> properties) {
+  private SecureStoreMetadata(String name, String description, long created, Map<String, String> properties) {
     this.name = name;
     this.description = description;
-    this.createdEpochMs = created.getTime();
+    this.createdEpochMs = created;
     this.properties = properties;
   }
 
-  public static SecureStoreMetadata of(String name, Map<String, String> properties) {
-    String tempDescription = properties.get(DESCRIPTION_FIELD) == null ?
-      DESCRIPTION_DEFAULT : properties.get(DESCRIPTION_FIELD);
-
-    return new SecureStoreMetadata(name, tempDescription, new Date(), properties);
+  public static SecureStoreMetadata of(String name, String description, Map<String, String> properties) {
+    return new SecureStoreMetadata(name, description, System.currentTimeMillis(),
+                                   Collections.unmodifiableMap(new HashMap<>(properties)));
   }
 
   /**
