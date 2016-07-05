@@ -40,13 +40,12 @@ import com.google.inject.name.Named;
  * Requires binding from {@link co.cask.cdap.common.guice.KafkaClientModule} and
  * {@link co.cask.cdap.common.guice.IOModule}.
  */
-public final class DistributedMetricsClientModule extends PrivateModule {
+final class DistributedMetricsClientModule extends PrivateModule {
+
+  private static final TypeToken<MetricValues> METRIC_RECORD_TYPE = TypeToken.of(MetricValues.class);
 
   @Override
   protected void configure() {
-    bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-    bind(MetricStore.class).to(DefaultMetricStore.class);
-    expose(MetricStore.class);
     bind(MetricsCollectionService.class).to(KafkaMetricsCollectionService.class).in(Scopes.SINGLETON);
     expose(MetricsCollectionService.class);
   }
@@ -61,8 +60,7 @@ public final class DistributedMetricsClientModule extends PrivateModule {
   public DatumWriter<MetricValues> providesDatumWriter(SchemaGenerator schemaGenerator,
                                                         DatumWriterFactory datumWriterFactory) {
     try {
-      TypeToken<MetricValues> metricRecordType = TypeToken.of(MetricValues.class);
-      return datumWriterFactory.create(metricRecordType, schemaGenerator.generate(metricRecordType.getType()));
+      return datumWriterFactory.create(METRIC_RECORD_TYPE, schemaGenerator.generate(METRIC_RECORD_TYPE.getType()));
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }

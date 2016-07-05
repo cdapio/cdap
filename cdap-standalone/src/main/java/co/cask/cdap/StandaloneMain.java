@@ -54,6 +54,7 @@ import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -489,6 +490,7 @@ public class StandaloneMain {
       new DataSetServiceModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
+      new LogReaderRuntimeModules().getStandaloneModules(),
       new RouterModules().getStandaloneModules(),
       new SecurityModules().getStandaloneModules(),
       new StreamServiceRuntimeModule().getStandaloneModules(),

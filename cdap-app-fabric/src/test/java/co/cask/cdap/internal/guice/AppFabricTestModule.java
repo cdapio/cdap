@@ -40,6 +40,7 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -100,6 +101,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new LocationRuntimeModule().getInMemoryModules());
     install(new LoggingModules().getInMemoryModules());
+    install(new LogReaderRuntimeModules().getInMemoryModules());
     install(new MetricsHandlerModule());
     install(new MetricsClientRuntimeModule().getInMemoryModules());
     install(new ExploreClientModule());

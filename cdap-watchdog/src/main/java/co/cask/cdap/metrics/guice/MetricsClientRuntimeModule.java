@@ -21,9 +21,6 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -41,11 +38,14 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-        bind(MetricStore.class).to(DefaultMetricStore.class);
+        // Install the MetricsStoreModule as private bindings and expose the MetricStore.
+        // Both LocalMetricsCollectionService and the AppFabricService needs it
+        install(new MetricsStoreModule());
         expose(MetricStore.class);
+
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
+
       }
     };
   }
@@ -55,9 +55,11 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-        bind(MetricStore.class).to(DefaultMetricStore.class);
+        // Install the MetricsStoreModule as private bindings and expose the MetricStore.
+        // Both LocalMetricsCollectionService and the AppFabricService needs it
+        install(new MetricsStoreModule());
         expose(MetricStore.class);
+
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }

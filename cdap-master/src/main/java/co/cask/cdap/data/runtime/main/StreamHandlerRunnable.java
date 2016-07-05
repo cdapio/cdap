@@ -40,6 +40,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
@@ -86,6 +87,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new DiscoveryRuntimeModule().getDistributedModules(),
         new LocationRuntimeModule().getDistributedModules(),
         new MetricsClientRuntimeModule().getDistributedModules(),
+        new MetricsStoreModule(),
         new DataFabricModules().getDistributedModules(),
         new DataSetsModules().getDistributedModules(),
         new LoggingModules().getDistributedModules(),
