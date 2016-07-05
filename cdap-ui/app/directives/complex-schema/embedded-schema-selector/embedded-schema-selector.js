@@ -22,7 +22,8 @@ angular.module(PKG.name+'.commons')
     scope: {
       type: '=',
       displayType: '=',
-      parentFormatOutput: '&'
+      parentFormatOutput: '&',
+      isDisabled: '='
     },
     bindToController: true,
     controller: function () {},

@@ -93,7 +93,8 @@ angular.module(PKG.name+'.commons')
     bindToController: true,
     scope: {
       model: '=ngModel',
-      parentFormatOutput: '&'
+      parentFormatOutput: '&',
+      isDisabled: '='
     }
   };
 })
@@ -104,11 +105,12 @@ angular.module(PKG.name+'.commons')
     scope: {
       model: '=ngModel',
       type: '@',
-      parentFormatOutput: '&'
+      parentFormatOutput: '&',
+      isDisabled: '='
     },
     link: (scope, element) => {
       if (scope.type === 'COMPLEX') {
-        $compile('<my-array-schema ng-model="model" parent-format-output="parentFormatOutput()"></my-array-schema')(scope, (cloned) => {
+        $compile('<my-array-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-array-schema')(scope, (cloned) => {
           element.append(cloned);
         });
       }

@@ -15,38 +15,41 @@
 -->
 
 <div class="union-schema-container">
-  <div ng-repeat="item in UnionSchema.types track by $index">
-    <div class="clearfix">
-      <div class="input-column no-type">
-        <select class="form-control"
-                ng-model="item.displayType"
-                ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
-                ng-change="(item.type = item.displayType) && UnionSchema.formatOutput()">
-        </select>
-      </div>
-
-      <div class="fields-actions">
-        <div class="checkbox text-center">
-          <input type="checkbox"
-                 ng-model="item.nullable"
-                 ng-change="UnionSchema.formatOutput()">
+  <fieldset ng-disabled="UnionSchema.isDisabled">
+    <div ng-repeat="item in UnionSchema.types track by $index">
+      <div class="clearfix">
+        <div class="input-column no-type">
+          <select class="form-control"
+                  ng-model="item.displayType"
+                  ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
+                  ng-change="(item.type = item.displayType) && UnionSchema.formatOutput()">
+          </select>
         </div>
 
-        <div class="actions-buttons text-right">
-          <i class="text-danger fa fa-trash"
-             ng-click="UnionSchema.removeType($index)">
-          </i>
-          <i class="fa fa-plus"
-             ng-click="UnionSchema.addType($index)">
-          </i>
+        <div class="fields-actions">
+          <div class="checkbox text-center">
+            <input type="checkbox"
+                   ng-model="item.nullable"
+                   ng-change="UnionSchema.formatOutput()">
+          </div>
+
+          <div class="actions-buttons text-right" ng-if="!UnionSchema.isDisabled">
+            <i class="text-danger fa fa-trash"
+               ng-click="UnionSchema.removeType($index)">
+            </i>
+            <i class="fa fa-plus"
+               ng-click="UnionSchema.addType($index)">
+            </i>
+          </div>
         </div>
       </div>
+
+      <my-embedded-schema-selector
+        type="item.type"
+        display-type="item.displayType"
+        parent-format-output="UnionSchema.formatOutput()"
+        is-disabled="UnionSchema.isDisabled">
+      </my-embedded-schema-selector>
     </div>
-
-    <my-embedded-schema-selector
-      type="item.type"
-      display-type="item.displayType"
-      parent-format-output="UnionSchema.formatOutput()">
-    </my-embedded-schema-selector>
-  </div>
+  </fieldset>
 </div>
