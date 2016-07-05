@@ -17,6 +17,7 @@ package co.cask.cdap.api.common;
 
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -84,7 +85,10 @@ public class Bytes {
   /**
    * Byte array comparator class.
    */
-  public static class ByteArrayComparator implements Comparator<byte []> {
+  public static class ByteArrayComparator implements Comparator<byte []>, Serializable {
+
+    private static final long serialVersionUID = -7139477985270503953L;
+
     /**
      * Constructor.
      */

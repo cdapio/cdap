@@ -35,7 +35,6 @@ import java.util.UUID;
  * Default implementation of {@link BatchSourceContext} for spark contexts.
  */
 public class SparkBatchSourceContext extends AbstractSparkBatchContext implements BatchSourceContext {
-
   private final SparkBatchSourceFactory sourceFactory;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
@@ -85,7 +84,7 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
 
   @Override
   public void setInput(Input input) {
-    Input trackableInput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), suffixInput(input));
+    Input trackableInput = ExternalDatasets.makeTrackable(admin, suffixInput(input));
     sourceFactory.addInput(getStageName(), trackableInput);
   }
 

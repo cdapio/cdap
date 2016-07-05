@@ -24,6 +24,8 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -42,11 +44,21 @@ public final class PluginJarHelper {
   public static Location createPluginJar(LocationFactory locationFactory, Manifest manifest,
                                          Class<?> clz, Class<?>... classes) throws IOException {
 
+    // include all packages from the given plugin classes
+    // for example, a plugin may use the org.apache.spark.streaming.kafka.KafkaUtils class,
+    // which would otherwise get filtered out by the org.apache.spark package filter.
+    Set<String> includePackages = new HashSet<>();
+    includePackages.add("org.apache.hadoop.hbase");
+    includePackages.add(clz.getPackage().getName());
+    for (Class<?> clazz : classes) {
+      includePackages.add(clazz.getPackage().getName());
+    }
+
     ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
                                                                          "org.apache.hadoop",
                                                                          "org.apache.hive",
                                                                          "org.apache.spark"),
-                                                        ImmutableList.of("org.apache.hadoop.hbase"));
+                                                        includePackages);
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
     try {
