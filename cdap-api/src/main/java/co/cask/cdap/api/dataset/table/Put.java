@@ -18,13 +18,17 @@ package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.common.Bytes;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.TreeMap;
 
 /**
  * Writes the specified value(s) in one or more columns of a row -- this overrides existing values.
  */
-public class Put {
+public class Put implements Serializable {
+
+  private static final long serialVersionUID = 5869452950547737896L;
+
   /** row to write to. */
   private final byte[] row;
 

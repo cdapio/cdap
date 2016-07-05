@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.planner;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -139,7 +138,7 @@ public class PipelinePlannerTest {
     Set<String> reduceTypes = ImmutableSet.of(AGGREGATOR);
     Set<String> isolationTypes = ImmutableSet.of();
     PipelinePlanner planner = new PipelinePlanner(pluginTypes, reduceTypes, isolationTypes);
-    PipelineSpec pipelineSpec = new PipelineSpec(stageSpecs, connections, new Resources(), true);
+    PipelineSpec pipelineSpec = PipelineSpec.builder().addStages(stageSpecs).addConnections(connections).build();
 
     Map<String, PipelinePhase> phases = new HashMap<>();
     /*
