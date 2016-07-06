@@ -63,7 +63,7 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeo
     vm.model = outputArr;
 
     if (typeof vm.parentFormatOutput === 'function') {
-      timeout = $timeout(vm.formatOutput);
+      timeout = $timeout(vm.parentFormatOutput);
     }
   };
 
