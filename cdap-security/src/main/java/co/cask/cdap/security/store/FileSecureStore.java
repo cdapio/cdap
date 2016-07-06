@@ -48,6 +48,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * File based implementation of secure store. Uses Java JCEKS based keystore.
@@ -276,8 +277,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       ks = KeyStore.getInstance(SCHEME_NAME);
       Files.deleteIfExists(newPath);
       if (Files.exists(path)) {
-        // If the main file exists then the new path should not exist.
-        // Both existing means there is an inconsistency.
         loadFromPath(ks, path, password);
       } else {
         // We were not able to load an existing key store. Create a new one.
@@ -308,25 +307,23 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       Files.deleteIfExists(newPath);
 
       // Flush the keystore, write the _NEW file first
-      writeToNew(newPath);
+      writeToKeyStore(newPath);
       // Do Atomic rename _NEW to CURRENT
-      Files.move(newPath, path, ATOMIC_MOVE);
-    } catch (IOException ioe) {
-      throw ioe;
+      Files.move(newPath, path, ATOMIC_MOVE, REPLACE_EXISTING);
     } finally {
       writeLock.unlock();
     }
   }
 
-  private void writeToNew(Path newPath) throws IOException {
+  private void writeToKeyStore(Path newPath) throws IOException {
     try (OutputStream fos = new DataOutputStream(Files.newOutputStream(newPath))) {
       keyStore.store(fos, password);
     } catch (KeyStoreException e) {
-      throw new IOException("Can't store keystore " + this, e);
+      throw new IOException("Can't store keystore.", e);
     } catch (NoSuchAlgorithmException e) {
-      throw new IOException("No such algorithm storing keystore " + this, e);
+      throw new IOException("No such algorithm storing keystore.", e);
     } catch (CertificateException e) {
-      throw new IOException("Certificate exception storing keystore " + this, e);
+      throw new IOException("Certificate exception storing keystore.", e);
     }
   }
 
