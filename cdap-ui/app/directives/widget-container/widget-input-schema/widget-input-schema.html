@@ -43,7 +43,7 @@
       </div>
       <div class="content"
           ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index, '': MyInputSchemaCtrl.currentIndex === $index}">
-        <table class="table" ng-if="::(inputschema.schema.fields.length > 0)">
+        <!-- <table class="table" ng-if="::(inputschema.schema.fields.length > 0)">
           <thead>
             <th>
               <label class="control-label">Name</label>
@@ -54,7 +54,7 @@
             <th>
               <label class="control-label">Null</label>
             </th>
-          </thead>
+          </thead> -->
           <!--
             This is bad. If we change the container's css class then infinite scroll is not going to work.
             The reason we are doing this today is because we need to have one scroll bar for all the three
@@ -67,7 +67,7 @@
 
             The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
           -->
-          <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
+          <!-- <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
                  infinite-scroll-container="'.modal.cdap-modal.node-config-modal .bottompanel-body'"
                  infinite-scroll-disabled="inputschema.schema.fields <= MyInputSchemaCtrl.inputSchemaRowLimit">
             <tr ng-repeat="field in ::inputschema.schema.fields | limitTo: 10 track by $index">
@@ -90,7 +90,12 @@
               </td>
             </tr>
           </tbody>
-        </table>
+        </table> -->
+
+        <my-complex-schema
+          ng-model="inputschema.schema"
+          is-disabled="true">
+        </my-complex-schema>
 
         <div ng-if="::(inputschema.schema.fields.length === 0)">
           <p>There is no input schema</p>
@@ -106,7 +111,7 @@
   <div ng-if="::(!MyInputSchemaCtrl.multipleInputs)">
     <!-- Section that shows single input schema table-->
 
-    <table class="table"
+    <!-- <table class="table"
       ng-if="::(MyInputSchemaCtrl.inputSchemas[0].schema.fields.length > 0)">
       <thead>
         <th>
@@ -118,7 +123,7 @@
         <th>
           <label class="control-label">Null</label>
         </th>
-      </thead>
+      </thead> -->
       <!--
         This is bad. If we change the container's css class then infinite scroll is not going to work.
         The reason we are doing this today is because we need to have one scroll bar for all the three
@@ -131,7 +136,7 @@
 
         The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
       -->
-      <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
+      <!-- <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
              infinite-scroll-container="'.modal.cdap-modal.node-config-modal .bottompanel-body'"
              infinite-scroll-disabled="MyInputSchemaCtrl.inputSchemas[0].schema.fields.length <= MyInputSchemaCtrl.inputSchemaRowLimit">
         <tr ng-repeat="field in MyInputSchemaCtrl.inputSchemas[0].schema.fields | limitTo: MyInputSchemaCtrl.inputSchemaRowLimit track by $index">
@@ -154,7 +159,13 @@
           </td>
         </tr>
       </tbody>
-    </table>
+    </table> -->
+
+    <my-complex-schema
+      ng-model="MyInputSchemaCtrl.inputSchemas[0].schema"
+      is-disabled="true">
+    </my-complex-schema>
+
 
     <!-- End of section that shows single input schema table-->
 

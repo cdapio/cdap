@@ -51,8 +51,10 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     // Timeouts
     this.setStateTimeout = null;
+    this.importSchemaTimeout = null;
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.setStateTimeout);
+      this.$timeout.cancel(this.importSchemaTimeout);
     });
 
   }
@@ -184,7 +186,11 @@ class HydratorPlusPlusNodeConfigCtrl {
                   type: configOutputSchema.implicitSchema[key]
                 });
               });
-              this.state.node.outputSchema = JSON.stringify({ fields: formattedSchema });
+              this.state.node.outputSchema = JSON.stringify({
+                name: 'etlSchemaBody',
+                type: 'record',
+                fields: formattedSchema
+              });
               this.HydratorPlusPlusConfigActions.editPlugin(this.state.node.name, this.state.node);
             } else {
               // If not an implcit schema check if a schema property exists in the node config.
@@ -221,7 +227,12 @@ class HydratorPlusPlusNodeConfigCtrl {
               );
             }
             if (!this.state.node.outputSchema) {
-              this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || JSON.stringify({'fields': []});
+              // this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || JSON.stringify({
+              //   name: 'etlSchemaBody',
+              //   type: 'record',
+              //   fields: []
+              // });
+              this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || '';
             }
             // Mark the configfetched to show that configurations have been received.
             this.state.configfetched = true;
@@ -238,7 +249,10 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.EventPipe.emit('schema.clear');
   }
   importSchema() {
-    document.getElementById('schema-import-link').click();
+    this.$timeout.cancel(this.importSchemaTimeout);
+    this.importSchemaTimeout = this.$timeout(() => {
+      document.getElementById('schema-import-link').click();
+    });
   }
   importFiles(files) {
     let reader = new FileReader();

@@ -80,7 +80,7 @@
     </div>
 
     <div class="column-content">
-      <table class="table table-bordered" ng-if="MetadataController.schema.length > 0">
+      <!-- <table class="table table-bordered" ng-if="MetadataController.schema.length > 0">
         <thead>
           <tr>
             <th>Name</th>
@@ -108,10 +108,15 @@
             </td>
           </tr>
         </tbody>
-      </table>
+      </table> -->
+      <my-complex-schema
+        ng-model="MetadataController.schema"
+        is-disabled="true"
+        ng-if="MetadataController.schema">
+      </my-complex-schema>
 
       <div class="no-properties-message text-center"
-           ng-if="MetadataController.schema.length === 0">
+           ng-if="!MetadataController.schema">
         <h4>There is no schema</h4>
       </div>
     </div>

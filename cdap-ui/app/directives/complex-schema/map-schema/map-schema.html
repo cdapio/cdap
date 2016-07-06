@@ -15,12 +15,17 @@
 -->
 
 <div class="map-schema-container">
+  <div class="error"
+       ng-if="MapSchema.error">
+    {{ MapSchema.error }}
+  </div>
+
   <div class="key-field clearfix">
     <fieldset ng-disabled="MapSchema.isDisabled">
       <div class="map-fields pull-left">
-        Keys:
+        Key:
       </div>
-      <div class="input-column">
+      <div class="map-input-column">
         <select class="form-control"
                 ng-model="MapSchema.fields.keys.displayType"
                 ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
@@ -49,9 +54,9 @@
   <div class="value-field clearfix">
     <fieldset ng-disabled="MapSchema.isDisabled">
       <div class="map-fields pull-left">
-        Values:
+        Value:
       </div>
-      <div class="input-column">
+      <div class="map-input-column">
         <select class="form-control"
                 ng-model="MapSchema.fields.values.displayType"
                 ng-options="option as option for option in MapSchema.SCHEMA_TYPES"

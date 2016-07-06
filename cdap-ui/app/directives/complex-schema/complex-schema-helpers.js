@@ -39,7 +39,7 @@ angular.module(PKG.name+'.commons')
     if (type.getTypeName() === 'union:wrapped') {
       type = type.getTypes();
 
-      if (type[1].getTypeName() === 'null') {
+      if (type[1] && type[1].getTypeName() === 'null') {
         storedType = type[0];
         type = type[0].getTypeName();
         nullable = true;

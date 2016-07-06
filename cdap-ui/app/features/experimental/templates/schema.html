@@ -23,10 +23,14 @@
   </ul>
 </div>
 
-<my-schema-editor
+<!-- <my-schema-editor
   ng-model="vm.outputSchema"
   plugin-properties="vm.props">
-</my-schema-editor>
+</my-schema-editor> -->
+
+<my-complex-schema-editor
+  ng-model="vm.outputSchema">
+</my-complex-schema-editor>
 
 <my-file-select class="sr-only"
                 id="schema-import-link"

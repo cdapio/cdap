@@ -15,6 +15,7 @@
  */
 
 @import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/variables.less';
 
 @type-column-width: 80px;
 @fields-right-offset: 70px;
@@ -35,14 +36,19 @@ my-complex-schema {
 
     .input-column {
       float: left;
-      width: ~"-moz-calc(100% - 90px - 80px)";
-      width: ~"-webkit-calc(100% - 90px - 80px)";
-      width: ~"calc(100% - 90px - 80px)";
+
+      /**
+       * 75px is the width of the checkbox, trash, and add button
+       * 80px is the width of the type dropdown
+       **/
+      width: ~"-moz-calc(100% - 75px - 80px)";
+      width: ~"-webkit-calc(100% - 75px - 80px)";
+      width: ~"calc(100% - 75px - 80px)";
 
       &.no-type {
-        width: ~"-moz-calc(100% - 90px)";
-        width: ~"-webkit-calc(100% - 90px)";
-        width: ~"calc(100% - 90px)";
+        width: ~"-moz-calc(100% - 75px)";
+        width: ~"-webkit-calc(100% - 75px)";
+        width: ~"calc(100% - 75px)";
       }
 
       .form-control {
@@ -50,9 +56,24 @@ my-complex-schema {
       }
     }
 
+    .error {
+      color: @brand-danger;
+    }
+
     .map-fields {
-      width: @type-column-width;
+      width: 50px;
       line-height: 32px;
+    }
+
+    .map-input-column {
+      float: left;
+
+      /**
+       * In case of Map, the 50px represent the label for 'Key' and 'Value'
+       **/
+      width: ~"-moz-calc(100% - 75px - 50px)";
+      width: ~"-webkit-calc(100% - 75px - 50px)";
+      width: ~"calc(100% - 75px - 50px)";
     }
 
     .fields-actions {
@@ -75,10 +96,43 @@ my-complex-schema {
         &.no-checkbox { margin-top: 7px; }
       }
     }
+
+    &.disabled {
+      .input-column {
+        /**
+         * On disabled mode, there is not trash or plus button. Therefore only need to
+         * substract 50px for the Null checkbox
+         **/
+        width: ~"-moz-calc(100% - 50px - 80px)";
+        width: ~"-webkit-calc(100% - 50px - 80px)";
+        width: ~"calc(100% - 50px - 80px)";
+
+        &.no-type {
+          width: ~"-moz-calc(100% - 50px)";
+          width: ~"-webkit-calc(100% - 50px)";
+          width: ~"calc(100% - 50px)";
+        }
+      }
+
+      .map-input-column {
+        width: ~"-moz-calc(100% - 50px - 50px)";
+        width: ~"-webkit-calc(100% - 50px - 50px)";
+        width: ~"calc(100% - 50px - 50px)";
+      }
+
+      .fields-actions {
+        .nullable-header { margin-right: 18px; }
+
+        .checkbox,
+        .checkbox.no-trash {
+          margin-right: 0;
+        }
+      }
+    }
   }
 
   my-embedded-schema-selector {
-    > div > [class*="col-"] {
+    [class*="col-"] {
       background-color: white;
       box-shadow: 0 -3px 5px 0 rgba(1, 0, 0, 0.25);
     }

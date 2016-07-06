@@ -56,9 +56,26 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeo
   }
 
   vm.formatOutput = () => {
+    vm.error = '';
+
     let outputArr = vm.types.map((item) => {
       return item.nullable ? [item.type, 'null'] : item.type;
     });
+
+    if (outputArr.length === 0) {
+      vm.model = '';
+      return;
+    }
+
+    // Validate
+    try {
+      avsc.parse(outputArr);
+    } catch (e) {
+      let err = '' + e;
+      err = err.split(':');
+      vm.error = err[0] + ': ' + err[1];
+      return;
+    }
 
     vm.model = outputArr;
 

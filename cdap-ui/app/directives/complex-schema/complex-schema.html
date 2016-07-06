@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="complex-schema-container">
+<div class="complex-schema-container" ng-class="{ 'disabled': ComplexSchema.isDisabled }">
 
   <div class="clearfix"
        ng-if="::!ComplexSchema.hideHeader">
@@ -34,6 +34,11 @@
   </div>
 
   <fieldset ng-disabled="ComplexSchema.isDisabled">
+    <div class="error"
+         ng-if="ComplexSchema.error">
+      {{ ComplexSchema.error }}
+    </div>
+
     <div ng-repeat="field in ComplexSchema.parsedSchema track by $index">
       <div class="clearfix">
         <div class="input-column">
