@@ -15,118 +15,161 @@
  */
 
 angular.module(PKG.name + '.feature.tracker')
-  .directive('myHistogram', function (d3) {
+  .directive('myHistogram', function (d3, moment) {
 
-    function HistogramLink (scope, element) {
-      let margin = {
-        top: 20,
-        right: 10,
-        bottom: 30,
-        left: 45
+    function getXaxisDomain(start, end) {
+      var pattern = /\d+/g,
+          startTime,
+          endTime;
+      // _time is days in string extracted from 'now-5d'
+      var getTimeInEpoch = function(_time) {
+        let _t = parseInt(_time, 10);
+        if (Number.isNaN(_t)) {
+          return Date.now();
+        }
+
+        let tempDate = new Date();
+        tempDate = tempDate.setDate( tempDate.getDate() - _t );  // 20 days from now
+        return tempDate;
       };
-
-      let parentHeight = 300;
-
-      let container = d3.select(element[0].parentNode).node().getBoundingClientRect();
-      let width = container.width - margin.left - margin.right;
-      let height = parentHeight - margin.top - margin.bottom;
-
-
-      /* FORMATTING TIME */
-      let data = scope.model.results.map((d) => {
-        return {
-          time: new Date(d.timestamp * 1000),
-          count: d['log_count']
-        };
-      });
-
-
-      let x = d3.time.scale()
-        .range([
-          (width * 0.2 / data.length / 2) + (width / data.length),
-          width - (width / data.length / 2)
-        ]);
-
-      let y = d3.scale.linear()
-        .range([height, 0]);
-
-      let parentContainer = d3.select(element[0]).select('.histogram-container')
-        .style({
-          height: parentHeight + 'px'
-        });
-
-      let svg = parentContainer.append('svg')
-          .attr('width', width + margin.left + margin.right)
-          .attr('height', parentHeight)
-        .append('g')
-          .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
-
-
-      /* CREATE GRAPH */
-      x.domain([data[0].time, data[data.length - 1].time]);
-      y.domain([0, d3.max(data, (d) => { return d.count; })]).nice();
-
-      /* X AXIS */
-      let timeFormat = d3.time.format('%b %d, %Y');
-      let xAxis = d3.svg.axis()
-        .scale(x)
-        .orient('bottom')
-        .tickPadding(10)
-        .tickFormat(timeFormat)
-        .outerTickSize(0)
-        .innerTickSize(0)
-        .ticks(d3.time.week, 1);
-
-      svg.append('g')
-        .attr('class', 'x axis')
-        .attr('transform', 'translate(0, ' + height + ')')
-        .call(xAxis);
-
-
-      /* Y AXIS */
-      let yAxis = d3.svg.axis()
-        .scale(y)
-        .orient('left')
-        .tickPadding(10)
-        .outerTickSize(0)
-        .innerTickSize(-width)
-        .ticks(5);
-
-      svg.append('g')
-        .attr('class', 'y axis')
-        .call(yAxis);
-
-
-      /* CREATING TOOLTIP */
-      let tip = d3.tip()
-        .attr('class', 'd3-tip tracker-audit-histogram')
-        .offset([-10, 0])
-        .html(function(d) {
-          return '<strong>' + timeFormat(d.time) + ' - ' + d.count +  '</strong>';
-        });
-      svg.call(tip);
-
-      /* BARS */
-      svg.selectAll('.bar')
-          .data(data)
-        .enter().append('rect')
-          .attr('class', 'bar')
-          .attr('x', (d) => { return x(d.time) - (width / data.length); })
-          .attr('y', (d) => { return y(d.count); })
-          .attr('width', width/data.length - (width * 0.2 / data.length ))
-          .attr('height', (d) => { return height - y(d.count); })
-        .on('mouseover', tip.show)
-        .on('mouseout', tip.hide);
-
+      if (typeof start === 'string') {
+        startTime = start.match(pattern);
+        if (Array.isArray(startTime)) {
+          startTime = startTime[0];
+        }
+        startTime = getTimeInEpoch(startTime);
+      }
+      if (typeof end === 'string') {
+        endTime = end.match(pattern);
+        if (Array.isArray(endTime)) {
+          endTime = endTime[0];
+        }
+        endTime = getTimeInEpoch(endTime);
+      }
+      return { 'startTime': startTime, 'endTime': endTime };
     }
+    function HistogramLink (scope, element) {
+      scope.render = function() {
+        let margin = {
+          top: 20,
+          right: 10,
+          bottom: 30,
+          left: 45
+        };
 
+        let parentHeight = 200;
+
+        let container = d3.select(element[0].parentNode).node().getBoundingClientRect();
+        let width = container.width - margin.left - margin.right;
+        let height = parentHeight - margin.top - margin.bottom;
+
+        /* FORMATTING TIME */
+        let data = scope.model.results.map((d) => {
+          return {
+            time: new Date(d.timestamp * 1000),
+            count: d.value
+          };
+        });
+
+        let x = d3.time.scale()
+          .range([0, width]);
+
+        let y = d3.scale.linear()
+          .range([height, 0]);
+
+        let parentContainer = d3.select(element[0]).select('.histogram-container')
+          .style({
+            height: parentHeight + 'px'
+          });
+
+        let svg = parentContainer.append('svg')
+            .attr('width', width + margin.left + margin.right)
+            .attr('height', parentHeight)
+          .append('g')
+            .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
+
+        /* CREATE GRAPH */
+        let xDomain = getXaxisDomain(scope.startTime, scope.endTime);
+        x.domain([ xDomain.startTime,xDomain.endTime ]);
+        y.domain([0, d3.max(data, (d) => { return d.count; })]).nice();
+
+        /* X AXIS */
+        let timeFormat = d3.time.format('%b %d, %Y');
+        let xAxis = d3.svg.axis()
+          .scale(x)
+          .orient('bottom')
+          .tickFormat(timeFormat)
+          .outerTickSize(0);
+
+        let durationAsDays = moment.duration(xDomain.endTime - xDomain.startTime).asDays();
+        if (durationAsDays >= 180) { // 6 months
+          xAxis.ticks(d3.time.months, 1).tickFormat(d3.time.format('%m-%Y'));
+        } else if ( durationAsDays >= 30 && durationAsDays < 180) {
+          xAxis.ticks(d3.time.weeks, 1).tickFormat(d3.time.format('%b-%U'));
+        } else {
+          xAxis.ticks(d3.time.days, 1).tickFormat(d3.time.format('%b-%e'));
+        }
+        svg.append('g')
+          .attr('class', 'x axis')
+          .attr('transform', 'translate(0, ' + height + ')')
+          .call(xAxis);
+
+        /* Y AXIS */
+        let yAxis = d3.svg.axis()
+          .scale(y)
+          .orient('left')
+          .tickPadding(10)
+          .outerTickSize(0)
+          .innerTickSize(-width)
+          .ticks(10);
+
+        svg.append('g')
+          .attr('class', 'y axis')
+          .call(yAxis);
+
+        /* CREATING TOOLTIP */
+        let tip = d3.tip()
+          .attr('class', 'd3-tip tracker-audit-histogram')
+          .offset([-10, 0])
+          .html(function(d) {
+            return '<strong>' + timeFormat(d.time) + ' - ' + d.count +  '</strong>';
+          });
+        svg.call(tip);
+
+        /* BARS */
+        svg.selectAll('.bar')
+            .data(data)
+          .enter().append('rect')
+            .attr('class', 'bar')
+            .attr('x', d => {
+              console.log('x: ', x(d.time) - ((width / durationAsDays) ));
+              return x(d.time) - (((width + 130) / durationAsDays));
+            })
+            .attr('y', (d) => { return y(d.count); })
+            .attr('width', () => {
+              return (width - 180) / durationAsDays;
+            })
+            .attr('height', (d) => { return height - y(d.count); })
+          .on('mouseover', tip.show)
+          .on('mouseout', tip.hide);
+      };
+    }
 
     return {
       restrict: 'E',
       scope: {
-        model: '='
+        model: '=',
+        startTime: '@',
+        endTime: '@'
       },
       templateUrl: '/assets/features/tracker/directives/histogram/histogram.html',
-      link: HistogramLink
+      link: HistogramLink,
+      controller: function($scope) {
+        $scope.$watch('model', function() {
+          if (typeof $scope.model === 'object') {
+            $scope.render();
+          }
+        });
+      }
     };
   });

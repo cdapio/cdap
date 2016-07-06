@@ -212,6 +212,16 @@ angular.module(PKG.name + '.feature.tracker')
               highlightTab: 'search'
             }
           })
+          .state('tracker.detail.entity.usage', {
+            url: '/usage?start&end',
+            templateUrl: '/assets/features/tracker/templates/usage.html',
+            controller: 'TrackerUsageController',
+            controllerAs: 'UsageController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'usage'
+            }
+          })
           .state('tracker.detail.entity.preview', {
             url: '/preview',
             templateUrl: '/assets/features/tracker/templates/preview.html',
