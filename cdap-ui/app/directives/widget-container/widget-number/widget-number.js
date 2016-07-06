@@ -24,10 +24,10 @@ angular.module(PKG.name + '.commons')
       },
       template: '<input type="number" class="form-control" min="{{min}}" max="{{max}}" ng-model="internalModel" />',
       controller: function($scope, myHelpers) {
-        $scope.model = $scope.model ||
-                       myHelpers.objectQuery($scope.config, 'properties', 'default') ||
-                       myHelpers.objectQuery($scope.config, 'widget-attributes', 'default');
+        $scope.model = $scope.model || myHelpers.objectQuery($scope.config, 'widget-attributes', 'default');
         $scope.internalModel = $scope.model;
+        $scope.min = myHelpers.objectQuery($scope.config, 'widget-attributes', 'min') || 0;
+        $scope.max = myHelpers.objectQuery($scope.config, 'widget-attributes', 'max') || Infinity;
         // The number textbox requires the input to be number.
         // This will be correct for a fresh create studio view. But when the user is trying to import or clone
         // it would be a problem as the imported/cloned plugin property would be a string and number textbox
@@ -40,15 +40,13 @@ angular.module(PKG.name + '.commons')
           if (oldValue === newValue) {
             return;
           }
-          $scope.model = $scope.internalModel && $scope.internalModel.toString();
+          $scope.model = typeof $scope.internalModel === 'number' && $scope.internalModel.toString();
         });
 
         // This is needed when we hit reset in node configuration.
         $scope.$watch('model', function() {
           $scope.internalModel = parseInt($scope.model, 10);
         });
-        $scope.min = $scope.config.min || '';
-        $scope.max = $scope.config.max || '';
       }
     };
   });
