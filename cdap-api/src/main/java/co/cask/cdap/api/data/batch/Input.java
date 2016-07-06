@@ -202,13 +202,19 @@ public abstract class Input {
     }
 
     @Nullable
+    public String getNamespace() {
+      return namespace;
+    }
+
+    @Nullable
     public List<Split> getSplits() {
       return splits;
     }
 
-    public <T extends Input> T fromNamespace(String namespace) {
-      this.namespace = namespace;
-      return (T) this;
+    public DatasetInput fromNamespace(String namespace) {
+      DatasetInput datasetInput = new DatasetInput(super.name, arguments, splits);
+      datasetInput.namespace = namespace;
+      return datasetInput;
     }
 
   }
@@ -226,9 +232,15 @@ public abstract class Input {
       this.streamBatchReadable = streamBatchReadable;
     }
 
-    public <T extends Input> T fromNamespace(String namespace) {
-      this.namespace = namespace;
-      return (T) this;
+    public StreamInput fromNamespace(String namespace) {
+      StreamInput streamInput = new StreamInput(streamBatchReadable);
+      streamInput.namespace = namespace;
+      return streamInput;
+    }
+
+    @Nullable
+    public String getNamespace() {
+      return namespace;
     }
 
     @Deprecated

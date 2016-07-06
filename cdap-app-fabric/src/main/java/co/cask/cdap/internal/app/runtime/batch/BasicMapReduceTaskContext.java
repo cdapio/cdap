@@ -285,8 +285,14 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   /**
    * Returns a {@link BatchReadable} that reads data from the given dataset.
    */
-  <K, V> BatchReadable<K, V> getBatchReadable(String datasetName, Map<String, String> datasetArgs) {
-    Dataset dataset = getDataset(datasetName, datasetArgs, AccessType.READ);
+  <K, V> BatchReadable<K, V> getBatchReadable(@Nullable String datasetNamespace, String datasetName,
+                                              Map<String, String> datasetArgs) {
+    Dataset dataset;
+    if (datasetNamespace == null) {
+      dataset = getDataset(datasetName, datasetArgs, AccessType.READ);
+    } else {
+      dataset = getDataset(datasetNamespace, datasetName, datasetArgs, AccessType.READ);
+    }
     // Must be BatchReadable.
     Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset '%s' is not a BatchReadable.", datasetName);
 

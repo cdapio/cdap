@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
@@ -52,6 +53,7 @@ import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
@@ -248,9 +250,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       Input.InputFormatProviderInput createdInput = createInput(datasetInput);
       addInput(createdInput.getAlias(), createdInput.getInputFormatProvider(), mapperCls);
     } else if (input instanceof Input.StreamInput) {
-      StreamBatchReadable streamBatchReadable = ((Input.StreamInput) input).getStreamBatchReadable();
+      Input.StreamInput streamInput = (Input.StreamInput) input;
+      StreamBatchReadable streamBatchReadable = streamInput.getStreamBatchReadable();
+      String namespace = streamInput.getNamespace();
+      if (namespace == null) {
+        namespace = getProgram().getId().getNamespace().getId();
+      }
       addInput(input.getAlias(),
-               new StreamInputFormatProvider(getProgram().getId().getNamespace(), streamBatchReadable, streamAdmin),
+               new StreamInputFormatProvider(new NamespaceId(namespace).toId(), streamBatchReadable, streamAdmin),
                mapperCls);
     } else if (input instanceof Input.InputFormatProviderInput) {
       addInput(input.getAlias(), ((Input.InputFormatProviderInput) input).getInputFormatProvider(), mapperCls);
@@ -394,8 +401,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                                            streamBatchReadable, streamAdmin));
       return (Input.InputFormatProviderInput) input.alias(originalAlias);
     }
+    Dataset dataset;
+    if (datasetInput.getNamespace() == null) {
+      dataset = getDataset(datasetName, datasetArgs, AccessType.READ);
+    } else {
+      dataset = getDataset(datasetInput.getNamespace(), datasetName, datasetArgs, AccessType.READ);
+    }
     DatasetInputFormatProvider datasetInputFormatProvider =
-      new DatasetInputFormatProvider(datasetName, datasetArgs, getDataset(datasetName, datasetArgs, AccessType.READ),
+      new DatasetInputFormatProvider(datasetInput.getNamespace(), datasetName, datasetArgs, dataset,
                                      datasetInput.getSplits(), MapReduceBatchReadableInputFormat.class);
     return (Input.InputFormatProviderInput) Input.of(datasetName, datasetInputFormatProvider).alias(originalAlias);
   }
