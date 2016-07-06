@@ -20,10 +20,28 @@
     <cron-selection class="select-wrapper" output="HydratorPlusPlusSettingsCtrl.cron"
             init="HydratorPlusPlusSettingsCtrl.initialCron"></cron-selection>
   </my-card>
-  <my-card title="Resources" class="resources">
+  <!-- Will be added in subsequent PRs -->
+  <!-- <my-card title="Resources" class="resources">
     Resources stuff
-  </my-card>
+  </my-card> -->
   <my-card title="Engine" class="engine">
-    Engine level stuff
+    <form role="form">
+      <label>
+        <input type="radio"
+          name="mapreduce"
+          value="mapreduce"
+          ng-change="HydratorPlusPlusSettingsCtrl.onEngineChange()"
+          ng-model="HydratorPlusPlusSettingsCtrl.engine">
+        MapReduce
+      </label>
+      <label>
+        <input type="radio"
+           name="spark"
+           value="spark"
+           ng-change="HydratorPlusPlusSettingsCtrl.onEngineChange()"
+           ng-model="HydratorPlusPlusSettingsCtrl.engine">
+          Spark
+      </label>
+    </form>
   </my-card>
 </div>
