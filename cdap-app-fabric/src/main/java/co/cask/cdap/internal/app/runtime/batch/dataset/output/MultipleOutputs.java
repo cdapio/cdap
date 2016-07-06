@@ -20,6 +20,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.verification.AbstractVerifier;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -140,7 +141,7 @@ public class MultipleOutputs implements Closeable {
 
   private static void assertValidName(String name) {
     // use the same check as used on datasets when they're created, since the output name can be any dataset name
-    Preconditions.checkArgument(AbstractVerifier.isId(name),
+    Preconditions.checkArgument(EntityId.isValidId(name),
                                 "Name '%s' must consist only of ASCII letters, numbers, _, or -.", name);
   }
 
