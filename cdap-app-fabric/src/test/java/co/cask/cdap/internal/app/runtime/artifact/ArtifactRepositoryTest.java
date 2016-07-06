@@ -30,6 +30,7 @@ import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -492,7 +493,8 @@ public class ArtifactRepositoryTest {
   private static ClassLoader createAppClassLoader(File jarFile) throws IOException {
     final File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
     BundleJarUtil.unJar(Files.newInputStreamSupplier(jarFile), unpackDir);
-    return ProgramClassLoader.create(cConf, unpackDir, ArtifactRepositoryTest.class.getClassLoader());
+    return new ProgramClassLoader(cConf, unpackDir,
+                                  FilterClassLoader.create(ArtifactRepositoryTest.class.getClassLoader()));
   }
 
   private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {

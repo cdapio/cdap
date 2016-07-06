@@ -29,7 +29,6 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -520,24 +519,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                                                    @Nullable ClassLoader classLoader) {
     DatasetDefinitionRegistry registry = registryFactory.create();
     for (String moduleClassName : availableModuleClasses) {
-      // todo: this module loading and registering code somewhat duplicated in RemoteDatasetFramework
-      Class<?> moduleClass;
-
-      // try program class loader then cdap class loader
       try {
-        moduleClass = ClassLoaders.loadClass(moduleClassName, classLoader, this);
-      } catch (ClassNotFoundException e) {
-        try {
-          moduleClass = ClassLoaders.loadClass(moduleClassName, null, this);
-        } catch (ClassNotFoundException e2) {
-          LOG.error("Was not able to load dataset module class {}", moduleClassName, e);
-          throw Throwables.propagate(e);
-        }
-      }
-
-      try {
-        DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
-        module.register(registry);
+        DatasetDefinitionRegistries.register(moduleClassName, classLoader, registry);
       } catch (Exception e) {
         LOG.error("Was not able to load dataset module class {}", moduleClassName, e);
         throw Throwables.propagate(e);

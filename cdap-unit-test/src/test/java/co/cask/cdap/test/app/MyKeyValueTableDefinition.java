@@ -55,8 +55,8 @@ public class MyKeyValueTableDefinition
                                                             Map<String, String> arguments,
                                                             ClassLoader classLoader) throws IOException {
     return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(),
-                                                       getDataset(datasetContext, "table", Table.class,
-                                                                  spec, arguments, classLoader));
+                                                       this.<Table>getDataset(datasetContext, "table",
+                                                                              spec, arguments, classLoader));
   }
 
   /**

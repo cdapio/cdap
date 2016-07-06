@@ -47,7 +47,7 @@ public class DatasetModuleMeta {
    *                    loaded and initialized
    */
   public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
-                           List<String> types, List<String> usesModules) {
+                           Collection<String> types, Collection<String> usesModules) {
     this.name = name;
     this.className = className;
     this.jarLocation = jarLocation;

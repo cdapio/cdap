@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
 
@@ -42,8 +43,11 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {
+    ClassLoader classLoader = getContext().getProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY);
     datasetModulesDeployer.deployModules(input.getApplicationId().getParent(),
-                                         input.getSpecification().getDatasetModules(), input.getArtifactLocation());
+                                         input.getSpecification().getDatasetModules(),
+                                         input.getArtifactLocation(),
+                                         classLoader);
 
     // Emit the input to next stage.
     emit(input);

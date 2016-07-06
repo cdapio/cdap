@@ -34,13 +34,16 @@ import co.cask.cdap.internal.app.deploy.pipeline.CreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
+import co.cask.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.pipeline.Stage;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -54,6 +57,13 @@ import com.google.inject.name.Named;
  * @param <O> Output type.
  */
 public class LocalApplicationManager<I, O> implements Manager<I, O> {
+
+  /**
+   * The key used in the {@link Stage} {@link Context} property for storing the artifact classloader
+   * of the artifact used during deployment.
+   */
+  public static final String ARTIFACT_CLASSLOADER_KEY = "artifact.classLoader";
+
   private final PipelineFactory pipelineFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final CConfiguration configuration;
@@ -116,6 +126,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     pipeline.addLast(new CreateSchedulesStage(scheduler));
     pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
+    pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }
 }

@@ -50,12 +50,12 @@ public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
   @SuppressWarnings("unchecked")
   @Override
   public ListenableFuture<T> execute(Object o) {
-    Context ctx = new StageContext(o);
+    StageContext ctx = new StageContext(o);
     try {
       for (Stage stage : getStages()) {
         stage.process(ctx);
         // Output of previous stage is input to next stage
-        ctx = new StageContext(ctx.getDownStream());
+        ctx = StageContext.next(ctx);
       }
       return Futures.immediateFuture((T) ctx.getUpStream());
     } catch (Throwable th) {

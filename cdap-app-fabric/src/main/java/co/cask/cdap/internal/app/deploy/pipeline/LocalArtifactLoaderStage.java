@@ -22,9 +22,13 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
+import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.pipeline.Context;
+import co.cask.cdap.pipeline.Pipeline;
+import co.cask.cdap.pipeline.Stage;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.reflect.TypeToken;
@@ -42,6 +46,9 @@ import java.util.concurrent.TimeoutException;
  * This stage is responsible for reading the JAR and generating an ApplicationSpecification
  * that is forwarded to the next stage of processing.
  * </p>
+ * An active {@link ClassLoader} for the artifact used during deployment will be set to the {@link Context} property
+ * with the key {@link LocalApplicationManager#ARTIFACT_CLASSLOADER_KEY}.
+ * It is expected a {@link Pipeline#setFinally(Stage)} stage to clean it up after the pipeline execution finished.
  */
 public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final CConfiguration cConf;
@@ -75,9 +82,14 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     String appClassName = deploymentInfo.getAppClassName();
     String configString = deploymentInfo.getConfigString();
 
-    InMemoryConfigurator inMemoryConfigurator =
-      new InMemoryConfigurator(cConf, deploymentInfo.getNamespaceId().toId(), artifactId.toId(), appClassName,
-                               artifactLocation, deploymentInfo.getApplicationName(), configString, artifactRepository);
+    ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation);
+    getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
+
+    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(cConf, deploymentInfo.getNamespaceId().toId(),
+                                                                         artifactId.toId(), appClassName,
+                                                                         artifactRepository, artifactClassLoader,
+                                                                         deploymentInfo.getApplicationName(),
+                                                                         configString);
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
