@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  * This class represents a purchase made by a customer. It is a very simple class and only contains
  * the name of the customer, the name of the product, product quantity, price paid, and the purchase time.
  */
-public class Purchase implements Writable {
+public class Purchase2 implements Writable {
 
   private String customer, product;
   private int quantity, price;
