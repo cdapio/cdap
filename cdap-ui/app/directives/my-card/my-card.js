@@ -22,6 +22,7 @@ angular.module(PKG.name + '.commons')
         'title': '@'
       },
       transclude: true,
+      bindToController: true,
       templateUrl: 'my-card/my-card.html',
       controller: 'MyCardCtrl',
       controllerAs: 'MyCardCtrl'

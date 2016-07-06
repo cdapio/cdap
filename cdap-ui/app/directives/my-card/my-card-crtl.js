@@ -15,9 +15,8 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyCardCtrl', function($scope) {
+  .controller('MyCardCtrl', function() {
     this.minimize = false;
-    this.title = $scope.title;
     this.dominimize = function() {
       this.minimize = !this.minimize;
     };
