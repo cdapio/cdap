@@ -1685,6 +1685,30 @@
   </property>
 
   <property>
+    <name>security.store.file.name</name>
+    <value>securestore</value>
+    <description>
+      Name of the secure store file.
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.file.password</name>
+    <value>cdapsecret</value>
+    <description>
+      Password to access the key store.
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.file.path</name>
+    <value>${local.data.dir}/store</value>
+    <description>
+      Location of the encrypted file which holds the secure store entries.
+    </description>
+  </property>
+
+  <property>
     <name>ssl.enabled</name>
     <value>false</value>
     <description>
