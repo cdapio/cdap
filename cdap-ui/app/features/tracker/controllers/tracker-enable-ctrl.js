@@ -125,6 +125,7 @@ class TrackerEnableController{
         if (err.statusCode === 409) {
           this.auditServiceRunning = true;
           this.onSuccessStartingPrograms();
+          return;
         }
 
         this.onErrorStartingPrograms(err);
@@ -139,6 +140,7 @@ class TrackerEnableController{
         if (err.statusCode === 409) {
           this.auditFlowRunning = true;
           this.onSuccessStartingPrograms();
+          return;
         }
 
         this.onErrorStartingPrograms(err);
@@ -153,6 +155,7 @@ class TrackerEnableController{
         if (err.statusCode === 409) {
           this.auditMetricsRunning = true;
           this.onSuccessStartingPrograms();
+          return;
         }
 
         this.onErrorStartingPrograms(err);
