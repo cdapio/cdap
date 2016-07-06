@@ -55,12 +55,34 @@ public class DefaultDataWriter implements DataWriter {
   }
 
   @Override
+  public <T extends Dataset> T getDataset(final String namespace, final String name)
+    throws DatasetInstantiationException {
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return dsContext.getDataset(namespace, name);
+      }
+    });
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(final String name, final Map<String, String> arguments)
     throws DatasetInstantiationException {
     return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
       @Override
       public T call() throws Exception {
         return dsContext.getDataset(name, arguments);
+      }
+    });
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(final String namespace, final String name,
+                                          final Map<String, String> arguments) throws DatasetInstantiationException {
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return dsContext.getDataset(namespace, name, arguments);
       }
     });
   }

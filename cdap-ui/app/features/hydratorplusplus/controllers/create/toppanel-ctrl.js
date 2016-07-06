@@ -66,11 +66,13 @@ class HydratorPlusPlusTopPanelCtrl{
   openMetadata() {
     this.metadataExpanded = true;
   }
-  resetMetadata() {
+  resetMetadata(event) {
     this.setState();
     this.metadataExpanded = false;
+    event.preventDefault();
+    event.stopPropagation();
   }
-  saveMetadata() {
+  saveMetadata(event) {
     this.HydratorPlusPlusConfigActions.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
     if (this.state.metadata.description) {
       this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
@@ -80,11 +82,13 @@ class HydratorPlusPlusTopPanelCtrl{
       this.tooltipDescription = '';
     }
     this.metadataExpanded = false;
+    event.preventDefault();
+    event.stopPropagation();
   }
   onEnterOnMetadata(event) {
     // Save when user hits ENTER key.
     if (event.keyCode === 13) {
-      this.saveMetadata();
+      this.saveMetadata(event);
       this.metadataExpanded = false;
     } else if (event.keyCode === 27) {
       // Reset if the user hits ESC key.

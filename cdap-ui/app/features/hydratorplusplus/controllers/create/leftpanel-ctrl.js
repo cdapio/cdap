@@ -326,7 +326,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     let templateType = this.HydratorPlusPlusConfigStore.getArtifact().name;
     this.$uibModal
       .open({
-        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/plugin-delete-confirmation.html',
+        templateUrl: '/assets/features/hydratorplusplus/templates/partial/plugin-delete-confirmation.html',
         size: 'lg',
         backdrop: 'static',
         keyboard: false,

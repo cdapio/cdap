@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Abstract implementation of {@link Pipeline}.
@@ -57,6 +58,7 @@ public abstract class AbstractPipeline<T> implements Pipeline<T> {
     return Collections.unmodifiableList(stages);
   }
 
+  @Nullable
   protected final Stage getFinalStage() {
     return finalStage;
   }

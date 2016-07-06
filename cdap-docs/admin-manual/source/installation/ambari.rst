@@ -22,7 +22,6 @@ Installation using Apache Ambari
   **not** with Ambari.
 - These features are **currently not included** in the CDAP Apache Ambari Service (though they may in the future):
   
-  - `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are currently not supported;
   - The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__;
   - CDAP component `high-availability <https://issues.cask.co/browse/CDAP-4107>`__  is not supported;
 
@@ -345,8 +344,9 @@ support :ref:`CDAP Security <admin-security>` will be erased by Ambari.
 
 Enabling Kerberos
 -----------------
-Ambari-managed `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are
-currently not supported in CDAP.
+Kerberos support in CDAP is automatically enabled when enabling Kerberos security on your
+cluster via Ambari. Consult the appropriate Ambari documentation for instructions on enabling
+Kerberos support for your cluster.
 
 CDAP HA Setup
 -------------

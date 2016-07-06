@@ -39,8 +39,21 @@ public interface DatasetContext {
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
    *         cannot be accessed).
    */
-  <T extends Dataset> T getDataset(String name)
-    throws DatasetInstantiationException;
+  <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException;
+
+  /**
+   * Get an instance of the specified Dataset.
+   *
+   * @param namespace The namespace of the Dataset
+   * @param name The name of the Dataset
+   * @param <T> The type of the Dataset
+   * @return An instance of the specified Dataset, never null.
+   * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
+   *         cannot be loaded; the default constructor throws an exception; or the Dataset
+   *         cannot be opened (for example, one of the underlying tables in the DataFabric
+   *         cannot be accessed).
+   */
+  <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException;
 
   /**
    * Get an instance of the specified Dataset.
@@ -54,7 +67,22 @@ public interface DatasetContext {
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
    *         cannot be accessed).
    */
-  <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+  <T extends Dataset> T getDataset(String name, Map<String, String> arguments) throws DatasetInstantiationException;
+
+  /**
+   * Get an instance of the specified Dataset.
+   *
+   * @param namespace The namespace of Dataset
+   * @param name The name of the Dataset
+   * @param arguments the arguments for this dataset instance
+   * @param <T> The type of the Dataset
+   * @return An instance of the specified Dataset, never null.
+   * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
+   *         cannot be loaded; the default constructor throws an exception; or the Dataset
+   *         cannot be opened (for example, one of the underlying tables in the DataFabric
+   *         cannot be accessed).
+   */
+  <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
     throws DatasetInstantiationException;
 
   /**

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -39,6 +40,7 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -312,9 +314,19 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
-    final ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingObjectStore.class);
+    // Deploy apps to another namespace and test cross-namespace access meanwhile
+    final ApplicationWithPrograms app = deployApp(new NamespaceId("someOtherNameSpace").toId(),
+                                                  AppWithMapReduceUsingObjectStore.class);
 
-    final ObjectStore<String> input = datasetCache.getDataset("keys");
+    final ObjectStore<String> input = datasetCache.getDataset("someOtherNameSpace", "keys");
+
+    // Get dataset from a non existing namespace
+    try {
+      final ObjectStore<String> inputwrong = datasetCache.getDataset("nonExistingNameSpace", "keys");
+      Assert.fail("getDataset() should throw an exception when accessing dataset from a non-existing namespace.");
+    } catch (DatasetInstantiationException e) {
+      Assert.assertTrue(e.getMessage().equals("Could not instantiate dataset 'nonExistingNameSpace:keys'"));
+    }
 
     final String testString = "persisted data";
 
@@ -330,7 +342,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     runProgram(app, AppWithMapReduceUsingObjectStore.ComputeCounts.class, false, true);
 
-    final KeyValueTable output = datasetCache.getDataset("count");
+    final KeyValueTable output = datasetCache.getDataset("someOtherNameSpace", "count");
     //read output and verify result
     Transactions.createTransactionExecutor(txExecutorFactory, output).execute(
       new TransactionExecutor.Subroutine() {
@@ -350,12 +362,19 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testWordCount() throws Exception {
-
+    // deploy to namespace default by default
     final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
     final String inputPath = createInput();
     final java.io.File outputDir = new java.io.File(TEMP_FOLDER.newFolder(), "output");
 
-    final KeyValueTable jobConfigTable = datasetCache.getDataset("jobConfig");
+    try {
+      final KeyValueTable jobConfigTable = datasetCache.getDataset("someOtherNameSpace", "jobConfig");
+      Assert.fail("getDataset() should throw an exception when accessing a non-existing dataset.");
+    } catch (DatasetInstantiationException e) {
+      Assert.assertTrue(e.getMessage().equals("Could not instantiate dataset 'someOtherNameSpace:jobConfig'"));
+    }
+    // Should work if explicitly specify the default namespace
+    final KeyValueTable jobConfigTable = datasetCache.getDataset(NamespaceId.DEFAULT.getNamespace(), "jobConfig");
 
     // write config into dataset
     Transactions.createTransactionExecutor(txExecutorFactory, jobConfigTable).execute(

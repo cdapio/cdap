@@ -162,63 +162,67 @@ public class PipelinePlannerTest {
 
     /*
         phase2:
-        n2.connector --- n2(r) --- n6.connector
+        n2.connector --- n2(r) --- n6 --- n7.connector
      */
     PipelinePhase phase2 = PipelinePhase.builder(pluginTypes)
       .addStage(AGGREGATOR, new StageInfo("n2"))
       .addStages(Constants.CONNECTOR_TYPE,
-                 ImmutableSet.of(new StageInfo("n2.connector"), new StageInfo("n6.connector")))
+                 ImmutableSet.of(new StageInfo("n2.connector"), new StageInfo("n7.connector")))
+      .addStage(NODE, new StageInfo("n6"))
       .addConnection("n2.connector", "n2")
-      .addConnection("n2", "n6.connector")
+      .addConnection("n2", "n6")
+      .addConnection("n6", "n7.connector")
       .build();
-    String phase2Name = getPhaseName("n2.connector", "n6.connector");
+    String phase2Name = getPhaseName("n2.connector", "n7.connector");
     phases.put(phase2Name, phase2);
 
     /*
         phase3:
-        n3.connector --- n3(r) --- n5 --- n6.connector
+        n3.connector --- n3(r) --- n5 --- n6 --- n7.connector
      */
     PipelinePhase phase3 = PipelinePhase.builder(pluginTypes)
-      .addStage(NODE, new StageInfo("n5"))
+      .addStages(NODE, ImmutableSet.of(new StageInfo("n5"), new StageInfo("n6")))
       .addStage(AGGREGATOR, new StageInfo("n3"))
       .addStages(Constants.CONNECTOR_TYPE,
-                 ImmutableSet.of(new StageInfo("n3.connector"), new StageInfo("n6.connector")))
+                 ImmutableSet.of(new StageInfo("n3.connector"), new StageInfo("n7.connector")))
       .addConnection("n3.connector", "n3")
       .addConnection("n3", "n5")
-      .addConnection("n5", "n6.connector")
+      .addConnection("n5", "n6")
+      .addConnection("n6", "n7.connector")
       .build();
-    String phase3Name = getPhaseName("n3.connector", "n6.connector");
+    String phase3Name = getPhaseName("n3.connector", "n7.connector");
     phases.put(phase3Name, phase3);
 
     /*
         phase4:
-        n4.connector --- n4(r) --- n6.connector
+        n4.connector --- n4(r) --- n6 --- n7.connector
      */
     PipelinePhase phase4 = PipelinePhase.builder(pluginTypes)
       .addStage(AGGREGATOR, new StageInfo("n4"))
       .addStages(Constants.CONNECTOR_TYPE,
-                 ImmutableSet.of(new StageInfo("n4.connector"), new StageInfo("n6.connector")))
+                 ImmutableSet.of(new StageInfo("n4.connector"), new StageInfo("n7.connector")))
+      .addStage(NODE, new StageInfo("n6"))
       .addConnection("n4.connector", "n4")
-      .addConnection("n4", "n6.connector")
+      .addConnection("n4", "n6")
+      .addConnection("n6", "n7.connector")
       .build();
-    String phase4Name = getPhaseName("n4.connector", "n6.connector");
+    String phase4Name = getPhaseName("n4.connector", "n7.connector");
     phases.put(phase4Name, phase4);
 
     /*
         phase5:
-        n6.connector --- n6 --- n7(r) --- n8 --- n9.connector
+        n7.connector --- n7(r) --- n8 --- n9.connector
      */
     PipelinePhase phase5 = PipelinePhase.builder(pluginTypes)
-      .addStages(NODE, ImmutableSet.of(new StageInfo("n6"), new StageInfo("n8")))
+      .addStage(NODE, new StageInfo("n8"))
       .addStage(AGGREGATOR, new StageInfo("n7"))
       .addStages(Constants.CONNECTOR_TYPE,
-                 ImmutableSet.of(new StageInfo("n6.connector"), new StageInfo("n9.connector")))
-      .addConnection("n6.connector", "n6")
-      .addConnection("n6", "n7")
+                 ImmutableSet.of(new StageInfo("n7.connector"), new StageInfo("n9.connector")))
+      .addConnection("n7.connector", "n7")
       .addConnection("n7", "n8")
       .addConnection("n8", "n9.connector")
       .build();
-    String phase5Name = getPhaseName("n6.connector", "n9.connector");
+    String phase5Name = getPhaseName("n7.connector", "n9.connector");
     phases.put(phase5Name, phase5);
 
     /*

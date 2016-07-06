@@ -23,21 +23,16 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -45,14 +40,12 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -64,10 +57,6 @@ import javax.annotation.Nullable;
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
 
-  /**
-   * JAR file path.
-   */
-  private final Location artifact;
   private final CConfiguration cConf;
   private final String applicationName;
   private final String configString;
@@ -76,26 +65,23 @@ public final class InMemoryConfigurator implements Configurator {
   // if the artifact is a system artifact, the namespace will be the system namespace.
   private final Id.Namespace appNamespace;
 
-  private ArtifactRepository artifactRepository;
-
-  // these field provided if going through artifact code path, but not through template code path
-  // this is temporary until we can remove templates. (CDAP-2662).
-  private String appClassName;
-  private Id.Artifact artifactId;
+  private final ArtifactRepository artifactRepository;
+  private final ClassLoader artifactClassLoader;
+  private final String appClassName;
+  private final Id.Artifact artifactId;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
-                              String appClassName, Location artifact,
-                              @Nullable String applicationName, @Nullable String configString,
-                              ArtifactRepository artifactRepository) {
-    Preconditions.checkNotNull(artifact);
+                              String appClassName, ArtifactRepository artifactRepository,
+                              ClassLoader artifactClassLoader,
+                              @Nullable String applicationName, @Nullable String configString) {
     this.cConf = cConf;
     this.appNamespace = appNamespace;
     this.artifactId = artifactId;
     this.appClassName = appClassName;
-    this.artifact = artifact;
     this.applicationName = applicationName;
     this.configString = configString == null ? "" : configString;
     this.artifactRepository = artifactRepository;
+    this.artifactClassLoader = artifactClassLoader;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -113,40 +99,20 @@ public final class InMemoryConfigurator implements Configurator {
     SettableFuture<ConfigResponse> result = SettableFuture.create();
 
     try {
-      if (appClassName == null) {
-        readAppClassName();
+      Object appMain = artifactClassLoader.loadClass(appClassName).newInstance();
+      if (!(appMain instanceof Application)) {
+        throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
+          appMain.getClass().getName()));
       }
 
-      try (CloseableClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifact)) {
-        Object appMain = artifactClassLoader.loadClass(appClassName).newInstance();
-        if (!(appMain instanceof Application)) {
-          throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
-            appMain.getClass().getName()));
-        }
-
-        Application app = (Application) appMain;
-        ConfigResponse response = createResponse(app);
-        result.set(response);
-      }
+      Application app = (Application) appMain;
+      ConfigResponse response = createResponse(app);
+      result.set(response);
 
       return result;
     } catch (Throwable t) {
-      LOG.error(t.getMessage(), t);
       return Futures.immediateFailedFuture(t);
     }
-  }
-
-  // remove once app templates are gone
-  private void readAppClassName() throws IOException {
-    // Load the JAR using the JAR class load and load the manifest file.
-    Manifest manifest = BundleJarUtil.getManifest(artifact);
-    Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", artifact);
-    Preconditions.checkArgument(manifest.getMainAttributes() != null,
-      "Failed to load manifest attributes from %s", artifact);
-
-    appClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
-    Preconditions.checkArgument(appClassName != null && !appClassName.isEmpty(),
-      "Main class attribute cannot be empty");
   }
 
   private ConfigResponse createResponse(Application app)
@@ -157,12 +123,13 @@ public final class InMemoryConfigurator implements Configurator {
 
   private <T extends Config> String getSpecJson(Application<T> app) throws IllegalAccessException,
                                                                            InstantiationException, IOException {
-    File tempDir = DirUtils.createTempDir(baseUnpackDir);
     // This Gson cannot be static since it is used to deserialize user class.
     // Gson will keep a static map to class, hence will leak the classloader
     Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
     // Now, we call configure, which returns application specification.
     DefaultAppConfigurer configurer;
+
+    File tempDir = DirUtils.createTempDir(baseUnpackDir);
     try (
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {

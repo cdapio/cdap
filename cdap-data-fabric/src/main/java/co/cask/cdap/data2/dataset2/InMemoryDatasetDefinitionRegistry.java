@@ -18,28 +18,23 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Simple implementation of {@link DatasetDefinitionRegistry} that keeps state in memory.
  */
 public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegistry {
-  private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetDefinitionRegistry.class);
 
-  private Map<String, DatasetDefinition> datasetTypes = Maps.newHashMap();
+  private final Map<String, DatasetDefinition> datasetTypes = new HashMap<>();
 
   @Override
   public <T extends DatasetDefinition> T get(String datasetType) {
     @SuppressWarnings("unchecked")
     T def = (T) datasetTypes.get(datasetType);
     if (def == null) {
-      String msg = "Requested dataset type does NOT exist: " + datasetType;
-      LOG.debug(msg);
-      throw new IllegalArgumentException(msg);
+      throw new IllegalArgumentException("Requested dataset type does NOT exist: " + datasetType);
     }
     return def;
   }

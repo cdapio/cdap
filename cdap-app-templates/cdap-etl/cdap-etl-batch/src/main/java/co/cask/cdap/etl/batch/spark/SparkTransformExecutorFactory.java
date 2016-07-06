@@ -59,8 +59,8 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
                                        PipelinePluginInstantiator pluginInstantiator,
                                        Metrics metrics, long logicalStartTime,
                                        Map<String, String> runtimeArgs,
-                                       boolean isFirstHalf) {
-    super(pluginInstantiator, metrics);
+                                       boolean isFirstHalf, String sourceStageName) {
+    super(pluginInstantiator, metrics, sourceStageName);
     this.pluginContext = pluginContext;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;

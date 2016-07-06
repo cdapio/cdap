@@ -137,7 +137,7 @@ final class SparkBatchSinkFactory {
   <K, V> void writeFromRDD(JavaPairRDD<K, V> rdd, JavaSparkExecutionContext sec, String sinkName,
                            Class<K> keyClass, Class<V> valueClass) {
     Set<String> outputNames = sinkOutputs.get(sinkName);
-    if (outputNames == null || outputNames.size() == 0) {
+    if (outputNames == null || outputNames.isEmpty()) {
       // should never happen if validation happened correctly at pipeline configure time
       throw new IllegalArgumentException(sinkName + " has no outputs. " +
                                            "Please check that the sink calls addOutput at some point.");

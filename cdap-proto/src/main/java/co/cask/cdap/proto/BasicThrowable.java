@@ -13,31 +13,33 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.proto;
 
-import co.cask.cdap.proto.codec.WorkflowNodeThrowableCodec;
+import co.cask.cdap.proto.codec.BasicThrowableCodec;
 
+import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
- * Carries {@link Throwable} information in {@link WorkflowNodeStateDetail}.
+ * Maintains basic information about a {@link Throwable}, for easy serialization/deserialization.
  */
-public final class WorkflowNodeThrowable {
+public final class BasicThrowable {
   private final String className;
   private final String message;
   private final StackTraceElement[] stackTraces;
-  private final WorkflowNodeThrowable cause;
+  private final BasicThrowable cause;
 
   /**
-   * This constructor is used by {@link WorkflowNodeThrowableCodec} during de-serialization.
+   * This constructor is used by {@link BasicThrowableCodec} during de-serialization.
    *
    * @param className the name of the Throwable
    * @param message the message inside the Throwable
    * @param stackTraces stack traces associated with the Throwable
    * @param cause cause associated with the Throwable
    */
-  public WorkflowNodeThrowable(String className, String message, StackTraceElement[] stackTraces,
-                               @Nullable WorkflowNodeThrowable cause) {
+  public BasicThrowable(String className, String message, StackTraceElement[] stackTraces,
+                        @Nullable BasicThrowable cause) {
     this.className = className;
     this.message = message;
     this.stackTraces = stackTraces;
@@ -49,7 +51,7 @@ public final class WorkflowNodeThrowable {
    *
    * @param throwable the instance of Throwable to be serialize
    */
-  public WorkflowNodeThrowable(Throwable throwable) {
+  public BasicThrowable(Throwable throwable) {
     this.className = throwable.getClass().getName();
     this.message = throwable.getMessage();
 
@@ -57,7 +59,7 @@ public final class WorkflowNodeThrowable {
     this.stackTraces = new StackTraceElement[stackTraceElements.length];
     System.arraycopy(stackTraceElements, 0, stackTraces, 0, stackTraceElements.length);
 
-    this.cause = (throwable.getCause() == null) ? null : new WorkflowNodeThrowable(throwable.getCause());
+    this.cause = (throwable.getCause() == null) ? null : new BasicThrowable(throwable.getCause());
   }
 
   /**
@@ -85,7 +87,40 @@ public final class WorkflowNodeThrowable {
    * Return the cause of Throwable if it is available, otherwise {@code null}.
    */
   @Nullable
-  public WorkflowNodeThrowable getCause() {
+  public BasicThrowable getCause() {
     return cause;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BasicThrowable that = (BasicThrowable) o;
+
+    if (!className.equals(that.className)) {
+      return false;
+    }
+    if (!message.equals(that.message)) {
+      return false;
+    }
+
+    if (!Arrays.equals(stackTraces, that.stackTraces)) {
+      return false;
+    }
+    return cause != null ? cause.equals(that.cause) : that.cause == null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = className.hashCode();
+    result = 31 * result + message.hashCode();
+    result = 31 * result + Arrays.hashCode(stackTraces);
+    result = 31 * result + (cause != null ? cause.hashCode() : 0);
+    return result;
   }
 }

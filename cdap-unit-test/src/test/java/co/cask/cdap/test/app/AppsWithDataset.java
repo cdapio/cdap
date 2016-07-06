@@ -187,7 +187,7 @@ public class AppsWithDataset {
     public KeyValueTableDefinition.KeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                                             Map<String, String> arguments,
                                                             ClassLoader classLoader) throws IOException {
-      return new KeyValueTable(spec, getDataset(datasetContext, "data", Table.class, spec, arguments, classLoader));
+      return new KeyValueTable(spec, this.<Table>getDataset(datasetContext, "data", spec, arguments, classLoader));
     }
 
     /**
@@ -200,8 +200,7 @@ public class AppsWithDataset {
 
       private final Table table;
 
-      public KeyValueTable(DatasetSpecification spec,
-                           @EmbeddedDataset("data") Table table) {
+      public KeyValueTable(DatasetSpecification spec, @EmbeddedDataset("data") Table table) {
         super(spec.getName(), table);
         this.table = table;
       }

@@ -36,8 +36,7 @@ import java.util.Map;
  * @param <D> defines data operations that can be performed on this dataset instance
  */
 @Beta
-public abstract class CompositeDatasetDefinition<D extends Dataset>
-  extends AbstractDatasetDefinition<D, DatasetAdmin> {
+public abstract class CompositeDatasetDefinition<D extends Dataset> extends AbstractDatasetDefinition<D, DatasetAdmin> {
 
   private final Map<String, ? extends DatasetDefinition> delegates;
 
@@ -52,22 +51,17 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
   }
 
   /**
-   * Gets dataset for underlying dataset instance of given name
-   * @param name dataset instance name
-   * @param type expected type of the dataset
-   * @param spec parent dataset instance name
-   * @param <T> expected type of the dataset
-   * @return dataset to perform data operations
-   * @throws IOException
+   * Gets a {@link Dataset} instance from the delegates with the given instance name.
+   *
+   * @param datasetContext the context which the get call is happening
+   * @param name name of the dataset
+   * @param spec the {@link DatasetSpecification} for the outer dataset
+   * @param arguments dataset arguments
+   * @param classLoader classloader for loading the dataset
+   * @param <T> type of the dataset
+   * @return a dataset instance
+   * @throws IOException if failed to get a dataset instance
    */
-  @SuppressWarnings("unchecked")
-  protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name, Class<T> type,
-                                                   DatasetSpecification spec, Map<String, String> arguments,
-                                                   ClassLoader classLoader) throws IOException {
-
-    return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), arguments, classLoader);
-  }
-
   @SuppressWarnings("unchecked")
   protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name,
                                                    DatasetSpecification spec, Map<String, String> arguments,

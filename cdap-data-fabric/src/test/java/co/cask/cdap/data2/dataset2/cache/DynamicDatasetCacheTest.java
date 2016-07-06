@@ -64,7 +64,9 @@ public abstract class DynamicDatasetCacheTest {
   private static final Map<String, String> X_ARGUMENTS = ImmutableMap.of("value", "x");
 
   protected static final Id.Namespace NAMESPACE = DatasetFrameworkTestUtil.NAMESPACE_ID;
+  protected static final Id.Namespace NAMESPACE2 = DatasetFrameworkTestUtil.NAMESPACE2_ID;
   protected static final NamespaceId NAMESPACE_ID = new NamespaceId(NAMESPACE.getId());
+  protected static final NamespaceId NAMESPACE2_ID = new NamespaceId(NAMESPACE2.getId());
   protected static DatasetFramework dsFramework;
   protected static TransactionSystemClient txClient;
   protected DynamicDatasetCache cache;
@@ -73,17 +75,24 @@ public abstract class DynamicDatasetCacheTest {
   public static void init() throws DatasetManagementException, IOException {
     dsFramework = dsFrameworkUtil.getFramework();
     dsFramework.addModule(Id.DatasetModule.from(NAMESPACE, "testDataset"), new TestDatasetModule());
+    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE2, "testDataset"), new TestDatasetModule());
     txClient = new InMemoryTxSystemClient(dsFrameworkUtil.getTxManager());
     dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE, "a"), DatasetProperties.EMPTY);
     dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE, "b"), DatasetProperties.EMPTY);
     dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE, "c"), DatasetProperties.EMPTY);
+    dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE2, "a2"), DatasetProperties.EMPTY);
+    dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE2, "c2"), DatasetProperties.EMPTY);
   }
 
   @AfterClass
   public static void tearDown() throws IOException, DatasetManagementException {
     dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE, "a"));
     dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE, "b"));
+    dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE, "c"));
+    dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE2, "a2"));
+    dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE2, "c2"));
     dsFrameworkUtil.deleteModule(Id.DatasetModule.from(NAMESPACE, "testDataset"));
+    dsFrameworkUtil.deleteModule(Id.DatasetModule.from(NAMESPACE2, "testDataset"));
   }
 
   @Before
@@ -121,9 +130,17 @@ public abstract class DynamicDatasetCacheTest {
     TestDataset b1 = cache.getDataset("b", B_ARGUMENTS, AccessType.READ);
     TestDataset b2 = cache.getDataset("b", B_ARGUMENTS, AccessType.WRITE);
     Assert.assertSame(b, b1);
-
     // assert that b1 and b2 are the same, even though their accessType is different
     Assert.assertSame(b1, b2);
+
+    // Test this for cross namespace access
+    TestDataset an2 = cache.getDataset(NAMESPACE2.getId(), "a2");
+    TestDataset a1n2 = cache.getDataset(NAMESPACE2.getId(), "a2");
+    TestDataset a2n2 = cache.getDataset(NAMESPACE2.getId(), "a2", A_ARGUMENTS);
+    Assert.assertSame(an2, a1n2);
+    Assert.assertSame(an2, a2n2);
+    Assert.assertNotSame(a, an2);
+
 
     // validate that arguments for a are the global runtime args of the cache
     Assert.assertEquals(2, a.getArguments().size());
@@ -140,9 +157,8 @@ public abstract class DynamicDatasetCacheTest {
     // verify that static datasets are in the tx-awares after start
     TransactionContext txContext = cache.newTransactionContext();
     txAwares = getTxAwares();
-    Assert.assertEquals(2, txAwares.size());
-    Assert.assertSame(a, txAwares.get(0));
-    Assert.assertSame(b, txAwares.get(1));
+    Assert.assertEquals(3, txAwares.size());
+    Assert.assertTrue(verifyTxAwaresContains(txAwares, a, an2, b));
 
     // verify that the tx-aware is actually part of the tx context and that they are in the same tx
     txContext.start();
@@ -154,67 +170,76 @@ public abstract class DynamicDatasetCacheTest {
     TestDataset c = cache.getDataset("c", C_ARGUMENTS);
     Assert.assertEquals(a.getCurrentTransaction(), c.getCurrentTransaction());
 
-    // validate runtime arguments of c
+    // another dataset from different namespace
+    TestDataset cn2 = cache.getDataset(NAMESPACE2.getId(), "c2", C_ARGUMENTS);
+    Assert.assertEquals(an2.getCurrentTransaction(), cn2.getCurrentTransaction());
+
+    // validate runtime arguments of c and c2
     // validate that arguments for b did override the global runtime args of the cache
     Assert.assertEquals("c", c.getKey());
     Assert.assertEquals("c", c.getValue());
 
+    Assert.assertEquals("c", cn2.getKey());
+    Assert.assertEquals("c", cn2.getValue());
+
     // validate that c was added to the tx-awares
     txAwares = getTxAwares();
-    Assert.assertEquals(3, txAwares.size());
-    Assert.assertSame(a, txAwares.get(0));
-    Assert.assertSame(b, txAwares.get(1));
-    Assert.assertSame(c, txAwares.get(2));
+    Assert.assertEquals(5, txAwares.size());
+    Assert.assertTrue(verifyTxAwaresContains(txAwares, a, an2, b, c, cn2));
 
-    // discard b and c, validate that they are not closed yet
+    // discard b and c and c2, validate that they are not closed yet
     cache.discardDataset(b);
     cache.discardDataset(c);
+    cache.discardDataset(cn2);
     Assert.assertFalse(b.isClosed());
     Assert.assertFalse(c.isClosed());
+    Assert.assertFalse(cn2.isClosed());
 
     // validate that static dataset b is still in the tx-awares, whereas c was dropped
     txAwares = getTxAwares();
-    Assert.assertEquals(2, txAwares.size());
-    Assert.assertSame(a, txAwares.get(0));
-    Assert.assertSame(b, txAwares.get(1));
+    Assert.assertEquals(3, txAwares.size());
+    Assert.assertTrue(verifyTxAwaresContains(txAwares, a, an2, b));
 
     // get b and c again, validate that they are the same
     TestDataset b3 = cache.getDataset("b", B_ARGUMENTS);
     TestDataset c1 = cache.getDataset("c", C_ARGUMENTS);
+    TestDataset c1n2 = cache.getDataset(NAMESPACE2.getId(), "c2", C_ARGUMENTS);
     Assert.assertSame(b3, b);
     Assert.assertSame(c1, c);
+    Assert.assertSame(c1n2, cn2);
 
-    // validate that c is back in the tx-awares
+    // validate that c and c2 is back in the tx-awares
     txAwares = getTxAwares();
-    Assert.assertEquals(3, txAwares.size());
-    Assert.assertSame(a, txAwares.get(0));
-    Assert.assertSame(b, txAwares.get(1));
-    Assert.assertSame(c, txAwares.get(2));
+    Assert.assertEquals(5, txAwares.size());
+    Assert.assertTrue(verifyTxAwaresContains(txAwares, a, an2, b, c, cn2));
 
-    // discard b and c, validate that they are not closed yet
+    // discard b and c and c2, validate that they are not closed yet
     cache.discardDataset(b);
     cache.discardDataset(c);
+    cache.discardDataset(cn2);
     Assert.assertFalse(b.isClosed());
     Assert.assertFalse(c.isClosed());
+    Assert.assertFalse(cn2.isClosed());
 
     // validate that static dataset b is still in the tx-awares, whereas c was dropped
     txAwares = getTxAwares();
-    Assert.assertEquals(2, txAwares.size());
-    Assert.assertSame(a, txAwares.get(0));
-    Assert.assertSame(b, txAwares.get(1));
+    Assert.assertEquals(3, txAwares.size());
+    Assert.assertTrue(verifyTxAwaresContains(txAwares, a, an2, b));
 
     // validate that all datasets participate in abort of tx
     txContext.abort();
     Assert.assertNull(a.getCurrentTransaction());
     Assert.assertNull(b.getCurrentTransaction());
     Assert.assertNull(c.getCurrentTransaction());
+    Assert.assertNull(an2.getCurrentTransaction());
+    Assert.assertNull(cn2.getCurrentTransaction());
 
     // validate that c disappears from the txAwares after tx aborted, and that it was closed
     txAwares = getTxAwares();
-    Assert.assertEquals(2, txAwares.size());
-    Assert.assertSame(a, txAwares.get(0));
-    Assert.assertSame(b, txAwares.get(1));
+    Assert.assertEquals(3, txAwares.size());
+    Assert.assertTrue(verifyTxAwaresContains(txAwares, a, an2, b));
     Assert.assertTrue(c.isClosed());
+    Assert.assertTrue(cn2.isClosed());
 
     // but also that b (a static dataset) remains and was not closed
     Assert.assertFalse(b.isClosed());
@@ -222,11 +247,14 @@ public abstract class DynamicDatasetCacheTest {
     // validate the tx context does not include c in the next transaction
     txContext.start();
     Assert.assertNotNull(a.getCurrentTransaction());
+    Assert.assertNotNull(an2.getCurrentTransaction());
     Assert.assertEquals(a.getCurrentTransaction(), b.getCurrentTransaction());
     Assert.assertNull(c.getCurrentTransaction());
+    Assert.assertNull(cn2.getCurrentTransaction());
 
     // validate that discarding a dataset that is not in the tx does not cause errors
     cache.discardDataset(c);
+    cache.discardDataset(cn2);
 
     // get a new instance of c, validate that it is not the same as before, that is, c was really discarded
     c1 = cache.getDataset("c", C_ARGUMENTS);
@@ -302,6 +330,15 @@ public abstract class DynamicDatasetCacheTest {
                               - Iterables.size(cache.getStaticTransactionAwares()));
       }
     });
+  }
+
+  private Boolean verifyTxAwaresContains(List<TestDataset> txAwares, TestDataset... datasets) {
+    for (TestDataset dataset : datasets) {
+      if (!txAwares.contains(dataset)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private List<TestDataset> getTxAwares() {

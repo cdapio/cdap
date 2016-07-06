@@ -53,6 +53,7 @@ import java.util.Map;
 
 public final class DatasetFrameworkTestUtil extends ExternalResource {
   public static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
+  public static final Id.Namespace NAMESPACE2_ID = Id.Namespace.from("myspace2");
 
   private Injector injector;
   private CConfiguration cConf;

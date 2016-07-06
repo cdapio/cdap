@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
@@ -42,7 +43,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -59,9 +60,9 @@ import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowNodeThrowable;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.NettyHttpService;
@@ -120,29 +121,30 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<>();
   private final LoggingContext loggingContext;
-  private NettyHttpService httpService;
-  private volatile Thread runningThread;
-  private boolean suspended;
-  private Lock lock;
-  private Condition condition;
+  private final Lock lock;
+  private final Condition condition;
   private final MetricsCollectionService metricsCollectionService;
   private final NameMappedDatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
-  private final Store store;
+  private final RuntimeStore runtimeStore;
   private final ProgramRunId workflowRunId;
-  private Workflow workflow;
   private final BasicWorkflowContext basicWorkflowContext;
   private final BasicWorkflowToken basicWorkflowToken;
   private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
   @Nullable
   private final PluginInstantiator pluginInstantiator;
 
+  private NettyHttpService httpService;
+  private volatile Thread runningThread;
+  private boolean suspended;
+  private Workflow workflow;
+
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                 TransactionSystemClient txClient, Store store, CConfiguration cConf,
+                 TransactionSystemClient txClient, RuntimeStore runtimeStore, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator) {
     this.program = program;
     this.hostname = hostname;
@@ -162,7 +164,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                            workflowRunId.getRun());
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.store = store;
+    this.runtimeStore = runtimeStore;
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
                                                                          program, options);
 
@@ -214,7 +216,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
-        store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
+        runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
       }
     } catch (Throwable t) {
       LOG.error(String.format("Failed to initialize the Workflow %s", workflowRunId), t);
@@ -290,7 +292,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
-        store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
+        runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
       }
       transactionContext.finish();
     } catch (Throwable t) {
@@ -333,7 +335,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       executorTerminateLatch.await();
       status.remove(node.getNodeId());
     }
-    store.updateWorkflowToken(workflowRunId, token);
+    runtimeStore.updateWorkflowToken(workflowRunId, token);
   }
 
   private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
@@ -402,7 +404,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       }
     } finally {
       // Update the WorkflowToken after the execution of the FORK node completes.
-      store.updateWorkflowToken(workflowRunId, token);
+      runtimeStore.updateWorkflowToken(workflowRunId, token);
       executorService.shutdownNow();
       // Wait for the executor termination
       executorTerminateLatch.await();
@@ -415,7 +417,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     CustomActionExecutor customActionExecutor = new CustomActionExecutor(workflowRunId, context,
                                                                          instantiator, classLoader);
     status.put(node.getNodeId(), node);
-    store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
+    runtimeStore.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;
     try {
       customActionExecutor.execute();
@@ -424,11 +426,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       throw t;
     } finally {
       status.remove(node.getNodeId());
-      store.updateWorkflowToken(workflowRunId, token);
+      runtimeStore.updateWorkflowToken(workflowRunId, token);
       NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
       nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
-      WorkflowNodeThrowable defaultThrowable = failureCause == null ? null : new WorkflowNodeThrowable(failureCause);
-      store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), status, null,
+      BasicThrowable defaultThrowable = failureCause == null ? null : new BasicThrowable(failureCause);
+      runtimeStore.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), status, null,
                                                                             defaultThrowable));
     }
   }
@@ -480,7 +482,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     // If a workflow updates its token at a condition node, it will be persisted after the execution of the next node.
     // However, the call below ensures that even if the workflow fails/crashes after a condition node, updates from the
     // condition node are also persisted.
-    store.updateWorkflowToken(workflowRunId, token);
+    runtimeStore.updateWorkflowToken(workflowRunId, token);
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 

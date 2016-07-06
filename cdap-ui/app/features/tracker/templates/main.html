@@ -35,33 +35,39 @@
   <div class="tracker-metrics">
     <div class="row text-center">
       <div class="col-md-4">
-        <p class="metric-heading">Top Applications</p>
-        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-heading">
+          <p>Top Applications</p>
+          <p>Last 7 days</p>
+        </div>
         <div class="metric-container">
-          <my-top-entity-graph
-            model="MainController.topAppsData"
-            type="apps">
-          </my-top-entity-graph>
+          <my-top-entity-graph type="applications"
+                              start="'now-7d'"
+                              end="'now'"></my-top-entity-graph>
         </div>
       </div>
       <div class="col-md-4">
-        <p class="metric-heading">Top Programs</p>
-        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-heading">
+          <p>Top Programs</p>
+          <p>Last 7 days</p>
+        </div>
         <div class="metric-container">
-          <my-top-entity-graph
-            model="MainController.topAppsData"
-            type="apps">
-          </my-top-entity-graph>
+          <my-top-entity-graph type="programs"
+                              start="'now-7d'"
+                              end="'now'"></my-top-entity-graph>
         </div>
       </div>
       <div class="col-md-4">
-        <p class="metric-heading">Top Datasets</p>
-        <p class="metric-timeframe">Last 7 days</p>
+        <div class="metric-heading">
+          <p>Top Datasets</p>
+          <p>Last 7 days</p>
+        </div>
         <div class="metric-container">
-          <table class="table">
+          <table ng-if="MainController.serviceUnavailable === false && MainController.topDatasets.length >= 3"
+                class="table">
             <thead>
-              <th>Dataset</th>
-              <th colspan="2">
+              <th class="text-center">Dataset</th>
+              <th colspan="2"
+                  class="text-center">
                 5 Programs
                 <div class="clearfix">
                   <span class="pull-left">Reading</span>
@@ -70,33 +76,51 @@
               </th>
             </thead>
             <tbody>
-              <tr>
-                <td>Name 01</td>
-                <td>-</td>
-                <td>-</td>
+              <tr ng-repeat="metric in ::MainController.topDatasets">
+                <td class="text-left">
+                  <a ng-if="metric.entityType === 'dataset'"
+                    ui-sref="datasets.detail.overview.status({datasetId: metric.entityName })">
+                    <span uib-tooltip="{{ ::metric.entityName }}"
+                      tooltip-ellipsis="{{ ::metric.entityName }}"
+                      tooltip-enable="metric.entityName.length > 15"
+                      tooltip-append-to-body="true"
+                      tooltip-class="tracker-tooltip"
+                      tooltip-placement="top">
+                      {{ ::metric.entityName }}
+                    </span>
+                  </a>
+                  <a ng-if="metric.entityType === 'stream'"
+                    ui-sref="streams.detail.overview.status({streamId: metric.entityName })">
+                    <span uib-tooltip="{{ ::metric.entityName }}"
+                      tooltip-ellipsis="{{ ::metric.entityName }}"
+                      tooltip-enable="metric.entityName.length > 15"
+                      tooltip-append-to-body="true"
+                      tooltip-class="tracker-tooltip"
+                      tooltip-placement="top">
+                      {{ ::metric.entityName }}
+                    </span>
+                  </a>
+                </td>
+                <td class="text-center">{{ ::metric.read }}</td>
+                <td class="text-center">{{ ::metric.write }}</td>
               </tr>
-              <tr>
-                <td>Name 02</td>
-                <td>-</td>
-                <td>-</td>
-              </tr>
-              <tr>
-                <td>Name 03</td>
-                <td>-</td>
-                <td>-</td>
-              </tr>
-              <tr>
-                <td>Name 04</td>
-                <td>-</td>
-                <td>-</td>
-              </tr>
-              <tr>
-                <td>Name 05</td>
-                <td>-</td>
-                <td>-</td>
+              <tr ng-if="MainController.emptyRows === true"
+                ng-repeat="row in MainController.totalEmptyRows"
+                class="empty-row">
+                <td></td>
+                <td></td>
+                <td></td>
               </tr>
             </tbody>
           </table>
+          <div ng-if="MainController.topDatasets.length < 3"
+              class="well">
+            <p>Not enough datasets found</p>
+          </div>
+          <div ng-if="MainController.serviceUnavailable === true"
+              class="well">
+            <p>Service unavailable</p>
+          </div>
         </div>
       </div>
     </div>

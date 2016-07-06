@@ -72,6 +72,10 @@ done
 # Load user-modifiable configuration
 test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh
 
+# Set JAVA_HEAPMAX from variable defined in JAVA_HEAP_VAR, unless defined already
+JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
+export JAVA_HEAPMAX
+
 logecho() {
   echo ${*} | tee -a ${loglog}
 }

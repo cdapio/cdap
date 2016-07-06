@@ -82,6 +82,13 @@ public class TransformRunner<KEY, VALUE> {
     Map<String, Map<String, String>> runtimeArgs = GSON.fromJson(
       hConf.get(ETLMapReduce.RUNTIME_ARGS_KEY), ETLMapReduce.RUNTIME_ARGS_TYPE);
 
+    // input alias name -> stage name mapping
+    Map<String, String> inputAliasToStage = GSON.fromJson(hConf.get(ETLMapReduce.INPUT_ALIAS_KEY),
+                                                          ETLMapReduce.INPUT_ALIAS_TYPE);
+    String inputAliasName = context.getInputName();
+    // inputAliasName can be null (in case of reducers)
+    String sourceStage = (inputAliasName != null) ? inputAliasToStage.get(inputAliasName) : null;
+
     PipelinePhase phase = phaseSpec.getPhase();
     Set<StageInfo> aggregators = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE);
     if (!aggregators.isEmpty()) {
@@ -95,7 +102,7 @@ public class TransformRunner<KEY, VALUE> {
       }
     }
     TransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
-      new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics, runtimeArgs);
+      new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics, runtimeArgs, sourceStage);
     this.transformExecutor = transformExecutorFactory.create(phase);
 
     // setup error dataset information

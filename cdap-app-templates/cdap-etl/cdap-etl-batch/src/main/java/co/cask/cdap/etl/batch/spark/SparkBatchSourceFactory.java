@@ -18,7 +18,6 @@ package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -31,6 +30,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import scala.Tuple2;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -40,9 +40,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.Set;
 
 import static java.lang.Thread.currentThread;
 
@@ -52,111 +53,154 @@ import static java.lang.Thread.currentThread;
  */
 final class SparkBatchSourceFactory {
 
-  private enum SourceType {
-    STREAM(1), PROVIDER(2), DATASET(3);
-
-    private final byte id;
-
-    SourceType(int id) {
-      this.id = (byte) id;
-    }
-
-    static SourceType from(byte id) {
-      for (SourceType type : values()) {
-        if (type.id == id) {
-          return type;
-        }
-      }
-      throw new IllegalArgumentException("No SourceType found for id " + id);
-    }
-  }
-
-  private final StreamBatchReadable streamBatchReadable;
-  private final InputFormatProvider inputFormatProvider;
-  private final DatasetInfo datasetInfo;
-
-  static SparkBatchSourceFactory create(StreamBatchReadable streamBatchReadable) {
-    return new SparkBatchSourceFactory(streamBatchReadable, null, null);
-  }
-
-  static SparkBatchSourceFactory create(InputFormatProvider inputFormatProvider) {
-    return new SparkBatchSourceFactory(null, inputFormatProvider, null);
-  }
-
-  static SparkBatchSourceFactory create(String datasetName, Map<String, String> datasetArgs,
-                                        @Nullable List<Split> splits) {
-    return new SparkBatchSourceFactory(null, null, new DatasetInfo(datasetName, datasetArgs, splits));
-  }
-
-  static SparkBatchSourceFactory create(Input input) {
-    if (input instanceof Input.DatasetInput) {
-      // Note if input format provider is trackable then it comes in as DatasetInput
-      Input.DatasetInput datasetInput = (Input.DatasetInput) input;
-      return create(datasetInput.getName(), datasetInput.getArguments(), datasetInput.getSplits());
-    } else if (input instanceof Input.StreamInput) {
-      Input.StreamInput streamInput = (Input.StreamInput) input;
-      return create(streamInput.getStreamBatchReadable());
-    } else if (input instanceof Input.InputFormatProviderInput) {
-      Input.InputFormatProviderInput ifpInput = (Input.InputFormatProviderInput) input;
-      return new SparkBatchSourceFactory(null, ifpInput.getInputFormatProvider(), null);
-    }
-    throw new IllegalArgumentException("Unknown input format type: " + input.getClass().getCanonicalName());
-  }
-
   static SparkBatchSourceFactory deserialize(InputStream inputStream) throws IOException {
     DataInput input = new DataInputStream(inputStream);
 
-    // Deserialize based on the type
-    switch (SourceType.from(input.readByte())) {
-      case STREAM:
-        return new SparkBatchSourceFactory(new StreamBatchReadable(URI.create(input.readUTF())), null, null);
-      case PROVIDER:
-        return new SparkBatchSourceFactory(
-          null, new BasicInputFormatProvider(
-          input.readUTF(), Serializations.deserializeMap(input, Serializations.createStringObjectReader())), null
-        );
-      case DATASET:
-        return new SparkBatchSourceFactory(null, null, DatasetInfo.deserialize(input));
-    }
-    throw new IllegalArgumentException("Invalid input. Failed to decode SparkBatchSourceFactory.");
+    Map<String, StreamBatchReadable> streamBatchReadables = Serializations.deserializeMap(
+      input, new Serializations.ObjectReader<StreamBatchReadable>() {
+      @Override
+      public StreamBatchReadable read(DataInput input) throws IOException {
+        return new StreamBatchReadable(URI.create(input.readUTF()));
+      }
+    });
+
+    Map<String, InputFormatProvider> inputFormatProviders = Serializations.deserializeMap(
+      input, new Serializations.ObjectReader<InputFormatProvider>() {
+      @Override
+      public InputFormatProvider read(DataInput input) throws IOException {
+        return new BasicInputFormatProvider(input.readUTF(),
+                                            Serializations.deserializeMap(input,
+                                                                          Serializations.createStringObjectReader()));
+      }
+    });
+
+    Map<String, DatasetInfo> datasetInfos = Serializations.deserializeMap(
+      input, new Serializations.ObjectReader<DatasetInfo>() {
+      @Override
+      public DatasetInfo read(DataInput input) throws IOException {
+        return DatasetInfo.deserialize(input);
+      }
+    });
+
+    Map<String, Set<String>> sourceInputs = Serializations.deserializeMap(
+      input, Serializations.createStringSetObjectReader());
+    return new SparkBatchSourceFactory(streamBatchReadables, inputFormatProviders, datasetInfos, sourceInputs);
   }
 
-  private SparkBatchSourceFactory(@Nullable StreamBatchReadable streamBatchReadable,
-                                  @Nullable InputFormatProvider inputFormatProvider,
-                                  @Nullable DatasetInfo datasetInfo) {
-    this.streamBatchReadable = streamBatchReadable;
-    this.inputFormatProvider = inputFormatProvider;
-    this.datasetInfo = datasetInfo;
+  private final Map<String, StreamBatchReadable> streamBatchReadables;
+  private final Map<String, InputFormatProvider> inputFormatProviders;
+  private final Map<String, DatasetInfo> datasetInfos;
+  private final Map<String, Set<String>> sourceInputs;
+
+  SparkBatchSourceFactory() {
+    this.streamBatchReadables = new HashMap<>();
+    this.inputFormatProviders = new HashMap<>();
+    this.datasetInfos = new HashMap<>();
+    this.sourceInputs = new HashMap<>();
+  }
+
+  private SparkBatchSourceFactory(Map<String, StreamBatchReadable> streamBatchReadables,
+                                  Map<String, InputFormatProvider> inputFormatProviders,
+                                  Map<String, DatasetInfo> datasetInfos,
+                                  Map<String, Set<String>> sourceInputs) {
+    this.streamBatchReadables = streamBatchReadables;
+    this.inputFormatProviders = inputFormatProviders;
+    this.datasetInfos = datasetInfos;
+    this.sourceInputs = sourceInputs;
+  }
+
+  public void addInput(String stageName, Input input) {
+    if (input instanceof Input.DatasetInput) {
+      // Note if input format provider is trackable then it comes in as DatasetInput
+      Input.DatasetInput datasetInput = (Input.DatasetInput) input;
+      addInput(stageName, datasetInput.getName(), datasetInput.getAlias(), datasetInput.getArguments());
+    } else if (input instanceof Input.InputFormatProviderInput) {
+      Input.InputFormatProviderInput ifpInput = (Input.InputFormatProviderInput) input;
+      addInput(stageName, ifpInput.getAlias(),
+               new BasicInputFormatProvider(ifpInput.getInputFormatProvider().getInputFormatClassName(),
+                                            ifpInput.getInputFormatProvider().getInputFormatConfiguration()));
+    } else if (input instanceof Input.StreamInput) {
+      Input.StreamInput streamInput = (Input.StreamInput) input;
+      addInput(stageName, streamInput.getAlias(), streamInput.getStreamBatchReadable());
+    }
+  }
+
+  private void addInput(String stageName, String alias, StreamBatchReadable streamBatchReadable) {
+    duplicateAliasCheck(alias);
+    streamBatchReadables.put(alias, streamBatchReadable);
+    addStageInput(stageName, alias);
+  }
+
+  private void addInput(String stageName, String datasetName, String alias, Map<String, String> datasetArgs) {
+    duplicateAliasCheck(alias);
+    datasetInfos.put(alias, new DatasetInfo(datasetName, datasetArgs, null));
+    addStageInput(stageName, alias);
+  }
+
+  private void addInput(String stageName, String alias, BasicInputFormatProvider inputFormatProvider) {
+    duplicateAliasCheck(alias);
+    inputFormatProviders.put(alias, inputFormatProvider);
+    addStageInput(stageName, alias);
+  }
+
+  private void duplicateAliasCheck(String alias) {
+    if (inputFormatProviders.containsKey(alias) || datasetInfos.containsKey(alias)
+      || streamBatchReadables.containsKey(alias)) {
+      // this will never happen since alias will be unique since we append it with UUID
+      throw new IllegalStateException(alias + " has already been added. Can't add an input with the same alias.");
+    }
   }
 
   public void serialize(OutputStream outputStream) throws IOException {
     DataOutput output = new DataOutputStream(outputStream);
-    if (streamBatchReadable != null) {
-      output.writeByte(SourceType.STREAM.id);
-      output.writeUTF(streamBatchReadable.toURI().toString());
-      return;
+
+    Serializations.serializeMap(streamBatchReadables, new Serializations.ObjectWriter<StreamBatchReadable>() {
+      @Override
+      public void write(StreamBatchReadable streamBatchReadable, DataOutput output) throws IOException {
+        output.writeUTF(streamBatchReadable.toURI().toString());
+      }
+    }, output);
+
+    Serializations.serializeMap(inputFormatProviders, new Serializations.ObjectWriter<InputFormatProvider>() {
+      @Override
+      public void write(InputFormatProvider inputFormatProvider, DataOutput output) throws IOException {
+        output.writeUTF(inputFormatProvider.getInputFormatClassName());
+        Serializations.serializeMap(inputFormatProvider.getInputFormatConfiguration(),
+                                    Serializations.createStringObjectWriter(), output);
+      }
+    }, output);
+
+    Serializations.serializeMap(datasetInfos, new Serializations.ObjectWriter<DatasetInfo>() {
+      @Override
+      public void write(DatasetInfo datasetInfo, DataOutput output) throws IOException {
+        datasetInfo.serialize(output);
+      }
+    }, output);
+
+    Serializations.serializeMap(sourceInputs, Serializations.createStringSetObjectWriter(), output);
+  }
+
+  public <K, V> JavaPairRDD<K, V> createRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc, String sourceName,
+                                            Class<K> keyClass, Class<V> valueClass) {
+    Set<String> inputNames = sourceInputs.get(sourceName);
+    if (inputNames == null || inputNames.isEmpty()) {
+      // should never happen if validation happened correctly at pipeline configure time
+      throw new IllegalArgumentException(
+        sourceName + " has no input. Please check that the source calls setInput at some input.");
     }
-    if (inputFormatProvider != null) {
-      output.writeByte(SourceType.PROVIDER.id);
-      output.writeUTF(inputFormatProvider.getInputFormatClassName());
-      Serializations.serializeMap(inputFormatProvider.getInputFormatConfiguration(),
-                                  Serializations.createStringObjectWriter(), output);
-      return;
+
+    JavaPairRDD<K, V> inputRDD = JavaPairRDD.fromJavaRDD(jsc.<Tuple2<K, V>>emptyRDD());
+    for (String inputName : inputNames) {
+      inputRDD = inputRDD.union(createInputRDD(sec, jsc, inputName, keyClass, valueClass));
     }
-    if (datasetInfo != null) {
-      output.writeByte(SourceType.DATASET.id);
-      datasetInfo.serialize(output);
-      return;
-    }
-    // This should never happen since the constructor is private and it only get calls from static create() methods
-    // which make sure one and only one of those source type will be specified.
-    throw new IllegalStateException("Unknown source type");
+    return inputRDD;
   }
 
   @SuppressWarnings("unchecked")
-  public <K, V> JavaPairRDD<K, V> createRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc,
-                                            Class<K> keyClass, Class<V> valueClass) {
-    if (streamBatchReadable != null) {
+  private <K, V> JavaPairRDD<K, V> createInputRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc, String inputName,
+                                                  Class<K> keyClass, Class<V> valueClass) {
+    if (streamBatchReadables.containsKey(inputName)) {
+      StreamBatchReadable streamBatchReadable = streamBatchReadables.get(inputName);
       FormatSpecification formatSpec = streamBatchReadable.getFormatSpecification();
       if (formatSpec != null) {
         return (JavaPairRDD<K, V>) sec.fromStream(streamBatchReadable.getStreamName(),
@@ -185,7 +229,9 @@ final class SparkBatchSourceFactory {
         }
       }
     }
-    if (inputFormatProvider != null) {
+
+    if (inputFormatProviders.containsKey(inputName)) {
+      InputFormatProvider inputFormatProvider = inputFormatProviders.get(inputName);
       Configuration hConf = new Configuration();
       hConf.clear();
       for (Map.Entry<String, String> entry : inputFormatProvider.getInputFormatConfiguration().entrySet()) {
@@ -202,12 +248,23 @@ final class SparkBatchSourceFactory {
         throw Throwables.propagate(e);
       }
     }
-    if (datasetInfo != null) {
+
+    if (datasetInfos.containsKey(inputName)) {
+      DatasetInfo datasetInfo = datasetInfos.get(inputName);
       return sec.fromDataset(datasetInfo.getDatasetName(), datasetInfo.getDatasetArgs());
     }
     // This should never happen since the constructor is private and it only get calls from static create() methods
     // which make sure one and only one of those source type will be specified.
     throw new IllegalStateException("Unknown source type");
+  }
+
+  private void addStageInput(String stageName, String inputName) {
+    Set<String> inputs = sourceInputs.get(stageName);
+    if (inputs == null) {
+      inputs = new HashSet<>();
+    }
+    inputs.add(inputName);
+    sourceInputs.put(stageName, inputs);
   }
 
   private static final class BasicInputFormatProvider implements InputFormatProvider {

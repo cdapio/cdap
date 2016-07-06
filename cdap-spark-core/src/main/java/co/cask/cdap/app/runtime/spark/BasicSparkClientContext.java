@@ -154,9 +154,20 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
+  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+    return sparkRuntimeContext.getDatasetCache().getDataset(namespace, name);
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(String name,
                                           Map<String, String> arguments) throws DatasetInstantiationException {
     return sparkRuntimeContext.getDatasetCache().getDataset(name, arguments);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name, String namespace,
+                                          Map<String, String> arguments) throws DatasetInstantiationException {
+    return sparkRuntimeContext.getDatasetCache().getDataset(namespace, name, arguments);
   }
 
   @Override

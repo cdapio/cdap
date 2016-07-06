@@ -150,6 +150,7 @@ gulp.task('js:lib', function() {
       './bower_components/sockjs-client/dist/sockjs.js',
 
       './bower_components/d3/d3.min.js',
+      './bower_components/d3-timeline/src/d3-timeline.js',
 
       './bower_components/epoch/epoch.min.js',
       './bower_components/lodash/lodash.js',
@@ -228,7 +229,8 @@ function getEs6Directives(isNegate) {
     'plugin-templates',
     'my-global-navbar',
     'datetime-picker',
-    'datetime-range'
+    'datetime-range',
+    'log-viewer'
   ];
 
   return es6directives.map(function (directive) {

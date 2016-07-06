@@ -16,6 +16,7 @@
 
 package co.cask.cdap.pipeline;
 
+import co.cask.cdap.internal.pipeline.StageContext;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -62,6 +63,13 @@ public abstract class AbstractStage<T> implements Stage {
    */
   protected final void emit(Object o) {
     ctx.setDownStream(o);
+  }
+
+  /**
+   * Returns the current {@link Context} object.
+   */
+  protected final Context getContext() {
+    return ctx;
   }
 
   /**

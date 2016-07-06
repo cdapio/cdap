@@ -20,6 +20,7 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -53,6 +54,7 @@ import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
+import co.cask.cdap.gateway.handlers.meta.RemoteRuntimeStoreHandler;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -71,6 +73,7 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
@@ -274,7 +277,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       install(
         new FactoryModuleBuilder()
           .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
-          },
+                     },
                      new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
                      })
           .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
@@ -282,6 +285,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(Store.class).to(DefaultStore.class);
+      // we can simply use DefaultStore for RuntimeStore, when its not running in a separate container
+      bind(RuntimeStore.class).to(DefaultStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
@@ -307,6 +312,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
+      handlerBinder.addBinding().to(RemoteRuntimeStoreHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

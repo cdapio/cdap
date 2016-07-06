@@ -83,7 +83,7 @@ class TrackerAuditController {
     return match.length > 0 ? match[0] : { label: 'Custom' };
   }
 
-  goCustomDate() {
+  goToCustomTimeRangeEntityDetailView() {
     let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000, 10);
     let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000, 10);
 

@@ -44,7 +44,6 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -64,13 +63,12 @@ import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
-import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -81,9 +79,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -94,7 +91,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnerService;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
@@ -345,6 +341,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
+      new MetricsStoreModule(),
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
@@ -354,30 +351,13 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
           bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
           bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
           bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
-        }
+          bind(Store.class).annotatedWith(Names.named("defaultStore")).to(DefaultStore.class).in(Singleton.class);
 
-        @Provides
-        @Singleton
-        @Named("defaultStore")
-        @SuppressWarnings("unused")
-        public Store getStore(CConfiguration conf,
-                              LocationFactory locationFactory,
-                              NamespacedLocationFactory namespacedLocationFactory,
-                              final TransactionExecutorFactory txExecutorFactory,
-                              DatasetFramework framework,
-                              TransactionSystemClient txClient) {
-          return new DefaultStore(conf, locationFactory, namespacedLocationFactory,
-                                  txExecutorFactory, framework, txClient);
-        }
-
-        // This is needed because the LocalApplicationManager
-        // expects a dsframework injection named datasetMDS
-        @Provides
-        @Singleton
-        @Named("datasetMDS")
-        @SuppressWarnings("unused")
-        public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
-          return dsFramework;
+          // This is needed because the LocalApplicationManager
+          // expects a dsframework injection named datasetMDS
+          bind(DatasetFramework.class)
+            .annotatedWith(Names.named("datasetMDS"))
+            .to(DatasetFramework.class).in(Singleton.class);
         }
       });
 

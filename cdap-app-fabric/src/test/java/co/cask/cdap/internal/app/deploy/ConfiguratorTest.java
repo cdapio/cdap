@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
@@ -71,20 +72,22 @@ public class ConfiguratorTest {
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory());
 
     // Create a configurator that is testable. Provide it a application.
-    Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
-                                                         WordCountApp.class.getName(), appJar, null, "", artifactRepo);
+    try (CloseableClassLoader artifactClassLoader = artifactRepo.createArtifactClassLoader(appJar)) {
+      Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
+                                                           WordCountApp.class.getName(), artifactRepo,
+                                                           artifactClassLoader, null, "");
+      // Extract response from the configurator.
+      ListenableFuture<ConfigResponse> result = configurator.config();
+      ConfigResponse response = result.get(10, TimeUnit.SECONDS);
+      Assert.assertNotNull(response);
 
-    // Extract response from the configurator.
-    ListenableFuture<ConfigResponse> result = configurator.config();
-    ConfigResponse response = result.get(10, TimeUnit.SECONDS);
-    Assert.assertNotNull(response);
-
-    // Deserialize the JSON spec back into Application object.
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
-    ApplicationSpecification specification = adapter.fromJson(response.get());
-    Assert.assertNotNull(specification);
-    Assert.assertTrue(specification.getName().equals("WordCountApp")); // Simple checks.
-    Assert.assertTrue(specification.getFlows().size() == 1); // # of flows.
+      // Deserialize the JSON spec back into Application object.
+      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+      ApplicationSpecification specification = adapter.fromJson(response.get());
+      Assert.assertNotNull(specification);
+      Assert.assertTrue(specification.getName().equals("WordCountApp")); // Simple checks.
+      Assert.assertTrue(specification.getFlows().size() == 1); // # of flows.
+    }
   }
 
   @Test
@@ -95,34 +98,37 @@ public class ConfiguratorTest {
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory());
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
-    Configurator configuratorWithConfig =
-      new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(), appJar,
-                               null, new Gson().toJson(config), artifactRepo);
+    // Create a configurator that is testable. Provide it a application.
+    try (CloseableClassLoader artifactClassLoader = artifactRepo.createArtifactClassLoader(appJar)) {
+      Configurator configuratorWithConfig =
+        new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
+                                 artifactRepo, artifactClassLoader, null, new Gson().toJson(config));
 
-    ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
-    ConfigResponse response = result.get(10, TimeUnit.SECONDS);
-    Assert.assertNotNull(response);
+      ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
+      ConfigResponse response = result.get(10, TimeUnit.SECONDS);
+      Assert.assertNotNull(response);
 
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
-    ApplicationSpecification specification = adapter.fromJson(response.get());
-    Assert.assertNotNull(specification);
-    Assert.assertTrue(specification.getStreams().size() == 1);
-    Assert.assertTrue(specification.getStreams().containsKey("myStream"));
-    Assert.assertTrue(specification.getDatasets().size() == 1);
-    Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
+      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+      ApplicationSpecification specification = adapter.fromJson(response.get());
+      Assert.assertNotNull(specification);
+      Assert.assertTrue(specification.getStreams().size() == 1);
+      Assert.assertTrue(specification.getStreams().containsKey("myStream"));
+      Assert.assertTrue(specification.getDatasets().size() == 1);
+      Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
 
-    Configurator configuratorWithoutConfig = new InMemoryConfigurator(
-      conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(), appJar, null, null, artifactRepo);
-    result = configuratorWithoutConfig.config();
-    response = result.get(10, TimeUnit.SECONDS);
-    Assert.assertNotNull(response);
+      Configurator configuratorWithoutConfig = new InMemoryConfigurator(
+        conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
+        artifactRepo, artifactClassLoader, null, null);
+      result = configuratorWithoutConfig.config();
+      response = result.get(10, TimeUnit.SECONDS);
+      Assert.assertNotNull(response);
 
-    specification = adapter.fromJson(response.get());
-    Assert.assertNotNull(specification);
-    Assert.assertTrue(specification.getStreams().size() == 1);
-    Assert.assertTrue(specification.getStreams().containsKey(ConfigTestApp.DEFAULT_STREAM));
-    Assert.assertTrue(specification.getDatasets().size() == 1);
-    Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
+      specification = adapter.fromJson(response.get());
+      Assert.assertNotNull(specification);
+      Assert.assertTrue(specification.getStreams().size() == 1);
+      Assert.assertTrue(specification.getStreams().containsKey(ConfigTestApp.DEFAULT_STREAM));
+      Assert.assertTrue(specification.getDatasets().size() == 1);
+      Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
+    }
   }
-
 }

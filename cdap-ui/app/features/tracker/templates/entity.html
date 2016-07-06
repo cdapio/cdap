@@ -52,6 +52,9 @@
           ng-if="::($state.params.entityType === 'streams' || EntityController.datasetExplorable)">
         <a ui-sref="tracker.detail.entity.preview">Preview</a>
       </li>
+      <li ng-class="{'active': $state.is('tracker.detail.entity.usage')}">
+        <a ui-sref="tracker.detail.entity.usage">Usage</a>
+      </li>
     </ul>
   </div>
 
@@ -59,7 +62,8 @@
     <my-jump-button
       entity-type="$state.params.entityType"
       entity-id="$state.params.entityId"
-      dataset-type="EntityController.datasetType">
+      dataset-type="EntityController.datasetType"
+      dataset-explorable="EntityController.datasetExplorable">
     </my-jump-button>
   </div>
 

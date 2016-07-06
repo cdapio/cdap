@@ -29,12 +29,12 @@ import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowNodeThrowable;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
@@ -172,7 +172,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private void addWorkflowNodeState(ProgramId programId, String pid, Map<String, String> systemArgs,
-                                    ProgramRunStatus status, @Nullable Throwable failureCause) {
+                                    ProgramRunStatus status, @Nullable BasicThrowable failureCause) {
     String workflowNodeId = systemArgs.get(ProgramOptionConstants.WORKFLOW_NODE_ID);
     String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
     String workflowRun = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
@@ -185,10 +185,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId.getParent().toId())
       .add(workflowRun).add(workflowNodeId).build();
 
-    WorkflowNodeThrowable defaultThrowable = failureCause == null ? null : new WorkflowNodeThrowable(failureCause);
     WorkflowNodeStateDetail nodeStateDetail = new WorkflowNodeStateDetail(workflowNodeId,
                                                                           ProgramRunStatus.toNodeStatus(status),
-                                                                          pid, defaultThrowable);
+                                                                          pid, failureCause);
 
     write(key, nodeStateDetail);
 
@@ -286,7 +285,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus,
-                                @Nullable Throwable failureCause) {
+                                @Nullable BasicThrowable failureCause) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())

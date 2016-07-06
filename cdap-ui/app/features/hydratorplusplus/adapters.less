@@ -308,6 +308,12 @@ body.theme-cdap {
           color: @gray-dark;
           padding-right: 15px;
           padding-left: 15px;
+          &.pipeline-name {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
         }
         th {
           font-weight: 500;

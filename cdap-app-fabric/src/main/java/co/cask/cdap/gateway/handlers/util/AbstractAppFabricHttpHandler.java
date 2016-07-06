@@ -112,20 +112,11 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   }
 
   protected Map<String, String> decodeArguments(HttpRequest request) throws JsonSyntaxException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
+    Map<String, String> args = parseBody(request, STRING_MAP_TYPE);
+    if (args == null) {
       return ImmutableMap.of();
     }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
-      Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
-      return args == null ? ImmutableMap.<String, String>of() : args;
-    } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
-      throw e;
-    } finally {
-      Closeables.closeQuietly(reader);
-    }
+    return args;
   }
 
   protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,

@@ -291,15 +291,42 @@ final class SparkTransactional implements Transactional {
     }
 
     @Override
+    public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+      return getDataset(namespace, name, Collections.<String, String>emptyMap());
+    }
+
+    @Override
     public <T extends Dataset> T getDataset(String name,
                                             Map<String, String> arguments) throws DatasetInstantiationException {
       return getDataset(name, arguments, AccessType.UNKNOWN);
     }
 
     @Override
+    public <T extends Dataset> T getDataset(String namespace, String name,
+                                            Map<String, String> arguments) throws DatasetInstantiationException {
+      return getDataset(namespace, name, arguments, AccessType.UNKNOWN);
+    }
+
+    @Override
     public <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
                                             AccessType accessType) throws DatasetInstantiationException {
       T dataset = datasetCache.getDataset(name, arguments, accessType);
+
+      // Only call startTx if the dataset hasn't been seen before
+      // It is ok because there is only one transaction in this DatasetContext
+      // If a dataset instance is being reused, we don't need to call startTx again.
+      // It's also true for the case when a dataset instance was released and reused.
+      if (datasets.add(dataset) && dataset instanceof TransactionAware) {
+        ((TransactionAware) dataset).startTx(transaction);
+      }
+
+      return dataset;
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
+                                            AccessType accessType) throws DatasetInstantiationException {
+      T dataset = datasetCache.getDataset(namespace, name, arguments, accessType);
 
       // Only call startTx if the dataset hasn't been seen before
       // It is ok because there is only one transaction in this DatasetContext
