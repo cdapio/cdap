@@ -33,7 +33,6 @@ body.theme-cdap {
 
       div.pipeline-type {
         color: #397cf1;
-        float: left;
         text-decoration: none;
         span {
           display: inline-block;
@@ -46,25 +45,21 @@ body.theme-cdap {
         }
       }
 
-      div.action-buttons {
-        width: 100%;
-      }
       div.btn {
-        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 0);
+        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 6px 15px);
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
-        height: @height-of-toppanel;
-        padding: 0;
         .transition(all 0.2s ease);
         span {
-          line-height: @height-of-toppanel;
+          line-height: 29px;
         }
         &:hover,
         &:focus {
           background-color: #ebebeb;
           border-right: 1px solid #ebebeb;
           border-left: 1px solid @table-border-color;
+          border-bottom: 1px solid @table-border-color;
         }
         &:active {
           background-color: #828da0;
@@ -80,12 +75,6 @@ body.theme-cdap {
         @media (max-width: @screen-xs-max) {
           display: none;
         }
-      }
-      .nopadding {
-        padding: 0;
-      }
-      .nomargin {
-        margin: 0;
       }
     }
     .toppanel-tooltip {
@@ -127,17 +116,15 @@ body.theme-cdap {
       max-width: ~"calc(100% - 130px)";
       left: 130px;
       .transition(all 0.2s ease);
+      display: flex;
 
-      div.btn {
-        width: 25%;
-      }
       div.hydrator-metadata {
-        @media (min-width: @screen-lg-min) {
-          max-width: 650px;
-        }
-
+        flex-grow: 3;
+        flex-basis: 50%;
+        flex-wrap: wrap;
+        display: flex;
         background-color: transparent;
-        position: relative;
+        min-width: 0;
         z-index: 1021;
         .box-shadow(none);
         .transition(all 0.2s ease);
@@ -147,44 +134,27 @@ body.theme-cdap {
           cursor: pointer;
         }
         div.pipeline-type {
-          padding-left: 10px;
+          display: inline-block;
+          padding-left: 7px;
         }
-        div.pipeline-name {
+        div.metadata {
           margin-left: 10px;
-          min-width: 135px;
-          max-width: 85%;
-          position: relative;
-          &:after {
-            position: absolute;
-            font-family: FontAwesome;
-            top: 5px;
-            right: -30px;
-            content: "\f040";
-            .opacity(0);
-            .transition(opacity 0.2s ease);
-          }
-          &:hover,
-          &:focus {
-            &:after {
-              .opacity(1);
-            }
-          }
+          width: ~"calc(100% - 50px)";
           > div {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+
             &:before {
               content: none;
               color: gray;
             }
-            &:first-child,
-            &:last-child {
-              max-width: 100%;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-              overflow: hidden;
-            }
+
             &:first-child {
               font-size: 14px;
               margin-top: 5px;
               line-height: 17px;
+
               &.placeholder {
                 &:before {
                   content: "Name your pipeline";
@@ -246,24 +216,22 @@ body.theme-cdap {
           background-color: white;
           height: 185px;
           cursor: auto;
+          padding: 10px;
           @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
           .box-shadow(@box-shadow);
           div.pipeline-type {
             span {
-              line-height: @height-of-toppanel;
+              line-height: 1;
             }
           }
           div.pipeline-name {
-            width: 85%;
-            padding-top: 10px;
+            padding: 10px;
 
             &:after {
               content: none;
             }
           }
           div.btn-group {
-            margin: 10px 0;
-            padding-right: 10px;
             .btn {
               display: inline-block;
               width: auto;
@@ -292,169 +260,114 @@ body.theme-cdap {
   &.state-hydratorplusplus-detail {
     div.side-panel.top {
       left: 0;
-      max-width: 100vw;
-      height: 70px;
+      width: 100vw;
+      display: flex;
 
-      div.tbl {
-        display: table;
-        height: @height-of-toppanel;
-        width: 100%;
-      }
-      div.tbl-cell {
-        display: table-cell;
+      > div {
+        padding: 5px 10px;
         border-left: 1px solid @table-border-color;
-        padding: 0 10px;
-        vertical-align: middle;
-        text-align: left;
-        &:first-child,
-        &:last-child {
+        &.next-run,
+        &.last-run,
+        &.all-runs {
+          flex-grow: 0.1;
+
+          .last-run-container,
+          .all-runs-container,
+          .next-runs-container {
+            display: flex;
+            justify-content: space-between;
+          }
+        }
+        &:first-child {
           border-left: 0;
         }
-        &:last-child {
-          padding-right: 0;
+        &.btn {
+          flex-grow: 0;
+          padding: inherit;
+          padding: 7px 15px 0 15px;
+          display: block;
+          align-items: center;
+          span {
+            line-height: 48px;
+          }
         }
-      }
-      div.batch div.tbl-cell {
-        &:first-child {
-          width: 24%;
-        }
-        &:nth-child(2) {
-          width: 6%;
-        }
-        &:nth-child(3) {
-          width: 20%;
-        }
-        &:nth-child(4) {
-          width: 15%;
-        }
-        &:nth-child(5) {
-          width: 14%;
-        }
-        &:last-child {
-          width: 21%;
-        }
-      }
-      div.realtime div.tbl-cell {
-        &:first-child {
-          width: 24%;
-        }
-        &:nth-child(2) {
-          width: 6%;
-        }
-        &:nth-child(3) {
-          width: 27%;
-        }
-        &:nth-child(4) {
-          width: 22%;
-        }
-        &:last-child {
-          width: 21%;
-        }
-      }
-      .hydrator-detail-metadata {
-        div.pipeline-type {
-          text-decoration: none;
-          padding: 0 10px 0 5px;
-        }
-        div.pipeline-name {
-          text-align: left;
-          padding-top: 4px;
-        }
-        h1,
-        p {
-          white-space: nowrap;
+
+        &.hydrator-detail-metadata {
+          display: flex;
+          flex-grow: 0.7;
           overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 100%;
+          flex-basis: 15%;
+          padding: 5px 10px;
+          div.pipeline-type {
+            text-decoration: none;
+            padding: 0 10px 0 0;
+          }
+          div.pipeline-name {
+            text-align: left;
+            padding-top: 4px;
+            overflow: hidden;
+          }
+          h1,
+          p {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+          }
+          h1 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 0;
+            line-height: 20px;
+            display: inline-block;
+          }
+          p {
+            color: #666666;
+            font-size: 12px;
+            font-weight: 400;
+            margin: 0;
+          }
         }
-        h1 {
-          font-size: 16px;
-          font-weight: 500;
-          margin-top: 0;
-          margin-bottom: 0;
-          line-height: 20px;
+        &.app-status {
+          flex-grow: 0.05;
+          display: flex;
+          align-items: center;
+          flex-direction: column;
+          .metric-value {
+            font-size: 20px;
+          }
+          &.status-green span {
+            color: @brand-success;
+          }
+          &.status-red span {
+            color: @brand-danger;
+          }
+          span {
+            line-height: inherit;
+          }
+
         }
-        p {
-          color: #666666;
+        strong {
+          display: block;
           font-size: 12px;
-          font-weight: 400;
-          margin: 0;
-        }
-      }
-      div.app-status {
-        .metric-value {
-          font-size: 20px;
-          line-height: 20px;
-          padding-bottom: 2px;
-        }
-        &.status-green span {
-          color: @brand-success;
-        }
-        &.status-red span {
-          color: @brand-danger;
         }
         span {
-          line-height: inherit;
+          display: block;
         }
-      }
-      div.last-run {
-        div.metric {
-          &:first-child {
-            padding-right: 5px;
-            width: 62%;
-          }
-          &:last-child {
-            width: 38%;
+        span.metric-value {
+          color: #636363;
+          font-size: 13px;
+          font-weight: 500;
+          small {
+            font-size: 10px;
+            font-weight: 400;
           }
         }
-      }
-      div.all-runs {
-        div.metric {
-          &:first-child {
-            padding-right: 5px;
-            width: 60%;
-          }
-          &:last-child {
-            width: 40%;
-          }
-        }
-      }
-      strong {
-        display: block;
-        font-size: 12px;
-        margin-bottom: 2px;
-      }
-      span {
-        display: block;
-      }
-      span.metric-value {
-        color: #636363;
-        font-size: 13px;
-        font-weight: 500;
-        line-height: 1;
-        small {
+        span.metric-label {
           font-size: 10px;
-          font-weight: 400;
-        }
-      }
-      span.metric-label {
-        font-size: 10px;
-        color: rgba(0, 0, 0, 0.4);
-        font-weight: 600;
-      }
-      div.action-buttons {
-        &.batch > div {
-          width: 20%;
-        }
-        &.realtime > div {
-          width: 25%;
-        }
-        div.btn {
-          width: 100%;
-          height: 70px;
-          span {
-            line-height: 70px;
-          }
+          color: rgba(0, 0, 0, 0.4);
+          font-weight: 600;
         }
       }
     }
