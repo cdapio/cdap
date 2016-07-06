@@ -26,8 +26,17 @@ angular.module(PKG.name + '.commons')
       controller: function($scope, myHelpers) {
         $scope.model = $scope.model || myHelpers.objectQuery($scope.config, 'widget-attributes', 'default');
         $scope.internalModel = $scope.model;
-        $scope.min = myHelpers.objectQuery($scope.config, 'widget-attributes', 'min') || 0;
-        $scope.max = myHelpers.objectQuery($scope.config, 'widget-attributes', 'max') || Infinity;
+        var minValueFromWidgetJSON = myHelpers.objectQuery($scope.config, 'widget-attributes', 'min');
+        var maxValueFromWidgetJSON = myHelpers.objectQuery($scope.config, 'widget-attributes', 'max');
+        if (typeof minValueFromWidgetJSON === 'number') {
+          minValueFromWidgetJSON = minValueFromWidgetJSON.toString();
+        }
+        if (typeof maxValueFromWidgetJSON === 'number') {
+          maxValueFromWidgetJSON = maxValueFromWidgetJSON.toString();
+        }
+
+        $scope.min =  minValueFromWidgetJSON || -Infinity;
+        $scope.max =  maxValueFromWidgetJSON || Infinity;
         // The number textbox requires the input to be number.
         // This will be correct for a fresh create studio view. But when the user is trying to import or clone
         // it would be a problem as the imported/cloned plugin property would be a string and number textbox
@@ -40,7 +49,7 @@ angular.module(PKG.name + '.commons')
           if (oldValue === newValue) {
             return;
           }
-          $scope.model = typeof $scope.internalModel === 'number' && $scope.internalModel.toString();
+          $scope.model = ($scope.internalModel && $scope.internalModel.toString()) || '';
         });
 
         // This is needed when we hit reset in node configuration.
