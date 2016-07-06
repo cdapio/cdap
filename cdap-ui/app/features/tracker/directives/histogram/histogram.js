@@ -15,8 +15,39 @@
  */
 
 angular.module(PKG.name + '.feature.tracker')
-  .directive('myHistogram', function (d3) {
+  .directive('myHistogram', function (d3, moment) {
 
+    function getXaxisDomain(start, end) {
+      var pattern = /\d+/g,
+          startTime,
+          endTime;
+      // _time is days in string extracted from 'now-5d'
+      var getTimeInEpoch = function(_time) {
+        let _t = parseInt(_time, 10);
+        if (Number.isNaN(_t)) {
+          return Date.now();
+        }
+
+        let tempDate = new Date();
+        tempDate = tempDate.setDate( tempDate.getDate() - _t );  // 20 days from now
+        return tempDate;
+      };
+      if (typeof start === 'string') {
+        startTime = start.match(pattern);
+        if (Array.isArray(startTime)) {
+          startTime = startTime[0];
+        }
+        startTime = getTimeInEpoch(startTime);
+      }
+      if (typeof end === 'string') {
+        endTime = end.match(pattern);
+        if (Array.isArray(endTime)) {
+          endTime = endTime[0];
+        }
+        endTime = getTimeInEpoch(endTime);
+      }
+      return { 'startTime': startTime, 'endTime': endTime };
+    }
     function HistogramLink (scope, element) {
       scope.render = function() {
         let margin = {
@@ -41,10 +72,7 @@ angular.module(PKG.name + '.feature.tracker')
         });
 
         let x = d3.time.scale()
-          .range([
-            ((width * 0.2) / (data.length / 2)) + (width / data.length),
-            width - (width / data.length / 2)
-          ]);
+          .range([0, width]);
 
         let y = d3.scale.linear()
           .range([height, 0]);
@@ -61,7 +89,8 @@ angular.module(PKG.name + '.feature.tracker')
             .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
 
         /* CREATE GRAPH */
-        x.domain([data[0].time, data[data.length - 1].time]);
+        let xDomain = getXaxisDomain(scope.startTime, scope.endTime);
+        x.domain([ xDomain.startTime,xDomain.endTime ]);
         y.domain([0, d3.max(data, (d) => { return d.count; })]).nice();
 
         /* X AXIS */
@@ -69,12 +98,17 @@ angular.module(PKG.name + '.feature.tracker')
         let xAxis = d3.svg.axis()
           .scale(x)
           .orient('bottom')
-          .tickPadding(10)
           .tickFormat(timeFormat)
-          .outerTickSize(0)
-          .innerTickSize(0)
-          .ticks(d3.time.day, 1);
+          .outerTickSize(0);
 
+        let durationAsDays = moment.duration(xDomain.endTime - xDomain.startTime).asDays();
+        if (durationAsDays >= 180) { // 6 months
+          xAxis.ticks(d3.time.months, 1).tickFormat(d3.time.format('%m-%Y'));
+        } else if ( durationAsDays >= 30 && durationAsDays < 180) {
+          xAxis.ticks(d3.time.weeks, 1).tickFormat(d3.time.format('%b-%U'));
+        } else {
+          xAxis.ticks(d3.time.days, 1).tickFormat(d3.time.format('%b-%e'));
+        }
         svg.append('g')
           .attr('class', 'x axis')
           .attr('transform', 'translate(0, ' + height + ')')
@@ -87,7 +121,7 @@ angular.module(PKG.name + '.feature.tracker')
           .tickPadding(10)
           .outerTickSize(0)
           .innerTickSize(-width)
-          .ticks(5);
+          .ticks(10);
 
         svg.append('g')
           .attr('class', 'y axis')
@@ -107,9 +141,14 @@ angular.module(PKG.name + '.feature.tracker')
             .data(data)
           .enter().append('rect')
             .attr('class', 'bar')
-            .attr('x', d => x(d.time) - (width / data.length))
+            .attr('x', d => {
+              console.log('x: ', x(d.time) - ((width / durationAsDays) ));
+              return x(d.time) - (((width + 130) / durationAsDays));
+            })
             .attr('y', (d) => { return y(d.count); })
-            .attr('width', width / data.length - (width * 0.2 / data.length ))
+            .attr('width', () => {
+              return (width - 180) / durationAsDays;
+            })
             .attr('height', (d) => { return height - y(d.count); })
           .on('mouseover', tip.show)
           .on('mouseout', tip.hide);
@@ -119,7 +158,9 @@ angular.module(PKG.name + '.feature.tracker')
     return {
       restrict: 'E',
       scope: {
-        model: '='
+        model: '=',
+        startTime: '@',
+        endTime: '@'
       },
       templateUrl: '/assets/features/tracker/directives/histogram/histogram.html',
       link: HistogramLink,

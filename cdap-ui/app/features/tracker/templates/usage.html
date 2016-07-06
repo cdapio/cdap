@@ -44,6 +44,8 @@
   <div ng-if="UsageController.serviceUnavailable === false"
       class="histogram-container">
     <my-histogram
+      start-time="{{UsageController.timeRange.start}}"
+      end-time="{{UsageController.timeRange.end}}"
       model="UsageController.auditHistogram">
     </my-histogram>
   </div>
