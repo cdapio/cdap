@@ -22,6 +22,14 @@
 # Override detected SPARK_HOME for Spark support
 # export SPARK_HOME="/usr/lib/spark"
 
+# Adds Hadoop and HBase libs to the classpath on startup.
+# If the "hbase" command is on the PATH, this will be done automatically.
+# Or uncomment the line below to point to the HBase installation directly.
+# HBASE_HOME=
+
+# Extra CLASSPATH locations to add to CDAP Java processes
+# EXTRA_CLASSPATH=""
+
 # LOCAL_DIR sets the JVM -Duser.dir property of the CDAP processes, and provides a
 # local working directory for application jars during startup if needed
 LOCAL_DIR="/var/tmp/cdap"
