@@ -169,9 +169,25 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
+  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+    return getDataset(namespace, name, RuntimeArguments.NO_ARGUMENTS);
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     return getDataset(name, arguments, AccessType.UNKNOWN);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
+    return getDataset(namespace, name, arguments, AccessType.UNKNOWN);
+  }
+
+  protected <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
+                                             AccessType accessType) throws DatasetInstantiationException {
+    return datasetCache.getDataset(namespace, name, arguments, accessType);
   }
 
   protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)

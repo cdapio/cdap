@@ -78,12 +78,34 @@ public class MapReduceRuntimeContext extends AbstractTransformContext implements
   }
 
   @Override
+  public <T extends Dataset> T getDataset(final String namespace, final String name)
+    throws DatasetInstantiationException {
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws DatasetInstantiationException {
+        return context.getDataset(namespace, name);
+      }
+    });
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
     return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(name, arguments);
+      }
+    });
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(final String namespace, final String name,
+                                          final Map<String, String> arguments) throws DatasetInstantiationException {
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws DatasetInstantiationException {
+        return context.getDataset(namespace, name, arguments);
       }
     });
   }

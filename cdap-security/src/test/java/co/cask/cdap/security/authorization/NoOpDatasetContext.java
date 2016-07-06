@@ -32,7 +32,18 @@ public class NoOpDatasetContext implements DatasetContext {
   }
 
   @Override
+  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+    throw new DatasetInstantiationException("NoOpDatasetContext cannot instantiate datasets");
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
+    throw new DatasetInstantiationException("NoOpDatasetContext cannot instantiate datasets");
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     throw new DatasetInstantiationException("NoOpDatasetContext cannot instantiate datasets");
   }

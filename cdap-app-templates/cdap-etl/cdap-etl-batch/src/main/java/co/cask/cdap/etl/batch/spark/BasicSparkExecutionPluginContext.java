@@ -131,9 +131,20 @@ public class BasicSparkExecutionPluginContext extends AbstractTransformContext i
   }
 
   @Override
+  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+    return datasetContext.getDataset(namespace, name);
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(String name,
                                           Map<String, String> arguments) throws DatasetInstantiationException {
     return datasetContext.getDataset(name, arguments);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String namespace, String name,
+                                          Map<String, String> arguments) throws DatasetInstantiationException {
+    return datasetContext.getDataset(namespace, name, arguments);
   }
 
   @Override
