@@ -119,8 +119,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
           keyStore.setKeyEntry(name, key, password, null);
         }
       } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
-        LOG.error("Failed to recover the store after a failed flush.");
-        ioe.addSuppressed(e);
+        ioe.addSuppressed(new IOException("Failed to recover the store after a failed flush."));
       }
       throw ioe;
     } finally {
@@ -249,20 +248,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     } catch (NoSuchAlgorithmException | CertificateException e) {
       throw new IOException("Unable to load the Secure Store. ", e);
     }
-  }
-
-  private static boolean isBadOrWrongPassword(IOException ioe) {
-    /* According to Java keystore documentation if the load failed due to bad password
-       then the cause of the exception would be set to "UnrecoverableKeyException".
-       Unfortunately that is not the observed behavior. */
-    if (ioe.getCause() instanceof UnrecoverableKeyException) {
-      return true;
-    }
-    // Workaround
-    return (ioe.getCause() == null)
-      && (ioe.getMessage() != null)
-      && ((ioe.getMessage().contains("Keystore was tampered")) || (ioe
-      .getMessage().contains("password was incorrect")));
   }
 
   /**
