@@ -38,9 +38,11 @@
       <div class="clearfix">
         <div class="input-column">
           <input type="text"
+                 id="{{ ::field.id }}"
                  class="form-control"
                  ng-model="field.name"
-                 ng-blur="ComplexSchema.formatOutput()">
+                 ng-blur="ComplexSchema.formatOutput()"
+                 ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)">
         </div>
 
         <div class="type-column">

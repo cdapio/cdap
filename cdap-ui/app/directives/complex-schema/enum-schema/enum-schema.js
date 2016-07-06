@@ -14,17 +14,29 @@
  * the License.
  */
 
-function EnumSchemaController (avsc, $timeout, $scope) {
+function EnumSchemaController (avsc, $timeout, $scope, uuid) {
   'ngInject';
 
   var vm = this;
 
   vm.symbols = [];
   let timeout;
+  let addSymbolTimeout;
 
   vm.addSymbol = (index) => {
     let placement = index === undefined ? 0 : index + 1;
-    vm.symbols.splice(placement, 0, {name: ''});
+    let newSymbol = {
+      name: '',
+      id: uuid.v4()
+    };
+
+    vm.symbols.splice(placement, 0, newSymbol);
+
+    $timeout.cancel(addSymbolTimeout);
+    addSymbolTimeout = $timeout(() => {
+      let elem = document.getElementById(newSymbol.id);
+      angular.element(elem)[0].focus();
+    });
   };
 
   vm.removeSymbol = (index) => {
@@ -68,12 +80,18 @@ function EnumSchemaController (avsc, $timeout, $scope) {
     }
 
     let parsed = avsc.parse(strJson, { wrapUnions: true });
-    vm.symbols = parsed.getSymbols().map( (symbol) => { return { name: symbol }; });
+    vm.symbols = parsed.getSymbols().map( (symbol) => {
+      return {
+        name: symbol,
+        id: uuid.v4()
+      };
+    });
     vm.formatOutput();
   }
 
   $scope.$on('$destroy', () => {
     $timeout.cancel(timeout);
+    $timeout.cancel(addSymbolTimeout);
   });
 }
 

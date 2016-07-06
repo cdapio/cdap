@@ -20,6 +20,7 @@
          ng-repeat="symbol in EnumSchema.symbols">
       <div class="input-column no-type">
         <input type="text"
+          id="{{ ::symbol.id }}"
           class="form-control"
           ng-model="symbol.name"
           ng-blur="EnumSchema.formatOutput()"

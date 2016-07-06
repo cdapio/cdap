@@ -17,17 +17,17 @@
 angular.module(PKG.name+'.commons')
 .constant('SCHEMA_TYPES', {
   'types': [
-    'string',
-    'int',
-    'long',
-    'float',
-    'double',
+    'array',
     'boolean',
     'bytes',
+    'double',
     'enum',
-    'array',
+    'float',
+    'int',
+    'long',
     'map',
     'record',
+    'string',
     'union'
   ]
 })
