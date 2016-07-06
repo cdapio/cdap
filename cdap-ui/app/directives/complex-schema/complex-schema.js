@@ -23,17 +23,27 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
   vm.parsedSchema = [];
   let recordName;
   let timeout;
+  let addFieldTimeout;
 
   vm.addField = (index) => {
     let placement = index === undefined ? 0 : index + 1;
-    vm.parsedSchema.splice(placement, 0, {
+    let newField = {
       name: '',
       type: 'string',
       displayType: 'string',
-      nullable: false
-    });
+      nullable: false,
+      id: uuid.v4()
+    };
+
+    vm.parsedSchema.splice(placement, 0, newField);
 
     vm.formatOutput();
+
+    $timeout.cancel(addFieldTimeout);
+    addFieldTimeout = $timeout(() => {
+      let elem = document.getElementById(newField.id);
+      angular.element(elem)[0].focus();
+    });
   };
 
   vm.removeField = (index) => {
@@ -76,6 +86,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
       }
 
       return {
+        id: uuid.v4(),
         name: field.getName(),
         displayType: type,
         type: storedType,
@@ -114,6 +125,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
 
   $scope.$on('$destroy', () => {
     $timeout.cancel(timeout);
+    $timeout.cancel(addFieldTimeout);
   });
 
 }
