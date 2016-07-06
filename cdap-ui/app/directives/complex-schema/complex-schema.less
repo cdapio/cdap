@@ -25,6 +25,7 @@ my-complex-schema {
 
     [class*="col-"] {
       padding-right: 0;
+      padding-left: 7px;
     }
 
     .type-column {
@@ -57,10 +58,7 @@ my-complex-schema {
     .fields-actions {
       float: right;
 
-      .nullable-header {
-        margin-right: 30px;
-        width: 35px;
-      }
+      .nullable-header { margin-right: 42px; }
 
       .checkbox {
         width: 35px;
@@ -72,8 +70,9 @@ my-complex-schema {
         margin-top: -2px;
         width: 60px;
         padding-right: 10px;
+
+        .btn-link { padding: 0; }
         &.no-checkbox { margin-top: 7px; }
-        .fa { cursor: pointer; }
       }
     }
   }

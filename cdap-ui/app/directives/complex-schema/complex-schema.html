@@ -61,12 +61,14 @@
           </div>
 
           <div class="actions-buttons text-right" ng-if="!ComplexSchema.isDisabled">
-            <i class="text-danger fa fa-trash"
-               ng-click="ComplexSchema.removeField($index)">
-            </i>
-            <i class="fa fa-plus"
-               ng-click="ComplexSchema.addField($index)">
-            </i>
+            <button class="btn btn-link"
+                    ng-click="ComplexSchema.removeField($index)">
+              <i class="text-danger fa fa-trash"></i>
+            </button>
+            <button class="btn btn-link"
+                    ng-click="ComplexSchema.addField($index)">
+              <i class="fa fa-plus"></i>
+            </button>
           </div>
         </div>
       </div>

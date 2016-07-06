@@ -28,12 +28,14 @@
       </div>
       <div class="fields-actions" ng-if="!EnumSchema.isDisabled">
         <div class="actions-buttons no-checkbox text-right">
-          <i class="text-danger fa fa-trash"
-             ng-click="EnumSchema.removeSymbol($index)">
-          </i>
-          <i class="fa fa-plus"
-             ng-click="EnumSchema.addSymbol($index)">
-          </i>
+          <button class="btn btn-link"
+                  ng-click="EnumSchema.removeSymbol($index)">
+            <i class="text-danger fa fa-trash"></i>
+          </button>
+          <button class="btn btn-link"
+                  ng-click="EnumSchema.addSymbol($index)">
+            <i class="fa fa-plus"></i>
+          </button>
         </div>
       </div>
     </div>
