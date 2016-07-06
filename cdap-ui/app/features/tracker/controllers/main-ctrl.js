@@ -15,36 +15,37 @@
  */
 
 class TrackerMainController{
-  constructor($state) {
+  constructor($state, $scope, myTrackerApi) {
     this.$state = $state;
+    this.$scope = $scope;
     this.searchQuery = '';
+    this.myTrackerApi = myTrackerApi;
 
-    // Placeholder data: TODO: remove once backend API is ready
-    this.topAppsData = {
-      'total' : 15,
-      'results' : [
-        {
-          'label' : 'Application1',
-          'value' : 36
-        },
-        {
-          'label' : 'Application3',
-          'value' : 28
-        },
-        {
-          'label' : 'Application2',
-          'value' : 17
-        },
-        {
-          'label' : 'Application5',
-          'value' : 17
-        },
-        {
-          'label' : 'Application4',
-          'value' : 1
-        }
-      ]
+    this.fetchTopDatasets();
+  }
+
+  fetchTopDatasets() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      limit: 5,
+      start: 'now-7d',
+      end: 'now',
+      scope: this.$scope,
+      entity: 'datasets'
     };
+
+    this.myTrackerApi.getTopEntities(params)
+      .$promise
+      .then((response) => {
+        this.topDatasets = response;
+        this.emptyRows = false;
+        if (this.topDatasets.length >= 3) {
+          this.emptyRows = true;
+          this.totalEmptyRows = Array.apply(null, {length: 5 - this.topDatasets.length}).map(Number.call, Number);
+        }
+      }, (err) => {
+        console.log('Error', err);
+      });
   }
 
   search(event) {
@@ -52,9 +53,10 @@ class TrackerMainController{
       this.$state.go('tracker.detail.result', { searchQuery: this.searchQuery });
     }
   }
+
 }
 
-TrackerMainController.$inject = ['$state'];
+TrackerMainController.$inject = ['$state', '$scope', 'myTrackerApi'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerMainController', TrackerMainController);

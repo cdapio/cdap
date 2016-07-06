@@ -24,6 +24,9 @@ my-histogram {
   .graph-container {
     border: 1px solid @border-color;
     border-radius: 4px;
+    margin-top: 20px;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .histogram-container {
@@ -36,10 +39,11 @@ my-histogram {
       }
 
       text {
-        font-weight: 500;
-        font-size: 12px;
+        font-weight: 600;
         fill: @font-color;
       }
+      &.x text { font-size: 13px; }
+      &.y text { font-size: 12px; }
     }
 
     svg { background-color: @svg-background; }
