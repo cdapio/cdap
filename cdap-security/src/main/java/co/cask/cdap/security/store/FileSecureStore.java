@@ -274,15 +274,11 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     KeyStore ks;
     try {
       ks = KeyStore.getInstance(SCHEME_NAME);
-      if (Files.exists(path) || Files.exists(newPath)) {
+      Files.deleteIfExists(newPath);
+      if (Files.exists(path)) {
         // If the main file exists then the new path should not exist.
         // Both existing means there is an inconsistency.
-        if (Files.exists(path) && Files.exists(newPath)) {
-          throw new IOException(
-            String.format("Secure Store not loaded due to an inconsistency "
-                            + "('%s' and '%s' should not exist together)!!", path, newPath));
-        }
-        tryLoadFromPath(ks, path, newPath, password);
+        loadFromPath(ks, path, password);
       } else {
         // We were not able to load an existing key store. Create a new one.
         ks.load(null, password);
@@ -292,34 +288,6 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       throw new IOException("Can't create Secure Store. ", e);
     }
     return ks;
-  }
-
-  /**
-   * Try loading from the user specified path, if that fails for any reason
-   * other than bad password then try loading from the backup path.
-   *
-   * @param path Path to load from
-   * @param backupPath Backup path (_NEW)
-   */
-  private static void tryLoadFromPath(KeyStore keyStore, Path path, Path backupPath, char[] password)
-    throws IOException {
-    try {
-      loadFromPath(keyStore, path, password);
-      // Successfully loaded the keystore. No need to keep the backup file.
-      Files.deleteIfExists(backupPath);
-      LOG.info("Secure store loaded successfully.");
-    } catch (IOException ioe) {
-      // Try the backup path if the loading failed for any reason other than incorrect password.
-      if (!isBadOrWrongPassword(ioe)) {
-        // Try loading from the backup path
-        loadFromPath(keyStore, backupPath, password);
-        Files.move(backupPath, path);
-        LOG.warn("Secure store loaded successfully from " + backupPath + " since " + path + " was corrupted.");
-      } else {
-        // Failed due to bad password.
-        throw ioe;
-      }
-    }
   }
 
   /**
