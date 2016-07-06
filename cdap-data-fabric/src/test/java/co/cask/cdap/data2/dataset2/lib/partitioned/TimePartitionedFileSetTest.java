@@ -69,8 +69,8 @@ public class TimePartitionedFileSetTest {
 
   @Before
   public void before() throws Exception {
-    dsFrameworkUtil.createInstance("timePartitionedFileSet", TPFS_INSTANCE, FileSetProperties.builder()
-      .setBasePath("testDir").build());
+    dsFrameworkUtil.createInstance("timePartitionedFileSet", TPFS_INSTANCE,
+                                   FileSetProperties.builder().setBasePath("testDir").build());
   }
 
   @After

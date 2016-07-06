@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.dataset;
 
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,13 +41,9 @@ public final class DatasetProperties {
   private final String description;
   private final Map<String, String> properties;
 
-  private DatasetProperties(Map<String, String> properties, @Nullable String description) {
+  protected DatasetProperties(Map<String, String> properties, @Nullable String description) {
     this.description = description;
     this.properties = properties;
-  }
-
-  public static Builder builder() {
-    return new Builder();
   }
 
   @Nullable
@@ -67,14 +65,30 @@ public final class DatasetProperties {
       '}';
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
   /**
    * A Builder to construct DatasetProperties instances.
    */
-  public static class Builder {
+  public static class Builder extends AbstractBuilder<Builder> { }
+
+  /**
+   * A abstract builder that is extensible while preserving the builder pattern. Builders that extend
+   * this builder should be defined as
+   * <pre>
+   *   class SubBuilder extends AbstractBuilder&lt;SubBuilder>
+   * </pre>
+   * This has the effect of returning from all the builder methods with type SubBuilder.
+   *
+   * @param <B> the subclass of this builder that is actually used (e.g. {@link FileSetProperties}
+   */
+  public abstract static class AbstractBuilder<B extends AbstractBuilder> {
     private String description;
     private Map<String, String> properties = new HashMap<>();
 
-    protected Builder() {
+    protected AbstractBuilder() {
     }
 
     /**
@@ -83,9 +97,9 @@ public final class DatasetProperties {
      * @param description dataset description
      * @return this builder object to allow chaining
      */
-    public Builder setDescription(String description) {
+    public B setDescription(String description) {
       this.description = description;
-      return this;
+      return thisBuilder();
     }
 
     /**
@@ -94,9 +108,9 @@ public final class DatasetProperties {
      * @param value the value of the property
      * @return this builder object to allow chaining
      */
-    public Builder add(String key, String value) {
+    public B add(String key, String value) {
       this.properties.put(key, value);
-      return this;
+      return thisBuilder();
     }
 
     /**
@@ -105,9 +119,9 @@ public final class DatasetProperties {
      * @param value the value of the property
      * @return this builder object to allow chaining
      */
-    public Builder add(String key, int value) {
+    public B add(String key, int value) {
       this.properties.put(key, String.valueOf(value));
-      return this;
+      return thisBuilder();
     }
 
     /**
@@ -115,9 +129,9 @@ public final class DatasetProperties {
      * @param properties the map of properties to add
      * @return this builder object to allow chaining
      */
-    public Builder addAll(Map<String, String> properties) {
+    public B addAll(Map<String, String> properties) {
       this.properties.putAll(properties);
-      return this;
+      return thisBuilder();
     }
 
     /**
@@ -126,6 +140,17 @@ public final class DatasetProperties {
      */
     public DatasetProperties build() {
       return new DatasetProperties(Collections.unmodifiableMap(this.properties), description);
+    }
+
+    /**
+     * This is a helper to return the current builder as the correct type.
+     * All builders that extend this builder should use this method to
+     * return from a builder method, instead of returning this.
+     * @return this, cast to the type parameter.
+     */
+    @SuppressWarnings("unchecked")
+    protected B thisBuilder() {
+      return (B) this;
     }
   }
 }

@@ -51,14 +51,15 @@ public class DataCleansing extends AbstractApplication {
     // Create the "rawRecords" partitioned file set for storing the input records, 
     // configure it to work with MapReduce
     createDataset(RAW_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
+      .setDescription("Store input records")
       // Properties for partitioning
       .setPartitioning(Partitioning.builder().addLongField("time").build())
       // Properties for file set
       .setInputFormat(TextInputFormat.class)
-      .setDescription("Store input records")
       .build());
 
     createDataset(CLEAN_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
+      .setDescription("Store clean records")
       // Properties for partitioning
       .setPartitioning(Partitioning.builder().addLongField("time").addIntField("zip").build())
       // Properties for file set
@@ -68,10 +69,10 @@ public class DataCleansing extends AbstractApplication {
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", "\n")
       .setExploreSchema("record STRING")
-      .setDescription("Store clean records")
       .build());
 
     createDataset(INVALID_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
+      .setDescription("Store invalid records")
       // Properties for partitioning
       .setPartitioning(Partitioning.builder().addLongField("time").build())
       // Properties for file set
@@ -81,7 +82,6 @@ public class DataCleansing extends AbstractApplication {
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", "\n")
       .setExploreSchema("record STRING")
-      .setDescription("Store invalid records")
       .build());
   }
 }

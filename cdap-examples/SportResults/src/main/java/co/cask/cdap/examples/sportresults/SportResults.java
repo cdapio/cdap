@@ -35,7 +35,8 @@ public class SportResults extends AbstractApplication {
 
     // Create the "results" partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("results", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
-      // Properties for partitioning
+      .setDescription("FileSet dataset of game results for a sport league and season")
+        // Properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("league").addIntField("season").build())
       // Properties for file set
       .setInputFormat(TextInputFormat.class)
@@ -50,7 +51,8 @@ public class SportResults extends AbstractApplication {
 
     // Create the aggregates partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("totals", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
-      // Properties for partitioning
+      .setDescription("FileSet dataset of aggregated results for each sport league")
+        // Properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("league").build())
       // Properties for file set
       .setInputFormat(TextInputFormat.class)
@@ -60,7 +62,6 @@ public class SportResults extends AbstractApplication {
       .setEnableExploreOnCreate(true)
       .setExploreFormat("csv")
       .setExploreSchema("team STRING, wins INT, ties INT, losses INT, scored INT, conceded INT")
-      .setDescription("FileSet dataset of aggregated results for each sport league")
       .build());
   }
 }
