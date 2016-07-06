@@ -26,6 +26,64 @@ angular.module(PKG.name + '.feature.tracker')
         controllerAs: 'EnableController',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
+        },
+        resolve: {
+          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG, myAlertOnValium, $cookies) {
+            let defer = $q.defer();
+            let params = {
+              namespace: $stateParams.namespace || $cookies.get('CDAP_Namespace') || 'default'
+            };
+
+            myTrackerApi.getTrackerApp(params)
+              .$promise
+              .then( () => {
+                let auditServiceParams = {
+                  namespace: $stateParams.namespace,
+                  programType: 'services',
+                  programId: UI_CONFIG.tracker.programId
+                };
+
+                let auditFlowParams = {
+                  namespace: $stateParams.namespace,
+                  programType: 'flows',
+                  programId: UI_CONFIG.tracker.flowProgramId
+                };
+
+                let auditMetricsParams = {
+                  namespace: $stateParams.namespace,
+                  programType: 'services',
+                  programId: UI_CONFIG.tracker.metricProgramId
+                };
+
+                $q.all([
+                  myTrackerApi.trackerProgramStatus(auditServiceParams).$promise,
+                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise,
+                  myTrackerApi.trackerProgramStatus(auditMetricsParams).$promise
+                ]).then( (res) => {
+                  let isRunning = true;
+                  angular.forEach(res, (program) => {
+                    if (program.status === 'STOPPED') {
+                      isRunning = false;
+                    }
+                  });
+
+                  if (isRunning) {
+                    $state.go('tracker.home', $stateParams);
+                  } else {
+                    defer.resolve(true);
+                  }
+                }, (err) => {
+                  myAlertOnValium.show({
+                    type: 'danger',
+                    content: err.data
+                  });
+                });
+              }, () => {
+                defer.resolve(true);
+              });
+
+            return defer.promise;
+          }
         }
       })
       .state('tracker', {
@@ -46,18 +104,25 @@ angular.module(PKG.name + '.feature.tracker')
                 let auditServiceParams = {
                   namespace: $stateParams.namespace,
                   programType: 'services',
-                  programId: UI_CONFIG.tracker.programId,
+                  programId: UI_CONFIG.tracker.programId
                 };
 
                 let auditFlowParams = {
                   namespace: $stateParams.namespace,
                   programType: 'flows',
-                  programId: UI_CONFIG.tracker.flowProgramId,
+                  programId: UI_CONFIG.tracker.flowProgramId
+                };
+
+                let auditMetricsParams = {
+                  namespace: $stateParams.namespace,
+                  programType: 'services',
+                  programId: UI_CONFIG.tracker.metricProgramId
                 };
 
                 $q.all([
                   myTrackerApi.trackerProgramStatus(auditServiceParams).$promise,
-                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise
+                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise,
+                  myTrackerApi.trackerProgramStatus(auditMetricsParams).$promise
                 ]).then( (res) => {
                   let isRunning = true;
                   angular.forEach(res, (program) => {
