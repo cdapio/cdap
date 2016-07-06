@@ -66,7 +66,7 @@ function EnumSchemaController (avsc, $timeout, $scope, uuid) {
     vm.model = obj;
 
     if (typeof vm.parentFormatOutput === 'function') {
-      timeout = $timeout(vm.formatOutput);
+      timeout = $timeout(vm.parentFormatOutput);
     }
   };
 
