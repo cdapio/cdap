@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact.plugin;
 
 import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -32,6 +33,7 @@ public class Plugin1 {
 
   public static class P1Config extends PluginConfig {
     private int x;
+    @Macro
     private String stuff;
   }
 }

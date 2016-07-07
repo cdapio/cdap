@@ -283,7 +283,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test get myapp-plugins-2.0.0
     Map<String, PluginPropertyField> props = ImmutableMap.of(
-      "x", new PluginPropertyField("x", "", "int", true));
+      "x", new PluginPropertyField("x", "", "int", true, false));
     ArtifactClasses pluginClasses = ArtifactClasses.builder()
       .addPlugin(new PluginClass("callable", "plugin1", "p1 description", Plugin1.class.getName(), "conf", props))
       .addPlugins(additionalPlugins)

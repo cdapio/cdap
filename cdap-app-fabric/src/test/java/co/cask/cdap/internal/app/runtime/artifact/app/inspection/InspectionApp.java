@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.artifact.app.inspection;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -37,6 +38,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   }
 
   public static class PConfig extends PluginConfig {
+    @Macro
     private double y;
     private boolean isSomething;
   }
