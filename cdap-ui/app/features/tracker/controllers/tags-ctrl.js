@@ -21,51 +21,54 @@ class TrackerTagsController{
     this.myTrackerApi = myTrackerApi;
     this.$uibModal = $uibModal;
 
-    this.preferredTags = [
-      {
-        'key': 'tag1',
-        'total_entity': 93
-      },
-      {
-        'key': 'tag2',
-        'total_entity': 0
-      },
-      {
-        'key': 'tag3',
-        'total_entity': 32
-      },
-      {
-        'key': 'tag4',
-        'total_entity': 32
-      },
-      {
-        'key': 'tag5',
-        'total_entity': 0
-      }
-    ];
-
-    this.userTags = [
-      {
-        'key': 'tag1',
-        'total_entity': 4
-      },
-      {
-        'key': 'tag2',
-        'total_entity': 1
-      },
-      {
-        'key': 'tag3',
-        'total_entity': 39
-      },
-      {
-        'key': 'tag4',
-        'total_entity': 17
-      },
-      {
-        'key': 'tag5',
-        'total_entity': 5
-      }
-    ];
+    this.tagList = {
+      preferred: 0,
+      preferredTags: [
+        {
+          'key': 'tag1',
+          'total_entity': 4
+        },
+        {
+          'key': 'tag2',
+          'total_entity': 0
+        },
+        {
+          'key': 'tag3',
+          'total_entity': 39
+        },
+        {
+          'key': 'tag4',
+          'total_entity': 17
+        },
+        {
+          'key': 'tag5',
+          'total_entity': 0
+        }
+      ],
+      user: 0,
+      userTags: [
+        {
+          'key': 'tag1',
+          'total_entity': 0
+        },
+        {
+          'key': 'tag2',
+          'total_entity': 1
+        },
+        {
+          'key': 'tag3',
+          'total_entity': 20
+        },
+        {
+          'key': 'tag4',
+          'total_entity': 6
+        },
+        {
+          'key': 'tag5',
+          'total_entity': 28
+        }
+      ]
+    };
 
     this.goToTag = function(event, tag) {
       event.stopPropagation();
