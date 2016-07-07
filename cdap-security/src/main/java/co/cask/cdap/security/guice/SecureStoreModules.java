@@ -29,10 +29,16 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 
 /**
- * Guice bindings for security store related classes.
+ *
  */
 public class SecureStoreModules extends RuntimeModule {
-
+  /**
+   * Implementers of this method should return a combined Module that includes
+   * all of the modules and classes required to instantiate and run an
+   * in-memory CDAP instance.
+   *
+   * @return A combined set of Modules required for InMemory execution.
+   */
   @Override
   public final Module getInMemoryModules() {
     return new AbstractModule() {
@@ -66,7 +72,7 @@ public class SecureStoreModules extends RuntimeModule {
     };
   }
 
-  private class SecureStoreProvider implements Provider<SecureStore> {
+  private static class SecureStoreProvider implements Provider<SecureStore> {
     private final CConfiguration cConf;
     private final Injector injector;
 
@@ -90,7 +96,7 @@ public class SecureStoreModules extends RuntimeModule {
     }
   }
 
-  private class SecureStoreManagerProvider implements Provider<SecureStoreManager> {
+  private static class SecureStoreManagerProvider implements Provider<SecureStoreManager> {
     private final CConfiguration cConf;
     private final Injector injector;
 

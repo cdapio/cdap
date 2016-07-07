@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -90,7 +89,14 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
 
-    keyStore = locateKeystore(path, password);
+    try {
+      keyStore = locateKeystore(path, password);
+    } catch (IOException ioe) {
+      // Throw a runtime exception so that it can be thrown by the injector
+      LOG.error("Unable to initialize the Secure Store.");
+      throw new RuntimeException();
+    }
+
     ReadWriteLock lock = new ReentrantReadWriteLock(true);
     readLock = lock.readLock();
     writeLock = lock.writeLock();
