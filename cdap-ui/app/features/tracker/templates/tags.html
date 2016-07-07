@@ -1,0 +1,81 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="row">
+  <div class="col-xs-12">
+    <h2>Tags</h2>
+    <a class="btn btn-default add-tags" href=""
+      ng-click="TagsController.addPreferredTags()">Add Preferred Tags</a>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-6 preferred-tags">
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Preferred Tags</th>
+            <th>Tagged Entities</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="tag in TagsController.preferredTags">
+            <td>
+              <span class="tag"
+                    ng-click="TagsController.goToTag($event, tag.name)">{{ tag.key }}</span>
+            </td>
+            <td>
+              <span class="tagged-entities">{{ tag.total_entity }}</span>
+            </td>
+            <td ng-if="tag.total_entity > 0">
+              <a href=""
+                class="action-link">Demote</a>
+            </td>
+            <td ng-if="tag.total_entity === 0">
+              <a href="">
+                <span class="fa fa-trash"></span>
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-sm-6 user-tags">
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>User Tags</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="tag in TagsController.userTags">
+            <td>
+              <span class="tag"
+                    ng-click="TagsController.goToTag($event, tag.name)">{{ tag.key }}</span>
+            </td>
+            <td>
+              <a href="" class="action-link">Promote</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
