@@ -153,17 +153,14 @@ angular.module(PKG.name+'.commons')
     replace: true,
     scope: {
       model: '=ngModel',
-      type: '@',
       recordName: '=',
       parentFormatOutput: '&',
       isDisabled: '='
     },
     link: (scope, element) => {
-      if (scope.type === 'COMPLEX') {
-        $compile('<my-complex-schema ng-model="model" record-name="recordName" hide-header="true" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-complex-schema')(scope, (cloned) => {
-          element.append(cloned);
-        });
-      }
+      $compile('<my-complex-schema ng-model="model" record-name="recordName" hide-header="true" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-complex-schema')(scope, (cloned) => {
+        element.append(cloned);
+      });
     }
   };
 });

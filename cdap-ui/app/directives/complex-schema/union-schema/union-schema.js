@@ -95,16 +95,13 @@ angular.module(PKG.name+'.commons')
     replace: true,
     scope: {
       model: '=ngModel',
-      type: '@',
       parentFormatOutput: '&',
       isDisabled: '='
     },
     link: (scope, element) => {
-      if (scope.type === 'COMPLEX') {
-        $compile('<my-union-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-union-schema')(scope, (cloned) => {
-          element.append(cloned);
-        });
-      }
+      $compile('<my-union-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-union-schema')(scope, (cloned) => {
+        element.append(cloned);
+      });
     }
   };
 });
