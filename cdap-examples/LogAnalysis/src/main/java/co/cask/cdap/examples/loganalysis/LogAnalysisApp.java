@@ -93,10 +93,9 @@ public class LogAnalysisApp extends AbstractApplication {
     createDataset(HIT_COUNT_STORE, KeyValueTable.class,
                   DatasetProperties.builder().setDescription("Store hit counts").build());
     createDataset(REQ_COUNT_STORE, TimePartitionedFileSet.class, FileSetProperties.builder()
-      .setDescription("Store request counts")
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
-      .build());
+      .setDescription("Store request counts").build());
   }
 
   /**

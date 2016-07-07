@@ -17,7 +17,6 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.DatasetProperties;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -26,7 +25,7 @@ import javax.annotation.Nullable;
  * Helper to build properties for files datasets.
  */
 @Beta
-public class PartitionedFileSetProperties {
+public class PartitionedFileSetProperties extends FileSetProperties {
 
   /**
    * The property name for the list of partitioning field names.
@@ -79,23 +78,19 @@ public class PartitionedFileSetProperties {
   }
 
   /**
-   * A Builder to construct properties for PartitionedFileSet datasets.
+   * A Builder to construct properties for FileSet datasets.
    */
-  public static class Builder extends AbstractBuilder<Builder> { }
+  public static class Builder extends FileSetProperties.Builder {
 
-  /**
-   * An abstract builder to construct properties for FileSet datasets. See {@link DatasetProperties} for an
-   * explanation of the need for generics.
-   *
-   * @param <B> the subclass of this builder that is actually used (e.g. {@link PartitionedFileSetProperties}
-   */
-  abstract static class AbstractBuilder<B extends AbstractBuilder>
-    extends FileSetProperties.AbstractBuilder<B> {
+    /**
+     * Package visible default constructor, to allow sub-classing by other datasets in this package.
+     */
+    Builder() { }
 
     /**
      * Sets the base path for the file dataset.
      */
-    public B setPartitioning(Partitioning partitioning) {
+    public Builder setPartitioning(Partitioning partitioning) {
       StringBuilder builder = new StringBuilder();
       String sep = "";
       for (String key : partitioning.getFields().keySet()) {
@@ -106,7 +101,7 @@ public class PartitionedFileSetProperties {
       for (Map.Entry<String, Partitioning.FieldType> entry : partitioning.getFields().entrySet()) {
         add(PARTITIONING_FIELD_PREFIX + entry.getKey(), entry.getValue().name());
       }
-      return thisBuilder();
+      return this;
     }
   }
 }
