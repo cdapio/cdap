@@ -109,11 +109,9 @@ angular.module(PKG.name+'.commons')
       isDisabled: '='
     },
     link: (scope, element) => {
-      if (scope.type === 'COMPLEX') {
-        $compile('<my-array-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-array-schema')(scope, (cloned) => {
-          element.append(cloned);
-        });
-      }
+      $compile('<my-array-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-array-schema')(scope, (cloned) => {
+        element.append(cloned);
+      });
     }
   };
 });

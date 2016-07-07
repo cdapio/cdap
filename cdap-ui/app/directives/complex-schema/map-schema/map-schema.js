@@ -95,16 +95,13 @@ angular.module(PKG.name+'.commons')
     replace: true,
     scope: {
       model: '=ngModel',
-      type: '@',
       parentFormatOutput: '&',
       isDisabled: '='
     },
     link: (scope, element) => {
-      if (scope.type === 'COMPLEX') {
-        $compile('<my-map-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-map-schema')(scope, (cloned) => {
-          element.append(cloned);
-        });
-      }
+      $compile('<my-map-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-map-schema')(scope, (cloned) => {
+        element.append(cloned);
+      });
     }
   };
 });
