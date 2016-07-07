@@ -1,0 +1,86 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
+@type-column-width: 80px;
+@fields-right-offset: 70px;
+
+my-complex-schema {
+  .complex-schema-container {
+    background-color: white;
+
+    [class*="col-"] {
+      padding-right: 0;
+      padding-left: 7px;
+    }
+
+    .type-column {
+      width: @type-column-width;
+      float: left;
+    }
+
+    .input-column {
+      float: left;
+      width: ~"-moz-calc(100% - 90px - 80px)";
+      width: ~"-webkit-calc(100% - 90px - 80px)";
+      width: ~"calc(100% - 90px - 80px)";
+
+      &.no-type {
+        width: ~"-moz-calc(100% - 90px)";
+        width: ~"-webkit-calc(100% - 90px)";
+        width: ~"calc(100% - 90px)";
+      }
+
+      .form-control {
+        padding-left: 5px;
+      }
+    }
+
+    .map-fields {
+      width: @type-column-width;
+      line-height: 32px;
+    }
+
+    .fields-actions {
+      float: right;
+
+      .nullable-header { margin-right: 42px; }
+
+      .checkbox {
+        width: 35px;
+        margin-top: 7px;
+        &.no-trash { margin-right: 25px; }
+      }
+
+      .actions-buttons {
+        margin-top: -2px;
+        width: 60px;
+        padding-right: 10px;
+
+        .btn-link { padding: 0; }
+        &.no-checkbox { margin-top: 7px; }
+      }
+    }
+  }
+
+  my-embedded-schema-selector {
+    > div > [class*="col-"] {
+      background-color: white;
+      box-shadow: 0 -3px 5px 0 rgba(1, 0, 0, 0.25);
+    }
+  }
+}

@@ -1,0 +1,84 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="complex-schema-container">
+
+  <div class="clearfix"
+       ng-if="::!ComplexSchema.hideHeader">
+    <div class="input-column">
+      <h4>Name</h4>
+    </div>
+
+    <div class="type-column">
+      <h4>Type</h4>
+    </div>
+
+    <div class="fields-actions">
+      <div class="nullable-header text-center">
+        <h4>Null</h4>
+      </div>
+    </div>
+  </div>
+
+  <fieldset ng-disabled="ComplexSchema.isDisabled">
+    <div ng-repeat="field in ComplexSchema.parsedSchema track by $index">
+      <div class="clearfix">
+        <div class="input-column">
+          <input type="text"
+                 id="{{ field.id }}"
+                 class="form-control"
+                 ng-model="field.name"
+                 ng-blur="ComplexSchema.formatOutput()"
+                 ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)">
+        </div>
+
+        <div class="type-column">
+          <select class="form-control"
+                  ng-model="field.displayType"
+                  ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
+                  ng-change="(field.type = field.displayType) && ComplexSchema.formatOutput()">
+          </select>
+        </div>
+
+        <div class="fields-actions">
+          <div class="checkbox text-center">
+            <input type="checkbox"
+                   ng-model="field.nullable"
+                   ng-change="ComplexSchema.formatOutput()">
+          </div>
+
+          <div class="actions-buttons text-right" ng-if="!ComplexSchema.isDisabled">
+            <button class="btn btn-link"
+                    ng-click="ComplexSchema.removeField($index)">
+              <i class="text-danger fa fa-trash"></i>
+            </button>
+            <button class="btn btn-link"
+                    ng-click="ComplexSchema.addField($index)">
+              <i class="fa fa-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <my-embedded-schema-selector
+        type="field.type"
+        display-type="field.displayType"
+        parent-format-output="ComplexSchema.formatOutput()"
+        is-disabled="ComplexSchema.isDisabled">
+      </my-embedded-schema-selector>
+    </div>
+  </fieldset>
+</div>

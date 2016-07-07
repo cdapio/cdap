@@ -181,7 +181,9 @@ gulp.task('js:lib', function() {
       './bower_components/ngInfiniteScroll/build/ng-infinite-scroll.min.js',
 
       './bower_components/d3-tip/index.js',
-      './bower_components/esprima/esprima.js'
+      './bower_components/esprima/esprima.js',
+
+      './app/lib/avsc-bundle.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({
@@ -230,7 +232,8 @@ function getEs6Directives(isNegate) {
     'my-global-navbar',
     'datetime-picker',
     'datetime-range',
-    'log-viewer'
+    'log-viewer',
+    'complex-schema'
   ];
 
   return es6directives.map(function (directive) {
@@ -251,6 +254,7 @@ gulp.task('watch:js:app', function() {
   var source = [
     './app/main.js',
     '!./app/lib/c3.js',
+    '!./app/lib/avsc-bundle.js',
     './app/features/*/module.js',
     './app/**/*.js',
     '!./app/**/*-test.js',
@@ -305,6 +309,7 @@ gulp.task('js:app', function() {
   return gulp.src([
     './app/main.js',
     '!./app/lib/c3.js',
+    '!./app/lib/avsc-bundle.js',
     './app/features/*/module.js',
     './app/**/*.js',
     '!./app/**/*-test.js',

@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,7 @@
   the License.
 -->
 
-<my-breadcrumbs></my-breadcrumbs>
-<h3>Experiemental things</h3>
-
-<ul>
-  <li><a ui-sref="experimental.uitemplate">UI Default Layout</a></li>
-  <li><a ui-sref="search.list">Search By Tags</a></li>
-  <li><a ui-sref="experimental.directivesPlayground"> Experimental Directives </a></li>
-  <li><a ui-sref="experimental.complexSchema">Complex Schema</a></li>
-</ul>
+<my-complex-schema
+  ng-model="vm.schema"
+  record-name="'etlSchema'">
+</my-complex-schema>
