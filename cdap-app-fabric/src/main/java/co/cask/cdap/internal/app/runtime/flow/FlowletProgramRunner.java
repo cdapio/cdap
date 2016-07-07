@@ -79,6 +79,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Function;
@@ -541,8 +542,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
               && (inputNames.contains(queueName.getSimpleName())
               || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
 
-              if (entry.getKey().getType() == FlowletConnection.Type.STREAM) {
-                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(program.getNamespace(),
+              Node sourceNode = entry.getKey();
+              if (sourceNode.getType() == FlowletConnection.Type.STREAM) {
+                 NamespaceId sourceNamespace = new NamespaceId(sourceNode.getNamespace());
+                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(sourceNamespace.toId(),
                                                                                             flowletContext.getOwners(),
                                                                                             usageRegistry,
                                                                                             dataFabricFacade,

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.flow;
 
+import javax.annotation.Nullable;
+
 /**
  * Defines a connection between two {@link co.cask.cdap.api.flow.flowlet.Flowlet Flowlets} or
  * from a {@link co.cask.cdap.api.data.stream.Stream Stream} to a
@@ -34,9 +36,15 @@ public final class FlowletConnection {
   private final Type sourceType;
   private final String sourceName;
   private final String targetName;
+  private final String sourceNamespace;
 
   public FlowletConnection(Type sourceType, String sourceName, String targetName) {
+    this(sourceType, null, sourceName, targetName);
+  }
+
+  public FlowletConnection(Type sourceType, @Nullable String sourceNamespace, String sourceName, String targetName) {
     this.sourceType = sourceType;
+    this.sourceNamespace = sourceNamespace;
     this.sourceName = sourceName;
     this.targetName = targetName;
   }
@@ -46,6 +54,14 @@ public final class FlowletConnection {
    */
   public Type getSourceType() {
     return sourceType;
+  }
+
+  /**
+   * @return Namespace of source stream. It can be null if the namespace of the source is the same as the program.
+   */
+  @Nullable
+  public String getSourceNamespace() {
+    return sourceNamespace;
   }
 
   /**
