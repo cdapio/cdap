@@ -9,7 +9,7 @@ compiled forms as JAR files in a release.
 
 Additional information about these examples is available at the Cask documentation website:
 
-http://docs.cask.co/cdap/${project.version}/en/examples-manual/examples/index.html
+http://docs.cask.co/cdap/@@project.version@@/en/examples-manual/examples/index.html
 
 
 Building

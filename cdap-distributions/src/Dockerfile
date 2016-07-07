@@ -63,4 +63,4 @@ EXPOSE 11011 11015
 
 # start CDAP in the background and tail in the foreground
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["cdap.sh","start","--foreground"]
+CMD ["cdap","sdk","start","--foreground"]
