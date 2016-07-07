@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * If anything fails during this process then the keystore reverts to the last successfully written file.
  * The keystore is flushed to the filesystem after every put and delete.
  */
-class FileSecureStore implements SecureStore, SecureStoreManager {
+public class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
   private static final String SCHEME_NAME = "jceks";
@@ -71,7 +72,8 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   private final Lock writeLock;
   private final KeyStore keyStore;
 
-  FileSecureStore(CConfiguration cConf) throws IOException {
+  @Inject
+  public FileSecureStore(CConfiguration cConf) {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
@@ -80,7 +82,14 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
 
-    keyStore = locateKeystore(path, password);
+    try {
+      keyStore = locateKeystore(path, password);
+    } catch (IOException ioe) {
+      // Throw a runtime exception so that it can be thrown by the injector
+      LOG.error("Unable to initialize the Secure Store.");
+      throw new RuntimeException();
+    }
+
     ReadWriteLock lock = new ReentrantReadWriteLock(true);
     readLock = lock.readLock();
     writeLock = lock.writeLock();

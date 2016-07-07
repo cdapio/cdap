@@ -1676,6 +1676,30 @@
   </property>
 
   <property>
+    <name>security.store.file.name</name>
+    <value>securestore</value>
+    <description>
+      Name of the secure store file.
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.file.password</name>
+    <value>cdapsecret</value>
+    <description>
+      Password to access the key store.
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.file.path</name>
+    <value>${local.data.dir}/store</value>
+    <description>
+      Location of the encrypted file which holds the secure store entries.
+    </description>
+  </property>
+
+  <property>
     <name>security.token.digest.algorithm</name>
     <value>HmacSHA256</value>
     <description>
@@ -1707,30 +1731,6 @@
     <description>
       Parent node in ZooKeeper used for secret key distribution in
       distributed mode
-    </description>
-  </property>
-
-  <property>
-    <name>security.store.file.name</name>
-    <value>securestore</value>
-    <description>
-      Name of the secure store file
-    </description>
-  </property>
-
-  <property>
-    <name>security.store.file.password</name>
-    <value>cdapsecret</value>
-    <description>
-      Password to access the key store
-    </description>
-  </property>
-
-  <property>
-    <name>security.store.file.path</name>
-    <value>${local.data.dir}/store</value>
-    <description>
-      Location of the encrypted file which holds the secure store entries
     </description>
   </property>
 
