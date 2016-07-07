@@ -19,6 +19,7 @@ package co.cask.cdap.api.workflow;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
@@ -52,8 +53,18 @@ public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer 
    * Adds a custom action as a next sequential step in the {@link Workflow}
    *
    * @param action to be added to the {@link Workflow}
+   * @deprecated Deprecated as of 3.5.0. Please use
+   * {@link WorkflowConfigurer#addAction(CustomAction action)} instead.
    */
+  @Deprecated
   void addAction(WorkflowAction action);
+
+  /**
+   * Adds a custom action as a next sequential step in the {@link Workflow}
+   *
+   * @param action to be added to the {@link Workflow}
+   */
+  void addAction(CustomAction action);
 
   /**
    * Forks the execution of the {@link Workflow} into multiple branches

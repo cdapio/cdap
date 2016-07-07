@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.workflow;
+package co.cask.cdap.internal.app.customaction;
 
+import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,12 +25,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The default implementation for a {@link WorkflowActionSpecification}.
- * @deprecated Deprecated as of 3.5.0. Please use {@link CustomActionSpecification} and its default
- * implementation instead.
+ * The default implementation for a {@link CustomActionSpecification}.
  */
-@Deprecated
-public class DefaultWorkflowActionSpecification implements WorkflowActionSpecification {
+public class DefaultCustomActionSpecification implements CustomActionSpecification {
 
   private final String className;
   private final String name;
@@ -39,10 +36,10 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   private final Set<String> datasets;
 
   /**
-   * Constructor be used by WorkflowActionConfigurer during workflow action configuration.
+   * Constructor used by {@link CustomActionConfigurer}.
    */
-  public DefaultWorkflowActionSpecification(String className, String name, String description,
-                                            Map<String, String> properties, Set<String> datasets) {
+  public DefaultCustomActionSpecification(String className, String name, String description,
+                                          Map<String, String> properties, Set<String> datasets) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -66,6 +63,11 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   }
 
   @Override
+  public Set<String> getDatasets() {
+    return datasets;
+  }
+
+  @Override
   public Map<String, String> getProperties() {
     return properties;
   }
@@ -77,17 +79,13 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
 
   @Override
   public String toString() {
-    return "DefaultWorkflowActionSpecification{" +
-      "className='" + className + '\'' +
-      ", name='" + name + '\'' +
-      ", description='" + description + '\'' +
-      ", properties=" + properties +
-      ", datasets=" + datasets +
-      '}';
-  }
-
-  @Override
-  public Set<String> getDatasets() {
-    return datasets;
+    StringBuilder sb = new StringBuilder("DefaultCustomActionSpecification{");
+    sb.append("className='").append(className).append('\'');
+    sb.append(", name='").append(name).append('\'');
+    sb.append(", description='").append(description).append('\'');
+    sb.append(", properties=").append(properties);
+    sb.append(", datasets=").append(datasets);
+    sb.append('}');
+    return sb.toString();
   }
 }

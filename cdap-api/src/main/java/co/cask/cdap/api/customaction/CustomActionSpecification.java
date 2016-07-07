@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,39 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.api.workflow;
+package co.cask.cdap.api.customaction;
 
 import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.workflow.Workflow;
 
 import java.util.Set;
 
 /**
- * Specification for a {@link WorkflowAction}.
- * @deprecated Deprecated as of 3.5.0. Please use {@link CustomActionSpecification} instead.
+ * Specification for the custom java code that will be executed as a part of {@link Workflow}.
  */
-@Deprecated
-public interface WorkflowActionSpecification extends PropertyProvider {
-
+public interface CustomActionSpecification extends PropertyProvider {
   /**
-   * @return Class name of the workflow action.
+   * @return Class name of the custom action.
    */
   String getClassName();
 
   /**
-   * @return Name of the workflow action.
+   * @return Name of the custom action.
    */
   String getName();
 
   /**
-   * @return Description of the workflow action.
+   * @return Description of the custom action.
    */
   String getDescription();
 
   /**
-   * @return an immutable set of {@link Dataset} name that are used by the {@link WorkflowAction}
+   * @return an immutable set of {@link Dataset} name that are used by the {@link CustomAction}
    */
   Set<String> getDatasets();
 }

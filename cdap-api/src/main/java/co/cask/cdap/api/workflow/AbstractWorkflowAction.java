@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.ArrayList;
@@ -25,7 +26,9 @@ import java.util.Map;
 
 /**
  * This abstract class provides a default implementation of {@link WorkflowAction} methods for easy extensions.
+ * @deprecated Deprecated as of 3.5.0. Please use {@link AbstractCustomAction} instead.
  */
+@Deprecated
 public abstract class AbstractWorkflowAction implements WorkflowAction {
 
   private final String name;
