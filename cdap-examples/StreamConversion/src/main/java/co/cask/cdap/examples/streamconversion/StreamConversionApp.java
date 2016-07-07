@@ -48,8 +48,7 @@ public class StreamConversionApp extends AbstractApplication {
 
     // create the time-partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("converted", TimePartitionedFileSet.class, FileSetProperties.builder()
-      .setDescription("Converted stream events dataset")
-        // properties for file set
+      // properties for file set
       .setBasePath("converted")
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
@@ -60,6 +59,7 @@ public class StreamConversionApp extends AbstractApplication {
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
       .setTableProperty("avro.schema.literal", SCHEMA_STRING)
+      .setDescription("Converted stream events dataset")
       .build());
   }
 }

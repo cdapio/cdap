@@ -37,16 +37,16 @@ public class FileSetExample extends AbstractApplication {
     setName("FileSetExample");
     setDescription("Application with a MapReduce that uses a FileSet dataset");
     createDataset("lines", FileSet.class, FileSetProperties.builder()
-      .setDescription("Store input lines")
       .setBasePath("example/data/lines")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
+      .setDescription("Store input lines")
       .build());
     createDataset("counts", FileSet.class, FileSetProperties.builder()
-      .setDescription("Store word counts")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .setDescription("Store word counts")
       .build());
     addService(new FileSetService());
     addMapReduce(new WordCount());

@@ -85,8 +85,8 @@ public class PurchaseApp extends AbstractApplication {
 
     createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties("History dataset"));
     try {
-      createDataset("purchases", ObjectMappedTable.class, ObjectMappedTableProperties.builder()
-        .setDescription("Store purchases").setType(Purchase.class).build());
+      createDataset("purchases", ObjectMappedTable.class, ObjectMappedTableProperties.builder().setType(Purchase.class)
+        .setDescription("Store purchases").build());
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectMappedTable if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is

@@ -94,7 +94,9 @@ public class FileSetProperties {
    */
   public static final String PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX = "explore.table.property.";
 
-  protected FileSetProperties() { }
+  public static Builder builder() {
+    return new Builder();
+  }
 
   /**
    * @return the base path configured in the properties.
@@ -216,145 +218,133 @@ public class FileSetProperties {
     return result;
   }
 
-  public static Builder builder() {
-    return new Builder();
-  }
-
   /**
    * A Builder to construct properties for FileSet datasets.
    */
-  public static class Builder extends AbstractBuilder<Builder> { }
-
-  /**
-   * An abstract builder to construct properties for FileSet datasets. See {@link DatasetProperties} for an
-   * explanation of the need for generics.
-   *
-   * @param <B> the subclass of this builder that is actually used (e.g. {@link PartitionedFileSetProperties}
-   */
-  public abstract static class AbstractBuilder<B extends AbstractBuilder> extends DatasetProperties.AbstractBuilder<B> {
+  public static class Builder extends DatasetProperties.Builder {
 
     private String format = null;
 
     /**
-     * Protected default constructor, to allow sub-classing by other datasets in this package.
+     * Package visible default constructor, to allow sub-classing by other datasets in this package.
      */
-    AbstractBuilder() { }
+    Builder() { }
 
     /**
      * Sets the base path for the file dataset.
      */
-    public B setBasePath(String path) {
+    public Builder setBasePath(String path) {
       add(BASE_PATH, path);
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Configures whether the files (the data) in this fileset are managed externally.
      */
-    public B setDataExternal(boolean isExternal) {
+    public Builder setDataExternal(boolean isExternal) {
       add(DATA_EXTERNAL, Boolean.toString(isExternal));
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Sets the output format of the file dataset.
      */
-    public B setOutputFormat(Class<?> outputFormatClass) {
+    public Builder setOutputFormat(Class<?> outputFormatClass) {
       setOutputFormat(outputFormatClass.getName());
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Sets the output format of the file dataset.
      */
-    public B setOutputFormat(String className) {
+    public Builder setOutputFormat(String className) {
       add(OUTPUT_FORMAT, className);
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Sets the input format of the file dataset.
      */
-    public B setInputFormat(Class<?> inputFormatClass) {
+    public Builder setInputFormat(Class<?> inputFormatClass) {
       setInputFormat(inputFormatClass.getName());
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Sets the input format of the file dataset.
      */
-    public B setInputFormat(String className) {
+    public Builder setInputFormat(String className) {
       add(INPUT_FORMAT, className);
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Sets a property for the input format of the file dataset.
      */
-    public B setInputProperty(String name, String value) {
+    public Builder setInputProperty(String name, String value) {
       add(INPUT_PROPERTIES_PREFIX + name, value);
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Sets a property for the output format of the file dataset.
      */
-    public B setOutputProperty(String name, String value) {
+    public Builder setOutputProperty(String name, String value) {
       add(OUTPUT_PROPERTIES_PREFIX + name, value);
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Enable explore for this dataset.
      */
-    public B setEnableExploreOnCreate(boolean enabled) {
+    public Builder setEnableExploreOnCreate(boolean enabled) {
       add(PROPERTY_ENABLE_EXPLORE_ON_CREATE, Boolean.toString(enabled));
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Set the format for the Hive table.
      * @param format currently, only "text" and "csv" are supported.
      */
-    public B setExploreFormat(String format) {
+    public Builder setExploreFormat(String format) {
       add(PROPERTY_EXPLORE_FORMAT, format);
       this.format = format;
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Set the schema for the Hive table.
      * @param schema a Hive schema string of the form: field type, ...
      */
-    public B setExploreSchema(String schema) {
+    public Builder setExploreSchema(String schema) {
       add(PROPERTY_EXPLORE_SCHEMA, schema);
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Set a property for the table format.
      * This may only be a called after setting the format using {@link #setExploreFormat}.
      */
-    public B setExploreFormatProperty(String name, String value) {
+    public Builder setExploreFormatProperty(String name, String value) {
       if (format == null) {
         throw new IllegalStateException("explore format has not been set");
       }
       add(String.format("%s.%s.%s", PROPERTY_EXPLORE_FORMAT, format, name), value);
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Set the class name of the SerDe used to create the Hive table.
      */
-    public B setSerDe(String className) {
+    public Builder setSerDe(String className) {
       add(PROPERTY_EXPLORE_SERDE, className);
-      return thisBuilder();
+      return this;
     }
 
     /**
      * Set the class name of the SerDe used to create the Hive table.
      */
-    public B setSerDe(Class<?> serde) {
+    public Builder setSerDe(Class<?> serde) {
       return setSerDe(serde.getName());
     }
 
@@ -363,9 +353,9 @@ public class FileSetProperties {
      * Note that this can be different than the input format used
      * for the file set itself.
      */
-    public B setExploreInputFormat(String className) {
+    public Builder setExploreInputFormat(String className) {
       add(PROPERTY_EXPLORE_INPUT_FORMAT, className);
-      return thisBuilder();
+      return this;
     }
 
     /**
@@ -373,7 +363,7 @@ public class FileSetProperties {
      * Note that this can be different than the input format used
      * for the file set itself.
      */
-    public B setExploreInputFormat(Class<?> inputFormat) {
+    public Builder setExploreInputFormat(Class<?> inputFormat) {
       return setExploreInputFormat(inputFormat.getName());
     }
 
@@ -382,9 +372,9 @@ public class FileSetProperties {
      * Note that this can be different than the output format used
      * for the file set itself.
      */
-    public B setExploreOutputFormat(String className) {
+    public Builder setExploreOutputFormat(String className) {
       add(PROPERTY_EXPLORE_OUTPUT_FORMAT, className);
-      return thisBuilder();
+      return this;
     }
 
     /**
@@ -392,16 +382,23 @@ public class FileSetProperties {
      * Note that this can be different than the output format used
      * for the file set itself.
      */
-    public B setExploreOutputFormat(Class<?> outputFormat) {
+    public Builder setExploreOutputFormat(Class<?> outputFormat) {
       return setExploreOutputFormat(outputFormat.getName());
     }
 
     /**
      * Set a table property to be added to the Hive table. Multiple properties can be set.
      */
-    public B setTableProperty(String name, String value) {
+    public Builder setTableProperty(String name, String value) {
       add(PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + name, value);
-      return thisBuilder();
+      return this;
+    }
+
+    /**
+     * Create a DatasetProperties from this builder.
+     */
+    public DatasetProperties build() {
+      return super.build();
     }
   }
 }
