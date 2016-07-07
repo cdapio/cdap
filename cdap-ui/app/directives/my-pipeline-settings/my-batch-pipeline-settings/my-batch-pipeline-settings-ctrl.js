@@ -23,6 +23,9 @@ class MyBatchPipelineSettingsCtrl {
     };
     this.initialCron = this.store.getSchedule();
     this.cron = this.initialCron;
+    if (!this.checkCron(this.initialCron)) {
+      this.scheduleWidget.type = 'advanced';
+    }
     this.engine = this.store.getEngine();
 
     // Debounce method for setting schedule
