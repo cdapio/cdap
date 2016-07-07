@@ -28,8 +28,9 @@ public class PluginPropertyField {
   private final String description;
   private final String type;
   private final boolean required;
+  private final boolean macroSupported;
 
-  public PluginPropertyField(String name, String description, String type, boolean required) {
+  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported) {
     if (name == null) {
       throw new IllegalArgumentException("Plugin property name cannot be null");
     }
@@ -44,6 +45,7 @@ public class PluginPropertyField {
     this.description = description;
     this.type = type;
     this.required = required;
+    this.macroSupported = macroSupported;
   }
 
   /**
@@ -68,6 +70,13 @@ public class PluginPropertyField {
   }
 
   /**
+   * Returns {@code true} if the property supports macro, {@code false} otherwise.
+   */
+  public boolean isMacroSupported() {
+    return macroSupported;
+  }
+
+  /**
    * Returns the type of the property.
    */
   public String getType() {
@@ -88,7 +97,8 @@ public class PluginPropertyField {
     return required == that.required
       && name.equals(that.name)
       && description.equals(that.description)
-      && type.equals(that.type);
+      && type.equals(that.type)
+      && macroSupported == that.macroSupported;
   }
 
   @Override
@@ -97,6 +107,7 @@ public class PluginPropertyField {
     result = 31 * result + description.hashCode();
     result = 31 * result + type.hashCode();
     result = 31 * result + (required ? 1 : 0);
+    result = 31 * result + (macroSupported ? 1 : 0);
     return result;
   }
 }

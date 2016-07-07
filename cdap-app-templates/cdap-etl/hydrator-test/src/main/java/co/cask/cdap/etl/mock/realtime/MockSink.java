@@ -146,7 +146,7 @@ public class MockSink extends RealtimeSink<StructuredRecord> {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("dir", new PluginPropertyField("dir", "", "string", false));
+    properties.put("dir", new PluginPropertyField("dir", "", "string", false, false));
     return new PluginClass(RealtimeSink.PLUGIN_TYPE, "Mock", "", MockSink.class.getName(), "config", properties);
   }
 }

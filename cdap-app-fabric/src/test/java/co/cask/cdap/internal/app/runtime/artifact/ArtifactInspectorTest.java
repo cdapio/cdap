@@ -102,8 +102,8 @@ public class ArtifactInspectorTest {
         InspectionApp.PLUGIN_TYPE, InspectionApp.PLUGIN_NAME, InspectionApp.PLUGIN_DESCRIPTION,
         InspectionApp.AppPlugin.class.getName(), "pluginConf",
         ImmutableMap.of(
-          "y", new PluginPropertyField("y", "", "double", true),
-          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true)));
+          "y", new PluginPropertyField("y", "", "double", true, true),
+          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)));
       Assert.assertEquals(ImmutableSet.of(expectedPlugin), classes.getPlugins());
     }
   }

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.app.Application;
@@ -445,8 +446,10 @@ final class ArtifactInspector {
     String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
     String description = descAnnotation == null ? "" : descAnnotation.value();
 
+    Macro macroAnnotation = field.getAnnotation(Macro.class);
+    boolean macroSupported = macroAnnotation != null;
     if (rawType.isPrimitive()) {
-      return new PluginPropertyField(name, description, rawType.getName(), true);
+      return new PluginPropertyField(name, description, rawType.getName(), true, macroSupported);
     }
 
     rawType = Primitives.unwrap(rawType);
@@ -462,7 +465,7 @@ final class ArtifactInspector {
       }
     }
 
-    return new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(), required);
+    return new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(), required, macroSupported);
   }
 
   /**

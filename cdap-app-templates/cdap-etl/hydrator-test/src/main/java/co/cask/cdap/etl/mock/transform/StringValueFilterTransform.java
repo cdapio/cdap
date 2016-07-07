@@ -68,8 +68,8 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("field", new PluginPropertyField("field", "", "string", true));
-    properties.put("value", new PluginPropertyField("value", "", "string", true));
+    properties.put("field", new PluginPropertyField("field", "", "string", true, false));
+    properties.put("value", new PluginPropertyField("value", "", "string", true, false));
     return new PluginClass(Transform.PLUGIN_TYPE, "StringValueFilter", "", StringValueFilterTransform.class.getName(),
                            "config", properties);
   }

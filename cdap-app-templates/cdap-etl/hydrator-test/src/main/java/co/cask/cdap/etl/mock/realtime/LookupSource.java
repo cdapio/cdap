@@ -102,8 +102,8 @@ public class LookupSource extends RealtimeSource<StructuredRecord> {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("fields", new PluginPropertyField("fields", "", "string", true));
-    properties.put("lookupName", new PluginPropertyField("lookupName", "", "string", true));
+    properties.put("fields", new PluginPropertyField("fields", "", "string", true, false));
+    properties.put("lookupName", new PluginPropertyField("lookupName", "", "string", true, false));
     return new PluginClass(RealtimeSource.PLUGIN_TYPE, "Lookup", "", LookupSource.class.getName(),
                            "config", properties);
   }
