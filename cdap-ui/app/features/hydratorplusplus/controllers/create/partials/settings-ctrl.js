@@ -19,7 +19,6 @@ class HydratorPlusPlusSettingsCtrl {
     this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.templateType = HydratorPlusPlusConfigStore.getArtifact().name;
-
     this.activeTab = 0;
 
     // If ETL Batch
