@@ -23,7 +23,8 @@
 </div>
 <div class="row">
   <div class="col-sm-6 preferred-tags">
-    <div class="table-responsive">
+    <div ng-if="TagsController.tagList.preferred > 0"
+        class="table-responsive">
       <table class="table table-striped">
         <thead>
           <tr>
@@ -33,7 +34,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="tag in TagsController.preferredTags">
+          <tr ng-repeat="tag in TagsController.tagList.preferredTags">
             <td>
               <span class="tag"
                     ng-click="TagsController.goToTag($event, tag.name)">{{ tag.key }}</span>
@@ -54,9 +55,14 @@
         </tbody>
       </table>
     </div>
+    <div ng-if="TagsController.tagList.preferred === 0"
+        class="well text-center">
+      <p>No preferred tags to display.</p>
+    </div>
   </div>
   <div class="col-sm-6 user-tags">
-    <div class="table-responsive">
+    <div ng-if="TagsController.tagList.user > 0"
+        class="table-responsive">
       <table class="table table-striped">
         <thead>
           <tr>
@@ -65,7 +71,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="tag in TagsController.userTags">
+          <tr ng-repeat="tag in TagsController.tagList.userTags">
             <td>
               <span class="tag"
                     ng-click="TagsController.goToTag($event, tag.name)">{{ tag.key }}</span>
@@ -76,6 +82,10 @@
           </tr>
         </tbody>
       </table>
+    </div>
+    <div ng-if="TagsController.tagList.user === 0"
+        class="well text-center">
+      <p>No user tags to display.</p>
     </div>
   </div>
 </div>

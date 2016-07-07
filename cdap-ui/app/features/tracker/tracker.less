@@ -29,6 +29,7 @@
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
 @tag-bg: #464a57;
+@well-bg: #d3d3d3;
 @search-top-bar-container-size: 60px;
 @navbar-size: 50px;
 @entity-detail-top-bar-size: 50px;
@@ -86,6 +87,18 @@ body[class*='state-tracker'] {
       }
     }
     .modal-body { padding: 15px; }
+  }
+
+  div.well {
+    background-color: @well-bg;
+    p {
+      color: @tracker-grey;
+      font-size: 14px;
+      line-height: 1.2;
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+    }
   }
 }
 
@@ -171,18 +184,7 @@ body.state-tracker-detail-entity-usage {
     margin: 0 auto;
     max-width: 340px;
   }
-  div.well {
-    background-color: #d3d3d3;
-    margin-bottom: 0;
-    p {
-      color: @tracker-grey;
-      font-size: 14px;
-      line-height: 1.2;
-      position: relative;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-  }
+  div.well { margin-bottom: 0; }
 }
 
 body.state-tracker-home.state-tracker {
@@ -1055,6 +1057,10 @@ body.state-tracker-tags {
           }
         }
       }
+    }
+    div.well {
+      height: 100px;
+      margin-top: 25px;
     }
   }
   div.add-preferred-tags-modal {
