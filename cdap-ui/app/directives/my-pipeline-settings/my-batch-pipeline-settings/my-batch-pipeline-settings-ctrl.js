@@ -18,20 +18,17 @@ class MyBatchPipelineSettingsCtrl {
   constructor(GLOBALS, $scope) {
     this.GLOBALS = GLOBALS;
     this.templateType = this.store.getArtifact().name;
-    // If ETL Batch
-    if (GLOBALS.etlBatchPipelines.indexOf(this.templateType) !== -1) {
-      // Initialiting ETL Batch Schedule
-      this.initialCron = this.store.getSchedule();
+    this.scheduleWidget = {
+      type: 'basic'
+    };
+    this.initialCron = this.store.getSchedule();
+    this.cron = this.initialCron;
+    this.engine = this.store.getEngine();
 
-      this.cron = this.initialCron;
-      this.engine = this.store.getEngine();
-      this.isBasic = this.checkCron(this.initialCron);
-
-      // Debounce method for setting schedule
-      var setSchedule = _.debounce(() => this.actionCreator.setSchedule(this.cron), 1000);
-      var unsub = $scope.$watch('MyBatchPipelineSettingsCtrl.cron', setSchedule);
-      $scope.$on('$destroy', unsub);
-    }
+    // Debounce method for setting schedule
+    var setSchedule = _.debounce(() => this.actionCreator.setSchedule(this.cron), 1000);
+    var unsub = $scope.$watch('MyBatchPipelineSettingsCtrl.cron', setSchedule);
+    $scope.$on('$destroy', unsub);
   }
 
   checkCron(cron) {
@@ -48,20 +45,9 @@ class MyBatchPipelineSettingsCtrl {
   onEngineChange() {
     this.actionCreator.setEngine(this.engine);
   }
-  changeScheduler (type) {
-    if (type === 'BASIC') {
-
-      this.initialCron = this.cron;
-      var check = true;
-      if (!this.checkCron(this.initialCron)) {
-        check = confirm('You have advanced configuration that is not available in basic mode. Are you sure you want to go to basic scheduler?');
-      }
-      if (check) {
-        this.isBasic = true;
-      }
-    } else {
-      this.isBasic = false;
-    }
+  changeScheduler () {
+    this.initialCron = this.store.getDefaultSchedule();
+    this.cron = this.initialCron;
   }
 }
 

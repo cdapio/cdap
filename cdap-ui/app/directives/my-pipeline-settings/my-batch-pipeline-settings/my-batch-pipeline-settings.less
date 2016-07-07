@@ -21,6 +21,14 @@ my-batch-pipeline-settings {
     > my-card {
       flex: 1;
       margin-right: 10px;
+      label {
+        font-weight: 500;
+        color: gray;
+        cursor: pointer;
+        input[type="radio"] {
+          margin-top: 3px;
+        }
+      }
       &.resources,
       &.engine {
         flex-grow: 0.5;
@@ -39,6 +47,7 @@ my-batch-pipeline-settings {
         align-items: center;
         font-weight: 500;
         color: #6d6d6d;
+        margin: 5px 0;
 
         > .cron-select {
           margin-left: 5px;
@@ -58,6 +67,11 @@ my-batch-pipeline-settings {
           > * {
             margin-left: 5px;
           }
+        }
+      }
+      my-schedule {
+        table.table {
+          margin-top: 5px;
         }
       }
     }
