@@ -110,8 +110,8 @@ public class AllProgramsApp extends AbstractApplication {
     try {
       createDataset(DS_WITH_SCHEMA_NAME, ObjectMappedTable.class,
                     ObjectMappedTableProperties.builder()
-                      .setDescription("test object mapped table")
                       .setType(DsSchema.class)
+                      .setDescription("test object mapped table")
                       .build()
       );
     } catch (UnsupportedTypeException e) {
