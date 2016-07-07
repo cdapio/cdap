@@ -175,13 +175,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     }
 
+    nsStore.create(metadata);
+
     try {
       dsFramework.createNamespace(namespace.toId());
     } catch (DatasetManagementException e) {
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
 
-    nsStore.create(metadata);
     // Skip authorization grants for the system user
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
       authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));

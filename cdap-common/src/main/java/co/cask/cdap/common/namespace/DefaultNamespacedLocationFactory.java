@@ -18,10 +18,15 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -31,13 +36,21 @@ import javax.annotation.Nullable;
  */
 public class DefaultNamespacedLocationFactory implements NamespacedLocationFactory {
 
-  private final LocationFactory locationFactory;
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespacedLocationFactory.class);
+
+  private final RootLocationFactory locationFactory;
+  private final String hdfsNamespace;
   private final String namespaceDir;
 
+  private final NamespaceAdmin nsAdmin;
+
   @Inject
-  public DefaultNamespacedLocationFactory(CConfiguration cConf, LocationFactory locationFactory) {
+  public DefaultNamespacedLocationFactory(CConfiguration cConf, RootLocationFactory locationFactory, NamespaceAdmin
+    nsAdmin) {
+    this.hdfsNamespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
+    this.nsAdmin = nsAdmin;
   }
 
   @Override
@@ -47,7 +60,20 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
 
   @Override
   public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
-    Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
+    String hdfsDirectory = null;
+    try {
+      hdfsDirectory = nsAdmin.get(namespaceId).getConfig().getHdfsDirectory();
+      LOG.info("##### HDFS directory mapping {}", hdfsDirectory);
+    } catch (Exception e) {
+      Throwables.propagate(e);
+    }
+    Location namespaceLocation;
+    if (Strings.isNullOrEmpty(hdfsDirectory)) {
+      namespaceLocation = locationFactory.create(hdfsNamespace).append(namespaceDir).append(namespaceId.getId());
+    } else {
+      namespaceLocation = getBaseLocation().append(hdfsDirectory);
+    }
+    LOG.info("##### namespacelocation {}", namespaceLocation);
     if (subPath != null) {
       namespaceLocation = namespaceLocation.append(subPath);
     }

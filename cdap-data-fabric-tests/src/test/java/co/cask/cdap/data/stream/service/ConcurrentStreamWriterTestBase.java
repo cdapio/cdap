@@ -20,6 +20,8 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
@@ -73,6 +75,7 @@ public abstract class ConcurrentStreamWriterTestBase {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final StreamCoordinatorClient COORDINATOR_CLIENT = new InMemoryStreamCoordinatorClient();
+  static final NamespaceAdmin NS_ADMIN = new InMemoryNamespaceClient();
 
   protected abstract NamespacedLocationFactory getNamespacedLocationFactory();
 

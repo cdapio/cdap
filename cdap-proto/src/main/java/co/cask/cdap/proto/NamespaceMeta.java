@@ -56,15 +56,21 @@ public final class NamespaceMeta {
     private String name;
     private String description;
     private String schedulerQueueName;
+    private String hdfsDirectory;
+    private String hbaseNamespace;
+    private String hiveDatabase;
 
     public Builder() {
-     // No-Op
+      // No-Op
     }
 
     public Builder(NamespaceMeta meta) {
       this.name = meta.getName();
       this.description = meta.getDescription();
       this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
+      this.hdfsDirectory = meta.getConfig().getHdfsDirectory();
+      this.hbaseNamespace = meta.getConfig().getHbaseNamespace();
+      this.hiveDatabase = meta.getConfig().getHiveDatabase();
     }
 
     public Builder setName(final Id.Namespace id) {
@@ -87,6 +93,21 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setHdfsDirectory(final String hdfsDirectory) {
+      this.hdfsDirectory = hdfsDirectory;
+      return this;
+    }
+
+    public Builder setHbaseNamespace(final String hbaseNamespace) {
+      this.hbaseNamespace = hbaseNamespace;
+      return this;
+    }
+
+    public Builder setHiveDatabase(final String hiveDatabase) {
+      this.hiveDatabase = hiveDatabase;
+      return this;
+    }
+
     public NamespaceMeta build() {
       if (name == null) {
         throw new IllegalArgumentException("Namespace id cannot be null.");
@@ -95,10 +116,8 @@ public final class NamespaceMeta {
         description = "";
       }
 
-      if (schedulerQueueName == null) {
-        schedulerQueueName = "";
-      }
-      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName));
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, hdfsDirectory,
+                                                                      hbaseNamespace, hiveDatabase));
     }
   }
 

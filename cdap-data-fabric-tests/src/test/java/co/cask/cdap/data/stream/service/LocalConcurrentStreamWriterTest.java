@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -35,7 +36,9 @@ public class LocalConcurrentStreamWriterTest extends ConcurrentStreamWriterTestB
   @BeforeClass
   public static void init() throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    namespacedLocationFactory = new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory);
+    namespacedLocationFactory = new DefaultNamespacedLocationFactory(CConfiguration.create(),
+                                                                     new RootLocationFactory(locationFactory),
+                                                                     NS_ADMIN);
   }
 
   @Override

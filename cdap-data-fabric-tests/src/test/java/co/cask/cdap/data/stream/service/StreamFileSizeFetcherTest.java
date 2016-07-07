@@ -18,7 +18,10 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
@@ -28,6 +31,7 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -48,16 +52,22 @@ public class StreamFileSizeFetcherTest {
 
   private static final CConfiguration cConf = CConfiguration.create();
   private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespaceAdmin nsAdmin;
 
   @BeforeClass
   public static void init() throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
+    nsAdmin = new InMemoryNamespaceClient();
+    namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, new RootLocationFactory(locationFactory),
+                                                                     nsAdmin);
   }
 
   @Test
   public void testFetchSize() throws Exception {
     final String streamName = "testFetchSize";
+    NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build();
+
+    nsAdmin.create(defaultNSMeta);
     Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     final int nbEvents = 100;
     StreamAdmin streamAdmin = new TestStreamAdmin(namespacedLocationFactory, Long.MAX_VALUE, 1000);

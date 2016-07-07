@@ -17,7 +17,9 @@
 package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -37,14 +39,24 @@ public class DefaultNamespacedLocationFactoryTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Test
-  public void testGet() throws IOException {
+  public void testGet() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
+
+    Id.Namespace ns1 = Id.Namespace.from("ns1");
+    NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build();
+    NamespaceMeta ns1NSMeta = new NamespaceMeta.Builder().setName(ns1).setHdfsDirectory("/ns1").build();
+
+    nsAdmin.create(defaultNSMeta);
+    nsAdmin.create(ns1NSMeta);
+
     NamespacedLocationFactory namespacedLocationFactory =
-      new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory);
+      new DefaultNamespacedLocationFactory(CConfiguration.create(), new RootLocationFactory(locationFactory), nsAdmin);
 
     Location defaultLoc = namespacedLocationFactory.get(Id.Namespace.DEFAULT);
-    Id.Namespace ns1 = Id.Namespace.from("ns1");
     Location ns1Loc = namespacedLocationFactory.get(ns1);
+    Location expectedLocation = namespacedLocationFactory.getBaseLocation().append("/ns1");
+    Assert.assertEquals(expectedLocation, ns1Loc);
 
     // test these are not the same
     Assert.assertNotEquals(defaultLoc, ns1Loc);

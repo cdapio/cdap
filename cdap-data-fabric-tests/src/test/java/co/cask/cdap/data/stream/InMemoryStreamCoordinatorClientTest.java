@@ -20,6 +20,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -48,7 +49,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
   private static StreamCoordinatorClient coordinatorClient;
 
   @BeforeClass
-  public static void init() throws IOException {
+  public static void init() throws Exception {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
@@ -58,6 +59,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
       new DataSetsModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),

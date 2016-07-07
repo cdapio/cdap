@@ -113,8 +113,20 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       NamespaceConfig config = metadata.getConfig();
-      if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
-        builder.setSchedulerQueueName(config.getSchedulerQueueName());
+      LOG.info("Namespace config is: {}", config);
+      if (config != null) {
+        if (!Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
+          builder.setSchedulerQueueName(config.getSchedulerQueueName());
+        }
+        if (!Strings.isNullOrEmpty(config.getHdfsDirectory())) {
+          builder.setHdfsDirectory(config.getHdfsDirectory());
+        }
+        if (!Strings.isNullOrEmpty(config.getHbaseNamespace())) {
+          builder.setHbaseNamespace(config.getHbaseNamespace());
+        }
+        if (!Strings.isNullOrEmpty(config.getHiveDatabase())) {
+          builder.setHiveDatabase(config.getHiveDatabase());
+        }
       }
     }
 

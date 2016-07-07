@@ -31,6 +31,9 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -103,6 +106,7 @@ public abstract class AbstractDatasetFrameworkTest {
   protected static CConfiguration cConf;
   protected static TransactionExecutorFactory txExecutorFactory;
   protected static InMemoryAuditPublisher inMemoryAuditPublisher;
+  protected static NamespaceAdmin namespaceAdmin;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -112,7 +116,8 @@ public abstract class AbstractDatasetFrameworkTest {
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
-      new AuditModule().getInMemoryModules());
+      new AuditModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules());
 
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     registryFactory = new DatasetDefinitionRegistryFactory() {
@@ -123,6 +128,7 @@ public abstract class AbstractDatasetFrameworkTest {
         return registry;
       }
     };
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }
@@ -370,12 +376,18 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
-  public void testNamespaceCreationDeletion() throws DatasetManagementException {
+  public void testNamespaceCreationDeletion() throws Exception {
     DatasetFramework framework = getFramework();
 
-    Id.Namespace namespace = Id.Namespace.from("yourspace");
-    framework.createNamespace(namespace);
-    framework.deleteNamespace(namespace);
+
+    Id.Namespace yourspace = Id.Namespace.from("yourspace");
+
+    NamespaceMeta yourspaceMeta = new NamespaceMeta.Builder().setName(yourspace).build();
+
+    namespaceAdmin.create(yourspaceMeta);
+
+
+    framework.createNamespace(yourspace);
   }
 
   @Test

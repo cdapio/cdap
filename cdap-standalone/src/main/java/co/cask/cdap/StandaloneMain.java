@@ -501,7 +501,7 @@ public class StandaloneMain {
       new NotificationServiceRuntimeModule().getStandaloneModules(),
       new ViewAdminModules().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
-      new NamespaceClientRuntimeModule().getStandaloneModules(),
+//      new NamespaceClientRuntimeModule().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
       new AuditModule().getStandaloneModules(),

@@ -21,8 +21,12 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.LocalNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
@@ -50,6 +54,7 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -106,9 +111,12 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
     TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
+    NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
+
 
     LocalLocationFactory locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
-    NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
+    NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(
+      cConf, new RootLocationFactory(locationFactory), nsAdmin);
     framework = new RemoteDatasetFramework(cConf, discoveryService, registryFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
@@ -168,6 +176,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     startLatch.await(5, TimeUnit.SECONDS);
+
+    nsAdmin.create(new NamespaceMeta.Builder().setName(Id.Namespace.SYSTEM).build());
+    nsAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
 
     framework.createNamespace(Id.Namespace.SYSTEM);
     framework.createNamespace(NAMESPACE_ID);
