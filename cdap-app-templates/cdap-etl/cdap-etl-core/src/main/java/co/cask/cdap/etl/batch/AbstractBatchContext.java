@@ -39,8 +39,6 @@ import java.util.concurrent.Callable;
  * MapReduce Aggregator Context.
  */
 public abstract class AbstractBatchContext extends AbstractTransformContext implements BatchContext {
-  private final Logger LOG = LoggerFactory.getLogger(AbstractBatchContext.class);
-
   private final DatasetContext datasetContext;
   private final long logicalStartTime;
   private final Map<String, String> runtimeArgs;
@@ -76,17 +74,14 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   }
 
   @Override
-  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    try {
-      datasetAdmin.createDataset(datasetName, typeName, properties);
-    } catch (DatasetManagementException e) {
-      LOG.error("Encountered error while creating dataset {}.", datasetName, e);
-    }
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties)
+    throws DatasetManagementException {
+    datasetAdmin.createDataset(datasetName, typeName, properties);
   }
 
   @Override
-  public boolean datasetExists(String datasetName) {
-    return false;
+  public boolean datasetExists(String datasetName) throws DatasetManagementException {
+    return datasetAdmin.datasetExists(datasetName);
   }
 
   @Override
