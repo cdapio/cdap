@@ -25,7 +25,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.upload.ContentWriterFactory;
@@ -106,7 +106,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   private final ConcurrentStreamWriter streamWriter;
   private final long batchBufferThreshold;
   private final StreamBodyConsumerFactory streamBodyConsumerFactory;
-  private final AbstractNamespaceClient namespaceClient;
+  private final NamespaceDefinitionAdmin namespaceDefinitionAdmin;
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
@@ -118,7 +118,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                        StreamFileWriterFactory writerFactory,
                        final MetricsCollectionService metricsCollectionService,
                        StreamWriterSizeCollector sizeCollector,
-                       AbstractNamespaceClient namespaceClient) {
+                       NamespaceDefinitionAdmin namespaceDefinitionAdmin) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.sizeCollector = sizeCollector;
@@ -136,7 +136,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
                                                    metricsCollectorFactory);
-    this.namespaceClient = namespaceClient;
+    this.namespaceDefinitionAdmin = namespaceDefinitionAdmin;
   }
 
   @Override
@@ -182,7 +182,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
     // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
-    namespaceClient.get(Id.Namespace.from(namespaceId));
+    namespaceDefinitionAdmin.get(Id.Namespace.from(namespaceId));
 
     Id.Stream streamId;
     try {

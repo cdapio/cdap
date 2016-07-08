@@ -31,7 +31,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -98,7 +98,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final CConfiguration configuration;
   private final Scheduler scheduler;
-  private final NamespaceAdmin namespaceAdmin;
+  private final NamespaceDefinitionAdmin namespaceDefinitionAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
@@ -106,10 +106,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
                           Scheduler scheduler, ProgramRuntimeService runtimeService,
-                          NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
+                          NamespaceDefinitionAdmin namespaceDefinitionAdmin,
+                          NamespacedLocationFactory namespacedLocationFactory,
                           ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
-    this.namespaceAdmin = namespaceAdmin;
+    this.namespaceDefinitionAdmin = namespaceDefinitionAdmin;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -415,7 +416,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      namespaceAdmin.get(namespace);
+      namespaceDefinitionAdmin.get(namespace);
     } catch (NamespaceNotFoundException e) {
       throw e;
     } catch (Exception e) {

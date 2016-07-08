@@ -25,6 +25,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
@@ -59,6 +60,7 @@ import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceDefinitionAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
@@ -73,7 +75,6 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
@@ -290,6 +291,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
+      bind(NamespaceDefinitionAdmin.class).to(DefaultNamespaceDefinitionAdmin.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

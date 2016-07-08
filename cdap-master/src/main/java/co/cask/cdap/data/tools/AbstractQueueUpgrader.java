@@ -17,7 +17,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -50,16 +50,16 @@ public abstract class AbstractQueueUpgrader extends AbstractUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractQueueUpgrader.class);
   protected final HBaseTableUtil tableUtil;
   protected final Configuration conf;
-  protected final NamespaceAdmin namespaceAdmin;
+  protected final NamespaceDefinitionAdmin namespaceDefinitionAdmin;
 
   protected AbstractQueueUpgrader(LocationFactory locationFactory,
                                   NamespacedLocationFactory namespacedLocationFactory,
                                   HBaseTableUtil tableUtil, Configuration conf,
-                                  NamespaceAdmin namespaceAdmin) {
+                                  NamespaceDefinitionAdmin namespaceDefinitionAdmin) {
     super(locationFactory, namespacedLocationFactory);
     this.tableUtil = tableUtil;
     this.conf = conf;
-    this.namespaceAdmin = namespaceAdmin;
+    this.namespaceDefinitionAdmin = namespaceDefinitionAdmin;
   }
 
   /**

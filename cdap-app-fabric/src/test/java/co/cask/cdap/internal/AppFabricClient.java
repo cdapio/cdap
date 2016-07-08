@@ -23,7 +23,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
@@ -94,20 +94,20 @@ public class AppFabricClient {
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
   private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
-  private final NamespaceAdmin namespaceAdmin;
+  private final NamespaceDefinitionAdmin namespaceDefinitionAdmin;
 
   @Inject
   public AppFabricClient(LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
-                         NamespaceAdmin namespaceAdmin,
+                         NamespaceDefinitionAdmin namespaceDefinitionAdmin,
                          WorkflowHttpHandler workflowHttpHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
-    this.namespaceAdmin = namespaceAdmin;
+    this.namespaceDefinitionAdmin = namespaceDefinitionAdmin;
     this.workflowHttpHandler = workflowHttpHandler;
   }
 
@@ -120,7 +120,7 @@ public class AppFabricClient {
     HttpRequest request;
 
     // delete all namespaces
-    for (NamespaceMeta namespaceMeta : namespaceAdmin.list()) {
+    for (NamespaceMeta namespaceMeta : namespaceDefinitionAdmin.list()) {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
 
       responder = new MockResponder();

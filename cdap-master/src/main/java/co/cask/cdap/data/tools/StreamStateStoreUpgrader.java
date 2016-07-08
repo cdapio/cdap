@@ -17,7 +17,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.util.TableId;
@@ -45,13 +45,13 @@ public class StreamStateStoreUpgrader extends AbstractQueueUpgrader {
   @Inject
   public StreamStateStoreUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil,
                                   NamespacedLocationFactory namespacedLocationFactory, Configuration conf,
-                                  NamespaceAdmin namespaceAdmin) {
-    super(locationFactory, namespacedLocationFactory, tableUtil, conf, namespaceAdmin);
+                                  NamespaceDefinitionAdmin namespaceDefinitionAdmin) {
+    super(locationFactory, namespacedLocationFactory, tableUtil, conf, namespaceDefinitionAdmin);
   }
 
   @Override
   protected Iterable<TableId> getTableIds() throws Exception {
-    return Lists.transform(namespaceAdmin.list(), new Function<NamespaceMeta, TableId>() {
+    return Lists.transform(namespaceDefinitionAdmin.list(), new Function<NamespaceMeta, TableId>() {
       @Override
       public TableId apply(NamespaceMeta input) {
         return StreamUtils.getStateStoreTableId(Id.Namespace.from(input.getName()));
