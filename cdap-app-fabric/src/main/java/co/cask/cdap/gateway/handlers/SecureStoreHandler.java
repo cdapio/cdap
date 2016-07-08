@@ -36,8 +36,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Exposes {@link org.apache.twill.api.SecureStore} and
- * {@link co.cask.cdap.api.security.store.SecureStoreManager} operations over HTTPS
+ * Exposes REST APIs for {@link co.cask.cdap.api.security.store.SecureStore} and
+ * {@link co.cask.cdap.api.security.store.SecureStoreManager}.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/security/store/namespaces/{namespace-id}")
 public class SecureStoreHandler extends AbstractAppFabricHttpHandler {

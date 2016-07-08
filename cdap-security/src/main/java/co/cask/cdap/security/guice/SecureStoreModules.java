@@ -30,16 +30,10 @@ import com.google.inject.ProvisionException;
 
 
 /**
- *
+ * Guice bindings for security store related classes.
  */
 public class SecureStoreModules extends RuntimeModule {
-  /**
-   * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and run an
-   * in-memory CDAP instance.
-   *
-   * @return A combined set of Modules required for InMemory execution.
-   */
+
   @Override
   public final Module getInMemoryModules() {
     return new AbstractModule() {
@@ -51,13 +45,6 @@ public class SecureStoreModules extends RuntimeModule {
     };
   }
 
-  /**
-   * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and run an a
-   * standalone CDAP instance.
-   *
-   * @return A combined set of Modules required for standalone execution.
-   */
   @Override
   public final Module getStandaloneModules() {
     return new AbstractModule() {
@@ -69,13 +56,6 @@ public class SecureStoreModules extends RuntimeModule {
     };
   }
 
-  /**
-   * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and run the fully
-   * distributed CDAP instance.
-   *
-   * @return A combined set of Modules required for distributed execution.
-   */
   @Override
   public final Module getDistributedModules() {
     return new AbstractModule() {
@@ -98,12 +78,7 @@ public class SecureStoreModules extends RuntimeModule {
     }
 
     /**
-     * Provides an instance of {@code T}. Must never return {@code null}.
-     *
-     * @throws OutOfScopeException when an attempt is made to access a scoped object while the scope
-     *                             in question is not currently active
-     * @throws ProvisionException  if an instance cannot be provided. Such exceptions include messages
-     *                             and throwables to describe why provision failed.
+     * Provides an instance of {@link SecureStore}. Must never return {@code null}.
      */
     @Override
     public SecureStore get() {

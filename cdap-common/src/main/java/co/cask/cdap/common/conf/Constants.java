@@ -717,6 +717,8 @@ public final class Constants {
       public static final String FILE_NAME = "security.store.file.name";
       /** Password to access the secure store. */
       public static final String FILE_PASSWORD = "security.store.file.password";
+      /** Backend provider for the secure store. e.g. file */
+      public static final String PROVIDER = "security.store.provider";
     }
 
     /**
