@@ -28,6 +28,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
@@ -77,8 +78,8 @@ public class ETLMapReduce extends AbstractMapReduce {
   static final String RUNTIME_ARGS_KEY = "cdap.etl.runtime.args";
   static final String INPUT_ALIAS_KEY = "cdap.etl.source.alias.key";
   static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
-  static final String GROUP_KEY_CLASS = "cdap.etl.aggregator.group.key.class";
-  static final String GROUP_VAL_CLASS = "cdap.etl.aggregator.group.val.class";
+  static final String MAP_KEY_CLASS = "cdap.etl.map.key.class";
+  static final String MAP_VAL_CLASS = "cdap.etl.map.val.class";
   static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
   static final Type INPUT_ALIAS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
@@ -117,22 +118,23 @@ public class ETLMapReduce extends AbstractMapReduce {
       throw new IllegalArgumentException(String.format(
         "Pipeline phase '%s' must contain at least one sink but does not have any.", phaseSpec.getPhaseName()));
     }
-    Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
-    if (aggregators.size() > 1) {
+    Set<StageInfo> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
+                                                                   BatchJoiner.PLUGIN_TYPE);
+    if (reducers.size() > 1) {
       throw new IllegalArgumentException(String.format(
-        "Pipeline phase '%s' cannot contain more than one aggregator but it has aggregators '%s'.",
-        phaseSpec.getPhaseName(), Joiner.on(',').join(aggregators)));
-    } else if (!aggregators.isEmpty()) {
-      String aggregatorName = aggregators.iterator().next().getName();
-      PipelinePhase mapperPipeline = phaseSpec.getPhase().subsetTo(ImmutableSet.of(aggregatorName));
+        "Pipeline phase '%s' cannot contain more than one reducer but it has reducers '%s'.",
+        phaseSpec.getPhaseName(), Joiner.on(',').join(reducers)));
+    } else if (!reducers.isEmpty()) {
+      String reducerName = reducers.iterator().next().getName();
+      PipelinePhase mapperPipeline = phaseSpec.getPhase().subsetTo(ImmutableSet.of(reducerName));
       for (StageInfo stageInfo : mapperPipeline) {
         // error datasets are not supported in the map phase of a mapreduce, because we can only
-        // write out the group key and not error dataset data.
+        // write out the group/join key and not error dataset data.
         // we need to re-think how error datasets are done. perhaps they are just sinks instead of a special thing.
         if (stageInfo.getErrorDatasetName() != null) {
           throw new IllegalArgumentException(String.format(
-            "Stage %s is not allowed to have an error dataset because it connects to aggregator %s.",
-            stageInfo.getName(), aggregatorName));
+            "Stage %s is not allowed to have an error dataset because it connects to reducer %s.",
+            stageInfo.getName(), reducerName));
         }
       }
     }
@@ -212,65 +214,104 @@ public class ETLMapReduce extends AbstractMapReduce {
         context.addOutput(Output.ofDataset(stageInfo.getErrorDatasetName(), args));
       }
     }
-
     job.setMapperClass(ETLMapper.class);
-    Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
-    if (!aggregators.isEmpty()) {
+
+    Set<StageInfo> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
+                                                                   BatchJoiner.PLUGIN_TYPE);
+    if (!reducers.isEmpty()) {
       job.setReducerClass(ETLReducer.class);
-      String aggregatorName = aggregators.iterator().next().getName();
-      BatchAggregator aggregator = pluginInstantiator.newPluginInstance(aggregatorName);
-      MapReduceAggregatorContext aggregatorContext =
-        new MapReduceAggregatorContext(context, mrMetrics,
-                                       new DatasetContextLookupProvider(context),
-                                       aggregatorName, context.getRuntimeArguments());
-      aggregator.prepareRun(aggregatorContext);
-      finishers.add(aggregator, aggregatorContext);
+      String reducerName = reducers.iterator().next().getName();
+      Class<?> outputKeyClass;
+      Class<?> outputValClass;
+      if (!phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE).isEmpty()) {
+        BatchAggregator aggregator = pluginInstantiator.newPluginInstance(reducerName);
+        MapReduceAggregatorContext aggregatorContext =
+          new MapReduceAggregatorContext(context, mrMetrics,
+                                         new DatasetContextLookupProvider(context),
+                                         reducerName, context.getRuntimeArguments());
+        aggregator.prepareRun(aggregatorContext);
+        finishers.add(aggregator, aggregatorContext);
 
-      if (aggregatorContext.getNumPartitions() != null) {
-        job.setNumReduceTasks(aggregatorContext.getNumPartitions());
-      }
-      // if the plugin sets the output key and value class directly, trust them
-      Class<?> outputKeyClass = aggregatorContext.getGroupKeyClass();
-      Class<?> outputValClass = aggregatorContext.getGroupValueClass();
-      // otherwise, derive it from the plugin's parameters
-      if (outputKeyClass == null) {
-        outputKeyClass = TypeChecker.getGroupKeyClass(aggregator);
-      }
-      if (outputValClass == null) {
-        outputValClass = TypeChecker.getGroupValueClass(aggregator);
-      }
-      hConf.set(GROUP_KEY_CLASS, outputKeyClass.getName());
-      hConf.set(GROUP_VAL_CLASS, outputValClass.getName());
-      // in case the classes are not a WritableComparable, but is some common type we support
-      // for example, a String or a StructuredRecord
-      WritableConversion writableConversion = WritableConversions.getConversion(outputKeyClass.getName());
-      // if the conversion is null, it means the user is using their own object.
-      if (writableConversion != null) {
-        outputKeyClass = writableConversion.getWritableClass();
-      }
-      writableConversion = WritableConversions.getConversion(outputValClass.getName());
-      if (writableConversion != null) {
-        outputValClass = writableConversion.getWritableClass();
-      }
-      // check classes here instead of letting mapreduce do it, since mapreduce throws a cryptic error
-      if (!WritableComparable.class.isAssignableFrom(outputKeyClass)) {
-        throw new IllegalArgumentException(String.format(
-          "Invalid aggregator %s. The group key class %s must implement Hadoop's WritableComparable.",
-          aggregatorName, outputKeyClass));
-      }
-      if (!Writable.class.isAssignableFrom(outputValClass)) {
-        throw new IllegalArgumentException(String.format(
-          "Invalid aggregator %s. The group value class %s must implement Hadoop's Writable.",
-          aggregatorName, outputValClass));
-      }
+        if (aggregatorContext.getNumPartitions() != null) {
+          job.setNumReduceTasks(aggregatorContext.getNumPartitions());
+        }
+        outputKeyClass = aggregatorContext.getGroupKeyClass();
+        outputValClass = aggregatorContext.getGroupValueClass();
 
-      job.setMapOutputKeyClass(outputKeyClass);
-      job.setMapOutputValueClass(outputValClass);
+        if (outputKeyClass == null) {
+          outputKeyClass = TypeChecker.getGroupKeyClass(aggregator);
+        }
+        if (outputValClass == null) {
+          outputValClass = TypeChecker.getGroupValueClass(aggregator);
+        }
+        hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
+        hConf.set(MAP_VAL_CLASS, outputValClass.getName());
+        job.setMapOutputKeyClass(getOutputKeyClass(reducerName, outputKeyClass));
+        job.setMapOutputValueClass(getOutputValClass(reducerName, outputValClass));
+      } else { // reducer type is joiner
+        BatchJoiner batchJoiner = pluginInstantiator.newPluginInstance(reducerName);
+        MapReduceJoinerContext joinerContext =
+          new MapReduceJoinerContext(context, mrMetrics,
+                                     new DatasetContextLookupProvider(context), reducerName,
+                                     context.getRuntimeArguments());
+        batchJoiner.prepareRun(joinerContext);
+        finishers.add(batchJoiner, joinerContext);
+
+        if (joinerContext.getNumPartitions() != null) {
+          job.setNumReduceTasks(joinerContext.getNumPartitions());
+        }
+        outputKeyClass = joinerContext.getJoinKeyClass();
+        Class<?> inputRecordClass = joinerContext.getJoinInputRecordClass();
+
+        if (outputKeyClass == null) {
+          outputKeyClass = TypeChecker.getJoinKeyClass(batchJoiner);
+        }
+        if (inputRecordClass == null) {
+          inputRecordClass = TypeChecker.getJoinInputRecordClass(batchJoiner);
+        }
+        hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
+        hConf.set(MAP_VAL_CLASS, inputRecordClass.getName());
+        job.setMapOutputKeyClass(getOutputKeyClass(reducerName, outputKeyClass));
+        getOutputValClass(reducerName, inputRecordClass);
+        // for joiner plugin map output is tagged with stageName
+        job.setMapOutputValueClass(TaggedWritable.class);
+      }
     } else {
       job.setNumReduceTasks(0);
     }
 
     hConf.set(RUNTIME_ARGS_KEY, GSON.toJson(runtimeArgs));
+  }
+
+  private Class<?> getOutputKeyClass(String reducerName, Class<?> outputKeyClass) {
+    // in case the classes are not a WritableComparable, but is some common type we support
+    // for example, a String or a StructuredRecord
+    WritableConversion writableConversion = WritableConversions.getConversion(outputKeyClass.getName());
+    // if the conversion is null, it means the user is using their own object.
+    if (writableConversion != null) {
+      outputKeyClass = writableConversion.getWritableClass();
+    }
+    // check classes here instead of letting mapreduce do it, since mapreduce throws a cryptic error
+    if (!WritableComparable.class.isAssignableFrom(outputKeyClass)) {
+      throw new IllegalArgumentException(String.format(
+        "Invalid reducer %s. The key class %s must implement Hadoop's WritableComparable.",
+        reducerName, outputKeyClass));
+    }
+    return outputKeyClass;
+  }
+
+  private Class<?> getOutputValClass(String reducerName, Class<?> outputValClass) {
+    WritableConversion writableConversion;
+    writableConversion = WritableConversions.getConversion(outputValClass.getName());
+    if (writableConversion != null) {
+      outputValClass = writableConversion.getWritableClass();
+    }
+    if (!Writable.class.isAssignableFrom(outputValClass)) {
+      throw new IllegalArgumentException(String.format(
+        "Invalid reducer %s. The value class %s must implement Hadoop's Writable.",
+        reducerName, outputValClass));
+    }
+    return outputValClass;
   }
 
   @Override

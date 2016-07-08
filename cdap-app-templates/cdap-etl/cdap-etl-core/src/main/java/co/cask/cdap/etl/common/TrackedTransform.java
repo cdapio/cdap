@@ -34,6 +34,7 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
   public static final String RECORDS_IN = "records.in";
   public static final String RECORDS_OUT = "records.out";
   private final Transformation<IN, OUT> transform;
+  private String prevStage;
   private final StageMetrics metrics;
   private final String metricInName;
   private final String metricOutName;
@@ -50,9 +51,16 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
     this.metricOutName = metricOutName;
   }
 
+  public String getPrevStage() {
+    return prevStage;
+  }
 
   @Override
   public void transform(IN input, Emitter<OUT> emitter) throws Exception {
+    if (emitter instanceof TransformDetail) {
+      prevStage = ((TransformDetail) emitter).getPrevStage();
+    }
+
     if (metricInName != null) {
       metrics.count(metricInName, 1);
     }

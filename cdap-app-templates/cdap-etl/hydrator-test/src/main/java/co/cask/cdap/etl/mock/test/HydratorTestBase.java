@@ -25,11 +25,13 @@ import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
+import co.cask.cdap.etl.mock.batch.joiner.Join;
 import co.cask.cdap.etl.mock.realtime.LookupSource;
 import co.cask.cdap.etl.mock.realtime.MockSink;
 import co.cask.cdap.etl.mock.realtime.MockSource;
 import co.cask.cdap.etl.mock.transform.DoubleTransform;
 import co.cask.cdap.etl.mock.transform.ErrorTransform;
+import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.IntValueFilterTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
@@ -50,11 +52,11 @@ public class HydratorTestBase extends TestBase {
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
-    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, Join.PLUGIN_CLASS,
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS, co.cask.cdap.etl.mock.batch.MockSource.PLUGIN_CLASS,
     MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
-    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
+    FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
   );
 
   public HydratorTestBase() {
@@ -97,7 +99,7 @@ public class HydratorTestBase extends TestBase {
                       MockExternalSource.class, MockExternalSink.class,
                       DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
-                      FieldCountAggregator.class, IdentityAggregator.class,
+                      FieldCountAggregator.class, IdentityAggregator.class, FieldsPrefixTransform.class,
                       NodeStatesAction.class);
   }
 

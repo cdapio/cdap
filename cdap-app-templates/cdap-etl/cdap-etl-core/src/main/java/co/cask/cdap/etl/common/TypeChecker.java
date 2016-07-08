@@ -18,6 +18,7 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.etl.api.Aggregator;
+import co.cask.cdap.etl.api.Joiner;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -30,10 +31,18 @@ public class TypeChecker {
 
   public static Class<?> getGroupKeyClass(Aggregator aggregator) {
     return getParameterClass(aggregator, Aggregator.class, 0);
-  }
+}
 
   public static Class<?> getGroupValueClass(Aggregator aggregator) {
     return getParameterClass(aggregator, Aggregator.class, 1);
+  }
+
+  public static Class<?> getJoinKeyClass(Joiner joiner) {
+    return getParameterClass(joiner, Joiner.class, 0);
+  }
+
+  public static Class<?> getJoinInputRecordClass(Joiner joiner) {
+    return getParameterClass(joiner, Joiner.class, 1);
   }
 
   public static Class getParameterClass(Object instance, Class instanceClass, int parameterNumber) {

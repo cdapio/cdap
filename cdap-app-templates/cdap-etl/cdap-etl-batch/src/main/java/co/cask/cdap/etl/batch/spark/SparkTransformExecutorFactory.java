@@ -81,7 +81,7 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
       if (isFirstHalf) {
-        return getTrackedGroupStep(new PreGroupAggregatorTransformation(batchAggregator), stageMetrics);
+        return getTrackedEmitKeyStep(new PreGroupAggregatorTransformation(batchAggregator), stageMetrics);
       } else {
         return getTrackedAggregateStep(new PostGroupAggregatorTransformation(batchAggregator), stageMetrics);
       }
