@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.etl.api.TransformContext;
 
 import java.util.Map;
@@ -31,12 +32,12 @@ import java.util.Map;
 public interface BatchContext extends DatasetContext, TransformContext {
 
   /**
-   * Creates a dataset identified by datasetName, typeName with properties.
+   * See {@link co.cask.cdap.api.Admin} for details.
    */
   void createDataset(String datasetName, String typeName, DatasetProperties properties) throws DatasetManagementException;
 
   /**
-   * return true if dataset with datasetName exists
+   * See {@link co.cask.cdap.api.Admin} for details.
    */
   boolean datasetExists(String datasetName) throws DatasetManagementException;
 
