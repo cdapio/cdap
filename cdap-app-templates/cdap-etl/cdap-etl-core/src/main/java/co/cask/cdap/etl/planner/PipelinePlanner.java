@@ -190,15 +190,14 @@ public class PipelinePlanner {
     // Create single stage phases for the Action nodes
     for (String node : actionNodes) {
       StageSpec actionStageSpec = specs.get(node);
-      StageInfo actionStageInfo = new StageInfo(node, actionStageSpec.getInputs(), actionStageSpec.getInputSchemas(),
-                                                actionStageSpec.getOutputs(), actionStageSpec.getOutputSchema(),
-                                                actionStageSpec.getErrorDatasetName());
-
-      Map<String, Set<StageInfo>> stages  = new HashMap<>();
-      Set<StageInfo> actionStageInfos = new HashSet<>();
-      actionStageInfos.add(actionStageInfo);
-      stages.put(node, actionStageInfos);
-      phases.put(node, new PipelinePhase(stages, null));
+      StageInfo actionStageInfo = StageInfo.builder(node, Action.PLUGIN_TYPE)
+        .addInputs(actionStageSpec.getInputs())
+        .addInputSchemas(actionStageSpec.getInputSchemas())
+        .addOutputs(actionStageSpec.getOutputs())
+        .setOutputSchema(actionStageSpec.getOutputSchema())
+        .setErrorDatasetName(actionStageSpec.getErrorDatasetName())
+        .build();
+      phases.put(node, PipelinePhase.builder(supportedPluginTypes).addStage(actionStageInfo).build());
     }
 
     // Build phaseConnections for the Action nodes
@@ -254,16 +253,20 @@ public class PipelinePlanner {
 
       // add connectors
       if (connectors.contains(stageName)) {
-        phaseBuilder.addStage(Constants.CONNECTOR_TYPE, new StageInfo(stageName));
+        phaseBuilder.addStage(StageInfo.builder(stageName, Constants.CONNECTOR_TYPE).build());
         continue;
       }
 
       // add other plugin types
       StageSpec spec = specs.get(stageName);
       String pluginType = spec.getPlugin().getType();
-      StageInfo stageInfo = new StageInfo(stageName, spec.getInputs(), spec.getInputSchemas(), spec.getOutputs(),
-                                          spec.getOutputSchema(), spec.getErrorDatasetName());
-      phaseBuilder.addStage(pluginType, stageInfo);
+      phaseBuilder.addStage(StageInfo.builder(stageName, pluginType)
+                              .addInputs(spec.getInputs())
+                              .addInputSchemas(spec.getInputSchemas())
+                              .addOutputs(spec.getOutputs())
+                              .setOutputSchema(spec.getOutputSchema())
+                              .setErrorDatasetName(spec.getErrorDatasetName())
+                              .build());
     }
 
     return phaseBuilder.build();

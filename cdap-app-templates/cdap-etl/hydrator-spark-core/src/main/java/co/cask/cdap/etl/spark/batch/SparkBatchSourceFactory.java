@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.spark;
+package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
@@ -49,7 +49,7 @@ import static java.lang.Thread.currentThread;
 
 /**
  * A POJO class for storing source information being set from {@link SparkBatchSourceContext} and used in
- * {@link ETLSparkProgram}.
+ * {@link BatchSparkPipelineDriver}.
  */
 final class SparkBatchSourceFactory {
 

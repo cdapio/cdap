@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.spark;
+package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -40,9 +40,9 @@ import java.util.Set;
  * Handles writes to batch sinks. Maintains a mapping from sinks to their outputs and handles serialization and
  * deserialization for those mappings.
  */
-final class SparkBatchSinkFactory {
+public final class SparkBatchSinkFactory {
 
-  static SparkBatchSinkFactory deserialize(InputStream inputStream) throws IOException {
+  public static SparkBatchSinkFactory deserialize(InputStream inputStream) throws IOException {
     DataInput input = new DataInputStream(inputStream);
     Map<String, OutputFormatProvider> outputFormatProviders = Serializations.deserializeMap(
       input, new Serializations.ObjectReader<OutputFormatProvider>() {
@@ -134,8 +134,8 @@ final class SparkBatchSinkFactory {
     Serializations.serializeMap(sinkOutputs, Serializations.createStringSetObjectWriter(), output);
   }
 
-  <K, V> void writeFromRDD(JavaPairRDD<K, V> rdd, JavaSparkExecutionContext sec, String sinkName,
-                           Class<K> keyClass, Class<V> valueClass) {
+  public <K, V> void writeFromRDD(JavaPairRDD<K, V> rdd, JavaSparkExecutionContext sec, String sinkName,
+                                  Class<K> keyClass, Class<V> valueClass) {
     Set<String> outputNames = sinkOutputs.get(sinkName);
     if (outputNames == null || outputNames.isEmpty()) {
       // should never happen if validation happened correctly at pipeline configure time

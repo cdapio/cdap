@@ -18,35 +18,40 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.planner.StageInfo;
-import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Sets;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline phase.
  */
 public class PipelinePhase implements Iterable<StageInfo> {
   // plugin type -> stage info
-  private final Map<String, Set<StageInfo>> stages;
+  private final Map<String, Set<StageInfo>> stagesByType;
+  private final Map<String, StageInfo> stagesByName;
   private final Dag dag;
 
-  public PipelinePhase(Map<String, Set<StageInfo>> stages, Dag dag) {
-    this.stages = ImmutableMap.copyOf(stages);
+  private PipelinePhase(Set<StageInfo> stages, @Nullable Dag dag) {
+    stagesByType = new HashMap<>();
+    stagesByName = new HashMap<>();
+    for (StageInfo stage : stages) {
+      stagesByName.put(stage.getName(), stage);
+      String pluginType = stage.getPluginType();
+      Set<StageInfo> typeStages = stagesByType.get(pluginType);
+      if (typeStages == null) {
+        typeStages = new HashSet<>();
+        stagesByType.put(pluginType, typeStages);
+      }
+      typeStages.add(stage);
+    }
     this.dag = dag;
   }
 
@@ -57,27 +62,33 @@ public class PipelinePhase implements Iterable<StageInfo> {
    * @return unmodifiable set of stages that use the specified plugin type
    */
   public Set<StageInfo> getStagesOfType(String pluginType) {
-    Set<StageInfo> stageInfos = stages.get(pluginType);
-    return Collections.unmodifiableSet(stageInfos == null ? new HashSet<StageInfo>() : stageInfos);
+    Set<StageInfo> stagesOfType = stagesByType.get(pluginType);
+    return Collections.unmodifiableSet(stagesOfType == null ? new HashSet<StageInfo>() : stagesOfType);
   }
 
   public Set<StageInfo> getStagesOfType(String... pluginTypes) {
     Set<StageInfo> stageInfos = new HashSet<>();
     for (String pluginType: pluginTypes) {
-      if (stages.get(pluginType) != null) {
-        stageInfos.addAll(stages.get(pluginType));
+      Set<StageInfo> typeStages = stagesByType.get(pluginType);
+      if (typeStages != null) {
+        stageInfos.addAll(typeStages);
       }
     }
     return Collections.unmodifiableSet(stageInfos);
   }
 
+  @Nullable
+  public StageInfo getStage(String stageName) {
+    return stagesByName.get(stageName);
+  }
+
   public Set<String> getStageOutputs(String stage) {
-    Set<String> outputs = dag.getNodeOutputs(stage);
+    Set<String> outputs = dag == null ? null : dag.getNodeOutputs(stage);
     return Collections.unmodifiableSet(outputs == null ? new HashSet<String>() : outputs);
   }
 
   public Set<String> getPluginTypes() {
-    return stages.keySet();
+    return stagesByType.keySet();
   }
 
   public Set<String> getSources() {
@@ -86,6 +97,11 @@ public class PipelinePhase implements Iterable<StageInfo> {
 
   public Set<String> getSinks() {
     return dag == null ? new HashSet<String>() : dag.getSinks();
+  }
+
+  @Nullable
+  public Dag getDag() {
+    return dag;
   }
 
   /**
@@ -110,16 +126,10 @@ public class PipelinePhase implements Iterable<StageInfo> {
   }
 
   private PipelinePhase getSubset(final Dag subsetDag) {
-    Map<String, Set<StageInfo>> subsetStages = new HashMap<>();
-    for (Map.Entry<String, Set<StageInfo>> stagesEntry : stages.entrySet()) {
-      final Set<StageInfo> stagesOfType = Sets.filter(stagesEntry.getValue(), new Predicate<StageInfo>() {
-        @Override
-        public boolean apply(StageInfo stageInfo) {
-          return subsetDag.getNodes().contains(stageInfo.getName());
-        }
-      });
-      if (!stagesOfType.isEmpty()) {
-        subsetStages.put(stagesEntry.getKey(), stagesOfType);
+    Set<StageInfo> subsetStages = new HashSet<>();
+    for (StageInfo stage : stagesByName.values()) {
+      if (subsetDag.getNodes().contains(stage.getName())) {
+        subsetStages.add(stage);
       }
     }
     return new PipelinePhase(subsetStages, subsetDag);
@@ -136,19 +146,21 @@ public class PipelinePhase implements Iterable<StageInfo> {
 
     PipelinePhase that = (PipelinePhase) o;
 
-    return Objects.equals(stages, that.stages) &&
+    return Objects.equals(stagesByType, that.stagesByType) &&
+      Objects.equals(stagesByName, that.stagesByName) &&
       Objects.equals(dag, that.dag);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(stages, dag);
+    return Objects.hash(stagesByType, stagesByName, dag);
   }
 
   @Override
   public String toString() {
     return "PipelinePhase{" +
-      "stages=" + stages +
+      "stagesByType=" + stagesByType +
+      ", stagesByName=" + stagesByName +
       ", dag=" + dag +
       '}';
   }
@@ -165,11 +177,7 @@ public class PipelinePhase implements Iterable<StageInfo> {
 
   @Override
   public Iterator<StageInfo> iterator() {
-    List<Iterator<StageInfo>> iterators = new ArrayList<>(stages.size());
-    for (Map.Entry<String, Set<StageInfo>> stagesEntry : stages.entrySet()) {
-      iterators.add(stagesEntry.getValue().iterator());
-    }
-    return Iterators.concat(iterators.iterator());
+    return stagesByName.values().iterator();
   }
 
   /**
@@ -177,54 +185,47 @@ public class PipelinePhase implements Iterable<StageInfo> {
    */
   public static class Builder {
     private final Set<String> supportedPluginTypes;
-    private final Map<String, Set<StageInfo>> stages;
+    private final Set<StageInfo> stages;
     private final Set<co.cask.cdap.etl.proto.Connection> connections;
 
     public Builder(Set<String> supportedPluginTypes) {
       this.supportedPluginTypes = supportedPluginTypes;
-      this.stages = new HashMap<>();
+      this.stages = new HashSet<>();
       this.connections = new HashSet<>();
     }
 
-    public Builder addStage(String pluginType, StageInfo stageInfo) {
-      return addStages(pluginType, ImmutableSet.of(stageInfo));
-    }
-
-    public Builder addStages(String pluginType, Collection<StageInfo> stages) {
+    public Builder addStage(StageInfo stageInfo) {
+      String pluginType = stageInfo.getPluginType();
       if (!supportedPluginTypes.contains(pluginType)) {
         throw new IllegalArgumentException(
           String.format("%s is an unsupported plugin type. Plugin type must be one of %s.",
                         pluginType, Joiner.on(',').join(supportedPluginTypes)));
       }
-      Set<StageInfo> existingStages = this.stages.get(pluginType);
-      if (existingStages == null) {
-        existingStages = new HashSet<>();
-        this.stages.put(pluginType, existingStages);
+      stages.add(stageInfo);
+      return this;
+    }
+
+    public Builder addStages(Collection<StageInfo> stages) {
+      for (StageInfo stage : stages) {
+        addStage(stage);
       }
-      existingStages.addAll(stages);
       return this;
     }
 
     public Builder addConnection(String from, String to) {
-      return addConnections(from, ImmutableSet.of(to));
-    }
-
-    public Builder addConnections(String from, Collection<String> to) {
-      for (String toStage : to) {
-        connections.add(new Connection(from, toStage));
-      }
+      connections.add(new co.cask.cdap.etl.proto.Connection(from, to));
       return this;
     }
 
-    public Builder addConnections(Map<String, Set<String>> connections) {
-      for (Map.Entry<String, Set<String>> entry : connections.entrySet()) {
-        addConnections(entry.getKey(), entry.getValue());
+    public Builder addConnections(String input, Collection<String> outputs) {
+      for (String output : outputs) {
+        addConnection(input, output);
       }
       return this;
     }
 
     public PipelinePhase build() {
-      return new PipelinePhase(stages, new Dag(connections));
+      return new PipelinePhase(stages, connections.isEmpty() ? null : new Dag(connections));
     }
   }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.spark;
+package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
@@ -22,21 +22,22 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
+import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.AbstractAggregatorContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
-import co.cask.cdap.etl.batch.CompositeFinisher;
-import co.cask.cdap.etl.batch.Finisher;
-import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.common.CompositeFinisher;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.Finisher;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Joiner;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -53,10 +54,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * Configures and sets up runs of {@link ETLSparkProgram}.
+ * Configures and sets up runs of {@link BatchSparkPipelineDriver}.
  */
 public class ETLSpark extends AbstractSpark {
   private static final Logger LOG = LoggerFactory.getLogger(ETLSpark.class);
@@ -75,23 +75,16 @@ public class ETLSpark extends AbstractSpark {
   @Override
   protected void configure() {
     setName(phaseSpec.getPhaseName());
-    setDescription("Spark phase executor. " + phaseSpec.getDescription());
+    setDescription(phaseSpec.getDescription());
 
-    setMainClass(ETLSparkProgram.class);
+    setMainClass(BatchSparkPipelineDriver.class);
 
     setExecutorResources(phaseSpec.getResources());
-    setDriverResources(phaseSpec.getResources());
-
-    if (phaseSpec.getPhase().getSources().isEmpty()) {
-      throw new IllegalArgumentException("Pipeline must contain at least one source.");
-    }
-    if (phaseSpec.getPhase().getSinks().isEmpty()) {
-      throw new IllegalArgumentException("Pipeline must contain at least one sink.");
-    }
+    setDriverResources(phaseSpec.getDriverResources());
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
-    properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec));
+    properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec, BatchPhaseSpec.class));
     setProperties(properties);
   }
 
@@ -104,49 +97,43 @@ public class ETLSpark extends AbstractSpark {
     sparkConf.set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m");
     sparkConf.set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m");
     context.setSparkConf(sparkConf);
+
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
-    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
     DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
     MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
                                                          context.getLogicalStartTime());
     SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
-    for (String sourceName : phaseSpec.getPhase().getSources()) {
-      BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
-      BatchSourceContext sourceContext = new SparkBatchSourceContext(sourceFactory, context, lookProvider, sourceName);
-      batchSource.prepareRun(sourceContext);
-      finishers.add(batchSource, sourceContext);
-    }
-
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
-    for (String sinkName : phaseSpec.getPhase().getSinks()) {
-      BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName, evaluator);
-      if (batchSink instanceof SparkSink) {
-        BasicSparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, sinkName);
-        ((SparkSink) batchSink).prepareRun(sparkPluginContext);
-        finishers.add((SparkSink) batchSink, sparkPluginContext);
-      } else {
-        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkName);
+    Map<String, Integer> stagePartitions = new HashMap<>();
+
+    for (StageInfo stageInfo : phaseSpec.getPhase()) {
+      String stageName = stageInfo.getName();
+      String pluginType = stageInfo.getPluginType();
+
+      if (BatchSource.PLUGIN_TYPE.equals(pluginType)) {
+        BatchConfigurable<BatchSourceContext> batchSource = context.newPluginInstance(stageName, evaluator);
+        BatchSourceContext sourceContext = new SparkBatchSourceContext(sourceFactory, context, lookProvider, stageName);
+        batchSource.prepareRun(sourceContext);
+        finishers.add(batchSource, sourceContext);
+      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {
+        BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(stageName, evaluator);
+        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, stageName);
         batchSink.prepareRun(sinkContext);
         finishers.add(batchSink, sinkContext);
+      } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
+        BatchConfigurable<SparkPluginContext> sparkSink = context.newPluginInstance(stageName, evaluator);
+        SparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, stageName);
+        sparkSink.prepareRun(sparkPluginContext);
+        finishers.add(sparkSink, sparkPluginContext);
+      } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
+        BatchAggregator aggregator = context.newPluginInstance(stageName, evaluator);
+        AbstractAggregatorContext aggregatorContext =
+          new SparkAggregatorContext(context, new DatasetContextLookupProvider(context), stageName);
+        aggregator.prepareRun(aggregatorContext);
+        finishers.add(aggregator, aggregatorContext);
+        stagePartitions.put(stageName, aggregatorContext.getNumPartitions());
       }
-    }
-
-    Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
-    Integer numPartitions = null;
-    if (!aggregators.isEmpty()) {
-      if (aggregators.size() > 1) {
-        throw new IllegalArgumentException(String.format(
-          "There was an error during planning. Phase %s has multiple aggregators %s.",
-          phaseSpec.getPhaseName(), Joiner.on(',').join(aggregators)));
-      }
-      String aggregatorName = aggregators.iterator().next().getName();
-      BatchAggregator aggregator = pluginInstantiator.newPluginInstance(aggregatorName, evaluator);
-      AbstractAggregatorContext aggregatorContext =
-        new SparkAggregatorContext(context, new DatasetContextLookupProvider(context), aggregatorName);
-      aggregator.prepareRun(aggregatorContext);
-      finishers.add(aggregator, aggregatorContext);
-      numPartitions = aggregatorContext.getNumPartitions();
     }
 
     File configFile = File.createTempFile("ETLSpark", ".config");
@@ -155,7 +142,7 @@ public class ETLSpark extends AbstractSpark {
       sourceFactory.serialize(os);
       sinkFactory.serialize(os);
       DataOutput dataOutput = new DataOutputStream(os);
-      dataOutput.writeInt(numPartitions == null ? -1 : numPartitions);
+      dataOutput.writeUTF(GSON.toJson(stagePartitions));
     }
 
     finisher = finishers.build();

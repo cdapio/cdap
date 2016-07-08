@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.spark;
+package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -22,6 +22,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.spark.NoLookupProvider;
 
 import java.util.Map;
 
@@ -35,7 +36,7 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext implement
 
   public SparkBatchRuntimeContext(PluginContext pluginContext, Metrics metrics,
                                   long logicalStartTime, Map<String, String> runtimeArguments, String stageId) {
-    super(pluginContext, metrics, null, stageId);
+    super(pluginContext, metrics, NoLookupProvider.INSTANCE, stageId);
     this.logicalStartTime = logicalStartTime;
     this.runtimeArguments = runtimeArguments;
   }
