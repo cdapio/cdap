@@ -23,7 +23,7 @@
 </div>
 <div class="row">
   <div class="col-sm-6 preferred-tags">
-    <div ng-if="TagsController.tagList.preferred > 0"
+    <div ng-if="TagsController.tagList.preferredTags.length"
         class="table-responsive">
       <table class="table table-striped">
         <thead>
@@ -36,8 +36,8 @@
         <tbody>
           <tr ng-repeat="tag in TagsController.tagList.preferredTags">
             <td>
-              <span class="tag"
-                    ng-click="TagsController.goToTag($event, tag.name)">{{ tag.key }}</span>
+              <a class="tag"
+                    ui-sref="search.objectswithtags({tag: tag.key})">{{ tag.key }}</a>
             </td>
             <td>
               <span class="tagged-entities">{{ tag.total_entity }}</span>
@@ -55,13 +55,13 @@
         </tbody>
       </table>
     </div>
-    <div ng-if="TagsController.tagList.preferred === 0"
+    <div ng-if="!TagsController.tagList.preferredTags.length"
         class="well text-center">
       <p>No preferred tags to display.</p>
     </div>
   </div>
   <div class="col-sm-6 user-tags">
-    <div ng-if="TagsController.tagList.user > 0"
+    <div ng-if="TagsController.tagList.userTags.length"
         class="table-responsive">
       <table class="table table-striped">
         <thead>
@@ -73,8 +73,8 @@
         <tbody>
           <tr ng-repeat="tag in TagsController.tagList.userTags">
             <td>
-              <span class="tag"
-                    ng-click="TagsController.goToTag($event, tag.name)">{{ tag.key }}</span>
+              <a class="tag"
+                    ui-sref="search.objectswithtags({tag: tag.key})">{{ tag.key }}</a>
             </td>
             <td>
               <a href="" class="action-link">Promote</a>
@@ -83,7 +83,7 @@
         </tbody>
       </table>
     </div>
-    <div ng-if="TagsController.tagList.user === 0"
+    <div ng-if="!TagsController.tagList.userTags.length"
         class="well text-center">
       <p>No user tags to display.</p>
     </div>
