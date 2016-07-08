@@ -234,7 +234,8 @@ function getEs6Directives(isNegate) {
     'datetime-range',
     'log-viewer',
     'complex-schema',
-    'my-pipeline-settings'
+    'my-pipeline-settings',
+    'my-post-run-action-wizard'
   ];
 
   return es6directives.map(function (directive) {
