@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 public class RemoteRuntimeStore extends RemoteOpsClient implements RuntimeStore {
 
   @Inject
-  public RemoteRuntimeStore(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
+  RemoteRuntimeStore(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
     super(cConf, discoveryClient);
   }
 

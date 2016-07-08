@@ -60,7 +60,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     cConfCopy.setBoolean(Constants.Security.Authorization.ENABLED, false);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizerInstantiator, cConfCopy);
+        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
       authEnforcementService.startAndWait();
       try {
         Assert.assertTrue(authEnforcementService.getCache().isEmpty());
@@ -79,7 +79,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     cConfCopy.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizerInstantiator, cConfCopy);
+        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
       authEnforcementService.startAndWait();
       try {
         authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
@@ -96,7 +96,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setInt(Constants.Security.Authorization.CACHE_TTL_SECS, -1);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      new DefaultAuthorizationEnforcementService(authorizerInstantiator, cConfCopy);
+      new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
     }
   }
 
@@ -105,7 +105,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setInt(Constants.Security.Authorization.CACHE_REFRESH_INTERVAL_SECS, -1);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      new DefaultAuthorizationEnforcementService(authorizerInstantiator, cConfCopy);
+      new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
     }
   }
 
@@ -113,7 +113,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
   public void testAuthCache() throws Exception {
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizerInstantiator, CCONF);
+        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), CCONF);
       authEnforcementService.startAndWait();
       try {
         Authorizer authorizer = authorizerInstantiator.get();

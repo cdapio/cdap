@@ -34,6 +34,7 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -77,6 +78,11 @@ class RemoteOpsClient {
     this.httpRequestConfig = new HttpRequestConfig(httpClientTimeoutMs, httpClientTimeoutMs);
   }
 
+  protected HttpResponse executeRequest(String methodName, Object... arguments) {
+    return doRequest("execute/" + methodName, HttpMethod.POST, ImmutableMap.<String, String>of(),
+                     GSON.toJson(createArguments(arguments)));
+  }
+
   private String resolve(String resource) {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable == null) {
@@ -87,11 +93,6 @@ class RemoteOpsClient {
 
     return String.format("http://%s:%s%s/%s",
                          addr.getHostName(), addr.getPort(), "/v1", resource);
-  }
-
-
-  void executeRequest(String methodName, Object... arguments) {
-    doPost("execute/" + methodName, GSON.toJson(createArguments(arguments)));
   }
 
   private static List<MethodArgument> createArguments(Object... arguments) {
@@ -105,10 +106,6 @@ class RemoteOpsClient {
       }
     }
     return methodArguments;
-  }
-
-  protected HttpResponse doPost(String resource, String body) {
-    return doRequest(resource, HttpMethod.POST, null, body);
   }
 
   private HttpResponse doRequest(String resource, HttpMethod requestMethod,

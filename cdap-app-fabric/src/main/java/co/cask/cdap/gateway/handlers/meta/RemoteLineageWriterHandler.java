@@ -38,7 +38,7 @@ public class RemoteLineageWriterHandler extends AbstractRemoteSystemOpsHandler {
   private final LineageWriter lineageWriter;
 
   @Inject
-  public RemoteLineageWriterHandler(LineageWriter lineageWriter) {
+  RemoteLineageWriterHandler(LineageWriter lineageWriter) {
     this.lineageWriter = lineageWriter;
   }
 
