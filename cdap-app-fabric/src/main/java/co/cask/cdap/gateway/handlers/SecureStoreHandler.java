@@ -53,7 +53,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/key")
   @PUT
-  public void create(HttpRequest httpRequest, HttpResponder httpResponder) throws BadRequestException {
+  public void create(HttpRequest httpRequest, HttpResponder httpResponder) throws BadRequestException, IOException {
     // Check authentication
     SecureStoreCreateRequest secureStoreCreateRequest = parseBody(httpRequest, SecureStoreCreateRequest.class);
 
@@ -67,47 +67,30 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     if (name == null || data == null) {
       throw new BadRequestException("Name or data empty.");
     }
-    try {
-      secureStoreManager.put(name, data, description, secureStoreCreateRequest.getProperties());
-    } catch (IOException e) {
-      httpResponder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to store the item in the store.");
-      return;
-    }
+    secureStoreManager.put(name, data, description, secureStoreCreateRequest.getProperties());
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/keys/{key-name}")
   @DELETE
-  public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name) {
-    try {
-      secureStoreManager.delete(name);
-    } catch (IOException e) {
-      httpResponder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to delete the key.");
-      return;
-    }
+  public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name)
+    throws IOException {
+    secureStoreManager.delete(name);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/keys/{key-name}")
   @GET
-  public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name) {
+  public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name)
+    throws IOException {
     SecureStoreData secureStoreData;
-    try {
-      secureStoreData = secureStore.get(name);
-    } catch (IOException e) {
-      httpResponder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to get the key.");
-      return;
-    }
+    secureStoreData = secureStore.get(name);
     httpResponder.sendJson(HttpResponseStatus.OK, secureStoreData.get());
   }
 
   @Path("/keys")
   @GET
-  public void list(HttpRequest httpRequest, HttpResponder httpResponder) {
-    try {
-      httpResponder.sendJson(HttpResponseStatus.OK, secureStore.list());
-    } catch (IOException e) {
-      httpResponder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Unable to list the keys in the store.");
-    }
+  public void list(HttpRequest httpRequest, HttpResponder httpResponder) throws IOException {
+    httpResponder.sendJson(HttpResponseStatus.OK, secureStore.list());
   }
 }

@@ -59,7 +59,6 @@ class RouterResource extends ExternalResource {
     CConfiguration cConf = CConfiguration.create();
     Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
                                              new SecurityModules().getInMemoryModules(),
-                                             new SecureStoreModules().getInMemoryModules(),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     AccessTokenTransformer accessTokenTransformer = new MockAccessTokenTransfomer();

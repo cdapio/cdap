@@ -103,6 +103,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (matches(uriParts, "v3", "security", "authorization")) {
       // Authorization Handler currently runs in App Fabric
       return Constants.Service.APP_FABRIC_HTTP;
+    } else if (matches(uriParts, "v3", "security", "store", "namespaces", null)) {
+      return Constants.Service.APP_FABRIC_HTTP;
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
       || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
       requestMethod.equals(AllowedMethod.GET)) {

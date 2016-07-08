@@ -19,10 +19,12 @@ package co.cask.cdap.security.guice;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.security.store.FileSecureStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.OutOfScopeException;
 import com.google.inject.Provider;
@@ -67,14 +69,13 @@ public class SecureStoreModules extends RuntimeModule {
   }
 
   private class SecureStoreProvider implements Provider<SecureStore> {
-    /**
-     * Configuration
-     */
     private final CConfiguration cConf;
+    private final Injector injector;
 
     @Inject
-    private SecureStoreProvider(final CConfiguration cConf) {
+    private SecureStoreProvider(final CConfiguration cConf, Injector injector) {
       this.cConf = cConf;
+      this.injector = injector;
     }
 
     /**
@@ -82,11 +83,11 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStore get() {
-      if ("file".equalsIgnoreCase(cConf.get("Constants.Security.Store.Mode"))) {
-        return new FileSecureStore(cConf);
+      if ("file".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
+        return injector.getInstance(FileSecureStore.class);
       } else {
         // TODO: Change this to use KMS once that is implemented.
-        return new FileSecureStore(cConf);
+        return injector.getInstance(FileSecureStore.class);
       }
     }
   }
