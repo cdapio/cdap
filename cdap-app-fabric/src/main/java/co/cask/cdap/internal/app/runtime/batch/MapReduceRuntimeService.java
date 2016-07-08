@@ -101,6 +101,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +111,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
@@ -257,11 +260,26 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           classpath.add(logbackLocation.getName());
         }
 
-        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
-        classpath.add("job.jar/lib/*");
+        // Get all the jars in jobJar and sort them lexically before adding to the classpath
+        // This allows CDAP classes to be picked up first before the Twill classes
+        List<String> jarFiles = new ArrayList<>();
+        try (JarFile jobJarFile = new JarFile(jobJar)) {
+          Enumeration<JarEntry> entries = jobJarFile.entries();
+          while (entries.hasMoreElements()) {
+            JarEntry entry = entries.nextElement();
+            if (entry.getName().startsWith("lib/") && entry.getName().endsWith(".jar")) {
+              jarFiles.add("job.jar/" + entry.getName());
+            }
+          }
+        }
+        Collections.sort(jarFiles);
+        classpath.addAll(jarFiles);
         classpath.add("job.jar/classes");
-        Location launcherJar = createLauncherJar(
-          Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath)), tempLocation);
+        String applicationClasspath
+          = Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath));
+
+        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
+        Location launcherJar = createLauncherJar(applicationClasspath, tempLocation);
         job.addCacheFile(launcherJar.toURI());
 
         // The only thing in the container classpath is the launcher.jar
