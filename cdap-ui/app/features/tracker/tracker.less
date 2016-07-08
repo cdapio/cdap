@@ -72,7 +72,13 @@ body[class*='state-tracker'] {
   }
 
   .tracker-modal {
-    h3.modal-title { font-size: 16px; }
+    h3.modal-title {
+      font-size: 16px;
+
+      @media (max-width: @screen-sm-max) {
+        max-width: 100%;
+      }
+    }
     .modal-header {
       background-color: transparent;
       border-bottom: 0;
@@ -1034,14 +1040,6 @@ body.state-tracker-tags {
         td {
           span {
             font-size: 12px;
-            &.tag {
-              background-color: @tag-bg;
-              border-radius: 4px;
-              color: white;
-              padding: 5px;
-              &:hover,
-              &:focus { cursor: pointer; }
-            }
             &.tagged-entities {
               color: @tracker-grey;
               font-weight: 500;
@@ -1051,9 +1049,19 @@ body.state-tracker-tags {
               font-size: 16px;
             }
           }
-          a.action-link {
-            color: @tracker-green;
-            font-size: 13px;
+          a {
+            &.action-link {
+              color: @tracker-green;
+              font-size: 13px;
+            }
+            &.tag {
+              background-color: @tag-bg;
+              border-radius: 4px;
+              color: white;
+              font-size: 12px;
+              padding: 5px;
+              &:focus { outline: 0; }
+            }
           }
         }
       }
@@ -1088,6 +1096,17 @@ body.state-tracker-tags {
           transform: translateY(-50%);
           text-align: center;
           > span:only-child { font-size: 16px; }
+        }
+      }
+      textarea {
+        border: 0;
+        height: 100%;
+        padding-top: 3.5em;
+        text-align: center;
+        &:focus {
+          padding-top: 6px;
+          text-align: left;
+          .placeholder(@color: transparent);
         }
       }
     }

@@ -22,7 +22,7 @@ class TrackerTagsController{
     this.$uibModal = $uibModal;
 
     this.tagList = {
-      preferred: 0,
+      preferred: 5,
       preferredTags: [
         {
           'key': 'tag1',
@@ -45,7 +45,7 @@ class TrackerTagsController{
           'total_entity': 0
         }
       ],
-      user: 0,
+      user: 5,
       userTags: [
         {
           'key': 'tag1',
@@ -68,11 +68,6 @@ class TrackerTagsController{
           'total_entity': 28
         }
       ]
-    };
-
-    this.goToTag = function(event, tag) {
-      event.stopPropagation();
-      $state.go('search.objectswithtags', {tag: tag});
     };
   }
 
