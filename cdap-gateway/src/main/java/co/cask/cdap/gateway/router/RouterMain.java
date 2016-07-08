@@ -118,7 +118,6 @@ public class RouterMain extends DaemonMain {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new RouterModules().getDistributedModules(),
       new SecurityModules().getDistributedModules(),
-      new SecureStoreModules().getDistributedModules(),
       new IOModule()
     );
   }

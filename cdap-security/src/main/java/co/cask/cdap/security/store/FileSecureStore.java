@@ -89,14 +89,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
 
-    try {
-      keyStore = locateKeystore(path, password);
-    } catch (IOException ioe) {
-      // Throw a runtime exception so that it can be thrown by the injector
-      LOG.error("Unable to initialize the Secure Store.");
-      throw new RuntimeException();
-    }
-
+    keyStore = locateKeystore(path, password);
     ReadWriteLock lock = new ReentrantReadWriteLock(true);
     readLock = lock.readLock();
     writeLock = lock.writeLock();
