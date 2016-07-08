@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
@@ -68,6 +69,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -102,9 +104,17 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testPipelineWithActions() throws Exception {
+  public void testPipelineWithActionsMR() throws Exception {
+    testPipelineWithActions(Engine.MAPREDUCE);
+  }
 
-    String actionTable = "actionTable";
+  @Test
+  public void testPipelineWithActionsSpark() throws Exception {
+    testPipelineWithActions(Engine.SPARK);
+  }
+
+  private void testPipelineWithActions(Engine engine) throws Exception {
+    String actionTable = "actionTable-" + engine;
     String action1RowKey = "action1.row";
     String action1ColumnKey = "action1.column";
     String action1Value = "action1.value";
@@ -115,6 +125,10 @@ public class DataPipelineTest extends HydratorTestBase {
     String action3ColumnKey = "action3.column";
     String action3Value = "action3.value";
 
+    String sourceName = "actionSource-" + engine;
+    String sinkName = "actionSink-" + engine;
+    String sourceTableName = "actionSourceTable-" + engine;
+    String sinkTableName = "actionSinkTable-" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, action1RowKey, action1ColumnKey,
                                                              action1Value)))
@@ -122,12 +136,13 @@ public class DataPipelineTest extends HydratorTestBase {
                                                              action2Value)))
       .addStage(new ETLStage("action3", MockAction.getPlugin(actionTable, action3RowKey, action3ColumnKey,
                                                              action3Value)))
-      .addStage(new ETLStage("source", MockSource.getPlugin("myInput")))
-      .addStage(new ETLStage("sink", MockSink.getPlugin("myOutput")))
-      .addConnection("source", "sink")
+      .addStage(new ETLStage(sourceName, MockSource.getPlugin(sourceTableName)))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(sinkTableName)))
+      .addConnection(sourceName, sinkName)
       .addConnection("action1", "action2")
-      .addConnection("action2", "source")
-      .addConnection("sink", "action3")
+      .addConnection("action2", sourceName)
+      .addConnection(sinkName, "action3")
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -143,7 +158,7 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write records to source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "myInput");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceTableName);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -151,7 +166,7 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // check sink
-    DataSetManager<Table> sinkManager = getDataset("myOutput");
+    DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
@@ -161,8 +176,8 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(action2Value, MockAction.readOutput(actionTableDS, action2RowKey, action2ColumnKey));
     Assert.assertEquals(action3Value, MockAction.readOutput(actionTableDS, action3RowKey, action3ColumnKey));
 
-    validateMetric(2, appId, "source.records.out");
-    validateMetric(2, appId, "sink.records.in");
+    validateMetric(2, appId, sourceName + ".records.out");
+    validateMetric(2, appId, sinkName + ".records.in");
   }
 
   @Test
@@ -448,7 +463,7 @@ public class DataPipelineTest extends HydratorTestBase {
     /*
        source1 --|--> agg1 --> sink1
                  |
-       source1 --|--> agg2 --> sink2
+       source2 --|--> agg2 --> sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .setEngine(engine)
@@ -469,9 +484,6 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ParallelAggApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
-    // total programs = 4; 1 workflow, 1 job for source1,source2 -> agg1.connector,agg2.connector
-    // 1 job for agg1.connector -> sink1 and another job for agg2.connector -> sink2
-    Assert.assertEquals(4, appManager.getInfo().getPrograms().size());
     Schema inputSchema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
@@ -638,7 +650,7 @@ public class DataPipelineTest extends HydratorTestBase {
     textsToClassify.send("genuine report");
 
     // manually trigger the pipeline
-    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 

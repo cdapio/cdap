@@ -35,15 +35,15 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
-import co.cask.cdap.etl.batch.CompositeFinisher;
-import co.cask.cdap.etl.batch.Finisher;
 import co.cask.cdap.etl.batch.LoggedBatchConfigurable;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
+import co.cask.cdap.etl.common.CompositeFinisher;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.Finisher;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
@@ -112,7 +112,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     setDescription("MapReduce phase executor. " + phaseSpec.getDescription());
 
     setMapperResources(phaseSpec.getResources());
-    setDriverResources(phaseSpec.getResources());
+    setDriverResources(phaseSpec.getDriverResources());
 
     Set<String> sources = phaseSpec.getPhase().getSources();
     // Planner should make sure this never happens

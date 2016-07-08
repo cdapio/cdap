@@ -14,17 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package co.cask.cdap.etl.spark;
+
+import co.cask.cdap.etl.api.Lookup;
+import co.cask.cdap.etl.api.LookupProvider;
+
+import java.util.Map;
 
 /**
- * Runs some logic on program finish.
+ * A LookupProvider that doesn't work because lookups don't work in Spark.
  */
-public interface Finisher {
+public class NoLookupProvider implements LookupProvider {
+  public static final LookupProvider INSTANCE = new NoLookupProvider();
 
-  /**
-   * Run logic on program finish.
-   *
-   * @param succeeded whether the program run succeeded or not
-   */
-  void onFinish(boolean succeeded);
+  @Override
+  public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
+    throw new UnsupportedOperationException("Lookup is not supported in Spark pipelines.");
+  }
 }

@@ -24,13 +24,13 @@ import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
-import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Joiner;
@@ -96,6 +96,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
       case MAPREDUCE:
         BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(ETLMapReduce.NAME, pipeline,
                                                            config.getResources(),
+                                                           config.getDriverResources(),
                                                            config.isStageLoggingEnabled(),
                                                            new HashMap<String, String>());
         addMapReduce(new ETLMapReduce(batchPhaseSpec));
@@ -103,6 +104,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
       case SPARK:
         batchPhaseSpec = new BatchPhaseSpec(ETLSpark.class.getSimpleName(), pipeline,
                                             config.getResources(),
+                                            config.getDriverResources(),
                                             config.isStageLoggingEnabled(),
                                             new HashMap<String, String>());
         addSpark(new ETLSpark(batchPhaseSpec));
