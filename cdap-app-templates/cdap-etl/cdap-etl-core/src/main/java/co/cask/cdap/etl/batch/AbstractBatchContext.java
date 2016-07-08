@@ -75,7 +75,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
     throws DatasetManagementException {
     datasetAdmin.createDataset(datasetName, typeName, properties);
   }
-  
+
   public boolean datasetExists(String datasetName) throws DatasetManagementException {
     return datasetAdmin.datasetExists(datasetName);
   }
