@@ -34,7 +34,8 @@ public interface BatchContext extends DatasetContext, TransformContext {
   /**
    * See {@link co.cask.cdap.api.Admin} for details.
    */
-  void createDataset(String datasetName, String typeName, DatasetProperties properties) throws DatasetManagementException;
+  void createDataset(String datasetName, String typeName, DatasetProperties properties)
+    throws DatasetManagementException;
 
   /**
    * See {@link co.cask.cdap.api.Admin} for details.
