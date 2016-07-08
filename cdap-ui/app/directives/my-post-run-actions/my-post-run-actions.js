@@ -19,7 +19,8 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
-        actions: '='
+        actions: '=',
+        store: '='
       },
       templateUrl: 'my-post-run-actions/my-post-run-actions.html',
       bindToController: true,

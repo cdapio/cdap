@@ -14,7 +14,8 @@
   the License.
 -->
 <div ng-if="!MyPostRunActionsCtrl.actions">
-  <div class="well well-sm text-center" ng-click="myPostRunActionWizardService.show()">
+  <div class="well well-sm text-center"
+       ng-click="myPostRunActionWizardService.show(false, MyPostRunActionsCtrl.actions, MyPostRunActionsCtrl.store)">
     <h1>+</h1>
   </div>
 </div>

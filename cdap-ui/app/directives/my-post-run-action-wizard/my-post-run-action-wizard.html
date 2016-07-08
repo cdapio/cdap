@@ -39,10 +39,10 @@
     </span>
     <span class="nav-title">Confirm</span>
   </div>
-  <div class="line"></div>
 </div>
-
-<wizard-select-action-step ng-if="MyPostRunActionWizardCtrl.currentStage === 1">
+<wizard-select-action-step
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 1"
+  store="MyPostRunActionWizardCtrl.store">
   <div class="clearfix">
     <div class="btn btn-primary pull-right"
          ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">

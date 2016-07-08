@@ -15,6 +15,15 @@
 -->
 
 <div>
-  <h1>Select Action Step</h1>
+  <div class="actions-list-section">
+    <div ng-repeat="action in WizardSelectActionStepCtrl.postActionsList track by $index"
+         class="btn btn-default"
+         my-popover
+         data-placement="right"
+         data-template="action.template"
+         content-data="action">
+      {{::action.label}}
+    </div>
+  </div>
   <ng-transclude></ng-transclude>
 </div>
