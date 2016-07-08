@@ -53,11 +53,16 @@ my-batch-pipeline-settings {
           margin-left: 5px;
           color: inherit;
         }
-        .cron-select {
-          transition: none;
+        .cron-select-wrap {
+          display: flex;
           flex-grow: 1;
-          color: inherit;
-          width: auto;
+          margin-left: 10px;
+          .cron-select {
+            transition: none;
+            flex-grow: 1;
+            color: inherit;
+            width: auto;
+          }
         }
         .select-options {
           margin-left: 5px;

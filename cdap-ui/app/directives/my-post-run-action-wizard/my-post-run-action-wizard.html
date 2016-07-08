@@ -42,18 +42,35 @@
   <div class="line"></div>
 </div>
 
-<wizard-select-action-step
-  ng-if="MyPostRunActionWizardCtrl.currentStage === 1">
-  <div class="btn btn-primary" ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">Add</div>
+<wizard-select-action-step ng-if="MyPostRunActionWizardCtrl.currentStage === 1">
+  <div class="clearfix">
+    <div class="btn btn-primary pull-right"
+         ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">
+        Add
+    </div>
+  </div>
 </wizard-select-action-step>
-<wizard-configure-confirm-step
-  ng-if="MyPostRunActionWizardCtrl.currentStage === 2">
-  <div class="btn btn-default" ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">Back</div>
-  <div class="btn btn-primary" ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">Add</div>
+<wizard-configure-confirm-step class="clearfix" ng-if="MyPostRunActionWizardCtrl.currentStage === 2">
+  <div class="pull-right">
+    <div class="btn btn-default"
+         ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">
+        Back
+    </div>
+    <div class="btn btn-primary"
+         ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">
+        Add
+    </div>
+  </div>
 </wizard-configure-confirm-step>
 <wizard-configure-confirm-step
   is-disabled="true"
+  class="clearfix"
   ng-if="MyPostRunActionWizardCtrl.currentStage === 3">
-  <div class="btn btn-default" ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">Back</div>
-  <div class="btn btn-primary">Confirm</div>
+    <div class="pull-right">
+      <div class="btn btn-default"
+           ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">
+          Back
+      </div>
+      <div class="btn btn-primary">Confirm</div>
+    </div>
 </wizard-configure-confirm-step>
