@@ -14,7 +14,53 @@
  * the License.
  */
 
+class WizardSelectActionStepCtrl {
+  constructor($state, myPipelineApi, myHelpers, GLOBALS) {
+    let artifact = this.store.getArtifact();
+    this.postActionsList = [];
+
+    let params = {
+      namespace: $state.params.namespace,
+      pipelineType: artifact.name,
+      version: artifact.version,
+      extensionType: 'postaction'
+    };
+    myPipelineApi.fetchPlugins(params)
+      .$promise
+      .then(
+        (res) => {
+          let filteredPlugins = this.filterPlugins(res);
+
+          this.postActionsList = Object.keys(filteredPlugins).map( postaction => {
+            // Coverting the name to lowercase before lookup as we can maintain a case insensitive map in case backend wants to change from camelcase or to any other case.
+            return Object.assign({}, filteredPlugins[postaction], {
+              template: '/assets/features/hydratorplusplus/templates/create/popovers/leftpanel-plugin-popover.html',
+              label: myHelpers.objectQuery(
+                GLOBALS.pluginTypes, 'post-run-actions', filteredPlugins[postaction].name.toLowerCase()
+              ) || filteredPlugins[postaction].name
+            });
+          });
+        },
+        (err) => {
+          console.log('ERROR: ', err);
+        }
+      );
+  }
+  filterPlugins(results) {
+    let pluginsMap = {};
+    angular.forEach(results, (plugin) => {
+      if (!pluginsMap[plugin.name]) {
+        pluginsMap[plugin.name] = Object.assign({}, plugin, {
+          defaultArtifact: [plugin.artifact],
+          allArtifacts: []
+        });
+      }
+      pluginsMap[plugin.name].allArtifacts.push(plugin);
+    });
+    return pluginsMap;
+  }
+}
+
+WizardSelectActionStepCtrl.$inject = ['$state', 'myPipelineApi', 'myHelpers', 'GLOBALS'];
 angular.module(PKG.name + '.commons')
-  .controller('WizardSelectActionStepCtrl', function() {
-    
-  });
+  .controller('WizardSelectActionStepCtrl', WizardSelectActionStepCtrl);

@@ -13,17 +13,29 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-angular.module(PKG.name + '.commons')
-  .directive('wizardSelectActionStep', function() {
-    return {
-      restrict: 'E',
-      scope: {
-        store: '='
-      },
-      transclude: true,
-      templateUrl: 'my-post-run-action-wizard/wizard-select-action-step/wizard-select-action-step.html',
-      controller: 'WizardSelectActionStepCtrl',
-      controllerAs: 'WizardSelectActionStepCtrl',
-      bindToController: true
-    };
-  });
+
+wizard-select-action-step {
+  .actions-list-section {
+    display: flex;
+    justify-content: space-between;
+    flex-flow: wrap;
+    margin: 10px 0;
+    .btn.btn-default {
+      flex-grow: 1;
+      box-shadow: 1px 1px 8px #b1b1b1;
+      margin: 10px;
+    }
+  }
+}
+
+body.theme-cdap {
+  &.state-hydratorplusplus-create {
+    .my-cdap-popover {
+      .list-group-item {
+        .template-label {
+          display: none;
+        }
+      }
+    }
+  }
+}
