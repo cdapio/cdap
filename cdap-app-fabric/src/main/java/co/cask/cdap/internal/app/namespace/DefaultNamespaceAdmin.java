@@ -64,7 +64,7 @@ import java.util.regex.Pattern;
 /**
  * Admin for managing namespaces.
  */
-public final class DefaultNamespaceAdmin extends DefaultNamespaceDefinitionAdmin implements NamespaceAdmin {
+public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin implements NamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
 
   private final Store store;

@@ -27,7 +27,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 /**
  * Admin class for managing a namespace's lifecycle
  */
-public interface NamespaceAdmin extends NamespaceDefinitionAdmin {
+public interface NamespaceAdmin extends NamespaceQueryAdmin {
 
   /**
    * Creates a new namespace.

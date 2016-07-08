@@ -36,7 +36,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -123,7 +123,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   private final ZKClientService zkClientService;
   private final HBaseQueueClientFactory queueClientFactory;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final NamespaceDefinitionAdmin namespaceDefinitionAdmin;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Store store;
 
   @Inject
@@ -131,14 +131,14 @@ public class HBaseQueueDebugger extends AbstractIdleService {
                             HBaseQueueClientFactory queueClientFactory,
                             ZKClientService zkClientService,
                             TransactionExecutorFactory txExecutorFactory,
-                            NamespaceDefinitionAdmin namespaceDefinitionAdmin,
+                            NamespaceQueryAdmin namespaceQueryAdmin,
                             Store store) {
     this.tableUtil = tableUtil;
     this.queueAdmin = queueAdmin;
     this.queueClientFactory = queueClientFactory;
     this.zkClientService = zkClientService;
     this.txExecutorFactory = txExecutorFactory;
-    this.namespaceDefinitionAdmin = namespaceDefinitionAdmin;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
   }
 
@@ -155,7 +155,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   public void scanAllQueues() throws Exception {
     QueueStatistics totalStats = new QueueStatistics();
 
-    List<NamespaceMeta> namespaceMetas = namespaceDefinitionAdmin.list();
+    List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       Id.Namespace namespaceId = Id.Namespace.from(namespaceMeta.getName());
 

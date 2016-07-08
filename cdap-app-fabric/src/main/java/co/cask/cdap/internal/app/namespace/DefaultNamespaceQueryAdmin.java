@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.store.NamespaceStore;
@@ -27,14 +27,14 @@ import com.google.inject.Inject;
 import java.util.List;
 
 /**
- * Default implementation of {@link NamespaceDefinitionAdmin} to query namespace details.
+ * Default implementation of {@link NamespaceQueryAdmin} to query namespace details.
  */
-public class DefaultNamespaceDefinitionAdmin implements NamespaceDefinitionAdmin {
+public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
 
   protected final NamespaceStore nsStore;
 
   @Inject
-  public DefaultNamespaceDefinitionAdmin(NamespaceStore nsStore) {
+  public DefaultNamespaceQueryAdmin(NamespaceStore nsStore) {
     this.nsStore = nsStore;
   }
 

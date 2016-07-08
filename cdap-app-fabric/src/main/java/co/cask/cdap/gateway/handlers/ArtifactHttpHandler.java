@@ -31,7 +31,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.PluginClassDeserializer;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.cdap.common.namespace.NamespaceDefinitionAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -120,14 +120,14 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Type PLUGINS_TYPE = new TypeToken<Set<PluginClass>>() { }.getType();
 
   private final ArtifactRepository artifactRepository;
-  private final NamespaceDefinitionAdmin namespaceDefinitionAdmin;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final File tmpDir;
   private final PluginService pluginService;
 
   @Inject
   ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository,
-                      NamespaceDefinitionAdmin namespaceDefinitionAdmin, PluginService pluginService) {
-    this.namespaceDefinitionAdmin = namespaceDefinitionAdmin;
+                      NamespaceQueryAdmin namespaceQueryAdmin, PluginService pluginService) {
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -721,7 +721,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     throws NamespaceNotFoundException {
 
     try {
-      namespaceDefinitionAdmin.get(namespace.toId());
+      namespaceQueryAdmin.get(namespace.toId());
     } catch (NamespaceNotFoundException e) {
       throw e;
     } catch (Exception e) {
