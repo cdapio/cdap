@@ -21,6 +21,7 @@ import co.cask.cdap.common.namespace.DiscoveryNamespaceClient;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.LocalNamespaceClient;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -36,6 +37,7 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(NamespaceAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+        bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -46,6 +48,7 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(NamespaceAdmin.class).to(LocalNamespaceClient.class);
+        bind(NamespaceQueryAdmin.class).to(LocalNamespaceClient.class);
       }
     };
   }
@@ -56,6 +59,7 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(NamespaceAdmin.class).to(DiscoveryNamespaceClient.class);
+        bind(NamespaceQueryAdmin.class).to(DiscoveryNamespaceClient.class);
       }
     };
   }

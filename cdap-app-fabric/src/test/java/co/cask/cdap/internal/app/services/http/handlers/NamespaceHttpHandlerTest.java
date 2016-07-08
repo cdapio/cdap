@@ -23,7 +23,7 @@ import co.cask.cdap.AppWithStreamSizeSchedule;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -328,7 +328,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testNamespaceClient() throws Exception {
     // tests the NamespaceClient's ability to interact with Namespace service/handlers.
-    AbstractNamespaceClient namespaceClient = getInjector().getInstance(AbstractNamespaceClient.class);
+    NamespaceAdmin namespaceClient = getInjector().getInstance(NamespaceAdmin.class);
     // test setup creates two namespaces in @BeforeClass, apart from the default namespace which always exists.
     List<NamespaceMeta> namespaces = namespaceClient.list();
     Assert.assertEquals(3, namespaces.size());
