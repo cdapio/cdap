@@ -20,4 +20,5 @@ angular.module(PKG.name + '.commons')
     if (this.isEdit) {
       this.hideStep1 = true;
     }
+    this.currentStage = 1;
   });

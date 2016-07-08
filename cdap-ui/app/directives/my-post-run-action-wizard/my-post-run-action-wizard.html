@@ -13,6 +13,47 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
+<div class="wizard-nav">
+  <div class="capsule"
+       ng-class="{'current': MyPostRunActionWizardCtrl.currentStage === 1, 'complete': MyPostRunActionWizardCtrl.currentStage > 1}">
+    <span class="badge">
+      <span ng-if="MyPostRunActionWizardCtrl.currentStage === 1">1</span>
+      <span class="fa fa-check" ng-if="MyPostRunActionWizardCtrl.currentStage > 1"></span>
+    </span>
+    <span class="nav-title">Select Actions</span>
+  </div>
+  <div class="line" ng-class="{'complete': MyPostRunActionWizardCtrl.currentStage > 1}"></div>
+  <div class="capsule"
+       ng-class="{'current': MyPostRunActionWizardCtrl.currentStage === 2, 'complete': MyPostRunActionWizardCtrl.currentStage > 2}">
+    <span class="badge" >
+      <span ng-if="MyPostRunActionWizardCtrl.currentStage <= 2">2</span>
+      <span class="fa fa-check" ng-if="MyPostRunActionWizardCtrl.currentStage > 2"></span>
+    </span>
+    <span class="nav-title">Configure</span>
+  </div>
+  <div class="line" ng-class="{'complete': MyPostRunActionWizardCtrl.currentStage > 2}"></div>
+  <div class="capsule"
+       ng-class="{'current': MyPostRunActionWizardCtrl.currentStage === 3}">
+    <span class="badge">
+      <span ng-if="MyPostRunActionWizardCtrl.currentStage <= 3">3</span>
+    </span>
+    <span class="nav-title">Confirm</span>
+  </div>
+  <div class="line"></div>
+</div>
 
-<wizard-select-action-step></wizard-select-action-step>
-<wizard-configure-confirm-step></wizard-configure-confirm-step>
+<wizard-select-action-step
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 1">
+  <div class="btn btn-primary" ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">Add</div>
+</wizard-select-action-step>
+<wizard-configure-confirm-step
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 2">
+  <div class="btn btn-default" ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">Back</div>
+  <div class="btn btn-primary" ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">Add</div>
+</wizard-configure-confirm-step>
+<wizard-configure-confirm-step
+  is-disabled="true"
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 3">
+  <div class="btn btn-default" ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">Back</div>
+  <div class="btn btn-primary">Confirm</div>
+</wizard-configure-confirm-step>
