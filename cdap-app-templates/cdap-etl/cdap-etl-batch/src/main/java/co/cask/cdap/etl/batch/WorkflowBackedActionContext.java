@@ -37,7 +37,8 @@ public class WorkflowBackedActionContext extends AbstractBatchContext implements
                                      String stageName,
                                      long logicalStartTime,
                                      Map<String, String> runtimeArgs) {
-    super(workflowContext, workflowContext, metrics, lookup, stageName, logicalStartTime, runtimeArgs);
+    super(workflowContext, workflowContext, metrics, lookup, stageName, logicalStartTime, runtimeArgs,
+          workflowContext.getAdmin());
     this.workflowContext = workflowContext;
   }
 
