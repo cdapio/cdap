@@ -14,14 +14,58 @@
  * the License.
  */
 
-function LogViewerController ($scope) {
+function LogViewerController ($scope, LogViewerStore) {
   'ngInject';
+
+  LogViewerStore.subscribe(() => {
+    this.logStartTime = LogViewerStore.getState().startTime;
+  });
 
   this.configOptions = {
     time: true,
     level: true,
     source: true,
     message: true
+  };
+
+  this.hiddenColumns = {
+    time: false,
+    level: false,
+    source: false,
+    message: false
+  };
+
+  var theColumns = [];
+  var cols = this.configOptions;
+
+  if(cols['source']){
+    theColumns.push('source');
+  }
+  if(cols['level']){
+    theColumns.push('level');
+  }
+  if(cols['time']){
+    theColumns.push('time');
+  }
+
+  var collapseCount = 0;
+  this.collapseColumns = () => {
+    if(this.isMessageExpanded){
+      this.isMessageExpanded = !this.isMessageExpanded;
+    }
+    if(collapseCount < theColumns.length){
+      this.hiddenColumns[theColumns[collapseCount++]] = true;
+      if(collapseCount === theColumns.length){
+        this.isMessageExpanded = true;
+      }
+    } else {
+      collapseCount = 0;
+      for(var key in this.hiddenColumns){
+        if(this.hiddenColumns.hasOwnProperty(key)){
+          this.hiddenColumns[key] = false;
+        }
+      }
+    }
   };
 
   angular.forEach($scope.displayOptions, (value, key) => {
@@ -40,7 +84,7 @@ function LogViewerController ($scope) {
 
   this.data = [
     {
-      time: '2016-03-04 16:28:40, 798',
+      time: '2016-03-04 16:28:40',
       level: 'INFO',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -49,7 +93,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 801',
+      time: '2016-03-04 16:28:43',
       level: 'ERROR',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -57,7 +101,23 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 900',
+      time: '2016-03-04 16:28:45',
+      level: 'ERROR',
+      source: 'leader-election-election-metrics-processor-part-0',
+      message: {
+        content: 'Some Other log data that is irrelevant for this demo.'
+      }
+    },
+    {
+      time: '2016-03-04 16:28:45',
+      level: 'ERROR',
+      source: 'leader-election-election-metrics-processor-part-0',
+      message: {
+        content: 'Some Other log data that is irrelevant for this demo.'
+      }
+    },
+    {
+      time: '2016-03-04 16:28:45',
       level: 'WARN',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -66,7 +126,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:40, 798',
+      time: '2016-03-04 16:28:47',
       level: 'DEBUG',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -75,7 +135,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 801',
+      time: '2016-03-04 16:28:51',
       level: 'TRACE',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -83,7 +143,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 900',
+      time: '2016-03-04 16:28:57',
       level: 'INFO',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -92,7 +152,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 801',
+      time: '2016-03-04 16:29:00',
       level: 'ERROR',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -100,7 +160,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 900',
+      time: '2016-03-04 16:29:15',
       level: 'WARN',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -109,7 +169,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:40, 798',
+      time: '2016-03-04 16:29:35',
       level: 'DEBUG',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -118,7 +178,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 801',
+      time: '2016-03-04 16:29:46',
       level: 'TRACE',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -126,7 +186,7 @@ function LogViewerController ($scope) {
       }
     },
     {
-      time: '2016-03-04 16:28:43, 900',
+      time: '2016-03-04 16:29:55',
       level: 'INFO',
       source: 'leader-election-election-metrics-processor-part-0',
       message: {
@@ -135,6 +195,12 @@ function LogViewerController ($scope) {
       }
     },
   ];
+
+  angular.forEach(this.data, (element, index) => {
+    let formattedDate = new Date(this.data[index].time);
+    this.data[index].time = formattedDate;
+    this.data[index].displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+  });
 
   this.totalCount = this.data.length;
   let errorCount = 0;
@@ -153,6 +219,14 @@ function LogViewerController ($scope) {
 
   this.errorCount = errorCount;
   this.warningCount = warningCount;
+  this.toggleExpandAll = false;
+
+  this.toggleLogExpansion = function() {
+    this.toggleExpandAll = !this.toggleExpandAll;
+    angular.forEach(this.data, (data) => {
+      data.isStackTraceExpanded = this.toggleExpandAll;
+    });
+  };
 
   //New 'includeEvent' function
   this.includeEvent = function(eventType){
@@ -169,6 +243,13 @@ function LogViewerController ($scope) {
       return log;
     }
     return;
+  };
+
+  this.filterByStartDate = (log) => {
+    if(this.logStartTime > log.time) {
+      return;
+    }
+    return log;
   };
 }
 
