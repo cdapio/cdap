@@ -43,12 +43,13 @@
 </div>
 
 <wizard-select-action-step
-  ng-if="MyPostRunActionWizardCtrl.currentStage === 1"
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 1 && !MyPostRunActionWizardCtrl.isEdit"
   store="MyPostRunActionWizardCtrl.store"
   on-action-select="MyPostRunActionWizardCtrl.onActionSelect">
 </wizard-select-action-step>
 <wizard-configure-confirm-step
   class="clearfix"
+  is-edit="MyPostRunActionWizardCtrl.isEdit"
   action="MyPostRunActionWizardCtrl.selectedAction"
   ng-if="MyPostRunActionWizardCtrl.currentStage === 2"
   on-action-configure="MyPostRunActionWizardCtrl.onActionConfigure"

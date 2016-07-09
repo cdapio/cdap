@@ -15,8 +15,11 @@
 -->
 <div class="modal-header clearfix">
 
-  <h4 class="modal-title pull-left">
+  <h4 class="modal-title pull-left" ng-if="!action.plugin.name">
     Post Run Actions
+  </h4>
+  <h4 ng-if="action.plugin.name" class="modal-title pull-left">
+    <span>{{action.plugin.name}}</span>
   </h4>
   <div class="btn-group pull-right">
     <a class="btn" ng-click="$close()">
@@ -27,9 +30,10 @@
 </div>
 <div class="modal-body config-modal">
   <my-post-run-action-wizard
-    isEdit="isEdit"
+    is-edit="isEdit"
+    is-disabled="isDisabled"
     action-creator="actionCreator"
     store="store"
-  ></my-post-run-action-wizard>
+    action="action"></my-post-run-action-wizard>
   <br>
 </div>
