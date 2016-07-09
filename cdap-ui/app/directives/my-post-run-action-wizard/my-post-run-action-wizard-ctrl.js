@@ -18,10 +18,15 @@ angular.module(PKG.name + '.commons')
   .controller('MyPostRunActionWizardCtrl', function($scope, uuid) {
     'ngInject';
     var vm = this;
+    vm.action = vm.action || {};
     if (vm.isEdit) {
-      vm.hideStep1 = true;
+      vm.currentStage = 2;
+      vm.selectedAction = Object.assign({}, vm.action.plugin, {
+        defaultArtifact: vm.action.plugin.artifact
+      });
+    } else {
+      vm.currentStage = 1;
     }
-    vm.currentStage = 1;
     vm.goToPreviousStep = function() {
       vm.currentStage -=1;
     };
@@ -35,15 +40,19 @@ angular.module(PKG.name + '.commons')
     };
     vm.onActionConfirm = function(action) {
       vm.confirmedAction = {
-        name: action.name + uuid.v4(),
+        name: vm.action.name || action.name + uuid.v4(),
         plugin: {
           name: action.name,
           type: action.type,
           artifact: action.defaultArtifact,
-          properties: action.plugin.properties
+          properties: action.properties
         }
       };
-      vm.actionCreator.addPostAction(vm.confirmedAction);
+      if (vm.isEdit) {
+        vm.actionCreator.editPostAction(vm.confirmedAction);
+      } else {
+        vm.actionCreator.addPostAction(vm.confirmedAction);
+      }
       $scope.$parent.$close();
     };
   });

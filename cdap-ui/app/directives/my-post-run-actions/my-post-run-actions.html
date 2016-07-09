@@ -15,7 +15,7 @@
 -->
 <div ng-if="!MyPostRunActionsCtrl.actions.length">
   <div class="well well-sm text-center"
-       ng-click="myPostRunActionWizardService.show(false, MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store)">
+       ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, false)">
     <h1>+</h1>
   </div>
 </div>
@@ -32,8 +32,16 @@
     <tr ng-repeat="action in MyPostRunActionsCtrl.actions">
       <td>{{action.plugin.name}}</td>
       <td>{{action.plugin.properties.runCondition}}</td>
-      <td><a herf="">Edit</a></td>
+      <td><a herf="" ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, true, action)">Edit</a></td>
       <td><a herf=""><span class="fa fa-trash text-danger"></span></a></td>
+    </tr>
+    <tr>
+      <td colspan="4">
+        <div class="well well-sm text-center"
+             ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store)">
+          <h1>+</h1>
+        </div>
+      </td>
     </tr>
   </tbody>
 </table>

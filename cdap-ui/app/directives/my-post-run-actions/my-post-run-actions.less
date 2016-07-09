@@ -17,8 +17,14 @@
 my-post-run-actions {
   .well.well-sm {
     cursor: pointer;
-    background: transparent;
-    border: 2px dashed gray;
+    margin-bottom: 0;
+    padding: 0;
+    border: 0;
+    background: #ebebeb;
+    border-radius: 0;
+    h1 {
+      padding-bottom: 7px;
+    }
   }
   > .table {
     &.table-bordered {
@@ -27,6 +33,9 @@ my-post-run-actions {
       td {
         font-size: 14px;
         padding: 5px;
+        &[colspan] {
+          padding: 0;
+        }
       }
     }
   }

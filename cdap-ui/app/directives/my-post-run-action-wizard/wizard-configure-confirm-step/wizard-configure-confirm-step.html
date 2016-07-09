@@ -28,7 +28,7 @@
                     tooltip-append-to-body="true">
               </span>
               <span class="fa fa-asterisk" ng-if="WizardConfigureConfirmStepCtrl.action._backendProperties[field.name].required"></span>
-              <small class="text-danger" ng-if="WizardConfigureConfirmStepCtrl.errorInConfig && WizardConfigureConfirmStepCtrl.action._backendProperties[field.name].required && !WizardConfigureConfirmStepCtrl.action.plugin.properties[field.name]">
+              <small class="text-danger" ng-if="WizardConfigureConfirmStepCtrl.errorInConfig && WizardConfigureConfirmStepCtrl.action._backendProperties[field.name].required && !WizardConfigureConfirmStepCtrl.action.properties[field.name]">
                 {{::WizardConfigureConfirmStepCtrl.requiredPropertyError}}
               </small>
             </label>
@@ -37,9 +37,9 @@
               <div data-name="field"
                    class="my-widget-container"
                    ng-class="{'select-wrapper': field.widget === 'select'}"
-                   data-model="WizardConfigureConfirmStepCtrl.action.plugin.properties[field.name]"
+                   data-model="WizardConfigureConfirmStepCtrl.action.properties[field.name]"
                    data-myconfig="field"
-                   data-properties="WizardConfigureConfirmStepCtrl.action.plugin.properties"
+                   data-properties="WizardConfigureConfirmStepCtrl.action.properties"
                    widget-container>
               </div>
             </div>
@@ -51,13 +51,14 @@
 </fieldset>
 <div class="pull-right">
   <div class="btn btn-default"
+       ng-if="!WizardConfigureConfirmStepCtrl.isEdit"
        ng-click="WizardConfigureConfirmStepCtrl.gotoPreviousStep()">
     Back
   </div>
   <div class="btn btn-primary"
        ng-if="!WizardConfigureConfirmStepCtrl.isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.addAction()">
-      Add
+      Save
   </div>
   <div class="btn btn-primary"
        ng-if="WizardConfigureConfirmStepCtrl.isDisabled"

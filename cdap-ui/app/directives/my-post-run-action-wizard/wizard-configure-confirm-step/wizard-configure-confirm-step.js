@@ -21,6 +21,7 @@ angular.module(PKG.name + '.commons')
       scope: {
         action: '=',
         isDisabled: '=',
+        isEdit: '=',
         onActionConfigure: '&',
         onGotoPreviousStep: '&'
       },
