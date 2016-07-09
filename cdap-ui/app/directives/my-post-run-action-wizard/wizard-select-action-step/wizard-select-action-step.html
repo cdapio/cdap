@@ -21,7 +21,8 @@
          my-popover
          data-placement="right"
          data-template="action.template"
-         content-data="action">
+         content-data="action"
+         ng-click="WizardSelectActionStepCtrl.chooseAction(action)">
       {{::action.label}}
     </div>
   </div>

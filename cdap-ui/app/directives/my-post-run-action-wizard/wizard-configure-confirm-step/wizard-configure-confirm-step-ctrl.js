@@ -14,7 +14,66 @@
  * the License.
  */
 
+class WizardConfigureConfirmStepCtrl {
+  constructor($state, myPipelineApi, HydratorPlusPlusPluginConfigFactory) {
+    this.$state = $state;
+    this.myPipelineApi = myPipelineApi;
+    this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
+    this.showLoadingIcon = true;
+    this.action.properties = this.action.properties || {};
+    this.pluginFetch(this.action)
+      .then( () => this.showLoadingIcon = false);
+  }
+  // Fetching Backend Properties
+  pluginFetch(action) {
+    this.errorInConfig = false;
+    let params = {
+      namespace: this.$state.params.namespace,
+      pipelineType: action.artifact.name,
+      version: action.artifact.version,
+      scope: action.artifact.scope,
+      extensionType: action.type,
+      pluginName: action.name
+    };
+
+    return this.myPipelineApi.fetchPostActionProperties(params)
+      .$promise
+      .then( (res) => {
+        this.action._backendProperties = res[0].properties;
+        this.fetchWidgets(action);
+      });
+  }
+
+  // Fetching Widget JSON for the plugin
+  fetchWidgets(action) {
+    let artifact = {
+      name: action.artifact.name,
+      version: action.artifact.version,
+      scope: action.artifact.scope,
+      key: 'widgets.' + action.name + '-' + action.type
+    };
+    return this.HydratorPlusPlusPluginConfigFactory
+      .fetchWidgetJson(artifact.name, artifact.version, artifact.scope, artifact.key)
+      .then( (widgetJson) => {
+        this.noConfig = false;
+
+        this.groupsConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(this.action._backendProperties, widgetJson);
+
+        // Initializing default value
+        angular.forEach(this.groupsConfig.groups, (group) => {
+          angular.forEach(group.fields, (field) => {
+            if (field.defaultValue) {
+              this.action.properties[field.name] = this.action.properties[field.name] || field.defaultValue;
+            }
+          });
+        });
+      }, () => {
+        this.noConfig = true;
+      });
+  }
+}
+
+WizardConfigureConfirmStepCtrl.$inject = ['$state', 'myPipelineApi', 'HydratorPlusPlusPluginConfigFactory'];
+
 angular.module(PKG.name + '.commons')
-  .controller('WizardConfigureConfirmStepCtrl', function() {
-    
-  });
+  .controller('WizardConfigureConfirmStepCtrl', WizardConfigureConfirmStepCtrl);
