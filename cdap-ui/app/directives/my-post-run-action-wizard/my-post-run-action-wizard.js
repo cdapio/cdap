@@ -19,7 +19,7 @@ angular.module(PKG.name + '.commons')
     return {
       scope: {
         isEdit: '=?',
-        action: '=?',
+        actionCreator: '=?',
         store: '='
       },
       templateUrl: 'my-post-run-action-wizard/my-post-run-action-wizard.html',
@@ -29,20 +29,20 @@ angular.module(PKG.name + '.commons')
     };
   })
   .service('myPostRunActionWizardService', function($uibModal) {
-    this.show = (isEdit, action, store) => {
+    this.show = (isEdit, actionCreator, store) => {
       $uibModal.open({
         templateUrl: 'my-post-run-action-wizard/my-post-run-action-wizard-modal.html',
         backdrop: true,
         keyboard: true,
         resolve: {
-          rAction: () => action || {},
+          rActionCreator: () => actionCreator || {},
           rIsEdit: () => isEdit || false,
           rStore: () => store
         },
         size: 'lg',
         windowClass: 'post-run-actions-modal cdap-modal',
-        controller: ['$scope', 'rAction', 'rIsEdit', 'rStore', function($scope, rAction, rIsEdit, rStore) {
-          $scope.action = rAction;
+        controller: ['$scope', 'rActionCreator', 'rIsEdit', 'rStore', function($scope, rActionCreator, rIsEdit, rStore) {
+          $scope.actionCreator = rActionCreator;
           $scope.isEdit = rIsEdit;
           $scope.store = rStore;
         }]

@@ -58,7 +58,7 @@ class WizardSelectActionStepCtrl {
     angular.forEach(results, (plugin) => {
       if (!pluginsMap[plugin.name]) {
         pluginsMap[plugin.name] = Object.assign({}, plugin, {
-          defaultArtifact: [plugin.artifact],
+          defaultArtifact: plugin.artifact,
           allArtifacts: []
         });
       }

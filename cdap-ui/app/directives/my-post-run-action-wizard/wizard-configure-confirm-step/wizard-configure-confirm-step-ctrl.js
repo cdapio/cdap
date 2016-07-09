@@ -26,12 +26,13 @@ class WizardConfigureConfirmStepCtrl {
   }
   // Fetching Backend Properties
   pluginFetch(action) {
+    let {name, version, scope} = action.defaultArtifact;
     this.errorInConfig = false;
     let params = {
       namespace: this.$state.params.namespace,
-      pipelineType: action.artifact.name,
-      version: action.artifact.version,
-      scope: action.artifact.scope,
+      pipelineType: name,
+      version: version,
+      scope: scope,
       extensionType: action.type,
       pluginName: action.name
     };
@@ -46,10 +47,11 @@ class WizardConfigureConfirmStepCtrl {
 
   // Fetching Widget JSON for the plugin
   fetchWidgets(action) {
+    let {name, version, scope} = action.defaultArtifact;
     let artifact = {
-      name: action.artifact.name,
-      version: action.artifact.version,
-      scope: action.artifact.scope,
+      name,
+      version,
+      scope,
       key: 'widgets.' + action.name + '-' + action.type
     };
     return this.HydratorPlusPlusPluginConfigFactory
@@ -70,6 +72,25 @@ class WizardConfigureConfirmStepCtrl {
       }, () => {
         this.noConfig = true;
       });
+  }
+
+  addAction() {
+    var fn = this.onActionConfigure();
+    if ('undefined' !== typeof fn) {
+      fn.call(null, this.action);
+    }
+  }
+  gotoPreviousStep() {
+    var fn = this.onGotoPreviousStep();
+    if ('undefined' !== typeof fn) {
+      fn.call(null);
+    }
+  }
+  onItemClicked(event, action) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.action = action;
+    this.addAction();
   }
 }
 
