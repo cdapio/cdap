@@ -44,7 +44,7 @@ checkHostNameAndSetClusterName() {
 
 # Try to perform an Ambari API GET
 # Dies if credentials are bad
-__validateAmbariConnectivity() {
+validateAmbariConnectivity() {
     local __coreSiteContent
     local __ret
     __coreSiteContent=$(${AMBARICONFIGS_SH} ${AMBARICREDS} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site)
@@ -133,7 +133,7 @@ restartCdapDependentClusterServices() {
 
 checkHostNameAndSetClusterName
 
-__validateAmbariConnectivity
+validateAmbariConnectivity
 
 # Update necessary hadoop configuration
 updateFsAzurePageBlobDirForCDAP
