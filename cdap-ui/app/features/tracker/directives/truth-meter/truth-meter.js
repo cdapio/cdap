@@ -14,30 +14,19 @@
  * the License.
  */
 
-// function truthMeterController ($scope) {
-//   'ngInject';
-
-//   this.truthScore = $scope.truthScore;
-//   console.log('this.truthScore: ', $scope.truthScore);
-// }
-
 angular.module(PKG.name + '.feature.tracker')
   .directive('myTruthMeter', function () {
 
     return {
       restrict: 'E',
       scope: {
-        model: '=',
         score: '=',
         multiplier: '=',
         width: '@'
       },
       templateUrl: '/assets/features/tracker/directives/truth-meter/truth-meter.html',
-      controller: function($scope) {
-        this.score = $scope.score;
-        this.multiplier = $scope.multiplier;
-        this.width = $scope.width;
-      },
+      controller: function() {},
+      bindToController: true,
       controllerAs: 'TruthMeter'
     };
   });
