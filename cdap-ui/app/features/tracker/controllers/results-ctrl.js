@@ -113,8 +113,31 @@ class TrackerResultsController {
       }
     ];
 
-
     this.fetchResults();
+
+    // Mock data
+    this.truthMeterData = {
+      datasets: [
+        {
+          name: 'history',
+          value: 80
+        },
+        {
+          name: 'purchases',
+          value: 26
+        }
+      ],
+      streams: [
+        {
+          name: 'purchaseStream',
+          value: 44
+        },
+        {
+          name: 'strm2',
+          value: 99
+        }
+      ]
+    };
   }
 
   fetchResults () {
@@ -137,7 +160,6 @@ class TrackerResultsController {
         this.loading = false;
       });
   }
-
   parseResult (entity) {
     let obj = {};
     if (entity.entityId.type === 'datasetinstance') {
@@ -153,6 +175,11 @@ class TrackerResultsController {
       if(entity.metadata.SYSTEM.tags.indexOf('explore') !== -1) {
         obj.datasetExplorable = true;
       }
+      for (var i=0; i < this.truthMeterData.datasets.length; i++) {
+        if(this.truthMeterData.datasets[i].name === obj.name) {
+          obj.score = this.truthMeterData.datasets[i].value;
+        }
+      }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;
     } else if (entity.entityId.type === 'stream') {
@@ -164,6 +191,11 @@ class TrackerResultsController {
         description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Stream.',
         createDate: entity.metadata.SYSTEM.properties['creation-time']
       });
+      for (var n=0; n < this.truthMeterData.streams.length; n++) {
+        if(this.truthMeterData.streams[n].name === obj.name) {
+          obj.score = this.truthMeterData.streams[n].value;
+        }
+      }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[1].count++;
     } else if (entity.entityId.type === 'view') {

@@ -162,8 +162,9 @@
         </div>
 
         <div class="col-xs-4">
-          <h5><span class="text-dark">Search term found in:</span></h5>
-          <span ng-repeat="found in entity.queryFound">{{ found }}<span ng-if="!$last">, </span></span>
+          <my-truth-meter score="entity.score"
+                          width="190"
+                          multiplier="1.9"></my-truth-meter>
         </div>
 
         <div class="col-xs-2 text-right">

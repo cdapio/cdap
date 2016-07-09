@@ -414,7 +414,7 @@ body.state-tracker {
 
         .row {
           border-bottom: 1px solid @border-color;
-          padding: 0 15px;
+          padding: 0 15px 15px;
         }
 
         .pagination li a { z-index: 0; }
@@ -471,6 +471,7 @@ body.state-tracker-detail-entity {
     .tab-options {
       ul {
         margin-bottom: 0;
+        margin-left: 20px;
         height: 50px;
       }
       li {
@@ -494,6 +495,15 @@ body.state-tracker-detail-entity {
     }
 
     .action-button { padding-right: 15px; }
+  }
+  div.truth-meter-container {
+    border-right: 1px solid @table-border-color;
+    border-left: 1px solid @table-border-color;
+    display: table-cell;
+    height: 100%;
+    width: 150px;
+    padding-left: 10px;
+    vertical-align: middle;
   }
 
   main.container {

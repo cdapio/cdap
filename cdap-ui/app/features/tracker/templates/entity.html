@@ -37,6 +37,12 @@
     </div>
   </div>
 
+  <div class="truth-meter-container">
+    <my-truth-meter score="EntityController.entityInfo.score"
+                    width="125"
+                    multiplier="1.25"></my-truth-meter>
+  </div>
+
   <div class="tab-options">
     <ul class="list-inline">
       <li ng-class="{'active': $state.is('tracker.detail.entity.metadata')}">
