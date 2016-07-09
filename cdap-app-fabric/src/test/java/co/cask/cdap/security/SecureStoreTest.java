@@ -21,14 +21,10 @@ import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.security.SecureStoreCreateRequest;
 import co.cask.cdap.security.store.FileSecureStore;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.image.ImagingOpException;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -109,6 +105,15 @@ public class SecureStoreTest extends AppFabricTestBase {
     String result2 = readResponse(response);
     list = new Gson().fromJson(result2, listType);
     expectedList.add(new FileSecureStore.SecureStoreListEntry(KEY2, DESCRIPTION2));
+    for (FileSecureStore.SecureStoreListEntry entry : list) {
+      Assert.assertTrue(expectedList.contains(entry));
+    }
+
+    delete(KEY);
+    response = doGet("/v3/security/store/namespaces/default/keys/");
+    String result3 = readResponse(response);
+    list = new Gson().fromJson(result3, listType);
+    expectedList.remove(new FileSecureStore.SecureStoreListEntry(KEY, DESCRIPTION));
     for (FileSecureStore.SecureStoreListEntry entry : list) {
       Assert.assertTrue(expectedList.contains(entry));
     }
