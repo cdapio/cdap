@@ -102,8 +102,6 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
 
-  // TODO enable testInnerJoin() test once CDAP-6391 is resolved
-  @Ignore
   @Test
   public void testInnerJoin() throws Exception {
     Schema inputSchema1 = Schema.recordOf(
