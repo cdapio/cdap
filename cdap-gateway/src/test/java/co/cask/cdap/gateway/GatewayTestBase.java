@@ -164,7 +164,6 @@ public abstract class GatewayTestBase {
         @Override
         protected void configure() {
           install(new StreamServiceRuntimeModule().getStandaloneModules());
-          install(new NamespaceClientRuntimeModule().getStandaloneModules());
 
           // It's a bit hacky to add it here. Need to refactor these
           // bindings out as it overlaps with
