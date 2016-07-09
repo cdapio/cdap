@@ -22,32 +22,37 @@
 AMBARICONFIGS_SH=/var/lib/ambari-server/resources/scripts/configs.sh
 AMBARIPORT=8080
 ACTIVEAMBARIHOST=headnodehost
+USERID=$(python -c 'import hdinsight_common.Constants as Constants; print Constants.AMBARI_WATCHDOG_USERNAME')
+PASSWD=$(python -c 'import hdinsight_common.ClusterManifestParser as ClusterManifestParser; \
+                    import hdinsight_common.Constants as Constants; \
+                    import base64; \
+                    base64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password; \
+                    print base64.b64decode(base64pwd)')
+
+AMBARICREDS="-u ${USERID} -p ${PASSWD}"
+
 
 # Function definitions
 
-die() { echo "ERROR: ${*}"; exit 1; };
+die() { __code=${2:-1}; echo "[ERROR] ${1}"; exit ${__code}; };
 
 checkHostNameAndSetClusterName() {
-    fullHostName=$(hostname -f)
-    echo "fullHostName=$fullHostName"
-    CLUSTERNAME=$(sed -n -e 's/.*\.\(.*\)-ssh.*/\1/p' <<< $fullHostName)
-    if [ -z "$CLUSTERNAME" ]; then
-        CLUSTERNAME=$(echo -e "import hdinsight_common.ClusterManifestParser as ClusterManifestParser\nprint ClusterManifestParser.parse_local_manifest().deployment.cluster_name" | python)
-        if [ $? -ne 0 ]; then
-            echo "[ERROR] Cannot determine cluster name. Exiting!"
-            exit 133
-        fi
-    fi
-    echo "Cluster Name=$CLUSTERNAME"
+    CLUSTERNAME=${CLUSTERNAME:-$(python -c 'import hdinsight_common.ClusterManifestParser as ClusterManifestParser; \
+        print ClusterManifestParser.parse_local_manifest().deployment.cluster_name')}
+    [[ ${CLUSTERNAME} ]] || die "Cannot determine cluster name. Exiting!" 133
 }
 
 # Try to perform an Ambari API GET
 # Dies if credentials are bad
 __validateAmbariConnectivity() {
-    coreSiteContent=$(bash ${AMBARICONFIGS_SH} -u ${USERID} -p ${PASSWD} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site)
-    if [[ ${coreSiteContent} == *"[ERROR]"* && ${coreSiteContent} == *"Bad credentials"* ]]; then
-        echo '[ERROR] Username and password are invalid. Exiting!'
-        exit 134
+    local __coreSiteContent
+    local __ret
+    __coreSiteContent=$(${AMBARICONFIGS_SH} ${AMBARICREDS} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site)
+    __ret=$?
+    if [[ ${__coreSiteContent} =~ "[ERROR]" && ${__coreSiteContent} =~ "Bad credentials" ]]; then
+        die 'Username and password are invalid. Exiting!' 134
+    elif [ ${__ret} -ne 0 ]; then
+        die "Could not connect to Ambari: ${__coreSiteContent}" 134
     fi
 }
 
@@ -57,58 +62,57 @@ setAmbariConfig() {
     local __configtype=${1} # core-site, etc
     local __name=${2}
     local __value=${3}
-    updateResult=$(bash ${AMBARICONFIGS_SH} -u ${USERID} -p ${PASSWD} set ${ACTIVEAMBARIHOST} ${CLUSTERNAME} ${__configtype} ${__name} ${__value})
+    local __updateResult
+    __updateResult=$(${AMBARICONFIGS_SH} ${AMBARICREDS} set ${ACTIVEAMBARIHOST} ${CLUSTERNAME} ${__configtype} ${__name} ${__value})
 
-    if [[ ${updateResult} != *"Tag:version"* ]] && [[ ${updateResult} == *"[ERROR]"* ]]; then
-        die "[ERROR] Failed to update ${__configtype}: ${updateResult}"
+    if [[ ${__updateResult} =~ "[ERROR]" ]] && [[ ! ${__updateResult} =~ "Tag:version" ]]; then
+        die "Failed to update ${__configtype}: ${__updateResult}" 135
     fi
 }
 
 # Fetches value of fs.azure.page.blob.dir, appends '/cdap' to it, updates it via Ambari API, updates the local client configurations, and restarts cluster services
 updateFsAzurePageBlobDirForCDAP() {
-    currentValue=$(bash ${AMBARICONFIGS_SH} -u ${USERID} -p ${PASSWD} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site | grep 'fs.azure.page.blob.dir' | cut -d' ' -f3 | sed -e 's/"\(.*\)"[,]*/\1/')
-    if [ -n ${currentValue} ]; then
-      if echo ${currentValue} | grep -q '/cdap'; then
+    local __currentValue
+    local __newValue
+    __currentValue=$(${AMBARICONFIGS_SH} ${AMBARICREDS} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site | grep 'fs.azure.page.blob.dir' | cut -d' ' -f3 | sed -e 's/"\(.*\)"[,]*/\1/')
+    if [ -n ${__currentValue} ]; then
+      if [[ ${__currentValue} =~ "/cdap" ]]; then
         echo "fs.azure.page.blob.dir already contains /cdap"
         return 0
       else
-        newValue="${currentValue},/cdap"
+        __newValue="${__currentValue},/cdap"
       fi
     else
-      newValue="/cdap"
+      __newValue="/cdap"
     fi
-    echo "Updating fs.azure.page.blob.dir to ${newValue}"
-    setAmbariConfig 'core-site' 'fs.azure.page.blob.dir' ${newValue} || die "Could not update Ambari config"
+    echo "Updating fs.azure.page.blob.dir to ${__newValue}"
+    setAmbariConfig 'core-site' 'fs.azure.page.blob.dir' ${__newValue} || die "Could not update Ambari config" 1
     restartCdapDependentClusterServices
 }
 
 # Stop an Ambari cluster service
 stopServiceViaRest() {
-    if [ -z "${1}" ]; then
-        echo "Need service name to stop service"
-        exit 136
-    fi
-    SERVICENAME=${1}
+    local SERVICENAME=${1}
+    [[ ${SERVICENAME} ]] || die "Need service name to stop service" 136
     echo "Stopping ${SERVICENAME}"
     curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Configure Azure page blob support for CDAP installation"}, "Body": {"ServiceInfo": {"state": "INSTALLED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}
 }
 
 # Start an Ambari cluster service
 startServiceViaRest() {
-    if [ -z "${1}" ]; then
-        echo "Need service name to start service"
-        exit 136
-    fi
+    local SERVICENAME=${1}
+    local __startResult
+    [[ ${SERVICENAME} ]] || die "Need service name to start service" 136
     sleep 2
-    SERVICENAME=${1}
     echo "Starting ${SERVICENAME}"
-    startResult=$(curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Configure Azure page blob support for CDAP installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME})
-    if [[ ${startResult} == *"500 Server Error"* || ${startResult} == *"internal system exception occurred"* ]]; then
+    cmd="curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{\"RequestInfo\": {\"context\" :\"Configure Azure page blob support for CDAP installation\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"STARTED\"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}"
+    __startResult=$(eval $cmd)
+    if [[ ${__startResult} =~ "500 Server Error" || ${__startResult} =~ "internal system exception occurred" ]]; then
         sleep 60
         echo "Retry starting ${SERVICENAME}"
-        startResult=$(curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Configure Azure page blob support for CDAP installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME})
+        __startResult=$(eval $cmd)
     fi
-    echo ${startResult}
+    echo ${__startResult}
 }
 
 # Restart Ambari cluster services
@@ -126,11 +130,6 @@ restartCdapDependentClusterServices() {
 
 
 # Begin Ambari Cluster Prep
-
-USERID=$(echo -e "import hdinsight_common.Constants as Constants\nprint Constants.AMBARI_WATCHDOG_USERNAME" | python)
-echo "USERID=$USERID"
-
-PASSWD=$(echo -e "import hdinsight_common.ClusterManifestParser as ClusterManifestParser\nimport hdinsight_common.Constants as Constants\nimport base64\nbase64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password\nprint base64.b64decode(base64pwd)" | python)
 
 checkHostNameAndSetClusterName
 
