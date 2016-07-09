@@ -16,7 +16,7 @@
 my-realtime-pipeline-settings {
   .pipeline-settings-content {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
 
     my-card {
       flex: 0.2;
@@ -29,6 +29,10 @@ my-realtime-pipeline-settings {
         label {
           margin: 0 10px;
         }
+      }
+      &.post-run-actions {
+        flex: 0.5;
+        margin-left: 10px;
       }
     }
   }
