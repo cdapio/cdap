@@ -21,7 +21,6 @@ angular.module(PKG.name + '.commons')
         store: '=',
         onActionSelect: '&'
       },
-      transclude: true,
       templateUrl: 'my-post-run-action-wizard/wizard-select-action-step/wizard-select-action-step.html',
       controller: 'WizardSelectActionStepCtrl',
       controllerAs: 'WizardSelectActionStepCtrl',

@@ -46,37 +46,20 @@
   ng-if="MyPostRunActionWizardCtrl.currentStage === 1"
   store="MyPostRunActionWizardCtrl.store"
   on-action-select="MyPostRunActionWizardCtrl.onActionSelect">
-  <div class="clearfix">
-    <div class="btn btn-primary pull-right"
-         ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">
-        Add
-    </div>
-  </div>
 </wizard-select-action-step>
 <wizard-configure-confirm-step
   class="clearfix"
   action="MyPostRunActionWizardCtrl.selectedAction"
-  ng-if="MyPostRunActionWizardCtrl.currentStage === 2">
-  <div class="pull-right">
-    <div class="btn btn-default"
-         ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">
-        Back
-    </div>
-    <div class="btn btn-primary"
-         ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">
-        Add
-    </div>
-  </div>
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 2"
+  on-action-configure="MyPostRunActionWizardCtrl.onActionConfigure"
+  on-goto-previous-step="MyPostRunActionWizardCtrl.goToPreviousStep"
+  >
 </wizard-configure-confirm-step>
 <wizard-configure-confirm-step
   is-disabled="true"
   class="clearfix"
-  ng-if="MyPostRunActionWizardCtrl.currentStage === 3">
-    <div class="pull-right">
-      <div class="btn btn-default"
-           ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">
-          Back
-      </div>
-      <div class="btn btn-primary">Confirm</div>
-    </div>
+  action="MyPostRunActionWizardCtrl.configuredAction"
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 3"
+  on-action-configure="MyPostRunActionWizardCtrl.onActionConfirm"
+  on-goto-previous-step="MyPostRunActionWizardCtrl.goToPreviousStep">
 </wizard-configure-confirm-step>

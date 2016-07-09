@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div>
+<fieldset ng-disabled="WizardConfigureConfirmStepCtrl.isDisabled">
   <div class="confirm-step-content">
     <div ng-repeat="group in WizardConfigureConfirmStepCtrl.groupsConfig.groups">
       <div class="widget-group-container">
@@ -48,6 +48,20 @@
       </div>
     </div>
   </div>
-
-  <ng-transclude></ng-transclude>
+</fieldset>
+<div class="pull-right">
+  <div class="btn btn-default"
+       ng-click="WizardConfigureConfirmStepCtrl.gotoPreviousStep()">
+    Back
+  </div>
+  <div class="btn btn-primary"
+       ng-if="!WizardConfigureConfirmStepCtrl.isDisabled"
+       ng-click="WizardConfigureConfirmStepCtrl.addAction()">
+      Add
+  </div>
+  <div class="btn btn-primary"
+       ng-if="WizardConfigureConfirmStepCtrl.isDisabled"
+       ng-click="WizardConfigureConfirmStepCtrl.addAction()">
+      Confirm
+  </div>
 </div>
