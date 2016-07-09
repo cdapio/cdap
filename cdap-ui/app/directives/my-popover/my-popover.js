@@ -23,7 +23,8 @@ angular.module(PKG.name + '.commons')
         contentData:'=',
         title: '@',
         placement: '@',
-        popoverContext: '='
+        popoverContext: '=',
+        customClass: '@'
       },
       link: function(scope, element) {
         scope.isOpen = false;
@@ -80,7 +81,7 @@ angular.module(PKG.name + '.commons')
             placement: scope.placement || 'right',
             trigger: 'manual',
             container: 'body',
-            customClass: 'my-cdap-popover'
+            customClass: 'my-cdap-popover ' + scope.customClass
           });
           if (scope.contentData) {
             mypopover.$scope.contentData = scope.contentData;
