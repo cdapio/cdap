@@ -24,9 +24,22 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'my-post-run-actions/my-post-run-actions.html',
       bindToController: true,
-      controller: ['$scope', 'myPostRunActionWizardService', function($scope, myPostRunActionWizardService) {
+      controller: ['$scope', 'myPostRunActionWizardService', 'myAlertOnValium', function($scope, myPostRunActionWizardService, myAlertOnValium) {
         $scope.myPostRunActionWizardService = myPostRunActionWizardService;
+        var sub = this.store.registerOnChangeListener(() => {
+          this.actions = this.store.getPostActions();
+        });
         this.actions = this.store.getPostActions();
+        this.deletePostRunAction = function(action) {
+          this.actionCreator.deletePostAction(action);
+          myAlertOnValium.show({
+            type: 'success',
+            content: action.plugin.name + ' post action deleted.'
+          });
+        };
+        $scope.$on('$destroy', () => {
+          sub();
+        })
       }],
       controllerAs: 'MyPostRunActionsCtrl'
     };
