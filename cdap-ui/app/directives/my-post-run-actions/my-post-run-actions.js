@@ -39,7 +39,7 @@ angular.module(PKG.name + '.commons')
         };
         $scope.$on('$destroy', () => {
           sub();
-        })
+        });
       }],
       controllerAs: 'MyPostRunActionsCtrl'
     };

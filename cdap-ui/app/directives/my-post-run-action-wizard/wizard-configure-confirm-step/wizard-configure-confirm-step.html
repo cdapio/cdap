@@ -28,7 +28,8 @@
                     tooltip-append-to-body="true">
               </span>
               <span class="fa fa-asterisk" ng-if="WizardConfigureConfirmStepCtrl.action._backendProperties[field.name].required"></span>
-              <small class="text-danger" ng-if="WizardConfigureConfirmStepCtrl.errorInConfig && WizardConfigureConfirmStepCtrl.action._backendProperties[field.name].required && !WizardConfigureConfirmStepCtrl.action.properties[field.name]">
+              <small class="text-danger"
+                     ng-if="WizardConfigureConfirmStepCtrl.errorInConfig && WizardConfigureConfirmStepCtrl.action._backendProperties[field.name].required && !WizardConfigureConfirmStepCtrl.action.properties[field.name]">
                 {{::WizardConfigureConfirmStepCtrl.requiredPropertyError}}
               </small>
             </label>
@@ -57,7 +58,7 @@
   </div>
   <div class="btn btn-primary"
        ng-if="!WizardConfigureConfirmStepCtrl.isDisabled"
-       ng-click="WizardConfigureConfirmStepCtrl.addAction()">
+       ng-click="WizardConfigureConfirmStepCtrl.isValid() && WizardConfigureConfirmStepCtrl.addAction()">
       Save
   </div>
   <div class="btn btn-primary"

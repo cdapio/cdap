@@ -15,12 +15,13 @@
  */
 
 class WizardConfigureConfirmStepCtrl {
-  constructor($state, myPipelineApi, HydratorPlusPlusPluginConfigFactory) {
+  constructor($state, myPipelineApi, HydratorPlusPlusPluginConfigFactory, GLOBALS) {
     this.$state = $state;
     this.myPipelineApi = myPipelineApi;
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.showLoadingIcon = true;
     this.action.properties = this.action.properties || {};
+    this.requiredPropertyError = GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
     this.pluginFetch(this.action)
       .then( () => this.showLoadingIcon = false);
   }
@@ -86,6 +87,24 @@ class WizardConfigureConfirmStepCtrl {
       fn.call(null);
     }
   }
+  isValid() {
+    this.errorInConfig = false;
+    let validateProperties = (action) => {
+      let valid = true;
+      angular.forEach(action._backendProperties, (value, key) => {
+        if (value.required && !action.properties[key]) {
+          valid = false;
+        }
+      });
+      return valid;
+    };
+
+    if (!validateProperties(this.action)) {
+      this.errorInConfig = true;
+      return false;
+    }
+    return true;
+  }
   onItemClicked(event, action) {
     event.stopPropagation();
     event.preventDefault();
@@ -94,7 +113,7 @@ class WizardConfigureConfirmStepCtrl {
   }
 }
 
-WizardConfigureConfirmStepCtrl.$inject = ['$state', 'myPipelineApi', 'HydratorPlusPlusPluginConfigFactory'];
+WizardConfigureConfirmStepCtrl.$inject = ['$state', 'myPipelineApi', 'HydratorPlusPlusPluginConfigFactory', 'GLOBALS'];
 
 angular.module(PKG.name + '.commons')
   .controller('WizardConfigureConfirmStepCtrl', WizardConfigureConfirmStepCtrl);
