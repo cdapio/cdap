@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyPostRunActionWizardCtrl', function($scope, uuid) {
+  .controller('MyPostRunActionWizardCtrl', function($scope, uuid, myAlertOnValium) {
     'ngInject';
     var vm = this;
     vm.action = vm.action || {};
@@ -48,10 +48,19 @@ angular.module(PKG.name + '.commons')
           properties: action.properties
         }
       };
-      if (vm.isEdit) {
-        vm.actionCreator.editPostAction(vm.confirmedAction);
-      } else {
-        vm.actionCreator.addPostAction(vm.confirmedAction);
+      try {
+        if (vm.isEdit) {
+          vm.actionCreator.editPostAction(vm.confirmedAction);
+        } else {
+          vm.actionCreator.addPostAction(vm.confirmedAction);
+        }
+        myAlertOnValium.show({
+          type: 'success',
+          content: vm.confirmedAction.plugin.name + ' post action saved.'
+        });
+      } catch(e) {
+        console.log('ERROR', e);
+        //FIXME: We should be able to handle errors more efficiently
       }
       $scope.$parent.$close();
     };

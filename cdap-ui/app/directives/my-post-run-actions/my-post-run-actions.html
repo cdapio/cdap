@@ -14,7 +14,7 @@
   the License.
 -->
 <div ng-if="!MyPostRunActionsCtrl.actions.length">
-  <div class="well well-sm text-center"
+  <div class="well well-sm text-center empty-table"
        ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, false)">
     <h1>+</h1>
   </div>
@@ -32,8 +32,16 @@
     <tr ng-repeat="action in MyPostRunActionsCtrl.actions">
       <td>{{action.plugin.name}}</td>
       <td>{{action.plugin.properties.runCondition}}</td>
-      <td><a herf="" ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, true, action)">Edit</a></td>
-      <td><a herf=""><span class="fa fa-trash text-danger"></span></a></td>
+      <td>
+        <a href="" ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, true, action)">
+          Edit
+        </a>
+      </td>
+      <td>
+        <a href ng-click="MyPostRunActionsCtrl.deletePostRunAction(action)">
+          <span class="fa text-danger fa-trash"></span>
+        </a>
+      </td>
     </tr>
     <tr>
       <td colspan="4">
