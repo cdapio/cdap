@@ -89,6 +89,7 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -132,6 +133,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
+                           new SecureStoreModules().getInMemoryModules(),
                            new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override
@@ -164,6 +166,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
+                           new SecureStoreModules().getStandaloneModules(),
                            new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override
@@ -218,6 +221,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     return Modules.combine(new AppFabricServiceModule(),
                            new ConfigStoreModule().getDistributedModule(),
+                           new SecureStoreModules().getDistributedModules(),
                            new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override

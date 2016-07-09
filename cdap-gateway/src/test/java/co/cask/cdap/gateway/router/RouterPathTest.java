@@ -380,6 +380,17 @@ public class RouterPathTest {
     assertAuthorizationRouting("//v3/security/authorization/group/devs/roles/admins", HttpMethod.DELETE);
   }
 
+  @Test
+  public void testSecureStorePaths() {
+    assertSecureStoreRouting("/v3/////security/store/namespaces/default/key", HttpMethod.PUT);
+    assertSecureStoreRouting("/v3/security/store/namespaces////default/key", HttpMethod.PUT);
+    assertSecureStoreRouting("/v3/security/store/namespaces/default/keys/key1", HttpMethod.GET);
+    assertSecureStoreRouting("/v3/security/store/namespaces/default/keys/key1", HttpMethod.DELETE);
+    assertSecureStoreRouting("/v3/security/store/namespaces/default/keys///////key1", HttpMethod.DELETE);
+    assertSecureStoreRouting("/v3/security/store/namespaces/default/keys", HttpMethod.GET);
+    assertSecureStoreRouting("/v3/security/store/////namespaces/default/keys", HttpMethod.GET);
+  }
+
   private void assertMetadataRouting(String path) {
     for (HttpMethod method : ImmutableList.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.DELETE)) {
       HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
@@ -389,6 +400,12 @@ public class RouterPathTest {
   }
 
   private void assertAuthorizationRouting(String path, HttpMethod method) {
+    HttpRequest request = new DefaultHttpRequest(VERSION, method, path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, request);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+  }
+
+  private void assertSecureStoreRouting(String path, HttpMethod method) {
     HttpRequest request = new DefaultHttpRequest(VERSION, method, path);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, request);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);

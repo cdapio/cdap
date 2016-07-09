@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -63,6 +64,9 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * The keystore is flushed to the filesystem after every put and delete.
  */
 @Singleton
+// Marking it as Singleton here because it won't work if this class is not a Singleton.
+// Setting in(Scopes.Singleton) in the bindings doesn't work because we are binding this
+// class to two interfaces and we need the instance to be shared between them.
 public class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
@@ -268,6 +272,10 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
       if (Files.exists(path)) {
         loadFromPath(ks, path, password);
       } else {
+        Path parent = path.getParent();
+        if (!Files.exists(parent)) {
+          Files.createDirectory(parent);
+        }
         // We were not able to load an existing key store. Create a new one.
         ks.load(null, password);
         LOG.info("New Secure Store initialized successfully.");
@@ -316,4 +324,42 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     }
   }
 
+  /**
+   * Represents an entry in the listing of the secure store elements.
+   */
+  public static class SecureStoreListEntry {
+
+    private final String name;
+    private final String description;
+
+    public SecureStoreListEntry(String name, String description) {
+      this.name = name;
+      this.description = description;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SecureStoreListEntry that = (SecureStoreListEntry) o;
+
+      if (!getName().equals(that.getName())) return false;
+      return getDescription().equals(that.getDescription());
+
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(name, description);
+    }
+  }
 }

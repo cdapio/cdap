@@ -16,8 +16,8 @@
 
 package co.cask.cdap.proto.security;
 
+import java.util.Collections;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Request for creating a new entry in the secure store
@@ -25,10 +25,10 @@ import javax.annotation.Nullable;
 public class SecureStoreCreateRequest {
   private final String name;
   private final String description;
-  private final byte[] data;
+  private final String data;
   private final Map<String, String> properties;
 
-  public SecureStoreCreateRequest(String name, String description, byte[] data, Map<String, String> properties) {
+  public SecureStoreCreateRequest(String name, String description, String data, Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.data = data;
@@ -43,12 +43,11 @@ public class SecureStoreCreateRequest {
     return description;
   }
 
-  public byte[] getData() {
+  public String getData() {
     return data;
   }
 
-  @Nullable
   public Map<String, String> getProperties() {
-    return properties;
+    return properties == null ? Collections.<String, String>emptyMap() : properties;
   }
 }

@@ -26,9 +26,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.OutOfScopeException;
 import com.google.inject.Provider;
-import com.google.inject.ProvisionException;
+import com.google.inject.Scopes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -64,6 +65,7 @@ public class SecureStoreModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(SecureStore.class).toProvider(SecureStoreProvider.class);
+        bind(SecureStoreManager.class).toProvider(SecureStoreManagerProvider.class);
       }
     };
   }
@@ -83,6 +85,30 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStore get() {
+      if ("file".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
+        return injector.getInstance(FileSecureStore.class);
+      } else {
+        // TODO: Change this to use KMS once that is implemented.
+        return injector.getInstance(FileSecureStore.class);
+      }
+    }
+  }
+
+  private class SecureStoreManagerProvider implements Provider<SecureStoreManager> {
+    private final CConfiguration cConf;
+    private final Injector injector;
+
+    @Inject
+    private SecureStoreManagerProvider(final CConfiguration cConf, Injector injector) {
+      this.cConf = cConf;
+      this.injector = injector;
+    }
+
+    /**
+     * Provides an instance of {@link SecureStoreManager}. Must never return {@code null}.
+     */
+    @Override
+    public SecureStoreManager get() {
       if ("file".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
         return injector.getInstance(FileSecureStore.class);
       } else {
