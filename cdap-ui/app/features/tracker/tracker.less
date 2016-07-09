@@ -28,6 +28,8 @@
 @title-font-color: #333333;
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
+@tag-bg: #464a57;
+@well-bg: #d3d3d3;
 @search-top-bar-container-size: 60px;
 @navbar-size: 50px;
 @entity-detail-top-bar-size: 50px;
@@ -36,9 +38,11 @@ body[class*='state-tracker'] {
   &:not(.state-tracker-home) {
     main.container { width: 100%; }
   }
+  &:not(.state-tracker-tags) {
+    main.container { padding: 0 0 15px 0; }
+  }
   main.container {
     margin-top: 50px;
-    padding: 0 0 15px 0;
 
     h1,
     h2,
@@ -64,6 +68,42 @@ body[class*='state-tracker'] {
       &.top {
         .tooltip-arrow { border-top-color: black; }
       }
+    }
+  }
+
+  .tracker-modal {
+    h3.modal-title {
+      font-size: 16px;
+
+      @media (max-width: @screen-sm-max) {
+        max-width: 100%;
+      }
+    }
+    .modal-header {
+      background-color: transparent;
+      border-bottom: 0;
+      box-shadow: none;
+      span.fa-times {
+        margin-top: 15px;
+        margin-right: 15px;
+        color: @tracker-grey;
+        -webkit-text-stroke: 1px white;
+        &:hover,
+        &:focus { cursor: pointer; }
+      }
+    }
+    .modal-body { padding: 15px; }
+  }
+
+  div.well {
+    background-color: @well-bg;
+    p {
+      color: @tracker-grey;
+      font-size: 14px;
+      line-height: 1.2;
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
     }
   }
 }
@@ -150,18 +190,7 @@ body.state-tracker-detail-entity-usage {
     margin: 0 auto;
     max-width: 340px;
   }
-  div.well {
-    background-color: #d3d3d3;
-    margin-bottom: 0;
-    p {
-      color: @tracker-grey;
-      font-size: 14px;
-      line-height: 1.2;
-      position: relative;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-  }
+  div.well { margin-bottom: 0; }
 }
 
 body.state-tracker-home.state-tracker {
@@ -971,6 +1000,124 @@ body.state-tracker-detail-entity-usage {
   div.histogram-container { width: 100%; }
 }
 
+body.state-tracker-tags {
+  main {
+    a.add-tags {
+      border-color: @border-color;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 10px;
+      padding: 4px 8px;
+    }
+    div.preferred-tags .table-responsive {
+      @media (min-width: @screen-sm-min) {
+        margin-right: 25px;
+      }
+    }
+    div.user-tags .table-responsive {
+      @media (min-width: @screen-sm-min) {
+        margin-left: 25px;
+      }
+    }
+    div.table-responsive {
+      @media (max-width: @screen-xs-max) {
+        border: 0;
+      }
+    }
+    table.table.table-striped {
+      margin-top: 25px;
+      thead tr,
+      tbody tr:nth-of-type(even) { background-color: rgb(238, 238, 238); }
+      thead tr th {
+        border-top: 1px solid @table-border-color;
+        font-size: 13px;
+        font-weight: 500;
+        &:last-child { width: 15%; }
+      }
+      tr {
+        th,
+        td { border: 1px solid @table-border-color; }
+        td {
+          span {
+            font-size: 12px;
+            &.tagged-entities {
+              color: @tracker-grey;
+              font-weight: 500;
+            }
+            &.fa-trash {
+              color: @alert-danger-bg;
+              font-size: 16px;
+            }
+          }
+          a {
+            &.action-link {
+              color: @tracker-green;
+              font-size: 13px;
+            }
+            &.tag {
+              background-color: @tag-bg;
+              border-radius: 4px;
+              color: white;
+              font-size: 12px;
+              padding: 5px;
+              &:focus { outline: 0; }
+            }
+          }
+        }
+      }
+    }
+    div.well {
+      height: 100px;
+      margin-top: 25px;
+    }
+  }
+  div.add-preferred-tags-modal {
+    .flex-box {
+      .flexbox();
+      justify-content: space-between;
+      margin-bottom: 30px;
+      .flex-item {
+        height: 130px;
+        &:first-child,
+        &:last-child {
+          border-radius: 4px;
+          width: 45%;
+        }
+        &:first-child {
+          border: 1px solid @tracker-grey;
+          color: @tracker-grey;
+        }
+        &:last-child { border: 1px dashed @tracker-grey; }
+        > div {
+          font-size: 14px;
+          font-weight: 500;
+          position: relative;
+          top: 50%;
+          transform: translateY(-50%);
+          text-align: center;
+          > span:only-child { font-size: 16px; }
+        }
+      }
+      textarea {
+        border: 0;
+        height: 100%;
+        padding-top: 3.5em;
+        text-align: center;
+        &:focus {
+          padding-top: 6px;
+          text-align: left;
+          .placeholder(@color: transparent);
+        }
+      }
+    }
+    span.fa-cloud-upload { font-size: 36px; }
+    .btn-row .btn:last-child {
+      border: 1px solid transparent;
+      margin-left: 20px;
+    }
+  }
+}
+
 .popover.complex-schema {
   .popover-content {
     padding: 10px;
@@ -988,3 +1135,4 @@ body.state-tracker-detail-entity-usage {
     }
   }
 }
+

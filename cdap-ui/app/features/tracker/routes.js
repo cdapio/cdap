@@ -173,6 +173,17 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
 
+      .state('tracker.tags', {
+        url: '/tags',
+        templateUrl: '/assets/features/tracker/templates/tags.html',
+        controller: 'TrackerTagsController',
+        controllerAs: 'TagsController',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'tags'
+        }
+      })
+
       .state('tracker.detail', {
         url: '',
         data: {
