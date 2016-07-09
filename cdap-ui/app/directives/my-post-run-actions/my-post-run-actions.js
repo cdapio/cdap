@@ -19,13 +19,14 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
-        actions: '=',
+        actionCreator: '=',
         store: '='
       },
       templateUrl: 'my-post-run-actions/my-post-run-actions.html',
       bindToController: true,
       controller: ['$scope', 'myPostRunActionWizardService', function($scope, myPostRunActionWizardService) {
         $scope.myPostRunActionWizardService = myPostRunActionWizardService;
+        this.actions = this.store.getPostActions();
       }],
       controllerAs: 'MyPostRunActionsCtrl'
     };
