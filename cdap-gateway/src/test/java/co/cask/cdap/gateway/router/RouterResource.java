@@ -23,7 +23,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
-import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
