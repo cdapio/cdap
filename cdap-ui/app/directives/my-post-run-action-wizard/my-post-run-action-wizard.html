@@ -13,6 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
+
 <div class="wizard-nav">
   <div class="capsule"
        ng-class="{'current': MyPostRunActionWizardCtrl.currentStage === 1, 'complete': MyPostRunActionWizardCtrl.currentStage > 1}">
@@ -40,9 +41,11 @@
     <span class="nav-title">Confirm</span>
   </div>
 </div>
+
 <wizard-select-action-step
   ng-if="MyPostRunActionWizardCtrl.currentStage === 1"
-  store="MyPostRunActionWizardCtrl.store">
+  store="MyPostRunActionWizardCtrl.store"
+  on-action-select="MyPostRunActionWizardCtrl.onActionSelect">
   <div class="clearfix">
     <div class="btn btn-primary pull-right"
          ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage + 1">
@@ -50,7 +53,10 @@
     </div>
   </div>
 </wizard-select-action-step>
-<wizard-configure-confirm-step class="clearfix" ng-if="MyPostRunActionWizardCtrl.currentStage === 2">
+<wizard-configure-confirm-step
+  class="clearfix"
+  action="MyPostRunActionWizardCtrl.selectedAction"
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 2">
   <div class="pull-right">
     <div class="btn btn-default"
          ng-click="MyPostRunActionWizardCtrl.currentStage = MyPostRunActionWizardCtrl.currentStage - 1">

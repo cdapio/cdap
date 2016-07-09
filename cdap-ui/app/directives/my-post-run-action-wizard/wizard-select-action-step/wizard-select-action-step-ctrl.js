@@ -15,9 +15,10 @@
  */
 
 class WizardSelectActionStepCtrl {
-  constructor($state, myPipelineApi, myHelpers, GLOBALS) {
+  constructor($scope, $state, myPipelineApi, myHelpers, GLOBALS) {
     let artifact = this.store.getArtifact();
     this.postActionsList = [];
+    this.$scope = $scope;
 
     let params = {
       namespace: $state.params.namespace,
@@ -46,6 +47,12 @@ class WizardSelectActionStepCtrl {
         }
       );
   }
+  chooseAction(action) {
+    var fn = this.onActionSelect();
+    if ('undefined' !== typeof fn) {
+      fn.call(null, action);
+    }
+  }
   filterPlugins(results) {
     let pluginsMap = {};
     angular.forEach(results, (plugin) => {
@@ -61,6 +68,6 @@ class WizardSelectActionStepCtrl {
   }
 }
 
-WizardSelectActionStepCtrl.$inject = ['$state', 'myPipelineApi', 'myHelpers', 'GLOBALS'];
+WizardSelectActionStepCtrl.$inject = ['$scope', '$state', 'myPipelineApi', 'myHelpers', 'GLOBALS'];
 angular.module(PKG.name + '.commons')
   .controller('WizardSelectActionStepCtrl', WizardSelectActionStepCtrl);

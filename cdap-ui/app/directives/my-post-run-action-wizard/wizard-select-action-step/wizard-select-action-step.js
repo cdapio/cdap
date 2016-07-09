@@ -18,7 +18,8 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
-        store: '='
+        store: '=',
+        onActionSelect: '&'
       },
       transclude: true,
       templateUrl: 'my-post-run-action-wizard/wizard-select-action-step/wizard-select-action-step.html',

@@ -39,7 +39,8 @@ angular.module(PKG.name + '.commons')
           rIsEdit: () => isEdit || false,
           rStore: () => store
         },
-        windowClass: 'post-action-run-wizard-modal cdap-modal',
+        size: 'lg',
+        windowClass: 'post-run-actions-modal cdap-modal',
         controller: ['$scope', 'rAction', 'rIsEdit', 'rStore', function($scope, rAction, rIsEdit, rStore) {
           $scope.action = rAction;
           $scope.isEdit = rIsEdit;

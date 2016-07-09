@@ -87,7 +87,8 @@
 }
 
 .modal.cdap-modal {
-  &.node-config-modal {
+  &.node-config-modal,
+  &.post-run-actions-modal {
     .modal-header {
       > h4 {
         line-height: 37px;
@@ -243,6 +244,17 @@
             .control-label {
               font-weight: bold;
             }
+          }
+        }
+      }
+    }
+    &.post-run-actions-modal {
+      .modal-dialog {
+        width: 50%;
+        margin-left: 33%;
+        .modal-content {
+          .modal-body {
+            max-height: 75vh;
           }
         }
       }

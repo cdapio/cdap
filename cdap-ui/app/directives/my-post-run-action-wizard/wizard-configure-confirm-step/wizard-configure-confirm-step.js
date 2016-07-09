@@ -24,6 +24,7 @@ angular.module(PKG.name + '.commons')
       transclude: true,
       templateUrl: 'my-post-run-action-wizard/wizard-configure-confirm-step/wizard-configure-confirm-step.html',
       controller: 'WizardConfigureConfirmStepCtrl',
-      controllerAs: 'WizardConfigureConfirmStepCtrl'
+      controllerAs: 'WizardConfigureConfirmStepCtrl',
+      bindToController: true
     };
   });
