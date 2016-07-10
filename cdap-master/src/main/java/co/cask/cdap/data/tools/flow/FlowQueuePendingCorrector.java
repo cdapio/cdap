@@ -43,7 +43,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -118,14 +118,15 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   private final Store store;
   private final ProgramRuntimeService programRuntimeService;
   private final TwillRunnerService twillRunnerService;
-  private final NamespaceAdmin namespaceAdmin;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public FlowQueuePendingCorrector(HBaseQueueDebugger queueDebugger, ZKClientService zkClientService,
                                    MetricsCollectionService metricsCollectionService, MetricStore metricStore,
                                    KafkaClientService kafkaClientService, Store store,
                                    ProgramRuntimeService programRuntimeService,
-                                   TwillRunnerService twillRunnerService, NamespaceAdmin namespaceAdmin) {
+                                   TwillRunnerService twillRunnerService,
+                                   NamespaceQueryAdmin namespaceQueryAdmin) {
     this.queueDebugger = queueDebugger;
     this.zkClientService = zkClientService;
     this.metricsCollectionService = metricsCollectionService;
@@ -134,7 +135,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
     this.store = store;
     this.programRuntimeService = programRuntimeService;
     this.twillRunnerService = twillRunnerService;
-    this.namespaceAdmin = namespaceAdmin;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -142,7 +143,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
    */
   public void run() throws Exception {
     System.out.println("Running queue.pending correction");
-    List<NamespaceMeta> namespaceMetas = namespaceAdmin.list();
+    List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       run(Id.Namespace.from(namespaceMeta.getName()));
     }

@@ -24,36 +24,10 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 
-import java.util.List;
-
 /**
  * Admin class for managing a namespace's lifecycle
  */
-public interface NamespaceAdmin {
-
-  /**
-   * Lists all namespaces.
-   *
-   * @return a list of {@link NamespaceMeta} for all namespaces
-   */
-  List<NamespaceMeta> list() throws Exception;
-
-  /**
-   * Gets details of a namespace.
-   *
-   * @param namespaceId the {@link Id.Namespace} of the requested namespace
-   * @return the {@link NamespaceMeta} of the requested namespace
-   * @throws NamespaceNotFoundException if the requested namespace is not found
-   */
-  NamespaceMeta get(Id.Namespace namespaceId) throws Exception;
-
-  /**
-   * Checks if the specified namespace exists.
-   *
-   * @param namespaceId the {@link Id.Namespace} to check for existence
-   * @return true, if the specifed namespace exists, false otherwise
-   */
-  boolean exists(Id.Namespace namespaceId) throws Exception;
+public interface NamespaceAdmin extends NamespaceQueryAdmin {
 
   /**
    * Creates a new namespace.
