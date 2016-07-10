@@ -6,9 +6,8 @@
       "scope": "SYSTEM"
     },
     "appId": "_Tracker",
-    "programId": "AuditLog",
-    "flowProgramId": "AuditLogFlow",
-    "metricProgramId": "AuditMetrics"
+    "serviceId": "TrackerService",
+    "flowProgramId": "AuditLogFlow"
   },
   "navigator": {
     "artifact": {
