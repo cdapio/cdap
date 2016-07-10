@@ -36,7 +36,8 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
 
   @Before
   public void setUp() throws Exception {
-    getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
+    // create the namespace with a custom hive database name
+    getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).setHiveDatabase("custom_db").build());
   }
 
   @Test(timeout = 90000L)
@@ -63,6 +64,21 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
       Assert.assertEquals("a", results.getString(1));
       Assert.assertTrue(results.next());
       Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+    }
+
+    try (
+      // list all databases in hive
+      Connection connection = getQueryClient(testSpace);
+      ResultSet results = connection.prepareStatement("SHOW DATABASES")
+        .executeQuery()
+    ) {
+      Assert.assertNotNull(results);
+      Assert.assertTrue(results.next());
+      // verify that the hive databases has the custom database given for the namespace
+      Assert.assertEquals("custom_db", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("default", results.getString(1));
       Assert.assertFalse(results.next());
     }
   }

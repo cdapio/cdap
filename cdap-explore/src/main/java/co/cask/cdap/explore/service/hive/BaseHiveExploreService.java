@@ -52,6 +52,7 @@ import co.cask.cdap.proto.TableNameInfo;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -159,6 +160,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final ExploreTableManager exploreTableManager;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final ExploreTableNaming tableNaming;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -199,6 +201,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                                        new ExploreTableNaming(), hConf);
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.tableNaming = tableNaming;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -1135,8 +1138,19 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (namespace == null) {
       return null;
     }
-    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    return namespace.equals(Id.Namespace.DEFAULT.getId()) ? namespace : String.format("%s_%s", tablePrefix, namespace);
+    try {
+      if (namespace.equals(Id.Namespace.DEFAULT.getId())) {
+        return namespace;
+      } else if (!Strings.isNullOrEmpty(
+        namespaceQueryAdmin.get(Id.Namespace.from(namespace)).getConfig().getHiveDatabase())) {
+        return namespaceQueryAdmin.get(Id.Namespace.from(namespace)).getConfig().getHiveDatabase();
+      } else {
+        String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+        return String.format("%s_%s", tablePrefix, namespace);
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
