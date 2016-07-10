@@ -60,6 +60,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -101,6 +102,8 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
 
+  // TODO enable testInnerJoin() test once CDAP-6391 is resolved
+  @Ignore
   @Test
   public void testInnerJoin() throws Exception {
     Schema inputSchema1 = Schema.recordOf(
