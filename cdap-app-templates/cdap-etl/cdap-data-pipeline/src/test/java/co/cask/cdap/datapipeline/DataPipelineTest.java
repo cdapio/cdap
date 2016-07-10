@@ -60,6 +60,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -101,6 +102,8 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
 
+  // TODO enable testInnerJoin() test once CDAP-6391 is resolved
+  @Ignore
   @Test
   public void testInnerJoin() throws Exception {
     Schema inputSchema1 = Schema.recordOf(
@@ -205,10 +208,10 @@ public class DataPipelineTest extends HydratorTestBase {
     DataSetManager<Table> sinkManager = getDataset("joinerOutput");
     Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
-//    Assert.assertEquals(expected, actual);
-//
-//    validateMetric(2, appId, "testJoiner.records.out");
-//    validateMetric(2, appId, "sink1.records.in");
+    Assert.assertEquals(expected, actual);
+
+    validateMetric(2, appId, "testJoiner.records.out");
+    validateMetric(2, appId, "sink1.records.in");
   }
 
   @Test
