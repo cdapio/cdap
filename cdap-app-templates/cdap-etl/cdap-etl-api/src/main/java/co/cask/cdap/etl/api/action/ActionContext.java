@@ -14,33 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.api.customaction;
+package co.cask.cdap.etl.api.action;
 
-import co.cask.cdap.api.ProgramState;
-import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 
 /**
- * Represents runtime context of the {@link CustomAction} in the Workflow.
+ * Represents the context available to the action plugin during runtime.
  */
-public interface CustomActionContext extends RuntimeContext, Transactional, WorkflowInfoProvider, PluginContext {
-
-  /**
-   * Return the specification of the custom action.
-   */
-  CustomActionSpecification getSpecification();
+public interface ActionContext extends Transactional, PluginContext {
 
   /**
    * Returns the logical start time of the batch job which triggers this instance of an action.
-   * Logical start time is the time when the triggering Batch job is supposed to start if it is started
-   * by the scheduler. Otherwise it would be the current time when the action runs.
+   * Logical start time is the time when the triggering Batch job is supposed to start if it is
+   * started by the scheduler. Otherwise it would be the current time when the action runs.
+   *
+   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */
   long getLogicalStartTime();
 
   /**
-   * Return the state of the custom action.
+   * Return the arguments which can be updated.
    */
-  ProgramState getState();
+  SettableArguments getArguments();
 }

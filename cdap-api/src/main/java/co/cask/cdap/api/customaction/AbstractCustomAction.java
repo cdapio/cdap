@@ -35,7 +35,7 @@ public abstract class AbstractCustomAction implements CustomAction {
   }
 
   @Override
-  public void configure(CustomActionConfigurer configurer) {
+  public final void configure(CustomActionConfigurer configurer) {
     this.configurer = configurer;
     setName(name);
     configure();
@@ -58,8 +58,17 @@ public abstract class AbstractCustomAction implements CustomAction {
   }
 
   @Override
-  public void initialize(CustomActionContext context) throws Exception {
+  public final void initialize(CustomActionContext context) throws Exception {
     this.context = context;
+    initialize();
+  }
+
+  /**
+   * Classes derived from {@link AbstractCustomAction} can override this method to initialize the {@link CustomAction}.
+   * @throws Exception if there is any error in initializing the custom action
+   */
+  protected void initialize() throws Exception {
+    // No-op by default
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 
 /**
@@ -36,5 +37,10 @@ public class BranchProgramAdder implements WorkflowProgramAdder {
   @Override
   public void addSpark(String name) {
     forkConfigurer.addSpark(name);
+  }
+
+  @Override
+  public void addAction(CustomAction action) {
+    forkConfigurer.addAction(action);
   }
 }

@@ -45,7 +45,7 @@ public class PipelinePhase implements Iterable<StageInfo> {
   private final Map<String, Set<StageInfo>> stages;
   private final Dag dag;
 
-  private PipelinePhase(Map<String, Set<StageInfo>> stages, Dag dag) {
+  public PipelinePhase(Map<String, Set<StageInfo>> stages, Dag dag) {
     this.stages = ImmutableMap.copyOf(stages);
     this.dag = dag;
   }
@@ -68,7 +68,7 @@ public class PipelinePhase implements Iterable<StageInfo> {
         stageInfos.addAll(stages.get(pluginType));
       }
     }
-    return Collections.unmodifiableSet(stageInfos == null ? new HashSet<StageInfo>() : stageInfos);
+    return Collections.unmodifiableSet(stageInfos);
   }
 
   public Set<String> getStageOutputs(String stage) {
@@ -81,11 +81,11 @@ public class PipelinePhase implements Iterable<StageInfo> {
   }
 
   public Set<String> getSources() {
-    return dag.getSources();
+    return dag == null ? new HashSet<String>() : dag.getSources();
   }
 
   public Set<String> getSinks() {
-    return dag.getSinks();
+    return dag == null ? new HashSet<String>() : dag.getSinks();
   }
 
   /**

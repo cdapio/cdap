@@ -17,6 +17,7 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.customaction.CustomAction;
 
 /**
  * Defines an interface for the conditions in the {@link Workflow}.
@@ -41,8 +42,17 @@ public interface WorkflowConditionConfigurer<T> {
    * Adds custom action a a next sequential step to the current branch of the {@link WorkflowConditionNode}.
    * @param action {@link WorkflowAction} to be added
    * @return the configurer for the current condition
+   * @deprecated Deprecated as of 3.5.0. Please use {@link WorkflowConditionConfigurer#addAction(CustomAction)} instead.
    */
+  @Deprecated
   WorkflowConditionConfigurer<T> addAction(WorkflowAction action);
+
+  /**
+   * Adds custom action a a next sequential step to the current branch of the {@link WorkflowConditionNode}.
+   * @param action {@link CustomAction} to be added
+   * @return the configurer for the current condition
+   */
+  WorkflowConditionConfigurer<T> addAction(CustomAction action);
 
   /**
    * Forks the current branch of the {@link WorkflowConditionNode}.
