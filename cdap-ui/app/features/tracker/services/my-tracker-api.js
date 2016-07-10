@@ -19,14 +19,14 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       searchPath = '/namespaces/:namespace/metadata/search?target=stream&target=dataset&target=view',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
-      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.programId + '/methods/auditlog/:entityType/:entityId',
+      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/auditlog/:entityType/:entityId',
       navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId,
       trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId,
       propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties',
       // FIXME: This service name needs to come from UI_CONFIG. Need to figure out how to do this.
-      topEntitiesPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/top-entities/:entity',
-      auditHistogramPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/audit-histogram',
-      timeSincePath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/AuditMetrics/methods/v1/auditmetrics/time-since',
+      topEntitiesPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditmetrics/top-entities/:entity',
+      auditHistogramPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditmetrics/audit-histogram',
+      timeSincePath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditmetrics/time-since',
       exploreQueryPath = '/namespaces/:namespace/data/explore/queries',
       baseQueryPath = '/data/explore/queries/:handle';
 
