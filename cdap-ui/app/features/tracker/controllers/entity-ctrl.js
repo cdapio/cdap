@@ -15,14 +15,13 @@
  */
 
 class TrackerEntityController{
-  constructor($state, myJumpFactory, rDatasetType, rSystemTags, $scope, myTrackerApi, myAlertOnValium) {
+  constructor($state, myJumpFactory, rDatasetType, rSystemTags, $scope, myTrackerApi) {
     'ngInject';
 
     this.$state = $state;
     this.$scope = $scope;
     this.myJumpFactory = myJumpFactory;
     this.myTrackerApi = myTrackerApi;
-    this.myAlertOnValium = myAlertOnValium;
 
     let entityParams = this.$state.params.entityType;
     let entitySplit = entityParams.split(':');
@@ -79,10 +78,7 @@ class TrackerEntityController{
       .then((res) => {
         this.truthMeterMap = res;
       }, (err) => {
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: err.data
-        });
+        console.log('error', err);
       });
   }
 
@@ -94,7 +90,7 @@ class TrackerEntityController{
   }
 }
 
-TrackerEntityController.$inject = ['$state', 'myJumpFactory', 'rDatasetType', 'rSystemTags', '$scope', 'myTrackerApi', 'myAlertOnValium'];
+TrackerEntityController.$inject = ['$state', 'myJumpFactory', 'rDatasetType', 'rSystemTags', '$scope', 'myTrackerApi'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerEntityController', TrackerEntityController);

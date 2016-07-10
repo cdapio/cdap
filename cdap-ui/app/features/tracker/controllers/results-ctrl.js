@@ -15,12 +15,11 @@
  */
 
 class TrackerResultsController {
-  constructor($state, myTrackerApi, $scope, myHelpers, myAlertOnValium) {
+  constructor($state, myTrackerApi, $scope, myHelpers) {
     this.$state = $state;
     this.$scope = $scope;
     this.myTrackerApi = myTrackerApi;
     this.myHelpers = myHelpers;
-    this.myAlertOnValium = myAlertOnValium;
 
     this.loading = false;
     this.entitiesShowAllButton = false;
@@ -326,15 +325,12 @@ class TrackerResultsController {
       .then((response) => {
         this.truthMeterMap = response;
       }, (err) => {
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: err.data
-        });
+        console.log('error', err);
       });
   }
 }
 
-TrackerResultsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myHelpers', 'myAlertOnValium'];
+TrackerResultsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myHelpers'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerResultsController', TrackerResultsController);
