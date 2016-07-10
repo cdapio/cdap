@@ -15,11 +15,12 @@
  */
 
 class TrackerResultsController {
-  constructor($state, myTrackerApi, $scope, myHelpers) {
+  constructor($state, myTrackerApi, $scope, myHelpers, myAlertOnValium) {
     this.$state = $state;
     this.$scope = $scope;
     this.myTrackerApi = myTrackerApi;
     this.myHelpers = myHelpers;
+    this.myAlertOnValium = myAlertOnValium;
 
     this.loading = false;
     this.entitiesShowAllButton = false;
@@ -114,17 +115,6 @@ class TrackerResultsController {
     ];
 
     this.fetchResults();
-
-    // Mock data
-    this.truthMeterMap = {
-      Dataset: {
-        'history': 80,
-        'purchases': 26
-      },
-      Stream: {
-        'purchaseStream': 44
-      }
-    };
   }
 
   fetchResults () {
@@ -141,6 +131,7 @@ class TrackerResultsController {
       .then( (res) => {
         this.fullResults = res.map(this.parseResult.bind(this));
         this.searchResults = angular.copy(this.fullResults);
+        this.fetchTruthMeter();
         this.loading = false;
       }, (err) => {
         console.log('error', err);
@@ -309,9 +300,41 @@ class TrackerResultsController {
 
     return this.searchResults.length === 0 ? '0' : lowerLimit + '-' + upperLimit;
   }
+
+  fetchTruthMeter() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    let streamsList = [];
+    let datasetsList = [];
+
+    angular.forEach(this.fullResults, (entity) => {
+      if (entity.type === 'Stream') {
+        streamsList.push(entity.name);
+      } else if (entity.type === 'Dataset') {
+        datasetsList.push(entity.name);
+      }
+    });
+
+    this.myTrackerApi.getTruthMeter(params, {
+      streams: streamsList,
+      datasets: datasetsList
+    })
+      .$promise
+      .then((response) => {
+        this.truthMeterMap = response;
+      }, (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
+  }
 }
 
-TrackerResultsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myHelpers'];
+TrackerResultsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myHelpers', 'myAlertOnValium'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerResultsController', TrackerResultsController);
