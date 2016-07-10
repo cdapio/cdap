@@ -20,6 +20,10 @@ class WizardSelectActionStepCtrl {
     this.postActionsList = [];
     this.$scope = $scope;
 
+    this.onItemClicked = function(event, action) {
+      this.chooseAction(action);
+    };
+
     let params = {
       namespace: $state.params.namespace,
       pipelineType: artifact.name,
