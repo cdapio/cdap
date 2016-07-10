@@ -345,7 +345,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   /**
-   * Represents an entry in the listing of the secure store elements.
+   * Represents an entry in the listing of secure store elements.
    */
   public static class SecureStoreListEntry {
 
