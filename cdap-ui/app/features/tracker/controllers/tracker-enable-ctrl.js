@@ -24,9 +24,8 @@ class TrackerEnableController{
     this.$q = $q;
     this.UI_CONFIG = UI_CONFIG;
 
-    this.auditServiceRunning = false;
+    this.trackerServiceRunning = false;
     this.auditFlowRunning = false;
-    this.auditMetricsRunning = false;
   }
 
   enableTracker() {
@@ -95,10 +94,10 @@ class TrackerEnableController{
   }
 
   startPrograms() {
-    let auditServiceParams = {
+    let trackerServiceParams = {
       namespace: this.$state.params.namespace,
       programType: 'services',
-      programId: this.UI_CONFIG.tracker.programId,
+      programId: this.UI_CONFIG.tracker.serviceId,
       scope: this.$scope
     };
 
@@ -109,21 +108,14 @@ class TrackerEnableController{
       scope: this.$scope
     };
 
-    let auditMetricsParams = {
-      namespace: this.$state.params.namespace,
-      programType: 'services',
-      programId: this.UI_CONFIG.tracker.metricProgramId,
-      scope: this.$scope
-    };
-
-    this.myTrackerApi.startTrackerProgram(auditServiceParams, {})
+    this.myTrackerApi.startTrackerProgram(trackerServiceParams, {})
       .$promise
       .then( () => {
-        this.auditServiceRunning = true;
+        this.trackerServiceRunning = true;
         this.onSuccessStartingPrograms();
       }, (err) => {
         if (err.statusCode === 409) {
-          this.auditServiceRunning = true;
+          this.trackerServiceRunning = true;
           this.onSuccessStartingPrograms();
           return;
         }
@@ -146,24 +138,10 @@ class TrackerEnableController{
         this.onErrorStartingPrograms(err);
       });
 
-    this.myTrackerApi.startTrackerProgram(auditMetricsParams, {})
-      .$promise
-      .then( () => {
-        this.auditMetricsRunning = true;
-        this.onSuccessStartingPrograms();
-      }, (err) => {
-        if (err.statusCode === 409) {
-          this.auditMetricsRunning = true;
-          this.onSuccessStartingPrograms();
-          return;
-        }
-
-        this.onErrorStartingPrograms(err);
-      });
   }
 
   onSuccessStartingPrograms() {
-    if (!(this.auditFlowRunning && this.auditServiceRunning && this.auditMetricsRunning)) {
+    if (!(this.auditFlowRunning && this.trackerServiceRunning)) {
       return;
     }
 
