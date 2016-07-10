@@ -17,7 +17,7 @@
 <div class="truth-meter"
     ng-style="{'border-left-width': TruthMeter.width + 'px'}">
   <div class="truth-score"
-      ng-style="{'left': ((TruthMeter.width * -1) + (TruthMeter.score * TruthMeter.multiplier)) + 'px'}">
+      ng-style="{'left': ((TruthMeter.width * -1) + (TruthMeter.score * (TruthMeter.width / 100))) + 'px'}">
     <span ng-bind="TruthMeter.score"></span>
   </div>
 </div>

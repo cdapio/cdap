@@ -162,9 +162,8 @@
         </div>
 
         <div class="col-xs-4">
-          <my-truth-meter score="entity.score"
-                          width="190"
-                          multiplier="1.9"></my-truth-meter>
+          <my-truth-meter score="ResultsController.truthMeterMap[entity.type][entity.name]"
+                          width="190"></my-truth-meter>
         </div>
 
         <div class="col-xs-2 text-right">

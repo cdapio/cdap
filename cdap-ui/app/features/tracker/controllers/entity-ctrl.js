@@ -26,62 +26,37 @@ class TrackerEntityController{
     this.datasetExplorable = Array.isArray(rSystemTags) && rSystemTags.indexOf('explore') !== -1;
 
     // Mock data
-    this.truthMeterData = {
-      datasets: [
-        {
-          name: 'history',
-          value: 80
-        },
-        {
-          name: 'purchases',
-          value: 26
-        }
-      ],
-      streams: [
-        {
-          name: 'purchaseStream',
-          value: 44
-        },
-        {
-          name: 'strm2',
-          value: 99
-        }
-      ]
+    this.truthMeterMap = {
+      datasets: {
+        'history': 80,
+        'purchases': 26
+      },
+      streams: {
+        'purchaseStream': 44
+      }
     };
 
     switch (entitySplit[0]) {
       case 'streams':
         this.entityInfo = {
           name: 'Stream',
-          icon: 'icon-streams'
+          icon: 'icon-streams',
+          score: this.truthMeterMap[this.$state.params.entityType][this.$state.params.entityId]
         };
-        for (var i=0; i < this.truthMeterData.streams.length; i++) {
-          if(this.truthMeterData.streams[i].name === this.$state.params.entityId) {
-            this.entityInfo.score = this.truthMeterData.streams[i].value;
-          }
-        }
         break;
       case 'datasets':
         this.entityInfo = {
           name: 'Dataset',
-          icon: 'icon-datasets'
+          icon: 'icon-datasets',
+          score: this.truthMeterMap[this.$state.params.entityType][this.$state.params.entityId]
         };
-        for (var n=0; n < this.truthMeterData.datasets.length; n++) {
-          if(this.truthMeterData.datasets[n].name === this.$state.params.entityId) {
-            this.entityInfo.score = this.truthMeterData.datasets[n].value;
-          }
-        }
         break;
       case 'views':
         this.entityInfo = {
           name: 'Stream View',
-          icon: 'icon-streams'
+          icon: 'icon-streams',
+          score: this.truthMeterMap[this.$state.params.entityType][this.$state.params.entityId]
         };
-        for (var x=0; x < this.truthMeterData.streams.length; x++) {
-          if(this.truthMeterData.streams[x].name === this.$state.params.entityId) {
-            this.entityInfo.score = this.truthMeterData.streams[x].value;
-          }
-        }
         break;
     }
   }
