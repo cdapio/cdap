@@ -14,7 +14,7 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi) {
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -24,6 +24,32 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS) {
       }
     });
   };
+
+  var namespace = 'default',
+      appId = 'HelloWorld',
+      programType = 'flows',
+      programId = 'WhoFlow',
+      runId = '3d7bef02-453e-11e6-8c94-56219b501a22';
+
+  myLogsApi.nextLogs({
+    'namespace' : namespace,
+    'appId' : appId,
+    'programType' : programType,
+    'programId' : programId,
+    'runId' : runId,
+  }).$promise.then(
+    (res) => {
+      //Process the data
+      angular.forEach(res, (element, index) => {
+        let formattedDate = new Date(res[index].log.timestamp);
+        res[index].log.timestamp = formattedDate;
+      });
+      this.timelineData = res;
+    },
+    (err) => {
+      console.log('ERROR: ', err);
+    });
+
 }
 
 angular.module(PKG.name + '.commons')
