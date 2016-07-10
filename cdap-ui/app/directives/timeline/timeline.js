@@ -16,8 +16,9 @@
 
 function link (scope, element) {
 
-  let timelineData = this.timelineData;
+  let timelineData = scope.timelineData;
 
+  console.log('from link function: ' , scope.testLogs);
   //Globals
   let width = element.parent()[0].offsetWidth;
   let height = 50;
