@@ -74,8 +74,8 @@ public class Hive12ExploreService extends BaseHiveExploreService {
                               StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                               ExploreTableNaming tableNaming) {
-    super(txClient, datasetFramework, cConf, hConf, previewsDir,
-          streamAdmin, namespaceQueryAdmin, datasetInstantiatorFactory, tableNaming);
+    super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin, namespaceQueryAdmin,
+          datasetInstantiatorFactory, tableNaming);
   }
 
   @Override
