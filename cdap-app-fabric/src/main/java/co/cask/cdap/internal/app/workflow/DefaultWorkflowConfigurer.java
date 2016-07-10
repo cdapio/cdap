@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.workflow;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -96,6 +97,11 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
 
   @Override
   public void addAction(WorkflowAction action) {
+    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
+  }
+
+  @Override
+  public void addAction(CustomAction action) {
     nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
   }
 
