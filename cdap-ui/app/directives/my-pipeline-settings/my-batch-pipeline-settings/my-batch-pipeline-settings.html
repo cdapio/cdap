@@ -51,30 +51,32 @@
     </div>
   </my-card>
 
-  <my-card title="Engine" class="engine">
-    <form role="form">
-      <label>
-        <input type="radio"
-          name="mapreduce"
-          value="mapreduce"
-          ng-change="MyBatchPipelineSettingsCtrl.onEngineChange()"
-          ng-model="MyBatchPipelineSettingsCtrl.engine">
-        MapReduce
-      </label>
-      <label>
-        <input type="radio"
-           name="spark"
-           value="spark"
-           ng-change="MyBatchPipelineSettingsCtrl.onEngineChange()"
-           ng-model="MyBatchPipelineSettingsCtrl.engine">
-          Spark
-      </label>
-    </form>
-  </my-card>
-  <my-card title="Post Run Actions" class="post-run-actions">
-    <my-post-run-actions
-      action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
-      store="MyBatchPipelineSettingsCtrl.store">
-    </my-post-run-actions>
-  </my-card>
+  <div class="engine-post-runs-section">
+    <my-card title="Post Run Actions" class="post-run-actions">
+      <my-post-run-actions
+        action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
+        store="MyBatchPipelineSettingsCtrl.store">
+      </my-post-run-actions>
+    </my-card>
+    <my-card title="Engine" class="engine">
+      <form role="form">
+        <label>
+          <input type="radio"
+            name="mapreduce"
+            value="mapreduce"
+            ng-change="MyBatchPipelineSettingsCtrl.onEngineChange()"
+            ng-model="MyBatchPipelineSettingsCtrl.engine">
+          MapReduce
+        </label>
+        <label>
+          <input type="radio"
+             name="spark"
+             value="spark"
+             ng-change="MyBatchPipelineSettingsCtrl.onEngineChange()"
+             ng-model="MyBatchPipelineSettingsCtrl.engine">
+            Spark
+        </label>
+      </form>
+    </my-card>
+  </div>
 </div>

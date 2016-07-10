@@ -18,74 +18,92 @@ my-batch-pipeline-settings {
     display: flex;
     justify-content: space-between;
 
-    > my-card {
-      flex: 1;
-      margin-right: 10px;
-      label {
-        font-weight: 500;
-        color: gray;
-        cursor: pointer;
-        input[type="radio"] {
-          margin-top: 3px;
-        }
-      }
-      &.resources,
-      &.engine {
-        flex-grow: 0.5;
+    my-card {
+      &.schedule {
+        flex: 0.5;
+        margin-right: 10px;
         label {
           font-weight: 500;
           color: gray;
-          display: block;
-        }
-      }
-      &.post-run-actions {
-        .panel-body {
-          padding: 0;
-        }
-      }
-      &:last-child {
-        margin-right: 0;
-      }
-      .select-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: 500;
-        color: #6d6d6d;
-        margin: 5px 0;
-
-        > .cron-select {
-          margin-left: 5px;
-          color: inherit;
-          width: auto;
-          display: flex;
-          flex: 1;
-        }
-        .cron-select-wrap {
-          display: flex;
-          flex-grow: 1;
-          margin-left: 10px;
-          .cron-select {
-            transition: none;
-            flex-grow: 1;
-            color: inherit;
-            width: auto;
+          cursor: pointer;
+          input[type="radio"] {
+            margin-top: 3px;
           }
         }
-        .select-options {
-          margin-left: 5px;
+        &.resources,
+        &:last-child {
+          margin-right: 0;
+        }
+        .select-wrapper {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          > * {
-            width: auto;
+          font-weight: 500;
+          color: #6d6d6d;
+          margin: 5px 0;
+
+          > .cron-select {
             margin-left: 5px;
+            color: inherit;
+            width: auto;
+            display: flex;
+            flex: 1;
+            // Thankyou, safari
+            min-width: 70px;
+          }
+          .cron-select-wrap {
+            display: flex;
+            flex-grow: 1;
+            margin-left: 10px;
+            .cron-select {
+              transition: none;
+              flex-grow: 1;
+              color: inherit;
+              width: auto;
+            }
+          }
+          .select-options {
+            margin-left: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            > * {
+              width: auto;
+              margin-left: 5px;
+              padding: 0;
+            }
+          }
+        }
+        my-schedule {
+          table.table {
+            margin-top: 5px;
           }
         }
       }
-      my-schedule {
-        table.table {
-          margin-top: 5px;
+    }
+    .engine-post-runs-section {
+      display: flex;
+      flex: 0.5;
+      flex-direction: column;
+      align-items: flex-end;
+      my-card {
+        flex: 1;
+        margin-right: 10px;
+        &.engine {
+          flex-grow: 0.5;
+          width: 200px;
+          label {
+            font-weight: 500;
+            color: gray;
+            display: block;
+          }
+        }
+        &.post-run-actions {
+          width: 100%;
+          margin-right: 0;
+          .panel-body {
+            padding: 0;
+          }
         }
       }
     }
