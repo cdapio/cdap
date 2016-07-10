@@ -58,7 +58,8 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/key")
   @PUT
-  public void create(HttpRequest httpRequest, HttpResponder httpResponder) throws BadRequestException, IOException {
+  public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
+    throws BadRequestException, IOException {
     SecureStoreCreateRequest secureStoreCreateRequest = parseBody(httpRequest, SecureStoreCreateRequest.class);
 
     if (secureStoreCreateRequest == null) {
@@ -75,31 +76,34 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Data can not be empty.");
     }
     byte[] data = value.getBytes(StandardCharsets.UTF_8);
-    secureStoreManager.put(name, data, description, secureStoreCreateRequest.getProperties());
+    secureStoreManager.put(namespace, name, data, description, secureStoreCreateRequest.getProperties());
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/keys/{key-name}")
   @DELETE
-  public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name)
+  public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name,
+                     @PathParam("namespace-id") String namespace)
     throws IOException {
-    secureStoreManager.delete(name);
+    secureStoreManager.delete(namespace, name);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/keys/{key-name}")
   @GET
-  public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name)
+  public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name,
+                  @PathParam("namespace-id") String namespace)
     throws IOException {
-    SecureStoreData secureStoreData = secureStore.get(name);;
+    SecureStoreData secureStoreData = secureStore.get(namespace, name);
     String data = new String(secureStoreData.get(), StandardCharsets.UTF_8);
     httpResponder.sendJson(HttpResponseStatus.OK, data);
   }
 
   @Path("/keys")
   @GET
-  public void list(HttpRequest httpRequest, HttpResponder httpResponder) throws IOException {
-    List<SecureStoreMetadata> metadataList = secureStore.list();
+  public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
+    throws IOException {
+    List<SecureStoreMetadata> metadataList = secureStore.list(namespace);
     List<FileSecureStore.SecureStoreListEntry> returnList = new ArrayList<>(metadataList.size());
     for (SecureStoreMetadata metadata : metadataList) {
       returnList.add(new FileSecureStore.SecureStoreListEntry(metadata.getName(), metadata.getDescription()));

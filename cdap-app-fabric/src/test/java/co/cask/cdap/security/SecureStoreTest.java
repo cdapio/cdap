@@ -82,9 +82,12 @@ public class SecureStoreTest extends AppFabricTestBase {
 
   @Test
   public void testList() throws Exception {
+    // Test empty list
     HttpResponse response = doGet("/v3/security/store/namespaces/default/keys/");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("[]", readResponse(response));
+
+    // One element
     SecureStoreCreateRequest secureStoreCreateRequest = new SecureStoreCreateRequest(KEY, DESCRIPTION, DATA,
                                                                                      PROPERTIES);
     response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureStoreCreateRequest));
@@ -98,6 +101,7 @@ public class SecureStoreTest extends AppFabricTestBase {
       Assert.assertTrue(expectedList.contains(entry));
     }
 
+    // Two elements
     secureStoreCreateRequest = new SecureStoreCreateRequest(KEY2, DESCRIPTION2, DATA2, PROPERTIES2);
     response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureStoreCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -109,6 +113,7 @@ public class SecureStoreTest extends AppFabricTestBase {
       Assert.assertTrue(expectedList.contains(entry));
     }
 
+    // After deleting an element
     delete(KEY);
     response = doGet("/v3/security/store/namespaces/default/keys/");
     String result3 = readResponse(response);
