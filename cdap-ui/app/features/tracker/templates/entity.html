@@ -38,7 +38,7 @@
   </div>
 
   <div class="truth-meter-container">
-    <my-truth-meter score="EntityController.entityInfo.score"
+    <my-truth-meter score="EntityController.truthMeterMap[$state.params.entityType][$state.params.entityId]"
                     width="125"></my-truth-meter>
   </div>
 

@@ -40,22 +40,19 @@ class TrackerEntityController{
       case 'streams':
         this.entityInfo = {
           name: 'Stream',
-          icon: 'icon-streams',
-          score: this.truthMeterMap[this.$state.params.entityType][this.$state.params.entityId]
+          icon: 'icon-streams'
         };
         break;
       case 'datasets':
         this.entityInfo = {
           name: 'Dataset',
-          icon: 'icon-datasets',
-          score: this.truthMeterMap[this.$state.params.entityType][this.$state.params.entityId]
+          icon: 'icon-datasets'
         };
         break;
       case 'views':
         this.entityInfo = {
           name: 'Stream View',
-          icon: 'icon-streams',
-          score: this.truthMeterMap[this.$state.params.entityType][this.$state.params.entityId]
+          icon: 'icon-streams'
         };
         break;
     }
