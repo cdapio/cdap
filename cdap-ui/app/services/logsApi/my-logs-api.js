@@ -27,11 +27,18 @@ angular.module(PKG.name + '.services')
       appId: '@appId',
       programType: '@programType',
       programId: '@flowId',
-      runId: '@runId'
+      runId: '@runId',
+      start: '@start',
+      stop: '@stop'
     },
     {
+      getLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs', true),
+      getLogsJson: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs?format=json', true),
+      getLogsStart: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs?format=json?start=:start', true),
       nextLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
-      prevLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/prev', true)
+      nextLogsJson: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next?format=json', true),
+      prevLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/prev', true),
+      prevLogsJson: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/prev', true)
     });
 
   });

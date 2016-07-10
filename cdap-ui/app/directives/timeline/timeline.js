@@ -16,7 +16,7 @@
 
 function link (scope, element) {
 
-  let timelineData = scope.timelineData;
+  let timelineData = this.timelineData;
 
   //Globals
   let width = element.parent()[0].offsetWidth;
@@ -36,7 +36,10 @@ function link (scope, element) {
   let brush;
   let xScale;
 
+  /* ------------------- Plot Function ------------------- */
+
   scope.plot = function plot() {
+
     // -----------------Define SVG and Plot Circles-------------------------- //
     let svg = d3.select('.timeline-log-chart')
                 .append('svg')
@@ -44,8 +47,9 @@ function link (scope, element) {
                 .attr('height', height);
     //Set the Range and Domain
     xScale = d3.time.scale().range([0, (maxRange)]);
+
     xScale.domain(d3.extent(timelineData, function(d) {
-      return d.time;
+      return d.log.timestamp;
     }));
     //Define the axes and ticks
     let xAxis = d3.svg.axis().scale(xScale)
@@ -61,16 +65,16 @@ function link (scope, element) {
       .append('circle');
 
     circles.attr('cx', function(d) {
-      let xVal = Math.floor(xScale(d.time));
+      let xVal = Math.floor(xScale(d.log.time));
       if(timelineStack[xVal] === undefined){
         timelineStack[xVal] = 0;
       } else {
         timelineStack[xVal]++;
       }
-      return xScale(d.time) + 15;
+      return xScale(d.log.time) + 15;
     })
     .attr('cy', function(d) {
-      let numDots = timelineStack[Math.floor(xScale(d.time))]--;
+      let numDots = timelineStack[Math.floor(xScale(d.log.time))]--;
       return height-height/2.5 - (numDots * 6);
     })
     .attr('r', 2)
@@ -203,6 +207,13 @@ function link (scope, element) {
         .attr('y', 0)
         .attr('class', 'scroll-pin');
 
+    d3.select('.scroll-pin').append('image')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('height', '15px')
+      .attr('width', '15px')
+      .attr('src', '/assets/img/scrollpin.png');
+
     var updatePin = function (val) {
       pinX = val;
       pinHandle.attr('x', val);
@@ -210,8 +221,6 @@ function link (scope, element) {
 
     scope.updatePin = updatePin;
   };
-
-  scope.plot();
 }
 
 angular.module(PKG.name + '.commons')
