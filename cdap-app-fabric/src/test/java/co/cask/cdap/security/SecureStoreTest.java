@@ -115,15 +115,6 @@ public class SecureStoreTest extends AppFabricTestBase {
     for (SecureKeyListEntry entry : list) {
       Assert.assertTrue(expected.contains(entry));
     }
-
-    delete(KEY);
-    response = doGet("/v3/security/store/namespaces/default/keys/");
-    String result3 = readResponse(response);
-    list = new Gson().fromJson(result3, listType);
-    expectedList.remove(new FileSecureStore.SecureStoreListEntry(KEY, DESCRIPTION));
-    for (FileSecureStore.SecureStoreListEntry entry : list) {
-      Assert.assertTrue(expectedList.contains(entry));
-    }
   }
 
   public HttpResponse delete(String key) throws Exception {
