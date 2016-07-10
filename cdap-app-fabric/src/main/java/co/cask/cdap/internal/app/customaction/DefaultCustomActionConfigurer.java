@@ -18,10 +18,14 @@ package co.cask.cdap.internal.app.customaction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.customaction.DefaultCustomActionSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
@@ -33,7 +37,7 @@ import java.util.Set;
 /**
  * Default implementation of the {@link CustomActionConfigurer}.
  */
-public class DefaultCustomActionConfigurer implements CustomActionConfigurer {
+public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer implements CustomActionConfigurer {
   private final String className;
   private final Map<String, String> propertyFields;
   private final Set<String> datasetFields;
@@ -42,7 +46,9 @@ public class DefaultCustomActionConfigurer implements CustomActionConfigurer {
   private String description;
   private Map<String, String> properties;
 
-  private DefaultCustomActionConfigurer(CustomAction customAction) {
+  private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace, Id.Artifact artifactId,
+                                       ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.name = customAction.getClass().getSimpleName();
     this.description = "";
     this.className = customAction.getClass().getName();
@@ -80,8 +86,12 @@ public class DefaultCustomActionConfigurer implements CustomActionConfigurer {
     return new DefaultCustomActionSpecification(className, name, description, properties, datasets);
   }
 
-  public static CustomActionSpecification configureAction(CustomAction action) {
-    DefaultCustomActionConfigurer configurer = new DefaultCustomActionConfigurer(action);
+  public static CustomActionSpecification configureAction(CustomAction action, Id.Namespace deployNamespace,
+                                                          Id.Artifact artifactId, ArtifactRepository artifactRepository,
+                                                          PluginInstantiator pluginInstantiator) {
+    DefaultCustomActionConfigurer configurer = new DefaultCustomActionConfigurer(action, deployNamespace, artifactId,
+                                                                                 artifactRepository,
+                                                                                 pluginInstantiator);
     action.configure(configurer);
     return configurer.createSpecification();
   }

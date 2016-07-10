@@ -16,6 +16,7 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 
 /**
@@ -36,5 +37,10 @@ public class TrunkProgramAdder implements WorkflowProgramAdder {
   @Override
   public void addSpark(String name) {
     configurer.addSpark(name);
+  }
+
+  @Override
+  public void addAction(CustomAction action) {
+    configurer.addAction(action);
   }
 }

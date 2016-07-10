@@ -33,6 +33,7 @@ import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
 import co.cask.cdap.etl.batch.WorkflowBackedActionContext;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
+import co.cask.cdap.etl.batch.customaction.PipelineAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.Constants;
@@ -235,6 +236,14 @@ public class SmartWorkflow extends AbstractWorkflow {
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
                                                        spec.isStageLoggingEnabled(), phaseConnectorDatasets);
 
+    // Custom action is the only phase in the pipeline which has no associated dag
+    boolean hasCustomAction = batchPhaseSpec.getPhase().getSources().isEmpty()
+      && batchPhaseSpec.getPhase().getSinks().isEmpty();
+    if (hasCustomAction) {
+      // Add custom action to the Workflow
+      programAdder.addAction(new PipelineAction(batchPhaseSpec));
+      return;
+    }
 
     boolean hasSparkCompute = !batchPhaseSpec.getPhase().getStagesOfType(SparkCompute.PLUGIN_TYPE).isEmpty();
     boolean hasSparkSink = !batchPhaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE).isEmpty();
