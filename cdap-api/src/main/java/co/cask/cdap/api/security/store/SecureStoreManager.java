@@ -37,7 +37,6 @@ public interface SecureStoreManager {
     throws IOException;
 
   /**
-   *
    * @param namespace The namespace that this key belongs to.
    * @param name of the element to delete.
    * @throws IOException If the store is not initialized or if the key could not be removed.

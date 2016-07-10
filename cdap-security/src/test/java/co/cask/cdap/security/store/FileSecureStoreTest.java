@@ -130,7 +130,7 @@ public class FileSecureStoreTest {
   }
 
   @Test(expected = IOException.class)
-  public void testGet_NonExistent() throws IOException {
+  public void testGetNonExistent() throws IOException {
     secureStore.get(NAMESPACE1, "Dummy");
   }
 
@@ -147,5 +147,21 @@ public class FileSecureStoreTest {
       Assert.assertTrue(ioe.getMessage().contains("not found in the secure store"));
       throw ioe;
     }
+  }
+
+  @Test
+  public void testMultipleNamespaces() throws IOException {
+    populateStore();
+    String ns = "namespace2";
+    secureStoreManager.put(ns, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    List<SecureStoreMetadata> expectedList = new ArrayList<>();
+    expectedList.add(secureStore.get(NAMESPACE1, KEY2).getMetadata());
+    expectedList.add(secureStore.get(NAMESPACE1, KEY1).getMetadata());
+    Assert.assertEquals(expectedList, secureStore.list(NAMESPACE1));
+    Assert.assertNotEquals(expectedList, secureStore.list(ns));
+    expectedList.clear();
+    expectedList.add(secureStore.get(ns, KEY1).getMetadata());
+    Assert.assertEquals(expectedList, secureStore.list(ns));
+    Assert.assertNotEquals(expectedList, secureStore.list(NAMESPACE1));
   }
 }

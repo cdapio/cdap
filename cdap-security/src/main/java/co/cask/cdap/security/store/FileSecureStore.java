@@ -85,7 +85,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
     path = dir.resolve(cConf.get(Constants.Security.Store.FILE_NAME));
-    nameSeparator = cConf.get(Constants.Security.Store.NAME_SEPARATOR);
+    nameSeparator = Constants.Security.Store.NAME_SEPARATOR;
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
 
@@ -341,7 +341,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   /**
-   * Represents an entry in the listing of the secure store elements.
+   * Represents an entry in the listing of secure store elements.
    */
   public static class SecureStoreListEntry {
 
