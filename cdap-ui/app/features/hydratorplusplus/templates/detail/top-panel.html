@@ -13,7 +13,7 @@
 
 <!-- TOP PANEL -->
 
-<div class="side-panel top text-center">
+<div class="side-panel top">
 
   <div class="run-specific-section">
     <div class="hydrator-detail-metadata">
@@ -165,12 +165,17 @@
   </div>
 
   <div class="pipeline-specific-section">
-    <div ui-sref="hydratorplusplus.create({data: TopPanelCtrl.config, type: TopPanelCtrl.app.type})" class="btn">
-    <span class="icon-clone"
-          uib-tooltip="Clone"
-          tooltip-placement="bottom"
-          tooltip-append-to-body="true"
-          tooltip-class="toppanel-tooltip"></span>
+    <div class="btn" ng-click="TopPanelCtrl.viewSettings = !TopPanelCtrl.viewSettings">
+      <span class="fa fa-sliders"></span>
+    </div>
+    <div class="btn"
+         ui-sref="hydratorplusplus.create({data: TopPanelCtrl.config, type: TopPanelCtrl.app.type})" >
+      <span class="icon-clone"
+            uib-tooltip="Clone"
+            tooltip-placement="bottom"
+            tooltip-append-to-body="true"
+            tooltip-class="toppanel-tooltip">
+      </span>
     </div>
 
     <div class="btn"
@@ -190,6 +195,19 @@
             tooltip-placement="bottom"
             tooltip-append-to-body="true"
             tooltip-class="toppanel-tooltip"></span>
+    </div>
+  </div>
+  <div class="pipeline-settings-backdrop"
+       ng-if="TopPanelCtrl.viewSettings"
+       ng-click="TopPanelCtrl.viewSettings = false"></div>
+  <div class="pipeline-settings">
+    <div
+      store="TopPanelCtrl.HydratorPlusPlusDetailNonRunsStore"
+      action-creator="TopPanelCtrl.HydratorPlusPlusDetailActions"
+      ng-if="TopPanelCtrl.viewSettings"
+      is-disabled="true"
+      template-type="{{TopPanelCtrl.config.artifact.name}}"
+      my-pipeline-settings>
     </div>
   </div>
 </div>

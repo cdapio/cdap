@@ -17,6 +17,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorDetailTopPanelController', function(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium) {
     this.GLOBALS = GLOBALS;
     this.myAlertOnValium = myAlertOnValium;
+    this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
+    this.HydratorPlusPlusDetailActions = HydratorPlusPlusDetailActions;
     this.config = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
     this.app = {
       name: this.config.name,
@@ -27,6 +29,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
 
     var params;
+    this.viewSettings = false;
     this.setState = function() {
       this.runsCount = HydratorPlusPlusDetailRunsStore.getRunsCount();
       var runs = HydratorPlusPlusDetailRunsStore.getRuns();

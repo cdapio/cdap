@@ -102,6 +102,21 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       match = (match.length? match[0]: null);
       return match;
     };
+    this.getArtifact = function() {
+      return this.state.cloneConfig.artifact;
+    };
+    this.getSchedule = function() {
+      return this.state.cloneConfig.config.schedule;
+    };
+    this.getEngine = function() {
+      return this.state.cloneConfig.config.engine;
+    };
+    this.getPostActions = function() {
+      return this.state.cloneConfig.config.postActions;
+    };
+    this.getInstance = function() {
+      return this.state.cloneConfig.config.instances;
+    };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
       var appConfig = {};
