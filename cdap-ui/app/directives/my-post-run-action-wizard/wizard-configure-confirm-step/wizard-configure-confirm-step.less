@@ -13,27 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-my-realtime-pipeline-settings {
-  .pipeline-settings-content {
-    display: flex;
-    justify-content: flex-start;
 
-    my-card {
-      flex: 0.2;
-      .instance-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        > input,
-        label {
-          margin: 0 10px;
-        }
-      }
-      &.post-run-actions {
-        flex: 0.5;
-        margin-left: 10px;
-      }
-    }
+wizard-configure-confirm-step {
+  .confirm-step-content {
+    max-height: ~"calc(75vh - 100px)";
+    margin-bottom: 10px;
+    overflow: auto;
+    overflow-x: hidden;
   }
 }

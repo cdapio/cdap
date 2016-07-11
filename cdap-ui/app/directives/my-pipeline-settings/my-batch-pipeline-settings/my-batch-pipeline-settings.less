@@ -38,6 +38,11 @@ my-batch-pipeline-settings {
           display: block;
         }
       }
+      &.post-run-actions {
+        .panel-body {
+          padding: 0;
+        }
+      }
       &:last-child {
         margin-right: 0;
       }
@@ -52,12 +57,20 @@ my-batch-pipeline-settings {
         > .cron-select {
           margin-left: 5px;
           color: inherit;
-        }
-        .cron-select {
-          transition: none;
-          flex-grow: 1;
-          color: inherit;
           width: auto;
+          display: flex;
+          flex: 1;
+        }
+        .cron-select-wrap {
+          display: flex;
+          flex-grow: 1;
+          margin-left: 10px;
+          .cron-select {
+            transition: none;
+            flex-grow: 1;
+            color: inherit;
+            width: auto;
+          }
         }
         .select-options {
           margin-left: 5px;
@@ -65,6 +78,7 @@ my-batch-pipeline-settings {
           justify-content: space-between;
           align-items: center;
           > * {
+            width: auto;
             margin-left: 5px;
           }
         }

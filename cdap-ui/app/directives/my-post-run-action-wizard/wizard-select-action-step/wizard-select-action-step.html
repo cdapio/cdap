@@ -14,20 +14,18 @@
   the License.
 -->
 
-<div class="pipeline-settings-content">
-  <my-card title="Instances">
-    <div class="instance-wrapper">
-      <input type="number"
-             ng-model="MyRealtimePipelineSettingsCtrl.instance"
-             class="form-control"
-             min="1">
-      <label class="control-label">Instances</label>
+<div>
+  <div class="actions-list-section">
+    <div ng-repeat="action in WizardSelectActionStepCtrl.postActionsList track by $index"
+         class="btn btn-default"
+         my-popover
+         data-placement="right"
+         data-template="action.template"
+         content-data="action"
+         custom-class="non-template-popover"
+         data-popover-context="WizardSelectActionStepCtrl"
+         ng-click="WizardSelectActionStepCtrl.chooseAction(action)">
+      {{::action.label}}
     </div>
-  </my-card>
-  <my-card title="Post Run Actions" class="post-run-actions">
-    <my-post-run-actions
-      action-creator="MyRealtimePipelineSettingsCtrl.actionCreator"
-      store="MyRealtimePipelineSettingsCtrl.store">
-    </my-post-run-actions>
-  </my-card>
+  </div>
 </div>

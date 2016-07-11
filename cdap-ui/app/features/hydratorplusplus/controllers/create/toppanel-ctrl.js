@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers) {
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.GLOBALS = GLOBALS;
@@ -24,6 +24,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
+    this.myHelpers = myHelpers;
 
     this.canvasOperations = [
       {
@@ -65,7 +66,7 @@ class HydratorPlusPlusTopPanelCtrl{
         name: this.HydratorPlusPlusConfigStore.getName(),
         description: this.HydratorPlusPlusConfigStore.getDescription()
       },
-      viewSettings: false,
+      viewSettings: this.myHelpers.objectQuery(this.state, 'viewSettings') || false,
       artifact: this.HydratorPlusPlusConfigStore.getArtifact()
     };
   }
@@ -163,7 +164,7 @@ class HydratorPlusPlusTopPanelCtrl{
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

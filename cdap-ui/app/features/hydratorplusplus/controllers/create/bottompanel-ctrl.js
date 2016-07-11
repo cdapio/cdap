@@ -20,10 +20,6 @@ class HydratorPlusPlusBottomPanelCtrl {
       {
         title: 'Console',
         template: '/assets/features/hydratorplusplus/templates/partial/console.html'
-      },
-      {
-        title: 'Post-Run Actions',
-        template: '/assets/features/hydratorplusplus/templates/partial/postactions.html'
       }
     ];
     this.HydratorPlusPlusBottomPanelActions = HydratorPlusPlusBottomPanelActions;
