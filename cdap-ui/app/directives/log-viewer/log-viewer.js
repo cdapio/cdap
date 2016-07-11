@@ -59,6 +59,7 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
 
   LogViewerStore.subscribe(() => {
     this.logStartTime = LogViewerStore.getState().startTime;
+    console.log('new start time is set to: ' + LogViewerStore.getState().startTime);
   });
 
   this.configOptions = {
