@@ -15,9 +15,13 @@
  */
 
 class TrackerEntityController{
-  constructor($state, myJumpFactory, rDatasetType, rSystemTags) {
+  constructor($state, myJumpFactory, rDatasetType, rSystemTags, $scope, myTrackerApi) {
+    'ngInject';
+
     this.$state = $state;
+    this.$scope = $scope;
     this.myJumpFactory = myJumpFactory;
+    this.myTrackerApi = myTrackerApi;
 
     let entityParams = this.$state.params.entityType;
     let entitySplit = entityParams.split(':');
@@ -46,6 +50,36 @@ class TrackerEntityController{
         break;
     }
 
+    this.fetchTruthMeter();
+  }
+
+  fetchTruthMeter() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    let datasetsList = [];
+    let streamsList = [];
+
+    if (this.entityInfo.name === 'Stream') {
+      streamsList.push(this.$state.params.entityId);
+    } else if (this.entityInfo.name === 'Dataset') {
+      datasetsList.push(this.$state.params.entityId);
+    } else {
+      return;
+    }
+
+    this.myTrackerApi.getTruthMeter(params, {
+      streams: streamsList,
+      datasets: datasetsList
+    })
+      .$promise
+      .then((res) => {
+        this.truthMeterMap = res;
+      }, (err) => {
+        console.log('error', err);
+      });
   }
 
   goBack() {
@@ -56,7 +90,7 @@ class TrackerEntityController{
   }
 }
 
-TrackerEntityController.$inject = ['$state', 'myJumpFactory', 'rDatasetType', 'rSystemTags'];
+TrackerEntityController.$inject = ['$state', 'myJumpFactory', 'rDatasetType', 'rSystemTags', '$scope', 'myTrackerApi'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerEntityController', TrackerEntityController);

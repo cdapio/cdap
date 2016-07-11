@@ -28,7 +28,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       auditHistogramPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditmetrics/audit-histogram',
       timeSincePath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditmetrics/time-since',
       exploreQueryPath = '/namespaces/:namespace/data/explore/queries',
-      baseQueryPath = '/data/explore/queries/:handle';
+      baseQueryPath = '/data/explore/queries/:handle',
+      truthMeterPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/tracker-meter';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -58,6 +59,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     getTopEntities: myHelpers.getConfig('GET', 'REQUEST', topEntitiesPath, true, { suppressErrors: true }),
     getAuditHistogram: myHelpers.getConfig('GET', 'REQUEST', auditHistogramPath, false, { suppressErrors: true }),
     getTimeSince: myHelpers.getConfig('GET', 'REQUEST', timeSincePath, false, { suppressErrors: true }),
+    getTruthMeter: myHelpers.getConfig('POST', 'REQUEST', truthMeterPath, false, { suppressErrors: true }),
 
     // METADATA PROPERTIES CONTROL
     deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true }),
