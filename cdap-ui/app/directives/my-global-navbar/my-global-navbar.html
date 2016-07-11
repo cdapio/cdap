@@ -101,6 +101,12 @@
           Integrations
         </a>
       </li>
+      <li>
+        <a ui-sref="tracker.tags({ namespace: $stateParams.namespace })"
+           ng-class="{ 'active': Navbar.highlightTab === 'tags'}">
+          Tags
+        </a>
+      </li>
     </ul>
 
 

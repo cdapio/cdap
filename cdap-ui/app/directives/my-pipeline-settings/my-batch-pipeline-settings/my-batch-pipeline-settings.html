@@ -1,0 +1,80 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<div class="pipeline-settings-content">
+
+  <my-card title="Schedule" class="schedule">
+    <div class="radio-inline">
+      <label>
+        <input type="radio"
+               ng-change="MyBatchPipelineSettingsCtrl.changeScheduler()"
+               ng-model="MyBatchPipelineSettingsCtrl.scheduleWidget.type"
+               value="basic"/>
+        Basic
+      </label>
+    </div>
+    <div class="radio-inline">
+      <label>
+        <input type="radio"
+             ng-change="MyBatchPipelineSettingsCtrl.changeScheduler()"
+             ng-model="MyBatchPipelineSettingsCtrl.scheduleWidget.type"
+             value="advanced"/>
+        Advanced
+      </label>
+    </div>
+    <cron-selection
+      ng-if="MyBatchPipelineSettingsCtrl.scheduleWidget.type === 'basic'"
+      class="select-wrapper"
+      output="MyBatchPipelineSettingsCtrl.cron"
+      init="MyBatchPipelineSettingsCtrl.initialCron">
+    </cron-selection>
+    <div data-name="field"
+         ng-if="MyBatchPipelineSettingsCtrl.scheduleWidget.type === 'advanced'"
+         class="my-widget-container"
+         data-model="MyBatchPipelineSettingsCtrl.cron"
+         data-myconfig="{properties: {}, widget: 'schedule'}"
+         widget-container>
+    </div>
+  </my-card>
+
+  <my-card title="Engine" class="engine">
+    <form role="form">
+      <label>
+        <input type="radio"
+          name="mapreduce"
+          value="mapreduce"
+          ng-change="MyBatchPipelineSettingsCtrl.onEngineChange()"
+          ng-model="MyBatchPipelineSettingsCtrl.engine">
+        MapReduce
+      </label>
+      <label>
+        <input type="radio"
+           name="spark"
+           value="spark"
+           ng-change="MyBatchPipelineSettingsCtrl.onEngineChange()"
+           ng-model="MyBatchPipelineSettingsCtrl.engine">
+          Spark
+      </label>
+    </form>
+  </my-card>
+  <my-card title="Post Run Actions" class="post-run-actions">
+    <my-post-run-actions
+      action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
+      store="MyBatchPipelineSettingsCtrl.store">
+    </my-post-run-actions>
+  </my-card>
+</div>

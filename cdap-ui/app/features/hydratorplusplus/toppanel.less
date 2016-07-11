@@ -107,17 +107,30 @@ body.theme-cdap {
         padding-left: 10px;
       }
     }
+
+    .pipeline-settings {
+      background: lightgray;
+      position: fixed;
+      top: 93px;
+      right: 0;
+      z-index: 1039;
+      > div {
+        padding: 20px;
+        width: 100%;
+      }
+    }
   }
   &.state-hydratorplusplus-create {
-    div.side-panel.top {
-      height: @height-of-toppanel;
+    div.side-panel.top,
+    .pipeline-settings {
       max-width: ~"-moz-calc(100% - 130px)";
       max-width: ~"-webkit-calc(100% - 130px)";
       max-width: ~"calc(100% - 130px)";
       left: 130px;
       .transition(all 0.2s ease);
       display: flex;
-
+    }
+    .side-panel.top {
       div.hydrator-metadata {
         flex-grow: 3;
         flex-basis: 50%;
@@ -217,6 +230,8 @@ body.theme-cdap {
           height: 185px;
           cursor: auto;
           padding: 10px;
+          width: 100%;
+          position: absolute;
           @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
           .box-shadow(@box-shadow);
           div.pipeline-type {
@@ -255,6 +270,16 @@ body.theme-cdap {
           }
         }
       }
+    }
+    .pipeline-settings-backdrop {
+      position: fixed;
+      height: 100vh;
+      width: 100vw;
+      background: black;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      z-index: 1030;
     }
   }
   &.state-hydratorplusplus-detail {

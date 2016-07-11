@@ -522,6 +522,9 @@ class HydratorPlusPlusConfigStore {
   getSchedule() {
     return this.getState().config.schedule;
   }
+  getDefaultSchedule() {
+    return this.HYDRATOR_DEFAULT_VALUES.schedule;
+  }
   setSchedule(schedule) {
     this.state.config.schedule = schedule;
   }

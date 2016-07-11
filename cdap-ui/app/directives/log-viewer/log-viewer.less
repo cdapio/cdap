@@ -33,7 +33,51 @@
 @warning-color: #f6b354;
 
 my-log-viewer {
+
   .log-viewer-container {
+
+    .slider .background {
+      cursor: pointer;
+    }
+
+    .fill-bar {
+      background-color: green;
+    }
+
+    .domain {
+      fill: none;
+      stroke: none;
+      display: none;
+    }
+
+    .axis {
+      shape-rendering: crispEdges;
+    }
+
+    .slider .domain {
+      fill: none;
+      stroke: #000000;
+      stroke-opacity: 0.3;
+      stroke-width: 10px;
+      stroke-linecap: round;
+    }
+
+    .xaxis-top {
+      stroke: none;
+      fill: none;
+    }
+
+    .xaxis-bottom {
+      stroke: white;
+      fill: white;
+      stroke-width: 0.2;
+      shape-rendering: crispEdges;
+    }
+
+    .xaxis-bottom line {
+      stroke-width: 0.6;
+      shape-rendering: crispEdges;
+    }
 
     .logs-headerbar {
       background-color: @headerbar-background-color;
@@ -145,7 +189,7 @@ my-log-viewer {
         width: 75px;
         height: 20px;
         line-height: 20px;
-        background-color: #9cd0fc;
+        background-color: #999999;
         border-radius: 5px;
         float: right;
         color: #ffffff;
@@ -155,6 +199,10 @@ my-log-viewer {
         font-weight: normal;
         font-size: 11px;
         cursor: pointer;
+      }
+
+      tbody tr:hover {
+        background-color: #e4e4e4;
       }
 
       td {
@@ -210,6 +258,7 @@ my-log-viewer {
 
       .time {
         width: 15%;
+        max-width: 165px;
       }
       .time.log-header {
         padding-left: 20px;
@@ -240,11 +289,17 @@ my-log-viewer {
       .highlighted { background: blue; }
 
       .message {
-        width: 50%;
+        width: 100%;
+        max-width: 50%;
         clear: both;
 
         .message-main {
           padding-right: 10px;
+          cursor: pointer;
+          height: 25px;
+          overflow: hidden;
+          position: relative;
+          line-height: 25px;
         }
 
         .fa {
@@ -270,18 +325,20 @@ my-log-viewer {
           color: #7f7f7f;
           position: relative;
           left: 7px;
-          top: 6px;
+          top: 10px;
         }
 
         .message-column {
           word-wrap: break-word;
           padding-left: 5px;
+          position: absolute;
+          top: 0;
+          left: 20px;
         }
 
         .stack-trace {
           position: relative;
-          padding-bottom: 20px;
-          bottom: 10px;
+          padding-bottom: 11px;
           height: 100%;
           background-color: @stack-trace-background-color;
           pre {
@@ -289,6 +346,7 @@ my-log-viewer {
             top: 8px;
             left: -10px;
             font-size: 12px;
+            font-family: inherit;
             background-color: @stack-trace-background-color;
             color: @stack-trace-font-color;
             white-space: pre-wrap;
@@ -304,6 +362,7 @@ my-log-viewer {
           padding-top: 0;
           padding-left: 0;
           padding-bottom: 0;
+          overflow: hidden;
           .message-column { padding-bottom: 10px; }
         }
       }

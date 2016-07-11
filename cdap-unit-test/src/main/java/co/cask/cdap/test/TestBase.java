@@ -236,7 +236,6 @@ public class TestBase {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AbstractModule() {

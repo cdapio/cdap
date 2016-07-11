@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.spark;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -32,6 +33,7 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
@@ -57,6 +59,7 @@ import java.util.Set;
 public class ETLSpark extends AbstractSpark {
   private static final Logger LOG = LoggerFactory.getLogger(ETLSpark.class);
   private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
 
   private final BatchPhaseSpec phaseSpec;

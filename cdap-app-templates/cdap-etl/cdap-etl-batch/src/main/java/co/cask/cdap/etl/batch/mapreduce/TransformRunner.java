@@ -16,12 +16,14 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
@@ -32,6 +34,7 @@ import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
@@ -60,7 +63,9 @@ import java.util.Set;
 public class TransformRunner<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(TransformRunner.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .create();
   private final Set<String> transformsWithoutErrorDataset;
   private final Map<String, ErrorOutputWriter<Object, Object>> transformErrorSinkMap;
   private final TransformExecutor<KeyValue<KEY, VALUE>> transformExecutor;
@@ -90,17 +95,18 @@ public class TransformRunner<KEY, VALUE> {
     String sourceStage = (inputAliasName != null) ? inputAliasToStage.get(inputAliasName) : null;
 
     PipelinePhase phase = phaseSpec.getPhase();
-    Set<StageInfo> aggregators = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE);
-    if (!aggregators.isEmpty()) {
-      String aggregatorName = aggregators.iterator().next().getName();
+    Set<StageInfo> reducers = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);
+    if (!reducers.isEmpty()) {
+      String reducerName = reducers.iterator().next().getName();
       // if we're in the mapper, get the part of the pipeline starting from sources and ending at aggregator
       if (jobContext instanceof Mapper.Context) {
-        phase = phase.subsetTo(ImmutableSet.of(aggregatorName));
+        phase = phase.subsetTo(ImmutableSet.of(reducerName));
       } else {
         // if we're in the reducer, get the part of the pipeline starting from the aggregator and ending at sinks
-        phase = phase.subsetFrom(ImmutableSet.of(aggregatorName));
+        phase = phase.subsetFrom(ImmutableSet.of(reducerName));
       }
     }
+
     TransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
       new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics, runtimeArgs, sourceStage);
     this.transformExecutor = transformExecutorFactory.create(phase);
@@ -120,10 +126,10 @@ public class TransformRunner<KEY, VALUE> {
   private OutputWriter<Object, Object> getSinkWriter(MapReduceTaskContext<Object, Object> context,
                                                      PipelinePhase pipelinePhase,
                                                      Configuration hConf) {
-    Set<StageInfo> aggregators = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE);
-    if (!aggregators.isEmpty()) {
-      String aggregatorName = aggregators.iterator().next().getName();
-      if (pipelinePhase.getSinks().contains(aggregatorName)) {
+    Set<StageInfo> reducers = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);
+    if (!reducers.isEmpty()) {
+      String reducerName = reducers.iterator().next().getName();
+      if (pipelinePhase.getSinks().contains(reducerName)) {
         return new SingleOutputWriter<>(context);
       }
     }

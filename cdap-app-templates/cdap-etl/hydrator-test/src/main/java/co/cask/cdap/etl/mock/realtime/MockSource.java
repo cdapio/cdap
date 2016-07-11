@@ -99,7 +99,7 @@ public class MockSource extends RealtimeSource<StructuredRecord> {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("records", new PluginPropertyField("records", "", "string", false));
+    properties.put("records", new PluginPropertyField("records", "", "string", false, false));
     return new PluginClass(RealtimeSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(),
                            "config", properties);
   }

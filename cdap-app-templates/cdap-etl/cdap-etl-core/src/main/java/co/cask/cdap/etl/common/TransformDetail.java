@@ -25,33 +25,44 @@ import java.util.Collection;
 
 /**
  * Encapsulates {@link Transformation} list of next stages, current stage name, and {@link DefaultEmitter}.
+ * @param <T> the type of object to emit
  */
-public class TransformDetail implements Emitter<Object> {
+public class TransformDetail<T> implements Emitter<T> {
   private final Transformation transformation;
   private final Collection<String> nextStages;
-  private final DefaultEmitter<Object> defaultEmitter;
+  private String prevStage;
+  private final DefaultEmitter<T> defaultEmitter;
 
   public TransformDetail(Transformation transformation, Collection<String> nextStages) {
     this.transformation = transformation;
     this.nextStages = nextStages;
     this.defaultEmitter = new DefaultEmitter<>();
+    this.prevStage = "";
+  }
+
+  public String getPrevStage() {
+    return prevStage;
+  }
+
+  public void setPrevStage(String prevStage) {
+    this.prevStage = prevStage;
   }
 
   @Override
-  public void emit(Object value) {
+  public void emit(T value) {
     this.defaultEmitter.emit(value);
   }
 
   @Override
-  public void emitError(InvalidEntry<Object> invalidEntry) {
+  public void emitError(InvalidEntry<T> invalidEntry) {
     this.defaultEmitter.emitError(invalidEntry);
   }
 
-  public Collection<Object> getEntries() {
+  public Collection<T> getEntries() {
     return defaultEmitter.getEntries();
   }
 
-  public Collection<InvalidEntry<Object>> getErrors() {
+  public Collection<InvalidEntry<T>> getErrors() {
     return defaultEmitter.getErrors();
   }
 

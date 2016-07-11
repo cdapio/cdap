@@ -93,8 +93,10 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     List<StageConnections> traversalOrder = validateConfig(config);
 
     Map<String, DefaultPipelineConfigurer> pluginConfigurers = new HashMap<>(traversalOrder.size());
+    Map<String, String> pluginTypes = new HashMap<>(traversalOrder.size());
     for (StageConnections stageConnections : traversalOrder) {
       String stageName = stageConnections.getStage().getName();
+      pluginTypes.put(stageName, stageConnections.getStage().getPlugin().getType());
       pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(configurer, stageName));
     }
 
@@ -109,9 +111,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
       // for each output, set their input schema to our output schema
       for (String outputStageName : stageConnections.getOutputs()) {
-        pluginConfigurers.get(outputStageName).getStageConfigurer().setInputSchema(outputSchema);
+        pluginConfigurers.get(outputStageName).getStageConfigurer().addInputSchema(stageName, outputSchema);
       }
-
       specBuilder.addStage(stageSpec);
     }
 
@@ -137,12 +138,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     }
 
     PluginSpec pluginSpec = configurePlugin(stageName, stagePlugin, pluginConfigurer);
-    Schema inputSchema = pluginConfigurer.getStageConfigurer().getInputSchema();
     Schema outputSchema = pluginConfigurer.getStageConfigurer().getOutputSchema();
-
+    Map<String, Schema> inputSchemas = pluginConfigurer.getStageConfigurer().getInputSchemas();
     return StageSpec.builder(stageName, pluginSpec)
       .setErrorDatasetName(stage.getErrorDatasetName())
-      .setInputSchema(inputSchema)
+      .addInputSchemas(inputSchemas)
       .setOutputSchema(outputSchema)
       .addInputs(stageConnections.getInputs())
       .addOutputs(stageConnections.getOutputs())

@@ -72,3 +72,16 @@
   </div>
 
 </div>
+<div class="pipeline-settings-backdrop"
+     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings"
+     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings = false"></div>
+<div class="pipeline-settings">
+  <div
+    store="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigStore"
+    action-creator="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigActions"
+    ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings"
+    is-disabled="false"
+    template-type="{{HydratorPlusPlusTopPanelCtrl.state.artifact.name}}"
+    my-pipeline-settings>
+  </div>
+</div>

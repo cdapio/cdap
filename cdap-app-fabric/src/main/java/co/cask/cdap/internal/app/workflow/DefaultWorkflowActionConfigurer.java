@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.internal.app.customaction.DefaultCustomActionConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
@@ -33,7 +34,9 @@ import java.util.Set;
 
 /**
  * Default implementation of {@link WorkflowActionConfigurer}.
+ * @deprecated Deprecated as of 3.5.0. Please use {@link DefaultCustomActionConfigurer} instead.
  */
+@Deprecated
 public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer {
 
   private final String className;

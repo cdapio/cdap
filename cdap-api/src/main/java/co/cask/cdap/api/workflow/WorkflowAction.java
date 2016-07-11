@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.customaction.CustomAction;
+
 /**
  * Represents an action that can be executed in a {@link Workflow}. The lifecycle of a {@link WorkflowAction} is:
  *
@@ -29,7 +31,9 @@ package co.cask.cdap.api.workflow;
  *   {@link #destroy()}
  * }
  * </pre>
+ * @deprecated Deprecated as of 3.5.0. Please use {@link CustomAction} instead.
  */
+@Deprecated
 public interface WorkflowAction extends Runnable {
 
   /**

@@ -233,7 +233,10 @@ function getEs6Directives(isNegate) {
     'datetime-picker',
     'datetime-range',
     'log-viewer',
-    'complex-schema'
+    'complex-schema',
+    'my-pipeline-settings',
+    'my-post-run-action-wizard',
+    'my-post-run-actions'
   ];
 
   return es6directives.map(function (directive) {

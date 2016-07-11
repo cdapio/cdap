@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.workflow;
 
+import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 
 import java.util.Collections;
@@ -25,7 +26,10 @@ import java.util.Set;
 
 /**
  * The default implementation for a {@link WorkflowActionSpecification}.
+ * @deprecated Deprecated as of 3.5.0. Please use {@link CustomActionSpecification} and its default
+ * implementation instead.
  */
+@Deprecated
 public class DefaultWorkflowActionSpecification implements WorkflowActionSpecification {
 
   private final String className;

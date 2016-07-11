@@ -357,26 +357,26 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
       PluginInfo info1Namespace1 =
         new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), artifact1,
                        ImmutableMap.of(
-                         "x", new PluginPropertyField("x", "", "int", true),
-                         "stuff", new PluginPropertyField("stuff", "", "string", true)
+                         "x", new PluginPropertyField("x", "", "int", true, false),
+                         "stuff", new PluginPropertyField("stuff", "", "string", true, true)
                        ), new HashSet<String>());
       PluginInfo info2Namespace1 =
         new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
                        Plugin2.class.getName(), artifact1,
                        ImmutableMap.of(
-                         "v", new PluginPropertyField("v", "value to return when called", "int", true)
+                         "v", new PluginPropertyField("v", "value to return when called", "int", true, false)
                        ), new HashSet<String>());
       PluginInfo info1Namespace2 =
         new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), artifact2,
                        ImmutableMap.of(
-                         "x", new PluginPropertyField("x", "", "int", true),
-                         "stuff", new PluginPropertyField("stuff", "", "string", true)
+                         "x", new PluginPropertyField("x", "", "int", true, false),
+                         "stuff", new PluginPropertyField("stuff", "", "string", true, true)
                        ), new HashSet<String>());
       PluginInfo info2Namespace2 =
         new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
                        Plugin2.class.getName(), artifact2,
                        ImmutableMap.of(
-                         "v", new PluginPropertyField("v", "value to return when called", "int", true)
+                         "v", new PluginPropertyField("v", "value to return when called", "int", true, false)
                        ), new HashSet<String>());
 
       Id.Artifact namespace1Artifact = Id.Artifact.from(namespace1, systemId.getName(), systemId.getVersion());
@@ -606,11 +606,11 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
     // get plugin info. Again, wordcount1 should see plugins from both artifacts
     Map<String, PluginPropertyField> p1Properties = ImmutableMap.of(
-      "x", new PluginPropertyField("x", "", "int", true),
-      "stuff", new PluginPropertyField("stuff", "", "string", true)
+      "x", new PluginPropertyField("x", "", "int", true, false),
+      "stuff", new PluginPropertyField("stuff", "", "string", true, true)
     );
     Map<String, PluginPropertyField> p2Properties = ImmutableMap.of(
-      "v", new PluginPropertyField("v", "value to return when called", "int", true)
+      "v", new PluginPropertyField("v", "value to return when called", "int", true, false)
     );
 
     Set<PluginInfo> expectedInfos = Sets.newHashSet(

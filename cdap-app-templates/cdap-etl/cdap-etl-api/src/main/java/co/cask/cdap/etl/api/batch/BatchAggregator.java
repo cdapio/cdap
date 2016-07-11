@@ -59,7 +59,7 @@ public abstract class BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends Batch
   }
 
   /**
-   * Prepare a pipeline run. This is run before every time before a pipeline runs in order to help set up the run.
+   * Prepare a pipeline run. This is run every time before a pipeline runs in order to help set up the run.
    * This is where you would set things like the number of partitions to use when grouping, and setting the
    * group key and value classes if they are not known at compile time.
    *

@@ -21,7 +21,9 @@ import co.cask.cdap.etl.proto.v2.ETLStage;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -37,17 +39,17 @@ public class StageSpec {
   private final String name;
   private final PluginSpec plugin;
   private final String errorDatasetName;
-  private final Schema inputSchema;
+  private final Map<String, Schema> inputSchemas;
   private final Schema outputSchema;
   private final Set<String> inputs;
   private final Set<String> outputs;
 
   private StageSpec(String name, PluginSpec plugin, String errorDatasetName,
-                    Schema inputSchema, Schema outputSchema, Set<String> inputs, Set<String> outputs) {
+                    Map<String, Schema> inputSchemas, Schema outputSchema, Set<String> inputs, Set<String> outputs) {
     this.name = name;
     this.plugin = plugin;
     this.errorDatasetName = errorDatasetName;
-    this.inputSchema = inputSchema;
+    this.inputSchemas = inputSchemas;
     this.outputSchema = outputSchema;
     this.inputs = ImmutableSet.copyOf(inputs);
     this.outputs = ImmutableSet.copyOf(outputs);
@@ -65,8 +67,8 @@ public class StageSpec {
     return errorDatasetName;
   }
 
-  public Schema getInputSchema() {
-    return inputSchema;
+  public Map<String, Schema> getInputSchemas() {
+    return inputSchemas;
   }
 
   public Schema getOutputSchema() {
@@ -95,7 +97,7 @@ public class StageSpec {
     return Objects.equals(name, that.name) &&
       Objects.equals(plugin, that.plugin) &&
       Objects.equals(errorDatasetName, that.errorDatasetName) &&
-      Objects.equals(inputSchema, that.inputSchema) &&
+      Objects.equals(inputSchemas, that.inputSchemas) &&
       Objects.equals(outputSchema, that.outputSchema) &&
       Objects.equals(inputs, that.inputs) &&
       Objects.equals(outputs, that.outputs);
@@ -103,7 +105,7 @@ public class StageSpec {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, plugin, errorDatasetName, inputSchema, outputSchema, inputs, outputs);
+    return Objects.hash(name, plugin, errorDatasetName, inputSchemas, outputSchema, inputs, outputs);
   }
 
   @Override
@@ -112,7 +114,7 @@ public class StageSpec {
       "name='" + name + '\'' +
       ", plugin=" + plugin +
       ", errorDatasetName='" + errorDatasetName + '\'' +
-      ", inputSchema=" + inputSchema +
+      ", inputSchemas=" + inputSchemas +
       ", outputSchema=" + outputSchema +
       ", inputs=" + inputs +
       ", outputs=" + outputs +
@@ -130,7 +132,7 @@ public class StageSpec {
     private final String name;
     private final PluginSpec plugin;
     private String errorDatasetName;
-    private Schema inputSchema;
+    private Map<String, Schema> inputSchemas;
     private Schema outputSchema;
     private Set<String> inputs;
     private Set<String> outputs;
@@ -140,6 +142,7 @@ public class StageSpec {
       this.plugin = plugin;
       this.inputs = new HashSet<>();
       this.outputs = new HashSet<>();
+      this.inputSchemas = new HashMap<>();
     }
 
     public Builder setErrorDatasetName(String errorDatasetName) {
@@ -147,8 +150,13 @@ public class StageSpec {
       return this;
     }
 
-    public Builder setInputSchema(Schema inputSchema) {
-      this.inputSchema = inputSchema;
+    public Builder addInputSchema(String stageName, Schema schema) {
+      this.inputSchemas.put(stageName, schema);
+      return this;
+    }
+
+    public Builder addInputSchemas(Map<String, Schema> inputSchemas) {
+      this.inputSchemas.putAll(inputSchemas);
       return this;
     }
 
@@ -182,7 +190,7 @@ public class StageSpec {
     }
 
     public StageSpec build() {
-      return new StageSpec(name, plugin, errorDatasetName, inputSchema, outputSchema, inputs, outputs);
+      return new StageSpec(name, plugin, errorDatasetName, inputSchemas, outputSchema, inputs, outputs);
     }
 
   }

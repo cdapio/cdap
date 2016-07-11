@@ -148,14 +148,15 @@ public class PipelinePlanner {
 
       // add connectors
       if (connectors.contains(stageName)) {
-        phaseBuilder.addStage(Constants.CONNECTOR_TYPE, new StageInfo(stageName, null));
+        phaseBuilder.addStage(Constants.CONNECTOR_TYPE, new StageInfo(stageName));
         continue;
       }
 
       // add other plugin types
       StageSpec spec = specs.get(stageName);
       String pluginType = spec.getPlugin().getType();
-      StageInfo stageInfo = new StageInfo(stageName, spec.getErrorDatasetName());
+      StageInfo stageInfo = new StageInfo(stageName, spec.getInputs(), spec.getInputSchemas(), spec.getOutputs(),
+                                          spec.getOutputSchema(), spec.getErrorDatasetName());
       phaseBuilder.addStage(pluginType, stageInfo);
     }
 

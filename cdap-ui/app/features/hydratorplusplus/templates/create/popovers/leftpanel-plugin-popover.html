@@ -27,7 +27,9 @@
     <li class="list-group-item">
       <h5>
         <strong>{{ contentData.name }}</strong>
-        <a href="#" ng-if="!contentData.pluginTemplate" ng-click="delayClose(1) && popoverContext.onItemClicked($event,  {action: 'createTemplate', contentData: contentData})">
+        <a href="#" ng-if="!contentData.pluginTemplate"
+           class="template-label"
+           ng-click="delayClose(1) && popoverContext.onItemClicked($event,  {action: 'createTemplate', contentData: contentData})">
           <span class="fa fa-plus-circle"></span>
           <span>Template</span>
         </a>

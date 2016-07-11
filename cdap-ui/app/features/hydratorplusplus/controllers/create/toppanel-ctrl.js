@@ -15,16 +15,23 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers) {
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
+    this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.$uibModal = $uibModal;
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
+    this.myHelpers = myHelpers;
 
     this.canvasOperations = [
+      {
+        name: 'Settings',
+        icon: 'fa-sliders',
+        fn: this.showSettings.bind(this)
+      },
       {
         name: 'Export',
         icon: 'icon-export',
@@ -59,6 +66,7 @@ class HydratorPlusPlusTopPanelCtrl{
         name: this.HydratorPlusPlusConfigStore.getName(),
         description: this.HydratorPlusPlusConfigStore.getDescription()
       },
+      viewSettings: this.myHelpers.objectQuery(this.state, 'viewSettings') || false,
       artifact: this.HydratorPlusPlusConfigStore.getArtifact()
     };
   }
@@ -151,9 +159,12 @@ class HydratorPlusPlusTopPanelCtrl{
   onPublish() {
     this.HydratorPlusPlusConfigActions.publishPipeline();
   }
+  showSettings() {
+    this.state.viewSettings = !this.state.viewSettings;
+  }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
