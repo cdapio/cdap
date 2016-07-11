@@ -59,7 +59,6 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       console.log('Polled Response: ', res);
       $scope.initialize();
       if (res.status === 'KILLED') {
-        console.log('Status: KILLED - stopping polling..');
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       }
@@ -82,10 +81,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 
       apiSettings.metric.startTime = res.start;
       if(res.status==='KILLED'){
+        console.log('STATUS: KILLED');
         apiSettings.metric.endTime = 'now';
         pollForMetadata();
       } else if(res.status==='RUNNING'){
-        console.log('End time is now');
+        console.log('STATUS: RUNNING');
         apiSettings.metric.endTime = 'now';
         pollForMetadata();
       }

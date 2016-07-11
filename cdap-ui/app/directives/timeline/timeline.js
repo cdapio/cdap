@@ -152,8 +152,6 @@ function link (scope, element) {
       scope.Timeline.updateStartTimeInStore(xScale.invert(0));
     }
     let xValue = xScale(scope.sliderBarPositionRefresh);
-    // console.log('xValue is: ' + xValue);
-    // console.log('Slider time is: ', xScale.invert(xValue));
     if(xValue < 0 || xValue > maxRange){
       xValue = 0;
     }

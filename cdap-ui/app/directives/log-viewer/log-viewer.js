@@ -18,6 +18,8 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
   'ngInject';
 
   this.data = {};
+  this.errorCount = 0;
+  this.warningCount = 0;
 
   this.configOptions = {
     time: true,
@@ -76,13 +78,16 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
   }).$promise.then(
     (res) => {
       angular.forEach(res, (element, index) => {
+        if(res[index].log.logLevel === 'WARN'){
+          this.warningCount++;
+        } else if(res[index].log.logLevel === 'ERROR'){
+          this.errorCount++;
+        }
         let formattedDate = new Date(res[index].log.timestamp);
-        res[index].log.stackTrace = 'test';
         res[index].log.timestamp = formattedDate;
         res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
       });
       this.data = res;
-      console.log('DATA FETCHED IN LOGVIEWER: ', res);
       this.totalCount = res.length;
     },
     (err) => {
@@ -108,22 +113,7 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
     'TRACE' : false
   };
 
-  let errorCount = 0;
-  let warningCount = 0;
   let numEvents = 0;
-
-  //Compute Total
-  for(let k = 0; k < this.data.length; k++){
-    let currentItem = this.data[k].logLevel;
-    if(currentItem === 'ERROR'){
-      errorCount++;
-    } else if(currentItem === 'WARN'){
-      warningCount++;
-    }
-  }
-
-  this.errorCount = errorCount;
-  this.warningCount = warningCount;
   this.toggleExpandAll = false;
 
   this.toggleLogExpansion = function() {
@@ -156,7 +146,6 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
     return log;
   };
 }
-
 
 angular.module(PKG.name + '.commons')
   .directive('myLogViewer', function () {
