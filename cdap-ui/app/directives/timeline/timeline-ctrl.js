@@ -80,16 +80,10 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       let formattedStartTime = new Date(res.start *1000);
       formattedStartTime = ((formattedStartTime.getMonth() + 1) + '/' + formattedStartTime.getDate() + '/' + formattedStartTime.getFullYear() + ' ' + formattedStartTime.getHours() + ':' + formattedStartTime.getMinutes() + ':' + formattedStartTime.getSeconds());
 
-      console.log('Start Time: ', formattedStartTime);
-
-      //Set apiSettings - startTime to epoch (seconds)
       apiSettings.metric.startTime = res.start;
       if(res.status==='KILLED'){
-        let formattedDate = new Date(res.stop*1000);
-        formattedDate = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
-        console.log('STATUS: KILLED - Stop time of Logs: ' + formattedDate);
-
-        apiSettings.metric.endTime = res.stop;
+        apiSettings.metric.endTime = 'now';
+        pollForMetadata();
       } else if(res.status==='RUNNING'){
         console.log('End time is now');
         apiSettings.metric.endTime = 'now';
