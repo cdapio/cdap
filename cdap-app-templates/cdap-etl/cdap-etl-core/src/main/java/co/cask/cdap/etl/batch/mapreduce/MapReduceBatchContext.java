@@ -34,7 +34,7 @@ public class MapReduceBatchContext extends AbstractBatchContext {
 
   public MapReduceBatchContext(MapReduceContext context, Metrics metrics,
                                LookupProvider lookup, String stageName, Map<String, String> runtimeArguments) {
-    super(context, metrics, lookup, stageName, context.getLogicalStartTime(), runtimeArguments);
+    super(context, metrics, lookup, stageName, context.getLogicalStartTime(), runtimeArguments, context.getAdmin());
     this.mrContext = context;
   }
 

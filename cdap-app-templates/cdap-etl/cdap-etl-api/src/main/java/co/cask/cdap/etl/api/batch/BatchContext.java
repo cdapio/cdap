@@ -18,6 +18,9 @@ package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.etl.api.TransformContext;
 
 import java.util.Map;
@@ -27,6 +30,26 @@ import java.util.Map;
  */
 @Beta
 public interface BatchContext extends DatasetContext, TransformContext {
+
+  /**
+   * Create a new dataset instance.
+   * @param datasetName the name of the new dataset
+   * @param typeName the type of the dataset to create
+   * @param properties the properties for the new dataset
+   * @throws InstanceConflictException if the dataset already exists
+   * @throws DatasetManagementException for any issues encountered in the dataset system,
+   *         or if the dataset type's create method fails.
+   */
+  void createDataset(String datasetName, String typeName, DatasetProperties properties)
+    throws DatasetManagementException;
+
+  /**
+   * Check whether a dataset exists in the current namespace.
+   * @param datasetName the name of the dataset
+   * @return whether a dataset of that name exists
+   * @throws DatasetManagementException for any issues encountered in the dataset system
+   */
+  boolean datasetExists(String datasetName) throws DatasetManagementException;
 
   /**
    * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch
