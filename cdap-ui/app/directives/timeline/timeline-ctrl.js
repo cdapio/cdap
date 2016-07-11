@@ -34,13 +34,16 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     metric : {
       context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.run.${this.runId}`,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
-      startTime : 1468196019,//0,
-      endTime : 1468196079,//'now',
+      startTime : '',//0,
+      endTime : '',
       resolution: '1m'
     }
   };
 
   function pollForMetadata() {
+
+    console.log('Before Poll: start: ', apiSettings.metric.startTime);
+    console.log('end: ', apiSettings.metric.endTime);
     pollPromise = dataSrc.poll({
       _cdapPath: '/metrics/query',
       method: 'POST',
@@ -52,13 +55,13 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     },
     function (res) {
       $scope.metadata = res;
-      console.log('Polling Response: ' , res);
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
+      console.log('Polled Response: ', res);
       $scope.initialize();
       if (res.status === 'KILLED') {
+        console.log('Status: KILLED - stopping polling..');
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
-        console.log('Status: KILLED - stopping polling..');
       }
     }, function(err) {
       console.log('ERROR: ', err);
@@ -73,16 +76,23 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     'runId' : this.runId,
   }).$promise.then(
     (res) => {
-      console.log('Metadata in timeline : ' , res);
-      apiSettings.metric.startTime = 1468196019;// = res.start;
+      //API returns seconds, not miliseconds
+      let formattedStartTime = new Date(res.start *1000);
+      formattedStartTime = ((formattedStartTime.getMonth() + 1) + '/' + formattedStartTime.getDate() + '/' + formattedStartTime.getFullYear() + ' ' + formattedStartTime.getHours() + ':' + formattedStartTime.getMinutes() + ':' + formattedStartTime.getSeconds());
 
+      console.log('Start Time: ', formattedStartTime);
+
+      //Set apiSettings - startTime to epoch (seconds)
+      apiSettings.metric.startTime = res.start;
       if(res.status==='KILLED'){
+        let formattedDate = new Date(res.stop*1000);
+        formattedDate = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+        console.log('STATUS: KILLED - Stop time of Logs: ' + formattedDate);
+
         apiSettings.metric.endTime = res.stop;
-        console.log('STATUS: KILLED');
       } else if(res.status==='RUNNING'){
-       // to be - apiSettings.endTime = 'now';
-        apiSettings.metric.endTime = 1468196079;
-        console.log('STATUS: RUNNING');
+        console.log('End time is now');
+        apiSettings.metric.endTime = 'now';
         pollForMetadata();
       }
     },

@@ -72,8 +72,7 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
     'appId' : this.appId,
     'programType' : this.programType,
     'programId' : this.programId,
-    'runId' : this.runId,
-    'start' : -10000.1468004430508
+    'runId' : this.runId
   }).$promise.then(
     (res) => {
       angular.forEach(res, (element, index) => {
@@ -83,7 +82,7 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
         res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
       });
       this.data = res;
-      console.log('MOCK THIS DATA: ', res);
+      console.log('DATA FETCHED IN LOGVIEWER: ', res);
       this.totalCount = res.length;
     },
     (err) => {

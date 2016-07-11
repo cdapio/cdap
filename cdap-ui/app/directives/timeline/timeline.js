@@ -73,7 +73,6 @@ function link (scope, element) {
     brush = undefined;
     brush2 = undefined;
     xScale = undefined;
-    timelineData = undefined;
     slide = undefined;
     slider = undefined;
     svg = undefined;
