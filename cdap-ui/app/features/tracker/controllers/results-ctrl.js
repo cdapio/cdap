@@ -113,7 +113,6 @@ class TrackerResultsController {
       }
     ];
 
-
     this.fetchResults();
   }
 
@@ -131,13 +130,13 @@ class TrackerResultsController {
       .then( (res) => {
         this.fullResults = res.map(this.parseResult.bind(this));
         this.searchResults = angular.copy(this.fullResults);
+        this.fetchTruthMeter();
         this.loading = false;
       }, (err) => {
         console.log('error', err);
         this.loading = false;
       });
   }
-
   parseResult (entity) {
     let obj = {};
     if (entity.entityId.type === 'datasetinstance') {
@@ -299,6 +298,35 @@ class TrackerResultsController {
     upperLimit = upperLimit > this.searchResults.length ? this.searchResults.length : upperLimit;
 
     return this.searchResults.length === 0 ? '0' : lowerLimit + '-' + upperLimit;
+  }
+
+  fetchTruthMeter() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    let streamsList = [];
+    let datasetsList = [];
+
+    angular.forEach(this.fullResults, (entity) => {
+      if (entity.type === 'Stream') {
+        streamsList.push(entity.name);
+      } else if (entity.type === 'Dataset') {
+        datasetsList.push(entity.name);
+      }
+    });
+
+    this.myTrackerApi.getTruthMeter(params, {
+      streams: streamsList,
+      datasets: datasetsList
+    })
+      .$promise
+      .then((response) => {
+        this.truthMeterMap = response;
+      }, (err) => {
+        console.log('error', err);
+      });
   }
 }
 
