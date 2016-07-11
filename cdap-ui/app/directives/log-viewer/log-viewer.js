@@ -28,8 +28,8 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
       appId = 'PurchaseHistory',
       programType = 'flows',
       programId = 'PurchaseFlow',
-      runId = '53522903-46e4-11e6-b2ff-56219b501a22',
-      pollPromise = null;
+      runId = 'e8f53d24-46e5-11e6-878e-56219b501a22';//,
+      //pollPromise = null;
 
   this.data = {};
 
@@ -42,16 +42,16 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
     'start' : -10000.1468004430508
   }).$promise.then(
     (res) => {
-      console.log('success from logviewer controller');
+      console.log('success from logviewer controller: ', res);
       //Process the data
       angular.forEach(res, (element, index) => {
         let formattedDate = new Date(res[index].log.timestamp);
         res[index].log.stackTrace = 'test';
-        console.log('Testing the date: ' + formattedDate);
         res[index].log.timestamp = formattedDate;
         res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
       });
       this.data = res;
+      // this.totalCount =
     },
     (err) => {
       console.log('ERROR: ', err);
