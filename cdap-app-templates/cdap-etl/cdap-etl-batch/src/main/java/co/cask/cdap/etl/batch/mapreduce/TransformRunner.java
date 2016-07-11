@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
@@ -33,6 +34,7 @@ import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
@@ -61,7 +63,9 @@ import java.util.Set;
 public class TransformRunner<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(TransformRunner.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .create();
   private final Set<String> transformsWithoutErrorDataset;
   private final Map<String, ErrorOutputWriter<Object, Object>> transformErrorSinkMap;
   private final TransformExecutor<KeyValue<KEY, VALUE>> transformExecutor;

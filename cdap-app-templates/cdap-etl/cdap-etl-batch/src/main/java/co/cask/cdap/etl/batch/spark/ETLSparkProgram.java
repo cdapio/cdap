@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -36,6 +37,7 @@ import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -67,7 +69,9 @@ import javax.annotation.Nullable;
 public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .create();
 
   private transient JavaSparkContext jsc;
   private transient JavaSparkExecutionContext sec;

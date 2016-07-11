@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -46,6 +47,7 @@ import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -85,7 +87,9 @@ public class ETLMapReduce extends AbstractMapReduce {
   static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .create();
 
   private Finisher finisher;
 

@@ -13,26 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-my-realtime-pipeline-settings {
-  .pipeline-settings-content {
+
+wizard-select-action-step {
+  .actions-list-section {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    flex-flow: wrap;
+    margin: 10px 0;
+    .btn.btn-default {
+      flex-grow: 1;
+      box-shadow: 1px 4px 7px -5px rgba(0, 0, 0, 0.65);
+      border: 1px solid #dddddd;
+      margin: 10px;
+    }
+  }
+}
 
-    my-card {
-      flex: 0.2;
-      .instance-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        > input,
-        label {
-          margin: 0 10px;
+body.theme-cdap {
+  &.state-hydratorplusplus-create {
+    .my-cdap-popover {
+      &.non-template-popover {
+        .list-group-item {
+          .template-label {
+            display: none;
+          }
         }
-      }
-      &.post-run-actions {
-        flex: 0.5;
-        margin-left: 10px;
       }
     }
   }

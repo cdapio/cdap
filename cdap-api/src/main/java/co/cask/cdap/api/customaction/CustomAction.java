@@ -13,27 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-my-realtime-pipeline-settings {
-  .pipeline-settings-content {
-    display: flex;
-    justify-content: flex-start;
+package co.cask.cdap.api.customaction;
 
-    my-card {
-      flex: 0.2;
-      .instance-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+import co.cask.cdap.api.ProgramLifecycle;
 
-        > input,
-        label {
-          margin: 0 10px;
-        }
-      }
-      &.post-run-actions {
-        flex: 0.5;
-        margin-left: 10px;
-      }
-    }
-  }
+/**
+ * Defines custom action in the Workflow.
+ */
+public interface CustomAction extends ProgramLifecycle<CustomActionContext> {
+
+  /**
+   * Configure the custom action.
+   * @param configurer the {@link CustomActionConfigurer} used to configure the action.
+   */
+  void configure(CustomActionConfigurer configurer);
+
+  /**
+   * Implementation should contain the code that will be executed by Workflow at runtime.
+   * @throws Exception if there is any error executing the code
+   */
+  void run() throws Exception;
 }

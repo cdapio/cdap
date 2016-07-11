@@ -13,26 +13,34 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-my-realtime-pipeline-settings {
-  .pipeline-settings-content {
-    display: flex;
-    justify-content: flex-start;
 
-    my-card {
-      flex: 0.2;
-      .instance-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        > input,
-        label {
-          margin: 0 10px;
+my-post-run-actions {
+  .well.well-sm {
+    cursor: pointer;
+    margin-bottom: 0;
+    padding: 0;
+    border: 0;
+    background: #ebebeb;
+    border-radius: 0;
+    h1 {
+      padding-bottom: 7px;
+    }
+    &.empty-table {
+      background: transparent;
+      border: 2px dashed #b1b1b1;
+      margin: 10px;
+    }
+  }
+  > .table {
+    &.table-bordered {
+      margin: 0;
+      th,
+      td {
+        font-size: 14px;
+        padding: 5px;
+        &[colspan] {
+          padding: 0;
         }
-      }
-      &.post-run-actions {
-        flex: 0.5;
-        margin-left: 10px;
       }
     }
   }

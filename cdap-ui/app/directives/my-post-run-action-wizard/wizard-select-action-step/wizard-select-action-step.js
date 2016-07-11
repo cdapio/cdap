@@ -13,27 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-my-realtime-pipeline-settings {
-  .pipeline-settings-content {
-    display: flex;
-    justify-content: flex-start;
-
-    my-card {
-      flex: 0.2;
-      .instance-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        > input,
-        label {
-          margin: 0 10px;
-        }
-      }
-      &.post-run-actions {
-        flex: 0.5;
-        margin-left: 10px;
-      }
-    }
-  }
-}
+angular.module(PKG.name + '.commons')
+  .directive('wizardSelectActionStep', function() {
+    return {
+      restrict: 'E',
+      scope: {
+        store: '=',
+        onActionSelect: '&'
+      },
+      templateUrl: 'my-post-run-action-wizard/wizard-select-action-step/wizard-select-action-step.html',
+      controller: 'WizardSelectActionStepCtrl',
+      controllerAs: 'WizardSelectActionStepCtrl',
+      bindToController: true
+    };
+  });
