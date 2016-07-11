@@ -37,10 +37,15 @@ function link (scope, element) {
   let xScale;
   let timelineData;
   let svg;
+  let xAxis;
+  let sliderBar;
 
   //initialize the graph
   scope.initialize = () => {
     timelineData = scope.metadata;
+    if(svg !== undefined){
+      d3.selectAll('svg > *').remove();
+    }
     scope.refactoredPlot();
   };
 
@@ -70,7 +75,7 @@ function link (scope, element) {
 
     xScale.domain([startTime, endTime]);
 
-    let xAxis = d3.svg.axis().scale(xScale)
+    xAxis = d3.svg.axis().scale(xScale)
       .orient('bottom')
       .innerTickSize(-40)
       .tickPadding(7)
@@ -81,116 +86,8 @@ function link (scope, element) {
   };
 
   function renderBrushAndSlider(){
-    console.log('rendering brush and sliders');
-  }
-
-  function generateEventCircles(){
-    console.log('generating event circles');
-    //Generate circles from the filtered events
-    if(timelineData.qid.series.length > 0){
-      for(var i = 0; i < timelineData.qid.series.length; i++){
-        for(var j = 0; j < timelineData.qid.series[i].data.length; j++){
-          let currentItem = timelineData.qid.series[i].data[j];
-          let xVal = Math.floor(xScale(currentItem.time));
-          let numEvents = currentItem.value;
-
-          if(timelineStack[xVal] === undefined) {
-            timelineStack[xVal] = 0;
-          }
-
-          //plot events until we reach capacity
-          for(var k = 0; k < numEvents && timelineStack[xVal] < 5; k++){
-            timelineStack[xVal]++;
-
-            //Append the circle
-            svg.append('circle').attr('cx', xScale(currentItem.time)).attr('cy', (timelineStack[xVal])*10).attr('r', 2).attr('class', 'red-circle');
-          }
-        }
-      }
-    }
-    let circles = svg.selectAll('circle')
-      .data(timelineData.qid.series[0].data[0])
-      .enter()
-      .append('circle');
-
-    circles.attr('cx', function(d) {
-      let xVal = Math.floor(xScale(d.log.time));
-      if(timelineStack[xVal] === undefined){
-        timelineStack[xVal] = 0;
-      } else {
-        timelineStack[xVal]++;
-      }
-      return xScale(d.log.time) + 15;
-    })
-    .attr('cy', function(d) {
-      let numDots = timelineStack[Math.floor(xScale(d.log.time))]--;
-      return height-height/2.5 - (numDots * 6);
-    })
-    .attr('r', 2)
-    .attr('class', function(d) {
-      if(d.level === 'ERROR'){
-        return 'red-circle';
-      }
-      else if(d.level === 'WARN'){
-        return 'yellow-circle';
-      } else {
-        return 'other-circle';
-      }
-    });
-  }
-
-  scope.plot = function plot() {
-
-    // -----------------Define SVG and Plot Circles-------------------------- //
-    let svg = d3.select('.timeline-log-chart')
-                .append('svg')
-                .attr('width', width)
-                .attr('height', height);
-    //Set the Range and Domain
-    xScale = d3.time.scale().range([0, (maxRange)]);
-
-    xScale.domain(d3.extent(timelineData, function(d) {
-      return d.log.timestamp;
-    }));
-    //Define the axes and ticks
-    let xAxis = d3.svg.axis().scale(xScale)
-        .orient('bottom')
-        .innerTickSize(-40)
-        .tickPadding(7)
-        .ticks(8);
-
-    //Generate circles from the filtered events
-    let circles = svg.selectAll('circle')
-      .data(timelineData)
-      .enter()
-      .append('circle');
-
-    circles.attr('cx', function(d) {
-      let xVal = Math.floor(xScale(d.log.time));
-      if(timelineStack[xVal] === undefined){
-        timelineStack[xVal] = 0;
-      } else {
-        timelineStack[xVal]++;
-      }
-      return xScale(d.log.time) + 15;
-    })
-    .attr('cy', function(d) {
-      let numDots = timelineStack[Math.floor(xScale(d.log.time))]--;
-      return height-height/2.5 - (numDots * 6);
-    })
-    .attr('r', 2)
-    .attr('class', function(d) {
-      if(d.level === 'ERROR'){
-        return 'red-circle';
-      }
-      else if(d.level === 'WARN'){
-        return 'yellow-circle';
-      } else {
-        return 'other-circle';
-      }
-    });
-
     // -------------------------Build Brush / Sliders------------------------- //
+    console.log('rendering brush and sliders');
     //X-Axis
     svg.append('g')
       .attr('class', 'xaxis-bottom')
@@ -207,37 +104,13 @@ function link (scope, element) {
             if(v !== leftVal){
               leftVal = v;
             }
+            //console.log('updating slider... : ', index);
             updateSlider(index);
           }
         });
 
-    //Fix me: Make me self reliant (see 'xScale' and other variables)
-    function updateSlider(val) {
-      //Update the brush position
-      if(val < 0){
-        val = 0;
-      }
-      if(val > sliderLimit){
-        val = sliderLimit;
-      }
-
-      sliderX = val;
-
-      //If the pin is at the top of the table, keep it at the top
-      if(sliderX >= pinX){
-        updatePin(sliderX);
-      }
-
-      leftHandle.attr('x', val);
-      sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
-      scope.Timeline.updateStartTimeInStore(xScale.invert(val));
-    }
-
-    //Make the update event available to the controller
-    scope.updateSlider = updateSlider;
-
     //Creates the top slider and trailing dark background
-    let sliderBar = svg.append('g')
+    sliderBar = svg.append('g')
       .attr('class', 'slider leftSlider')
       .call(d3.svg.axis()
         .scale(xScale)
@@ -245,8 +118,6 @@ function link (scope, element) {
         .tickFormat(''))
       .select('.domain')
       .attr('class', 'fill-bar');
-
-    sliderBar.attr('d', 'M0,0V0H' + xScale(0) + 'V0');
 
     let slide = svg.append('g')
           .attr('class', 'slider sliderGroup')
@@ -315,13 +186,295 @@ function link (scope, element) {
       .attr('width', '15px')
       .attr('src', '/assets/img/scrollpin.png');
 
-    var updatePin = function (val) {
-      pinX = val;
-      pinHandle.attr('x', val);
-    };
 
-    scope.updatePin = updatePin;
+  }
+
+  var updatePin = function (val) {
+    pinX = val;
+    pinHandle.attr('x', val);
   };
+
+  function updateSlider(val) {
+    //Update the brush position
+    if(val < 0){
+      val = 0;
+    }
+    if(val > sliderLimit){
+      val = sliderLimit;
+    }
+
+    sliderX = val;
+
+    //If the pin is at the top of the table, keep it at the top
+    if(sliderX >= pinX){
+      updatePin(sliderX);
+    }
+
+    leftHandle.attr('x', val);
+    sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
+    scope.Timeline.updateStartTimeInStore(xScale.invert(val));
+  }
+
+  scope.updateSlider = updateSlider;
+
+  function generateEventCircles(){
+    console.log('generating event circles');
+    //Generate circles from the filtered events
+    let circleClass;
+
+    if(timelineData.qid.series.length > 0){
+      for(var i = 0; i < timelineData.qid.series.length; i++){
+
+        switch(timelineData.qid.series[i].metricName){
+          case 'system.app.log.info':
+            circleClass = 'red-circle';
+            break;
+          case 'system.app.log.error':
+            circleClass = 'red-circle';
+            break;
+          case 'system.app.log.warn':
+            circleClass = 'yellow-circle';
+            break;
+          default:
+            circleClass = 'other-circle';
+            break;
+        }
+
+        for(var j = 0; j < timelineData.qid.series[i].data.length; j++){
+          let currentItem = timelineData.qid.series[i].data[j];
+          let xVal = Math.floor(xScale(currentItem.time));
+          let numEvents = currentItem.value;
+
+          if(timelineStack[xVal] === undefined) {
+            timelineStack[xVal] = 0;
+          }
+
+          //plot events until we reach capacity
+          for(var k = 0; k < numEvents && timelineStack[xVal] < 5; k++){
+            timelineStack[xVal]++;
+
+            //Append the circle
+            if(currentItem){
+              svg.append('circle').attr('cx', xScale(currentItem.time)).attr('cy', (timelineStack[xVal])*7).attr('r', 2).attr('class', circleClass);
+            }
+          }
+        }
+      }
+    }
+    // let circles = svg.selectAll('circle')
+    //   .data(timelineData.qid.series[0].data[0])
+    //   .enter()
+    //   .append('circle');
+
+    // circles.attr('cx', function(d) {
+    //   let xVal = Math.floor(xScale(d.log.time));
+    //   if(timelineStack[xVal] === undefined){
+    //     timelineStack[xVal] = 0;
+    //   } else {
+    //     timelineStack[xVal]++;
+    //   }
+    //   return xScale(d.log.time) + 15;
+    // })
+    // .attr('cy', function(d) {
+    //   let numDots = timelineStack[Math.floor(xScale(d.log.time))]--;
+    //   return height-height/2.5 - (numDots * 6);
+    // })
+    // .attr('r', 2)
+    // .attr('class', function(d) {
+    //   if(d.level === 'ERROR'){
+    //     return 'red-circle';
+    //   }
+    //   else if(d.level === 'WARN'){
+    //     return 'yellow-circle';
+    //   } else {
+    //     return 'other-circle';
+    //   }
+    // });
+  }
+
+  // scope.plot = function plot() {
+
+  //   // -----------------Define SVG and Plot Circles-------------------------- //
+  //   let svg = d3.select('.timeline-log-chart')
+  //               .append('svg')
+  //               .attr('width', width)
+  //               .attr('height', height);
+  //   //Set the Range and Domain
+  //   xScale = d3.time.scale().range([0, (maxRange)]);
+
+  //   xScale.domain(d3.extent(timelineData, function(d) {
+  //     return d.log.timestamp;
+  //   }));
+  //   //Define the axes and ticks
+  //   let xAxis = d3.svg.axis().scale(xScale)
+  //       .orient('bottom')
+  //       .innerTickSize(-40)
+  //       .tickPadding(7)
+  //       .ticks(8);
+
+  //   //Generate circles from the filtered events
+  //   let circles = svg.selectAll('circle')
+  //     .data(timelineData)
+  //     .enter()
+  //     .append('circle');
+
+  //   circles.attr('cx', function(d) {
+  //     let xVal = Math.floor(xScale(d.log.time));
+  //     if(timelineStack[xVal] === undefined){
+  //       timelineStack[xVal] = 0;
+  //     } else {
+  //       timelineStack[xVal]++;
+  //     }
+  //     return xScale(d.log.time) + 15;
+  //   })
+  //   .attr('cy', function(d) {
+  //     let numDots = timelineStack[Math.floor(xScale(d.log.time))]--;
+  //     return height-height/2.5 - (numDots * 6);
+  //   })
+  //   .attr('r', 2)
+  //   .attr('class', function(d) {
+  //     if(d.level === 'ERROR'){
+  //       return 'red-circle';
+  //     }
+  //     else if(d.level === 'WARN'){
+  //       return 'yellow-circle';
+  //     } else {
+  //       return 'other-circle';
+  //     }
+  //   });
+
+  //   // -------------------------Build Brush / Sliders------------------------- //
+  //   //X-Axis
+  //   svg.append('g')
+  //     .attr('class', 'xaxis-bottom')
+  //     .attr('transform', 'translate(' + ( (paddingLeft + paddingRight) / 2) + ',' + (height - 20) + ')')
+  //     .call(xAxis);
+
+  //   //attach handler to brush
+  //   brush = d3.svg.brush()
+  //       .x(xScale)
+  //       .on('brush', function(){
+  //         if(d3.event.sourceEvent) {
+  //           let v = xScale.invert(d3.mouse(this)[0]);
+  //           let index = d3.mouse(this)[0];
+  //           if(v !== leftVal){
+  //             leftVal = v;
+  //           }
+  //           updateSlider(index);
+  //         }
+  //       });
+
+  //   //Fix me: Make me self reliant (see 'xScale' and other variables)
+  //   function updateSlider(val) {
+  //     //Update the brush position
+  //     if(val < 0){
+  //       val = 0;
+  //     }
+  //     if(val > sliderLimit){
+  //       val = sliderLimit;
+  //     }
+
+  //     sliderX = val;
+
+  //     //If the pin is at the top of the table, keep it at the top
+  //     if(sliderX >= pinX){
+  //       updatePin(sliderX);
+  //     }
+
+  //     leftHandle.attr('x', val);
+  //     sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
+  //     scope.Timeline.updateStartTimeInStore(xScale.invert(val));
+  //   }
+
+  //   //Make the update event available to the controller
+  //   scope.updateSlider = updateSlider;
+
+  //   //Creates the top slider and trailing dark background
+  //   let sliderBar = svg.append('g')
+  //     .attr('class', 'slider leftSlider')
+  //     .call(d3.svg.axis()
+  //       .scale(xScale)
+  //       .tickSize(0)
+  //       .tickFormat(''))
+  //     .select('.domain')
+  //     .attr('class', 'fill-bar');
+
+  //   sliderBar.attr('d', 'M0,0V0H' + xScale(0) + 'V0');
+
+  //   let slide = svg.append('g')
+  //         .attr('class', 'slider sliderGroup')
+  //         .attr('transform' , 'translate(0,10)')
+  //         .call(brush);
+
+  //   leftHandle = slide.append('rect')
+  //       .attr('height', 50)
+  //       .attr('width', 7)
+  //       .attr('x', 0)
+  //       .attr('y', -10)
+  //       .attr('class', 'left-handle');
+
+  //   //Append the Top slider
+  //   let brush2 = d3.svg.brush()
+  //       .x(xScale)
+  //       .on('brush', function(){
+  //         let xPos = d3.mouse(this)[0];
+
+  //         if(xPos < 0){
+  //           xPos = 0;
+  //         }
+
+  //         if(xPos > width - 8){
+  //           xPos = width - 8;
+  //         }
+
+  //         if(xPos > sliderX){
+  //           updatePin(xPos);
+  //         }
+  //       });
+
+  //   let svg2 = d3.select('.top-bar').append('svg')
+  //       .attr('width', width)
+  //       .attr('height', 20)
+  //     .append('g');
+
+  //   svg2.append('g')
+  //       .attr('class', 'xaxis-top')
+  //       .call(d3.svg.axis()
+  //         .scale(xScale)
+  //         .orient('bottom'))
+  //     .select('.domain')
+  //     .select(function(){ return this.parentNode.appendChild(this.cloneNode(true));})
+  //       .attr('class', 'halo');
+
+  //   let slider = svg2.append('g')
+  //       .attr('class', 'slider')
+  //       .attr('width', width)
+  //       .call(brush2);
+
+  //   slider.select('.background')
+  //     .attr('height', 15);
+
+  //   pinHandle = slider.append('rect')
+  //       .attr('width', 15)
+  //       .attr('height', 15)
+  //       .attr('x', 0)
+  //       .attr('y', 0)
+  //       .attr('class', 'scroll-pin');
+
+  //   d3.select('.scroll-pin').append('image')
+  //     .attr('x', 0)
+  //     .attr('y', 0)
+  //     .attr('height', '15px')
+  //     .attr('width', '15px')
+  //     .attr('src', '/assets/img/scrollpin.png');
+
+  //   var updatePin = function (val) {
+  //     pinX = val;
+  //     pinHandle.attr('x', val);
+  //   };
+
+  //   scope.updatePin = updatePin;
+  // };
 
   function formatTimeReadable(time) {
     let formattedDate = new Date(time);
