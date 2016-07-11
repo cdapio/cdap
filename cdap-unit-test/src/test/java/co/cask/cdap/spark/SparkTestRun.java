@@ -34,11 +34,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.DatasetSQLSpark;
 import co.cask.cdap.spark.app.Person;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
+import co.cask.cdap.spark.app.ScalaCrossNSDatasetProgram;
+import co.cask.cdap.spark.app.ScalaCrossNSStreamProgram;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
 import co.cask.cdap.spark.app.ScalaStreamFormatSpecSpark;
 import co.cask.cdap.spark.app.SparkAppUsingGetDataset;
@@ -114,6 +118,10 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   private ApplicationManager deploy(Class<? extends Application> appClass) throws Exception {
     return deployWithArtifact(appClass, ARTIFACTS.get(appClass));
+  }
+
+  private ApplicationManager deploy(NamespaceId namespaceId, Class<? extends Application> appClass) throws Exception {
+    return deployWithArtifact(namespaceId, appClass, ARTIFACTS.get(appClass));
   }
 
   @Test
@@ -292,6 +300,50 @@ public class SparkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> countManager = getDataset("count");
     checkOutputData(countManager);
   }
+
+  @Test
+  public void testScalaSparkCrossNSStream() throws Exception {
+    getNamespaceAdmin().create(new NamespaceMeta.Builder()
+                                 .setName("streamSpaceForSpark").build());
+    NamespaceId streamSpace = new NamespaceId("streamSpaceForSpark");
+    StreamManager streamManager = getStreamManager(streamSpace.toId(), "testStream");
+    streamManager.createStream();
+    for (int i = 0; i < 50; i++) {
+      streamManager.send(String.valueOf(i));
+    }
+
+    ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
+    SparkManager sparkManager =
+      applicationManager.getSparkManager(ScalaCrossNSStreamProgram.class.getSimpleName()).start();
+    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+
+    DataSetManager<KeyValueTable> countManager = getDataset("count");
+    KeyValueTable results = countManager.get();
+    for (int i = 0; i < 50; i++) {
+      byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
+      Assert.assertArrayEquals(key, results.read(key));
+    }
+  }
+
+  @Test
+  public void testScalaSparkCrossNSDataset() throws Exception {
+    // Deploy and create a dataset in namespace datasetSpaceForSpark
+    getNamespaceAdmin().create(new NamespaceMeta.Builder()
+                                 .setName("datasetSpaceForSpark").build());
+    NamespaceId dataSpace = new NamespaceId("datasetSpaceForSpark");
+    deploy(dataSpace, SparkAppUsingObjectStore.class);
+    DataSetManager<ObjectStore<String>> keysManager = getDataset(dataSpace.toId(), "keys");
+    prepareInputData(keysManager);
+
+    ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
+    SparkManager sparkManager =
+      applicationManager.getSparkManager(ScalaCrossNSDatasetProgram.class.getSimpleName()).start();
+    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+
+    DataSetManager<KeyValueTable> countManager = getDataset("count");
+    checkOutputData(countManager);
+  }
+
 
   @Test
   public void testTransaction() throws Exception {

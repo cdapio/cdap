@@ -150,13 +150,31 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
                                                      datasetName: String,
                                                      arguments: Map[String, String],
                                                      splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
-    new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration, datasetName, arguments, splits,
-                         getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
+    new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration, getNamespace, datasetName,
+      arguments, splits, getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
+  }
+
+  override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
+                                                     namespace: String,
+                                                     datasetName: String,
+                                                     arguments: Map[String, String],
+                                                     splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
+    new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration, namespace,
+      datasetName, arguments, splits, getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
   }
 
   override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
                                       (implicit decoder: StreamEvent => T): RDD[T] = {
-    val rdd: RDD[(Long, StreamEvent)] = fromStream(sc, streamName, startTime, endTime, None)
+    val rdd: RDD[(Long, StreamEvent)] = fromStream(sc, getNamespace, streamName, startTime, endTime, None)
+
+    // Wrap the StreamEvent with a SerializableStreamEvent
+    // Don't use rdd.values() as it brings in implicit object from SparkContext, which is not available in Spark 1.2
+    rdd.map(t => new SerializableStreamEvent(t._2)).map(decoder)
+  }
+
+  override def fromStream[T: ClassTag](sc: SparkContext, namespace: String, streamName: String, startTime: Long,
+                                       endTime: Long) (implicit decoder: StreamEvent => T): RDD[T] = {
+    val rdd: RDD[(Long, StreamEvent)] = fromStream(sc, namespace, streamName, startTime, endTime, None)
 
     // Wrap the StreamEvent with a SerializableStreamEvent
     // Don't use rdd.values() as it brings in implicit object from SparkContext, which is not available in Spark 1.2
@@ -165,13 +183,20 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, formatSpec: FormatSpecification,
                                        startTime: Long, endTime: Long): RDD[(Long, GenericStreamEventData[T])] = {
-    fromStream(sc, streamName, startTime, endTime, Some(formatSpec))
+    fromStream(sc, getNamespace, streamName, startTime, endTime, Some(formatSpec))
+  }
+
+  override def fromStream[T: ClassTag](sc: SparkContext, namespace: String, streamName: String,
+                                       formatSpec: FormatSpecification, startTime: Long, endTime: Long):
+  RDD[(Long, GenericStreamEventData[T])] = {
+    fromStream(sc, namespace, streamName, startTime, endTime, Some(formatSpec))
   }
 
   /**
     * Creates a [[org.apache.spark.rdd.RDD]] by reading from the given stream and time range.
     *
     * @param sc the [[org.apache.spark.SparkContext]] to use
+    * @param namespace namespace of the stream
     * @param streamName name of the stream
     * @param startTime  the starting time of the stream to be read in milliseconds (inclusive);
     *                   passing in `0` means start reading from the first event available in the stream.
@@ -181,18 +206,18 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     *                   to the given value type `T`
     * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
     */
-  private def fromStream[T: ClassTag](sc: SparkContext, streamName: String,
+  private def fromStream[T: ClassTag](sc: SparkContext, namespace: String, streamName: String,
                                       startTime: Long, endTime: Long,
                                       formatSpec: Option[FormatSpecification]): RDD[(Long, T)] = {
-    val streamId = new StreamId(getNamespace, streamName)
+    val streamId = new StreamId(namespace, streamName)
 
     // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
     val configuration = configureStreamInput(new Configuration(runtimeContext.getConfiguration),
-                                             streamId, startTime, endTime, formatSpec)
+      streamId, startTime, endTime, formatSpec)
 
     val valueClass = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
     val rdd = sc.newAPIHadoopRDD(configuration, classOf[StreamInputFormat[LongWritable, T]],
-                                 classOf[LongWritable], valueClass)
+      classOf[LongWritable], valueClass)
     recordStreamUsage(streamId)
     rdd.map(t => (t._1.get(), t._2))
   }
@@ -280,7 +305,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     */
   private def createDatasetCompute: DatasetCompute = {
     new DatasetCompute {
-      override def apply[T: ClassTag](datasetName: String, arguments: Map[String, String], f: (Dataset) => T): T = {
+      override def apply[T: ClassTag](namespace: String, datasetName: String,
+                                      arguments: Map[String, String], f: (Dataset) => T): T = {
         val result = new Array[T](1)
 
         // For RDD to compute partitions, a transaction is needed in order to gain access to dataset instance.
@@ -289,7 +315,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
         // the job ended.
         transactional.execute(new SparkTxRunnable {
           override def run(context: SparkDatasetContext) = {
-            val dataset: Dataset = context.getDataset(datasetName, arguments, AccessType.READ)
+            val dataset: Dataset = context.getDataset(namespace, datasetName, arguments, AccessType.READ)
             try {
               result(0) = f(dataset)
             } finally {

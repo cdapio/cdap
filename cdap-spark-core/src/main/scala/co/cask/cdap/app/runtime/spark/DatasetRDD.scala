@@ -37,6 +37,7 @@ import scala.reflect.ClassTag
 class DatasetRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
                                            @transient datasetCompute: DatasetCompute,
                                            @transient hConf: Configuration,
+                                           namespace: String,
                                            datasetName: String,
                                            arguments: Map[String, String],
                                            @transient splits: Option[Iterable[_ <: Split]],
@@ -50,12 +51,13 @@ class DatasetRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
 
   override protected def getPartitions: Array[Partition] = {
     if (delegateRDD.isEmpty) {
-      delegateRDD = Some(datasetCompute(datasetName, arguments, (dataset: Dataset) => {
+      delegateRDD = Some(datasetCompute(namespace, datasetName, arguments, (dataset: Dataset) => {
         // Depends on whether it is a BatchReadable or an InputFormatProvider, constructs a corresponding
         // RDD that this RDD delegates to
         dataset match {
           case batchReadable: BatchReadable[K, V] => {
-            new BatchReadableRDD[K, V](sc, batchReadable, datasetName, arguments, splits, txServiceBaseURI)
+            new BatchReadableRDD[K, V](sc, batchReadable, namespace, datasetName, arguments, splits,
+              txServiceBaseURI)
           }
 
           case inputFormatProvider: InputFormatProvider => {

@@ -16,7 +16,10 @@
 
 package co.cask.cdap.spark.stream;
 
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
@@ -49,6 +52,47 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
 
     // The Spark job simply turns every stream event body into key/value pairs, with key==value.
     DataSetManager<KeyValueTable> datasetManager = getDataset("result");
+    verifyDatasetResult(datasetManager);
+  }
+
+  @Test
+  public void testSparkCrossNS() throws Exception {
+    // A series of test for cross namespace access here:
+    // Spark1 deployed at dataSpace:
+    //  reading a stream from streamSpace and write into dataset in the same ns (dataSpace)
+    // Spark2 deployed at DEFAULT:
+    //  reading from the dataset from dataSpace (created by spark1) and write into dataset in DEFAULT
+    getNamespaceAdmin().create(new NamespaceMeta.Builder()
+                                 .setName(TestSparkCrossNSStreamApp.SOURCE_STREAM_NAMESPACE).build());
+    getNamespaceAdmin().create(new NamespaceMeta.Builder()
+                                 .setName(TestSparkCrossNSDatasetApp.SOURCE_DATA_NAMESPACE).build());
+
+    NamespaceId streamSpace = new NamespaceId(TestSparkCrossNSStreamApp.SOURCE_STREAM_NAMESPACE);
+    NamespaceId dataSpace = new NamespaceId(TestSparkCrossNSDatasetApp.SOURCE_DATA_NAMESPACE);
+
+    StreamManager streamManager = getStreamManager(streamSpace.toId(), "testStream");
+    streamManager.createStream();
+
+    ApplicationManager spark1 = deployApplication(dataSpace.toId(), TestSparkCrossNSStreamApp.class);
+    for (int i = 0; i < 50; i++) {
+      streamManager.send(String.valueOf(i));
+    }
+
+    SparkManager sparkManager = spark1.getSparkManager("SparkStreamProgram").start();
+    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    // Verify the results written in dataSpace by spark1
+    DataSetManager<KeyValueTable> datasetManager = getDataset(dataSpace.toId(), "result");
+    verifyDatasetResult(datasetManager);
+
+    ApplicationManager spark2 = deployApplication(TestSparkCrossNSDatasetApp.class);
+    sparkManager = spark2.getSparkManager("SparkStreamProgram").start();
+    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    // Verify the results written in DEFAULT by spark2
+    datasetManager = getDataset("result");
+    verifyDatasetResult(datasetManager);
+  }
+
+  private void verifyDatasetResult(DataSetManager<KeyValueTable> datasetManager) {
     KeyValueTable results = datasetManager.get();
     for (int i = 0; i < 50; i++) {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
