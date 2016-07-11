@@ -521,6 +521,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
     Assert.assertEquals("service", Bytes.toString(outputTable.read("hi")));
+    Assert.assertEquals("another.world", Bytes.toString(outputTable.read("another.hello")));
 
     DataSetManager<FileSet> outFileSetManager = getDataset(DatasetWithCustomActionApp.CUSTOM_FILESET);
     FileSet fs = outFileSetManager.get();

@@ -61,8 +61,8 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
                                    programNameInWorkflow, GSON.fromJson(workflowToken, BasicWorkflowToken.class));
   }
 
-  private WorkflowProgramInfo(String workflowName, String workflowNodeId,
-                              String workflowRunId, String programNameInWorkflow, BasicWorkflowToken workflowToken) {
+  WorkflowProgramInfo(String workflowName, String workflowNodeId, String workflowRunId, String programNameInWorkflow,
+                      BasicWorkflowToken workflowToken) {
     this.workflowName = workflowName;
     this.workflowNodeId = workflowNodeId;
     this.workflowRunId = workflowRunId;

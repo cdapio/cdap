@@ -55,6 +55,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
@@ -413,9 +414,30 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private void executeCustomAction(final WorkflowActionNode node, InstantiatorFactory instantiator,
                                    final ClassLoader classLoader, WorkflowToken token)  throws Exception {
-    BasicWorkflowContext context = createWorkflowContext(node.getActionSpecification(), token, node.getNodeId());
-    CustomActionExecutor customActionExecutor = new CustomActionExecutor(workflowRunId, context,
-                                                                         instantiator, classLoader);
+
+    CustomActionExecutor customActionExecutor;
+    if (node.getActionSpecification() != null) {
+      // Node has WorkflowActionSpecification, so it must represent the deprecated WorkflowAction
+      // Create instance of the CustomActionExecutor using BasicWorkflowContext
+      BasicWorkflowContext context = createWorkflowContext(node.getActionSpecification(), token, node.getNodeId());
+      customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
+    } else {
+      // Node has CustomActionSpecification, so it must represent the CustomAction added in 3.5.0
+      // Create instance of the CustomActionExecutor using CustomActionContext
+
+      WorkflowProgramInfo info = new WorkflowProgramInfo(workflowSpec.getName(), node.getNodeId(),
+                                                         workflowRunId.getRun(), node.getNodeId(),
+                                                         (BasicWorkflowToken) token);
+      BasicCustomActionContext context = new BasicCustomActionContext(program,
+                                                                      RunIds.fromString(workflowRunId.getRun()),
+                                                                      new BasicArguments(runtimeArgs),
+                                                                      node.getCustomActionSpecification(), info,
+                                                                      metricsCollectionService, datasetFramework,
+                                                                      txClient, discoveryServiceClient,
+                                                                      pluginInstantiator);
+      customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
+    }
+
     status.put(node.getNodeId(), node);
     runtimeStore.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;
@@ -431,7 +453,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
       BasicThrowable defaultThrowable = failureCause == null ? null : new BasicThrowable(failureCause);
       runtimeStore.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), status, null,
-                                                                            defaultThrowable));
+                                                                                   defaultThrowable));
     }
   }
 
