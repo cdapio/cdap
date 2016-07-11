@@ -28,7 +28,8 @@ function link (scope, element) {
       timelineStack,
       leftVal,
       startTime,
-      endTime;
+      endTime,
+      firstRun = true;
 
   //Components
   let leftHandle,
@@ -79,7 +80,8 @@ function link (scope, element) {
     svg2 = undefined;
     xAxis = undefined;
     sliderBar = undefined;
-    timelineData = scope.metadata;
+    //timelineData = scope.metadata;
+    timelineData = scope.testData;
 
     scope.plot();
   };
@@ -87,8 +89,8 @@ function link (scope, element) {
   /* ------------------- Plot Function ------------------- */
   scope.plot = function(){
 
-    startTime = scope.metadata.qid.startTime;
-    endTime = scope.metadata.qid.endTime;
+    startTime = scope.testData.qid.startTime*1000;
+    endTime = scope.testData.qid.endTime*1000;
 
     svg = d3.select('.timeline-log-chart')
                 .append('svg')
@@ -98,12 +100,6 @@ function link (scope, element) {
     //Set the Range and Domain
     xScale = d3.time.scale().range([0, (maxRange)]);
     xScale.domain([startTime, endTime]);
-
-    console.log('Api returns: ' , scope.metadata);
-    console.log('start time: ', formatTimeReadable(startTime));
-    console.log('endtime: ' + formatTimeReadable(endTime));
-    console.log('start time in epoch' + startTime);
-    console.log('end time in epoch' + endTime);
 
     xAxis = d3.svg.axis().scale(xScale)
       .orient('bottom')
@@ -133,8 +129,6 @@ function link (scope, element) {
             if(v !== leftVal){
               leftVal = v;
             }
-            console.log('updating slider...(invert) : ', v);
-            console.log('updating slider... : ', index);
             updateSlider(index);
           }
         });
@@ -149,17 +143,21 @@ function link (scope, element) {
       .select('.domain')
       .attr('class', 'fill-bar');
 
-    sliderBar.attr('d', 'M0,0V0H' + 0 + 'V0');
-
     slide = svg.append('g')
           .attr('class', 'slider sliderGroup')
           .attr('transform' , 'translate(0,10)')
           .call(brush);
 
+    if(firstRun){
+      firstRun = false;
+      scope.sliderBarPositionRefresh = xScale.invert(0);
+    }
+    let xValue = xScale(scope.sliderBarPositionRefresh);
+    sliderBar.attr('d', 'M0,0V0H' + xValue + 'V0');
     leftHandle = slide.append('rect')
         .attr('height', 50)
         .attr('width', 7)
-        .attr('x', 0)
+        .attr('x', xValue)
         .attr('y', -10)
         .attr('class', 'left-handle');
 
@@ -207,7 +205,7 @@ function link (scope, element) {
     pinHandle = slider.append('rect')
         .attr('width', 15)
         .attr('height', 15)
-        .attr('x', 0)
+        .attr('x', xValue)
         .attr('y', 0)
         .attr('class', 'scroll-pin');
 
@@ -225,7 +223,6 @@ function link (scope, element) {
   };
 
   function updateSlider(val) {
-    //Update the brush position
     if(val < 0){
       val = 0;
     }
@@ -235,7 +232,6 @@ function link (scope, element) {
 
     sliderX = val;
 
-    //If the pin is at the top of the table, keep it at the top
     if(sliderX >= pinX){
       updatePin(sliderX);
     }
@@ -283,17 +279,12 @@ function link (scope, element) {
 
             //Append the circle
             if(currentItem){
-              svg.append('circle').attr('cx', xScale(currentItem.time)).attr('cy', (timelineStack[xVal])*7).attr('r', 2).attr('class', circleClass);
+              svg.append('circle').attr('cx', xScale(currentItem.time *1000)).attr('cy', (timelineStack[xVal])*7).attr('r', 2).attr('class', circleClass);
             }
           }
         }
       }
     }
-  }
-
-  function formatTimeReadable(time) {
-    let formattedDate = new Date(time);
-    return ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
   }
 }
 

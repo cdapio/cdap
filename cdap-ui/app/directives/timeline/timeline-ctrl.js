@@ -14,16 +14,28 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, myTimelineLogs, MyMetricsQueryHelper, MyCDAPDataSource) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   $scope.metadata = [];
-  //var loadTimeout = null;
 
-  this.testLogs = {'name' : 'Patrick', 'age' : 29};
-  console.log('From timeline controller: ', this.testLogs);
-
-  this.testLogsFromService = myTimelineLogs.getLogs();
+  $scope.testData = {
+    qid : {
+      endTime : 1468196079,
+      startTime : 1468196019,
+      series : [
+        {
+          metricName : 'system.app.log.error',
+          data : [
+            {
+              time : '1468196029',
+              value : 5
+            }
+          ]
+        }
+      ]
+    }
+  };
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -41,33 +53,17 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       runId = '66747576-46fc-11e6-be39-56219b501a22',
       pollPromise = null;
 
-  // var namespace = 'default',
-  //     appId = 'HelloWorld',
-  //     programType = 'flows',
-  //     programId = 'WhoFlow',
-  //     runId = '3d7bef02-453e-11e6-8c94-56219b501a22',
-  //     pollPromise = null;
-
-  // var metadataParams = {
-  //   'namespace' : namespace,
-  //   'appId' : appId,
-  //   'programType' : programType,
-  //   'programId' : programId,
-  //   'runId' : runId
-  // };
-
-
   var apiSettings = {
     metric : {
       context: 'namespace.' + namespace + '.app.' + appId + '.service.' + programId + '.run.' + runId ,
-      names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info'],
-      startTime: 0,
-      endTime : 'now',
+      names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
+      startTime : 1468196019,//0,
+      endTime : 1468196079,//'now',
       resolution: '1m'
     }
   };
-  function pollForMetadata() {
 
+  function pollForMetadata() {
     pollPromise = dataSrc.poll({
       _cdapPath: '/metrics/query',
       method: 'POST',
@@ -79,6 +75,9 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     },
     function (res) {
       $scope.metadata = res;
+      $scope.testData.qid.endTime+=5;
+      console.log('Polling Response: ' , res);
+      $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
       if (res.status === 'KILLED') {
         dataSrc.stopPoll(pollPromise.__pollId__);
@@ -97,16 +96,15 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   }).$promise.then(
     (res) => {
       console.log('Metadata in timeline : ' , res);
-
       apiSettings.metric.startTime = 1468196019;// = res.start;
 
       if(res.status==='KILLED'){
         apiSettings.metric.endTime = res.stop;
-        console.log('Program is not running');
+        console.log('STATUS: KILLED');
       } else if(res.status==='RUNNING'){
-       // apiSettings.endTime = 'now';
+       // to be - apiSettings.endTime = 'now';
         apiSettings.metric.endTime = 1468196079;
-        console.log('Program is running');
+        console.log('STATUS: RUNNING');
         pollForMetadata();
       }
     },
