@@ -40,12 +40,12 @@ to enable the building, deploying, and managing of data pipelines.
 .. |introduction| replace:: **Introduction to Hydrator:**
 .. _introduction: introduction.html
 
-- |introduction|_ What are pipelines, plugin and Cask Hydrator Studio
+- |introduction|_ What are pipelines, plugins and Cask Hydrator Studio
 
 .. |pipelines| replace:: **Creating and Running Pipelines:**
 .. _pipelines: pipelines.html
 
-- |pipelines|_ Including onfiguring plugins, publishing** and running pipelines
+- |pipelines|_ Including **configuring plugins, publishing** and **running** pipelines
 
 .. |plugins| replace:: **Hydrator Plugins:**
 .. _plugins: plugins/index.html
