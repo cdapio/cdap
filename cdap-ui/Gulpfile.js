@@ -236,7 +236,8 @@ function getEs6Directives(isNegate) {
     'complex-schema',
     'my-pipeline-settings',
     'my-post-run-action-wizard',
-    'my-post-run-actions'
+    'my-post-run-actions',
+    'widget-container/widget-complex-schema-editor'
   ];
 
   return es6directives.map(function (directive) {

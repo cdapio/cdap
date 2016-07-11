@@ -26,7 +26,11 @@ angular.module(PKG.name+'.commons')
       isDisabled: '='
     },
     bindToController: true,
-    controller: function () {},
+    controller: function () {
+      var vm = this;
+
+      vm.expanded = true;
+    },
     controllerAs: 'Embedded'
   };
 });

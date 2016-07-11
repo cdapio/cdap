@@ -15,6 +15,11 @@
 -->
 
 <div class="array-schema-container">
+  <div class="error"
+       ng-if="ArraySchema.error">
+    {{ ArraySchema.error }}
+  </div>
+
   <fieldset ng-disabled="ArraySchema.isDisabled">
     <div class="clearfix">
       <div class="input-column no-type">

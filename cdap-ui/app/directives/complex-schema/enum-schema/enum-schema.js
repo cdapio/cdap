@@ -48,6 +48,8 @@ function EnumSchemaController (avsc, $timeout, $scope, uuid) {
   };
 
   vm.formatOutput = () => {
+    vm.error = '';
+
     let symbols = vm.symbols.filter( (symbol) => {
       return symbol.name ? true : false;
     }).map( (symbol) => {
@@ -63,6 +65,15 @@ function EnumSchemaController (avsc, $timeout, $scope, uuid) {
       type: 'enum',
       symbols: symbols
     };
+
+    // Validate
+    try {
+      avsc.parse(obj);
+    } catch (e) {
+      vm.error = '' + e;
+      return;
+    }
+
     vm.model = obj;
 
     if (typeof vm.parentFormatOutput === 'function') {

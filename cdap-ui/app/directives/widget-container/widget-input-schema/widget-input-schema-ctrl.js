@@ -33,6 +33,7 @@ angular.module(PKG.name + '.commons')
         } catch(e) {
           schema = {
             'name': 'etlSchemaBody',
+            'type': 'record',
             'fields': []
           };
         }

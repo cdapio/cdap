@@ -57,14 +57,14 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
 
   function init(strJson) {
     if (!strJson || strJson === 'record') {
-      recordName = uuid.v4();
+      recordName = vm.recordName || 'a' + uuid.v4().split('-').join('');
       vm.addField();
       vm.formatOutput();
       return;
     }
 
     let parsed = avsc.parse(strJson, { wrapUnions: true });
-    recordName = parsed._name;
+    recordName = vm.recordName || parsed._name;
 
     vm.parsedSchema = parsed.getFields().map((field) => {
       let type = field.getType();
@@ -74,7 +74,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
       if (type.getTypeName() === 'union:wrapped') {
         type = type.getTypes();
 
-        if (type[1].getTypeName() === 'null') {
+        if (type[1] && type[1].getTypeName() === 'null') {
           storedType = type[0];
           type = type[0].getTypeName();
           nullable = true;
@@ -94,12 +94,19 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
       };
     });
 
+    if (!vm.isDisabled && vm.parsedSchema.length === 0) {
+      vm.addField();
+      return;
+    }
+
     vm.formatOutput();
   }
 
   vm.formatOutput = () => {
+    vm.error = '';
+
     let outputFields = vm.parsedSchema.filter((field) => {
-      return field.name ? true : false;
+      return field.name && field.type ? true : false;
     }).map( (field) => {
       let obj = {
         name: field.name,
@@ -108,13 +115,29 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
       return obj;
     });
 
-    let obj = {
-      type: 'record',
-      name: recordName || uuid.v4(),
-      fields: outputFields
-    };
+    if (outputFields.length > 0) {
+      let obj = {
+        type: 'record',
+        name: recordName || 'a' + uuid.v4().split('-').join(''),
+        fields: outputFields
+      };
 
-    vm.model = obj;
+      // Validate
+      try {
+        avsc.parse(obj);
+      } catch (e) {
+        let err = '' + e;
+        err = err.split(':');
+        vm.error = err[0] + ': ' + err[1];
+        return;
+      }
+
+      if (!vm.error) {
+        vm.model = obj;
+      }
+    } else {
+      vm.model = '';
+    }
 
     if (typeof vm.parentFormatOutput === 'function') {
       timeout = $timeout(vm.parentFormatOutput);

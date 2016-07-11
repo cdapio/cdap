@@ -53,11 +53,23 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout
   }
 
   vm.formatOutput = () => {
+    vm.error = '';
+
     let obj = {
       type: 'map',
       keys: vm.fields.keys.nullable ? [vm.fields.keys.type, 'null'] : vm.fields.keys.type,
       values: vm.fields.values.nullable ? [vm.fields.values.type, 'null'] : vm.fields.values.type
     };
+
+    // Validate
+    try {
+      avsc.parse(obj);
+    } catch (e) {
+      let err = '' + e;
+      err = err.split(':');
+      vm.error = err[0] + ': ' + err[1];
+      return;
+    }
 
     vm.model = obj;
 

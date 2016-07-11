@@ -14,7 +14,7 @@
  * the License.
  */
 
-function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope) {
+function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope, SchemaHelper) {
   'ngInject';
 
   var vm = this;
@@ -24,10 +24,22 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope) {
   let timeout;
 
   vm.formatOutput = () => {
+    vm.error = '';
+
     let obj = {
       type: 'array',
       items: vm.items.nullable ? [vm.items.type, 'null'] : vm.items.type
     };
+
+    // Validate
+    try {
+      avsc.parse(obj);
+    } catch (e) {
+      let err = '' + e;
+      err = err.split(':');
+      vm.error = err[0] + ': ' + err[1];
+      return;
+    }
 
     vm.model = obj;
 
@@ -48,30 +60,9 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope) {
     }
 
     let parsed = avsc.parse(strJson, { wrapUnions: true });
-
     let type = parsed.getItemsType();
-    let storedType = type;
-    let nullable = false;
 
-    if (type.getTypeName() === 'union:wrapped') {
-      type = type.getTypes();
-
-      if (type[1].getTypeName() === 'null') {
-        storedType = type[0];
-        type = type[0].getTypeName();
-        nullable = true;
-      } else {
-        type = 'union';
-      }
-    } else {
-      type = type.getTypeName();
-    }
-
-    vm.items = {
-      displayType: type,
-      type: storedType,
-      nullable: nullable
-    };
+    vm.items = SchemaHelper.parseType(type);
 
     vm.formatOutput();
   }
