@@ -116,7 +116,13 @@ angular.module(PKG.name+'.commons')
       isDisabled: '='
     },
     link: (scope, element) => {
-      $compile('<my-union-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-union-schema')(scope, (cloned) => {
+      let elemString = `<my-union-schema
+                          ng-model="model"
+                          parent-format-output="parentFormatOutput()"
+                          is-disabled="isDisabled">
+                        </my-union-schema>`;
+
+      $compile(elemString)(scope, (cloned) => {
         element.append(cloned);
       });
     }

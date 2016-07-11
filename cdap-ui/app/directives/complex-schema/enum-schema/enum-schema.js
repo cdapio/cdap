@@ -132,7 +132,13 @@ angular.module(PKG.name+'.commons')
       isDisabled: '='
     },
     link: (scope, element) => {
-      $compile('<my-enum-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-enum-schema')(scope, (cloned) => {
+      let elemString = `<my-enum-schema
+                          ng-model="model"
+                          parent-format-output="parentFormatOutput()"
+                          is-disabled="isDisabled">
+                        </my-enum-schema>`;
+
+      $compile(elemString)(scope, (cloned) => {
         element.append(cloned);
       });
     }

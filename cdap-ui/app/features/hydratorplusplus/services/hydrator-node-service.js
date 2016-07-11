@@ -46,10 +46,22 @@ class HydratorPlusPlusNodeService {
         inputSchema = null;
       }
       if (typeof inputSchema === 'object' && isStreamSource) {
-        inputSchema.fields = inputSchema.fields.map( field => {
-          delete field.readonly;
-          return field;
-        });
+        let streamSchemaPrefix = [
+          {
+            name: 'ts',
+            type: 'long'
+          },
+          {
+            name: 'headers',
+            type: {
+              type: 'map',
+              keys: 'string',
+              values: 'string'
+            }
+          }
+        ];
+
+        inputSchema.fields = streamSchemaPrefix.concat(inputSchema.fields);
       }
       return JSON.stringify(inputSchema);
     };

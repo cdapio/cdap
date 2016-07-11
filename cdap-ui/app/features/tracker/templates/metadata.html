@@ -80,35 +80,6 @@
     </div>
 
     <div class="column-content">
-      <!-- <table class="table table-bordered" ng-if="MetadataController.schema.length > 0">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Null</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr ng-repeat="field in MetadataController.schema">
-            <td>{{ ::field.name }}</td>
-            <td uib-popover-template="'/assets/features/tracker/templates/partial/complex-schema-popover.html'"
-                popover-append-to-body="true"
-                popover-placement="right"
-                popover-class="complex-schema"
-                popover-enable="field.fullSchema"
-                popover-trigger="outsideClick"
-                popover-is-open="field.popoverOpen"
-                ng-class="{'complex-type': field.fullSchema }"
-                >
-              {{ ::field.type }}
-            </td>
-            <td>
-              <span class="fa fa-check-square" ng-if="field.null"></span>
-              <span class="fa fa-square" ng-if="!field.null"></span>
-            </td>
-          </tr>
-        </tbody>
-      </table> -->
       <my-complex-schema
         ng-model="MetadataController.schema"
         is-disabled="true"
