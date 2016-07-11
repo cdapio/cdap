@@ -150,7 +150,7 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
   };
 
   this.filterByStartDate = (log) => {
-    if(this.logStartTime > log.time) {
+    if(this.logStartTime > log.log.timestamp) {
       return;
     }
     return log;
