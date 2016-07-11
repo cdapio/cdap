@@ -16,8 +16,11 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.AbstractService;
@@ -63,6 +66,7 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
     protected void configure() {
       setName(CUSTOM_WORKFLOW);
       addAction(new TestAction());
+      addAction(new MyCustomAction());
     }
 
     @Override
@@ -107,6 +111,20 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
             throw Throwables.propagate(e);
           }
         }
+      }
+    }
+
+    private static class MyCustomAction extends AbstractCustomAction {
+
+      @Override
+      public void run() throws Exception {
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            KeyValueTable table = context.getDataset(CUSTOM_TABLE);
+            table.write("another.hello", "another.world");
+          }
+        });
       }
     }
   }

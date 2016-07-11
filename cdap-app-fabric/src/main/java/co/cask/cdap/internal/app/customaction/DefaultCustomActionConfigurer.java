@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.customaction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
+import co.cask.cdap.internal.customaction.DefaultCustomActionSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
@@ -45,6 +46,7 @@ public class DefaultCustomActionConfigurer implements CustomActionConfigurer {
     this.name = customAction.getClass().getSimpleName();
     this.description = "";
     this.className = customAction.getClass().getName();
+    this.properties = new HashMap<>();
     this.propertyFields = new HashMap<>();
     this.datasetFields = new HashSet<>();
 

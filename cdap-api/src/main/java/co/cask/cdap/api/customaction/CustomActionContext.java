@@ -25,7 +25,7 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 /**
  * Represents runtime context of the {@link CustomAction} in the Workflow.
  */
-public interface CustomActionContext extends RuntimeContext, Transactional, PluginContext, WorkflowInfoProvider {
+public interface CustomActionContext extends RuntimeContext, Transactional, WorkflowInfoProvider {
 
   /**
    * Return the specification of the custom action.
