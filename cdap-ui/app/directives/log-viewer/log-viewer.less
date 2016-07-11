@@ -183,6 +183,26 @@ my-log-viewer {
       }
     }
 
+    table.scroll tbody,
+    table.scroll thead {
+      display: block;
+      color: #000000;
+    }
+
+    table.scroll th {
+      border-bottom: none;
+    }
+
+    table.scroll thead {
+      border-bottom: 1px solid #cccccc;
+    }
+
+    table.scroll tbody {
+      height: 400px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
     .logs-table {
 
       th {
@@ -258,12 +278,28 @@ my-log-viewer {
           position: relative;
           top: 1px;
         }
+      }
 
+      tbody {
+        .message {
+          padding: 0;
+        }
+      }
+
+      .highlighted {
+        background: blue;
+      }
+
+      thead tr {
+        width: 100%;
+      }
+
+      .log-header {
+        font-size: 14px;
       }
 
       .time {
         width: 15%;
-        max-width: 165px;
       }
       .time.log-header {
         padding-left: 20px;
@@ -271,27 +307,20 @@ my-log-viewer {
       .time div {
         padding-left: 10px;
       }
-      .level,
-      .level.log-header {
-        padding-right: 5px;
-        .fa-caret-down {
-          position: relative;
-          top: 6px;
-          float: right;
-        }
-        width: 20px;
-      }
-      .source { width: 28%; }
-      .log-header {
-        font-size: 14px;
-      }
-      tbody {
-        .message {
-          padding: 0;
-        }
+
+      .level2,
+      .level2-header {
+        padding-right: 10px;
       }
 
-      .highlighted { background: blue; }
+      .source,
+      .source-header {
+        width: 20%;
+      }
+
+      .message-header {
+        width: 100%;
+      }
 
       .message {
         width: 100%;

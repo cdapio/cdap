@@ -80,8 +80,7 @@ function link (scope, element) {
     svg2 = undefined;
     xAxis = undefined;
     sliderBar = undefined;
-    //timelineData = scope.metadata;
-    timelineData = scope.testData;
+    timelineData = scope.metadata;
 
     scope.plot();
   };
@@ -89,8 +88,8 @@ function link (scope, element) {
   /* ------------------- Plot Function ------------------- */
   scope.plot = function(){
 
-    startTime = scope.testData.qid.startTime*1000;
-    endTime = scope.testData.qid.endTime*1000;
+    startTime = timelineData.qid.startTime*1000;
+    endTime = timelineData.qid.endTime*1000;
 
     svg = d3.select('.timeline-log-chart')
                 .append('svg')
@@ -153,6 +152,12 @@ function link (scope, element) {
       scope.sliderBarPositionRefresh = xScale.invert(0);
     }
     let xValue = xScale(scope.sliderBarPositionRefresh);
+    console.log('xValue is: ' + xValue);
+
+    if(xValue < 0 || xValue > maxRange){
+      xValue = 0;
+    }
+
     sliderBar.attr('d', 'M0,0V0H' + xValue + 'V0');
     leftHandle = slide.append('rect')
         .attr('height', 50)
@@ -293,9 +298,15 @@ angular.module(PKG.name + '.commons')
   return {
     templateUrl: 'timeline/timeline.html',
     scope: {
-      timelineData: '=?'
+      timelineData: '=?',
+      namespaceId: '@',
+      appId: '@',
+      programType: '@',
+      programId: '@',
+      runId: '@'
     },
     link: link,
+    bindToController: true,
     controller: 'TimelineController',
     controllerAs: 'Timeline'
   };

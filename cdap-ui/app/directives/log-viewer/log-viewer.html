@@ -50,7 +50,13 @@
   </div>
 
   <!-- LOGS TIMELINE -->
-  <my-timeline></my-timeline>
+  <my-timeline
+    namespace-id="{{LogViewer.namespaceId}}"
+    app-id="{{LogViewer.appId}}"
+    program-type="{{LogViewer.programType}}"
+    program-id="{{LogViewer.programId}}"
+    run-id="{{LogViewer.runId}}">
+  </my-timeline>
 
   <!-- NO DATA MESSAGE -->
   <div ng-if="LogViewer.data.length === 0" class="jumbotron">
@@ -59,26 +65,34 @@
 
   <!-- LOGS TABLE -->
   <div ng-if="LogViewer.data.length > 0" class="logs-table">
-    <table class="table table-bordered">
+    <table class="table table-bordered scroll scroll-table">
       <thead>
-        <th class="time log-header"
+        <th class="time time-header log-header"
             ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
           Time
         </th>
 
-        <th class="level log-header header-level"
+<!--         <th class="level level-header log-header"
             ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-          <span uib-dropdown>
-            <span uib-dropdown-toggle>Level <span class="fa fa-caret-down"></span></span>
-            <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
-              <li ng-repeat="option in LogViewer.logEvents">
-                <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span>{{option}}</span></li>
-              </li>
-            </ul>
+          <span class="level-container">
+            <div class='level-text'>Level</div>
+            <div uib-dropdown class='level-dropdown'>
+              <span uib-dropdown-toggle><span class="fa fa-caret-down"></span></span>
+              <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
+                <li ng-repeat="option in LogViewer.logEvents">
+                  <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span>{{option}}</span></li>
+                </li>
+              </ul>
+            </div>
           </span>
         </th>
+ -->
+        <th class='level2 level2-header'
+            ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
+            Level
+        </th>
 
-        <th class="source log-header"
+        <th class="source source-header log-header"
             ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
           Source
         </th>
@@ -104,7 +118,7 @@
           </td>
 
           <!-- LEVEL -->
-          <td class="level"
+          <td class="level2"
               ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
             <div class="table-text-content">{{ ::log.log.logLevel }}</div>
           </td>
@@ -129,7 +143,7 @@
                 </span>
               </div>
               <div class="message-column">
-                &nbsp;&nbsp;{{ ::log.log.message}}
+                {{ ::log.log.message}}
               </div>
             </div>
 
