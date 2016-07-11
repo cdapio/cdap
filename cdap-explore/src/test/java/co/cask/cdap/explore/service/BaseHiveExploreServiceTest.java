@@ -198,9 +198,9 @@ public class BaseHiveExploreServiceTest {
     namespaceStore.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
-    datasetFramework.createNamespace(Id.Namespace.DEFAULT);
-    datasetFramework.createNamespace(NAMESPACE_ID);
-    datasetFramework.createNamespace(OTHER_NAMESPACE_ID);
+    datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
+    datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
+    datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
   }
 
   @AfterClass

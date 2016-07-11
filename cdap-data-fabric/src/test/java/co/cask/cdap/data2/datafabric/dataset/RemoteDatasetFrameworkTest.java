@@ -50,6 +50,7 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -169,8 +170,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     startLatch.await(5, TimeUnit.SECONDS);
 
-    framework.createNamespace(Id.Namespace.SYSTEM);
-    framework.createNamespace(NAMESPACE_ID);
+    framework.createNamespace(new NamespaceMeta.Builder().setName(Id.Namespace.SYSTEM).build());
+    framework.createNamespace(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }
 
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in

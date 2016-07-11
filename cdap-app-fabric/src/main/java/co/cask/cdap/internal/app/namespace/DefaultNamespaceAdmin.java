@@ -131,7 +131,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     }
 
     try {
-      dsFramework.createNamespace(namespace.toId());
+      dsFramework.createNamespace(metadata);
     } catch (DatasetManagementException e) {
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
@@ -197,10 +197,13 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
       if (!Id.Namespace.DEFAULT.equals(namespaceId)) {
-        // Finally delete namespace from MDS
-        nsStore.delete(namespaceId);
-        // Delete namespace in storage providers
-        dsFramework.deleteNamespace(namespaceId);
+        try {
+          // Delete namespace in storage providers
+          dsFramework.deleteNamespace(namespaceId);
+        } finally {
+          // Finally delete namespace from MDS
+          nsStore.delete(namespaceId);
+        }
       }
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);

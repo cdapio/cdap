@@ -38,6 +38,7 @@ import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -486,11 +487,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+  public void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException {
     writeLock.lock();
     try {
-      if (!namespaces.add(namespaceId)) {
-        throw new DatasetManagementException(String.format("Namespace %s already exists.", namespaceId.getId()));
+      if (!namespaces.add(namespaceMeta.getNamespaceId().toId())) {
+        throw new DatasetManagementException(String.format("Namespace %s already exists.", namespaceMeta.getName()));
       }
     } finally {
       writeLock.unlock();

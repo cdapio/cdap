@@ -98,7 +98,7 @@ public class ExploreDisabledTest {
     namespaceStore.create(new NamespaceMeta.Builder().setName(namespaceId).build());
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
-    datasetFramework.createNamespace(namespaceId);
+    datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(namespaceId).build());
   }
 
   @AfterClass

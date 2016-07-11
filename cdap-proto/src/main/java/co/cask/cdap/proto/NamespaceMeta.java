@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.id.NamespaceId;
+
 import java.util.Objects;
 
 /**
@@ -100,6 +102,10 @@ public final class NamespaceMeta {
       }
       return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName));
     }
+  }
+
+  public NamespaceId getNamespaceId() {
+    return new NamespaceId(name);
   }
 
   @Override

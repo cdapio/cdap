@@ -374,7 +374,7 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
 
     Id.Namespace namespace = Id.Namespace.from("yourspace");
-    framework.createNamespace(namespace);
+    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
     framework.deleteNamespace(namespace);
   }
 
@@ -388,8 +388,8 @@ public abstract class AbstractDatasetFrameworkTest {
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace1).build());
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    framework.createNamespace(namespace1);
-    framework.createNamespace(namespace2);
+    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace1).build());
+    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace2).build());
 
     // create 2 tables, one in each namespace. both tables have the same name.
     Id.DatasetInstance table1ID = Id.DatasetInstance.from(namespace1, "table");
@@ -452,8 +452,8 @@ public abstract class AbstractDatasetFrameworkTest {
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace1).build());
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    framework.createNamespace(namespace1);
-    framework.createNamespace(namespace2);
+    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace1).build());
+    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace2).build());
 
     // add modules in each namespace, with one module that shares the same name
     Id.DatasetModule simpleModuleNs1 = Id.DatasetModule.from(namespace1, SimpleKVTable.class.getName());
