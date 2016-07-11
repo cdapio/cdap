@@ -22,6 +22,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * An {@link InputFormat} for reading data from {@link BatchReadable} for MapReduce.
@@ -34,8 +35,14 @@ public final class MapReduceBatchReadableInputFormat<KEY, VALUE> extends Abstrac
   protected BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context,
                                                           String datasetName, Map<String, String> datasetArgs) {
 
+    return createBatchReadable(context, null, datasetName, datasetArgs);
+  }
+
+  @Override
+  protected BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context, @Nullable String datasetNamespace,
+                                                          String datasetName, Map<String, String> datasetArgs) {
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
     BasicMapReduceTaskContext<?, ?> taskContext = classLoader.getTaskContextProvider().get(context);
-    return taskContext.getBatchReadable(datasetName, datasetArgs);
+    return taskContext.getBatchReadable(datasetNamespace, datasetName, datasetArgs);
   }
 }
