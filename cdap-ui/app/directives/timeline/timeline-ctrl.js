@@ -34,16 +34,13 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     metric : {
       context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.run.${this.runId}`,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
-      startTime : '',//0,
+      startTime : '',
       endTime : '',
       resolution: '1m'
     }
   };
 
   function pollForMetadata() {
-
-    console.log('Before Poll: start: ', apiSettings.metric.startTime);
-    console.log('end: ', apiSettings.metric.endTime);
     pollPromise = dataSrc.poll({
       _cdapPath: '/metrics/query',
       method: 'POST',
@@ -54,9 +51,9 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       )
     },
     function (res) {
+      console.log('GET METADATA FROM HERE: ', res);
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
-      console.log('Polled Response: ', res);
       $scope.initialize();
       if (res.status === 'KILLED') {
         dataSrc.stopPoll(pollPromise.__pollId__);
@@ -75,17 +72,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     'runId' : this.runId,
   }).$promise.then(
     (res) => {
-      //API returns seconds, not miliseconds
-      let formattedStartTime = new Date(res.start *1000);
-      formattedStartTime = ((formattedStartTime.getMonth() + 1) + '/' + formattedStartTime.getDate() + '/' + formattedStartTime.getFullYear() + ' ' + formattedStartTime.getHours() + ':' + formattedStartTime.getMinutes() + ':' + formattedStartTime.getSeconds());
-
       apiSettings.metric.startTime = res.start;
-      if(res.status==='KILLED'){
-        console.log('STATUS: KILLED');
+      if (res.status==='KILLED') {
         apiSettings.metric.endTime = 'now';
         pollForMetadata();
-      } else if(res.status==='RUNNING'){
-        console.log('STATUS: RUNNING');
+      } else if (res.status==='RUNNING') {
         apiSettings.metric.endTime = 'now';
         pollForMetadata();
       }

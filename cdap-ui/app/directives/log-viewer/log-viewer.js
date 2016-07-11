@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   'ngInject';
 
   this.data = {};

@@ -34,7 +34,7 @@ angular.module(PKG.name + '.services')
     {
       getLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs', true),
       getLogsJson: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs?format=json', true),
-      getLogsStart: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs?format=json?start=start', true),
+      getLogsStart: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs?format=json&start=start', true),
       getLogsMetadata: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/', false),
       nextLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
       nextLogsJson: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next?format=json', true),
