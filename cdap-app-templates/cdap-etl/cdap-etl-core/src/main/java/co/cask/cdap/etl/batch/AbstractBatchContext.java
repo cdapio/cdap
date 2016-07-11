@@ -16,9 +16,12 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.LookupProvider;
@@ -37,6 +40,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   private final DatasetContext datasetContext;
   private final long logicalStartTime;
   private final Map<String, String> runtimeArgs;
+  private final Admin datasetAdmin;
 
   protected AbstractBatchContext(PluginContext pluginContext,
                                  DatasetContext datasetContext,
@@ -44,11 +48,13 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                  LookupProvider lookup,
                                  String stageName,
                                  long logicalStartTime,
-                                 Map<String, String> runtimeArgs) {
+                                 Map<String, String> runtimeArgs,
+                                 Admin datasetAdmin) {
     super(pluginContext, metrics, lookup, stageName);
     this.datasetContext = datasetContext;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
+    this.datasetAdmin = datasetAdmin;
   }
 
   protected <T extends PluginContext & DatasetContext> AbstractBatchContext(T context,
@@ -56,13 +62,23 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                                                             LookupProvider lookup,
                                                                             String stageName,
                                                                             long logicalStartTime,
-                                                                            Map<String, String> runtimeArgs) {
+                                                                            Map<String, String> runtimeArgs,
+                                                                            Admin datasetAdmin) {
     super(context, metrics, lookup, stageName);
     this.datasetContext = context;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
+    this.datasetAdmin = datasetAdmin;
   }
 
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties)
+    throws DatasetManagementException {
+    datasetAdmin.createDataset(datasetName, typeName, properties);
+  }
+
+  public boolean datasetExists(String datasetName) throws DatasetManagementException {
+    return datasetAdmin.datasetExists(datasetName);
+  }
 
   @Override
   public long getLogicalStartTime() {
