@@ -19,12 +19,6 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
 
   this.data = {};
 
-  var namespace = 'default',
-      appId = 'PurchaseHistory',
-      programType = 'flows',
-      programId = 'PurchaseFlow',
-      runId = 'e8f53d24-46e5-11e6-878e-56219b501a22';
-
   this.configOptions = {
     time: true,
     level: true,
@@ -74,11 +68,11 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
   };
 
   myLogsApi.nextLogsJson({
-    'namespace' : namespace,
-    'appId' : appId,
-    'programType' : programType,
-    'programId' : programId,
-    'runId' : runId,
+    'namespace' : this.namespaceId,
+    'appId' : this.appId,
+    'programType' : this.programType,
+    'programId' : this.programId,
+    'runId' : this.runId,
     'start' : -10000.1468004430508
   }).$promise.then(
     (res) => {
@@ -89,6 +83,7 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
         res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
       });
       this.data = res;
+      console.log('MOCK THIS DATA: ', res);
       this.totalCount = res.length;
     },
     (err) => {
@@ -163,14 +158,23 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
   };
 }
 
+
 angular.module(PKG.name + '.commons')
   .directive('myLogViewer', function () {
     return {
       templateUrl: 'log-viewer/log-viewer.html',
       controller: LogViewerController,
       scope: {
-        displayOptions: '=?'
+        displayOptions: '=?',
+        namespaceId: '@',
+        appId: '@',
+        programType: '@',
+        programId: '@',
+        runId: '@'
       },
+      bindToController: true,
       controllerAs: 'LogViewer'
     };
   });
+
+

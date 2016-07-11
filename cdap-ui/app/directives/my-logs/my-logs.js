@@ -14,12 +14,20 @@
  * the License.
  */
 
-angular.module(`${PKG.name}.feature.experimental`)
-  .controller('LogsController', function() {
-
-    this.namespaceId = 'default';
-    this.appId = 'PurchaseHistory';
-    this.programType = 'flows';
-    this.programId = 'PurchaseFlow';
-    this.runId = 'e8f53d24-46e5-11e6-878e-56219b501a22';
+angular.module(PKG.name + '.commons')
+  .directive('myLogs', function() {
+    return {
+      restrict: 'E',
+      scope: {
+        namespaceId: '@',
+        appId: '@',
+        programType: '@',
+        programId: '@',
+        runId: '@'
+      },
+      bindToController: true,
+      controller: function() {},
+      controllerAs: 'MyLogsController',
+      templateUrl: 'my-logs/my-logs.html'
+    };
   });

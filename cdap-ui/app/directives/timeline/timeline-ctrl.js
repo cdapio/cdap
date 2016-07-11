@@ -19,24 +19,6 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   var dataSrc = new MyCDAPDataSource($scope);
   $scope.metadata = [];
 
-  $scope.testData = {
-    qid : {
-      endTime : 1468196079,
-      startTime : 1468196019,
-      series : [
-        {
-          metricName : 'system.app.log.error',
-          data : [
-            {
-              time : '1468196029',
-              value : 5
-            }
-          ]
-        }
-      ]
-    }
-  };
-
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
       type: LOGVIEWERSTORE_ACTIONS.START_TIME,
@@ -46,16 +28,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     });
   };
 
-  var namespace = 'default',
-      appId = 'PurchaseHistory',
-      programType = 'services',
-      programId = 'PurchaseHistoryService',
-      runId = '66747576-46fc-11e6-be39-56219b501a22',
-      pollPromise = null;
+  var pollPromise = null;
 
   var apiSettings = {
     metric : {
-      context: 'namespace.' + namespace + '.app.' + appId + '.service.' + programId + '.run.' + runId ,
+      context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.run.${this.runId}`,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
       startTime : 1468196019,//0,
       endTime : 1468196079,//'now',
@@ -75,7 +52,6 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     },
     function (res) {
       $scope.metadata = res;
-      $scope.testData.qid.endTime+=5;
       console.log('Polling Response: ' , res);
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
@@ -84,15 +60,17 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
         pollPromise = null;
         console.log('Status: KILLED - stopping polling..');
       }
+    }, function(err) {
+      console.log('ERROR: ', err);
     });
   }
 
   myLogsApi.getLogsMetadata({
-    'namespace' : namespace,
-    'appId' : appId,
-    'programType' : programType,
-    'programId' : programId,
-    'runId' : runId,
+    'namespace' : this.namespaceId,
+    'appId' : this.appId,
+    'programType' : this.programType,
+    'programId' : this.programId,
+    'runId' : this.runId,
   }).$promise.then(
     (res) => {
       console.log('Metadata in timeline : ' , res);
