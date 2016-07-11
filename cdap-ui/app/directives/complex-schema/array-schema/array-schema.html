@@ -26,7 +26,7 @@
         <select class="form-control"
                 ng-model="ArraySchema.items.displayType"
                 ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
-                ng-change="(ArraySchema.items.type = ArraySchema.items.displayType) && ArraySchema.formatOutput()">
+                ng-change="ArraySchema.changeType()">
         </select>
       </div>
 

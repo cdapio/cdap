@@ -43,54 +43,6 @@
       </div>
       <div class="content"
           ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index, '': MyInputSchemaCtrl.currentIndex === $index}">
-        <!-- <table class="table" ng-if="::(inputschema.schema.fields.length > 0)">
-          <thead>
-            <th>
-              <label class="control-label">Name</label>
-            </th>
-            <th>
-              <label class="control-label">Type</label>
-            </th>
-            <th>
-              <label class="control-label">Null</label>
-            </th>
-          </thead> -->
-          <!--
-            This is bad. If we change the container's css class then infinite scroll is not going to work.
-            The reason we are doing this today is because we need to have one scroll bar for all the three
-            sections of the node config modal (input-schema, config & output-schema) and that is technically
-            the container for the inifinite scroll here.
-
-            So container = bottompanel-body & element = table/tbody. As we scroll in the container
-            the ng-inifinite scroll is going to check whether the difference between element bottom & container
-            bottom is less than the scroll distance, if yes then its going to add additional elements.
-
-            The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
-          -->
-          <!-- <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
-                 infinite-scroll-container="'.modal.cdap-modal.node-config-modal .bottompanel-body'"
-                 infinite-scroll-disabled="inputschema.schema.fields <= MyInputSchemaCtrl.inputSchemaRowLimit">
-            <tr ng-repeat="field in ::inputschema.schema.fields | limitTo: 10 track by $index">
-              <td class="name">
-                <span uib-tooltip="{{ ::field.name }}"
-                      tooltip-ellipsis="{{ ::field.name }}"
-                      data-ellipsis="isEllipsis"
-                      data-offset-value="20"
-                      tooltip-enable="isEllipsis"
-                      tooltip-append-to-body="true">
-                  {{::field.name}}
-                </span>
-              </td>
-              <td class="type">
-                <span ng-if="field.type.type !== 'map'">{{::field.type}}</span>
-                <span ng-if="field.type.type === 'map'">map&lt;string, string&gt; </span>
-              </td>
-              <td class="nullable text-center" >
-                <input type="checkbox" ng-model="field.nullable" disabled="disabled">
-              </td>
-            </tr>
-          </tbody>
-        </table> -->
 
         <my-complex-schema
           ng-model="inputschema.schema"
@@ -111,61 +63,10 @@
   <div ng-if="::(!MyInputSchemaCtrl.multipleInputs)">
     <!-- Section that shows single input schema table-->
 
-    <!-- <table class="table"
-      ng-if="::(MyInputSchemaCtrl.inputSchemas[0].schema.fields.length > 0)">
-      <thead>
-        <th>
-          <label class="control-label">Name</label>
-        </th>
-        <th>
-          <label class="control-label">Type</label>
-        </th>
-        <th>
-          <label class="control-label">Null</label>
-        </th>
-      </thead> -->
-      <!--
-        This is bad. If we change the container's css class then infinite scroll is not going to work.
-        The reason we are doing this today is because we need to have one scroll bar for all the three
-        sections of the node config modal (input-schema, config & output-schema) and that is technically
-        the container for the inifinite scroll here.
-
-        So container = bottompanel-body & element = table/tbody. As we scroll in the container
-        the ng-inifinite scroll is going to check whether the difference between element bottom & container
-        bottom is less than the scroll distance, if yes then its going to add additional elements.
-
-        The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
-      -->
-      <!-- <tbody infinite-scroll="MyInputSchemaCtrl.doLoadNextSetOfInputSchemaRows()"
-             infinite-scroll-container="'.modal.cdap-modal.node-config-modal .bottompanel-body'"
-             infinite-scroll-disabled="MyInputSchemaCtrl.inputSchemas[0].schema.fields.length <= MyInputSchemaCtrl.inputSchemaRowLimit">
-        <tr ng-repeat="field in MyInputSchemaCtrl.inputSchemas[0].schema.fields | limitTo: MyInputSchemaCtrl.inputSchemaRowLimit track by $index">
-          <td class="name">
-            <span uib-tooltip="{{ ::field.name }}"
-                  tooltip-ellipsis="{{ ::field.name }}"
-                  data-ellipsis="isEllipsis"
-                  data-offset-value="20"
-                  tooltip-enable="isEllipsis"
-                  tooltip-append-to-body="true">
-              {{::field.name}}
-            </span>
-          </td>
-          <td class="type">
-            <span ng-if="field.type.type !== 'map'">{{::field.type}}</span>
-            <span ng-if="field.type.type === 'map'">map&lt;string, string&gt; </span>
-          </td>
-          <td class="nullable text-center" >
-            <input type="checkbox" ng-model="field.nullable" disabled="disabled">
-          </td>
-        </tr>
-      </tbody>
-    </table> -->
-
     <my-complex-schema
       ng-model="MyInputSchemaCtrl.inputSchemas[0].schema"
       is-disabled="true">
     </my-complex-schema>
-
 
     <!-- End of section that shows single input schema table-->
 

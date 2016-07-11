@@ -17,18 +17,27 @@
 angular.module(PKG.name+'.commons')
 .constant('SCHEMA_TYPES', {
   'types': [
-    'array',
     'boolean',
     'bytes',
     'double',
-    'enum',
     'float',
     'int',
     'long',
-    'map',
-    'record',
     'string',
-    'union'
+    'array',
+    'enum',
+    'map',
+    'union',
+    'record'
+  ],
+  'simpleTypes': [
+    'boolean',
+    'bytes',
+    'double',
+    'float',
+    'int',
+    'long',
+    'string',
   ]
 })
 .factory('SchemaHelper', () => {

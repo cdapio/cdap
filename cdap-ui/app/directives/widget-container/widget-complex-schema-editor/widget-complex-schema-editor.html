@@ -15,12 +15,16 @@
 -->
 
 <div class="widget-schema-container">
+  <div class="error text-danger">
+    {{ SchemaEditor.error }}
+  </div>
   <div ng-if="!SchemaEditor.clearDOM">
     <my-complex-schema
       ng-model="SchemaEditor.schemaObj"
       record-name="'etlSchemaBody'"
-      is-disabled="SchemaEditor.isDisabled"
-      parent-format-output="SchemaEditor.formatOutput()">
+      is-disabled="SchemaEditor.isDisabled || SchemaEditor.implicitSchemaPresent"
+      parent-format-output="SchemaEditor.formatOutput()"
+      schema-prefix="SchemaEditor.schemaPrefix">
     </my-complex-schema>
   </div>
 

@@ -137,51 +137,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       if(appConfig.configJson) {
         app.config = appConfig.configJson;
         uiConfig = this.HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(app);
-        let setDefaultOutputSchemaForNodes = (node) => {
-          var pluginName = node.plugin.name;
-          var pluginToSchemaMap = {
-            'Stream': [
-              {
-                readonly: true,
-                name: 'ts',
-                type: 'long'
-              },
-              {
-                readonly: true,
-                name: 'headers',
-                type: {
-                  type: 'map',
-                  keys: 'string',
-                  values: 'string'
-                }
-              }
-            ]
-          };
-          if (pluginToSchemaMap[pluginName]){
-            if (!node.plugin.properties.schema) {
-              node.plugin.properties.schema = {
-                fields: [{ name: 'body', type: 'string'}]
-              };
-              node.plugin.properties.schema = JSON.stringify({
-                type: 'record',
-                name: 'etlSchemaBody',
-                fields: angular.isObject(node.outputSchema)?
-                  pluginToSchemaMap[pluginName].concat(node.outputSchema.fields || []):
-                  pluginToSchemaMap[pluginName]
-              });
-            } else {
-              try {
-                let schema = JSON.parse(node.plugin.properties.schema);
-                node.plugin.properties.schema = JSON.stringify({
-                  type: 'record',
-                  name: 'etlSchemaBody',
-                  fields: pluginToSchemaMap[pluginName].concat(schema.fields)
-                });
-              } catch(e) {}
-            }
-          }
-        };
-        uiConfig.nodes.forEach(setDefaultOutputSchemaForNodes);
+
         appConfig.DAGConfig = {
           nodes: uiConfig.nodes,
           connections: uiConfig.connections

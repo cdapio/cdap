@@ -132,42 +132,6 @@ class TrackerMetadataController {
       });
   }
 
-  // parseSchema(schema) {
-  //   this.complexSchema = schema;
-  //   let jsonSchema;
-
-  //   try {
-  //     jsonSchema = JSON.parse(schema);
-  //   } catch (e) {
-  //     console.log('Error parsing schema JSON');
-  //     return [];
-  //   }
-
-  //   let fieldsArr = [];
-  //   angular.forEach(jsonSchema.fields, (field) => {
-  //     let obj = {
-  //       name: field.name
-  //     };
-
-  //     if (angular.isArray(field.type)) {
-  //       obj.type = field.type[0];
-  //       obj.null = true;
-  //     } else {
-  //       obj.type = field.type;
-  //       obj.null = false;
-  //     }
-
-  //     if (angular.isObject(obj.type)) {
-  //       obj.fullSchema = angular.copy(obj.type);
-  //       obj.type = obj.type.type;
-  //     }
-
-  //     fieldsArr.push(obj);
-  //   });
-
-  //   return fieldsArr;
-  // }
-
   /* METADATA PROPERTIES CONTROL */
   /*
     TODO:

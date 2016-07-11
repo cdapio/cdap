@@ -29,7 +29,7 @@
         <select class="form-control"
                 ng-model="MapSchema.fields.keys.displayType"
                 ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
-                ng-change="(MapSchema.fields.keys.type = MapSchema.fields.keys.displayType) && MapSchema.formatOutput()">
+                ng-change="MapSchema.changeType(MapSchema.fields.keys)">
         </select>
       </div>
 
@@ -60,7 +60,7 @@
         <select class="form-control"
                 ng-model="MapSchema.fields.values.displayType"
                 ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
-                ng-change="(MapSchema.fields.values.type = MapSchema.fields.values.displayType) && MapSchema.formatOutput()">
+                ng-change="MapSchema.changeType(MapSchema.fields.values)">
         </select>
       </div>
 
