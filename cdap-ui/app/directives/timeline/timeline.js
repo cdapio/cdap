@@ -16,9 +16,8 @@
 
 function link (scope, element) {
 
-  let timelineData = scope.timelineData;
+  //let timelineData = scope.timelineData;
 
-  console.log('from link function: ' , scope.testLogs);
   //Globals
   let width = element.parent()[0].offsetWidth;
   let height = 50;
@@ -36,8 +35,109 @@ function link (scope, element) {
   let pinHandle;
   let brush;
   let xScale;
+  let timelineData;
+  let svg;
+
+  //initialize the graph
+  scope.initialize = () => {
+    timelineData = scope.metadata;
+    scope.refactoredPlot();
+  };
 
   /* ------------------- Plot Function ------------------- */
+  scope.refactoredPlot = function(){
+    let startTime,
+        endTime;
+
+    svg = d3.select('.timeline-log-chart')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+    //Set the Range and Domain
+    xScale = d3.time.scale().range([0, (maxRange)]);
+
+    console.log('Api returns: ' , scope.metadata);
+
+    startTime = scope.metadata.qid.startTime;
+    endTime = scope.metadata.qid.endTime;
+
+    console.log('start time: ', formatTimeReadable(startTime));
+    console.log('endtime: ' + formatTimeReadable(endTime));
+    console.log('start time in epoch' + startTime);
+    console.log('end time in epoch' + endTime);
+
+
+    xScale.domain([startTime, endTime]);
+
+    let xAxis = d3.svg.axis().scale(xScale)
+      .orient('bottom')
+      .innerTickSize(-40)
+      .tickPadding(7)
+      .ticks(8);
+
+    generateEventCircles();
+    renderBrushAndSlider();
+  };
+
+  function renderBrushAndSlider(){
+    console.log('rendering brush and sliders');
+  }
+
+  function generateEventCircles(){
+    console.log('generating event circles');
+    //Generate circles from the filtered events
+    if(timelineData.qid.series.length > 0){
+      for(var i = 0; i < timelineData.qid.series.length; i++){
+        for(var j = 0; j < timelineData.qid.series[i].data.length; j++){
+          let currentItem = timelineData.qid.series[i].data[j];
+          let xVal = Math.floor(xScale(currentItem.time));
+          let numEvents = currentItem.value;
+
+          if(timelineStack[xVal] === undefined) {
+            timelineStack[xVal] = 0;
+          }
+
+          //plot events until we reach capacity
+          for(var k = 0; k < numEvents && timelineStack[xVal] < 5; k++){
+            timelineStack[xVal]++;
+
+            //Append the circle
+            svg.append('circle').attr('cx', xScale(currentItem.time)).attr('cy', (timelineStack[xVal])*10).attr('r', 2).attr('class', 'red-circle');
+          }
+        }
+      }
+    }
+    let circles = svg.selectAll('circle')
+      .data(timelineData.qid.series[0].data[0])
+      .enter()
+      .append('circle');
+
+    circles.attr('cx', function(d) {
+      let xVal = Math.floor(xScale(d.log.time));
+      if(timelineStack[xVal] === undefined){
+        timelineStack[xVal] = 0;
+      } else {
+        timelineStack[xVal]++;
+      }
+      return xScale(d.log.time) + 15;
+    })
+    .attr('cy', function(d) {
+      let numDots = timelineStack[Math.floor(xScale(d.log.time))]--;
+      return height-height/2.5 - (numDots * 6);
+    })
+    .attr('r', 2)
+    .attr('class', function(d) {
+      if(d.level === 'ERROR'){
+        return 'red-circle';
+      }
+      else if(d.level === 'WARN'){
+        return 'yellow-circle';
+      } else {
+        return 'other-circle';
+      }
+    });
+  }
 
   scope.plot = function plot() {
 
@@ -222,6 +322,11 @@ function link (scope, element) {
 
     scope.updatePin = updatePin;
   };
+
+  function formatTimeReadable(time) {
+    let formattedDate = new Date(time);
+    return ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+  }
 }
 
 angular.module(PKG.name + '.commons')

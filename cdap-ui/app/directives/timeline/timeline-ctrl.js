@@ -14,7 +14,7 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, myTimelineLogs, MyCDAPDataSource) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, myTimelineLogs, MyMetricsQueryHelper, MyCDAPDataSource) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   $scope.metadata = [];
@@ -34,6 +34,13 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     });
   };
 
+  var namespace = 'default',
+      appId = 'PurchaseHistory',
+      programType = 'services',
+      programId = 'PurchaseHistoryService',
+      runId = '66747576-46fc-11e6-be39-56219b501a22',
+      pollPromise = null;
+
   // var namespace = 'default',
   //     appId = 'HelloWorld',
   //     programType = 'flows',
@@ -41,33 +48,38 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   //     runId = '3d7bef02-453e-11e6-8c94-56219b501a22',
   //     pollPromise = null;
 
-  var namespace = 'default',
-      appId = 'PurchaseHistory',
-      programType = 'flows',
-      programId = 'PurchaseFlow',
-      runId = '53522903-46e4-11e6-b2ff-56219b501a22',
-      pollPromise = null;
+  // var metadataParams = {
+  //   'namespace' : namespace,
+  //   'appId' : appId,
+  //   'programType' : programType,
+  //   'programId' : programId,
+  //   'runId' : runId
+  // };
 
-  var metadataParams = {
-    'namespace' : namespace,
-    'appId' : appId,
-    'programType' : programType,
-    'programId' : programId,
-    'runId' : runId
+
+  var apiSettings = {
+    metric : {
+      context: 'namespace.' + namespace + '.app.' + appId + '.service.' + programId + '.run.' + runId ,
+      names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info'],
+      startTime: 0,
+      endTime : 'now',
+      resolution: '1m'
+    }
   };
-
-  function pollForMetadata(params) {
-    var path = '/namespaces/' + params.namespace +
-      '/apps/' + params.appId +
-      '/' + params.programType + '/' + params.programId +
-      '/runs/' + params.runId;
+  function pollForMetadata() {
 
     pollPromise = dataSrc.poll({
-      _cdapPath: path,
-      interval: 3000
-    }, function (res) {
+      _cdapPath: '/metrics/query',
+      method: 'POST',
+      body: MyMetricsQueryHelper.constructQuery(
+        'qid',
+        MyMetricsQueryHelper.contextToTags(apiSettings.metric.context),
+        apiSettings.metric
+      )
+    },
+    function (res) {
       $scope.metadata = res;
-
+      $scope.initialize();
       if (res.status === 'KILLED') {
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
@@ -86,36 +98,21 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     (res) => {
       console.log('Metadata in timeline : ' , res);
 
+      apiSettings.metric.startTime = 1468196019;// = res.start;
+
       if(res.status==='KILLED'){
+        apiSettings.metric.endTime = res.stop;
         console.log('Program is not running');
       } else if(res.status==='RUNNING'){
-        //Poll the API for data every 10 seconds
+       // apiSettings.endTime = 'now';
+        apiSettings.metric.endTime = 1468196079;
         console.log('Program is running');
-        pollForMetadata(metadataParams);
+        pollForMetadata();
       }
     },
     (err) => {
       console.log('ERROR: ', err);
     });
-  // myLogsApi.nextLogs({
-  //   'namespace' : namespace,
-  //   'appId' : appId,
-  //   'programType' : programType,
-  //   'programId' : programId,
-  //   'runId' : runId,
-  // }).$promise.then(
-  //   (res) => {
-  //     //Process the data
-  //     angular.forEach(res, (element, index) => {
-  //       let formattedDate = new Date(res[index].log.timestamp);
-  //       res[index].log.timestamp = formattedDate;
-  //     });
-  //     this.timelineData = res;
-  //     console.log('data fetched from timeline controller');
-  //   },
-  //   (err) => {
-  //     console.log('ERROR: ', err);
-  //   });
 }
 
 angular.module(PKG.name + '.commons')
