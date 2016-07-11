@@ -17,50 +17,13 @@
 function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
   'ngInject';
 
-  //include above when no longer hard coding: $stateParams
-  // var namespace = 'default',
-  //     appId = 'HelloWorld',
-  //     programType = 'flows',
-  //     programId = 'WhoFlow',
-  //     runId = '3d7bef02-453e-11e6-8c94-56219b501a22';
+  this.data = {};
 
   var namespace = 'default',
       appId = 'PurchaseHistory',
       programType = 'flows',
       programId = 'PurchaseFlow',
-      runId = 'e8f53d24-46e5-11e6-878e-56219b501a22';//,
-      //pollPromise = null;
-
-  this.data = {};
-
-  myLogsApi.nextLogsJson({
-    'namespace' : namespace,
-    'appId' : appId,
-    'programType' : programType,
-    'programId' : programId,
-    'runId' : runId,
-    'start' : -10000.1468004430508
-  }).$promise.then(
-    (res) => {
-      console.log('success from logviewer controller: ', res);
-      //Process the data
-      angular.forEach(res, (element, index) => {
-        let formattedDate = new Date(res[index].log.timestamp);
-        res[index].log.stackTrace = 'test';
-        res[index].log.timestamp = formattedDate;
-        res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
-      });
-      this.data = res;
-      // this.totalCount =
-    },
-    (err) => {
-      console.log('ERROR: ', err);
-    });
-
-  LogViewerStore.subscribe(() => {
-    this.logStartTime = LogViewerStore.getState().startTime;
-    console.log('new start time is set to: ' + LogViewerStore.getState().startTime);
-  });
+      runId = 'e8f53d24-46e5-11e6-878e-56219b501a22';
 
   this.configOptions = {
     time: true,
@@ -76,6 +39,7 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
     message: false
   };
 
+  //Collapsing LogViewer Table Columns
   var theColumns = [];
   var cols = this.configOptions;
 
@@ -109,6 +73,33 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
     }
   };
 
+  myLogsApi.nextLogsJson({
+    'namespace' : namespace,
+    'appId' : appId,
+    'programType' : programType,
+    'programId' : programId,
+    'runId' : runId,
+    'start' : -10000.1468004430508
+  }).$promise.then(
+    (res) => {
+      angular.forEach(res, (element, index) => {
+        let formattedDate = new Date(res[index].log.timestamp);
+        res[index].log.stackTrace = 'test';
+        res[index].log.timestamp = formattedDate;
+        res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+      });
+      this.data = res;
+      this.totalCount = res.length;
+    },
+    (err) => {
+      console.log('ERROR: ', err);
+    });
+
+  //Subscribe logStartTime to start time
+  LogViewerStore.subscribe(() => {
+    this.logStartTime = LogViewerStore.getState().startTime;
+  });
+
   angular.forEach($scope.displayOptions, (value, key) => {
     this.configOptions[key] = value;
   });
@@ -123,14 +114,13 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
     'TRACE' : false
   };
 
-  // this.totalCount = this.data.length;
   let errorCount = 0;
   let warningCount = 0;
   let numEvents = 0;
 
   //Compute Total
   for(let k = 0; k < this.data.length; k++){
-    let currentItem = this.data[k].level;
+    let currentItem = this.data[k].logLevel;
     if(currentItem === 'ERROR'){
       errorCount++;
     } else if(currentItem === 'WARN'){
@@ -149,7 +139,6 @@ function LogViewerController ($scope, $resource, LogViewerStore, myLogsApi) {
     });
   };
 
-  //New 'includeEvent' function
   this.includeEvent = function(eventType){
     if(included[eventType]){
       numEvents--;
