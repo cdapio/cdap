@@ -57,7 +57,7 @@ public class MockRuntimeDatasetSource extends MockSource {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true));
+    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
     return new PluginClass(BatchSource.PLUGIN_TYPE, "MockRuntime", "", MockRuntimeDatasetSource.class.getName(),
                            "config", properties);
   }

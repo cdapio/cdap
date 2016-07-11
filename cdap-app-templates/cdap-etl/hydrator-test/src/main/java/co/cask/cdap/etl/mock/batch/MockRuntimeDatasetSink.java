@@ -57,7 +57,7 @@ public class MockRuntimeDatasetSink extends MockSink {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true));
+    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
     return new PluginClass(BatchSink.PLUGIN_TYPE, "MockRuntime", "", MockRuntimeDatasetSink.class.getName(),
                            "config", properties);
   }
