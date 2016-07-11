@@ -25,12 +25,9 @@ import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
-<<<<<<< HEAD
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
-=======
 import co.cask.cdap.etl.mock.batch.joiner.Join;
->>>>>>> develop
 import co.cask.cdap.etl.mock.realtime.LookupSource;
 import co.cask.cdap.etl.mock.realtime.MockSink;
 import co.cask.cdap.etl.mock.realtime.MockSource;
@@ -57,7 +54,7 @@ public class HydratorTestBase extends TestBase {
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
-    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, Join.PLUGIN_CLASS,
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS, co.cask.cdap.etl.mock.batch.MockSource.PLUGIN_CLASS,
     MockRuntimeDatasetSink.PLUGIN_CLASS, MockRuntimeDatasetSource.PLUGIN_CLASS,
     MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
