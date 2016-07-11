@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@
 #
 
 # Install
-apt-get install -y slim
+apt-get install -y --no-install-recommends slim
 
 # Global configuration and auto-login
 echo 'sessiondir /usr/share/xsessions/' >> /etc/slim.conf

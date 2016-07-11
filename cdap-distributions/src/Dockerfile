@@ -24,7 +24,7 @@ MAINTAINER Cask Data <ops@cask.co>
 # grab gosu for easy step-down from root
 ENV GOSU_VERSION 1.7
 RUN apt-get update && \
-  apt-get install -y \
+  apt-get install -y --no-install-recommends \
     curl \
     git && \
   curl -vL \
