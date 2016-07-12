@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.SparkCompute;
@@ -32,6 +33,7 @@ import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TransformExecutor;
@@ -132,7 +134,9 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
         });
 
       if (namesOfTypeSparkSink.contains(sinkName)) {
-        SparkSink sparkSink = sec.getPluginContext().newPluginInstance(sinkName);
+        SparkSink sparkSink = sec.getPluginContext().newPluginInstance(
+          sinkName, new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(),
+                                              sec.getLogicalStartTime()));
         sparkSink.run(new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, sinkName),
                       filteredResultRDD.values());
       } else {
@@ -204,7 +208,9 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
     JavaPairRDD<String, Object> sourceTransformed = performMapFunction(inputRDDs, sourcePipelineStr, true);
 
     SparkCompute sparkCompute =
-      new PipelinePluginInstantiator(sec.getPluginContext(), phaseSpec).newPluginInstance(sparkComputeName);
+      new PipelinePluginInstantiator(sec.getPluginContext(), phaseSpec).newPluginInstance(
+        sparkComputeName, new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(),
+                                                    sec.getLogicalStartTime()));
     JavaRDD<Object> sparkComputed =
       sparkCompute.transform(new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, sparkComputeName),
                              sourceTransformed.values());
@@ -267,6 +273,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
     protected final long logicalStartTime;
     protected final Map<String, String> runtimeArgs;
     protected final String pipelineStr;
+    protected final WorkflowToken workflowToken;
     private transient TransformExecutor<EXECUTOR_IN> transformExecutor;
 
     public TransformExecutorFunction(JavaSparkExecutionContext sec, @Nullable String pipelineStr) {
@@ -276,6 +283,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
       this.runtimeArgs = sec.getRuntimeArguments();
       this.pipelineStr = pipelineStr != null ?
         pipelineStr : sec.getSpecification().getProperty(Constants.PIPELINEID);
+      this.workflowToken = sec.getWorkflowToken();
     }
 
     @Override
@@ -337,7 +345,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
       TransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, true, sourceStageName);
+                                            logicalStartTime, runtimeArgs, true, sourceStageName, workflowToken);
       PipelinePhase pipelinePhase = phaseSpec.getPhase().subsetTo(ImmutableSet.of(aggregatorName));
       return transformExecutorFactory.create(pipelinePhase);
     }
@@ -376,7 +384,8 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
       throws Exception {
       TransformExecutorFactory<KeyValue<Object, T>> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, isBeforeBreak, sourceStageName);
+                                            logicalStartTime, runtimeArgs, isBeforeBreak,
+                                            sourceStageName, workflowToken);
 
       PipelinePhase pipelinePhase = phaseSpec.getPhase();
       if (aggregatorName != null) {
@@ -430,7 +439,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
       TransformExecutorFactory<EXECUTOR_IN> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, false, sourceStageName);
+                                            logicalStartTime, runtimeArgs, false, sourceStageName, workflowToken);
 
       PipelinePhase pipelinePhase = phaseSpec.getPhase();
       return transformExecutorFactory.create(pipelinePhase);

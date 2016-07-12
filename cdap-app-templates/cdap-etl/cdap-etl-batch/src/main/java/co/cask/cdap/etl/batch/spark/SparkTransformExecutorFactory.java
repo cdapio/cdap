@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch.spark;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.Aggregator;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -30,6 +31,7 @@ import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.DefaultEmitter;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.TrackedTransform;
 import scala.Tuple2;
@@ -54,17 +56,21 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
   private final Map<String, String> runtimeArgs;
   // whether this is before the group step of an aggregator, or before a spark compute stage
   private final boolean isFirstHalf;
+  private final WorkflowToken workflowToken;
 
   public SparkTransformExecutorFactory(PluginContext pluginContext,
                                        PipelinePluginInstantiator pluginInstantiator,
                                        Metrics metrics, long logicalStartTime,
                                        Map<String, String> runtimeArgs,
-                                       boolean isFirstHalf, String sourceStageName) {
-    super(pluginInstantiator, metrics, sourceStageName);
+                                       boolean isFirstHalf, String sourceStageName,
+                                       WorkflowToken workflowToken) {
+    super(pluginInstantiator, metrics, sourceStageName,
+          new DefaultMacroEvaluator(workflowToken, runtimeArgs, logicalStartTime));
     this.pluginContext = pluginContext;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
     this.isFirstHalf = isFirstHalf;
+    this.workflowToken = workflowToken;
   }
 
   @Override
@@ -77,7 +83,8 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
   protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
-      BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName);
+      BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(
+        stageName, new DefaultMacroEvaluator(workflowToken, runtimeArgs, logicalStartTime));
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
       if (isFirstHalf) {

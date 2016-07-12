@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
@@ -42,6 +43,7 @@ import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
@@ -162,6 +164,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     // plugin name -> runtime args for that plugin
     Map<String, Map<String, String>> runtimeArgs = new HashMap<>();
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
+                                                         context.getLogicalStartTime());
 
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
@@ -170,7 +174,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     Map<String, String> inputAliasToStage = new HashMap<>();
     for (String sourceName : phaseSpec.getPhase().getSources()) {
-      BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+      BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
       batchSource = new LoggedBatchConfigurable<>(sourceName, batchSource);
       MapReduceSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics,
                                                                         new DatasetContextLookupProvider(context),
@@ -193,7 +197,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         continue;
       }
 
-      BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName);
+      BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName, evaluator);
       batchSink = new LoggedBatchConfigurable<>(sinkName, batchSink);
       MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics,
                                                                   new DatasetContextLookupProvider(context),
@@ -228,7 +232,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       Class<?> outputKeyClass;
       Class<?> outputValClass;
       if (!phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE).isEmpty()) {
-        BatchAggregator aggregator = pluginInstantiator.newPluginInstance(reducerName);
+        BatchAggregator aggregator = pluginInstantiator.newPluginInstance(reducerName, evaluator);
         MapReduceAggregatorContext aggregatorContext =
           new MapReduceAggregatorContext(context, mrMetrics,
                                          new DatasetContextLookupProvider(context),
@@ -253,7 +257,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         job.setMapOutputKeyClass(getOutputKeyClass(reducerName, outputKeyClass));
         job.setMapOutputValueClass(getOutputValClass(reducerName, outputValClass));
       } else { // reducer type is joiner
-        BatchJoiner batchJoiner = pluginInstantiator.newPluginInstance(reducerName);
+        BatchJoiner batchJoiner = pluginInstantiator.newPluginInstance(reducerName, evaluator);
         MapReduceJoinerContext joinerContext =
           new MapReduceJoinerContext(context, mrMetrics,
                                      new DatasetContextLookupProvider(context), reducerName,

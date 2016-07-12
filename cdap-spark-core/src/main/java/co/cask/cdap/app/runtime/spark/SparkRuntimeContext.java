@@ -19,6 +19,7 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -186,6 +187,11 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return pluginContext.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
+    return pluginContext.newPluginInstance(pluginId, evaluator);
   }
 
   @Override

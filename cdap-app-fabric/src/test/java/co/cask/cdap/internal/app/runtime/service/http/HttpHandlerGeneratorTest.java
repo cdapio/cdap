@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -655,6 +656,11 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+      return null;
+    }
+
+    @Override
+    public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
       return null;
     }
 

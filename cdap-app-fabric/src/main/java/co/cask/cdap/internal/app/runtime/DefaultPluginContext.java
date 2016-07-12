@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -94,6 +95,12 @@ public class DefaultPluginContext implements PluginContext {
       // This is fatal, since jar cannot be expanded.
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
+    // todo : use pluginInstantiator#newPluginInstance(String pluginId, MacroEvaluator evaluator)
+    return newPluginInstance(pluginId);
   }
 
   private Plugin getPlugin(String pluginId) {

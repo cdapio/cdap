@@ -23,6 +23,7 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
@@ -272,6 +273,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return pluginContext.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
+    return pluginContext.newPluginInstance(pluginId, evaluator);
   }
 
   @Override

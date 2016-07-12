@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowContext;
@@ -26,6 +27,7 @@ import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.gson.Gson;
@@ -84,8 +86,11 @@ public class ETLWorkflow extends AbstractWorkflow {
     postActions = new LinkedHashMap<>();
     BatchPipelineSpec batchPipelineSpec =
       GSON.fromJson(context.getWorkflowSpecification().getProperty("pipeline.spec"), BatchPipelineSpec.class);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
+                                                              context.getLogicalStartTime());
     for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {
-      postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName()));
+      postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName(),
+                                                                                   macroEvaluator));
     }
   }
 

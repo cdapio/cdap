@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -31,6 +32,7 @@ import co.cask.cdap.etl.batch.Finisher;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -106,10 +108,11 @@ public class ETLSpark extends AbstractSpark {
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
     DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
-
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
+                                                         context.getLogicalStartTime());
     SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
     for (String sourceName : phaseSpec.getPhase().getSources()) {
-      BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+      BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
       BatchSourceContext sourceContext = new SparkBatchSourceContext(sourceFactory, context, lookProvider, sourceName);
       batchSource.prepareRun(sourceContext);
       finishers.add(batchSource, sourceContext);
@@ -117,7 +120,7 @@ public class ETLSpark extends AbstractSpark {
 
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     for (String sinkName : phaseSpec.getPhase().getSinks()) {
-      BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName);
+      BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName, evaluator);
       if (batchSink instanceof SparkSink) {
         BasicSparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, sinkName);
         ((SparkSink) batchSink).prepareRun(sparkPluginContext);
@@ -138,7 +141,7 @@ public class ETLSpark extends AbstractSpark {
           phaseSpec.getPhaseName(), Joiner.on(',').join(aggregators)));
       }
       String aggregatorName = aggregators.iterator().next().getName();
-      BatchAggregator aggregator = pluginInstantiator.newPluginInstance(aggregatorName);
+      BatchAggregator aggregator = pluginInstantiator.newPluginInstance(aggregatorName, evaluator);
       AbstractAggregatorContext aggregatorContext =
         new SparkAggregatorContext(context, new DatasetContextLookupProvider(context), aggregatorName);
       aggregator.prepareRun(aggregatorContext);
