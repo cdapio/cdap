@@ -21,7 +21,7 @@ angular.module(PKG.name + '.commons')
     vm.action = vm.action || {};
     if (vm.isEdit) {
       vm.currentStage = 2;
-      vm.selectedAction = Object.assign({}, vm.action.plugin, {
+      vm.selectedAction = Object.assign({}, angular.copy(vm.action.plugin), {
         defaultArtifact: vm.action.plugin.artifact
       });
     } else {

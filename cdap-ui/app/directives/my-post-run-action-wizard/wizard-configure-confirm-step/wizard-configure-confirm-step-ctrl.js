@@ -22,8 +22,12 @@ class WizardConfigureConfirmStepCtrl {
     this.showLoadingIcon = true;
     this.action.properties = this.action.properties || {};
     this.requiredPropertyError = GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
-    this.pluginFetch(this.action)
-      .then( () => this.showLoadingIcon = false);
+    if (this.action && !Object.keys(this.action._backendProperties || {}).length) {
+      this.pluginFetch(this.action)
+        .then( () => this.showLoadingIcon = false);
+    } else {
+      this.fetchWidgets(this.action);
+    }
   }
   // Fetching Backend Properties
   pluginFetch(action) {
