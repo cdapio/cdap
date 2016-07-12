@@ -674,7 +674,7 @@
     <name>explore.local.data.dir</name>
     <value>${local.data.dir}/explore</value>
     <description>
-      Data directory for CDAP Explore Service when in Standalone mode
+      Data directory for CDAP Explore Service when in standalone mode
     </description>
   </property>
 
@@ -1688,7 +1688,7 @@
     <name>security.store.file.name</name>
     <value>securestore</value>
     <description>
-      Name of the secure store file.
+      Name of the secure store file
     </description>
   </property>
 
@@ -1696,7 +1696,7 @@
     <name>security.store.file.password</name>
     <value>cdapsecret</value>
     <description>
-      Password to access the key store.
+      Password to access the key store
     </description>
   </property>
 
@@ -1704,7 +1704,7 @@
     <name>security.store.file.path</name>
     <value>${local.data.dir}/store</value>
     <description>
-      Location of the encrypted file which holds the secure store entries.
+      Location of the encrypted file which holds the secure store entries
     </description>
   </property>
 
