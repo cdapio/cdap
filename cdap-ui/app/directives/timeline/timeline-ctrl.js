@@ -17,7 +17,6 @@
 function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource) {
 
   var dataSrc = new MyCDAPDataSource($scope);
-  $scope.metadata = [];
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -51,7 +50,6 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       )
     },
     function (res) {
-      console.log('GET METADATA FROM HERE: ', res);
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
