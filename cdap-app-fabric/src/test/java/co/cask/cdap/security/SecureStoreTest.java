@@ -36,20 +36,21 @@ import java.util.Map;
 public class SecureStoreTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static Type listType = new TypeToken<ArrayList<SecureStoreEntry>>() { }.getType();
-  private static final String KEY = "Key1";
+  private static final String KEY = "key1";
   private static final String DESCRIPTION = "This is Key1";
   private static final String DATA = "Secret1";
   private static final Map<String, String> PROPERTIES = ImmutableMap.of("Prop1", "Val1", "Prop2", "Val2");
-  private static final String KEY2 = "Key2";
+  private static final String KEY2 = "key2";
   private static final String DESCRIPTION2 = "This is Key2";
   private static final String DATA2 = "Secret2";
   private static final Map<String, String> PROPERTIES2 = ImmutableMap.of("Prop1", "Val1", "Prop2", "Val2");
 
   @Test
   public void testCreate() throws Exception {
-    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(KEY, DESCRIPTION, DATA,
+    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    HttpResponse response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureKeyCreateRequest));
+    HttpResponse response = doPut("/v3/security/store/namespaces/default/keys/" + KEY,
+                                  GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = delete(KEY);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -57,9 +58,10 @@ public class SecureStoreTest extends AppFabricTestBase {
 
   @Test
   public void testGet() throws Exception {
-    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(KEY, DESCRIPTION, DATA,
+    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    HttpResponse response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureKeyCreateRequest));
+    HttpResponse response = doPut("/v3/security/store/namespaces/default/keys/" + KEY,
+                                  GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = doGet("/v3/security/store/namespaces/default/keys/" + KEY);
@@ -81,9 +83,9 @@ public class SecureStoreTest extends AppFabricTestBase {
     Assert.assertEquals("[]", readResponse(response));
 
     // One element
-    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(KEY, DESCRIPTION, DATA,
+    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureKeyCreateRequest));
+    response = doPut("/v3/security/store/namespaces/default/keys/" + KEY, GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doGet("/v3/security/store/namespaces/default/keys/");
     String result = readResponse(response);
@@ -95,8 +97,8 @@ public class SecureStoreTest extends AppFabricTestBase {
     }
 
     // Two elements
-    secureKeyCreateRequest = new SecureKeyCreateRequest(KEY2, DESCRIPTION2, DATA2, PROPERTIES2);
-    response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureKeyCreateRequest));
+    secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION2, DATA2, PROPERTIES2);
+    response = doPut("/v3/security/store/namespaces/default/keys/" + KEY2, GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doGet("/v3/security/store/namespaces/default/keys/");
     String result2 = readResponse(response);

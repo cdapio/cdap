@@ -58,29 +58,31 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     this.secureStoreManager = secureStoreManager;
   }
 
-  @Path("/key")
+  @Path("/keys/{key-name}")
   @PUT
-  public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
-    throws BadRequestException, IOException {
-    SecureKeyCreateRequest secureKeyCreateRequest = parseBody(httpRequest, SecureKeyCreateRequest.class);
-
-    if (secureKeyCreateRequest == null) {
-      throw new BadRequestException("Unable to parse the request.");
-    }
-
-    String name = secureKeyCreateRequest.getName();
-    String description = secureKeyCreateRequest.getDescription();
-    String value = secureKeyCreateRequest.getData();
-    if (Strings.isNullOrEmpty(name)) {
-      throw new BadRequestException("A secure key should have a non-empty name. The name can contain lower case " +
-                                    "alphabets, numbers, _, and -");
-    }
-    if (Strings.isNullOrEmpty(value)) {
-      throw new BadRequestException("The data field should not be empty. This is the ");
-    }
+  public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
+                     @PathParam("key-name") String name) throws BadRequestException, IOException {
     if (!EntityId.isValidStoreKey(name)) {
       throw new BadRequestException("Improperly formatted name. The name can contain lower case alphabets, " +
                                     "numbers, _, and -");
+    }
+    SecureKeyCreateRequest secureKeyCreateRequest = parseBody(httpRequest, SecureKeyCreateRequest.class);
+
+    if (secureKeyCreateRequest == null) {
+      throw new BadRequestException("Unable to parse the request. The request body should be of the following format" +
+                                      "{\n" +
+                                      "  \"description\" :  \"<description>\"\n" +
+                                      "  \"data\"        :  \"<data>\"  //utf-8\n" +
+                                      "  \"properties\"  :  {\n" +
+                                      "    \"key\"  :  \"value\"\n" +
+                                      "    ...\n" +
+                                      "  }");
+    }
+
+    String description = secureKeyCreateRequest.getDescription();
+    String value = secureKeyCreateRequest.getData();
+    if (Strings.isNullOrEmpty(value)) {
+      throw new BadRequestException("The data field should not be empty. This data that will be stored securely.");
     }
 
     byte[] data = value.getBytes(StandardCharsets.UTF_8);
@@ -91,8 +93,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @Path("/keys/{key-name}")
   @DELETE
   public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
-                     @PathParam("key-name") String name)
-    throws IOException {
+                     @PathParam("key-name") String name) throws IOException {
     secureStoreManager.delete(namespace, name);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
@@ -100,8 +101,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @Path("/keys/{key-name}")
   @GET
   public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
-                  @PathParam("key-name") String name)
-    throws IOException {
+                  @PathParam("key-name") String name) throws IOException {
     SecureStoreData secureStoreData = secureStore.get(namespace, name);
     String data = new String(secureStoreData.get(), StandardCharsets.UTF_8);
     httpResponder.sendJson(HttpResponseStatus.OK, data);
