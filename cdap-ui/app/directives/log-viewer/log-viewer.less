@@ -198,7 +198,9 @@ my-log-viewer {
     }
 
     table.scroll tbody {
-      height: 400px;
+      min-height: ~"-moz-calc(100vh - 510px)";
+      min-height: ~"-webkit-calc(100vh - 510px)";
+      min-height: ~"calc(100vh - 510px)";
       overflow-y: auto;
       overflow-x: hidden;
     }
