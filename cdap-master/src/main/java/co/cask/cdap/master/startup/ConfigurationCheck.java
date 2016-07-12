@@ -69,32 +69,16 @@ class ConfigurationCheck extends AbstractMasterCheck {
   // and the instances does not exceed max instances
   private void checkServiceResources(Set<String> problemKeys) {
     for (ServiceResourceKeys serviceResourceKeys : systemServicesResourceKeys) {
-      // verify memory and vcores are positive integers
-      if (!isPositiveInteger(serviceResourceKeys.getMemoryKey())) {
-        LOG.error("  {} must be a positive integer", serviceResourceKeys.getMemoryKey());
-        problemKeys.add(serviceResourceKeys.getMemoryKey());
-      }
-      if (!isPositiveInteger(serviceResourceKeys.getVcoresKey())) {
-        LOG.error("  {} must be a positive integer", serviceResourceKeys.getVcoresKey());
-        problemKeys.add(serviceResourceKeys.getVcoresKey());
-      }
+      verifyResources(serviceResourceKeys, problemKeys);
 
       // verify instances and max instances are positive integers
-      boolean instancesIsPositive = isPositiveInteger(serviceResourceKeys.getInstancesKey());
-      boolean maxInstancesIsPositive = isPositiveInteger(serviceResourceKeys.getMaxInstancesKey());
-      if (!instancesIsPositive) {
-        LOG.error("  {} must be a positive integer", serviceResourceKeys.getInstancesKey());
-        problemKeys.add(serviceResourceKeys.getInstancesKey());
-      }
-      if (!maxInstancesIsPositive) {
-        LOG.error("  {} must be a positive integer", serviceResourceKeys.getMaxInstancesKey());
-        problemKeys.add(serviceResourceKeys.getMaxInstancesKey());
-      }
+      boolean instancesIsPositive = !problemKeys.contains(serviceResourceKeys.getInstancesKey());
+      boolean maxInstancesIsPositive = !problemKeys.contains(serviceResourceKeys.getMaxInstancesKey());
 
       // verify instances <= maxInstances
       if (instancesIsPositive && maxInstancesIsPositive) {
-        int instances = cConf.getInt(serviceResourceKeys.getInstancesKey());
-        int maxInstances = cConf.getInt(serviceResourceKeys.getMaxInstancesKey());
+        int instances = serviceResourceKeys.getInstances();
+        int maxInstances = serviceResourceKeys.getMaxInstances();
         if (instances > maxInstances) {
           LOG.error("  {}={} must not be greater than {}={}",
                     serviceResourceKeys.getInstancesKey(), instances,
@@ -163,9 +147,30 @@ class ConfigurationCheck extends AbstractMasterCheck {
     }
   }
 
-  private boolean isPositiveInteger(String key) {
+  private boolean verifyResources(ServiceResourceKeys serviceResourceKeys, Set<String> problemKeys) {
     try {
-      return cConf.getInt(key) > 0;
+      boolean allPositive = true;
+      if (serviceResourceKeys.getMemory() <= 0) {
+        LOG.error("  {} must be a positive integer", serviceResourceKeys.getMemoryKey());
+        problemKeys.add(serviceResourceKeys.getMemoryKey());
+        allPositive = false;
+      }
+      if (serviceResourceKeys.getVcores() <= 0) {
+        LOG.error("  {} must be a positive integer", serviceResourceKeys.getVcoresKey());
+        problemKeys.add(serviceResourceKeys.getVcoresKey());
+        allPositive = false;
+      }
+      if (serviceResourceKeys.getInstances() <= 0) {
+        LOG.error("  {} must be a positive integer", serviceResourceKeys.getInstancesKey());
+        problemKeys.add(serviceResourceKeys.getInstancesKey());
+        allPositive = false;
+      }
+      if (serviceResourceKeys.getMaxInstances() <= 0) {
+        LOG.error("  {} must be a positive integer", serviceResourceKeys.getMaxInstancesKey());
+        problemKeys.add(serviceResourceKeys.getMaxInstancesKey());
+        allPositive = false;
+      }
+      return allPositive;
     } catch (Exception e) {
       return false;
     }

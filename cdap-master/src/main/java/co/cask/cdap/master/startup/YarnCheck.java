@@ -140,19 +140,19 @@ class YarnCheck extends AbstractMasterCheck {
       int vcores = 0;
 
       try {
-        instances = cConf.getInt(serviceResourceKeys.getInstancesKey());
+        instances = serviceResourceKeys.getInstances();
       } catch (Exception e) {
         invalidKeys.add(serviceResourceKeys.getInstancesKey());
         hasConfigError = true;
       }
       try {
-        memoryMB = cConf.getInt(serviceResourceKeys.getMemoryKey());
+        memoryMB = serviceResourceKeys.getMemory();
       } catch (Exception e) {
         invalidKeys.add(serviceResourceKeys.getMemoryKey());
         hasConfigError = true;
       }
       try {
-        vcores = cConf.getInt(serviceResourceKeys.getVcoresKey());
+        vcores = serviceResourceKeys.getVcores();
       } catch (Exception e) {
         invalidKeys.add(serviceResourceKeys.getVcoresKey());
         hasConfigError = true;

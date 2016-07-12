@@ -22,6 +22,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.common.MasterUtils;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -55,6 +56,7 @@ import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.master.startup.ServiceResourceKeys;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -69,9 +71,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
@@ -286,47 +286,17 @@ public class MasterServiceMain extends DaemonMain {
     }
   }
 
-  /**
-   * Returns a map from system service name to a map from property to configuration key.
-   */
-  private Map<String, Map<String, String>> getConfigKeys() {
-    Map<String, Map<String, String>> configKeys = Maps.newHashMap();
-
-    configKeys.put(Constants.Service.LOGSAVER,
-                   ImmutableMap.of("default", Constants.LogSaver.NUM_INSTANCES,
-                                   "max", Constants.LogSaver.MAX_INSTANCES));
-    configKeys.put(Constants.Service.TRANSACTION,
-                   ImmutableMap.of("default", Constants.Transaction.Container.NUM_INSTANCES,
-                                   "max", Constants.Transaction.Container.MAX_INSTANCES));
-    configKeys.put(Constants.Service.METRICS_PROCESSOR,
-                   ImmutableMap.of("default", Constants.MetricsProcessor.NUM_INSTANCES,
-                                   "max", Constants.MetricsProcessor.MAX_INSTANCES));
-    configKeys.put(Constants.Service.METRICS,
-                   ImmutableMap.of("default", Constants.Metrics.NUM_INSTANCES,
-                                   "max", Constants.Metrics.MAX_INSTANCES));
-    configKeys.put(Constants.Service.STREAMS,
-                   ImmutableMap.of("default", Constants.Stream.CONTAINER_INSTANCES,
-                                   "max", Constants.Stream.MAX_INSTANCES));
-    configKeys.put(Constants.Service.DATASET_EXECUTOR,
-                   ImmutableMap.of("default", Constants.Dataset.Executor.CONTAINER_INSTANCES,
-                                   "max", Constants.Dataset.Executor.MAX_INSTANCES));
-    configKeys.put(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                   ImmutableMap.of("default", Constants.Explore.CONTAINER_INSTANCES,
-                                   "max", Constants.Explore.MAX_INSTANCES));
-    return configKeys;
-  }
-
   private Map<String, Integer> getSystemServiceInstances(ServiceStore serviceStore) {
     Map<String, Integer> instanceCountMap = new HashMap<>();
-    for (Map.Entry<String, Map<String, String>> entry : getConfigKeys().entrySet()) {
-      String service = entry.getKey();
-      Map<String, String> configKeys = entry.getValue();
+    Set<ServiceResourceKeys> serviceResourceKeysSet = MasterUtils.createSystemServicesResourceKeysSet(cConf);
+    for (ServiceResourceKeys serviceResourceKeys : serviceResourceKeysSet) {
+      String service = serviceResourceKeys.getServiceName();
       try {
-        int maxCount = cConf.getInt(configKeys.get("max"));
+        int maxCount = serviceResourceKeys.getMaxInstances();
 
         Integer savedCount = serviceStore.getServiceInstance(service);
         if (savedCount == null || savedCount == 0) {
-          savedCount = Math.min(maxCount, cConf.getInt(configKeys.get("default")));
+          savedCount = Math.min(maxCount, serviceResourceKeys.getInstances());
         } else {
           // If the max value is smaller than the saved instance count, update the store to the max value.
           if (savedCount > maxCount) {

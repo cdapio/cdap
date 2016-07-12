@@ -22,11 +22,15 @@ import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service manager for explore service in distributed mode.
  */
 public class ExploreServiceManager extends AbstractDistributedMasterServiceManager {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceManager.class);
 
   @Inject
   public ExploreServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
@@ -42,7 +46,12 @@ public class ExploreServiceManager extends AbstractDistributedMasterServiceManag
 
   @Override
   public int getMaxInstances() {
-    return cConf.getInt(Constants.Explore.MAX_INSTANCES, 1);
+    String configuredInstances = cConf.get(Constants.Explore.CONTAINER_INSTANCES);
+    if (configuredInstances != null) {
+      LOG.warn("Explore service instance count is set to {}, but this configuration is no longer supported " +
+                 "as it is always set to 1.", configuredInstances);
+    }
+    return 1; // max explore service container instances is 1 (non-configurable)
   }
 
   @Override
