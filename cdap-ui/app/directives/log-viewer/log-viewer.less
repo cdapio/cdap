@@ -365,9 +365,12 @@ my-log-viewer {
         }
 
         .message-column {
-          word-wrap: break-word;
+          width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
           text-overflow: ellipsis;
           padding-left: 5px;
+          padding-right: 30px;
           position: absolute;
           top: 0;
           left: 20px;
