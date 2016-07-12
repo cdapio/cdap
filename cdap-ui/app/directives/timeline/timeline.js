@@ -174,7 +174,7 @@ function link (scope, element) {
           }
 
           if(xPos > sliderX){
-            updatePin(xPos);
+            updatePin(xPos-8);
           }
         });
 
@@ -204,13 +204,13 @@ function link (scope, element) {
       .attr('width', 40)
       .attr('height', 60)
       .attr('xlink:href', '/assets/img/scrollPin.png')
-      .attr('x', xValue)
+      .attr('x', xValue - 8)
       .attr('y', 0);
   }
 
   var updatePin = function (val) {
-    pinX = val;
-    pinHandle.attr('x', val);
+    pinX = val - 8;
+    pinHandle.attr('x', pinX);
   };
 
   function updateSlider(val) {
