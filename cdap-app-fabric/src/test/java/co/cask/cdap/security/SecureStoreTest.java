@@ -18,8 +18,10 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.proto.security.SecureStoreCreateRequest;
-import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.proto.security.SecureKeyCreateRequest;
+import co.cask.cdap.proto.security.SecureStoreEntry;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -33,30 +35,21 @@ import java.util.Map;
 
 public class SecureStoreTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
-  private static Type listType = new TypeToken<ArrayList<FileSecureStore.SecureStoreListEntry>>() { }.getType();
+  private static Type listType = new TypeToken<ArrayList<SecureStoreEntry>>() { }.getType();
   private static final String KEY = "Key1";
   private static final String DESCRIPTION = "This is Key1";
   private static final String DATA = "Secret1";
-  private static final Map<String, String> PROPERTIES = new HashMap<>();
-  static {
-    PROPERTIES.put("Prop1", "Val1");
-    PROPERTIES.put("Prop2", "Val2");
-  }
-
+  private static final Map<String, String> PROPERTIES = ImmutableMap.of("Prop1", "Val1", "Prop2", "Val2");
   private static final String KEY2 = "Key2";
   private static final String DESCRIPTION2 = "This is Key2";
   private static final String DATA2 = "Secret2";
-  private static final Map<String, String> PROPERTIES2 = new HashMap<>();
-  static {
-    PROPERTIES2.put("Prop1", "Val1");
-    PROPERTIES2.put("Prop2", "Val2");
-  }
+  private static final Map<String, String> PROPERTIES2 = ImmutableMap.of("Prop1", "Val1", "Prop2", "Val2");
 
   @Test
   public void testCreate() throws Exception {
-    SecureStoreCreateRequest secureStoreCreateRequest = new SecureStoreCreateRequest(KEY, DESCRIPTION, DATA,
-                                                                                     PROPERTIES);
-    HttpResponse response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureStoreCreateRequest));
+    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(KEY, DESCRIPTION, DATA,
+                                                                               PROPERTIES);
+    HttpResponse response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = delete(KEY);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -64,9 +57,9 @@ public class SecureStoreTest extends AppFabricTestBase {
 
   @Test
   public void testGet() throws Exception {
-    SecureStoreCreateRequest secureStoreCreateRequest = new SecureStoreCreateRequest(KEY, DESCRIPTION, DATA,
-                                                                                     PROPERTIES);
-    HttpResponse response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureStoreCreateRequest));
+    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(KEY, DESCRIPTION, DATA,
+                                                                               PROPERTIES);
+    HttpResponse response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = doGet("/v3/security/store/namespaces/default/keys/" + KEY);
@@ -88,39 +81,39 @@ public class SecureStoreTest extends AppFabricTestBase {
     Assert.assertEquals("[]", readResponse(response));
 
     // One element
-    SecureStoreCreateRequest secureStoreCreateRequest = new SecureStoreCreateRequest(KEY, DESCRIPTION, DATA,
-                                                                                     PROPERTIES);
-    response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureStoreCreateRequest));
+    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(KEY, DESCRIPTION, DATA,
+                                                                               PROPERTIES);
+    response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doGet("/v3/security/store/namespaces/default/keys/");
     String result = readResponse(response);
-    List<FileSecureStore.SecureStoreListEntry> expectedList = new ArrayList<>();
-    expectedList.add(new FileSecureStore.SecureStoreListEntry(KEY, DESCRIPTION));
-    List<FileSecureStore.SecureStoreListEntry> list = new Gson().fromJson(result, listType);
-    for (FileSecureStore.SecureStoreListEntry entry : list) {
-      Assert.assertTrue(expectedList.contains(entry));
+    List<SecureStoreEntry> expected = new ArrayList<>();
+    expected.add(new SecureStoreEntry(KEY, DESCRIPTION));
+    List<SecureStoreEntry> list = GSON.fromJson(result, listType);
+    for (SecureStoreEntry entry : list) {
+      Assert.assertTrue(expected.contains(entry));
     }
 
     // Two elements
-    secureStoreCreateRequest = new SecureStoreCreateRequest(KEY2, DESCRIPTION2, DATA2, PROPERTIES2);
-    response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureStoreCreateRequest));
+    secureKeyCreateRequest = new SecureKeyCreateRequest(KEY2, DESCRIPTION2, DATA2, PROPERTIES2);
+    response = doPut("/v3/security/store/namespaces/default/key", GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doGet("/v3/security/store/namespaces/default/keys/");
     String result2 = readResponse(response);
-    list = new Gson().fromJson(result2, listType);
-    expectedList.add(new FileSecureStore.SecureStoreListEntry(KEY2, DESCRIPTION2));
-    for (FileSecureStore.SecureStoreListEntry entry : list) {
-      Assert.assertTrue(expectedList.contains(entry));
+    list = GSON.fromJson(result2, listType);
+    expected.add(new SecureStoreEntry(KEY2, DESCRIPTION2));
+    for (SecureStoreEntry entry : list) {
+      Assert.assertTrue(expected.contains(entry));
     }
 
     // After deleting an element
     delete(KEY);
     response = doGet("/v3/security/store/namespaces/default/keys/");
     String result3 = readResponse(response);
-    list = new Gson().fromJson(result3, listType);
-    expectedList.remove(new FileSecureStore.SecureStoreListEntry(KEY, DESCRIPTION));
-    for (FileSecureStore.SecureStoreListEntry entry : list) {
-      Assert.assertTrue(expectedList.contains(entry));
+    list = GSON.fromJson(result3, listType);
+    expected.remove(new SecureStoreEntry(KEY, DESCRIPTION));
+    for (SecureStoreEntry entry : list) {
+      Assert.assertTrue(expected.contains(entry));
     }
   }
 

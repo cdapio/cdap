@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.Charsets;
 import org.junit.After;
 import org.junit.Assert;
@@ -154,14 +155,12 @@ public class FileSecureStoreTest {
     populateStore();
     String ns = "namespace2";
     secureStoreManager.put(ns, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
-    List<SecureStoreMetadata> expectedList = new ArrayList<>();
-    expectedList.add(secureStore.get(NAMESPACE1, KEY2).getMetadata());
-    expectedList.add(secureStore.get(NAMESPACE1, KEY1).getMetadata());
+    List<SecureStoreMetadata> expectedList = ImmutableList.of(secureStore.get(NAMESPACE1, KEY2).getMetadata(),
+                                                              secureStore.get(NAMESPACE1, KEY1).getMetadata());
     Assert.assertEquals(expectedList, secureStore.list(NAMESPACE1));
     Assert.assertNotEquals(expectedList, secureStore.list(ns));
-    expectedList.clear();
-    expectedList.add(secureStore.get(ns, KEY1).getMetadata());
-    Assert.assertEquals(expectedList, secureStore.list(ns));
-    Assert.assertNotEquals(expectedList, secureStore.list(NAMESPACE1));
+    List<SecureStoreMetadata> expectedList2 = ImmutableList.of(secureStore.get(ns, KEY1).getMetadata());
+    Assert.assertEquals(expectedList2, secureStore.list(ns));
+    Assert.assertNotEquals(expectedList2, secureStore.list(NAMESPACE1));
   }
 }

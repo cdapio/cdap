@@ -26,8 +26,8 @@ import java.util.List;
 public interface SecureStore {
 
   /**
-   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
    * @param namespace The namespace that this key belongs to.
+   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
    */
   List<SecureStoreMetadata> list(String namespace) throws IOException;
 

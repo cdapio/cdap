@@ -719,8 +719,6 @@ public final class Constants {
       public static final String FILE_PASSWORD = "security.store.file.password";
       /** Backend provider for the secure store. e.g. file */
       public static final String PROVIDER = "security.store.provider";
-      /** Separator between the namespace name and the key name */
-      public static final String NAME_SEPARATOR = ":";
     }
 
     /**

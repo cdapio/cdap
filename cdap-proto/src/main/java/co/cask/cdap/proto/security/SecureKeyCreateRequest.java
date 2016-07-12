@@ -22,13 +22,13 @@ import java.util.Map;
 /**
  * Request for creating a new entry in the secure store
  */
-public class SecureStoreCreateRequest {
+public class SecureKeyCreateRequest {
   private final String name;
   private final String description;
   private final String data;
   private final Map<String, String> properties;
 
-  public SecureStoreCreateRequest(String name, String description, String data, Map<String, String> properties) {
+  public SecureKeyCreateRequest(String name, String description, String data, Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.data = data;

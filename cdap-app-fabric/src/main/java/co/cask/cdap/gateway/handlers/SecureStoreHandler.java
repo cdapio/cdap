@@ -23,9 +23,11 @@ import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.security.SecureStoreCreateRequest;
-import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.security.SecureKeyCreateRequest;
+import co.cask.cdap.proto.security.SecureStoreEntry;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -60,30 +62,36 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @PUT
   public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws BadRequestException, IOException {
-    SecureStoreCreateRequest secureStoreCreateRequest = parseBody(httpRequest, SecureStoreCreateRequest.class);
+    SecureKeyCreateRequest secureKeyCreateRequest = parseBody(httpRequest, SecureKeyCreateRequest.class);
 
-    if (secureStoreCreateRequest == null) {
+    if (secureKeyCreateRequest == null) {
       throw new BadRequestException("Unable to parse the request.");
     }
 
-    String name = secureStoreCreateRequest.getName();
-    String description = secureStoreCreateRequest.getDescription();
-    String value = secureStoreCreateRequest.getData();
-    if (name == null || name.isEmpty()) {
-      throw new BadRequestException("Name can not be empty.");
+    String name = secureKeyCreateRequest.getName();
+    String description = secureKeyCreateRequest.getDescription();
+    String value = secureKeyCreateRequest.getData();
+    if (Strings.isNullOrEmpty(name)) {
+      throw new BadRequestException("A secure key should have a non-empty name. The name can contain lower case " +
+                                    "alphabets, numbers, _, and -");
     }
-    if (value == null || value.isEmpty()) {
-      throw new BadRequestException("Data can not be empty.");
+    if (Strings.isNullOrEmpty(value)) {
+      throw new BadRequestException("The data field should not be empty. This is the ");
     }
+    if (!EntityId.isValidStoreKey(name)) {
+      throw new BadRequestException("Improperly formatted name. The name can contain lower case alphabets, " +
+                                    "numbers, _, and -");
+    }
+
     byte[] data = value.getBytes(StandardCharsets.UTF_8);
-    secureStoreManager.put(namespace, name, data, description, secureStoreCreateRequest.getProperties());
+    secureStoreManager.put(namespace, name, data, description, secureKeyCreateRequest.getProperties());
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/keys/{key-name}")
   @DELETE
-  public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name,
-                     @PathParam("namespace-id") String namespace)
+  public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
+                     @PathParam("key-name") String name)
     throws IOException {
     secureStoreManager.delete(namespace, name);
     httpResponder.sendStatus(HttpResponseStatus.OK);
@@ -91,22 +99,31 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/keys/{key-name}")
   @GET
-  public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("key-name") String name,
-                  @PathParam("namespace-id") String namespace)
+  public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
+                  @PathParam("key-name") String name)
     throws IOException {
     SecureStoreData secureStoreData = secureStore.get(namespace, name);
     String data = new String(secureStoreData.get(), StandardCharsets.UTF_8);
     httpResponder.sendJson(HttpResponseStatus.OK, data);
   }
 
+  @Path("/keys/{key-name}/metadata")
+  @GET
+  public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
+                          @PathParam("namespace-id") String namespace, @PathParam("key-name") String name)
+    throws IOException {
+    SecureStoreData secureStoreData = secureStore.get(namespace, name);
+    httpResponder.sendJson(HttpResponseStatus.OK, secureStoreData.getMetadata());
+  }
+
   @Path("/keys")
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws IOException {
-    List<SecureStoreMetadata> metadataList = secureStore.list(namespace);
-    List<FileSecureStore.SecureStoreListEntry> returnList = new ArrayList<>(metadataList.size());
-    for (SecureStoreMetadata metadata : metadataList) {
-      returnList.add(new FileSecureStore.SecureStoreListEntry(metadata.getName(), metadata.getDescription()));
+    List<SecureStoreMetadata> metadatas = secureStore.list(namespace);
+    List<SecureStoreEntry> returnList = new ArrayList<>(metadatas.size());
+    for (SecureStoreMetadata metadata : metadatas) {
+      returnList.add(new SecureStoreEntry(metadata.getName(), metadata.getDescription()));
     }
 
     httpResponder.sendJson(HttpResponseStatus.OK, returnList);

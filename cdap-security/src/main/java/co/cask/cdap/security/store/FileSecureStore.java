@@ -62,22 +62,24 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * If that is successful then the temporary file is renamed atomically to the secure store file.
  * If anything fails during this process then the keystore reverts to the last successfully written file.
  * The keystore is flushed to the filesystem after every put and delete.
+ *
+ * This class is marked as Singleton because it won't work if this class is not a Singleton.
+ * Setting in(Scopes.Singleton) in the bindings doesn't work because we are binding this
+ * class to two interfaces and we need the instance to be shared between them.
  */
 @Singleton
-// Marking it as Singleton here because it won't work if this class is not a Singleton.
-// Setting in(Scopes.Singleton) in the bindings doesn't work because we are binding this
-// class to two interfaces and we need the instance to be shared between them.
 public class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
   private static final String SCHEME_NAME = "jceks";
+  /** Separator between the namespace name and the key name */
+  private static final String NAME_SEPARATOR = ":";
 
   private final char[] password;
   private final Path path;
   private final Lock readLock;
   private final Lock writeLock;
   private final KeyStore keyStore;
-  private final String nameSeparator;
 
   @Inject
   FileSecureStore(CConfiguration cConf) throws IOException {
@@ -85,7 +87,6 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
     path = dir.resolve(cConf.get(Constants.Security.Store.FILE_NAME));
-    nameSeparator = Constants.Security.Store.NAME_SEPARATOR;
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
 
@@ -184,7 +185,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     try {
       Enumeration<String> aliases = keyStore.aliases();
       List<SecureStoreMetadata> list = new ArrayList<>();
-      String prefix = namespace + nameSeparator;
+      String prefix = namespace + NAME_SEPARATOR;
       while (aliases.hasMoreElements()) {
         String alias = aliases.nextElement();
         // Filter out elements not in this namespace.
@@ -223,7 +224,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   private String getKeyName(String namespace, String name) {
-    return namespace + nameSeparator + name;
+    return namespace + NAME_SEPARATOR + name;
   }
 
   private Key deleteFromStore(String name, char[] password) throws KeyStoreException,
@@ -337,47 +338,6 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
       throw new IOException("No such algorithm storing keystore.", e);
     } catch (CertificateException e) {
       throw new IOException("Certificate exception storing keystore.", e);
-    }
-  }
-
-  /**
-   * Represents an entry in the listing of secure store elements.
-   */
-  public static class SecureStoreListEntry {
-
-    private final String name;
-    private final String description;
-
-    public SecureStoreListEntry(String name, String description) {
-      this.name = name;
-      this.description = description;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getDescription() {
-      return description;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      SecureStoreListEntry that = (SecureStoreListEntry) o;
-
-      return getName().equals(that.getName()) && getDescription().equals(that.getDescription());
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(name, description);
     }
   }
 }
