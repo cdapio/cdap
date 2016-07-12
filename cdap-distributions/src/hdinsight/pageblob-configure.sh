@@ -76,14 +76,14 @@ updateFsAzurePageBlobDirForCDAP() {
     local __newValue
     __currentValue=$(${AMBARICONFIGS_SH} ${AMBARICREDS} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site | grep 'fs.azure.page.blob.dir' | cut -d' ' -f3 | sed -e 's/"\(.*\)"[,]*/\1/')
     if [ -n ${__currentValue} ]; then
-      if [[ ${__currentValue} =~ "/cdap" ]]; then
-        echo "fs.azure.page.blob.dir already contains /cdap"
-        return 0
-      else
-        __newValue="${__currentValue},/cdap"
-      fi
+        if [[ ${__currentValue} =~ "/cdap" ]]; then
+            echo "fs.azure.page.blob.dir already contains /cdap"
+            return 0
+        else
+            __newValue="${__currentValue},/cdap"
+        fi
     else
-      __newValue="/cdap"
+        __newValue="/cdap"
     fi
     echo "Updating fs.azure.page.blob.dir to ${__newValue}"
     setAmbariConfig 'core-site' 'fs.azure.page.blob.dir' ${__newValue} || die "Could not update Ambari config" 1
