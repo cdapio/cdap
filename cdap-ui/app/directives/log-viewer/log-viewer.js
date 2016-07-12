@@ -139,11 +139,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
     return;
   };
 
-  this.filterByStartDate = (log) => {
-    if(this.logStartTime > log.log.timestamp) {
+  this.filterByStartDate = (entry) => {
+    if(this.logStartTime > entry.log.timestamp) {
       return;
     }
-    return log;
+    return entry;
   };
 }
 
