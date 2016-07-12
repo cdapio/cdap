@@ -119,7 +119,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   this.toggleLogExpansion = function() {
     this.toggleExpandAll = !this.toggleExpandAll;
     angular.forEach(this.data, (data) => {
-      data.isStackTraceExpanded = this.toggleExpandAll;
+      if(data.log.stackTrace.length > 0){
+        data.isStackTraceExpanded = this.toggleExpandAll;
+      }
     });
   };
 
