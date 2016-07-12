@@ -23,14 +23,20 @@ import java.util.Map;
  * Request for creating a new entry in the secure store
  */
 public class SecureKeyCreateRequest {
+  private final String name;
   private final String description;
   private final String data;
   private final Map<String, String> properties;
 
-  public SecureKeyCreateRequest(String description, String data, Map<String, String> properties) {
+  public SecureKeyCreateRequest(String name, String description, String data, Map<String, String> properties) {
+    this.name = name;
     this.description = description;
     this.data = data;
     this.properties = properties;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public String getDescription() {
@@ -43,14 +49,5 @@ public class SecureKeyCreateRequest {
 
   public Map<String, String> getProperties() {
     return properties == null ? Collections.<String, String>emptyMap() : properties;
-  }
-
-  @Override
-  public String toString() {
-    return "SecureKeyCreateRequest{" +
-      "description='" + description + '\'' +
-      ", data='" + data + '\'' +
-      ", properties=" + properties +
-      '}';
   }
 }

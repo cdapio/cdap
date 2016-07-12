@@ -68,9 +68,6 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * class to two interfaces and we need the instance to be shared between them.
  */
 @Singleton
-// Marking it as Singleton here because it won't work if this class is not a Singleton.
-// Setting in(Scopes.Singleton) in the bindings doesn't work because we are binding this
-// class to two interfaces and we need the instance to be shared between them.
 public class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
@@ -341,47 +338,6 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
       throw new IOException("No such algorithm storing keystore.", e);
     } catch (CertificateException e) {
       throw new IOException("Certificate exception storing keystore.", e);
-    }
-  }
-
-  /**
-   * Represents an entry in the listing of secure store elements.
-   */
-  public static class SecureStoreListEntry {
-
-    private final String name;
-    private final String description;
-
-    public SecureStoreListEntry(String name, String description) {
-      this.name = name;
-      this.description = description;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getDescription() {
-      return description;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      SecureStoreListEntry that = (SecureStoreListEntry) o;
-
-      return getName().equals(that.getName()) && getDescription().equals(that.getDescription());
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(name, description);
     }
   }
 }

@@ -28,7 +28,6 @@ public interface SecureStore {
   /**
    * @param namespace The namespace that this key belongs to.
    * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
-   * @param namespace The namespace that this key belongs to.
    */
   List<SecureStoreMetadata> list(String namespace) throws IOException;
 

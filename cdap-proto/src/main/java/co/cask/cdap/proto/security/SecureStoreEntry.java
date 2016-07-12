@@ -16,23 +16,19 @@
 
 package co.cask.cdap.proto.security;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.Objects;
 
 /**
- * Request for creating a new entry in the secure store
+ * Represents an entry in the listing of secure store elements.
  */
-public class SecureStoreCreateRequest {
+public class SecureStoreEntry {
+
   private final String name;
   private final String description;
-  private final String data;
-  private final Map<String, String> properties;
 
-  public SecureStoreCreateRequest(String name, String description, String data, Map<String, String> properties) {
+  public SecureStoreEntry(String name, String description) {
     this.name = name;
     this.description = description;
-    this.data = data;
-    this.properties = properties;
   }
 
   public String getName() {
@@ -43,11 +39,22 @@ public class SecureStoreCreateRequest {
     return description;
   }
 
-  public String getData() {
-    return data;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SecureStoreEntry that = (SecureStoreEntry) o;
+
+    return getName().equals(that.getName()) && getDescription().equals(that.getDescription());
   }
 
-  public Map<String, String> getProperties() {
-    return properties == null ? Collections.<String, String>emptyMap() : properties;
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, description);
   }
 }
