@@ -152,12 +152,13 @@ function link (scope, element) {
     }
 
     sliderBar.attr('d', 'M0,0V0H' + xValue + 'V0');
-    sliderHandle = slide.append('rect')
-        .attr('height', 50)
-        .attr('width', 7)
-        .attr('x', xValue)
-        .attr('y', -10)
-        .attr('class', 'left-handle');
+
+    sliderHandle = slide.append('svg:image')
+      .attr('width', 8)
+      .attr('height', 52)
+      .attr('xlink:href', '/assets/img/sliderHandle.svg')
+      .attr('x', xValue-1)
+      .attr('y', -10);
 
     //Append the Top slider
     scrollPinBrush = d3.svg.brush()
@@ -174,7 +175,7 @@ function link (scope, element) {
           }
 
           if(xPos > sliderX){
-            updatePin(xPos-8);
+            updatePin(xPos-11);
           }
         });
 
@@ -203,13 +204,13 @@ function link (scope, element) {
     pinHandle = slider.append('svg:image')
       .attr('width', 40)
       .attr('height', 60)
-      .attr('xlink:href', '/assets/img/scrollPin.png')
-      .attr('x', xValue - 8)
+      .attr('xlink:href', '/assets/img/scrollPin.svg')
+      .attr('x', xValue - 13)
       .attr('y', 0);
   }
 
   var updatePin = function (val) {
-    pinX = val - 8;
+    pinX = val - 13;
     pinHandle.attr('x', pinX);
   };
 

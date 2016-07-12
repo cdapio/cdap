@@ -67,7 +67,6 @@ LogViewerStore.$inject = ['LOGVIEWERSTORE_ACTIONS', 'Redux', 'ReduxThunk'];
 angular.module(`${PKG.name}.commons`)
   .constant('LOGVIEWERSTORE_ACTIONS', {
     'START_TIME' : 'START_TIME',
-    'SCROLL_POSITION' : 'SCROLL_POSITION',
-    'LOG_METADATA' : 'LOG_METADATA'
+    'SCROLL_POSITION' : 'SCROLL_POSITION'
   })
   .factory('LogViewerStore', LogViewerStore);

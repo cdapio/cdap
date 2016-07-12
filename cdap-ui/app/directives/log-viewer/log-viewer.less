@@ -185,8 +185,9 @@ my-log-viewer {
 
     table.scroll tbody,
     table.scroll thead {
-      display: block;
       color: #000000;
+      display: block;
+      right: -10px;
     }
 
     table.scroll th {
@@ -198,9 +199,9 @@ my-log-viewer {
     }
 
     table.scroll tbody {
-      min-height: ~"-moz-calc(100vh - 510px)";
-      min-height: ~"-webkit-calc(100vh - 510px)";
-      min-height: ~"calc(100vh - 510px)";
+      height: ~"-moz-calc(100vh - 510px)";
+      height: ~"-webkit-calc(100vh - 510px)";
+      height: ~"calc(100vh - 510px)";
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -302,6 +303,7 @@ my-log-viewer {
 
       .time {
         width: 15%;
+        min-width: 15%;
       }
       .time.log-header {
         padding-left: 20px;
