@@ -26,22 +26,21 @@ function link (scope, element) {
       pinX,
       sliderX,
       timelineStack,
-      leftVal,
       startTime,
       endTime,
       firstRun = true;
 
   //Components
-  let leftHandle,
+  let sliderHandle,
       pinHandle,
-      brush,
-      brush2,
+      sliderBrush,
+      scrollPinBrush,
       xScale,
       timelineData,
       slide,
       slider,
-      svg,
-      svg2,
+      timescaleSvg,
+      scrollPinSvg,
       xAxis,
       sliderBar;
 
@@ -49,13 +48,13 @@ function link (scope, element) {
   scope.initialize = () => {
 
     //If chart already exists, remove it
-    if(svg){
+    if(timescaleSvg){
       d3.selectAll('svg > *').remove();
-      svg.remove();
+      timescaleSvg.remove();
     }
 
-    if(svg2){
-      svg2.remove();
+    if(scrollPinSvg){
+      scrollPinSvg.remove();
     }
 
     width = element.parent()[0].offsetWidth;
@@ -67,16 +66,15 @@ function link (scope, element) {
     pinX = 0;
     sliderX = 0;
     timelineStack = {};
-    leftVal = 0;
-    leftHandle = undefined;
+    sliderHandle = undefined;
     pinHandle = undefined;
-    brush = undefined;
-    brush2 = undefined;
+    sliderBrush = undefined;
+    scrollPinBrush = undefined;
     xScale = undefined;
     slide = undefined;
     slider = undefined;
-    svg = undefined;
-    svg2 = undefined;
+    timescaleSvg = undefined;
+    scrollPinSvg = undefined;
     xAxis = undefined;
     sliderBar = undefined;
     timelineData = scope.metadata;
@@ -90,7 +88,7 @@ function link (scope, element) {
     startTime = timelineData.qid.startTime*1000;
     endTime = timelineData.qid.endTime*1000;
 
-    svg = d3.select('.timeline-log-chart')
+    timescaleSvg = d3.select('.timeline-log-chart')
                 .append('svg')
                 .attr('width', width)
                 .attr('height', height);
@@ -112,27 +110,23 @@ function link (scope, element) {
   // -------------------------Build Brush / Sliders------------------------- //
   function renderBrushAndSlider(){
 
-    svg.append('g')
+    timescaleSvg.append('g')
       .attr('class', 'xaxis-bottom')
       .attr('transform', 'translate(' + ( (paddingLeft + paddingRight) / 2) + ',' + (height - 20) + ')')
       .call(xAxis);
 
     //attach handler to brush
-    brush = d3.svg.brush()
+    sliderBrush = d3.svg.brush()
         .x(xScale)
         .on('brush', function(){
           if(d3.event.sourceEvent) {
-            let v = xScale.invert(d3.mouse(this)[0]);
             let index = d3.mouse(this)[0];
-            if(v !== leftVal){
-              leftVal = v;
-            }
             updateSlider(index);
           }
         });
 
     //Creates the top slider and trailing dark background
-    sliderBar = svg.append('g')
+    sliderBar = timescaleSvg.append('g')
       .attr('class', 'slider leftSlider')
       .call(d3.svg.axis()
         .scale(xScale)
@@ -141,10 +135,10 @@ function link (scope, element) {
       .select('.domain')
       .attr('class', 'fill-bar');
 
-    slide = svg.append('g')
-          .attr('class', 'slider sliderGroup')
+    slide = timescaleSvg.append('g')
+          .attr('class', 'slider')
           .attr('transform' , 'translate(0,10)')
-          .call(brush);
+          .call(sliderBrush);
 
     if(firstRun){
       firstRun = false;
@@ -157,7 +151,7 @@ function link (scope, element) {
     }
 
     sliderBar.attr('d', 'M0,0V0H' + xValue + 'V0');
-    leftHandle = slide.append('rect')
+    sliderHandle = slide.append('rect')
         .attr('height', 50)
         .attr('width', 7)
         .attr('x', xValue)
@@ -165,7 +159,7 @@ function link (scope, element) {
         .attr('class', 'left-handle');
 
     //Append the Top slider
-    brush2 = d3.svg.brush()
+    scrollPinBrush = d3.svg.brush()
         .x(xScale)
         .on('brush', function(){
           let xPos = d3.mouse(this)[0];
@@ -183,11 +177,11 @@ function link (scope, element) {
           }
         });
 
-    svg2 = d3.select('.top-bar').append('svg')
+    scrollPinSvg = d3.select('.top-bar').append('svg')
         .attr('width', width)
         .attr('height', 20);
 
-    svg2.append('g')
+    scrollPinSvg.append('g')
         .attr('class', 'xaxis-top')
         .call(d3.svg.axis()
           .scale(xScale)
@@ -197,10 +191,10 @@ function link (scope, element) {
         return this.parentNode.appendChild(this.cloneNode(true));
       });
 
-    slider = svg2.append('g')
+    slider = scrollPinSvg.append('g')
         .attr('class', 'slider')
         .attr('width', width)
-        .call(brush2);
+        .call(scrollPinBrush);
 
     slider.select('.background')
       .attr('height', 15);
@@ -239,7 +233,7 @@ function link (scope, element) {
       updatePin(sliderX);
     }
 
-    leftHandle.attr('x', val);
+    sliderHandle.attr('x', val);
     sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
     scope.Timeline.updateStartTimeInStore(xScale.invert(val));
   }
@@ -282,7 +276,7 @@ function link (scope, element) {
 
             //Append the circle
             if(currentItem){
-              svg.append('circle').attr('cx', xScale(currentItem.time *1000)).attr('cy', (timelineStack[xVal])*7).attr('r', 2).attr('class', circleClass);
+              timescaleSvg.append('circle').attr('cx', xScale(currentItem.time *1000)).attr('cy', (timelineStack[xVal])*7).attr('r', 2).attr('class', circleClass);
             }
           }
         }
