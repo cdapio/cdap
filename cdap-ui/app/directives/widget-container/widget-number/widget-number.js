@@ -49,7 +49,7 @@ angular.module(PKG.name + '.commons')
           if (oldValue === newValue) {
             return;
           }
-          $scope.model = ($scope.internalModel && $scope.internalModel.toString()) || '';
+          $scope.model = (typeof $scope.internalModel === 'number' && !Number.isNaN($scope.internalModel) && $scope.internalModel.toString()) || '';
         });
 
         // This is needed when we hit reset in node configuration.
