@@ -93,7 +93,6 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     }
 
     final HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
-    setVersion(tableDescriptor);
     tableDescriptor.addFamily(columnDescriptor);
 
     // if the dataset is configured for readless increments, the set the table property to support upgrades

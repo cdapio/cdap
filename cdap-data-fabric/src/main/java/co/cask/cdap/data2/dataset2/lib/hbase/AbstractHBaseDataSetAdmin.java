@@ -53,9 +53,6 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractHBaseDataSetAdmin.class);
 
-  // Property key in the coprocessor for storing version of the coprocessor.
-  private static final String CDAP_VERSION = "cdap.version";
-
   // Function to convert Class into class Name
   private static final Function<Class<?>, String> CLASS_TO_NAME = new Function<Class<?>, String>() {
     @Override
@@ -119,7 +116,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     boolean needUpdate = needsUpdate(tableDescriptor) || force;
 
     // Get the cdap version from the table
-    ProjectInfo.Version version = getVersion(tableDescriptor);
+    ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
 
     if (!needUpdate && version.compareTo(ProjectInfo.getVersion()) >= 0) {
       // If neither the table spec nor the cdap version have changed, no need to update
@@ -159,7 +156,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       newDescriptor.removeCoprocessor(remove);
     }
 
-    setVersion(newDescriptor);
+    HBaseTableUtil.setVersion(newDescriptor);
 
     LOG.info("Updating table '{}'...", tableId);
     boolean enableTable = false;
@@ -176,15 +173,6 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
 
     LOG.info("Table '{}' update completed.", tableId);
-  }
-
-  public static void setVersion(HTableDescriptorBuilder tableDescriptor) {
-    tableDescriptor.setValue(CDAP_VERSION, ProjectInfo.getVersion().toString());
-  }
-
-  public static ProjectInfo.Version getVersion(HTableDescriptor tableDescriptor) {
-    String value = tableDescriptor.getValue(CDAP_VERSION);
-    return new ProjectInfo.Version(value);
   }
 
   protected void addCoprocessor(HTableDescriptorBuilder tableDescriptor, Class<? extends Coprocessor> coprocessor,
