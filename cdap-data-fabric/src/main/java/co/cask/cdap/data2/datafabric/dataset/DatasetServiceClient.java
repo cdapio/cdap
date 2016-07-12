@@ -33,6 +33,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -251,8 +252,8 @@ class DatasetServiceClient {
     }
   }
 
-  public void createNamespace() throws DatasetManagementException {
-    HttpResponse response = doPut("admin/create", GSON.toJson(namespaceId));
+  public void createNamespace(NamespaceConfig namespaceConfig) throws DatasetManagementException {
+    HttpResponse response = doPut("admin/create", GSON.toJson(namespaceConfig));
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to create namespace, details: %s", response));
     }

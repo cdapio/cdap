@@ -40,6 +40,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -267,8 +268,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    clientCache.getUnchecked(namespaceId).createNamespace();
+  public void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceMeta.getNamespaceId().toId()).createNamespace(namespaceMeta.getConfig());
   }
 
   @Override

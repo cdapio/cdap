@@ -26,6 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -177,8 +178,8 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    delegate.createNamespace(namespaceId);
+  public void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException {
+    delegate.createNamespace(namespaceMeta);
   }
 
   @Override

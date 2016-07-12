@@ -29,6 +29,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.twill.filesystem.Location;
 
@@ -350,9 +351,9 @@ public interface DatasetFramework {
   /**
    * Creates a namespace in the Storage Providers - HBase/LevelDB, Hive and HDFS/Local File System.
    *
-   * @param namespaceId the {@link Id.Namespace} to create
+   * @param namespaceMeta the {@link NamespaceMeta} to create
    */
-  void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException;
+  void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException;
 
   /**
    * Deletes a namespace in the Storage Providers - HBase/LevelDB, Hive and HDFS/Local File System.
