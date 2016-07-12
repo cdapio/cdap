@@ -100,6 +100,7 @@ function link (scope, element) {
     xAxis = d3.svg.axis().scale(xScale)
       .orient('bottom')
       .innerTickSize(-40)
+      .outerTickSize(0)
       .tickPadding(7)
       .ticks(8);
 
