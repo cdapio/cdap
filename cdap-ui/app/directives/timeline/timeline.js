@@ -200,19 +200,12 @@ function link (scope, element) {
     slider.select('.background')
       .attr('height', 15);
 
-    pinHandle = slider.append('rect')
-        .attr('width', 15)
-        .attr('height', 15)
-        .attr('x', xValue)
-        .attr('y', 0)
-        .attr('class', 'scroll-pin');
-
-    d3.select('.scroll-pin').append('image')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('height', '15px')
-      .attr('width', '15px')
-      .attr('src', '/assets/img/scrollpin.png');
+    pinHandle = slider.append('svg:image')
+      .attr('width', 40)
+      .attr('height', 60)
+      .attr('xlink:href', '/assets/img/scrollPin.png')
+      .attr('x', xValue)
+      .attr('y', 0);
   }
 
   var updatePin = function (val) {
