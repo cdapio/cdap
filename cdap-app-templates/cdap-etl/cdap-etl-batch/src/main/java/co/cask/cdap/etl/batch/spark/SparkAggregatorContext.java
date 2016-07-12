@@ -27,7 +27,7 @@ public class SparkAggregatorContext extends AbstractAggregatorContext {
 
   public SparkAggregatorContext(SparkClientContext context, LookupProvider lookup, String stageName) {
     super(context, context, context.getMetrics(),
-          lookup, stageName, context.getLogicalStartTime(), context.getRuntimeArguments());
+          lookup, stageName, context.getLogicalStartTime(), context.getRuntimeArguments(), context.getAdmin());
   }
 
   @Override
