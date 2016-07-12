@@ -72,7 +72,7 @@
           Time
         </th>
 
-        <th class='level2 level2-header'
+        <th class='level level-header'
             ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
             Level
         </th>
@@ -103,7 +103,7 @@
           </td>
 
           <!-- LEVEL -->
-          <td class="level2"
+          <td class="level"
               ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
             <div class="table-text-content">{{ ::entry.log.logLevel }}</div>
           </td>
@@ -117,14 +117,14 @@
           <!-- MESSAGE -->
           <td class="message"
               ng-if="LogViewer.configOptions.message"
-              ng-class="{'stack-trace-expanded': entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded,
+              ng-class="{'stack-trace-expanded': entry.isStackTraceExpanded,
                 'stack-trace-available': entry.log.stackTrace.length > 0 }">
             <div class="message-main"
                  ng-click="entry.log.stackTrace.length > 0 && (entry.isStackTraceExpanded = !entry.isStackTraceExpanded)">
               <div class="icon-column"
                    ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)">
                 <span class="fa"
-                      ng-class="{'fa-minus': entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded}">
+                      ng-class="{'fa-minus': entry.isStackTraceExpanded}">
                 </span>
               </div>
               <div class="message-column">
@@ -134,7 +134,7 @@
 
             <div class="stack-trace"
                  ng-class="{'expanded': LogViewer.isMessageExpanded}"
-                 ng-if="entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded">
+                 ng-if="entry.isStackTraceExpanded">
               <pre>{{ ::entry.log.stackTrace }}</pre>
             </div>
 

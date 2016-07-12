@@ -53,7 +53,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
-      if (res.status === 'KILLED') {
+      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED') {
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       }
@@ -71,13 +71,8 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   }).$promise.then(
     (res) => {
       apiSettings.metric.startTime = res.start;
-      if (res.status==='KILLED') {
-        apiSettings.metric.endTime = 'now';
-        pollForMetadata();
-      } else if (res.status==='RUNNING') {
-        apiSettings.metric.endTime = 'now';
-        pollForMetadata();
-      }
+      apiSettings.metric.endTime = 'now';
+      pollForMetadata();
     },
     (err) => {
       console.log('ERROR: ', err);
