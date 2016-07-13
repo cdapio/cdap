@@ -13,8 +13,9 @@
 
 ## Distributed
 
-The simplest usage is to install a complete CDAP stack on a single machine, using `cdap::fullstack` recipe. Directories
-in HDFS are created using the `cdap::init` recipe.
+The simplest usage is to install a complete CDAP stack on a single machine, using the `cdap::fullstack` recipe. Directories
+in HDFS are created using the `cdap::init` recipe. The CDAP Upgrade Tool can be run after upgrading CDAP by using the
+`cdap::upgrade` recipe.
 
 ## Standalone/SDK
 
@@ -26,6 +27,7 @@ Use the `cdap::sdk` recipe.
 * `['cdap']['repo']['apt_repo_url']` - Specifies URL for fetching packages from APT
 * `['cdap']['repo']['apt_components']` - Repository components to use for APT repositories
 * `['cdap']['repo']['yum_repo_url']` - Specifies URL for fetching packages from YUM
+* `['cdap']['version']` - CDAP package version to install, must exist in the given repository
 
 # Recipes
 
@@ -34,7 +36,7 @@ Use the `cdap::sdk` recipe.
 * `default` - Installs `cdap` base package and performs configuration of `cdap-site.xml`
 * `fullstack` - Installs all packages and services on a single node
 * `gateway` - Installs the `cdap-gateway` package and `cdap-gateway` and `cdap-router` services
-* `init` - Sets up HDFS
+* `init` - Sets up HDFS, run on Master node
 * `kafka` - Installs the `cdap-kafka` package and `cdap-kafka-server` service
 * `master` - Installs the `cdap-master` package and service
 * `prerequisites` - Installs dependencies such as `hadoop`, `hbase`, `hive`, and `ntpd`
@@ -42,7 +44,7 @@ Use the `cdap::sdk` recipe.
 * `sdk` - Installs the CDAP SDK and sets up a `cdap-sdk` service
 * `security` - Installs the `cdap-security` package and `cdap-auth-server` service
 * `ui` - Installs the `cdap-ui` package and service, replaces `web_app`
-* `upgrade` - Executes the CDAP Upgrade Tool
+* `upgrade` - Executes the CDAP Upgrade Tool, run on Master node
 * `web_app` - Installs the `cdap-web-app` package and service
 
 # Author
