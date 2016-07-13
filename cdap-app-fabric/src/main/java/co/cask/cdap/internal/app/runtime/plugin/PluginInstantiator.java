@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.macro.InvalidMacroException;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -58,10 +59,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * This class helps creating new instances of plugins. It also contains a ClassLoader cache to
@@ -70,7 +73,6 @@ import java.util.concurrent.ExecutionException;
  * This class implements {@link Closeable} as well for cleanup of temporary directories created for the ClassLoaders.
  */
 public class PluginInstantiator implements Closeable {
-
   private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
 
   private final LoadingCache<ArtifactId, ClassLoader> classLoaders;
@@ -151,15 +153,29 @@ public class PluginInstantiator implements Closeable {
 
   /**
    * Creates a new instance of the given plugin class.
-   *
    * @param plugin {@link Plugin}
    * @param <T> Type of the plugin
-   * @return a new plugin instance
+   * @return a new plugin instance with macros substituted
    * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
    * @throws ClassNotFoundException if failed to load the given plugin class
    */
-  @SuppressWarnings("unchecked")
-  public <T> T newInstance(Plugin plugin) throws IOException, ClassNotFoundException {
+  public <T> T newInstance(Plugin plugin) throws IOException, ClassNotFoundException, InvalidMacroException {
+    return newInstance(plugin, null);
+  }
+
+  /**
+   * Creates a new instance of the given plugin class with all property macros substituted if a MacroEvaluator is given.
+   * At runtime, plugin property fields that are macro-enabled and contain macro syntax will remain in the macroFields
+   * set in the plugin config.
+   * @param plugin {@link Plugin}
+   * @param macroEvaluator the MacroEvaluator that performs macro substitution
+   * @param <T> Type of the plugin
+   * @return a new plugin instance with macros substituted
+   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
+   * @throws ClassNotFoundException if failed to load the given plugin class
+   */
+  public <T> T newInstance(Plugin plugin, @Nullable MacroEvaluator macroEvaluator)
+    throws IOException, ClassNotFoundException, InvalidMacroException {
     ClassLoader classLoader = getArtifactClassLoader(plugin.getArtifactId());
     PluginClass pluginClass = plugin.getPluginClass();
     TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
@@ -175,8 +191,15 @@ public class PluginInstantiator implements Closeable {
       Field field = Fields.findField(pluginType.getType(), configFieldName);
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
+
+      // perform macro substitution if an evaluator is provided
+      PluginProperties pluginProperties = plugin.getProperties();
+      if (macroEvaluator != null) {
+        pluginProperties = substituteMacroFields(plugin, macroEvaluator);
+      }
+
       Reflections.visit(config, configFieldType.getType(),
-                        new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), plugin.getProperties(),
+                        new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), pluginProperties,
                                               getFieldsWithMacro(plugin)));
 
       // Create the plugin instance
@@ -188,30 +211,41 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
-  private Set<String> getFieldsWithMacro(Plugin plugin) {
-    Set<String> macroFields = new HashSet<>();
+  private PluginProperties substituteMacroFields(Plugin plugin, MacroEvaluator macroEvaluator) {
+    Map<String, String> properties = new HashMap<>();
     Map<String, PluginPropertyField> pluginPropertyFieldMap = plugin.getPluginClass().getProperties();
+    MacroParser macroParser = new MacroParser(macroEvaluator);
     for (Map.Entry<String, PluginPropertyField> pluginEntry : pluginPropertyFieldMap.entrySet()) {
       if (pluginEntry.getValue().isMacroSupported()) {
         String macroValue = plugin.getProperties().getProperties().get(pluginEntry.getKey());
-        if (containsMacro(macroValue)) {
+        properties.put(pluginEntry.getKey(), macroParser.parse(macroValue));
+      } else {
+        properties.put(pluginEntry.getKey(), plugin.getProperties().getProperties().get(pluginEntry.getKey()));
+      }
+    }
+    return PluginProperties.builder().addAll(properties).build();
+  }
+
+  private Set<String> getFieldsWithMacro(Plugin plugin) {
+    Set<String> macroFields = new HashSet<>();
+    Map<String, PluginPropertyField> pluginPropertyFieldMap = plugin.getPluginClass().getProperties();
+
+    TrackingMacroEvaluator trackingMacroEvaluator = new TrackingMacroEvaluator();
+    MacroParser macroParser = new MacroParser(trackingMacroEvaluator);
+
+    for (Map.Entry<String, PluginPropertyField> pluginEntry : pluginPropertyFieldMap.entrySet()) {
+      if (pluginEntry.getValue().isMacroSupported()) {
+        String macroValue = plugin.getProperties().getProperties().get(pluginEntry.getKey());
+        macroParser.parse(macroValue);
+        if (trackingMacroEvaluator.hasMacro()) {
           macroFields.add(pluginEntry.getKey());
+          trackingMacroEvaluator.reset();
         }
       }
     }
     return macroFields;
   }
 
-  /**
-   * check if fieldValue which is macroEnabled contains a macro.
-   * @param fieldValue
-   * @throws InvalidMacroException on invalid syntax.
-   * @return
-   */
-  private boolean containsMacro(String fieldValue) throws InvalidMacroException {
-    // todo : implement.
-    return false;
-  }
 
   /**
    * Creates a new plugin instance and optionally setup the {@link PluginConfig} field.
