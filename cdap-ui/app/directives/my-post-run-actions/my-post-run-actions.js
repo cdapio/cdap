@@ -20,11 +20,13 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         actionCreator: '=',
-        store: '='
+        store: '=',
+        isDisabled: '@'
       },
       templateUrl: 'my-post-run-actions/my-post-run-actions.html',
       bindToController: true,
       controller: ['$scope', 'myPostRunActionWizardService', 'myAlertOnValium', function($scope, myPostRunActionWizardService, myAlertOnValium) {
+        this._isDisabled = this.isDisabled === 'true';
         $scope.myPostRunActionWizardService = myPostRunActionWizardService;
         var sub = this.store.registerOnChangeListener(() => {
           this.actions = this.store.getPostActions();
