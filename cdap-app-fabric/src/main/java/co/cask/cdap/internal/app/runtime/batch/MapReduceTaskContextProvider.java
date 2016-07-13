@@ -24,9 +24,10 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -160,8 +161,9 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
 
         // Setup dataset framework context, if required
         if (programDatasetFramework instanceof ProgramContextAware) {
-          Id.Run id = new Id.Run(program.getId(), contextConfig.getRunId().getId());
-          ((ProgramContextAware) programDatasetFramework).initContext(id);
+          ProgramRunId programRunId = program.getId().toEntityId()
+            .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
+          ((ProgramContextAware) programDatasetFramework).initContext(programRunId.toId());
         }
 
         MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
@@ -176,9 +178,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
 
         return new BasicMapReduceTaskContext(
-          program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
-          contextConfig.getArguments(), spec,
-          workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
+          program, contextConfig.getProgramOptions(), taskType, key.getTaskAttemptID().getTaskID().toString(),
+          spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources()
         );
@@ -199,7 +200,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
       this.configuration = context.getConfiguration();
     }
 
-    public TaskAttemptID getTaskAttemptID() {
+    TaskAttemptID getTaskAttemptID() {
       return taskAttemptID;
     }
 

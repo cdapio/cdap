@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,12 +25,9 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -44,8 +41,6 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.runtime.app.PendingMetricTestApp;
@@ -123,18 +118,14 @@ public class FlowTest {
   public void testAppWithArgs() throws Exception {
    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(ArgumentCheckApp.class,
                                                                                         TEMP_FOLDER_SUPPLIER);
-   ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     // Only running flow is good. But, in case of service, we need to send something to service as it's lazy loading
     List<ProgramController> controllers = Lists.newArrayList();
     for (ProgramDescriptor programDescriptor : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
-      BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                     RunIds.generate().getId()));
-      BasicArguments userArgs = new BasicArguments(ImmutableMap.of("arg", "test"));
-      Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
-                                                          runner, TEMP_FOLDER_SUPPLIER);
-      controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs)));
+      Arguments userArgs = new BasicArguments(ImmutableMap.of("arg", "test"));
+      controllers.add(AppFabricTestHelper.submit(app, programDescriptor.getSpecification().getClassName(),
+                                                 userArgs, TEMP_FOLDER_SUPPLIER)
+      );
     }
 
     TimeUnit.SECONDS.sleep(1);
@@ -163,8 +154,6 @@ public class FlowTest {
   public void testFlow() throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WordCountApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
-
     List<ProgramController> controllers = Lists.newArrayList();
 
     for (ProgramDescriptor programDescriptor : app.getPrograms()) {
@@ -172,13 +161,10 @@ public class FlowTest {
       if (programDescriptor.getProgramId().getType() == ProgramType.MAPREDUCE) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
-      BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                     RunIds.generate().getId()));
-      Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
-                                                          runner, TEMP_FOLDER_SUPPLIER);
-      controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
-                                                                   new BasicArguments())));
+
+      controllers.add(AppFabricTestHelper.submit(app, programDescriptor.getSpecification().getClassName(),
+                                                 new BasicArguments(), TEMP_FOLDER_SUPPLIER)
+      );
     }
 
     TimeUnit.SECONDS.sleep(1);
@@ -262,22 +248,15 @@ public class FlowTest {
 
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(PendingMetricTestApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
-
     File tempFolder = TEMP_FOLDER_SUPPLIER.get();
 
     ProgramController controller = null;
     for (ProgramDescriptor programDescriptor : app.getPrograms()) {
       // running mapreduce is out of scope of this tests (there's separate unit-test for that)
       if (programDescriptor.getProgramId().getType() == ProgramType.FLOW) {
-        ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
-        BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                       RunIds.generate().getId()));
-        Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
-                                                            runner, TEMP_FOLDER_SUPPLIER);
-        controller = runner.run(program, new SimpleProgramOptions(
-          program.getName(), systemArgs, new BasicArguments(ImmutableMap.of("temp", tempFolder.getAbsolutePath(),
-                                                                            "count", "4"))));
+        Arguments args = new BasicArguments(ImmutableMap.of("temp", tempFolder.getAbsolutePath(), "count", "4"));
+        controller = AppFabricTestHelper.submit(app, programDescriptor.getSpecification().getClassName(),
+                                                args, TEMP_FOLDER_SUPPLIER);
       }
     }
     Assert.assertNotNull(controller);

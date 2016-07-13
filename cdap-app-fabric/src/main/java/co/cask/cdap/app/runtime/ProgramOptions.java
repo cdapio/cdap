@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,15 +17,27 @@
 package co.cask.cdap.app.runtime;
 
 /**
- *
+ * Represents options for a program execution.
  */
 public interface ProgramOptions {
 
+  /**
+   * Returns the name of the program.
+   */
   String getName();
 
+  /**
+   * Returns the system arguments. It is for storing arguments used by the runtime system.
+   */
   Arguments getArguments();
 
+  /**
+   * Returns the user arguments.
+   */
   Arguments getUserArguments();
 
+  /**
+   * Returns {@code true} if executing in debug mode.
+   */
   boolean isDebug();
 }

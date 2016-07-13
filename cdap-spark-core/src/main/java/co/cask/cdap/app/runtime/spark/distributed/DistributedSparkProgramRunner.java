@@ -25,11 +25,10 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractDistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
@@ -87,7 +86,7 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
     TwillController controller = launcher.launch(
       new SparkTwillApplication(program, spec, localizeResources, eventHandler), sparkAssemblyJarName);
 
-    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    RunId runId = ProgramRunners.getRunId(options);
     return new SparkTwillProgramController(program.getId().toEntityId(), controller, runId).startListen();
   }
 

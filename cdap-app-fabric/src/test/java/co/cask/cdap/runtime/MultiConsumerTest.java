@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,8 @@ package co.cask.cdap.runtime;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
@@ -32,8 +28,6 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.runtime.app.MultiApp;
 import co.cask.tephra.TransactionExecutor;
@@ -42,7 +36,6 @@ import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import org.junit.Assert;
@@ -80,17 +73,11 @@ public class MultiConsumerTest {
     // TODO: Fix this test case to really test with numGroups settings.
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(MultiApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
-
     List<ProgramController> controllers = Lists.newArrayList();
     for (ProgramDescriptor programDescriptor : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
-      BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                     RunIds.generate().getId()));
-      Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
-                                                          runner, TEMP_FOLDER_SUPPLIER);
-      controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
-                                                                   new BasicArguments())));
+      controllers.add(AppFabricTestHelper.submit(app, programDescriptor.getSpecification().getClassName(),
+                                                 new BasicArguments(), TEMP_FOLDER_SUPPLIER)
+      );
     }
 
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
