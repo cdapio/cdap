@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.batch;
 
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
@@ -63,6 +64,7 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
    * Config for the sink.
    */
   public static class Config extends PluginConfig {
+    @Macro
     private String tableName;
   }
 
@@ -119,7 +121,7 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
+    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
     return new PluginClass(BatchSink.PLUGIN_TYPE, "Mock", "", MockSink.class.getName(), "config", properties);
   }
 }

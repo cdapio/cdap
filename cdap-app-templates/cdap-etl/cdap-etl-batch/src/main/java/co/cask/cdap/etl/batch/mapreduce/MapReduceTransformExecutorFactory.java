@@ -36,6 +36,7 @@ import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.batch.join.Join;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.TrackedEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
@@ -70,7 +71,9 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                            Metrics metrics,
                                            Map<String, Map<String, String>> pluginRuntimeArgs,
                                            String sourceStageName) {
-    super(pluginInstantiator, metrics, sourceStageName);
+    super(pluginInstantiator, metrics, sourceStageName,
+          new DefaultMacroEvaluator(taskContext.getWorkflowToken(), taskContext.getRuntimeArguments(),
+                                    taskContext.getLogicalStartTime()));
     this.taskContext = taskContext;
     this.pluginRuntimeArgs = pluginRuntimeArgs;
     JobContext hadoopContext = (JobContext) taskContext.getHadoopContext();
@@ -103,8 +106,11 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   @SuppressWarnings("unchecked")
   @Override
   protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
+    DefaultMacroEvaluator macroEvaluator = new DefaultMacroEvaluator(taskContext.getWorkflowToken(),
+                                                                     taskContext.getRuntimeArguments(),
+                                                                     taskContext.getLogicalStartTime());
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
-      BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName);
+      BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
       StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
@@ -116,7 +122,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                                                            mapOutputValClassName), stageMetrics);
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
-      BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName);
+      BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       BatchJoinerRuntimeContext runtimeContext = createJoinerRuntimeContext(stageName);
       batchJoiner.initialize(runtimeContext);
       StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);

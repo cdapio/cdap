@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.plugin;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -57,6 +58,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -172,7 +176,8 @@ public class PluginInstantiator implements Closeable {
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
       Reflections.visit(config, configFieldType.getType(),
-                        new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), plugin.getProperties()));
+                        new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), plugin.getProperties(),
+                                              getFieldsWithMacro(plugin)));
 
       // Create the plugin instance
       return newInstance(pluginType, field, configFieldType, config);
@@ -181,6 +186,31 @@ public class PluginInstantiator implements Closeable {
     } catch (IllegalAccessException e) {
       throw new InvalidPluginConfigException("Failed to set plugin config field: " + pluginClass, e);
     }
+  }
+
+  private Set<String> getFieldsWithMacro(Plugin plugin) {
+    Set<String> macroFields = new HashSet<>();
+    Map<String, PluginPropertyField> pluginPropertyFieldMap = plugin.getPluginClass().getProperties();
+    for (Map.Entry<String, PluginPropertyField> pluginEntry : pluginPropertyFieldMap.entrySet()) {
+      if (pluginEntry.getValue().isMacroSupported()) {
+        String macroValue = plugin.getProperties().getProperties().get(pluginEntry.getKey());
+        if (containsMacro(macroValue)) {
+          macroFields.add(pluginEntry.getKey());
+        }
+      }
+    }
+    return macroFields;
+  }
+
+  /**
+   * check if fieldValue which is macroEnabled contains a macro.
+   * @param fieldValue
+   * @throws InvalidMacroException on invalid syntax.
+   * @return
+   */
+  private boolean containsMacro(String fieldValue) throws InvalidMacroException {
+    // todo : implement.
+    return false;
   }
 
   /**
@@ -266,12 +296,14 @@ public class PluginInstantiator implements Closeable {
     private final PluginClass pluginClass;
     private final PluginProperties properties;
     private final ArtifactId artifactId;
+    private final Set<String> macroFields;
 
     public ConfigFieldSetter(PluginClass pluginClass, ArtifactId artifactId,
-                             PluginProperties properties) {
+                             PluginProperties properties, Set<String> macroFields) {
       this.pluginClass = pluginClass;
       this.artifactId = artifactId;
       this.properties = properties;
+      this.macroFields = macroFields;
     }
 
     @Override
@@ -286,6 +318,8 @@ public class PluginInstantiator implements Closeable {
       if (PluginConfig.class.equals(declareTypeToken.getRawType())) {
         if (field.getName().equals("properties")) {
           field.set(instance, properties);
+        } else if (field.getName().equals("macroFields")) {
+          field.set(instance, macroFields);
         }
         return;
       }

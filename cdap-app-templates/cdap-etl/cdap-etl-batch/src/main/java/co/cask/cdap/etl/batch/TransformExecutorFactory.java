@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.StageLifecycle;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -41,19 +42,21 @@ import javax.annotation.Nullable;
  * @param <T> the type of input for the created transform executors
  */
 public abstract class TransformExecutorFactory<T> {
-  protected final String sourceStageName;
   protected final Map<String, Map<String, Schema>> perStageInputSchemas;
+  private final String sourceStageName;
+  private final MacroEvaluator macroEvaluator;
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
   protected Schema outputSchema;
 
   public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics,
-                                  @Nullable String sourceStageName) {
+                                  @Nullable String sourceStageName, MacroEvaluator macroEvaluator) {
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
     this.perStageInputSchemas = new HashMap<>();
     this.outputSchema = null;
     this.sourceStageName = sourceStageName;
+    this.macroEvaluator = macroEvaluator;
   }
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
@@ -100,7 +103,7 @@ public abstract class TransformExecutorFactory<T> {
   protected <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
   getInitializedTransformation(String stageName) throws Exception {
     BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
-    T plugin = pluginInstantiator.newPluginInstance(stageName);
+    T plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
     plugin.initialize(runtimeContext);
     return plugin;
   }

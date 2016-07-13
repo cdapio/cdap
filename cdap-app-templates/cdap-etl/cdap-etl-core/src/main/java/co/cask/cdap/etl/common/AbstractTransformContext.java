@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -66,6 +67,22 @@ public abstract class AbstractTransformContext implements TransformContext {
         @Override
         public T call() throws Exception {
           return pluginContext.newPluginInstance(scopePluginId(pluginId));
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, InstantiationException.class);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public final <T> T newPluginInstance(final String pluginId,
+                                       final MacroEvaluator evaluator) throws InstantiationException {
+    try {
+      return LogContext.runWithoutLogging(new Callable<T>() {
+        @Override
+        public T call() throws Exception {
+          return pluginContext.newPluginInstance(scopePluginId(pluginId), evaluator);
         }
       });
     } catch (Exception e) {
