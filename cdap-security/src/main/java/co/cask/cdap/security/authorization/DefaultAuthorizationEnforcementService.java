@@ -32,6 +32,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,8 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,6 +61,8 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   private final int cacheTtlSecs;
   private final int cacheRefreshIntervalSecs;
   private final LoadingCache<Principal, Set<Privilege>> authPolicyCache;
+
+  private ScheduledExecutorService executor;
 
   @Inject
   DefaultAuthorizationEnforcementService(final AuthorizerInstantiator authorizerInstantiator,
@@ -119,9 +124,20 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   }
 
   @Override
+  protected ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("authorization-enforcement-service"));
+    return executor;
+  }
+
+  @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down authorization enforcement service...");
+    LOG.debug("Shutting down authorization enforcement service...");
     authPolicyCache.invalidateAll();
+    if (executor != null) {
+      executor.shutdownNow();
+    }
+    LOG.info("Shutdown authorization enforcement service successfully.");
   }
 
   @VisibleForTesting
