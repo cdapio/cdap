@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,13 +18,10 @@ package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -36,11 +33,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -56,30 +50,27 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private final FlowletSpecification flowletSpec;
 
   private volatile int instanceCount;
-  private final Metrics userMetrics;
   private final LoadingCache<String, MetricsContext> queueMetrics;
   private final LoadingCache<ImmutablePair<String, String>, MetricsContext> producerMetrics;
 
-  BasicFlowletContext(Program program, final String flowletId,
-                      int instanceId, RunId runId,
-                      int instanceCount, Set<String> datasets,
-                      Arguments runtimeArguments, FlowletSpecification flowletSpec,
-                      MetricsCollectionService metricsCollectionService,
+  BasicFlowletContext(Program program, ProgramOptions programOptions, final String flowletId,
+                      int instanceId, int instanceCount, Set<String> datasets,
+                      FlowletSpecification flowletSpec,
+                      MetricsCollectionService metricsService,
                       DiscoveryServiceClient discoveryServiceClient,
                       TransactionSystemClient txClient,
                       DatasetFramework dsFramework) {
-    super(program, runId, runtimeArguments, datasets,
-          getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
-          dsFramework, txClient, discoveryServiceClient, false);
+    super(program, programOptions, datasets, dsFramework, txClient, discoveryServiceClient, false, metricsService,
+          ImmutableMap.of(Constants.Metrics.Tag.FLOWLET, flowletId,
+                          Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId))
+    );
     this.flowId = program.getName();
     this.flowletId = flowletId;
-    this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId);
+    this.groupId = FlowUtils.generateConsumerGroupId(program.getId().toEntityId(), flowletId);
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.flowletSpec = flowletSpec;
-    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
-                                                                 flowletId, runId.getId(), instanceId));
-    // TODO - does this have to cache the metric collectors? Metrics framework itself has a cache [CDAP-2334]
+
     //noinspection NullableProblems
     this.queueMetrics = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -109,11 +100,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   public String toString() {
     return String.format("flowlet=%s, instance=%d, groupsize=%s, %s",
                          getFlowletId(), getInstanceId(), getInstanceCount(), super.toString());
-  }
-
-  @Override
-  public Map<String, Plugin> getPlugins() {
-    return null;
   }
 
   @Override
@@ -153,11 +139,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                                      getRunId().getId(), String.valueOf(getInstanceId()));
   }
 
-  @Override
-  public Metrics getMetrics() {
-    return userMetrics;
-  }
-
   public MetricsContext getQueueMetrics(String flowletQueueName) {
     return queueMetrics.getUnchecked(flowletQueueName);
   }
@@ -168,17 +149,5 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   public long getGroupId() {
     return groupId;
-  }
-
-  private static MetricsContext getMetricCollector(MetricsCollectionService service, Program program,
-                                                     String flowletName, String runId, int instanceId) {
-    if (service == null) {
-      return null;
-    }
-    Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-    tags.put(Constants.Metrics.Tag.FLOWLET, flowletName);
-    tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-
-    return service.getContext(tags);
   }
 }

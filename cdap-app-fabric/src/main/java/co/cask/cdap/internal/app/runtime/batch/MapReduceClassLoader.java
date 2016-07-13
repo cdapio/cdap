@@ -28,6 +28,7 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
@@ -156,7 +157,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   private LoggingContext createMapReduceLoggingContext() {
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(parameters.getHConf());
     ProgramId programId = contextConfig.getProgramId();
-    RunId runId = contextConfig.getRunId();
+    RunId runId = ProgramRunners.getRunId(contextConfig.getProgramOptions());
     WorkflowProgramInfo workflowProgramInfo = contextConfig.getWorkflowProgramInfo();
     if (workflowProgramInfo == null) {
       return new MapReduceLoggingContext(programId.getNamespace(), programId.getApplication(),

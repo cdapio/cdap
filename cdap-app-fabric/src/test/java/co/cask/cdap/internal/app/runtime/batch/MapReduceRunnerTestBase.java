@@ -19,12 +19,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -40,9 +36,6 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.MockResponder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -53,7 +46,6 @@ import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
@@ -67,7 +59,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
@@ -191,7 +182,7 @@ public class MapReduceRunnerTestBase {
 
   // returns true if the program ran successfully
   protected boolean runProgram(ApplicationWithPrograms app, Class<?> programClass, Arguments args) throws Exception {
-    return waitForCompletion(submit(app, programClass, args));
+    return waitForCompletion(AppFabricTestHelper.submit(app, programClass.getName(), args, TEMP_FOLDER_SUPPLIER));
   }
 
   private boolean waitForCompletion(ProgramController controller) throws InterruptedException {
@@ -213,17 +204,5 @@ public class MapReduceRunnerTestBase {
     // MR tests can run for long time.
     completion.await(5, TimeUnit.MINUTES);
     return success.get();
-  }
-
-  protected ProgramController submit(ApplicationWithPrograms app,
-                                     Class<?> programClass, Arguments userArgs) throws Exception {
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    final Program program = AppFabricTestHelper.createProgram(app, programClass, TEMP_FOLDER_SUPPLIER);
-    Assert.assertNotNull(program);
-    ProgramRunner runner = runnerFactory.create(program.getType());
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                   RunIds.generate().getId()));
-
-    return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs));
   }
 }

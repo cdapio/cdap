@@ -16,6 +16,7 @@
 package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -37,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRangeCodec;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactRange;
@@ -84,6 +86,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
   private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
   .create();
 

@@ -20,11 +20,13 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 
 import java.io.Serializable;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -103,5 +105,15 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
    */
   public BasicWorkflowToken getWorkflowToken() {
     return workflowToken;
+  }
+
+  /**
+   * Updates the metrics tags based on the information in this class.
+   */
+  public Map<String, String> updateMetricsTags(Map<String, String> tags) {
+    tags.put(Constants.Metrics.Tag.WORKFLOW, getName());
+    tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, getRunId().getId());
+    tags.put(Constants.Metrics.Tag.NODE, getNodeId());
+    return tags;
   }
 }

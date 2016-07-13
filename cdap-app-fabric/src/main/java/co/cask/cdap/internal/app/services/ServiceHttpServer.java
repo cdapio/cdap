@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,11 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -32,7 +31,6 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -43,7 +41,7 @@ import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionExecutor;
@@ -57,10 +55,8 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -98,37 +94,34 @@ public class ServiceHttpServer extends AbstractIdleService {
   private static final long DEFAULT_HANDLER_CLEANUP_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(60);
 
   private final Program program;
-  private final RunId runId;
-  private final int instanceId;
+  private final BasicHttpServiceContext context;
   private final AtomicInteger instanceCount;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final List<HandlerDelegatorContext> handlerContexts;
   private final NettyHttpService service;
-  private final MetricsContext metricsContext;
 
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public ServiceHttpServer(String host, Program program, ServiceSpecification spec, RunId runId, Arguments runtimeArgs,
+  public ServiceHttpServer(String host, Program program, ProgramOptions programOptions, ServiceSpecification spec,
                            int instanceId, int instanceCount, ServiceAnnouncer serviceAnnouncer,
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
                            DiscoveryServiceClient discoveryServiceClient,
                            @Nullable PluginInstantiator pluginInstantiator) {
     this.program = program;
-    this.runId = runId;
-    this.instanceId = instanceId;
     this.instanceCount = new AtomicInteger(instanceCount);
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
-    this.metricsContext = getMetricCollector(metricsCollectionService, program, runId.getId());
-    BasicHttpServiceContextFactory contextFactory = createContextFactory(program, runId, instanceId, this.instanceCount,
-                                                                         runtimeArgs, metricsCollectionService,
+    BasicHttpServiceContextFactory contextFactory = createContextFactory(program, programOptions,
+                                                                         instanceId, this.instanceCount,
+                                                                         metricsCollectionService,
                                                                          datasetFramework, discoveryServiceClient,
                                                                          txClient, pluginInstantiator);
     this.handlerContexts = createHandlerDelegatorContexts(program, spec, contextFactory);
-    this.service = createNettyHttpService(program, host, handlerContexts, metricsContext);
+    this.context = contextFactory.create(null);
+    this.service = createNettyHttpService(program, host, handlerContexts, context.getProgramMetrics());
   }
 
   private List<HandlerDelegatorContext> createHandlerDelegatorContexts(Program program, ServiceSpecification spec,
@@ -197,9 +190,9 @@ public class ServiceHttpServer extends AbstractIdleService {
     return builder.build();
   }
 
-  private BasicHttpServiceContextFactory createContextFactory(final Program program, final RunId runId,
+  private BasicHttpServiceContextFactory createContextFactory(final Program program,
+                                                              final ProgramOptions programOptions,
                                                               final int instanceId, final AtomicInteger instanceCount,
-                                                              final Arguments runtimeArgs,
                                                               final MetricsCollectionService metricsCollectionService,
                                                               final DatasetFramework datasetFramework,
                                                               final DiscoveryServiceClient discoveryServiceClient,
@@ -207,9 +200,9 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                               @Nullable final PluginInstantiator pluginInstantiator) {
     return new BasicHttpServiceContextFactory() {
       @Override
-      public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount,
-                                           runtimeArgs, metricsCollectionService,
+      public BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec) {
+        return new BasicHttpServiceContext(program, programOptions, spec, instanceId, instanceCount,
+                                           metricsCollectionService,
                                            datasetFramework, discoveryServiceClient, txClient, pluginInstantiator);
       }
     };
@@ -226,16 +219,17 @@ public class ServiceHttpServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getNamespaceId(),
                                                                            program.getApplicationId(),
                                                                            program.getId().getId(),
-                                                                           program.getId().getId(), runId.getId(),
-                                                                           String.valueOf(instanceId)));
+                                                                           program.getId().getId(),
+                                                                           context.getRunId().getId(),
+                                                                           String.valueOf(context.getInstanceId())));
     LOG.debug("Starting HTTP server for Service {}", program.getId());
-    Id.Program programId = program.getId();
+    ProgramId programId = program.getId().toEntityId();
     service.startAndWait();
 
     // announce the twill runnable
     InetSocketAddress bindAddress = service.getBindAddress();
     int port = bindAddress.getPort();
-    cancelDiscovery = serviceAnnouncer.announce(ServiceDiscoverable.getName(programId.toEntityId()), port);
+    cancelDiscovery = serviceAnnouncer.announce(ServiceDiscoverable.getName(programId), port);
     LOG.info("Announced HTTP Service for Service {} at {}", programId, bindAddress);
 
     // Create a Timer thread to periodically collect handler that are no longer in used and call destroy on it
@@ -321,17 +315,6 @@ public class ServiceHttpServer extends AbstractIdleService {
   private ClassLoader setContextCombinedClassLoader(HttpServiceHandler handler) {
     return ClassLoaders.setContextClassLoader(
       new CombineClassLoader(null, ImmutableList.of(handler.getClass().getClassLoader(), getClass().getClassLoader())));
-  }
-
-  private static MetricsContext getMetricCollector(MetricsCollectionService service, Program program, String runId) {
-    if (service == null) {
-      return new NoopMetricsContext();
-    }
-    Map<String, String> tags = Maps.newHashMap(AbstractContext.getMetricsContext(program, runId));
-    // todo: use proper service instance id. For now we have to emit smth for test framework's waitFor metric to work
-    tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
-
-    return service.getContext(tags);
   }
 
   /**
@@ -420,7 +403,7 @@ public class ServiceHttpServer extends AbstractIdleService {
           if (cancelled.compareAndSet(false, true)) {
             contextPairPool.offer(contextPair);
             // offer never return false for ConcurrentLinkedQueue
-            metricsContext.gauge("context.pool.size", contextPairPoolSize.incrementAndGet());
+            context.getProgramMetrics().gauge("context.pool.size", contextPairPoolSize.incrementAndGet());
           } else {
             // This shouldn't happen, unless there is bug in the platform.
             // Since the context capture and release is a complicated logic, it's better throwing exception
@@ -488,7 +471,7 @@ public class ServiceHttpServer extends AbstractIdleService {
             if (contextPair == null) {
               return createContextPair();
             }
-            metricsContext.gauge("context.pool.size", contextPairPoolSize.decrementAndGet());
+            context.getProgramMetrics().gauge("context.pool.size", contextPairPoolSize.decrementAndGet());
             return contextPair;
           }
         });

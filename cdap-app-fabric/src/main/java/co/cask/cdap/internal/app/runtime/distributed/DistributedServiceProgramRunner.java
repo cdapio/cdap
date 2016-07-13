@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,11 +21,10 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
@@ -77,7 +76,7 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
 
     DistributedServiceRunnableInstanceUpdater instanceUpdater =
       new DistributedServiceRunnableInstanceUpdater(controller);
-    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    RunId runId = ProgramRunners.getRunId(options);
     return new ServiceTwillProgramController(program.getId(), controller, instanceUpdater, runId).startListen();
   }
 
