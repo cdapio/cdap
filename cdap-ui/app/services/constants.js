@@ -38,7 +38,8 @@ angular.module(PKG.name + '.services')
         'transform': 'transform',
         'batchaggregator': 'batchaggregator',
         'sparksink': 'sparksink',
-        'sparkcompute': 'sparkcompute'
+        'sparkcompute': 'sparkcompute',
+        'batchjoiner': 'batchjoiner'
       },
       'post-run-actions': {
         'email': 'Send Email',
@@ -54,7 +55,8 @@ angular.module(PKG.name + '.services')
       'realtimesink': 'sink',
       'transform': 'transform',
       'sparksink': 'sink',
-      'sparkcompute': 'transform'
+      'sparkcompute': 'transform',
+      'batchjoiner': 'transform'
     },
 
     artifactConvert: {
