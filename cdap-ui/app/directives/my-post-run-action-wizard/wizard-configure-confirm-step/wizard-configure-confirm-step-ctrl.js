@@ -17,6 +17,8 @@
 class WizardConfigureConfirmStepCtrl {
   constructor($state, myPipelineApi, HydratorPlusPlusPluginConfigFactory, GLOBALS) {
     this.$state = $state;
+    this._isDisabled = this.isDisabled === 'true';
+    this._isEdit = this.isEdit === 'true';
     this.myPipelineApi = myPipelineApi;
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.showLoadingIcon = true;
@@ -79,10 +81,10 @@ class WizardConfigureConfirmStepCtrl {
       });
   }
 
-  addAction() {
+  addAction(isClose) {
     var fn = this.onActionConfigure();
     if ('undefined' !== typeof fn) {
-      fn.call(null, this.action);
+      fn.call(null, (isClose ? null : this.action));
     }
   }
   gotoPreviousStep() {

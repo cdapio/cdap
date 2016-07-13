@@ -18,8 +18,8 @@ angular.module(PKG.name + '.commons')
   .directive('myPostRunActionWizard', function() {
     return {
       scope: {
-        isEdit: '=?',
-        isDisaled: '=?',
+        isEdit: '@',
+        isDisabled: '@',
         actionCreator: '=?',
         store: '=',
         action: '=?'

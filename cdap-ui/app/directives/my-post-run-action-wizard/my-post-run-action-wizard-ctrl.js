@@ -18,13 +18,21 @@ angular.module(PKG.name + '.commons')
   .controller('MyPostRunActionWizardCtrl', function($scope, uuid, myAlertOnValium) {
     'ngInject';
     var vm = this;
+    vm._isDisabled = vm.isDisabled === 'true';
+    vm._isEdit = vm.isEdit === 'true';
     vm.action = vm.action || {};
-    if (vm.isEdit) {
+
+    if (vm._isEdit) {
       vm.currentStage = 2;
       vm.selectedAction = Object.assign({}, angular.copy(vm.action.plugin), {
         defaultArtifact: vm.action.plugin.artifact
       });
-    } else {
+    }
+    if (vm._isDisabled) {
+      vm.currentStage = 3;
+      vm.configuredAction = vm.selectedAction;
+    }
+    if(!vm._isEdit && !vm._isDisabled) {
       vm.currentStage = 1;
     }
     vm.goToPreviousStep = function() {
@@ -39,6 +47,10 @@ angular.module(PKG.name + '.commons')
       vm.currentStage += 1;
     };
     vm.onActionConfirm = function(action) {
+      if (!action) {
+        $scope.$parent.$close();
+        return;
+      }
       vm.confirmedAction = {
         name: vm.action.name || action.name + uuid.v4(),
         plugin: {
@@ -49,7 +61,7 @@ angular.module(PKG.name + '.commons')
         }
       };
       try {
-        if (vm.isEdit) {
+        if (vm._isEdit) {
           vm.actionCreator.editPostAction(vm.confirmedAction);
         } else {
           vm.actionCreator.addPostAction(vm.confirmedAction);

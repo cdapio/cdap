@@ -13,8 +13,8 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
-<fieldset ng-disabled="WizardConfigureConfirmStepCtrl.isDisabled">
+<fieldset
+  ng-disabled="!WizardConfigureConfirmStepCtrl._isEdit || WizardConfigureConfirmStepCtrl._isDisabled">
   <div class="confirm-step-content">
     <div ng-repeat="group in WizardConfigureConfirmStepCtrl.groupsConfig.groups">
       <div class="widget-group-container">
@@ -52,18 +52,24 @@
 </fieldset>
 <div class="pull-right">
   <div class="btn btn-default"
-       ng-if="!WizardConfigureConfirmStepCtrl.isEdit"
+       ng-if="!WizardConfigureConfirmStepCtrl._isDisabled && !WizardConfigureConfirmStepCtrl._isEdit"
        ng-click="WizardConfigureConfirmStepCtrl.gotoPreviousStep()">
     Back
   </div>
+
   <div class="btn btn-primary"
-       ng-if="!WizardConfigureConfirmStepCtrl.isDisabled"
+       ng-if="WizardConfigureConfirmStepCtrl._isEdit && !WizardConfigureConfirmStepCtrl._isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.isValid() && WizardConfigureConfirmStepCtrl.addAction()">
-      Save
+      Next
   </div>
   <div class="btn btn-primary"
-       ng-if="WizardConfigureConfirmStepCtrl.isDisabled"
+       ng-if="!WizardConfigureConfirmStepCtrl._isEdit && !WizardConfigureConfirmStepCtrl._isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.addAction()">
       Confirm
+  </div>
+  <div class="btn btn-primary"
+       ng-if="WizardConfigureConfirmStepCtrl._isDisabled"
+       ng-click="WizardConfigureConfirmStepCtrl.addAction(true)">
+      Close
   </div>
 </div>

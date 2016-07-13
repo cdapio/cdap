@@ -20,8 +20,8 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         action: '=',
-        isDisabled: '=',
-        isEdit: '=',
+        isDisabled: '@',
+        isEdit: '@',
         onActionConfigure: '&',
         onGotoPreviousStep: '&'
       },
