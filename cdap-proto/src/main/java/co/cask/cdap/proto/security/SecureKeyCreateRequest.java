@@ -44,4 +44,13 @@ public class SecureKeyCreateRequest {
   public Map<String, String> getProperties() {
     return properties == null ? Collections.<String, String>emptyMap() : properties;
   }
+
+  @Override
+  public String toString() {
+    return "SecureKeyCreateRequest{" +
+      "description='" + description + '\'' +
+      ", data='" + data + '\'' +
+      ", properties=" + properties +
+      '}';
+  }
 }
