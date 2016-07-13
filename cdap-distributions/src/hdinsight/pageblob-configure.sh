@@ -116,12 +116,41 @@ startServiceViaRest() {
     echo ${__startResult}
 }
 
+# Given a service and component, wait for "started_count" to equal 0
+waitForComponentStop() {
+    local __svc=${1}
+    local __component=${2}
+    local __currRunning
+
+    for i in {1..60} ; do
+        __currRunning=$(curl -s -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X GET http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${__svc}/components/${__component} | grep \"started_count\" | awk '{ print $3 }' | sed -e 's/,$//')
+        if [ ${__currRunning} -eq 0 ]; then
+            return 0
+        else
+            sleep 5
+        fi
+    done
+    echo "ERROR: giving up waiting for ${__svc}, component ${__component} to have started_count: 0"
+    return 1
+}
+
 # Restart Ambari cluster services
 restartCdapDependentClusterServices() {
     stopServiceViaRest HBASE
     stopServiceViaRest YARN
     stopServiceViaRest MAPREDUCE2
     stopServiceViaRest HDFS
+
+    # Ensure all critical components are completely stopped before issuing any starts.  Otherwise, components may be left not running.
+    for __component in HBASE_MASTER HBASE_REGIONSERVER PHOENIX_QUERY_SERVER; do
+        waitForComponentStop HBASE ${__component} || die "Could not stop component ${__component} of service HBASE" 1
+    done
+    for __component in RESOURCEMANAGER NODEMANAGER; do
+        waitForComponentStop YARN ${__component} || die "Could not stop component ${__component} of service YARN" 1
+    done
+    for __component in DATANODE NAMENODE JOURNALNODE ZKFC; do
+        waitForComponentStop HDFS ${__component} || die "Could not stop component ${__component} of service HDFS" 1
+    done
 
     startServiceViaRest HDFS
     startServiceViaRest MAPREDUCE2
