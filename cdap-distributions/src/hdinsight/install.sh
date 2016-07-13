@@ -70,7 +70,7 @@ ${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
 
 # CDAP cli install, ensures package dependencies are present
 # We must specify the cdap version
-echo "{\"cdap\": \"version\": \"${CDAP_VERSION}\"}}" > ${__tmpdir}/cli-conf.json
+echo "{\"cdap\": {\"version\": \"${CDAP_VERSION}\"}}" > ${__tmpdir}/cli-conf.json
 chef-solo -o 'recipe[cdap::cli]' -j ${__tmpdir}/cli-conf.json
 
 # Read zookeeper quorum from hbase-site.xml, using sourced init script function
