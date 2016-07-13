@@ -21,12 +21,12 @@ import java.util.Objects;
 /**
  * Represents an entry in the listing of secure store elements.
  */
-public class SecureStoreEntry {
+public class SecureKeyListEntry {
 
   private final String name;
   private final String description;
 
-  public SecureStoreEntry(String name, String description) {
+  public SecureKeyListEntry(String name, String description) {
     this.name = name;
     this.description = description;
   }
@@ -48,7 +48,7 @@ public class SecureStoreEntry {
       return false;
     }
 
-    SecureStoreEntry that = (SecureStoreEntry) o;
+    SecureKeyListEntry that = (SecureKeyListEntry) o;
 
     return getName().equals(that.getName()) && getDescription().equals(that.getDescription());
   }

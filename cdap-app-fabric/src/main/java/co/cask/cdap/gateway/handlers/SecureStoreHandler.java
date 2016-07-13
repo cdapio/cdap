@@ -25,9 +25,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.proto.security.SecureStoreEntry;
+import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -46,7 +47,7 @@ import javax.ws.rs.PathParam;
  * Exposes REST APIs for {@link co.cask.cdap.api.security.store.SecureStore} and
  * {@link co.cask.cdap.api.security.store.SecureStoreManager}.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/security/store/namespaces/{namespace-id}")
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/securekeys")
 public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
 
   private final SecureStore secureStore;
@@ -63,26 +64,23 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws BadRequestException, IOException {
     if (!EntityId.isValidStoreKey(name)) {
-      throw new BadRequestException("Improperly formatted name. The name can contain lower case alphabets, " +
-                                    "numbers, _, and -");
+      throw new BadRequestException("Improperly formatted secure key name. The name can contain lower case " +
+                                      "alphabets, " + "numbers, _, and -");
     }
     SecureKeyCreateRequest secureKeyCreateRequest = parseBody(httpRequest, SecureKeyCreateRequest.class);
 
     if (secureKeyCreateRequest == null) {
-      throw new BadRequestException("Unable to parse the request. The request body should be of the following format" +
-                                      "{\n" +
-                                      "  \"description\" :  \"<description>\"\n" +
-                                      "  \"data\"        :  \"<data>\"  //utf-8\n" +
-                                      "  \"properties\"  :  {\n" +
-                                      "    \"key\"  :  \"value\"\n" +
-                                      "    ...\n" +
-                                      "  }");
+      SecureKeyCreateRequest dummy = new SecureKeyCreateRequest("<description>", "<data>",
+                                                                ImmutableMap.of("key", "value"));
+      throw new BadRequestException("Unable to parse the request. The request body should be of the following format." +
+                                      " \n" + dummy);
     }
 
     String description = secureKeyCreateRequest.getDescription();
     String value = secureKeyCreateRequest.getData();
     if (Strings.isNullOrEmpty(value)) {
-      throw new BadRequestException("The data field should not be empty. This data that will be stored securely.");
+      throw new BadRequestException("The data field should not be empty. This is the data that will be stored " +
+                                      "securely.");
     }
 
     byte[] data = value.getBytes(StandardCharsets.UTF_8);
@@ -121,9 +119,9 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws IOException {
     List<SecureStoreMetadata> metadatas = secureStore.list(namespace);
-    List<SecureStoreEntry> returnList = new ArrayList<>(metadatas.size());
+    List<SecureKeyListEntry> returnList = new ArrayList<>(metadatas.size());
     for (SecureStoreMetadata metadata : metadatas) {
-      returnList.add(new SecureStoreEntry(metadata.getName(), metadata.getDescription()));
+      returnList.add(new SecureKeyListEntry(metadata.getName(), metadata.getDescription()));
     }
 
     httpResponder.sendJson(HttpResponseStatus.OK, returnList);

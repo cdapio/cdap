@@ -19,8 +19,7 @@ package co.cask.cdap.security;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.proto.security.SecureStoreEntry;
-import com.google.common.collect.ImmutableList;
+import co.cask.cdap.proto.security.SecureKeyListEntry;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
@@ -29,13 +28,12 @@ import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class SecureStoreTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
-  private static Type listType = new TypeToken<ArrayList<SecureStoreEntry>>() { }.getType();
+  private static Type listType = new TypeToken<ArrayList<SecureKeyListEntry>>() { }.getType();
   private static final String KEY = "key1";
   private static final String DESCRIPTION = "This is Key1";
   private static final String DATA = "Secret1";
@@ -49,7 +47,7 @@ public class SecureStoreTest extends AppFabricTestBase {
   public void testCreate() throws Exception {
     SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    HttpResponse response = doPut("/v3/security/store/namespaces/default/keys/" + KEY,
+    HttpResponse response = doPut("/v3/namespaces/default/securekeys/keys/" + KEY,
                                   GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = delete(KEY);
@@ -60,15 +58,15 @@ public class SecureStoreTest extends AppFabricTestBase {
   public void testGet() throws Exception {
     SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    HttpResponse response = doPut("/v3/security/store/namespaces/default/keys/" + KEY,
+    HttpResponse response = doPut("/v3/namespaces/default/securekeys/keys/" + KEY,
                                   GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet("/v3/security/store/namespaces/default/keys/" + KEY);
+    response = doGet("/v3/namespaces/default/securekeys/keys/" + KEY);
     Assert.assertEquals('"' + DATA + '"', readResponse(response));
 
     // Get again
-    response = doGet("/v3/security/store/namespaces/default/keys/" + KEY);
+    response = doGet("/v3/namespaces/default/securekeys/keys/" + KEY);
     Assert.assertEquals('"' + DATA + '"', readResponse(response));
 
     response = delete(KEY);
@@ -78,49 +76,48 @@ public class SecureStoreTest extends AppFabricTestBase {
   @Test
   public void testList() throws Exception {
     // Test empty list
-    HttpResponse response = doGet("/v3/security/store/namespaces/default/keys/");
+    HttpResponse response = doGet("/v3/namespaces/default/securekeys/keys/");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("[]", readResponse(response));
 
     // One element
     SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    response = doPut("/v3/security/store/namespaces/default/keys/" + KEY, GSON.toJson(secureKeyCreateRequest));
+    response = doPut("/v3/namespaces/default/securekeys/keys/" + KEY, GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/security/store/namespaces/default/keys/");
+    response = doGet("/v3/namespaces/default/securekeys/keys/");
     String result = readResponse(response);
-    List<SecureStoreEntry> expected = new ArrayList<>();
-    expected.add(new SecureStoreEntry(KEY, DESCRIPTION));
-    List<SecureStoreEntry> list = GSON.fromJson(result, listType);
-    for (SecureStoreEntry entry : list) {
+    List<SecureKeyListEntry> expected = new ArrayList<>();
+    expected.add(new SecureKeyListEntry(KEY, DESCRIPTION));
+    List<SecureKeyListEntry> list = GSON.fromJson(result, listType);
+    for (SecureKeyListEntry entry : list) {
       Assert.assertTrue(expected.contains(entry));
     }
 
     // Two elements
     secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION2, DATA2, PROPERTIES2);
-    response = doPut("/v3/security/store/namespaces/default/keys/" + KEY2, GSON.toJson(secureKeyCreateRequest));
+    response = doPut("/v3/namespaces/default/securekeys/keys/" + KEY2, GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/security/store/namespaces/default/keys/");
+    response = doGet("/v3/namespaces/default/securekeys/keys/");
     String result2 = readResponse(response);
     list = GSON.fromJson(result2, listType);
-    expected.add(new SecureStoreEntry(KEY2, DESCRIPTION2));
-    for (SecureStoreEntry entry : list) {
+    expected.add(new SecureKeyListEntry(KEY2, DESCRIPTION2));
+    for (SecureKeyListEntry entry : list) {
       Assert.assertTrue(expected.contains(entry));
     }
 
     // After deleting an element
     delete(KEY);
-    response = doGet("/v3/security/store/namespaces/default/keys/");
+    response = doGet("/v3/namespaces/default/securekeys/keys/");
     String result3 = readResponse(response);
     list = GSON.fromJson(result3, listType);
-    expected.remove(new SecureStoreEntry(KEY, DESCRIPTION));
-    for (SecureStoreEntry entry : list) {
+    expected.remove(new SecureKeyListEntry(KEY, DESCRIPTION));
+    for (SecureKeyListEntry entry : list) {
       Assert.assertTrue(expected.contains(entry));
     }
   }
 
   public HttpResponse delete(String key) throws Exception {
-    return doDelete("/v3/security/store/namespaces/default/keys/" + key);
+    return doDelete("/v3/namespaces/default/securekeys/keys/" + key);
   }
-
 }
