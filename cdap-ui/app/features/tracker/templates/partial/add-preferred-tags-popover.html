@@ -13,17 +13,20 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div class="modal-header">
-  <h3 class="modal-title">
-    <span>Add Preferred Tags</span>
-    <span class="fa fa-times pull-right" ng-click="$close()"></span>
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">
+    <span ng-if="AddTags.proceedToNextStep === false">Add Preferred Tags</span>
+    <span ng-if="AddTags.proceedToNextStep === true">Preview</span>
   </h3>
+  <span class="fa fa-times pull-right" ng-click="$close()"></span>
 </div>
-
 <div class="modal-body">
-  <div class="flex-box">
+  <div ng-if="AddTags.proceedToNextStep === false"
+      class="flex-box">
     <div class="flex-item">
       <textarea class="form-control"
+                ng-class="{ empty: !AddTags.tags.length }"
+                ng-model="AddTags.tags"
                 placeholder="Enter preferred tags here separated by comma or newline."></textarea>
     </div>
     <div class="flex-item">
@@ -41,9 +44,29 @@
       </div>
     </div>
   </div>
-  <div class="btn-row pull-right">
-    <a href="" class="btn btn-default"
-       ng-click="$close()">Cancel</a>
-    <a href="" class="btn btn-success">Next</a>
+  <div ng-if="AddTags.proceedToNextStep === true">
+    <div class="valid-tags">
+      <p>{{ AddTags.tagList.validTags.length }} tags loaded.</p>
+      <span ng-repeat="(key, value) in AddTags.tagList.validTags"
+            class="tag">{{ value }}</a>
+    </div>
+    <div ng-if="AddTags.tagList.invalidTags.length"
+        class="invalid-tags">
+      <p class="text-danger">{{ AddTags.tagList.invalidTags.length }} tags failed to load.</p>
+      <span ng-repeat="(key, value) in AddTags.tagList.invalidTags">{{ value }}</span>
+    </div>
   </div>
+</div>
+<div class="modal-footer text-right">
+  <p class="pull-left text-danger"
+    ng-if="AddTags.proceedToNextStep === false && AddTags.tagList.invalidTags.length">Oops! Invalid format.</p>
+  <button class="btn btn-default"
+          ng-click="close()">Cancel</button>
+  <button ng-if="AddTags.proceedToNextStep === false"
+          class="btn btn-success"
+          ng-click="AddTags.validatePreferredTags()"
+          ng-disabled="!AddTags.tags.length">Next</button>
+  <button ng-if="AddTags.proceedToNextStep === true"
+          class="btn btn-success"
+          ng-click="AddTags.promoteUserTags(AddTags.tagList.validTags)">Add</button>
 </div>

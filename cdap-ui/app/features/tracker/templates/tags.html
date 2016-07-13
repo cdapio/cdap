@@ -17,13 +17,13 @@
 <div class="row">
   <div class="col-xs-12">
     <h2>Tags</h2>
-    <a class="btn btn-default add-tags" href=""
-      ng-click="TagsController.addPreferredTags()">Add Preferred Tags</a>
+    <button class="btn btn-default add-tags"
+      ng-click="TagsController.showAddModal(key)">Add Preferred Tags</button>
   </div>
 </div>
 <div class="row">
   <div class="col-sm-6 preferred-tags">
-    <div ng-if="TagsController.tagList.preferredTags.length"
+    <div ng-if="TagsController.tags.preferredTags.length > 0"
         class="table-responsive">
       <table class="table table-striped">
         <thead>
@@ -34,34 +34,38 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="tag in TagsController.tagList.preferredTags">
+          <tr ng-repeat="tag in TagsController.tags.preferredTags | myPaginate:TagsController.currentPreferredPage">
             <td>
               <a class="tag"
-                    ui-sref="search.objectswithtags({tag: tag.key})">{{ tag.key }}</a>
+                ui-sref="search.objectswithtags({tag: tag.name})">{{ tag.name }}</a>
             </td>
             <td>
-              <span class="tagged-entities">{{ tag.total_entity }}</span>
+              <span class="tagged-entities">{{ tag.count }}</span>
             </td>
-            <td ng-if="tag.total_entity > 0">
-              <a href=""
-                class="action-link">Demote</a>
+            <td ng-if="tag.count > 0">
+              <span class="action-link"
+                    ng-click="TagsController.demotePreferredTags(tag.name)">Demote</span>
             </td>
-            <td ng-if="tag.total_entity === 0">
-              <a href="">
-                <span class="fa fa-trash"></span>
-              </a>
+            <td ng-if="tag.count === 0">
+              <span class="fa fa-trash"
+                    ng-click="TagsController.showDeleteModal(tag.name)"></span>
             </td>
           </tr>
         </tbody>
       </table>
+      <div class="text-left"
+          ng-if="TagsController.tags.preferredTags.length > 10">
+        <uib-pagination total-items="TagsController.tags.preferredTags.length"
+                        ng-model="TagsController.currentPreferredPage"></uib-pagination>
+      </div>
     </div>
-    <div ng-if="!TagsController.tagList.preferredTags.length"
+    <div ng-if="TagsController.tags.preferredTags.length === 0"
         class="well text-center">
       <p>No preferred tags to display.</p>
     </div>
   </div>
   <div class="col-sm-6 user-tags">
-    <div ng-if="TagsController.tagList.userTags.length"
+    <div ng-if="TagsController.tags.userTags.length > 0"
         class="table-responsive">
       <table class="table table-striped">
         <thead>
@@ -71,19 +75,25 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="tag in TagsController.tagList.userTags">
+          <tr ng-repeat="tag in TagsController.tags.userTags | myPaginate:TagsController.currentUserPage">
             <td>
               <a class="tag"
-                    ui-sref="search.objectswithtags({tag: tag.key})">{{ tag.key }}</a>
+                ui-sref="search.objectswithtags({tag: tag.name})">{{ tag.name }}</a>
             </td>
             <td>
-              <a href="" class="action-link">Promote</a>
+              <span class="action-link"
+                    ng-click="TagsController.promoteUserTags(tag.name)">Promote</span>
             </td>
           </tr>
         </tbody>
       </table>
+      <div class="text-left"
+          ng-if="TagsController.tags.userTags.length > 10">
+        <uib-pagination total-items="TagsController.tags.userTags.length"
+                        ng-model="TagsController.currentUserPage"></uib-pagination>
+      </div>
     </div>
-    <div ng-if="!TagsController.tagList.userTags.length"
+    <div ng-if="TagsController.tags.userTags.length === 0"
         class="well text-center">
       <p>No user tags to display.</p>
     </div>

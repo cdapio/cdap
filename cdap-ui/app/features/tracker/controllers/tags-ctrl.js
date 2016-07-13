@@ -20,67 +20,182 @@ class TrackerTagsController{
     this.$scope = $scope;
     this.myTrackerApi = myTrackerApi;
     this.$uibModal = $uibModal;
+    this.currentPreferredPage = 1;
+    this.currentUserPage = 1;
 
-    this.tagList = {
-      preferred: 5,
-      preferredTags: [
-        {
-          'key': 'tag1',
-          'total_entity': 4
-        },
-        {
-          'key': 'tag2',
-          'total_entity': 0
-        },
-        {
-          'key': 'tag3',
-          'total_entity': 39
-        },
-        {
-          'key': 'tag4',
-          'total_entity': 17
-        },
-        {
-          'key': 'tag5',
-          'total_entity': 0
-        }
-      ],
-      user: 5,
-      userTags: [
-        {
-          'key': 'tag1',
-          'total_entity': 0
-        },
-        {
-          'key': 'tag2',
-          'total_entity': 1
-        },
-        {
-          'key': 'tag3',
-          'total_entity': 20
-        },
-        {
-          'key': 'tag4',
-          'total_entity': 6
-        },
-        {
-          'key': 'tag5',
-          'total_entity': 28
-        }
-      ]
-    };
+    this.fetchTags();
   }
 
-  addPreferredTags() {
-    this.$uibModal.open({
+  fetchTags() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    this.myTrackerApi.getTags(params)
+      .$promise
+      .then((response) => {
+        this.tags = {
+          preferredTags: [],
+          userTags: []
+        };
+
+        angular.forEach(response.preferredTags, (count, tag) => {
+          this.tags.preferredTags.push({
+            name: tag,
+            count: count
+          });
+        });
+
+        angular.forEach((response.userTags), (count, tag) => {
+          this.tags.userTags.push({
+            name: tag,
+            count: count
+          });
+        });
+        console.log('this.tags.preferredTags', this.tags.preferredTags);
+        console.log('this.tags.userTags', this.tags.userTags);
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  promoteUserTags(tag) {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    this.myTrackerApi.promoteUserTags(params, [tag])
+      .$promise
+      .then((response) => {
+        this.response = response;
+        this.fetchTags();
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  demotePreferredTags(tag) {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    this.myTrackerApi.demotePreferredTags(params, [tag])
+      .$promise
+      .then((response) => {
+        this.response = response;
+        this.fetchTags();
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  showDeleteModal(tag) {
+    let modal = this.$uibModal.open({
+      templateUrl: '/assets/features/tracker/templates/partial/delete-preferred-tags-popover.html',
+      size: 'md',
+      backdrop: true,
+      keyboard: true,
+      windowTopClass: 'tracker-modal delete-modal',
+      controller: DeletePreferredTagsModalCtrl,
+      controllerAs: 'DeleteTags',
+      resolve: {
+        tag: () => {
+          return tag;
+        }
+      }
+    });
+    modal.result
+      .then((message) => {
+        if (message === 'success') {
+          this.fetchTags();
+        }
+    });
+  }
+
+  showAddModal() {
+    let modal = this.$uibModal.open({
       templateUrl: '/assets/features/tracker/templates/partial/add-preferred-tags-popover.html',
       size: 'md',
       backdrop: true,
       keyboard: true,
-      windowTopClass: 'tracker-modal add-preferred-tags-modal'
+      windowTopClass: 'tracker-modal add-preferred-tags-modal',
+      controller: AddPreferredTagsModalCtrl,
+      controllerAs: 'AddTags'
+    });
+    modal.result
+      .then((message) => {
+        if (message === 'success') {
+          this.fetchTags();
+        }
     });
   }
+}
 
+function AddPreferredTagsModalCtrl (myTrackerApi, $scope, $state) {
+  'ngInject';
+  this.proceedToNextStep = false;
+  this.validatePreferredTags = () => {
+    let tags = [];
+
+    angular.forEach(this.tags.split('\n'), (line) => {
+      tags = tags.concat(line.split(',').map((tag) => {
+        return tag.trim();
+      }));
+    });
+
+    let validateParams = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
+    myTrackerApi.validatePreferredTags(validateParams, tags)
+      .$promise
+      .then((response) => {
+        this.tagList = response;
+        if (this.tagList.validTags.length > 0) {
+          this.proceedToNextStep = true;
+        }
+      }, (err) => {
+        console.log('Error', err);
+      });
+  };
+  this.promoteUserTags = (tags) => {
+    let addParams = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
+    myTrackerApi.promoteUserTags(addParams, tags)
+      .$promise
+      .then((response) => {
+        $scope.$close('success');
+      }, (err) => {
+        console.log('Error', err);
+      });
+  };
+}
+
+function DeletePreferredTagsModalCtrl (tag, myTrackerApi, $scope, $state, myAlertOnValium) {
+  'ngInject';
+  this.tag = tag;
+  this.deletePreferredTags = () => {
+    let deleteParams = {
+      namespace: $state.params.namespace,
+      scope: $scope,
+      tag: tag
+    };
+    myTrackerApi.deletePreferredTags(deleteParams)
+      .$promise
+      .then((response) => {
+        $scope.$close('success');
+      }, (err) => {
+        myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
+  };
 }
 
 TrackerTagsController.$inject = ['$state', '$scope', 'myTrackerApi', '$uibModal'];

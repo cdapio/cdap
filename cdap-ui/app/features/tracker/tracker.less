@@ -70,29 +70,46 @@ body[class*='state-tracker'] {
       }
     }
   }
-
   .tracker-modal {
-    h3.modal-title {
-      font-size: 16px;
-
-      @media (max-width: @screen-sm-max) {
-        max-width: 100%;
-      }
-    }
-    .modal-header {
+    div.modal-header {
       background-color: transparent;
       border-bottom: 0;
       box-shadow: none;
+      height: auto;
+      padding: 15px 15px 0;
+      h3.modal-title {
+        font-size: 16px;
+        line-height: inherit;
+        padding-left: 0;
+        text-align: left;
+
+        @media (max-width: @screen-sm-max) {
+          max-width: 100%;
+        }
+      }
       span.fa-times {
-        margin-top: 15px;
-        margin-right: 15px;
         color: @tracker-grey;
         -webkit-text-stroke: 1px white;
         &:hover,
         &:focus { cursor: pointer; }
       }
     }
-    .modal-body { padding: 15px; }
+    .modal-body { padding: 0 15px 15px; }
+    .modal-footer {
+      padding-top: 0;
+      .btn {
+        color: #ffffff;
+        font-weight: 500;
+        padding-right: 16px;
+        padding-left: 16px;
+        &:last-child {
+          border: 1px solid transparent;
+          margin-left: 15px;
+        }
+      }
+      .btn-default { background-color: @border-color; }
+      .btn-danger { background-color: @alert-danger-bg; }
+    }
   }
 
   div.well {
@@ -416,14 +433,43 @@ body.state-tracker {
           border-bottom: 1px solid @border-color;
           padding: 0 15px 15px;
         }
-
-        .pagination li a { z-index: 0; }
       }
     }
   }
 
   .time-range-picker-group {
     .dropdown-menu { margin: 0; }
+  }
+
+  ul.pagination {
+    margin-top: 0;
+    > li {
+      a,
+      a:hover,
+      a:focus,
+      span {
+        background-color: transparent;
+        border: 0;
+        color: @tracker-green;
+      }
+      a,
+      span { padding: 6px; }
+      a {
+        z-index: 0;
+        &:focus { outline: 0; }
+      }
+      &.active,
+      &.disabled {
+        a,
+        a:hover,
+        a:focus,
+        span {
+          background-color: transparent;
+          border: 0;
+          color: @tracker-grey;
+        }
+      }
+    }
   }
 }
 
@@ -1011,8 +1057,16 @@ body.state-tracker-detail-entity-usage {
 }
 
 body.state-tracker-tags {
+  .tag {
+    background-color: @tag-bg;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    padding: 5px 10px;
+    &:focus { outline: 0; }
+  }
   main {
-    a.add-tags {
+    button.add-tags {
       border-color: @border-color;
       font-size: 12px;
       font-weight: 500;
@@ -1058,20 +1112,22 @@ body.state-tracker-tags {
               color: @alert-danger-bg;
               font-size: 16px;
             }
-          }
-          a {
             &.action-link {
               color: @tracker-green;
               font-size: 13px;
             }
-            &.tag {
-              background-color: @tag-bg;
-              border-radius: 4px;
-              color: white;
-              font-size: 12px;
-              padding: 5px;
-              &:focus { outline: 0; }
+            &:not(.tagged-entities) {
+              &:hover,
+              &:focus {
+                cursor: pointer;
+                text-decoration: underline;
+              }
             }
+          }
+          a.tag {
+            color: white;
+            display: inline-block;
+            line-height: 1;
           }
         }
       }
@@ -1084,8 +1140,8 @@ body.state-tracker-tags {
   div.add-preferred-tags-modal {
     .flex-box {
       .flexbox();
-      justify-content: space-between;
-      margin-bottom: 30px;
+      .justify-content(@justify: space-between);
+      margin: 15px auto 10px;
       .flex-item {
         height: 130px;
         &:first-child,
@@ -1111,8 +1167,10 @@ body.state-tracker-tags {
       textarea {
         border: 0;
         height: 100%;
-        padding-top: 3.5em;
-        text-align: center;
+        &.empty {
+          padding-top: 3.5em;
+          text-align: center;
+        }
         &:focus {
           padding-top: 6px;
           text-align: left;
@@ -1121,9 +1179,25 @@ body.state-tracker-tags {
       }
     }
     span.fa-cloud-upload { font-size: 36px; }
-    .btn-row .btn:last-child {
-      border: 1px solid transparent;
-      margin-left: 20px;
+    p.text-danger {
+      color: @alert-danger-bg;
+      font-weight: 500;
+      margin: 0;
+    }
+    div.valid-tags,
+    div.invalid-tags {
+      p {
+        font-weight: 500;
+        margin-bottom: 5px;
+      }
+    }
+    div.valid-tags span {
+      display: inline-block;
+      &:not(:last-child) { margin-right: 5px; }
+    }
+    div.invalid-tags {
+      p { margin-top: 10px; }
+      span:not(:last-child):after { content: ", "; }
     }
   }
 }
