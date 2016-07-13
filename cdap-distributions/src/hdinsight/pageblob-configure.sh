@@ -124,7 +124,7 @@ waitForComponentStop() {
 
     for i in {1..60} ; do
         __currRunning=$(curl -s -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X GET http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${__svc}/components/${__component} | grep \"started_count\" | awk '{ print $3 }' | sed -e 's/,$//')
-        if [ "${__currRunning}" == "0" ]; then
+        if [ ${__currRunning} -eq 0 ]; then
             return 0
         else
             sleep 5
