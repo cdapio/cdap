@@ -227,6 +227,10 @@ my-log-viewer {
       }
 
       td {
+        padding: 0;
+        padding-left: 10px;
+        max-width: 0;
+        vertical-align: middle;
         line-height: 12px;
         height: 10px;
         overflow: hidden;
@@ -296,6 +300,7 @@ my-log-viewer {
       .time {
         width: 15%;
         min-width: 15%;
+        padding-left: 15px;
       }
       .time.log-header {
         padding-left: 20px;
@@ -314,6 +319,12 @@ my-log-viewer {
         width: 20%;
       }
 
+      .source {
+        height: 20px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
       .message-header {
         width: 100%;
       }
@@ -324,10 +335,19 @@ my-log-viewer {
         clear: both;
 
         .message-main {
-          padding-right: 10px;
+          padding-left: 20px;
           cursor: pointer;
-          height: 25px;
+          height: 20px;
+          max-width: 0;
+        }
+
+        .message-text {
+          padding-right: 40px;
           overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 0;
+          width: 100%;
         }
 
         .fa {
