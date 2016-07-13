@@ -20,6 +20,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   this.data = {};
   this.errorCount = 0;
   this.warningCount = 0;
+  this.loading = true;
 
   this.configOptions = {
     time: true,
@@ -92,14 +93,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
         } else if(res[index].log.logLevel === 'ERROR'){
           this.errorCount++;
         }
-
         let formattedDate = new Date(res[index].log.timestamp);
         res[index].log.timestamp = formattedDate;
         res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
       });
-
       this.data = res;
-      console.log('Testing res: ', res);
+      this.loading = false;
       currentOffset = res[res.length-1].offset;
       this.cacheSize = res.length - this.cacheDecrement;
       console.log('Cache Size: ', this.cacheSize);
