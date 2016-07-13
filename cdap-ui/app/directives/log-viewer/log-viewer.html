@@ -118,7 +118,13 @@
 
           <!-- SOURCE -->
           <td class="source"
-              ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
+              ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
+              tooltip="testing"
+              uib-tooltip="{{ ::entry.log.threadName}}"
+              tooltip-append-to-body="true"
+              tooltip-placement="top"
+              tooltip-popup-delay="200"
+              >
               {{ ::entry.log.threadName }}
             <!-- <div class="table-text-content">{{ ::entry.log.threadName }}</div> -->
           </td>
