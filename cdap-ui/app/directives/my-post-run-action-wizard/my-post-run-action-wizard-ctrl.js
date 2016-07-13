@@ -18,32 +18,38 @@ angular.module(PKG.name + '.commons')
   .controller('MyPostRunActionWizardCtrl', function($scope, uuid, myAlertOnValium) {
     'ngInject';
     var vm = this;
-    vm._isDisabled = vm.isDisabled === 'true';
-    vm._isEdit = vm.isEdit === 'true';
     vm.action = vm.action || {};
-
-    if (vm._isEdit) {
-      vm.currentStage = 2;
+    if (vm.action && Object.keys(vm.action).length > 1) {
       vm.selectedAction = Object.assign({}, angular.copy(vm.action.plugin), {
         defaultArtifact: vm.action.plugin.artifact
       });
+    } else {
+      vm.selectedAction = {};
     }
-    if (vm._isDisabled) {
+
+    if (vm.mode === 'edit') {
+      vm.currentStage = 2;
+    } else if (vm.mode === 'view') {
       vm.currentStage = 3;
       vm.configuredAction = vm.selectedAction;
-    }
-    if(!vm._isEdit && !vm._isDisabled) {
+    } else if(vm.mode === 'create') {
       vm.currentStage = 1;
     }
     vm.goToPreviousStep = function() {
       vm.currentStage -=1;
+      if (vm.currentStage === 1) {
+        vm.selectedAction = {};
+        $scope.$parent.action = vm.selectedAction;
+      }
     };
     vm.onActionSelect = function(action) {
       vm.selectedAction = action;
+      $scope.$parent.action = vm.selectedAction;
       vm.currentStage = 2;
     };
     vm.onActionConfigure = function(action) {
       vm.configuredAction = action;
+      $scope.$parent.action = vm.configuredAction;
       vm.currentStage += 1;
     };
     vm.onActionConfirm = function(action) {
@@ -58,10 +64,11 @@ angular.module(PKG.name + '.commons')
           type: action.type,
           artifact: action.defaultArtifact,
           properties: action.properties
-        }
+        },
+        description: vm.action.description
       };
       try {
-        if (vm._isEdit) {
+        if (vm.mode === 'edit') {
           vm.actionCreator.editPostAction(vm.confirmedAction);
         } else {
           vm.actionCreator.addPostAction(vm.confirmedAction);

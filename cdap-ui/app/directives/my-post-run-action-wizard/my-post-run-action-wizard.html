@@ -13,7 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div class="wizard-nav" ng-if="!MyPostRunActionWizardCtrl._isDisabled">
+<div class="wizard-nav" ng-if="MyPostRunActionWizardCtrl.mode !== 'view'">
   <div class="capsule"
        ng-class="{'current': MyPostRunActionWizardCtrl.currentStage === 1, 'complete': MyPostRunActionWizardCtrl.currentStage > 1}">
     <span class="badge">
@@ -41,13 +41,13 @@
   </div>
 </div>
 <wizard-select-action-step
-  ng-if="MyPostRunActionWizardCtrl.currentStage === 1 && !MyPostRunActionWizardCtrl._isEdit"
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 1 && MyPostRunActionWizardCtrl.mode === 'create'"
   store="MyPostRunActionWizardCtrl.store"
   on-action-select="MyPostRunActionWizardCtrl.onActionSelect">
 </wizard-select-action-step>
 <wizard-configure-confirm-step
   class="clearfix"
-  is-edit="true"
+  mode="{{MyPostRunActionWizardCtrl.mode}}"
   action="MyPostRunActionWizardCtrl.selectedAction"
   ng-if="MyPostRunActionWizardCtrl.currentStage === 2"
   on-action-configure="MyPostRunActionWizardCtrl.onActionConfigure"
@@ -55,8 +55,8 @@
   >
 </wizard-configure-confirm-step>
 <wizard-configure-confirm-step
-  is-disabled="{{MyPostRunActionWizardCtrl._isDisabled}}"
-  is-edit="false"
+  mode="{{MyPostRunActionWizardCtrl.mode}}"
+  is-disabled="true"
   class="clearfix"
   action="MyPostRunActionWizardCtrl.configuredAction"
   ng-if="MyPostRunActionWizardCtrl.currentStage === 3"
