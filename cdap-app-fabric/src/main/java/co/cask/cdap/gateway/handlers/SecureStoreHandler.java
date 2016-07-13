@@ -29,6 +29,7 @@ import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -49,6 +50,7 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/securekeys")
 public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
+  private static final Gson GSON = new Gson();
 
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
@@ -73,7 +75,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
       SecureKeyCreateRequest dummy = new SecureKeyCreateRequest("<description>", "<data>",
                                                                 ImmutableMap.of("key", "value"));
       throw new BadRequestException("Unable to parse the request. The request body should be of the following format." +
-                                      " \n" + dummy);
+                                      " \n" + GSON.toJson(dummy));
     }
 
     String description = secureKeyCreateRequest.getDescription();

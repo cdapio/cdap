@@ -84,6 +84,7 @@ public abstract class EntityId implements IdCompatible {
     return datasetIdPattern.matcher(datasetId).matches();
   }
 
+  // TODO: Move to a separate class.
   public static boolean isValidStoreKey(String name) {
     return storeKeyNamePattern.matcher(name).matches();
   }
