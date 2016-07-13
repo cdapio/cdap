@@ -13,15 +13,16 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
-<div class="pipeline-settings-content">
-  <my-card title="Instances">
-    <div class="instance-wrapper">
-      <input type="number"
-             ng-model="MyRealtimePipelineSettingsCtrl.instance"
-             class="form-control"
-             min="1">
-      <label class="control-label">Instances</label>
-    </div>
-  </my-card>
-</div>
+<fieldset ng-disabled="MyRealtimePipelineSettingsCtrl._isDisabled">
+  <div class="pipeline-settings-content">
+    <my-card title="Instances">
+      <div class="instance-wrapper">
+        <input type="number"
+               ng-model="MyRealtimePipelineSettingsCtrl.instance"
+               class="form-control"
+               min="1">
+        <label class="control-label">Instances</label>
+      </div>
+    </my-card>
+  </div>
+</fieldset>
