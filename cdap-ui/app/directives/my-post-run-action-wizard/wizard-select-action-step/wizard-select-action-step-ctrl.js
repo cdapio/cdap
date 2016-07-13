@@ -23,6 +23,7 @@ class WizardSelectActionStepCtrl {
     this.onItemClicked = function(event, action) {
       this.chooseAction(action);
     };
+    this.loadingPlugins = true;
 
     let params = {
       namespace: $state.params.namespace,
@@ -42,11 +43,14 @@ class WizardSelectActionStepCtrl {
               template: '/assets/features/hydratorplusplus/templates/create/popovers/leftpanel-plugin-popover.html',
               label: myHelpers.objectQuery(
                 GLOBALS.pluginTypes, 'post-run-actions', filteredPlugins[postaction].name.toLowerCase()
-              ) || filteredPlugins[postaction].name
+              ) || filteredPlugins[postaction].name,
+              description: filteredPlugins[postaction].description || ''
             });
           });
+          this.loadingPlugins = false;
         },
         (err) => {
+          this.loadingPlugins = false;
           console.log('ERROR: ', err);
         }
       );

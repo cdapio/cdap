@@ -18,7 +18,6 @@ class WizardConfigureConfirmStepCtrl {
   constructor($state, myPipelineApi, HydratorPlusPlusPluginConfigFactory, GLOBALS) {
     this.$state = $state;
     this._isDisabled = this.isDisabled === 'true';
-    this._isEdit = this.isEdit === 'true';
     this.myPipelineApi = myPipelineApi;
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.showLoadingIcon = true;
@@ -43,7 +42,7 @@ class WizardConfigureConfirmStepCtrl {
       extensionType: action.type,
       pluginName: action.name
     };
-
+    this.loadingPlugin = true;
     return this.myPipelineApi.fetchPostActionProperties(params)
       .$promise
       .then( (res) => {
@@ -76,7 +75,9 @@ class WizardConfigureConfirmStepCtrl {
             }
           });
         });
+        this.loadingPlugin = false;
       }, () => {
+        this.loadingPlugin = false;
         this.noConfig = true;
       });
   }

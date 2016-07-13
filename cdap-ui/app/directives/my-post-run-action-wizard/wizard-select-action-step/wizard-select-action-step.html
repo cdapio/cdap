@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div>
+<div ng-if="!WizardSelectActionStepCtrl.loadingPlugins">
   <div class="actions-list-section">
     <div ng-repeat="action in WizardSelectActionStepCtrl.postActionsList track by $index"
          class="btn btn-default"
@@ -29,3 +29,7 @@
     </div>
   </div>
 </div>
+<h3 ng-if="WizardSelectActionStepCtrl.loadingPlugins">
+  <span class="fa fa-spinner fa-spin"></span>
+  <span>Loading...</span>
+</h3>
