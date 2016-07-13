@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 
 /**
@@ -55,23 +54,22 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   }
 
   /**
-   * This determines the actual TableId from the table name prefix and the name of the queue.
+   * This determines the tableName from the table name prefix and the name of the queue.
    * @param queueName The name of the queue.
    * @return the full name of the table that holds this queue.
    */
-  public TableId getDataTableId(QueueName queueName) {
+  public String getDataTableName(QueueName queueName) {
     if (queueName.isQueue()) {
-      return getDataTableId(Id.Flow.from(queueName.getFirstComponent(),
-                                         queueName.getSecondComponent(),
-                                         queueName.getThirdComponent()));
+      return getDataTableName(Id.Flow.from(queueName.getFirstComponent(),
+                                           queueName.getSecondComponent(),
+                                           queueName.getThirdComponent()));
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
   }
 
-  public TableId getDataTableId(Id.Flow flowId) {
+  public String getDataTableName(Id.Flow flowId) {
     // tableName = system.queue.<app>.<flow>
-    String tableName = unqualifiedTableNamePrefix + "." + flowId.getApplicationId() + "." + flowId.getId();
-    return TableId.from(flowId.getNamespaceId(), tableName);
+    return unqualifiedTableNamePrefix + "." + flowId.getApplicationId() + "." + flowId.getId();
   }
 }

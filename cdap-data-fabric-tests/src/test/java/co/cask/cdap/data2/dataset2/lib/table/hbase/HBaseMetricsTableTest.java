@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -36,12 +37,15 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -70,7 +74,13 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   public static void setup() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
-    Injector injector = Guice.createInjector(new DataFabricDistributedModule(),
+    Injector injector = Guice.createInjector(Modules.override(new DataFabricDistributedModule()).with(
+                                               new AbstractModule() {
+                                               @Override
+                                               protected void configure() {
+                                                 bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+                                               }
+                                             }),
                                              new ConfigModule(conf, TEST_HBASE.getConfiguration()),
                                              new ZKClientModule(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
@@ -81,13 +91,13 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
     dsFramework = injector.getInstance(DatasetFramework.class);
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(Id.Namespace.SYSTEM));
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
-    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(Id.Namespace.SYSTEM));
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(Id.Namespace.SYSTEM));
   }
 
   @Override

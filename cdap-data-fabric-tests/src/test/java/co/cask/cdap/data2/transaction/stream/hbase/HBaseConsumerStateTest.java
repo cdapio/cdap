@@ -20,6 +20,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
@@ -37,6 +38,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -89,7 +91,13 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new DataFabricDistributedModule(),
+      Modules.override(new DataFabricDistributedModule())
+      .with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+        }
+      }),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
@@ -110,8 +118,8 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);
 
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), TEST_NAMESPACE);
-    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), OTHER_NAMESPACE);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(TEST_NAMESPACE));
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(OTHER_NAMESPACE));
 
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
@@ -134,8 +142,8 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
   }
 
   private static void deleteNamespace(Id.Namespace namespace) throws IOException {
-    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), namespace);
-    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), namespace);
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace));
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace));
   }
 
   @Override

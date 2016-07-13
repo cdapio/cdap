@@ -20,6 +20,7 @@ package co.cask.cdap.data2.util.hbase;
  * Factory for HBase version-specific {@link HTableNameConverterFactory} instances.
  */
 public class HTableNameConverterFactory extends HBaseVersionSpecificFactory<HTableNameConverter> {
+
   @Override
   protected String getHBase96Classname() {
     return "co.cask.cdap.data2.util.hbase.HTable96NameConverter";

@@ -41,8 +41,7 @@ import java.util.NavigableMap;
  * unit-test
  * @param <T> table type
  */
-public abstract class BufferingTableTest<T extends BufferingTable>
-  extends TableConcurrentTest<T> {
+public abstract class BufferingTableTest<T extends BufferingTable> extends TableConcurrentTest<T> {
 
   @Test
   public void testRollingBackAfterExceptionDuringPersist() throws Exception {

@@ -28,12 +28,20 @@ public class NamespaceConfig {
   @SerializedName("scheduler.queue.name")
   private final String schedulerQueueName;
 
-  public NamespaceConfig(String schedulerQueueName) {
+  @SerializedName("hbase.namespace")
+  private final String hbaseNamespace;
+
+  public NamespaceConfig(String schedulerQueueName, String hbaseNamespace) {
     this.schedulerQueueName = schedulerQueueName;
+    this.hbaseNamespace = hbaseNamespace;
   }
 
   public String getSchedulerQueueName() {
     return schedulerQueueName;
+  }
+
+  public String getHbaseNamespace() {
+    return hbaseNamespace;
   }
 
   @Override
@@ -45,18 +53,20 @@ public class NamespaceConfig {
       return false;
     }
     NamespaceConfig other = (NamespaceConfig) o;
-    return Objects.equals(schedulerQueueName, other.schedulerQueueName);
+    return Objects.equals(schedulerQueueName, other.schedulerQueueName) &&
+      Objects.equals(hbaseNamespace, other.hbaseNamespace);
   }
 
   @Override
   public int hashCode() {
-    return schedulerQueueName.hashCode();
+    return Objects.hash(schedulerQueueName, hbaseNamespace);
   }
 
   @Override
   public String toString() {
     return "NamespaceConfig{" +
       "scheduler.queue.name='" + schedulerQueueName + '\'' +
+      ", hbase.namespace='" + hbaseNamespace + '\'' +
       '}';
   }
 }

@@ -46,12 +46,12 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
     TableId tableId = StreamUtils.getStateStoreTableId(namespace);
     InMemoryTableAdmin admin =
-      new InMemoryTableAdmin(DatasetContext.from(tableId.getNamespace().getId()), tableId.getTableName(), cConf);
+      new InMemoryTableAdmin(DatasetContext.from(tableId.getNamespace()), tableId.getTableName(), cConf);
     if (!admin.exists()) {
       admin.create();
     }
     InMemoryTable table =
-      new InMemoryTable(DatasetContext.from(tableId.getNamespace().getId()), tableId.getTableName(), cConf);
+      new InMemoryTable(DatasetContext.from(tableId.getNamespace()), tableId.getTableName(), cConf);
     return new InMemoryStreamConsumerStateStore(streamConfig, table);
   }
 
@@ -59,7 +59,7 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
     TableId tableId = StreamUtils.getStateStoreTableId(namespace);
     InMemoryTableAdmin admin =
-      new InMemoryTableAdmin(DatasetContext.from(tableId.getNamespace().getId()), tableId.getTableName(), cConf);
+      new InMemoryTableAdmin(DatasetContext.from(tableId.getNamespace()), tableId.getTableName(), cConf);
     admin.drop();
   }
 }
