@@ -36,6 +36,7 @@ public class HBase10CDH550TableUtilTest extends AbstractHBaseTableUtilTest {
   protected HBaseTableUtil getTableUtil() {
     HBase10CDH550TableUtil hBaseTableUtil = new HBase10CDH550TableUtil();
     hBaseTableUtil.setCConf(cConf);
+    hBaseTableUtil.setNamespaceQueryAdmin(getNamespaceQueryAdmin());
     return hBaseTableUtil;
   }
 
@@ -48,11 +49,10 @@ public class HBase10CDH550TableUtilTest extends AbstractHBaseTableUtilTest {
   protected String getTableNameAsString(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "TableId should not be null.");
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    if (Id.Namespace.DEFAULT.equals(tableId.getNamespace())) {
+    if (Id.Namespace.DEFAULT.getId().equals(tableId.getNamespace())) {
       return nameConverter.getHBaseTableName(tablePrefix, tableId);
     }
-    return Joiner.on(':').join(nameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()),
-                               nameConverter.getHBaseTableName(tablePrefix, tableId));
+    return Joiner.on(':').join(tableId.getNamespace(), nameConverter.getHBaseTableName(tablePrefix, tableId));
   }
 
   @Override

@@ -58,6 +58,7 @@ public final class NamespaceMeta {
     private String name;
     private String description;
     private String schedulerQueueName;
+    private String hbaseNamespace;
 
     public Builder() {
      // No-Op
@@ -89,6 +90,11 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setHbaseNamespace(final String hbaseNamespace) {
+      this.hbaseNamespace = hbaseNamespace;
+      return this;
+    }
+
     public NamespaceMeta build() {
       if (name == null) {
         throw new IllegalArgumentException("Namespace id cannot be null.");
@@ -100,7 +106,7 @@ public final class NamespaceMeta {
       if (schedulerQueueName == null) {
         schedulerQueueName = "";
       }
-      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName));
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, hbaseNamespace));
     }
   }
 

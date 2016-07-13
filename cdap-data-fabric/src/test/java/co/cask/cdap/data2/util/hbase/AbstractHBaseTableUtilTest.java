@@ -19,6 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
@@ -75,6 +76,10 @@ public abstract class AbstractHBaseTableUtilTest {
     hAdmin.close();
   }
 
+  private String getPrefix() {
+    return cConf.get(Constants.Dataset.TABLE_PREFIX);
+  }
+
   protected abstract HBaseTableUtil getTableUtil();
 
   protected abstract HTableNameConverter getNameConverter();
@@ -83,12 +88,16 @@ public abstract class AbstractHBaseTableUtilTest {
 
   protected abstract boolean namespacesSupported();
 
+  protected NamespaceQueryAdmin getNamespaceQueryAdmin() {
+    return new SimpleNamespaceQueryAdmin();
+  }
+
   @Test
   public void testTableSizeMetrics() throws Exception {
     HBaseTableUtil tableUtil = getTableUtil();
     // namespace should not exist
     if (namespacesSupported()) {
-      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
+      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, tableUtil.getHBaseNamespace(Id.Namespace.from("namespace"))));
     }
 
     Assert.assertNull(getTableStats("namespace", "table1"));
@@ -98,7 +107,7 @@ public abstract class AbstractHBaseTableUtilTest {
     if (namespacesSupported()) {
       createNamespace("namespace");
       createNamespace("namespace2");
-      Assert.assertTrue(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
+      Assert.assertTrue(tableUtil.hasNamespace(hAdmin, tableUtil.getHBaseNamespace(Id.Namespace.from("namespace"))));
     }
 
     Futures.allAsList(
@@ -149,8 +158,9 @@ public abstract class AbstractHBaseTableUtilTest {
 
     drop("namespace", "table1");
     Assert.assertFalse(exists("namespace", "table1"));
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from("namespace"), "table2");
     //TODO: TestHBase methods should eventually accept namespace as a param, but will add them incrementally
-    TEST_HBASE.forceRegionFlush(Bytes.toBytes(getTableNameAsString(TableId.from("namespace", "table2"))));
+    TEST_HBASE.forceRegionFlush(Bytes.toBytes(getTableNameAsString(hTableId)));
     truncate("namespace", "table3");
 
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -198,8 +208,8 @@ public abstract class AbstractHBaseTableUtilTest {
     if (namespacesSupported()) {
       deleteNamespace("namespace");
       deleteNamespace("namespace2");
-      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
-      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace2")));
+      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, "namespace"));
+      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, "namespace2"));
     }
   }
 
@@ -220,30 +230,45 @@ public abstract class AbstractHBaseTableUtilTest {
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("default", "my.dataset");
     create(tableId);
-    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
-    Assert.assertEquals("cdap.user.my.dataset",
-                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
+
+    TableId resultTableId = getTableId("default", "my.dataset");
+    Assert.assertNotNull(resultTableId);
+    Assert.assertEquals("default", resultTableId.getNamespace());
+    Assert.assertEquals("cdap.user.my.dataset", getNameConverter().getHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("default", "system.queue.config");
     create(tableId);
-    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
-    Assert.assertEquals("cdap.system.queue.config",
-                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
+
+    resultTableId = getTableId("default", "system.queue.config");
+    Assert.assertEquals("default", resultTableId.getNamespace());
+    Assert.assertEquals("cdap.system.queue.config", getNameConverter().getHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("myspace", "could.be.any.table.name");
     createNamespace("myspace");
     create(tableId);
-    Assert.assertEquals("cdap_myspace", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
-    Assert.assertEquals("could.be.any.table.name",
-                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
+    resultTableId = getTableId("myspace", "could.be.any.table.name");
+    Assert.assertEquals("cdap_myspace", resultTableId.getNamespace());
+    Assert.assertEquals("could.be.any.table.name", getNameConverter().getHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     deleteNamespace("myspace");
+  }
+
+  private TableId getTableId(String namespace, String tableName) throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    List<TableId> tableIds = tableUtil.listTablesInNamespace(hAdmin,
+                                                             tableUtil.getHBaseNamespace(Id.Namespace.from(namespace)));
+    for (TableId tId : tableIds) {
+      if (tId.getTableName().endsWith(tableName)) {
+        return tId;
+      }
+    }
+    return null;
   }
 
   @Test
@@ -252,9 +277,14 @@ public abstract class AbstractHBaseTableUtilTest {
     Set<TableId> fooNamespaceTableIds = ImmutableSet.of(TableId.from("foo", "some.table1"),
                                                         TableId.from("foo", "other.table"),
                                                         TableId.from("foo", "some.table2"));
+    String fooNamespaceInHbase = String.format("%s_foo", getPrefix());
+    Set<TableId> fooNamespaceHTableIds = ImmutableSet.of(TableId.from(fooNamespaceInHbase, "some.table1"),
+                                                         TableId.from(fooNamespaceInHbase, "other.table"),
+                                                         TableId.from(fooNamespaceInHbase, "some.table2"));
     createNamespace("foo");
     createNamespace("foo_bar");
     TableId tableIdInOtherNamespace = TableId.from("foo_bar", "my.dataset");
+    TableId hTableIdInOtherNamespace = TableId.from(String.format("%s_foo_bar", getPrefix()), "my.dataset");
 
     List<ListenableFuture<TableId>> createFutures = new ArrayList<>();
     for (TableId tableId : fooNamespaceTableIds) {
@@ -265,16 +295,16 @@ public abstract class AbstractHBaseTableUtilTest {
 
     Futures.allAsList(createFutures).get(60, TimeUnit.SECONDS);
 
-    Set<TableId> retrievedTableIds =
-      ImmutableSet.copyOf(tableUtil.listTablesInNamespace(hAdmin, Id.Namespace.from("foo")));
-    Assert.assertEquals(fooNamespaceTableIds, retrievedTableIds);
+    Set<TableId> retrievedTableIds = ImmutableSet.copyOf(
+      tableUtil.listTablesInNamespace(hAdmin, tableUtil.getHBaseNamespace(Id.Namespace.from("foo"))));
+    Assert.assertEquals(fooNamespaceHTableIds, retrievedTableIds);
 
     Set<TableId> allTableIds =
-      ImmutableSet.<TableId>builder().addAll(fooNamespaceTableIds).add(tableIdInOtherNamespace).build();
+      ImmutableSet.<TableId>builder().addAll(fooNamespaceHTableIds).add(hTableIdInOtherNamespace).build();
     Assert.assertEquals(allTableIds, ImmutableSet.copyOf(tableUtil.listTables(hAdmin)));
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foo"));
+    tableUtil.deleteAllInNamespace(hAdmin, tableUtil.getHBaseNamespace(Id.Namespace.from("foo")));
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -297,7 +327,7 @@ public abstract class AbstractHBaseTableUtilTest {
     ).get(60, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.DEFAULT);
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.DEFAULT.getId());
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -322,7 +352,8 @@ public abstract class AbstractHBaseTableUtilTest {
     ).get(60, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), new Predicate<TableId>() {
+    tableUtil.deleteAllInNamespace(hAdmin, tableUtil.getHBaseNamespace(Id.Namespace.from("foonamespace")),
+                                   new Predicate<TableId>() {
       @Override
       public boolean apply(TableId input) {
         return input.getTableName().startsWith("some");
@@ -341,8 +372,9 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   private void writeSome(String namespace, String tableName) throws IOException {
-    try (HTable table = getTableUtil().createHTable(TEST_HBASE.getConfiguration(),
-                                                    TableId.from(namespace, tableName))) {
+    HBaseTableUtil tableUtil = getTableUtil();
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from(namespace), tableName);
+    try (HTable table = tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId)) {
       // writing at least couple megs to reflect in "megabyte"-based metrics
       for (int i = 0; i < 8; i++) {
         Put put = new Put(Bytes.toBytes("row" + i));
@@ -353,23 +385,22 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   private void createNamespace(String namespace) throws IOException {
-    getTableUtil().createNamespaceIfNotExists(hAdmin, Id.Namespace.from(namespace));
+    String hbaseNamespace = getTableUtil().getHBaseNamespace(Id.Namespace.from(namespace));
+    getTableUtil().createNamespaceIfNotExists(hAdmin, hbaseNamespace);
   }
 
 
   private void deleteNamespace(String namespace) throws IOException {
-    getTableUtil().deleteNamespaceIfExists(hAdmin, Id.Namespace.from(namespace));
-  }
-
-  private void create(String namespace, String tableName) throws IOException {
-    create(TableId.from(namespace, tableName));
+    String hbaseNamespace = getTableUtil().getHBaseNamespace(Id.Namespace.from(namespace));
+    getTableUtil().deleteNamespaceIfExists(hAdmin, hbaseNamespace);
   }
 
   private void create(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    HTableDescriptorBuilder desc = tableUtil.buildHTableDescriptor(tableId);
+    TableId htableId = tableUtil.createHTableId(Id.Namespace.from(tableId.getNamespace()), tableId.getTableName());
+    HTableDescriptorBuilder desc = tableUtil.buildHTableDescriptor(htableId);
     desc.addFamily(new HColumnDescriptor("d"));
-    tableUtil.createTableIfNotExists(hAdmin, tableId, desc.build());
+    tableUtil.createTableIfNotExists(hAdmin, htableId, desc.build());
   }
 
   private ListenableFuture<TableId> createAsync(final TableId tableId) {
@@ -395,25 +426,32 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private boolean exists(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    return tableUtil.tableExists(hAdmin, tableId);
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from(tableId.getNamespace()), tableId.getTableName());
+    return tableUtil.tableExists(hAdmin, hTableId);
   }
 
   private HTableDescriptor getTableDescriptor(String namespace, String name) throws IOException {
-    return getTableUtil().getHTableDescriptor(hAdmin, TableId.from(namespace, name));
+    HBaseTableUtil tableUtil = getTableUtil();
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from(namespace), name);
+    return getTableUtil().getHTableDescriptor(hAdmin, hTableId);
   }
 
   private void truncate(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    TableId tableId = TableId.from(namespace, tableName);
-    tableUtil.truncateTable(hAdmin, tableId);
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from(namespace), tableName);
+    tableUtil.truncateTable(hAdmin, hTableId);
   }
 
   private void disable(String namespace, String tableName) throws IOException {
-    getTableUtil().disableTable(hAdmin, TableId.from(namespace, tableName));
+    HBaseTableUtil tableUtil = getTableUtil();
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from(namespace), tableName);
+    tableUtil.disableTable(hAdmin, hTableId);
   }
 
   private void enable(String namespace, String tableName) throws IOException {
-    getTableUtil().enableTable(hAdmin, TableId.from(namespace, tableName));
+    HBaseTableUtil tableUtil = getTableUtil();
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from(namespace), tableName);
+    tableUtil.enableTable(hAdmin, hTableId);
   }
 
   private void drop(String namespace, String tableName) throws IOException {
@@ -422,7 +460,8 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private void drop(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    tableUtil.dropTable(hAdmin, tableId);
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from(tableId.getNamespace()), tableId.getTableName());
+    tableUtil.dropTable(hAdmin, hTableId);
   }
 
   private ListenableFuture<TableId> dropAsync(final TableId tableId) {
@@ -445,7 +484,7 @@ public abstract class AbstractHBaseTableUtilTest {
   private HBaseTableUtil.TableStats getTableStats(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     // todo : should support custom table-prefix
-    TableId tableId = TableId.from(namespace, tableName);
+    TableId tableId = tableUtil.createHTableId(Id.Namespace.from(namespace), tableName);
     Map<TableId, HBaseTableUtil.TableStats> statsMap = tableUtil.getTableStats(hAdmin);
     return statsMap.get(tableId);
   }

@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import com.google.inject.Inject;
 
 /**
@@ -25,23 +26,31 @@ import com.google.inject.Inject;
 public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTableUtil> {
 
   private final CConfiguration cConf;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
-  @Inject
   public HBaseTableUtilFactory(CConfiguration cConf) {
     this.cConf = cConf;
+    this.namespaceQueryAdmin = null;
+  }
+
+  @Inject
+  public HBaseTableUtilFactory(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
+    this.cConf = cConf;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
   protected HBaseTableUtil createInstance(String className) throws ClassNotFoundException {
     HBaseTableUtil hBaseTableUtil = super.createInstance(className);
     hBaseTableUtil.setCConf(cConf);
+    hBaseTableUtil.setNamespaceQueryAdmin(namespaceQueryAdmin);
     return hBaseTableUtil;
   }
 
   public static Class<? extends HBaseTableUtil> getHBaseTableUtilClass() {
-    // Since we only need the class name, it is fine to have a null CConfiguration, since we do not use the
-    // tableUtil instance
-    return new HBaseTableUtilFactory(null).get().getClass();
+    // Since we only need the class name, it is fine to have a null CConfiguration and null namespaceQueryAdmin,
+    // since we do not use the tableUtil instance
+    return new HBaseTableUtilFactory(null, null).get().getClass();
   }
 
   @Override

@@ -369,9 +369,9 @@ public class MasterServiceMain extends DaemonMain {
    * Creates HBase namespace for the cdap system namespace.
    */
   private void createSystemHBaseNamespace() {
-    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf, null).get();
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.createNamespaceIfNotExists(admin, Id.Namespace.SYSTEM);
+      tableUtil.createNamespaceIfNotExists(admin, tableUtil.getHBaseNamespace(Id.Namespace.SYSTEM));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

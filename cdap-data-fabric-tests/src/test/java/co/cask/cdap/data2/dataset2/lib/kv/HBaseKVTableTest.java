@@ -48,13 +48,14 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
+    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
+                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
+    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
+    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
   @Override

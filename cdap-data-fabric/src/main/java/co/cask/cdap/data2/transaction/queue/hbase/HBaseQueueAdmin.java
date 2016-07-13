@@ -97,8 +97,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
                          HBaseTableUtil tableUtil,
                          DatasetFramework datasetFramework,
                          TransactionExecutorFactory txExecutorFactory) {
-    this(hConf, cConf, locationFactory, tableUtil, datasetFramework,
-         txExecutorFactory, QueueConstants.QueueType.SHARDED_QUEUE);
+    this(hConf, cConf, locationFactory, tableUtil, datasetFramework, txExecutorFactory,
+         QueueConstants.QueueType.SHARDED_QUEUE);
   }
 
   protected HBaseQueueAdmin(Configuration hConf,
@@ -118,13 +118,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     this.type = type;
   }
 
-  public static TableId getConfigTableId(QueueName queueName) {
-    return getConfigTableId(queueName.getFirstComponent());
-  }
-
-  public static TableId getConfigTableId(String namespace) {
-    return TableId.from(namespace, QueueConstants.STATE_STORE_NAME + "."
-                                  + HBaseQueueDatasetModule.STATE_STORE_EMBEDDED_TABLE_NAME);
+  public static String getConfigTableId() {
+    return QueueConstants.STATE_STORE_NAME + "." + HBaseQueueDatasetModule.STATE_STORE_EMBEDDED_TABLE_NAME;
   }
 
   protected final synchronized HBaseAdmin getHBaseAdmin() throws IOException {
@@ -210,6 +205,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     // For each table managed by this admin, perform an upgrade
     List<TableId> tableIds = tableUtil.listTables(getHBaseAdmin());
     List<TableId> stateStoreTableIds = Lists.newArrayList();
+    Map<String, String> reverseHBaseNamepsace = tableUtil.getHBaseToCDAPNamespaceMap();
 
     for (TableId tableId : tableIds) {
       // It's important to skip config table enabled.
@@ -232,7 +228,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     // Upgrade of state store table
     for (TableId tableId : stateStoreTableIds) {
       LOG.info("Upgrading queue state store: {}", tableId);
-      Id.DatasetInstance stateStoreId = createStateStoreDataset(tableId.getNamespace().getId());
+      String cdapNamespace = reverseHBaseNamepsace.get(tableId.getNamespace());
+      Id.DatasetInstance stateStoreId = createStateStoreDataset(cdapNamespace);
       co.cask.cdap.api.dataset.DatasetAdmin admin = datasetFramework.getAdmin(stateStoreId, null);
       if (admin == null) {
         LOG.error("No dataset admin available for {}", stateStoreId);
@@ -358,8 +355,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
       // It's important to keep config table enabled while disabling and dropping  queue tables.
       final String queueTableNamePrefix = String.format("%s.%s.", Id.Namespace.SYSTEM.getId(), queueType);
-      final TableId configTableId = getConfigTableId(namespaceId.getId());
-      tableUtil.deleteAllInNamespace(getHBaseAdmin(), namespaceId, new Predicate<TableId>() {
+      final String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceId);
+      final TableId configTableId = TableId.from(hbaseNamespace, getConfigTableId());
+      tableUtil.deleteAllInNamespace(getHBaseAdmin(), hbaseNamespace, new Predicate<TableId>() {
         @Override
         public boolean apply(TableId tableId) {
           // It's a bit hacky here since we know how the Dataset system names table
@@ -375,17 +373,15 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
-  @Override
-  public TableId getDataTableId(Id.Flow flowId) {
+  public TableId getDataTableId(Id.Flow flowId) throws IOException {
     return getDataTableId(flowId, type);
   }
 
-  @Override
-  public TableId getDataTableId(QueueName queueName) {
+  public TableId getDataTableId(QueueName queueName) throws IOException {
     return getDataTableId(queueName, type);
   }
 
-  public TableId getDataTableId(QueueName queueName, QueueConstants.QueueType queueType) {
+  public TableId getDataTableId(QueueName queueName, QueueConstants.QueueType queueType) throws IOException {
     if (!queueName.isQueue()) {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
@@ -395,10 +391,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
                           queueType);
   }
 
-  public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) {
+  public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) throws IOException {
     String tableName = String.format("%s.%s.%s.%s", Id.Namespace.SYSTEM.getId(), queueType, flowId.getApplicationId(),
                                      flowId.getId());
-    return TableId.from(flowId.getNamespaceId(), tableName);
+    return tableUtil.createHTableId(flowId.getNamespace(), tableName);
   }
 
   private void upgrade(TableId tableId, Properties properties) throws Exception {
@@ -431,8 +427,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   private boolean isStateStoreTable(TableId tableId) {
-    // Namespace doesn't matter
-    return tableId.getTableName().equals(getConfigTableId("ns").getTableName());
+    return tableId.getTableName().equals(getConfigTableId());
   }
 
   // only used for create & upgrade of data table
@@ -504,7 +499,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       createQueueTable(tableId, htd, splitKeys);
     }
 
-    private void createQueueTable(TableId tableId, HTableDescriptorBuilder htd, byte[][] splitKeys) throws IOException {
+    private void createQueueTable(TableId tableId, HTableDescriptorBuilder htd, byte[][] splitKeys)
+      throws IOException {
       int prefixBytes = (type == QueueConstants.QueueType.SHARDED_QUEUE) ? ShardedHBaseQueueStrategy.PREFIX_BYTES
                                                                          : SaltedHBaseQueueStrategy.SALT_BYTES;
       htd.setValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(prefixBytes));

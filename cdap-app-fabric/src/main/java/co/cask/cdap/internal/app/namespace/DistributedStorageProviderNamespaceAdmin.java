@@ -17,16 +17,21 @@
 package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -36,17 +41,22 @@ import java.sql.SQLException;
  */
 public final class DistributedStorageProviderNamespaceAdmin extends AbstractStorageProviderNamespaceAdmin {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedStorageProviderNamespaceAdmin.class);
+
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private HBaseAdmin hBaseAdmin;
 
   @Inject
   DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
                                            NamespacedLocationFactory namespacedLocationFactory,
-                                           ExploreFacade exploreFacade, HBaseTableUtil tableUtil) {
+                                           ExploreFacade exploreFacade, HBaseTableUtil tableUtil,
+                                           NamespaceQueryAdmin namespaceQueryAdmin) {
     super(cConf, namespacedLocationFactory, exploreFacade);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -55,15 +65,40 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
     super.create(namespaceMeta);
     // TODO: CDAP-1519: Create base directory for filesets under namespace home
     // create HBase namespace
-    tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceMeta.getNamespaceId().toId());
+    String namespace = tableUtil.getHBaseNamespace(namespaceMeta);
+    if (!Strings.isNullOrEmpty(namespaceMeta.getConfig().getHbaseNamespace())) {
+      if (!tableUtil.hasNamespace(getAdmin(), namespace)) {
+        throw new IOException(String.format("Custom mapped HBase namespace doesn't exist %s for namespace %s",
+                                            namespace, namespaceMeta.getName()));
+      }
+    } else {
+      tableUtil.createNamespaceIfNotExists(getAdmin(), namespace);
+    }
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Override
   public void delete(NamespaceId namespaceId) throws IOException, ExploreException, SQLException {
     // soft delete namespace directory from filesystem
     super.delete(namespaceId);
     // delete HBase namespace
-    tableUtil.deleteNamespaceIfExists(getAdmin(), namespaceId.toId());
+    NamespaceConfig namespaceConfig = null;
+    try {
+      namespaceQueryAdmin.get(namespaceId.toId()).getConfig();
+    } catch (Exception ex) {
+      throw new IOException("Could not fetch custom HBase mapping.", ex);
+    }
+
+    String namespace = tableUtil.getHBaseNamespace(namespaceId.toId());
+    if (Strings.isNullOrEmpty(namespaceConfig.getHbaseNamespace())) {
+      // delete HBase namespace
+      tableUtil.deleteNamespaceIfExists(getAdmin(), namespace);
+    } else {
+      // custom namespace mapping is set for HBase, hence don't do anything during delete since the lifecycle of the
+      // namespace will be managed by the user
+      LOG.warn("Custom HBase mapping {} was found while deleting namespace {}. Hence skipping deletion of " +
+                 "HBase namespace", namespaceConfig.getHbaseNamespace(), namespaceId.getNamespace());
+    }
   }
 
   private HBaseAdmin getAdmin() throws IOException {
