@@ -14,7 +14,7 @@
  * the License.
  */
 
-function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies) {
+function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies, $http) {
   'ngInject';
 
   let vm = this;
@@ -42,6 +42,11 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
     vm.showSidebar = false;
   });
 
+
+  $http.get('/environment')
+    .then((res) => {
+      vm.environment = res.data.mode;
+    });
 
   // NAMESPACE
   vm.namespaces = [];

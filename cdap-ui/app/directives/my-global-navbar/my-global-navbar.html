@@ -109,6 +109,12 @@
       </li>
     </ul>
 
+    <div class="environment">
+      <span>{{ ::Navbar.environment }}</span>
+      <span class="icon-lock_close" ng-if="Navbar.securityEnabled"></span>
+      <span class="icon-lock_open" ng-if="!Navbar.securityEnabled"></span>
+    </div>
+
 
     <!-- RIGHT MENUS -->
     <div class="pull-right right-menu">

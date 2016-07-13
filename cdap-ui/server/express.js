@@ -348,6 +348,22 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
+  app.get('/environment', [
+    function (req, res) {
+      var mode = 'Standalone';
+
+      if (process.env.NODE_ENV && process.env.NODE_ENV === 'production') {
+        mode = 'Distributed';
+      }
+
+      var obj = {
+        mode: mode
+      };
+
+      res.send(obj);
+    }
+  ]);
+
   // any other path, serve index.html
   app.all('*', [
     function (req, res) {
