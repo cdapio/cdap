@@ -116,6 +116,7 @@ startServiceViaRest() {
     echo ${__startResult}
 }
 
+# Given a service and component, wait for "started_count" to equal 0
 waitForComponentStop() {
     local __svc=${1}
     local __component=${2}
@@ -132,7 +133,6 @@ waitForComponentStop() {
     echo "ERROR: giving up waiting for ${__svc}, component ${__component} to have started_count: 0"
     return 1
 }
-
 
 # Restart Ambari cluster services
 restartCdapDependentClusterServices() {
