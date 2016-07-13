@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
