@@ -13,9 +13,9 @@ Creating Custom Plugins
 Overview
 ========
 This section is intended for developers writing custom plugins. Users of these should
-refer to the :ref:`Included Applications <cdap-apps-index>`.
+refer to the documentation on :ref:`using plugins <cask-hydrator-introduction-what-is-a-plugin>`.
 
-CDAP provides for the creation of custom ETL plugins to extend the existing ``cdap-etl-batch``,
+CDAP provides for the creation of custom plugins to extend the existing ``cdap-etl-batch``,
 ``cdap-etl-realtime``, and ``cdap-data-pipeline`` system artifacts.
 
 
@@ -623,8 +623,9 @@ copies in each transform is emitted. The user metrics can be queried by using th
 
 Script Transformations
 ----------------------
-In the script transformations (*JavaScriptTransform*, *PythonEvaluator*, *ScriptFilterTransform*, and the *ValidatorTransform*), a
-``ScriptContext`` object is passed to the ``transform()`` method::
+In the script transformations (*JavaScriptTransform*, *PythonEvaluator*,
+*ScriptFilterTransform*, and the *ValidatorTransform*), a ``ScriptContext`` object is
+passed to the ``transform()`` method::
 
   function transform(input, context);
 
@@ -665,14 +666,16 @@ These methods allow access within the script to CDAP loggers, metrics, lookup ta
 
 ``StageMetrics`` has these methods:
 
-- ``count(String metricName, int delta)``: Increases the value of the specific metric by delta. Metrics name will be prefixed by the
-  stage ID, hence it will be aggregated for the current stage.
-- ``gauge(String metricName, long value)``: Sets the specific metric to the provided value. Metrics name will be prefixed by the
-  stage ID, hence it will be aggregated for the current stage.
-- ``pipelineCount(String metricName, int delta)``: Increases the value of the specific metric by delta. Metrics emitted will be aggregated
-  for the entire pipeline.
-- ``pipelineGauge(String metricName, long value)``: Sets the specific metric to the provided value. Metrics emitted will be aggregated
-  for the entire pipeline.
+- ``count(String metricName, int delta)``: Increases the value of the specific metric by
+  delta. Metrics name will be prefixed by the stage ID, hence it will be aggregated for
+  the current stage.
+- ``gauge(String metricName, long value)``: Sets the specific metric to the provided
+  value. Metrics name will be prefixed by the stage ID, hence it will be aggregated for
+  the current stage.
+- ``pipelineCount(String metricName, int delta)``: Increases the value of the specific
+  metric by delta. Metrics emitted will be aggregated for the entire pipeline.
+- ``pipelineGauge(String metricName, long value)``: Sets the specific metric to the
+  provided value. Metrics emitted will be aggregated for the entire pipeline.
 
 **ScriptLookup**
 
@@ -696,13 +699,19 @@ Creating a Batch Aggregator
 ===========================
 In order to implement a Batch Aggregator (to be used in the Data Pipeline artifact), you extend the
 ``BatchAggregator`` class. Unlike a ``Transform``, which operates on a single record at a time, a
-``BatchAggregator`` operates on a collection of records. An aggregation takes place in two steps:
-*groupBy* and then *aggregate*. In the *groupBy* step, the aggregator creates zero or more group keys for each
-input record. Before the *aggregate step occurs, Hydrator will take all records that have the same
-group key, and collect them into a group. If a record does not have any of the group keys, it is filtered out.
-If a record has multiple group keys, it will belong to multiple groups. The *aggregate* step is then
-called. In this step, the plugin receives group keys and all records that had that group key.
-It is then left to the plugin to decide what to do with each of the groups.
+``BatchAggregator`` operates on a collection of records. 
+
+An aggregation takes place in two steps: *groupBy* and then *aggregate*.
+
+- In the *groupBy* step, the aggregator creates zero or more group keys for each input
+  record. Before the *aggregate* step occurs, Hydrator will take all records that have the
+  same group key, and collect them into a group. If a record does not have any of the
+  group keys, it is filtered out. If a record has multiple group keys, it will belong to
+  multiple groups.
+
+- The *aggregate* step is then called. In this step, the plugin receives group keys and
+  all records that had that group key. It is then left to the plugin to decide what to do
+  with each of the groups.
 
 .. highlight:: java
 
@@ -713,9 +722,10 @@ It is then left to the plugin to decide what to do with each of the groups.
 - ``initialize()``: Initialize the Batch Aggregator. Guaranteed to be executed before any call
   to the plugin’s ``groupBy`` or ``aggregate`` methods. This is called by each executor of the job.
   For example, if the MapReduce engine is being used, each mapper will call this method.
-- ``destroy()``: Destroy any resources created by ``initialize``. Guaranteed to be executed after all calls
-  to the plugin’s ``groupBy`` or ``aggregate`` methods have been made. This is called by each executor of the job.
-  For example, if the MapReduce engine is being used, each mapper will call this method.
+- ``destroy()``: Destroy any resources created by ``initialize``. Guaranteed to be
+  executed after all calls to the plugin’s ``groupBy`` or ``aggregate`` methods have been
+  made. This is called by each executor of the job. For example, if the MapReduce engine
+  is being used, each mapper will call this method.
 - ``groupBy()``: This method will be called for every object that is received from the
   previous stage. This method returns zero or more group keys for each object it recieves.
   Objects with the same group key will be grouped together for the ``aggregate`` method.
@@ -884,11 +894,14 @@ Example::
 
 Creating a Spark Sink
 =====================
-In order to implement a SparkSink Plugin (to be used in the Data Pipeline artifact), you extend the
-``SparkSink`` class. A ``SparkSink`` is like a ``SparkCompute`` plugin except that it has no
-output. This means other plugins cannot be connected to it. In this way, it is similar to a
-``BatchSink``. In a ``SparkSink``, you are given access to anything you would be able to do in a Spark program. 
-For example, one common use case is to train a machine-learning model in this plugin.
+In order to implement a SparkSink Plugin (to be used in the Data Pipeline artifact), you
+extend the ``SparkSink`` class. A ``SparkSink`` is like a ``SparkCompute`` plugin except
+that it has no output. This means other plugins cannot be connected to it. In this way, it
+is similar to a ``BatchSink``. 
+
+In a ``SparkSink``, you are given access to anything you would be able to do in a Spark
+program. For example, one common use case is to train a machine-learning model in this
+plugin.
 
 .. highlight:: java
 

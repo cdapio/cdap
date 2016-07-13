@@ -18,14 +18,14 @@ Advanced Topics
     Preconfigured Pipelines <preconfigured-pipelines>
     Version Management <version-management>
     Importing Pipelines <importing-pipelines>
-    Plugin Drafts <plugin-drafts>
-    Test Framework <test-framework>
+    Pipeline Drafts <pipeline-drafts>
+    Test Framework for Plugins <test-framework>
 
 
 .. |how-hydrator-works| replace:: **How Hydrator Works:**
 .. _how-hydrator-works: how-hydrator-works.html
 
-- |how-hydrator-works|_ A "behind-the-scenes" of the internals of Hydrator
+- |how-hydrator-works|_ A **"behind-the-scenes"** of the internals of Hydrator
 
 
 .. |creating-plugin-templates| replace:: **Creating Plugin Templates:**
@@ -52,13 +52,13 @@ Advanced Topics
 - |importing-pipelines|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
 
 
-.. |plugin-drafts| replace:: **Plugin Drafts:**
-.. _plugin-drafts: plugin-drafts.html
+.. |pipeline-drafts| replace:: **Pipeline Drafts:**
+.. _pipeline-drafts: pipeline-drafts.html
 
-- |plugin-drafts|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
+- |pipeline-drafts|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
 
 
-.. |test-framework| replace:: **Test Framework:**
+.. |test-framework| replace:: **Test Framework for Plugins:**
 .. _test-framework: test-framework.html
 
 - |test-framework|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*

@@ -27,8 +27,8 @@ Runtime Arguments and Macro Substitution
 *[New in 3.5]*
 
 
-Configuring Pre- and Post-Actions 
-=================================
+Configuring Post-Actions 
+=========================
 *[To Be Completed]*
 
 

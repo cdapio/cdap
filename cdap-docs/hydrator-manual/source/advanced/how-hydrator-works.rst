@@ -31,12 +31,12 @@ Logical versus Physical Pipelines
 =================================
 
 .. figure:: /_images/logical-physical-pipelines.png
-   :figwidth: 50%
-   :width: 3in
-   :align: right
-   :class: bordered-image-top-margin
+ :figwidth: 50%
+ :width: 3in
+ :align: right
+ :class: bordered-image-top-margin
 
-   **Logical** and **Physical** Pipelines, converted by a **Planner**
+ **Logical** and **Physical** Pipelines, converted by a **Planner**
 
 Within CDAP, there is the concept of *logical* and *physical* pipelines, converted by a
 planner, and then run in an execution environment.
@@ -163,18 +163,19 @@ Cask Hydrator is built as a CDAP extension, with three major components:
 
 The **Hydrator Studio** interfaces with CDAP using RESTful APIs.
 
-The **application templates** ETL Batch, Data Pipeline Batch, and ETL Real-time are available
+The **application templates** |---| ETL Batch, Data Pipeline Batch, and ETL Real-time |---| are available
 by default from within Hydrator. Additional application templates, such as Data Pipeline
 Real-time and Spark Streaming, are being added in upcoming releases.
 
-The ETL Batch and ETL Realtime application templates expose three plugin types: source,
+The ETL Batch and ETL Real-time application templates expose three plugin types: source,
 transform, and sink. The Data Pipeline Batch application template exposes three additional
-plugin types: aggregate, compute, and model.
+plugin types: aggregate, compute, and model. Additional plugin types can be created and
+will be added in upcoming releases.
 
 There are many **different plugins** that implement each of these types available
 "out-of-the-box" in CDAP and Cask Hydrator. New plugins can be implemented using the
 public APIs exposed by the application templates. When an application template or a plugin
-is deployed within CDAP, it is referred to as an artifact. CDAP provides capabilities to
+is deployed within CDAP, it is referred to as an **artifact**. CDAP provides capabilities to
 manage the different versions of both the application templates and the plugins.
 
 .. figure:: /_images/hydrator-internals.png
@@ -189,7 +190,15 @@ manage the different versions of both the application templates and the plugins.
 Building of a Pipeline
 ----------------------
 Here is how the Hydrator Studio works with CDAP to build a pipeline, beginning with a user
-creating a new pipeline in Hydrator Studio:
+creating a new pipeline in Hydrator Studio. First, the components of Hydrator Studio:
+
+.. figure:: /_images/hydrator-studio-annotated.png
+   :figwidth: 100%
+   :width: 6in
+   :align: center
+   :class: bordered-image-top-margin
+
+   **Hydrator Studio, showing different UI components**
 
 - **User Selects an Application Template**
 

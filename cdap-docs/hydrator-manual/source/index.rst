@@ -40,7 +40,7 @@ to enable the building, deploying, and managing of data pipelines.
 .. |introduction| replace:: **Introduction to Hydrator:**
 .. _introduction: introduction.html
 
-- |introduction|_ What are pipelines, plugins and Cask Hydrator Studio
+- |introduction|_ **Pipelines**, **plugins**, and **Cask Hydrator Studio**
 
 .. |pipelines| replace:: **Creating and Running Pipelines:**
 .. _pipelines: pipelines.html
@@ -50,7 +50,8 @@ to enable the building, deploying, and managing of data pipelines.
 .. |plugins| replace:: **Hydrator Plugins:**
 .. _plugins: plugins/index.html
 
-- |plugins|_ Reference to using plugins included in CDAP, and creating and installing custom plugins
+- |plugins|_ Reference to using the **plugins included in CDAP**, and creating and
+  installing **custom plugins**
 
 .. |operating| replace:: **Operating Hydrator:**
 .. _operating: operating.html
@@ -60,12 +61,15 @@ to enable the building, deploying, and managing of data pipelines.
 .. |advanced| replace:: **Advanced Topics:**
 .. _advanced: advanced/index.html
 
-- |advanced|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
+- |advanced|_ How Hydrator **works "behind-the-scenes"**, creating **plugin templates** in
+  Hydrator Studio, available **preconfigured pipelines**, **version management** for
+  plugins, **importing** pipelines, pipeline **drafts**, and a **test framework** for
+  custom plugins
 
 .. |faqs| replace:: **FAQs:**
 .. _faqs: faqs.html
 
-- |faqs|_ FAQs relevant to Cask Hydrator and pipelines
+- |faqs|_ Frequently-asked-questions relevant to Cask Hydrator and pipelines
 
 .. |glossary| replace:: **Glossary:**
 .. _glossary: glossary.html

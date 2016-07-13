@@ -5,7 +5,7 @@
 .. _cask-hydrator-plugins-post-actions:
 
 ===================
-Post-Action Plugins
+Post-action Plugins
 ===================
 
 Hydrator Version |cdap-hydrator-version|

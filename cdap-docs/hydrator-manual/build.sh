@@ -26,8 +26,8 @@ EXTRACT_TABLE_TOOL="../tools/docs-extract-table.py"
 DOUBLE_RETURN_STRING="\
 
 "
-
-VERSION_STRING="Hydrator Version "
+ACTION_POST_ACTION="action-post-action"
+VERSION_STRING="Hydrator Version"
 
 function get_hydrator_version() {
   local base_target="${1}"
@@ -68,11 +68,11 @@ function download_md_file() {
       plugin_category="realtime"
       plugin_type="${type:8}"
     elif [[ "x${type}" == "xpostaction" ]]; then
-      plugin_category='pre-post'
+      plugin_category="${ACTION_POST_ACTION}"
       plugin_type="post-action"
-    elif [[ "x${type}" == "xpreaction" ]]; then
-      plugin_category='pre-post'
-      plugin_type="pre-action"
+    elif [[ "x${type}" == "xaction" ]]; then
+      plugin_category="${ACTION_POST_ACTION}"
+      plugin_type="action"
     else
       # assume of type transform; to be copied to both batch and realtime
       plugin_category=''
@@ -119,7 +119,7 @@ function download_md_file() {
         echo "  Appending ${append_file} to ${target_file_name}"
         cat ${BASE_TARGET}/${append_file} >> ${target}
       fi
-      echo "${DOUBLE_RETURN_STRING}${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
+      echo "${DOUBLE_RETURN_STRING}${VERSION_STRING} ${HYDRATOR_VERSION}" >> ${target}
       if [[ "x${target_dir_extra}" != "x" ]]; then
         cp ${target} ${target_extra}
         echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
@@ -175,6 +175,7 @@ function download_includes() {
   # Uses: $BASE_TARGET  $HYDRATOR_SOURCE
   # Parameter      1                 2                         3
   # Definition     source_dir        source_file_name          append_file (optional)
+  
   download_md_file cassandra-plugins Cassandra-batchsink.md 
   download_md_file cassandra-plugins Cassandra-batchsource.md 
   download_md_file cassandra-plugins Cassandra-realtimesink.md 

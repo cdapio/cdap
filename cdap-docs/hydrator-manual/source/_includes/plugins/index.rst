@@ -16,7 +16,7 @@ Hydrator Plugins
     Batch Plugins <batch/index>
     Real-time Plugins <realtime/index>
     Shared Plugins <shared-plugins/index>
-    Pre- and Post-Action Plugins <pre-post/index>
+    Action and Post-action Plugins <action-post-action/index>
     Adding Third-Party Plugins <third-party>
     Creating Custom Plugins <creating>
     Installing Plugins <installing>
@@ -45,10 +45,10 @@ for creating ETL, data pipelines, and other applications.
 
   - :doc:`CoreValidator Plugin <shared-plugins/core>`
 
-- :doc:`Pre- and Post-Action Plugins <pre-post/index>`
+- :doc:`Action and Post-action Plugins <action-post-action/index>`
 
-  - :doc:`Pre-Action Plugins <pre-post/pre-actions/index>`
-  - :doc:`Post-Action Plugins <pre-post/post-actions/index>`
+  - :doc:`Action Plugins <action-post-action/actions/index>`
+  - :doc:`Post-action Plugins <action-post-action/post-actions/index>`
 
 
 .. rubric:: Exploring Plugin Details

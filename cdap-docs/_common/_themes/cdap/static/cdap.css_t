@@ -91,6 +91,10 @@ div.related a {
     font-weight: bold;
 }
 
+div.section {
+	clear: both;
+}
+
 div.sphinxsidebar {
     font-size: 0.75em;
     line-height: 1.5em;
