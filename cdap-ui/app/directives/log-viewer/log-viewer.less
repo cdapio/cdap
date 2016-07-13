@@ -186,8 +186,6 @@ my-log-viewer {
     table.scroll tbody,
     table.scroll thead {
       color: #000000;
-      display: block;
-      right: -10px;
     }
 
     table.scroll th {
@@ -198,16 +196,11 @@ my-log-viewer {
       border-bottom: 1px solid #cccccc;
     }
 
-    table.scroll tbody {
+    .logs-table {
       height: ~"-moz-calc(100vh - 510px)";
       height: ~"-webkit-calc(100vh - 510px)";
       height: ~"calc(100vh - 510px)";
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-
-    .logs-table {
-
+      overflow: auto;
       th {
         line-height: 25px;
         border-color: @border-color;
@@ -243,6 +236,7 @@ my-log-viewer {
       .table {
         &.table-bordered {
           border-color: #cccccc;
+          margin-bottom: 0;
         }
         margin-top: 0;
         background-color: @table-background-color;
@@ -261,8 +255,6 @@ my-log-viewer {
           }
         }
         td {
-          padding: 0 7px 0 10px;
-          height: 18px;
           line-height: 18px;
         }
         .table-text-content {
@@ -336,8 +328,6 @@ my-log-viewer {
           cursor: pointer;
           height: 25px;
           overflow: hidden;
-          position: relative;
-          line-height: 25px;
         }
 
         .fa {
@@ -367,15 +357,7 @@ my-log-viewer {
         }
 
         .message-column {
-          width: 100%;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
           padding-left: 5px;
-          padding-right: 30px;
-          position: absolute;
-          top: 0;
-          left: 20px;
         }
 
         .stack-trace {

@@ -35,6 +35,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
     message: false
   };
 
+  //viewLimit and cacheDecrement should match
+  this.viewLimit = 50;
+  this.cacheDecrement = 50;
+  this.cacheSize = 0;
+  let currentOffset;
+
   //Collapsing LogViewer Table Columns
   var theColumns = [];
   var cols = this.configOptions;
@@ -77,22 +83,72 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
     'runId' : this.runId
   }).$promise.then(
     (res) => {
+
+      console.log('First API call');
+
       angular.forEach(res, (element, index) => {
         if(res[index].log.logLevel === 'WARN'){
           this.warningCount++;
         } else if(res[index].log.logLevel === 'ERROR'){
           this.errorCount++;
         }
+
         let formattedDate = new Date(res[index].log.timestamp);
         res[index].log.timestamp = formattedDate;
         res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
       });
+
       this.data = res;
+      console.log('Testing res: ', res);
+      currentOffset = res[res.length-1].offset;
+      this.cacheSize = res.length - this.cacheDecrement;
+      console.log('Cache Size: ', this.cacheSize);
+      console.log('Data returned by API is: ', res);
+      console.log('The offset of the data returned is: ', res[res.length-1].offset);
       this.totalCount = res.length;
     },
     (err) => {
       console.log('ERROR: ', err);
     });
+
+
+  const requestWithOffset = () => {
+    myLogsApi.nextLogsJson({
+      'namespace' : this.namespaceId,
+      'appId' : this.appId,
+      'programType' : this.programType,
+      'programId' : this.programId,
+      'runId' : this.runId
+    }).$promise.then(
+      (res) => {
+
+        //If there is no data
+        if(res.length === 0){
+          return;
+        }
+
+        angular.forEach(res, (element, index) => {
+          if(res[index].log.logLevel === 'WARN'){
+            this.warningCount++;
+          } else if(res[index].log.logLevel === 'ERROR'){
+            this.errorCount++;
+          }
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+        });
+
+        //Append newly fetched data to the current dataset
+        this.data = this.data.concat(res);
+        this.cacheSize = res.length - this.cacheDecrement;
+        currentOffset = res[length-1].offset;
+        console.log('Data returned by request with offset is: ', res);
+        console.log('The offset of the data returned is: ', res[res.length-1].offset);
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+      });
+  }
 
   //Subscribe logStartTime to start time
   LogViewerStore.subscribe(() => {
@@ -140,6 +196,15 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
     }
     return;
   };
+
+  this.scrollFn = _.debounce(function(){
+    this.cacheSize -= this.cacheDecrement;
+    if(this.cacheSize <= 0){
+      //make request THEN increase view limit
+      requestWithOffset();
+    }
+    this.viewLimit += this.cacheDecrement;
+  }, 1000);
 
   this.filterByStartDate = (entry) => {
     if(this.logStartTime > entry.log.timestamp) {
