@@ -51,6 +51,7 @@
 
   <!-- LOGS TIMELINE -->
   <my-timeline
+    ng-if="!LogViewer.loading"
     namespace-id="{{LogViewer.namespaceId}}"
     app-id="{{LogViewer.appId}}"
     program-type="{{LogViewer.programType}}"
@@ -59,12 +60,14 @@
   </my-timeline>
 
   <!-- NO DATA MESSAGE -->
-  <div ng-if="LogViewer.data.length === 0" class="jumbotron">
-    Oops! Looks like there are no logs to be found!
+  <div ng-if="LogViewer.data.length === 0" class="well well-lg">
+    There are no logs to be found.
   </div>
-
+  <div ng-if="LogViewer.loading" class="jumbotron well well-lg">
+    Loading Logs...
+  </div>
   <!-- LOGS TABLE -->
-  <div ng-if="LogViewer.data.length > 0" class="logs-table">
+  <div ng-if="LogViewer.data.length > 0 && !LogViewer.loading" class="logs-table">
     <table class="table table-bordered scroll scroll-table">
       <thead>
         <th class="time time-header log-header"
