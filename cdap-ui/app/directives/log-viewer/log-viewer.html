@@ -94,8 +94,11 @@
                ng-click="LogViewer.toggleLogExpansion()">Expand All</div>
         </th>
       </thead>
-      <tbody>
-        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:LogViewer.eventFilter | filter:searchText">
+      <tbody infinite-scroll="LogViewer.scrollFn()"
+             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.data.length"
+             infinite-scroll-container="'.logs-table'"
+             >
+        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:LogViewer.eventFilter | filter:searchText | limitTo: LogViewer.viewLimit track by $index">
           <!-- TIME -->
           <td class="time"
               ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
