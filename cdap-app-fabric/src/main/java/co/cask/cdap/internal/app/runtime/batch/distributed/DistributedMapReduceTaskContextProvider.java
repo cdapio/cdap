@@ -17,36 +17,15 @@
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.TransactionExecutorModule;
-import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
-import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.tephra.distributed.ThriftClientProvider;
-import co.cask.tephra.metrics.TxMetricsCollector;
-import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -126,31 +105,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   }
 
   private static Injector createInjector(CConfiguration cConf, Configuration hConf) {
-    return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new LocationRuntimeModule().getDistributedModules(),
-      new IOModule(),
-      new ZKClientModule(),
-      new KafkaClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new ExploreClientModule(),
-      new DataSetsModules().getDistributedModules(),
-      new TransactionModules().getDistributedModules(),
-      new TransactionExecutorModule(),
-      new AuditModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // Data-fabric bindings
-          bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
-          // For log publishing
-          bind(LogAppender.class).to(KafkaLogAppender.class);
-          // For transaction modules
-          bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
-          bind(ThriftClientProvider.class).toProvider(DataFabricDistributedModule.ThriftClientProviderSupplier.class);
-        }
-      }
-    );
+    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule());
   }
 }

@@ -38,7 +38,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -92,7 +92,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final NotificationFeedManager notificationFeedManager;
   private final String streamBaseDirPath;
-  private final UsageRegistry usageRegistry;
+  private final RuntimeUsageRegistry runtimeUsageRegistry;
   private final LineageWriter lineageWriter;
   private final StreamMetaStore streamMetaStore;
   private final ExploreTableNaming tableNaming;
@@ -108,7 +108,7 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamCoordinatorClient streamCoordinatorClient,
                          StreamConsumerStateStoreFactory stateStoreFactory,
                          NotificationFeedManager notificationFeedManager,
-                         UsageRegistry usageRegistry,
+                         RuntimeUsageRegistry runtimeUsageRegistry,
                          LineageWriter lineageWriter,
                          StreamMetaStore streamMetaStore,
                          ExploreTableNaming tableNaming,
@@ -120,7 +120,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
-    this.usageRegistry = usageRegistry;
+    this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.lineageWriter = lineageWriter;
     this.streamMetaStore = streamMetaStore;
     this.tableNaming = tableNaming;
@@ -453,7 +453,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
-    usageRegistry.registerAll(owners, streamId);
+    runtimeUsageRegistry.registerAll(owners, streamId);
   }
 
   @Override

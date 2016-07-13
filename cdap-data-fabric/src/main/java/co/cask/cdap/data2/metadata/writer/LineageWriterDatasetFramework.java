@@ -26,7 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -44,7 +44,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
 
   private static final Logger LOG = LoggerFactory.getLogger(LineageWriterDatasetFramework.class);
 
-  private final UsageRegistry usageRegistry;
+  private final RuntimeUsageRegistry runtimeUsageRegistry;
   private final LineageWriter lineageWriter;
   private final ProgramContext programContext = new ProgramContext();
 
@@ -54,10 +54,10 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   public LineageWriterDatasetFramework(@Named(DataSetsModules.BASIC_DATASET_FRAMEWORK)
                                          DatasetFramework datasetFramework,
                                        LineageWriter lineageWriter,
-                                       UsageRegistry usageRegistry) {
+                                       RuntimeUsageRegistry runtimeUsageRegistry) {
     super(datasetFramework);
     this.lineageWriter = lineageWriter;
-    this.usageRegistry = usageRegistry;
+    this.runtimeUsageRegistry = runtimeUsageRegistry;
   }
 
   @SuppressWarnings("unused")
@@ -157,7 +157,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
       return;
     }
     try {
-      usageRegistry.registerAll(owners, datasetInstanceId);
+      runtimeUsageRegistry.registerAll(owners, datasetInstanceId);
     } catch (Exception e) {
       LOG.warn("Failed to register usage of {} -> {}", owners, datasetInstanceId, e);
     }
