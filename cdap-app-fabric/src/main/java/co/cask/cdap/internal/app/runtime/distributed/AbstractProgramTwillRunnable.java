@@ -13,13 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.guice.AuthorizationModule;
-import co.cask.cdap.app.guice.DataFabricFacadeModule;
+import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
@@ -28,45 +27,20 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.app.stream.DefaultStreamWriter;
-import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.data.view.ViewAdminModules;
-import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
-import co.cask.cdap.security.authorization.DefaultAuthorizationEnforcementService;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -80,15 +54,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -97,11 +65,9 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
-import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -115,7 +81,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.InetAddress;
 import java.security.Permission;
 import java.util.Arrays;
 import java.util.Map;
@@ -183,7 +148,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     runlatch = new CountDownLatch(1);
     name = context.getSpecification().getName();
-    LOG.info("Initialize runnable: " + name);
+    LOG.info("Initializing runnable: " + name);
     try {
       CommandLine cmdLine = parseArgs(context.getApplicationArguments());
 
@@ -415,76 +380,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
                                     original.getUserArguments(), original.isDebug());
   }
 
-  // TODO(terence) make this works for different mode
-  protected Module createModule(final TwillContext context) {
-    return Modules.combine(
-      new ConfigModule(cConf, hConf),
-      new IOModule(),
-      new ZKClientModule(),
-      new KafkaClientModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new LocationRuntimeModule().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
-      new ExploreClientModule(),
-      new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedClientModule(),
-      new AuditModule().getDistributedModules(),
-      new AuthorizationModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
-            .toInstance(context.getHost());
-
-          // For Binding queue stuff
-          bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
-
-          // For binding DataSet transaction stuff
-          install(new DataFabricFacadeModule());
-
-          bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
-            @Override
-            public Cancellable announce(String serviceName, int port) {
-              return context.announce(serviceName, port);
-            }
-          });
-
-          bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
-          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
-
-          // For binding StreamWriter
-          install(createStreamFactoryModule());
-
-          // also bind AuthorizationEnforcementService as a singleton. This binding is used while starting/stopping
-          // the service itself.
-          bind(AuthorizationEnforcementService.class).to(DefaultAuthorizationEnforcementService.class)
-            .in(Scopes.SINGLETON);
-          // bind AuthorizationEnforcer to AuthorizationEnforcementService
-          bind(AuthorizationEnforcer.class).to(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
-        }
-      }
-    );
-  }
-
-  private Module createStreamFactoryModule() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
-                  .build(StreamWriterFactory.class));
-        expose(StreamWriterFactory.class);
-      }
-    };
-  }
-
   private ApplicationSpecification readAppSpec(File appSpecFile) throws IOException {
     try (Reader reader = Files.newReader(appSpecFile, Charsets.UTF_8)) {
       return GSON.fromJson(reader, ApplicationSpecification.class);
     }
+  }
+
+  protected Module createModule(TwillContext context) {
+    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context);
   }
 
   /**

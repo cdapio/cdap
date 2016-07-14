@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.handlers.meta;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.app.store.remote.MethodArgument;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.proto.BasicThrowable;
@@ -26,34 +25,22 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.lang.reflect.Type;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
  * The {@link HttpHandler} for handling REST calls from a {@link RemoteRuntimeStore}.
  */
-// we don't share the same version as other handlers, so we can upgrade/iterate faster
-@Path("/v1/execute")
-public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
-
-  private static final Gson GSON = new Gson();
-  private static final Type METHOD_ARGUMENT_LIST_TYPE = new TypeToken<List<MethodArgument>>() { }.getType();
+@Path(AbstractRemoteSystemOpsHandler.VERSION + "/execute")
+public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
 
   private final Store store;
 
@@ -131,7 +118,6 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-
   @POST
   @Path("/updateWorkflowToken")
   public void updateWorkflowToken(HttpRequest request, HttpResponder responder) throws Exception {
@@ -154,28 +140,5 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
     store.addWorkflowNodeState(workflowRunId, nodeStateDetail);
 
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  private Iterator<MethodArgument> parseArguments(HttpRequest request) {
-    String body = request.getContent().toString(Charsets.UTF_8);
-    List<MethodArgument> arguments = GSON.fromJson(body, METHOD_ARGUMENT_LIST_TYPE);
-    return arguments.iterator();
-  }
-
-  @Nullable
-  private <T> T deserializeNext(Iterator<MethodArgument> arguments) throws ClassNotFoundException, BadRequestException {
-    if (!arguments.hasNext()) {
-      throw new BadRequestException("Expected additional elements.");
-    }
-
-    MethodArgument argument = arguments.next();
-    if (argument == null) {
-      return null;
-    }
-    JsonElement value = argument.getValue();
-    if (value == null) {
-      return null;
-    }
-    return GSON.<T>fromJson(value, Class.forName(argument.getType()));
   }
 }

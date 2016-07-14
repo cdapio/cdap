@@ -20,6 +20,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.codec.BasicThrowableCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -28,6 +34,8 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -36,20 +44,28 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Common HTTP client functionality for remote store implementations.
+ * Common HTTP client functionality for remote operations from programs.
  */
-public class RemoteStoreClient {
+class RemoteOpsClient {
+
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
+    .create();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final HttpRequestConfig httpRequestConfig;
 
   @Inject
-  public RemoteStoreClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
+  RemoteOpsClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -73,12 +89,30 @@ public class RemoteStoreClient {
                          addr.getHostName(), addr.getPort(), "/v1", resource);
   }
 
+
+  void executeRequest(String methodName, Object... arguments) {
+    doPost("execute/" + methodName, GSON.toJson(createArguments(arguments)));
+  }
+
+  private static List<MethodArgument> createArguments(Object... arguments) {
+    List<MethodArgument> methodArguments = new ArrayList<>();
+    for (Object arg : arguments) {
+      if (arg == null) {
+        methodArguments.add(null);
+      } else {
+        String type = arg.getClass().getName();
+        methodArguments.add(new MethodArgument(type, GSON.toJsonTree(arg)));
+      }
+    }
+    return methodArguments;
+  }
+
   protected HttpResponse doPost(String resource, String body) {
     return doRequest(resource, HttpMethod.POST, null, body);
   }
 
-  protected HttpResponse doRequest(String resource, HttpMethod requestMethod,
-                                   @Nullable Map<String, String> headers, @Nullable String body) {
+  private HttpResponse doRequest(String resource, HttpMethod requestMethod,
+                                 @Nullable Map<String, String> headers, @Nullable String body) {
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
@@ -101,8 +135,8 @@ public class RemoteStoreClient {
   }
 
   // creates error message, encoding details about the request
-  private String createErrorMessage(String resolvedUrl, HttpMethod requestMethod,
-                                    @Nullable Map<String, String> headers, @Nullable String body) {
+  private static String createErrorMessage(String resolvedUrl, HttpMethod requestMethod,
+                                           @Nullable Map<String, String> headers, @Nullable String body) {
     return String.format("Error making request to AppFabric Service at %s while doing %s with headers %s and body %s.",
                          resolvedUrl, requestMethod,
                          headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),

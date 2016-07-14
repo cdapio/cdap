@@ -25,7 +25,6 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -36,7 +35,6 @@ import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -92,7 +90,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final RuntimeStore runtimeStore;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final UsageRegistry usageRegistry;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -101,8 +98,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore,
-                                UsageRegistry usageRegistry) {
+                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -114,7 +110,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.runtimeStore = runtimeStore;
-    this.usageRegistry = usageRegistry;
   }
 
   @Inject (optional = true)
@@ -186,7 +181,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       final Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                           context, program.getJarLocation(),
                                                                           locationFactory, streamAdmin,
-                                                                          txSystemClient, usageRegistry);
+                                                                          txSystemClient);
       mapReduceRuntimeService.addListener(
         createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);

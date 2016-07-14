@@ -55,7 +55,9 @@ import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
+import co.cask.cdap.gateway.handlers.meta.RemoteLineageWriterHandler;
 import co.cask.cdap.gateway.handlers.meta.RemoteRuntimeStoreHandler;
+import co.cask.cdap.gateway.handlers.meta.RemoteUsageRegistryHandler;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -315,6 +317,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(RemoteRuntimeStoreHandler.class);
+      handlerBinder.addBinding().to(RemoteLineageWriterHandler.class);
+      handlerBinder.addBinding().to(RemoteUsageRegistryHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

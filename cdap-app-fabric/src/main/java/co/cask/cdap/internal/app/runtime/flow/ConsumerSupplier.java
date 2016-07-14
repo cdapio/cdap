@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,12 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.proto.Id;
@@ -45,31 +46,31 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   private final DataFabricFacade dataFabricFacade;
   private final QueueName queueName;
   private final int numGroups;
-  private final UsageRegistry usageRegistry;
-  private final Id.Namespace namespace;
+  private final RuntimeUsageRegistry runtimeUsageRegistry;
   private final List<Id> owners;
   private ConsumerConfig consumerConfig;
   private Closeable consumer;
 
-  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+  static <T> ConsumerSupplier<T> create(List<Id> owners,
+                                        RuntimeUsageRegistry runtimeUsageRegistry,
                                         DataFabricFacade dataFabricFacade,
                                         QueueName queueName, ConsumerConfig consumerConfig) {
-    return create(namespace, owners, usageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
+    return create(owners, runtimeUsageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
   }
 
-  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+  static <T> ConsumerSupplier<T> create(List<Id> owners,
+                                        RuntimeUsageRegistry runtimeUsageRegistry,
                                         DataFabricFacade dataFabricFacade, QueueName queueName,
                                         ConsumerConfig consumerConfig, int numGroups) {
-    return new ConsumerSupplier<>(namespace, owners, usageRegistry, dataFabricFacade,
+    return new ConsumerSupplier<>(owners, runtimeUsageRegistry, dataFabricFacade,
                                    queueName, consumerConfig, numGroups);
   }
 
-  private ConsumerSupplier(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+  private ConsumerSupplier(List<Id> owners, RuntimeUsageRegistry runtimeUsageRegistry,
                            DataFabricFacade dataFabricFacade, QueueName queueName,
                            ConsumerConfig consumerConfig, int numGroups) {
-    this.namespace = namespace;
     this.owners = owners;
-    this.usageRegistry = usageRegistry;
+    this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.dataFabricFacade = dataFabricFacade;
     this.queueName = queueName;
     this.numGroups = numGroups;
@@ -101,7 +102,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
       } else {
         for (Id owner : owners) {
           try {
-            usageRegistry.register(owner, queueName.toStreamId());
+            runtimeUsageRegistry.register(owner, queueName.toStreamId());
           } catch (Exception e) {
             LOG.warn("Failed to register usage of {} -> {}", owner, queueName.toStreamId(), e);
           }

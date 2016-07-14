@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
  * Tests BasicLineageWriter
  */
 public class BasicLineageWriterTest {
+
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
