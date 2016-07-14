@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -185,7 +184,7 @@ public final class FileMetaDataManager {
                                                    "Please check why the table is not TransactionAware", table));
       }
     } catch (Exception e) {
-      throw new RuntimeException(String.format("Error accessing %s table", Constants.Stream.View.STORE_TABLE), e);
+      throw new RuntimeException(String.format("Error accessing %s table", tableUtil.getMetaTableName()), e);
     }
   }
 
@@ -202,7 +201,7 @@ public final class FileMetaDataManager {
                                                    "Please check why the table is not TransactionAware", table));
       }
     } catch (Exception e) {
-      throw new RuntimeException(String.format("Error accessing %s table", Constants.Stream.View.STORE_TABLE), e);
+      throw new RuntimeException(String.format("Error accessing %s table", tableUtil.getMetaTableName()), e);
     }
   }
 

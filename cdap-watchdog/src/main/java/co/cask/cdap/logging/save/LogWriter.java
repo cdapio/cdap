@@ -69,7 +69,7 @@ public class LogWriter implements Runnable {
 
             Map<String, Entry<Long, List<KafkaLogEvent>>> row = messageTable.row(oldestBucketKey);
             for (Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
-                   it.hasNext(); ) {
+                 it.hasNext(); ) {
               Map.Entry<String, Entry<Long, List<KafkaLogEvent>>> mapEntry = it.next();
               if (limitKey < (mapEntry.getValue().getKey() + maxNumberOfBucketsInTable)) {
                 break;
@@ -82,16 +82,16 @@ public class LogWriter implements Runnable {
         }
 
         LOG.trace("Got {} log messages to save", messages);
+      }
 
-        for (Iterator<Map.Entry<String, Collection<KafkaLogEvent>>> it = writeListMap.asMap().entrySet().iterator();
-             it.hasNext(); ) {
-          Map.Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
-          List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
-          Collections.sort(list);
-          logFileWriter.append(list);
-          // Remove successfully written message
-          it.remove();
-        }
+      for (Iterator<Map.Entry<String, Collection<KafkaLogEvent>>> it = writeListMap.asMap().entrySet().iterator();
+           it.hasNext(); ) {
+        Map.Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
+        List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
+        Collections.sort(list);
+        logFileWriter.append(list);
+        // Remove successfully written message
+        it.remove();
       }
     } catch (Throwable e) {
       LOG.error("Caught exception during save, will try again.", e);
