@@ -325,14 +325,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       }
     }
 
-    @Provides
-    @Named(Constants.AppFabric.SERVER_ADDRESS)
-    @SuppressWarnings("unused")
-    public InetAddress providesHostname(CConfiguration cConf) {
-      return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
-                              new InetSocketAddress("localhost", 0).getAddress());
-    }
-
     /**
      * Provides a supplier of quartz scheduler so that initialization of the scheduler can be done after guice
      * injection. It returns a singleton of Scheduler.
