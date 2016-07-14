@@ -22,12 +22,14 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -55,7 +57,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   private static final EnumSet<State> SERVICE_AVAILABLE_STATES =
     EnumSet.of(State.STARTING, State.RUNNING, State.STOPPING);
 
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final PrivilegesFetcher privilegesFetcher;
   private final boolean authorizationEnabled;
   private final boolean cacheEnabled;
   private final int cacheTtlSecs;
@@ -65,9 +67,8 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   private ScheduledExecutorService executor;
 
   @Inject
-  DefaultAuthorizationEnforcementService(final AuthorizerInstantiator authorizerInstantiator,
-                                         CConfiguration cConf) {
-    this.authorizerInstantiator = authorizerInstantiator;
+  DefaultAuthorizationEnforcementService(PrivilegesFetcher privilegesFetcher, CConfiguration cConf) {
+    this.privilegesFetcher = privilegesFetcher;
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.cacheEnabled = cConf.getBoolean(Constants.Security.Authorization.CACHE_ENABLED);
     this.cacheTtlSecs = cConf.getInt(Constants.Security.Authorization.CACHE_TTL_SECS);
@@ -113,11 +114,8 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
     if (!authorizationEnabled) {
       return;
     }
-    if (!cacheEnabled) {
-      authorizerInstantiator.get().enforce(entity, principal, action);
-      return;
-    }
-    Set<Privilege> privileges = authPolicyCache.get(principal);
+    Set<Privilege> privileges = cacheEnabled ? authPolicyCache.get(principal) : getPrivileges(principal);
+    privileges = privileges == null ? ImmutableSet.<Privilege>of() : privileges;
     if (!privileges.contains(new Privilege(entity, action))) {
       throw new UnauthorizedException(principal, action, entity);
     }
@@ -157,7 +155,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
                       AuthorizationEnforcementService.class.getName(), serviceState)
       );
     }
-    return authorizerInstantiator.get().listPrivileges(principal);
+    return privilegesFetcher.listPrivileges(principal);
   }
 
   /**

@@ -37,7 +37,7 @@ public class RemoteLineageWriter extends RemoteOpsClient implements LineageWrite
   private final ConcurrentMap<BasicLineageWriter.DataAccessKey, Boolean> registered = new ConcurrentHashMap<>();
 
   @Inject
-  public RemoteLineageWriter(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
+  RemoteLineageWriter(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
     super(cConf, discoveryClient);
   }
 

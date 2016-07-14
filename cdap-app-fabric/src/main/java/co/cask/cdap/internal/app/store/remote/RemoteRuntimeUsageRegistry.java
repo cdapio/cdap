@@ -35,7 +35,7 @@ public class RemoteRuntimeUsageRegistry extends RemoteOpsClient implements Runti
   private final ConcurrentMap<DatasetUsageKey, Boolean> registered = new ConcurrentHashMap<>();
 
   @Inject
-  public RemoteRuntimeUsageRegistry(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
+  RemoteRuntimeUsageRegistry(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
     super(cConf, discoveryClient);
   }
 

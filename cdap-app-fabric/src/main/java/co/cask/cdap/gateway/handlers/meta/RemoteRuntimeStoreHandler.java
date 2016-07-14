@@ -45,7 +45,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   private final Store store;
 
   @Inject
-  public RemoteRuntimeStoreHandler(Store store) {
+  RemoteRuntimeStoreHandler(Store store) {
     this.store = store;
   }
 

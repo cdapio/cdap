@@ -37,7 +37,7 @@ public class RemoteUsageRegistryHandler extends AbstractRemoteSystemOpsHandler {
   private final UsageRegistry usageRegistry;
 
   @Inject
-  public RemoteUsageRegistryHandler(UsageRegistry usageRegistry) {
+  RemoteUsageRegistryHandler(UsageRegistry usageRegistry) {
     this.usageRegistry = usageRegistry;
   }
 

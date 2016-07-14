@@ -38,6 +38,7 @@ import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
+import co.cask.cdap.internal.app.store.remote.RemotePrivilegesFetcher;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -46,6 +47,7 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.DefaultAuthorizationEnforcementService;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -113,6 +115,7 @@ public class DistributedProgramRunnableModule {
             .in(Scopes.SINGLETON);
           // bind AuthorizationEnforcer to AuthorizationEnforcementService
           bind(AuthorizationEnforcer.class).to(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
+          bind(PrivilegesFetcher.class).to(RemotePrivilegesFetcher.class);
         }
       }
     );
