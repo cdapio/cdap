@@ -21,10 +21,10 @@
   </span>
   <!-- <span ng-if="!title" ng-bind-html="content"></span> -->
   <span ng-if="templateScope.content.length > 1">
-    <span class="fa fa-caret-left fa-fw"
+    <span class="fa fa-arrow-left fa-fw"
       ng-if="templateScope.currentIndex > 0"
       ng-click="templateScope.moveToPrevIndex()"></span>
-    <span class="fa fa-caret-right fa-fw"
+    <span class="fa fa-arrow-right fa-fw"
           ng-click="templateScope.moveToNextIndex()"
           ng-if="templateScope.content.length - 1 > templateScope.currentIndex"
           ></span>
