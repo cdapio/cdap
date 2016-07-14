@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,9 @@
  */
 
 package co.cask.cdap.internal.app.runtime;
+
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
+import co.cask.cdap.proto.id.ArtifactId;
 
 /**
  * Defines constants used across different modules.
@@ -68,4 +71,14 @@ public final class ProgramOptionConstants {
    * Option to a local file path of a JAR file containing plugins artifacts.
    */
   public static final String PLUGIN_ARCHIVE = "pluginArchive";
+
+  /**
+   * Option to a json encoded {@link ArtifactId} of the artifact containing the program.
+   */
+  public static final String ARTIFACT_ID = "artifactId";
+
+  /**
+   * Option to a json encoded {@link ArtifactMeta} of the artifact containing the program.
+   */
+  public static final String ARTIFACT_META = "artifactMeta";
 }

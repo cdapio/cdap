@@ -51,7 +51,12 @@ public class SimpleQueueSpecificationGeneratorTest {
     = HashBasedTable.create();
 
   private Set<QueueSpecification> get(FlowletConnection.Type sourceType, String sourceName, String target) {
-    QueueSpecificationGenerator.Node node = new QueueSpecificationGenerator.Node(sourceType, sourceName);
+    QueueSpecificationGenerator.Node node;
+    if (sourceType == FlowletConnection.Type.FLOWLET) {
+      node = new QueueSpecificationGenerator.Node(sourceType, sourceName);
+    } else {
+      node = new QueueSpecificationGenerator.Node(sourceType, TEST_NAMESPACE_ID, sourceName);
+    }
     return table.get(node, target);
   }
 

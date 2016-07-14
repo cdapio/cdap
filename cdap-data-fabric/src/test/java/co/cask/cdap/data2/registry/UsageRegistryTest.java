@@ -141,7 +141,7 @@ public class UsageRegistryTest extends UsageDatasetTest {
    */
   private static class WrappedUsageDataset extends UsageDataset {
 
-    static int registerCount = 0;
+    private static int registerCount = 0;
 
     final UsageDataset uds;
 

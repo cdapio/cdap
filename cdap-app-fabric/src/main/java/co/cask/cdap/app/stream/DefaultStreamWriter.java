@@ -24,6 +24,7 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
@@ -58,7 +59,7 @@ public class DefaultStreamWriter implements StreamWriter {
 
   private final EndpointStrategy endpointStrategy;
   private final ConcurrentMap<Id.Stream, Boolean> isStreamRegistered;
-  private final UsageRegistry usageRegistry;
+  private final RuntimeUsageRegistry runtimeUsageRegistry;
 
   /**
    * The namespace that this {@link StreamWriter} belongs to.
@@ -74,7 +75,7 @@ public class DefaultStreamWriter implements StreamWriter {
   @Inject
   public DefaultStreamWriter(@Assisted("run") Id.Run run,
                              @Assisted("owners") List<Id> owners,
-                             UsageRegistry usageRegistry,
+                             RuntimeUsageRegistry runtimeUsageRegistry,
                              LineageWriter lineageWriter,
                              DiscoveryServiceClient discoveryServiceClient) {
     this.run = run;
@@ -83,7 +84,7 @@ public class DefaultStreamWriter implements StreamWriter {
     this.lineageWriter = lineageWriter;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
     this.isStreamRegistered = Maps.newConcurrentMap();
-    this.usageRegistry = usageRegistry;
+    this.runtimeUsageRegistry = runtimeUsageRegistry;
   }
 
   private URL getStreamURL(String stream) throws IOException {
@@ -178,9 +179,9 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private void registerStream(Id.Stream stream) {
-    // prone being entered multiple times, but OK since usageRegistry.register is not an expensive operation
+    // prone to being entered multiple times, but OK since usageRegistry.register is not an expensive operation
     if (!isStreamRegistered.containsKey(stream)) {
-      usageRegistry.registerAll(owners, stream);
+      runtimeUsageRegistry.registerAll(owners, stream);
       isStreamRegistered.put(stream, true);
     }
 

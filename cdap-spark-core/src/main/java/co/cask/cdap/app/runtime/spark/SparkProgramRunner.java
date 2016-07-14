@@ -32,8 +32,8 @@ import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -200,8 +200,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   }
 
   @Override
-  public ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir) {
-    return SparkRuntimeUtils.createProgramClassLoader(cConf, dir, getClass().getClassLoader());
+  public ClassLoader createProgramClassLoaderParent() {
+    return new FilterClassLoader(getClass().getClassLoader(), SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
   }
 
   /**

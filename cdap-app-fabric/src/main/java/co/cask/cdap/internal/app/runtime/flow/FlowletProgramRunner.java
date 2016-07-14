@@ -61,7 +61,7 @@ import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
@@ -79,6 +79,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Function;
@@ -134,7 +135,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final DatasetFramework dsFramework;
-  private final UsageRegistry usageRegistry;
+  private final RuntimeUsageRegistry runtimeUsageRegistry;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -146,7 +147,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient,
                               DatasetFramework dsFramework,
-                              UsageRegistry usageRegistry) {
+                              RuntimeUsageRegistry runtimeUsageRegistry) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -156,7 +157,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.dsFramework = dsFramework;
-    this.usageRegistry = usageRegistry;
+    this.runtimeUsageRegistry = runtimeUsageRegistry;
   }
 
   @SuppressWarnings("unused")
@@ -522,10 +523,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder,
     final SchemaCache schemaCache) {
 
-    final Id.Program program = Id.Flow.from(flowletContext.getNamespaceId(),
-                                            flowletContext.getApplicationId(),
-                                            ProgramType.FLOW,
-                                            flowletContext.getFlowId());
     return new ProcessSpecificationFactory() {
       @Override
       public <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
@@ -541,10 +538,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
               && (inputNames.contains(queueName.getSimpleName())
               || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
 
-              if (entry.getKey().getType() == FlowletConnection.Type.STREAM) {
-                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(program.getNamespace(),
-                                                                                            flowletContext.getOwners(),
-                                                                                            usageRegistry,
+              Node sourceNode = entry.getKey();
+              if (sourceNode.getType() == FlowletConnection.Type.STREAM) {
+                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(flowletContext.getOwners(),
+                                                                                            runtimeUsageRegistry,
                                                                                             dataFabricFacade,
                                                                                             queueName, consumerConfig);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
@@ -566,9 +563,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   wrapInputDecoder(flowletContext, entry.getKey().getName(), // the producer flowlet,
                                    queueName, createInputDatumDecoder(dataType, schema, schemaCache));
 
-                ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(program.getNamespace(),
-                                                                                           flowletContext.getOwners(),
-                                                                                           usageRegistry,
+                ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(flowletContext.getOwners(),
+                                                                                           runtimeUsageRegistry,
                                                                                            dataFabricFacade, queueName,
                                                                                            consumerConfig, numGroups);
                 queueConsumerSupplierBuilder.add(consumerSupplier);

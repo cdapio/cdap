@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package co.cask.cdap.proto.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -30,15 +30,21 @@ import java.util.Set;
 @Beta
 public final class ArtifactClasses {
   private final Set<ApplicationClass> apps;
+  private final Set<DatasetClass> datasets;
   private final Set<PluginClass> plugins;
 
-  private ArtifactClasses(Set<ApplicationClass> apps, Set<PluginClass> plugins) {
+  private ArtifactClasses(Set<ApplicationClass> apps, Set<DatasetClass> datasets, Set<PluginClass> plugins) {
     this.apps = apps;
+    this.datasets = datasets;
     this.plugins = plugins;
   }
 
   public Set<ApplicationClass> getApps() {
     return apps;
+  }
+
+  public Set<DatasetClass> getDatasets() {
+    return datasets;
   }
 
   public Set<PluginClass> getPlugins() {
@@ -55,19 +61,21 @@ public final class ArtifactClasses {
     }
 
     ArtifactClasses that = (ArtifactClasses) o;
-
-    return Objects.equals(apps, that.apps) && Objects.equals(plugins, that.plugins);
+    return Objects.equals(apps, that.apps) &&
+      Objects.equals(datasets, that.datasets) &&
+      Objects.equals(plugins, that.plugins);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(apps, plugins);
+    return Objects.hash(apps, datasets, plugins);
   }
 
   @Override
   public String toString() {
     return "ArtifactClasses{" +
       "apps=" + apps +
+      ", datasets=" + datasets +
       ", plugins=" + plugins +
       '}';
   }
@@ -82,6 +90,7 @@ public final class ArtifactClasses {
   public static class Builder {
 
     private final Set<ApplicationClass> apps = new HashSet<>();
+    private final Set<DatasetClass> datasets = new HashSet<>();
     private final Set<PluginClass> plugins = new HashSet<>();
 
     public Builder addApps(ApplicationClass... apps) {
@@ -98,6 +107,18 @@ public final class ArtifactClasses {
 
     public Builder addApp(ApplicationClass app) {
       apps.add(app);
+      return this;
+    }
+
+    public Builder addDatasets(Iterable<DatasetClass> datasets) {
+      for (DatasetClass dataset : datasets) {
+        this.datasets.add(dataset);
+      }
+      return this;
+    }
+
+    public Builder addDataset(DatasetClass dataset) {
+      datasets.add(dataset);
       return this;
     }
 
@@ -119,7 +140,9 @@ public final class ArtifactClasses {
     }
 
     public ArtifactClasses build() {
-      return new ArtifactClasses(Collections.unmodifiableSet(apps), Collections.unmodifiableSet(plugins));
+      return new ArtifactClasses(Collections.unmodifiableSet(apps),
+                                 Collections.unmodifiableSet(datasets),
+                                 Collections.unmodifiableSet(plugins));
     }
   }
 }

@@ -26,15 +26,12 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Set;
@@ -46,8 +43,6 @@ import java.util.Set;
  */
 public class DefaultUsageRegistry implements UsageRegistry {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultUsageRegistry.class);
-
   private static final Id.DatasetInstance USAGE_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, "usage.registry");
 
@@ -56,11 +51,13 @@ public class DefaultUsageRegistry implements UsageRegistry {
 
   // this cache will avoid duplicate registration by the same owner if a program repeatedly gets the same dataset.
   // for streams, that does not seem necessary, because programs register stream usage once at startup.
-  private final LoadingCache<DatasetUsageKey, Boolean> usageCache;
+  protected final LoadingCache<DatasetUsageKey, Boolean> usageCache;
 
   @Inject
-  public DefaultUsageRegistry(TransactionExecutorFactory executorFactory,
-                              @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework) {
+  public DefaultUsageRegistry(
+    TransactionExecutorFactory executorFactory,
+    @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework) {
+
     this.executorFactory = executorFactory;
     this.datasetFramework = datasetFramework;
 
@@ -78,19 +75,19 @@ public class DefaultUsageRegistry implements UsageRegistry {
     );
   }
 
-  private <T> T execute(TransactionExecutor.Function<UsageDataset, T> func) {
-    UsageDataset usageDataset = newUsageDataset();
+  protected <T> T execute(TransactionExecutor.Function<UsageDataset, T> func) {
+    UsageDataset usageDataset = getOrCreateUsageDataset();
     return Transactions.createTransactionExecutor(executorFactory, usageDataset)
       .executeUnchecked(func, usageDataset);
   }
 
-  private void execute(TransactionExecutor.Procedure<UsageDataset> func) {
-    UsageDataset usageDataset = newUsageDataset();
+  protected void execute(TransactionExecutor.Procedure<UsageDataset> func) {
+    UsageDataset usageDataset = getOrCreateUsageDataset();
     Transactions.createTransactionExecutor(executorFactory, usageDataset)
       .executeUnchecked(func, usageDataset);
   }
 
-  private UsageDataset newUsageDataset() {
+  private UsageDataset getOrCreateUsageDataset() {
     try {
       return DatasetsUtil.getOrCreateDataset(
         datasetFramework, USAGE_INSTANCE_ID, UsageDataset.class.getSimpleName(),
@@ -100,6 +97,7 @@ public class DefaultUsageRegistry implements UsageRegistry {
     }
   }
 
+  // TODO: javadocs aren't needed in implementation; just in interface...
   /**
    * Registers usage of a stream by multiple ids.
    *
@@ -285,41 +283,5 @@ public class DefaultUsageRegistry implements UsageRegistry {
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     datasetFramework.addInstance(UsageDataset.class.getName(), USAGE_INSTANCE_ID, DatasetProperties.EMPTY);
-  }
-
-  static class DatasetUsageKey {
-    private final Id.DatasetInstance dataset;
-    private final Id.Program owner;
-
-    DatasetUsageKey(Id.DatasetInstance dataset, Id.Program owner) {
-      this.dataset = dataset;
-      this.owner = owner;
-    }
-
-    Id.DatasetInstance getDataset() {
-      return dataset;
-    }
-
-    Id.Program getOwner() {
-      return owner;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      DatasetUsageKey that = (DatasetUsageKey) o;
-      return Objects.equal(dataset, that.dataset) &&
-        Objects.equal(owner, that.owner);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(dataset, owner);
-    }
   }
 }

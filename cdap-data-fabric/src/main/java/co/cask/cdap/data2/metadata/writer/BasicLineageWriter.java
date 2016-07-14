@@ -83,7 +83,10 @@ public class BasicLineageWriter implements LineageWriter {
     return registered.putIfAbsent(new DataAccessKey(run, data, accessType, component), true) != null;
   }
 
-  private static final class DataAccessKey {
+  /**
+   * Key used to keep track of whether a particular access has been recorded already or not (for lineage).
+   */
+  public static final class DataAccessKey {
     private final Id.Run run;
     private final Id.NamespacedId data;
     private final AccessType accessType;

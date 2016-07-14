@@ -84,13 +84,17 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
     for (FlowletConnection connection : input.getConnections()) {
       final String source = connection.getSourceName();
       final String target = connection.getTargetName();
-      final Node sourceNode = new Node(connection.getSourceType(), source);
+      String sourceNamespace = connection.getSourceNamespace() == null ? appId.getNamespaceId() :
+        connection.getSourceNamespace();
+      Node sourceNode;
 
       Set<QueueSpecification> queueSpec;
       if (connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
+        sourceNode = new Node(connection.getSourceType(), source);
         queueSpec = generateQueueSpecification(appId, flow, connection,
                                                flowlets.get(target).getInputs(), flowlets.get(source).getOutputs());
       } else {
+        sourceNode = new Node(connection.getSourceType(), sourceNamespace, source);
         queueSpec = generateQueueSpecification(appId, flow, connection, flowlets.get(target).getInputs(),
                                                ImmutableMap.<String, Set<Schema>>of(
                                                   connection.getSourceName(), ImmutableSet.of(STREAM_EVENT_SCHEMA)));

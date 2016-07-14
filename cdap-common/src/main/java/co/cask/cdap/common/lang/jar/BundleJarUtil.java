@@ -18,9 +18,7 @@ package co.cask.cdap.common.lang.jar;
 
 import co.cask.cdap.common.io.Locations;
 import com.google.common.base.Preconditions;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import org.apache.twill.filesystem.Location;
@@ -35,6 +33,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -176,8 +175,8 @@ public class BundleJarUtil {
                                    OutputSupplier<? extends ZipOutputStream> outputSupplier) throws IOException {
     final URI baseURI = input.toURI();
     try (ZipOutputStream output = outputSupplier.getOutput()) {
-      java.nio.file.Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
-                                       new SimpleFileVisitor<Path>() {
+      Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                         new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
           URI uri = baseURI.relativize(dir.toUri());
@@ -197,7 +196,7 @@ public class BundleJarUtil {
           } else {
             output.putNextEntry(new ZipEntry(uri.getPath()));
           }
-          java.nio.file.Files.copy(file, output);
+          Files.copy(file, output);
           output.closeEntry();
           return FileVisitResult.CONTINUE;
         }
@@ -230,26 +229,27 @@ public class BundleJarUtil {
                            File destinationFolder) throws IOException {
     Preconditions.checkArgument(inputSupplier != null);
     Preconditions.checkArgument(destinationFolder != null);
-    Preconditions.checkArgument(destinationFolder.canWrite());
 
-    destinationFolder.mkdirs();
-    Preconditions.checkState(destinationFolder.exists());
+    Path destinationPath = destinationFolder.toPath();
+    Files.createDirectories(destinationPath);
+
     try (ZipInputStream input = new ZipInputStream(inputSupplier.getInput())) {
-      unJar(input, destinationFolder);
-      return destinationFolder;
+      unJar(input, destinationPath);
+      return destinationPath.toFile();
     }
   }
 
-  private static void unJar(ZipInputStream input, File targetDirectory) throws IOException {
+
+  private static void unJar(ZipInputStream input, Path targetDirectory) throws IOException {
     ZipEntry entry;
     while ((entry = input.getNextEntry()) != null) {
-      File output = new File(targetDirectory, entry.getName());
+      Path output = targetDirectory.resolve(entry.getName());
 
       if (entry.isDirectory()) {
-        output.mkdirs();
+        Files.createDirectories(output);
       } else {
-        output.getParentFile().mkdirs();
-        ByteStreams.copy(input, Files.newOutputStreamSupplier(output));
+        Files.createDirectories(output.getParent());
+        Files.copy(input, output);
       }
     }
   }
