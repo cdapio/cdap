@@ -24,6 +24,9 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.schedule.Schedules;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This implements a simple purchase history application via a scheduled MapReduce Workflow --
  * see package-info for more details.
@@ -52,8 +55,14 @@ public class PurchaseApp extends AbstractApplication {
     // Specify a MapReduce to run on the acquired data
     addMapReduce(new PurchaseHistoryBuilder());
 
+    List<String> workflowNames = new ArrayList<>();
+    int numWorkflows = 30;
     // Run a Workflow that uses the MapReduce to run on the acquired data
-    addWorkflow(new PurchaseHistoryWorkflow());
+    for (int i = 0; i < numWorkflows; i++) {
+      String name = "PurchaseHistoryWorkflow" + i;
+      addWorkflow(new PurchaseHistoryWorkflow(name));
+      workflowNames.add(name);
+    }
 
     // Retrieve the processed data using a Service
     addService(new PurchaseHistoryService());
@@ -64,21 +73,23 @@ public class PurchaseApp extends AbstractApplication {
     // Provide a Service to Application components
     addService(new CatalogLookupService());
 
-    // Schedule the workflow
-    scheduleWorkflow(
-      Schedules.builder("DailySchedule")
-        .setMaxConcurrentRuns(1)
-        .createTimeSchedule("0 4 * * *"),
-      "PurchaseHistoryWorkflow");
+    for (String workflowName : workflowNames) {
+      // resume schedule PurchaseHistory.DailySchedule_PurchaseHistoryWorkflow0
+      // Schedule the workflows
+      scheduleWorkflow(
+        Schedules.builder("DailySchedule" + "_" + workflowName)
+          .createTimeSchedule("0/2 * * * *"),
+        workflowName);
+    }
 
     // Schedule the workflow based on the data coming in the purchaseStream stream
-    scheduleWorkflow(
-      Schedules.builder("DataSchedule")
-        .setDescription("Schedule execution when 1 MB or more of data is ingested in the purchaseStream")
-        .setMaxConcurrentRuns(1)
-        .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
-      "PurchaseHistoryWorkflow"
-    );
+//    scheduleWorkflow(
+//      Schedules.builder("DataSchedule")
+//        .setDescription("Schedule execution when 1 MB or more of data is ingested in the purchaseStream")
+//        .setMaxConcurrentRuns(1)
+//        .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
+//      "PurchaseHistoryWorkflow"
+//    );
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());

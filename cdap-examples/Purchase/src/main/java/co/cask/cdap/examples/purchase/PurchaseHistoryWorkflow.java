@@ -23,10 +23,16 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
  */
 public class PurchaseHistoryWorkflow extends AbstractWorkflow {
 
+  private final String name;
+
+  public PurchaseHistoryWorkflow(String name) {
+    this.name = name;
+  }
+
   @Override
   public void configure() {
-      setName("PurchaseHistoryWorkflow");
+      setName(name);
       setDescription("PurchaseHistoryWorkflow description");
-      addMapReduce("PurchaseHistoryBuilder");
+//      addMapReduce("PurchaseHistoryBuilder");
   }
 }
