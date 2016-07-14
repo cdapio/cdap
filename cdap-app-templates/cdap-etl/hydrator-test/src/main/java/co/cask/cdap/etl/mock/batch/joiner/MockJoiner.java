@@ -44,14 +44,14 @@ import javax.annotation.Nullable;
  * Join plugin to perform joins on structured records
  */
 @Plugin(type = BatchJoiner.PLUGIN_TYPE)
-@Name("Join")
-public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, StructuredRecord> {
+@Name("MockJoiner")
+public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
   private Map<String, Schema> inputSchemas;
   private Schema outputSchema;
 
-  public Join(Config config) {
+  public MockJoiner(Config config) {
     this.config = config;
   }
 
@@ -117,7 +117,7 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
     List<Schema.Field> outputFields = new ArrayList<>();
     Iterable<String> requiredInputs = config.getRequiredInputs();
 
-    // TODO use properties like fieldsToSelect and fieldsToRename to create output schema
+    // TODO use selectedFields
     for (Map.Entry<String, Schema> entry : sortedMap.entrySet()) {
       Schema inputSchema = entry.getValue();
       if (Iterables.contains(requiredInputs, entry.getKey())) {
@@ -139,18 +139,14 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
    */
   public static class Config extends PluginConfig {
     private final String joinKeys;
-    @Nullable
-    private final String fieldsToSelect;
-    @Nullable
-    private final String fieldsToRename;
+    private final String selectedFields;
     @Nullable
     private final String requiredInputs;
 
 
     public Config() {
       this.joinKeys = "joinKeys";
-      this.fieldsToSelect = "fieldsToSelect";
-      this.fieldsToRename = "fieldsToRename";
+      this.selectedFields = "selectedFields";
       this.requiredInputs = "requiredInputs";
     }
 
@@ -160,7 +156,7 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
           "join keys can not be empty or null for plugin %s", PLUGIN_CLASS));
       }
 
-      Iterable<String> multipleJoinKeys = Splitter.on(',').trimResults().omitEmptyStrings().split(joinKeys);
+      Iterable<String> multipleJoinKeys = Splitter.on('&').trimResults().omitEmptyStrings().split(joinKeys);
       for (String key : multipleJoinKeys) {
         Iterable<String> perStageJoinKeys = Splitter.on('=').trimResults().omitEmptyStrings().split(key);
         for (String perStageKey : perStageJoinKeys) {
@@ -176,13 +172,13 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
 
     /**
      * Converts join keys to map of per stage join keys For example,
-     * customers.id=items.cust_id,customers.name=items.cust_name
+     * customers.id=items.cust_id&customers.name=items.cust_name
      * will get converted to customers -> (id,name) and items -> (cust_id,cust_name)
      * @return
      */
     private Map<String, List<String>> getJoinKeys() {
       Map<String, List<String>> stageToKey = new HashMap<>();
-      Iterable<String> multipleJoinKeys = Splitter.on(',').trimResults().omitEmptyStrings().split(joinKeys);
+      Iterable<String> multipleJoinKeys = Splitter.on('&').trimResults().omitEmptyStrings().split(joinKeys);
       for (String key : multipleJoinKeys) {
         Iterable<String> perStageJoinKeys = Splitter.on('=').trimResults().omitEmptyStrings().split(key);
         for (String perStageKey : perStageJoinKeys) {
@@ -205,23 +201,20 @@ public class Join extends BatchJoiner<StructuredRecord, StructuredRecord, Struct
     }
   }
 
-  public static ETLPlugin getPlugin(String joinKeys, String requiredInputs,
-                                    String fieldsToSelect, String fieldsToRename) {
+  public static ETLPlugin getPlugin(String joinKeys, String requiredInputs, String selectedFields) {
     Map<String, String> properties = new HashMap<>();
     properties.put("joinKeys", joinKeys);
     properties.put("requiredInputs", requiredInputs);
-    properties.put("fieldsToSelect", fieldsToSelect);
-    properties.put("fieldsToRename", fieldsToRename);
-    return new ETLPlugin("Join", BatchJoiner.PLUGIN_TYPE, properties, null);
+    properties.put("selectedFields", selectedFields);
+    return new ETLPlugin("MockJoiner", BatchJoiner.PLUGIN_TYPE, properties, null);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("joinKeys", new PluginPropertyField("joinKeys", "", "string", true, false));
     properties.put("requiredInputs", new PluginPropertyField("requiredInputs", "", "string", true, false));
-    properties.put("fieldsToSelect", new PluginPropertyField("fieldsToSelect", "", "string", true, false));
-    properties.put("fieldsToRename", new PluginPropertyField("fieldsToRename", "", "string", true, false));
-    return new PluginClass(BatchJoiner.PLUGIN_TYPE, "Join", "", Join.class.getName(),
+    properties.put("selectedFields", new PluginPropertyField("selectedFields", "", "string", true, false));
+    return new PluginClass(BatchJoiner.PLUGIN_TYPE, "MockJoiner", "", MockJoiner.class.getName(),
                            "config", properties);
   }
 }
