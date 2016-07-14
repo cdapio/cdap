@@ -14,7 +14,7 @@
  * the License.
  */
 
-function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies, $http) {
+function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies) {
   'ngInject';
 
   let vm = this;
@@ -35,18 +35,13 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
     vm.showSidebar = !vm.showSidebar;
   };
   vm.securityEnabled = MY_CONFIG.securityEnabled;
+  vm.environment = MY_CONFIG.isEnterprise ? 'Distributed' : 'Standalone';
 
   $scope.$on('$stateChangeSuccess', function(event, toState) {
     vm.highlightTab = toState.data && toState.data.highlightTab;
     vm.activeProduct = findActiveProduct();
     vm.showSidebar = false;
   });
-
-
-  $http.get('/environment')
-    .then((res) => {
-      vm.environment = res.data.mode;
-    });
 
   // NAMESPACE
   vm.namespaces = [];
