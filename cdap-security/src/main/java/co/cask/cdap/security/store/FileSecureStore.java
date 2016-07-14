@@ -291,7 +291,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
       } else {
         Path parent = path.getParent();
         if (!Files.exists(parent)) {
-          Files.createDirectory(parent);
+          Files.createDirectories(parent);
         }
         // We were not able to load an existing key store. Create a new one.
         ks.load(null, password);
