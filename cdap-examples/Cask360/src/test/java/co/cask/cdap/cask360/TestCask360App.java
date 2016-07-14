@@ -17,12 +17,10 @@ package co.cask.cdap.cask360;
 
 import co.cask.cdap.api.dataset.lib.cask360.Cask360Entity;
 import co.cask.cdap.api.dataset.lib.cask360.Cask360Group;
-import co.cask.cdap.api.dataset.lib.cask360.Cask360Table;
 import co.cask.cdap.api.dataset.lib.cask360.Cask360GroupData.Cask360GroupDataMap;
 import co.cask.cdap.api.dataset.lib.cask360.Cask360GroupData.Cask360GroupDataTime;
+import co.cask.cdap.api.dataset.lib.cask360.Cask360Table;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.cask360.Cask360App;
-import co.cask.cdap.cask360.Cask360Flow;
 import co.cask.cdap.cask360.Cask360Service.Cask360ServiceResponse;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -260,7 +258,8 @@ public class TestCask360App extends TestBase {
     response = putUrl(serviceURL, entityPath + id, jsonLine);
     Assert.assertTrue("Service write operation failed", response.isSuccess());
     id = "8";
-    jsonLine = "{\"id\":\"" + id + "\",\"data\":{\"json\":{\"type\":\"map\",\"data\":{\"source\":\"json\"}}}}"; // JSON with " around keys/vals
+    // JSON with " around keys/vals
+    jsonLine = "{\"id\":\"" + id + "\",\"data\":{\"json\":{\"type\":\"map\",\"data\":{\"source\":\"json\"}}}}";
     response = putUrl(serviceURL, entityPath + id, jsonLine);
     Assert.assertTrue("Service write operation failed", response.isSuccess());
 
