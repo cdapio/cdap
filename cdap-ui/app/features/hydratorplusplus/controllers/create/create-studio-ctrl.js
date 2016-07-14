@@ -16,7 +16,7 @@
 
 class HydratorPlusPlusStudioCtrl {
   // Holy cow. Much DI. Such angular.
-  constructor(HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions, rSelectedArtifact, rArtifacts, myLocalStorage, HydratorPlusPlusConfigStore, $window) {
+  constructor(HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions, rSelectedArtifact, rArtifacts, myLocalStorage, HydratorPlusPlusConfigStore, $window, HydratorPlusPlusConsoleTabService) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
     this.myLocalStorage = myLocalStorage;
@@ -25,7 +25,9 @@ class HydratorPlusPlusStudioCtrl {
         .then(isExpanded => this.isExpanded = (isExpanded === false ? false : true))
         .catch( () => this.isExpanded = true);
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
+    HydratorPlusPlusConsoleTabService.listen();
     $scope.$on('$destroy', () => {
+      HydratorPlusPlusConsoleTabService.unsubscribe();
       HydratorPlusPlusConsoleActions.resetMessages();
       $window.onbeforeunload = null;
     });
@@ -121,7 +123,7 @@ class HydratorPlusPlusStudioCtrl {
   }
 }
 
-HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions','rSelectedArtifact', 'rArtifacts', 'myLocalStorage', 'HydratorPlusPlusConfigStore', '$window'];
+HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions','rSelectedArtifact', 'rArtifacts', 'myLocalStorage', 'HydratorPlusPlusConfigStore', '$window', 'HydratorPlusPlusConsoleTabService'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusStudioCtrl', HydratorPlusPlusStudioCtrl);

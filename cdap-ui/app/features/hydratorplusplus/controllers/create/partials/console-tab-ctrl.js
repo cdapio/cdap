@@ -14,14 +14,18 @@
  * the License.
  */
 
-class HydratorPlusPlusConsoleTabCtrl {
+class HydratorPlusPlusConsoleTabService {
   constructor(HydratorPlusPlusConsoleStore, myAlertOnValium) {
     this.HydratorPlusPlusConsoleStore = HydratorPlusPlusConsoleStore;
     this.myAlertOnValium = myAlertOnValium;
     this.setMessages();
-    this.HydratorPlusPlusConsoleStore.registerOnChangeListener( this.setMessages.bind(this) );
   }
-
+  listen() {
+    this.unsub = this.HydratorPlusPlusConsoleStore.registerOnChangeListener( this.setMessages.bind(this) );
+  }
+  unsubscribe() {
+    this.unsub();
+  }
   setMessages() {
     let messages = this.HydratorPlusPlusConsoleStore.getMessages();
     if (Array.isArray(messages) && !messages.length) {
@@ -80,6 +84,6 @@ class HydratorPlusPlusConsoleTabCtrl {
   }
 }
 
-HydratorPlusPlusConsoleTabCtrl.$inject = ['HydratorPlusPlusConsoleStore', 'myAlertOnValium'];
+HydratorPlusPlusConsoleTabService.$inject = ['HydratorPlusPlusConsoleStore', 'myAlertOnValium'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusConsoleTabCtrl', HydratorPlusPlusConsoleTabCtrl);
+  .service('HydratorPlusPlusConsoleTabService', HydratorPlusPlusConsoleTabService);
