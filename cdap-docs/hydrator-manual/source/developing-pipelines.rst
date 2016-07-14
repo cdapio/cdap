@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-pipelines:
+.. _cask-hydrator-developing-pipelines:
 
 ==============================
 Creating and Running Pipelines

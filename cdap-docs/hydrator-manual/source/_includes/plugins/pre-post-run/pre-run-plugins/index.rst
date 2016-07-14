@@ -2,15 +2,15 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-actions:
+.. _cask-hydrator-pre-run-plugins:
 
-==================
-Action Plugins
-==================
+===============
+Pre-run Plugins
+===============
 
 Hydrator Version |cdap-hydrator-version|
 
-.. Disabled as there are no action plugins currently
+.. Disabled as there are no pre-run plugins currently
 .. 
 .. .. toctree::
 ..     :maxdepth: 1

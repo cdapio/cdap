@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-introduction:
+.. _cask-hydrator-concepts-design:
 
 ========================
 Introduction to Hydrator
@@ -165,7 +165,7 @@ A reference lists and describes all :ref:`plugins included with CDAP <cask-hydra
 Creating Plugins
 ----------------
 Developers are free to create and add not only their own custom plugins, but their own plugin types.
-Details on plugin creation are covered in :ref:`cask-hydrator-creating-custom-plugins`.
+Details on plugin development are covered in :ref:`cask-hydrator-developing-plugins`.
  
 Plugin Templates
 ----------------

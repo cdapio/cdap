@@ -6,9 +6,9 @@
 
 .. _cask-hydrator-plugins:
 
-================
-Hydrator Plugins
-================
+=================
+Plugins Reference
+=================
 
 .. toctree::
    :maxdepth: 2
@@ -16,9 +16,9 @@ Hydrator Plugins
     Batch Plugins <batch/index>
     Real-time Plugins <realtime/index>
     Shared Plugins <shared-plugins/index>
-    Action and Post-action Plugins <action-post-action/index>
+    Action Plugins <actions/index>
+    Pre- and Post-run Plugins <pre-post-run/index>
     Adding Third-Party Plugins <third-party>
-    Creating Custom Plugins <creating>
     Installing Plugins <installing>
 
 .. rubric:: Available Plugins
@@ -45,10 +45,8 @@ for creating ETL, data pipelines, and other applications.
 
   - :doc:`CoreValidator Plugin <shared-plugins/core>`
 
-- :doc:`Action and Post-action Plugins <action-post-action/index>`
-
-  - :doc:`Action Plugins <action-post-action/actions/index>`
-  - :doc:`Post-action Plugins <action-post-action/post-actions/index>`
+- :doc:`Action Plugins <actions/index>`
+- :doc:`Post-run Plugins <pre-post-run/post-run-plugins/index>`
 
 
 .. rubric:: Exploring Plugin Details
@@ -67,7 +65,7 @@ are accessible to other plugins and applications.
 .. rubric:: Creating Custom Plugins
 
 If these plugins don't meet your requirements, you can :ref:`create a custom
-plugin <cask-hydrator-creating-custom-plugins>`.
+plugin <cask-hydrator-developing-plugins>`.
 
 If you are creating a custom plugin that extends the **existing system artifacts,** its name
 should not collide with existing names, for ease-of-use in the CDAP UI and Cask Hydrator Studio.

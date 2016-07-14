@@ -7,9 +7,9 @@
 .. _cask-hydrator:
 .. _hydrator:
 
-=============
-Cask Hydrator
-=============
+======================
+Cask Hydrator Overview
+======================
 
 .. SIDEBAR ON ANNOTATION SYSTEM START
 
@@ -32,55 +32,80 @@ Cask Hydrator
 .. SIDEBAR ON ANNOTATION SYSTEM END
 
 
-Overview
-========
 Cask Hydrator is an extension of CDAP that combines a user interface with back-end services
 to enable the building, deploying, and managing of data pipelines.
 
-.. |introduction| replace:: **Introduction to Hydrator:**
-.. _introduction: introduction.html
+.. |concepts-design| replace:: **Concepts and Design:**
+.. _concepts-design: concepts-design.html
 
-- |introduction|_ **Pipelines**, **plugins**, and **Cask Hydrator Studio**
+- |concepts-design|_ **Pipelines**, **plugins**, and **Cask Hydrator Studio**
 
-.. |pipelines| replace:: **Creating and Running Pipelines:**
-.. _pipelines: pipelines.html
 
-- |pipelines|_ Including **configuring plugins, publishing** and **running** pipelines
+.. |getting-started| replace:: **Getting Started:**
+.. _getting-started: getting-started.html
 
-.. |plugins| replace:: **Hydrator Plugins:**
+- |getting-started|_ A tutorial demonstrating the basics of building and running pipelines
+
+
+.. |creating-pipelines| replace:: **Creating Pipelines:**
+.. _creating-pipelines: creating-pipelines.html
+
+- |creating-pipelines|_ Including **configuring plugins, publishing** and **running** pipelines
+
+
+.. |running-pipelines| replace:: **Running Pipelines:**
+.. _running-pipelines: running-pipelines.html
+
+- |running-pipelines|_ Including **configuring plugins, publishing** and **running** pipelines
+
+
+.. |plugin-management| replace:: **Plugin Management:**
+.. _plugin-management: plugin-management.html
+
+- |plugin-management|_ Deploying plugins and **third-party JARs**, updating, deleting and **managing versions**
+
+
+.. |plugins| replace:: **Plugins Reference:**
 .. _plugins: plugins/index.html
 
 - |plugins|_ Reference to using the **plugins included in CDAP**, and creating and
   installing **custom plugins**
 
-.. |operating| replace:: **Operating Hydrator:**
-.. _operating: operating.html
 
-- |operating|_ *Lorem ipsum dolor sit amet, consectetur adipiscing elit*
+.. |developing-plugins| replace:: **Developing Plugins:**
+.. _developing-plugins: developing-plugins.html
 
-.. |advanced| replace:: **Advanced Topics:**
-.. _advanced: advanced/index.html
+- |developing-plugins|_ Developing custom plugins and using the **test framework** for plugins
 
-- |advanced|_ How Hydrator **works "behind-the-scenes"**, creating **plugin templates** in
-  Hydrator Studio, available **preconfigured pipelines**, **version management** for
-  plugins, **importing** pipelines, pipeline **drafts**, and a **test framework** for
-  custom plugins
 
+.. |developing-pipelines| replace:: **Developing Pipelines:**
+.. _developing-pipelines: developing-pipelines.html
+
+- |developing-pipelines|_ Creating pipelines using tools outside of Hydrator Studio
+
+
+.. |administration-operation| replace:: **Administration and Operation:**
+.. _administration-operation: administration-operation.html
+
+- |administration-operation|_ *[TBD]*
+
+
+.. |how-hydrator-works| replace:: **How Hydrator Works:**
+.. _how-hydrator-works: how-hydrator-works.html
+
+- |how-hydrator-works|_ How it **works "behind-the-scenes"**
+    
+  
 .. |faqs| replace:: **FAQs:**
 .. _faqs: faqs.html
 
 - |faqs|_ Frequently-asked-questions relevant to Cask Hydrator and pipelines
 
+
 .. |glossary| replace:: **Glossary:**
 .. _glossary: glossary.html
 
 - |glossary|_ Terms particular to Cask Hydrator and pipelines
-
-
-Hydrator Quick Start
-====================
-
-A quick introduction demonstrating how to use Cask Hydrator.
 
 
 ..  youtube::  ezTzYIS88YU

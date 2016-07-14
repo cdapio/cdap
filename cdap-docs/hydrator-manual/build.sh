@@ -26,7 +26,7 @@ EXTRACT_TABLE_TOOL="../tools/docs-extract-table.py"
 DOUBLE_RETURN_STRING="\
 
 "
-ACTION_POST_ACTION="action-post-action"
+PRE_POST_RUN="pre-post-run"
 VERSION_STRING="Hydrator Version"
 
 function get_hydrator_version() {
@@ -67,11 +67,21 @@ function download_md_file() {
     elif [[ "x${type:0:8}" == "xrealtime" ]]; then
       plugin_category="realtime"
       plugin_type="${type:8}"
+      
+    # FIXME: this type "postaction" is going away
     elif [[ "x${type}" == "xpostaction" ]]; then
-      plugin_category="${ACTION_POST_ACTION}"
-      plugin_type="post-action"
+      plugin_category="${PRE_POST_RUN}"
+      plugin_type="post-run-plugin"
+    # END FIXME
+    
+    elif [[ "x${type}" == "xprerun" ]]; then
+      plugin_category="${PRE_POST_RUN}"
+      plugin_type="pre-run"
+    elif [[ "x${type}" == "xpostrun" ]]; then
+      plugin_category="${PRE_POST_RUN}"
+      plugin_type="post-run"
     elif [[ "x${type}" == "xaction" ]]; then
-      plugin_category="${ACTION_POST_ACTION}"
+      plugin_category=''
       plugin_type="action"
     else
       # assume of type transform; to be copied to both batch and realtime
@@ -87,6 +97,9 @@ function download_md_file() {
     # Directories are plural, though types are singular
     local target_dir="batch/${plugin_type}s"
     local target_dir_extra="realtime/${plugin_type}s"
+  elif [[ "${plugin_type}" == "action" ]]; then
+    local target_dir="${plugin_type}s"
+    local target_dir_extra=''
   fi
   
   local target="${BASE_TARGET}/${target_dir}/${target_file_name}"

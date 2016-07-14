@@ -10,10 +10,15 @@ Cask Hydrator Table of Contents
    :maxdepth: 3
 
     Overview <index>
-    Introduction to Hydrator <introduction>
-    Creating and Running Pipelines <pipelines>
-    Hydrator Plugins <plugins/index>
-    Operating Hydrator <operating>
-    Advanced Topics <advanced/index>
+    Concepts and Design <concepts-design>
+    Getting Started <getting-started>
+    Creating Pipelines <creating-pipelines>
+    Running Pipelines <running-pipelines>
+    Plugin Management <plugin-management>
+    Hydrator Reference <plugins/index>
+    Developing Plugins <developing-plugins>
+    Developing Pipelines <developing-pipelines>
+    Administration and Operation <administration-operation>
+    How Hydrator Works <how-hydrator-works>
     FAQs <faqs>
     Glossary <glossary>

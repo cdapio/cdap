@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-operating:
+.. _cask-hydrator-administration-operation:
 
-==================
-Operating Hydrator
-==================
+============================
+Administration and Operation
+============================
 
 Metrics
 =======

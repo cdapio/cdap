@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-advanced-how-hydrator-works:
+.. _cask-hydrator-how-hydrator-works:
 
-===================================
-Advanced Topics: How Hydrator Works
-===================================
+==================
+How Hydrator Works
+==================
 
 **A "behind-the-scenes" look at Cask Hydrator**
 

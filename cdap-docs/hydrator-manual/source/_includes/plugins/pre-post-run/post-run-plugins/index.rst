@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-post-actions:
+.. _cask-hydrator-plugins-post-run-plugins:
 
-===================
-Post-action Plugins
-===================
+================
+Post-run Plugins
+================
 
 Hydrator Version |cdap-hydrator-version|
 
