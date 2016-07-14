@@ -22,6 +22,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   this.warningCount = 0;
   this.loading = true;
   this.loadingMoreLogs = true;
+  this.fromOffset;
 
   this.configOptions = {
     time: true,
@@ -41,7 +42,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   this.viewLimit = 10;
   this.cacheDecrement = 10;
   this.cacheSize = 0;
-  let currentOffset;
 
   //Collapsing LogViewer Table Columns
   var theColumns = [];
@@ -100,11 +100,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
       });
       this.data = res;
       this.loading = false;
-      currentOffset = res[res.length-1].offset;
+      this.fromOffset = res[res.length-1].offset;
+      console.log('the offset is: ', currentOffset);
       this.cacheSize = res.length - this.cacheDecrement;
-      console.log('Cache Size: ', this.cacheSize);
-      console.log('Data returned by API is: ', res);
-      console.log('The offset of the data returned is: ', res[res.length-1].offset);
       this.totalCount = res.length;
     },
     (err) => {
@@ -113,21 +111,22 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
 
 
   const requestWithOffset = () => {
-    myLogsApi.nextLogsJson({
+    myLogsApi.nextLogsJsonOffset({
       'namespace' : this.namespaceId,
       'appId' : this.appId,
       'programType' : this.programType,
       'programId' : this.programId,
-      'runId' : this.runId
+      'runId' : this.runId,
+      'fromOffset' : this.fromOffset
     }).$promise.then(
       (res) => {
-
+        console.log('Calling NEXT with OFFSET: ', this.fromOffset);
         //If there is no data
         if(res.length === 0){
           this.loadingMoreLogs = false;
           return;
         }
-
+        this.fromOffset = res[res.length-1].offset;
         angular.forEach(res, (element, index) => {
           if(res[index].log.logLevel === 'WARN'){
             this.warningCount++;
