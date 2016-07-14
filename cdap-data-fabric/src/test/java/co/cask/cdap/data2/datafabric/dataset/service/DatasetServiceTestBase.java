@@ -209,8 +209,7 @@ public abstract class DatasetServiceTestBase {
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
-                                 new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade), namespaceStore);
+                                 namespaceStore);
 
     // Start dataset service, wait for it to be discoverable
     service.start();

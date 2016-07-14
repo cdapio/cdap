@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -103,18 +102,6 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
 
   @Override
   public void deleteAllModules(Id.Namespace namespaceId) {
-    throw new UnsupportedOperationException("Cannot change modules of "
-                                              + StaticDatasetFramework.class.getSimpleName());
-  }
-
-  @Override
-  public void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException {
-    throw new UnsupportedOperationException("Cannot change modules of "
-                                              + StaticDatasetFramework.class.getSimpleName());
-  }
-
-  @Override
-  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     throw new UnsupportedOperationException("Cannot change modules of "
                                               + StaticDatasetFramework.class.getSimpleName());
   }

@@ -27,7 +27,6 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -182,15 +181,5 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   @Override
   public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
     delegate.writeLineage(datasetInstanceId, accessType);
-  }
-
-  @Override
-  public void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException {
-    delegate.createNamespace(namespaceMeta);
-  }
-
-  @Override
-  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    delegate.deleteNamespace(namespaceId);
   }
 }

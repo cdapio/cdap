@@ -34,7 +34,6 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.twill.filesystem.Location;
 
@@ -361,18 +360,4 @@ public interface DatasetFramework {
    * @param accessType accessType to be recorded
    */
   void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType);
-
-  /**
-   * Creates a namespace in the Storage Providers - HBase/LevelDB, Hive and HDFS/Local File System.
-   *
-   * @param namespaceMeta the {@link NamespaceMeta} to create
-   */
-  void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException;
-
-  /**
-   * Deletes a namespace in the Storage Providers - HBase/LevelDB, Hive and HDFS/Local File System.
-   *
-   * @param namespaceId the {@link Id.Namespace} to create
-   */
-  void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException;
 }

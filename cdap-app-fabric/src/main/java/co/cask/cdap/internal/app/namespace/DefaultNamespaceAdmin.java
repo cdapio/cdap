@@ -33,6 +33,7 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
@@ -58,6 +59,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -80,6 +82,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
   private final ArtifactRepository artifactRepository;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final InstanceId instanceId;
+  private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
 
   @Inject
@@ -90,7 +93,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                         ApplicationLifecycleService applicationLifecycleService,
                         ArtifactRepository artifactRepository,
                         AuthorizerInstantiator authorizerInstantiator,
-                        CConfiguration cConf) {
+                        CConfiguration cConf, StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) {
     super(nsStore);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
@@ -105,6 +108,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     this.artifactRepository = artifactRepository;
     this.authorizerInstantiator = authorizerInstantiator;
     this.instanceId = createInstanceId(cConf);
+    this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
   }
 
   /**
@@ -131,8 +135,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     }
 
     try {
-      dsFramework.createNamespace(metadata);
-    } catch (DatasetManagementException e) {
+      storageProviderNamespaceAdmin.create(metadata);
+    } catch (IOException | ExploreException | SQLException e) {
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
 
@@ -199,7 +203,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       if (!Id.Namespace.DEFAULT.equals(namespaceId)) {
         try {
           // Delete namespace in storage providers
-          dsFramework.deleteNamespace(namespaceId);
+          storageProviderNamespaceAdmin.delete(namespaceId.toEntityId());
         } finally {
           // Finally delete namespace from MDS
           nsStore.delete(namespaceId);

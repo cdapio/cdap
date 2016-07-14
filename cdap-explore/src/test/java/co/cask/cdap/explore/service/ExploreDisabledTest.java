@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -76,6 +77,7 @@ public class ExploreDisabledTest {
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
   private static NamespaceStore namespaceStore;
+  private static NamespacedLocationFactory namespacedLocationFactory;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -95,15 +97,19 @@ public class ExploreDisabledTest {
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
     namespaceStore = injector.getInstance(NamespaceStore.class);
-    namespaceStore.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
-    datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(namespaceId).build());
+    namespaceStore.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+    namespacedLocationFactory.get(namespaceId).mkdirs();
+    exploreClient.addNamespace(namespaceId);
+
   }
 
   @AfterClass
   public static void stop() throws Exception {
-    datasetFramework.deleteNamespace(namespaceId);
+    exploreClient.removeNamespace(namespaceId);
     namespaceStore.delete(namespaceId);
     exploreClient.close();
     datasetService.stopAndWait();
