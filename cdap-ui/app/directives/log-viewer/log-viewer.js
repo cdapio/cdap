@@ -21,6 +21,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   this.errorCount = 0;
   this.warningCount = 0;
   this.loading = true;
+  this.loadingMoreLogs = true;
 
   this.configOptions = {
     time: true,
@@ -37,8 +38,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   };
 
   //viewLimit and cacheDecrement should match
-  this.viewLimit = 50;
-  this.cacheDecrement = 50;
+  this.viewLimit = 10;
+  this.cacheDecrement = 10;
   this.cacheSize = 0;
   let currentOffset;
 
@@ -123,6 +124,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
 
         //If there is no data
         if(res.length === 0){
+          this.loadingMoreLogs = false;
           return;
         }
 
@@ -147,7 +149,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
       (err) => {
         console.log('ERROR: ', err);
       });
-  }
+  };
 
   //Subscribe logStartTime to start time
   LogViewerStore.subscribe(() => {
@@ -197,11 +199,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   };
 
   this.scrollFn = _.debounce(function(){
+    this.loadingMoreLogs = true;
     this.cacheSize -= this.cacheDecrement;
     if(this.cacheSize <= 0){
       //make request THEN increase view limit
       requestWithOffset();
     }
+    // this.loadingMoreLogs = false;
     this.viewLimit += this.cacheDecrement;
   }, 1000);
 

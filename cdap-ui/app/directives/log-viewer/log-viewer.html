@@ -61,7 +61,7 @@
 
   <!-- NO DATA MESSAGE -->
   <div ng-if="LogViewer.data.length === 0" class="well well-lg">
-    There are no logs to be found.
+    No logs to be displayed.
   </div>
   <div ng-if="LogViewer.loading" class="jumbotron well well-lg">
     Loading Logs...
@@ -123,7 +123,7 @@
               uib-tooltip="{{ ::entry.log.threadName}}"
               tooltip-append-to-body="true"
               tooltip-placement="top"
-              tooltip-popup-delay="200"
+              tooltip-popup-delay="500"
               >
               {{ ::entry.log.threadName }}
             <!-- <div class="table-text-content">{{ ::entry.log.threadName }}</div> -->
@@ -143,9 +143,6 @@
                 </span>
               </div>
               <span class="message-text">{{ ::entry.log.message}}</span>
-<!--               <div class="message-column">
-                {{ ::entry.log.message}}
-              </div> -->
             </div>
 
             <div class="stack-trace"
@@ -155,6 +152,10 @@
             </div>
 
           </td>
+        </tr>
+        <tr class="well well-sm">
+          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading more logs...</td>
+          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No more logs to show.</td>
         </tr>
       </tbody>
     </table>
