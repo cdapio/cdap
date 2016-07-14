@@ -30,6 +30,7 @@ PASSWD=$(python -c 'import hdinsight_common.ClusterManifestParser as ClusterMani
                     print base64.b64decode(base64pwd)')
 
 AMBARICREDS="-u ${USERID} -p ${PASSWD}"
+AMBARICURLCREDS="-u \"${USERID}\":\"${PASSWD}\""
 
 
 # Function definitions
@@ -95,7 +96,7 @@ stopServiceViaRest() {
   local SERVICENAME=${1}
   [[ ${SERVICENAME} ]] || die "Need service name to stop service" 136
   echo "Stopping ${SERVICENAME}"
-  cmd="curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{\"RequestInfo\": {\"context\" :\"Configure Azure page blob support for CDAP installation. Stopping ${SERVICENAME}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"INSTALLED\"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}"
+  cmd="curl -s ${AMBARICURLCREDS} -i -H 'X-Requested-By: ambari' -X PUT -d '{\"RequestInfo\": {\"context\" :\"Configure Azure page blob support for CDAP installation. Stopping ${SERVICENAME}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"INSTALLED\"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}"
   eval $cmd
 }
 
@@ -106,7 +107,7 @@ startServiceViaRest() {
   [[ ${SERVICENAME} ]] || die "Need service name to start service" 136
   sleep 2
   echo "Starting ${SERVICENAME}"
-  cmd="curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{\"RequestInfo\": {\"context\" :\"Configure Azure page blob support for CDAP installation. Starting ${SERVICENAME}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"STARTED\"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}"
+  cmd="curl -s ${AMBARICURLCREDS} -i -H 'X-Requested-By: ambari' -X PUT -d '{\"RequestInfo\": {\"context\" :\"Configure Azure page blob support for CDAP installation. Starting ${SERVICENAME}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"STARTED\"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}"
   __startResult=$(eval $cmd)
   if [[ ${__startResult} =~ "500 Server Error" || ${__startResult} =~ "internal system exception occurred" ]]; then
     sleep 60
