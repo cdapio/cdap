@@ -17,7 +17,6 @@
 package co.cask.cdap.proto.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 

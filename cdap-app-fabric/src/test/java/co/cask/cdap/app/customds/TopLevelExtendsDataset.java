@@ -14,18 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package co.cask.cdap.app.customds;
+
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 
 /**
- * A provider for for program classloading creation.
+ *
  */
-public interface ProgramClassLoaderProvider {
+public interface TopLevelExtendsDataset extends Dataset {
 
-  /**
-   * Creates a {@link ClassLoader} that will be used as the parent {@link ClassLoader} of
-   * {@link ProgramClassLoader}.
-   *
-   * @return an instance of {@link ClassLoader}
-   */
-  ClassLoader createProgramClassLoaderParent();
+  DatasetSpecification getSpecification();
 }

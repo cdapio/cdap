@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
@@ -37,8 +35,10 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
+import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -342,25 +342,7 @@ public class ArtifactRepository {
    *                               on the added artifact.
    */
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
-    Principal principal = SecurityRequestContext.toPrincipal();
-    NamespaceId namespace = artifactId.getNamespace().toEntityId();
-    // Enforce WRITE privileges on the namespace
-    authorizerInstantiator.get().enforce(namespace, principal, Action.WRITE);
-
-    Location artifactLocation = Locations.toLocation(artifactFile);
-    ArtifactDetail artifactDetail;
-    try (CloseableClassLoader parentClassLoader = createArtifactClassLoader(artifactLocation)) {
-      ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, null, parentClassLoader);
-      validatePluginSet(artifactClasses.getPlugins());
-      ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
-      ArtifactInfo artifactInfo = new ArtifactInfo(artifactId.toArtifactId(), artifactClasses,
-                                                   ImmutableMap.<String, String>of());
-      writeSystemMetadata(artifactId, artifactInfo);
-      artifactDetail = artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
-    }
-    // grant ALL privileges once artifact is successfully added
-    authorizerInstantiator.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
-    return artifactDetail;
+    return addArtifact(artifactId, artifactFile, null);
   }
 
   /**
@@ -387,16 +369,7 @@ public class ArtifactRepository {
   @VisibleForTesting
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts) throws Exception {
-    // To add an artifact, a user must have write privileges on the namespace in which the artifact is being added
-    // This method is used to add user plugin artifacts, so enforce authorization on the specified, non-system namespace
-    Principal principal = SecurityRequestContext.toPrincipal();
-    NamespaceId namespace = artifactId.getNamespace().toEntityId();
-    authorizerInstantiator.get().enforce(namespace, principal, Action.WRITE);
-    ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, null,
-                                                Collections.<String, String>emptyMap());
-    // artifact successfully added. now grant ALL permissions on the artifact to the current user
-    authorizerInstantiator.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
-    return artifactDetail;
+    return addArtifact(artifactId, artifactFile, parentArtifacts, null);
   }
 
   /**
@@ -594,6 +567,7 @@ public class ArtifactRepository {
     } else {
       return ArtifactClasses.builder()
         .addApps(artifactClasses.getApps())
+        .addDatasets(artifactClasses.getDatasets())
         .addPlugins(artifactClasses.getPlugins())
         .addPlugins(additionalPlugins)
         .build();

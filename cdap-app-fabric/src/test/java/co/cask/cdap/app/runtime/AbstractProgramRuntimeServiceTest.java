@@ -17,6 +17,8 @@
 package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.ArtifactNotFoundException;
@@ -26,10 +28,15 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.ArtifactClasses;
+import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -72,17 +79,18 @@ public class AbstractProgramRuntimeServiceTest {
       }
 
       @Override
-      protected Location getArtifactLocation(ProgramDescriptor descriptor) throws IOException,
-                                                                                  ArtifactNotFoundException {
-        // Just return some dummy location. It is not used by the test.
-        return Locations.toLocation(TEMP_FOLDER.newFile());
-      }
-
-      @Override
       protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                       ProgramDescriptor programDescriptor,
                                       Location programJarLocation, File tempDir) throws IOException {
         return program;
+      }
+
+      @Override
+      protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+        co.cask.cdap.api.artifact.ArtifactId id = new co.cask.cdap.api.artifact.ArtifactId(
+          "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
+        return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
+                                  new ArtifactMeta(ArtifactClasses.builder().build()));
       }
     };
 

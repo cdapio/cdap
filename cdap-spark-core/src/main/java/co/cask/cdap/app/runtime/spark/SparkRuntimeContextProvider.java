@@ -199,7 +199,7 @@ public final class SparkRuntimeContextProvider {
                                        SparkRuntimeContextConfig contextConfig) throws IOException {
     File programJar = new File(PROGRAM_JAR_NAME);
     File programDir = new File(PROGRAM_JAR_EXPANDED_NAME);
-    ProgramClassLoader classLoader = SparkRuntimeUtils.createProgramClassLoader(
+    ClassLoader classLoader = SparkRuntimeUtils.createProgramClassLoader(
       cConf, programDir, SparkRuntimeContextProvider.class.getClassLoader());
     return new DefaultProgram(new ProgramDescriptor(contextConfig.getProgramId(),
                                                     contextConfig.getApplicationSpecification()),
