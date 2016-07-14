@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,19 +73,13 @@ public final class SecurityUtil {
                                 Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL + " is not configured");
 
     String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    principal = SecurityUtil.expandPrincipal(principal);
+    principal = expandPrincipal(principal);
 
     Preconditions.checkArgument(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH) != null,
                                 "Kerberos authentication is enabled, but " +
                                 Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH + " is not configured");
 
-    File keyTabFile = new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
-    Preconditions.checkArgument(keyTabFile.exists(),
-                                "Kerberos keytab file does not exist: " + keyTabFile.getAbsolutePath());
-    Preconditions.checkArgument(keyTabFile.isFile(),
-                                "Kerberos keytab file should be a file: " + keyTabFile.getAbsolutePath());
-    Preconditions.checkArgument(keyTabFile.canRead(),
-                                "Kerberos keytab file cannot be read: " + keyTabFile.getAbsolutePath());
+    File keyTabFile = validateKeytabPath(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
 
     LOG.info("Using Kerberos principal {} and keytab {}", principal, keyTabFile.getAbsolutePath());
 
@@ -115,6 +109,18 @@ public final class SecurityUtil {
     Configuration.setConfiguration(configuration);
   }
 
+  // validates that the path specified exists and is a readable file
+  private static File validateKeytabPath(String keytabPath) {
+    File keytabFile = new File(keytabPath);
+    Preconditions.checkArgument(keytabFile.exists(),
+                                "Kerberos keytab file does not exist: " + keytabFile.getAbsolutePath());
+    Preconditions.checkArgument(keytabFile.isFile(),
+                                "Kerberos keytab file should be a file: " + keytabFile.getAbsolutePath());
+    Preconditions.checkArgument(keytabFile.canRead(),
+                                "Kerberos keytab file cannot be read: " + keytabFile.getAbsolutePath());
+    return keytabFile;
+  }
+
   /**
    * Expands _HOST in principal name with local hostname.
    *
@@ -142,12 +148,14 @@ public final class SecurityUtil {
   }
 
   public static void loginForMasterService(CConfiguration cConf) throws IOException, LoginException {
-    String principal = SecurityUtil.expandPrincipal(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
+    String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     String keytabPath = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
 
     if (UserGroupInformation.isSecurityEnabled()) {
+      validateKeytabPath(keytabPath);
+      String expandedPrincipal = expandPrincipal(principal);
       LOG.info("Logging in as: principal={}, keytab={}", principal, keytabPath);
-      UserGroupInformation.loginUserFromKeytab(principal, keytabPath);
+      UserGroupInformation.loginUserFromKeytab(expandedPrincipal, keytabPath);
 
       long delaySec = cConf.getLong(Constants.Security.KERBEROS_KEYTAB_RELOGIN_INTERVAL);
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("Kerberos keytab renewal"))

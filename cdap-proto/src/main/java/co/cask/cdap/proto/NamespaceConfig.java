@@ -28,12 +28,28 @@ public class NamespaceConfig {
   @SerializedName("scheduler.queue.name")
   private final String schedulerQueueName;
 
-  public NamespaceConfig(String schedulerQueueName) {
+  @SerializedName("principal")
+  private final String principal;
+
+  @SerializedName("keytab.path")
+  private final String keytabPath;
+
+  public NamespaceConfig(String schedulerQueueName, String principal, String keytabPath) {
     this.schedulerQueueName = schedulerQueueName;
+    this.principal = principal;
+    this.keytabPath = keytabPath;
   }
 
   public String getSchedulerQueueName() {
     return schedulerQueueName;
+  }
+
+  public String getPrincipal() {
+    return principal;
+  }
+
+  public String getKeytabPath() {
+    return keytabPath;
   }
 
   @Override
@@ -44,19 +60,26 @@ public class NamespaceConfig {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    NamespaceConfig other = (NamespaceConfig) o;
-    return Objects.equals(schedulerQueueName, other.schedulerQueueName);
+
+    NamespaceConfig that = (NamespaceConfig) o;
+
+    return Objects.equals(schedulerQueueName, that.schedulerQueueName)
+      && Objects.equals(principal, that.principal)
+      && Objects.equals(keytabPath, that.keytabPath);
+
   }
 
   @Override
   public int hashCode() {
-    return schedulerQueueName.hashCode();
+    return Objects.hash(schedulerQueueName, principal, keytabPath);
   }
 
   @Override
   public String toString() {
     return "NamespaceConfig{" +
-      "scheduler.queue.name='" + schedulerQueueName + '\'' +
+      "schedulerQueueName='" + schedulerQueueName + '\'' +
+      ", principal='" + principal + '\'' +
+      ", keytabPath='" + keytabPath + '\'' +
       '}';
   }
 }

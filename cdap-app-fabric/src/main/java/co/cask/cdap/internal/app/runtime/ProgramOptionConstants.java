@@ -68,4 +68,12 @@ public final class ProgramOptionConstants {
    * Option to a local file path of a JAR file containing plugins artifacts.
    */
   public static final String PLUGIN_ARCHIVE = "pluginArchive";
+
+  /**
+   * Options for impersonation
+   */
+  public static final String PRINCIPAL = "principal";
+
+  public static final String KEYTAB_PATH = "keytabPath";
+
 }

@@ -23,6 +23,7 @@ import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 
 import javax.annotation.Nullable;
 
@@ -34,9 +35,7 @@ public class SchedulerQueueResolver {
   private final String defaultQueue;
   private final NamespaceStore store;
 
-  /**
-   * Construct SchedulerQueueResolver with CConfiguration and Store.
-   */
+  @Inject
   public SchedulerQueueResolver(CConfiguration cConf, NamespaceStore store) {
     this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
     this.store = store;
