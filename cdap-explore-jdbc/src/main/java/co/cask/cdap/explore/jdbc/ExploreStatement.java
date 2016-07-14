@@ -19,9 +19,7 @@ package co.cask.cdap.explore.jdbc;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.QueryStatus;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
@@ -120,15 +118,6 @@ public class ExploreStatement implements Statement {
       if (t instanceof HandleNotFoundException) {
         LOG.error("Error executing query", e);
         throw new SQLException("Unknown state");
-      } else if (t instanceof UnexpectedQueryStatusException) {
-        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
-        if (QueryStatus.OpStatus.CANCELED.equals(sE.getStatus())) {
-          // The query execution may have been canceled without calling futureResults.cancel(), using the right
-          // REST endpoint with the handle for eg.
-          return false;
-        }
-        throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
-                                             "Got final state - %s", sql, sE.getStatus().toString()));
       }
       LOG.error("Caught exception", e);
       throw new SQLException(Throwables.getRootCause(e));

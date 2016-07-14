@@ -311,8 +311,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
 
       Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-      Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() {
-      }.getType());
+      Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
 
       PartitionKey partitionKey;
       try {

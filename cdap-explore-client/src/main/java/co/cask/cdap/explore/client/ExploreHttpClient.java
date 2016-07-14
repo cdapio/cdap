@@ -178,8 +178,19 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException {
+    return execute(namespace, statement, null);
+  }
+
+  @Override
+  public QueryHandle execute(Id.Namespace namespace, String statement,
+                             @Nullable Map<String, String> additionalSessionConf) throws ExploreException {
+
+    Map<String, String> bodyMap = additionalSessionConf == null
+      ? ImmutableMap.of("query", statement)
+      : ImmutableMap.<String, String>builder().put("query", statement).putAll(additionalSessionConf).build();
+
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/queries", namespace.getId()),
-                                   GSON.toJson(ImmutableMap.of("query", statement)), null);
+                                   GSON.toJson(bodyMap), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }

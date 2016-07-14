@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
@@ -34,6 +35,9 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
@@ -45,8 +49,11 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.text.DateFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * This tests that time partitioned file sets and their partitions are correctly registered
@@ -268,6 +275,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
     // drop a partition and query again
     dropPartition(partitioned, keyX2);
+    validatePartitions(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
     // verify that one value is gone now, namely x2
     runCommand(NAMESPACE_ID, "SELECT key, value FROM " + tableName + " ORDER BY key, value", true,
@@ -278,6 +286,21 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  new QueryResult(Lists.<Object>newArrayList("x1", "#1")),
                  new QueryResult(Lists.<Object>newArrayList("y1", "#1")),
                  new QueryResult(Lists.<Object>newArrayList("y2", "#2"))));
+
+    // drop a partition directly from hive
+    runCommand(NAMESPACE_ID, "ALTER TABLE " + tableName + " DROP PARTITION (str='y', num=2)", false, null, null);
+    // verify that one more value is gone now, namely y2
+    runCommand(NAMESPACE_ID, "SELECT key, value FROM " + tableName + " ORDER BY key, value", true,
+               Lists.newArrayList(
+                 new ColumnDesc("key", "STRING", 1, null),
+                 new ColumnDesc("value", "STRING", 2, null)),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("x1", "#1")),
+                 new QueryResult(Lists.<Object>newArrayList("y1", "#1"))));
+    // make sure the partition can still be dropped from the PFS dataset
+    validatePartitions(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
+    dropPartition(partitioned, keyY2);
+    validatePartitions(partitioned, ImmutableSet.of(keyX1, keyY1));
 
     // drop the dataset
     datasetFramework.deleteInstance(datasetInstanceId);
@@ -489,6 +512,28 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
       @Override
       public void run() {
         partitioned.dropPartition(key);
+      }
+    });
+  }
+
+  private void validatePartitions(final PartitionedFileSet partitioned,
+                                  final Collection<PartitionKey> expected)
+    throws Exception {
+    doTransaction(partitioned, new Runnable() {
+      @Override
+      public void run() {
+        Set<PartitionDetail> actual = partitioned.getPartitions(null);
+        Assert.assertEquals(ImmutableSet.copyOf(expected),
+                            ImmutableSet.copyOf(Iterables.transform(
+                              actual,
+                              new Function<PartitionDetail, PartitionKey>() {
+                                @Nullable
+                                @Override
+                                public PartitionKey apply(@Nullable PartitionDetail detail) {
+                                  Assert.assertNotNull(detail);
+                                  return detail.getPartitionKey();
+                                }
+                              })));
       }
     });
   }

@@ -98,6 +98,9 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
                            String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (ExploreException | RuntimeException e) {
+      LOG.debug("Got exception:", e);
+      throw e;
     }
   }
 

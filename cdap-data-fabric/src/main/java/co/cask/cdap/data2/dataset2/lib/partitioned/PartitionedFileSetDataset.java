@@ -462,6 +462,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       // silently ignore non-existing partitions
       return;
     }
+    // TODO: make DDL operations transactional [CDAP-1393]
+    dropPartitionFromExplore(key);
+    partitionsTable.delete(rowKey);
     if (!isExternal) {
       Location partitionLocation = partition.getLocation();
       try {
@@ -484,9 +487,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       operationsInThisTx.add(new PathOperation(partition.getRelativePath(),
                                                PathOperation.OperationType.DROP));
     }
-    partitionsTable.delete(rowKey);
-    dropPartitionFromExplore(key);
-    // TODO: make DDL operations transactional [CDAP-1393]
   }
 
   protected void dropPartitionFromExplore(PartitionKey key) {

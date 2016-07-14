@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -159,12 +158,12 @@ public class ExploreFacade {
     try {
       future.get(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
-      LOG.error("Caught exception", e);
+      LOG.error("Future interrupted", e);
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       Throwable t = Throwables.getRootCause(e);
       if (t instanceof ExploreException) {
-        LOG.error("{} explore did not finish successfully for {} instance {}.",
+        LOG.error("{} operation did not finish successfully for {} instance {}.",
                   operation, type, name);
         throw (ExploreException) t;
       } else if (t instanceof SQLException) {
@@ -172,10 +171,6 @@ public class ExploreFacade {
       } else if (t instanceof HandleNotFoundException) {
         // Cannot happen unless explore server restarted, or someone calls close in between.
         LOG.error("Error running {} explore", operation, e);
-        throw Throwables.propagate(e);
-      } else if (t instanceof UnexpectedQueryStatusException) {
-        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
-        LOG.error("{} explore operation ended in an unexpected state - {}", operation, sE.getStatus().name(), e);
         throw Throwables.propagate(e);
       }
     } catch (TimeoutException e) {

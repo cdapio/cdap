@@ -104,6 +104,11 @@ public class Hive12CDH5ExploreService extends BaseHiveExploreService {
   protected QueryStatus doFetchStatus(OperationHandle handle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     OperationStatus operationStatus = getCliService().getOperationStatus(handle);
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    HiveSQLException hiveExn = operationStatus.getOperationException();
+    if (hiveExn != null) {
+      return new QueryStatus(hiveExn.getMessage(), hiveExn.getSQLState());
+    }
     return new QueryStatus(QueryStatus.OpStatus.valueOf(operationStatus.getState().toString()),
                            handle.hasResultSet());
   }

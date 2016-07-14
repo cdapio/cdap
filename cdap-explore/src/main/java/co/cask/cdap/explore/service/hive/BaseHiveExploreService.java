@@ -168,10 +168,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private final Map<String, String> sparkConf = new HashMap<>();
 
-  protected abstract QueryStatus doFetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
-    HandleNotFoundException;
   protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException;
+
+  /**
+   * Fetch the status of a query that was submitted using {@link #doExecute}.
+   * @param handle a query handle returned by {@link #doExecute}.
+   * @throws HiveSQLException if the query execution itself failed with this exception
+   * @throws ExploreException if there is an (internal) error in the explore system that is causing failure
+   * @throws HandleNotFoundException if a query with the given handle does not exist
+   */
+  protected abstract QueryStatus doFetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
+    HandleNotFoundException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf,
@@ -783,13 +791,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   public QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException, SQLException {
+    return execute(namespace, statement, null);
+  }
+
+  @Override
+  public QueryHandle execute(Id.Namespace namespace, String statement,
+                             @Nullable Map<String, String> additionalSessionConf)
+
+  throws ExploreException, SQLException {
+
     startAndWait();
 
     try {
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
-      LOG.trace("Got statement: {}", statement);
-      Map<String, String> sessionConf = startSession(namespace);
+      LOG.trace("Got statement '{}' with additional session configuration {}", statement, additionalSessionConf);
+      Map<String, String> sessionConf = startSession(namespace, additionalSessionConf);
       try {
         sessionHandle = openHiveSession(sessionConf);
         String database = getHiveDatabase(namespace.getId());
@@ -1129,12 +1146,20 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @throws IOException
    * @throws ExploreException
    */
-  protected Map<String, String> startSession() throws IOException, ExploreException, NamespaceNotFoundException {
+  protected Map<String, String> startSession()
+    throws IOException, ExploreException, NamespaceNotFoundException {
     return startSession(null);
   }
 
-  protected Map<String, String> startSession(Id.Namespace namespace)
+  protected Map<String, String> startSession(@Nullable Id.Namespace namespace)
     throws IOException, ExploreException, NamespaceNotFoundException {
+    return startSession(namespace, null);
+  }
+
+  protected Map<String, String> startSession(@Nullable Id.Namespace namespace,
+                                             @Nullable Map<String, String> additionalSessionConf)
+    throws IOException, ExploreException, NamespaceNotFoundException {
+
     Map<String, String> sessionConf = Maps.newHashMap();
 
     QueryHandle queryHandle = QueryHandle.generate();
@@ -1162,6 +1187,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       sessionConf.put("spark.hadoop.mapreduce.job.complete.cancel.delegation.tokens", "false");
       // refresh delegations for the job - TWILL-170
       updateTokenStore();
+    }
+
+    if (additionalSessionConf != null) {
+      sessionConf.putAll(additionalSessionConf);
     }
 
     return sessionConf;
@@ -1214,7 +1243,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected QueryStatus fetchStatus(OperationInfo operationInfo)
     throws ExploreException, HandleNotFoundException, HiveSQLException {
-    QueryStatus queryStatus = doFetchStatus(operationInfo.getOperationHandle());
+    QueryStatus queryStatus;
+    try {
+      queryStatus = doFetchStatus(operationInfo.getOperationHandle());
+      if (QueryStatus.OpStatus.ERROR.equals(queryStatus.getStatus()) && queryStatus.getErrorMessage() == null) {
+        queryStatus = new QueryStatus("Operation failed. See the log for more details.", null);
+      }
+    } catch (HiveSQLException e) {
+      // if this is a sql exception, record it in the query status.
+      // it means that query execution failed, but we can successfully retrieve the status.
+      if (e.getSQLState() != null) {
+        queryStatus = new QueryStatus(e.getMessage(), e.getSQLState());
+      } else {
+        // this is an internal error - we are not able to retrieve the status
+        throw new ExploreException(e.getMessage(), e);
+      }
+    }
     operationInfo.setStatus(queryStatus);
     return queryStatus;
   }

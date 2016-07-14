@@ -99,6 +99,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.ws.rs.HttpMethod;
 
 /**
@@ -280,15 +281,20 @@ public class BaseHiveExploreServiceTest {
   }
 
   protected static void assertStatementResult(ListenableFuture<ExploreExecutionResult> future,
-                                              boolean expectedHasResult, List<ColumnDesc> expectedColumnDescs,
-                                              List<QueryResult> expectedResults)
+                                              boolean expectedHasResult,
+                                              @Nullable List<ColumnDesc> expectedColumnDescs,
+                                              @Nullable List<QueryResult> expectedResults)
     throws Exception {
     ExploreExecutionResult results = future.get();
 
     Assert.assertEquals(expectedHasResult, results.hasNext());
 
-    Assert.assertEquals(expectedColumnDescs, results.getResultSchema());
-    Assert.assertEquals(expectedResults, trimColumnValues(results));
+    if (expectedColumnDescs != null) {
+      Assert.assertEquals(expectedColumnDescs, results.getResultSchema());
+    }
+    if (expectedResults != null) {
+      Assert.assertEquals(expectedResults, trimColumnValues(results));
+    }
 
     results.close();
   }
