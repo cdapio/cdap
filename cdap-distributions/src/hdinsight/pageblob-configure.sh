@@ -121,17 +121,31 @@ startServiceViaRest() {
 waitForComponentStop() {
   local __svc=${1}
   local __component=${2}
-  local __currRunning
+  local __hc_url
 
-  for i in {1..60} ; do
-    __currRunning=$(curl -s -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X GET http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${__svc}/components/${__component} | grep \"started_count\" | awk '{ print $3 }' | sed -e 's/,$//')
-    if [ ${__currRunning} -eq 0 ]; then
+  # Get a list of host_component hrefs
+  cmd="curl -s ${AMBARICURLCREDS} -H 'X-Requested-By: ambari' -X GET http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${__svc}/components/${__component} | grep href | grep host_components | awk '{ print \$3 }' | sed -e 's/\"\(.*\)\"[,]*/\1/'"
+  for __hc_url in $(eval $cmd) ; do
+    echo "querying host_component at: ${__hc_url}"
+    waitForHostComponentStop ${__hc_url} || die "Giving up waiting for ${__svc}, component ${__component} to stop"
+    echo "${__component} stopped"
+  done
+}
+
+# Given a "host_component" href, wait for "state" to be "INSTALLED" (stopped)
+waitForHostComponentStop() {
+  local __hc_url=${1}
+  local __currState
+
+  cmd="curl -s ${AMBARICURLCREDS} -H 'X-Requested-By: ambari' -X GET ${__hc_url} | grep \\\"state\\\" | awk '{ print \$3 }' | sed -e 's/\"\(.*\)\"[,]*/\1/'"
+  for i in {1..60}; do
+    __currState=$(eval $cmd)
+    if [ "${__currState}" == "INSTALLED" ]; then
       return 0
     else
       sleep 5
     fi
   done
-  echo "ERROR: giving up waiting for ${__svc}, component ${__component} to have started_count: 0"
   return 1
 }
 
@@ -143,12 +157,15 @@ restartCdapDependentClusterServices() {
   stopServiceViaRest HDFS
 
   # Ensure all critical components are completely stopped before issuing any starts.  Otherwise, components may be left not running.
+  echo "Confirming HBASE STOP"
   for __component in HBASE_MASTER HBASE_REGIONSERVER PHOENIX_QUERY_SERVER; do
     waitForComponentStop HBASE ${__component} || die "Could not stop component ${__component} of service HBASE" 1
   done
+  echo "Confirming YARN STOP"
   for __component in RESOURCEMANAGER NODEMANAGER; do
     waitForComponentStop YARN ${__component} || die "Could not stop component ${__component} of service YARN" 1
   done
+  echo "Confirming HDFS STOP"
   for __component in DATANODE NAMENODE JOURNALNODE ZKFC; do
     waitForComponentStop HDFS ${__component} || die "Could not stop component ${__component} of service HDFS" 1
   done
@@ -166,7 +183,9 @@ checkHostNameAndSetClusterName
 
 validateAmbariConnectivity
 
+
 # Update necessary hadoop configuration
 updateFsAzurePageBlobDirForCDAP
 
 exit 0
+
