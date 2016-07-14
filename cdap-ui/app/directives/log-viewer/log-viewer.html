@@ -106,27 +106,24 @@
           <td class="time"
               ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
               {{ ::entry.log.displayTime }}
-            <!-- <div class="table-text-content">{{ ::entry.log.displayTime }}</div> -->
           </td>
 
           <!-- LEVEL -->
           <td class="level"
               ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
               {{ ::entry.log.logLevel }}
-            <!-- <div class="table-text-content">{{ ::entry.log.logLevel }}</div> -->
           </td>
 
           <!-- SOURCE -->
           <td class="source"
               ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
               tooltip="testing"
-              uib-tooltip="{{ ::entry.log.threadName}}"
+              uib-tooltip="{{ ::entry.log.threadName}}:{{::entry.log.lineNumber}}"
               tooltip-append-to-body="true"
               tooltip-placement="top"
               tooltip-popup-delay="500"
               >
               {{ ::entry.log.threadName }}
-            <!-- <div class="table-text-content">{{ ::entry.log.threadName }}</div> -->
           </td>
 
           <!-- MESSAGE -->
@@ -137,7 +134,8 @@
             <div class="message-main"
                  ng-click="entry.log.stackTrace.length > 0 && (entry.isStackTraceExpanded = !entry.isStackTraceExpanded)">
               <div class="icon-column"
-                   ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)">
+                   ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)"
+                   ng-class="Logviewer.message-class">
                 <span class="fa"
                       ng-class="{'fa-minus': entry.isStackTraceExpanded}">
                 </span>
