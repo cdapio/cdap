@@ -34,6 +34,7 @@
     When adding a new module here, be sure to add it to deploy_pom.xml too.
   -->
   <modules>
+    <module>Cask360</module>
     <module>CountRandom</module>
     <module>ClicksAndViews</module>
     <module>CubeService</module>
