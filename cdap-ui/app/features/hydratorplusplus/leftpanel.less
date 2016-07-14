@@ -84,6 +84,8 @@ body.theme-cdap.state-hydratorplusplus-create {
           border-right: 1px solid #dddddd;
           border-top: 1px solid #dddddd;
           height: ~"calc(100% - 79px)"; // 100% height of left panel - 80px of height from top section of left panel (filter, import, templates & + plugin)
+          height: ~"-moz-calc(100% - 79px)";
+          height: ~"-webkit-calc(100% - 79px)";
 
           .hydrator-filter {
             min-height: 50px;
@@ -116,6 +118,8 @@ body.theme-cdap.state-hydratorplusplus-create {
             position: static;
             border-top: 1px solid #d4d4d4;
             height: calc(~"100% - 50px");
+            height: ~"-moz-calc(100% - 50px)";
+            height: ~"-webkit-calc(100% - 50px)";
             .item {
               color: @cdap-lightgray;
               font-size: 14px;
@@ -293,6 +297,8 @@ body.theme-cdap.state-hydratorplusplus-create {
         .pipeline-settings {
           left: 290px;
           max-width: ~"calc(100% - 290px)";
+          max-width: ~"-moz-calc(100% - 290px)";
+          max-width: ~"-webkit-calc(100% - 290px)";
         }
       }
       ~ .right-wrapper {
@@ -306,6 +312,7 @@ body.theme-cdap.state-hydratorplusplus-create {
       height: 100%;
       position: relative;
       .transition(all 0.2s ease);
+      top: 30px;
     }
 
     width: 130px;
