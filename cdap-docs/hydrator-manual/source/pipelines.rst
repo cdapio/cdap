@@ -221,8 +221,6 @@ when the run completes, a post-action send an email indicating that the run has 
       "config": {
         "schedule": "\* \* \* \* \*",
         "engine": "mapreduce",
-        "postActions": [],
-        
         "postActions": [
           {
             "name": "Email-1",
@@ -371,7 +369,6 @@ stream after performing a projection transformation, you can use a configuration
             "plugin": {
               "name": "Projection",
               "type": "transform",
-              "label": "Projection",
               "artifact": {
                 "name": "core-plugins",
                 "version": "|cdap-hydrator-version|",
@@ -448,13 +445,13 @@ in the step ``spendingUsersScript``:
 .. container:: highlight
 
   .. parsed-literal::
-  
+
     {
       "name": "forkedPipeline",
       "artifact": {
         "name": "cdap-etl-batch",
         "version": "|release|",
-        "scope": "system"
+        "scope": "SYSTEM"
       },
       "config": {
         "schedule": "\* \* \* \* \*",
@@ -469,21 +466,13 @@ in the step ``spendingUsersScript``:
               "artifact": {
                 "name": "core-plugins",
                 "version": "|cdap-hydrator-version|",
-                "scope": "system"
+                "scope": "SYSTEM"
               },
               "properties": {
                 "name": "testStream",
                 "duration": "1d",
                 "format": "csv",
-                "schema": "{
-                  \\"type\\":\\"record\\",
-                  \\"name\\":\\"etlSchemaBody\\",
-                  \\"fields\\":[
-                    {\\"name\\":\\"userId\\",\\"type\\":\\"string\\"},
-                    {\\"name\\":\\"purchaseItem\\",\\"type\\":\\"string\\"},
-                    {\\"name\\":\\"purchasePrice\\",\\"type\\":\\"long\\"}
-                  ]
-                }"
+                "schema": "{\\"type\\":\\"record\\",\\"name\\":\\"etlSchemaBody\\",\\"fields\\":[{\\"name\\":\\"userId\\",\\"type\\":\\"string\\"},{\\"name\\":\\"purchaseItem\\",\\"type\\":\\"string\\"},{\\"name\\":\\"purchasePrice\\",\\"type\\":\\"long\\"}]}"
               }
             }
           },
@@ -495,19 +484,11 @@ in the step ``spendingUsersScript``:
               "artifact": {
                 "name": "core-plugins",
                 "version": "|cdap-hydrator-version|",
-                "scope": "system"
+                "scope": "SYSTEM"
               },
               "properties": {
                 "name": "replicaTable",
-                "schema": "{
-                  \\"type\\":\\"record\\",
-                  \\"name\\":\\"etlSchemaBody\\",
-                  \\"fields\\":[
-                    {\\"name\\":\\"userId\\",\\"type\\":\\"string\\"},
-                    {\\"name\\":\\"purchaseItem\\",\\"type\\":\\"string\\"},
-                    {\\"name\\":\\"purchasePrice\\",\\"type\\":\\"long\\"}
-                  ]
-                }",
+                "schema": "{\\"type\\":\\"record\\",\\"name\\":\\"etlSchemaBody\\",\\"fields\\":[{\\"name\\":\\"userId\\",\\"type\\":\\"string\\"},{\\"name\\":\\"purchaseItem\\",\\"type\\":\\"string\\"},{\\"name\\":\\"purchasePrice\\",\\"type\\":\\"long\\"}]}",
                 "schema.row.field": "userId"
               }
             }
@@ -520,17 +501,11 @@ in the step ``spendingUsersScript``:
               "artifact": {
                 "name": "core-plugins",
                 "version": "|cdap-hydrator-version|",
-                "scope": "system"
+                "scope": "SYSTEM"
               },
               "properties": {
                 "name": "targetCustomers",
-                "schema": "{
-                  \\"type\\":\\"record\\",
-                  \\"name\\":\\"etlSchemaBody\\",
-                  \\"fields\\":[
-                    {\\"name\\":\\"userId\\",\\"type\\":\\"string\\"}
-                  ]
-                }",
+                "schema": "{\\"type\\":\\"record\\",\\"name\\":\\"etlSchemaBody\\",\\"fields\\":[{\\"name\\":\\"userId\\",\\"type\\":\\"string\\"}]}",
                 "schema.row.field": "userId"
               }
             }
@@ -538,26 +513,15 @@ in the step ``spendingUsersScript``:
           {
             "name": "spendingUsersScript",
             "plugin": {
-              "name": "Script",
+              "name": "ScriptFilter",
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
                 "version": "|cdap-hydrator-version|",
-                "scope": "system"
+                "scope": "SYSTEM"
               },
               "properties": {
-                "script": "function transform(input, context) {
-                            if (input.purchasePrice > 1000) {
-                              return {'userId' : input.userId};
-                            }
-                          }",
-                "schema": "{
-                  \"type\":\"record\",
-                  \"name\":\"etlSchemaBody\",
-                  \"fields\":[
-                    {\"name\":\"userId\",\"type\":\"string\"}
-                  ]
-                }"
+                "script": "function shouldFilter(input, context) {\\n  return (input.purchasePrice <= 1000);\\n}"
               }
             }
           }
@@ -586,6 +550,7 @@ sent to two or more configured stages; in the above example, the output record f
 Merging Stages in Pipeline
 ..........................
 Forked transform stages can merge together at a transform or a sink stage.
+
 A merge does not join, or modify records in any way. It simply means that multiple stages can write to the same stage.
 The only requirement is that all stages must output records of the same schema to the merging stage. Note that
 the order of records sent from the forked stages to the merging stage will not be defined.
@@ -613,14 +578,19 @@ The rewards records are merged at the sink ``rewardsSink``; note that the incomi
   .. parsed-literal::
   
     {
+      "name": "mergedPipeline",
       "artifact": {
           "name": "cdap-etl-batch",
-          "version": "|version|",
+          "version": "|release|",
           "scope": "SYSTEM"
       },
-      "name": "RewardsPipeline",
       "config": {
-        "source": {
+        "schedule": "\* \* \* \* \*",
+        "engine": "mapreduce",
+        "postActions": [],
+        "stages": [
+
+          {
           "name": "purchaseStream",
           "plugin": {
             "name": "Stream",
