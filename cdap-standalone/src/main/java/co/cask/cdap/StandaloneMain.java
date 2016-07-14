@@ -63,6 +63,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -492,6 +493,7 @@ public class StandaloneMain {
       new LogReaderRuntimeModules().getStandaloneModules(),
       new RouterModules().getStandaloneModules(),
       new SecurityModules().getStandaloneModules(),
+      new SecureStoreModules().getStandaloneModules(),
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModules(),

@@ -27,6 +27,7 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
@@ -95,6 +96,7 @@ public class AppFabricClient {
   private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final SecureStoreHandler secureStoreHandler;
 
   @Inject
   public AppFabricClient(LocationFactory locationFactory,
@@ -102,13 +104,15 @@ public class AppFabricClient {
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
                          NamespaceQueryAdmin namespaceQueryAdmin,
-                         WorkflowHttpHandler workflowHttpHandler) {
+                         WorkflowHttpHandler workflowHttpHandler,
+                         SecureStoreHandler secureStoreHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.workflowHttpHandler = workflowHttpHandler;
+    this.secureStoreHandler = secureStoreHandler;
   }
 
   private String getNamespacePath(String namespaceId) {

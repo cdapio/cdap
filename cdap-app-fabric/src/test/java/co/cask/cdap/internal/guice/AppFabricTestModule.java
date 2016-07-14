@@ -48,6 +48,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -113,6 +114,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new NamespaceStoreModule().getStandaloneModules());
     install(new MetadataServiceModule());
     install(new AuthorizationModule());
+    install(new SecureStoreModules().getInMemoryModules());
   }
 
   private Scheduler createNoopScheduler() {

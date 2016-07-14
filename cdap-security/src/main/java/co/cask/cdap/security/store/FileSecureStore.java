@@ -22,6 +22,8 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -59,11 +62,18 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * If that is successful then the temporary file is renamed atomically to the secure store file.
  * If anything fails during this process then the keystore reverts to the last successfully written file.
  * The keystore is flushed to the filesystem after every put and delete.
+ *
+ * This class is marked as Singleton because it won't work if this class is not a Singleton.
+ * Setting in(Scopes.Singleton) in the bindings doesn't work because we are binding this
+ * class to two interfaces and we need the instance to be shared between them.
  */
-class FileSecureStore implements SecureStore, SecureStoreManager {
+@Singleton
+public class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
   private static final String SCHEME_NAME = "jceks";
+  /** Separator between the namespace name and the key name */
+  private static final String NAME_SEPARATOR = ":";
 
   private final char[] password;
   private final Path path;
@@ -71,12 +81,12 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   private final Lock writeLock;
   private final KeyStore keyStore;
 
+  @Inject
   FileSecureStore(CConfiguration cConf) throws IOException {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
     path = dir.resolve(cConf.get(Constants.Security.Store.FILE_NAME));
-
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
 
@@ -88,22 +98,25 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
 
   /**
    * Stores an element in the secure store.
-   * @param name Name of the element to store
-   * @param data The data that needs to be securely stored
+   * @param namespace The namespace this key belongs to.
+   * @param name Name of the element to store.
+   * @param data The data that needs to be securely stored.
    * @param description User provided description of the entry.
-   *@param properties Metadata associated with the data  @throws IOException
+   * @param properties Metadata associated with the data  @throws IOException
    */
   @Override
-  public void put(String name, byte[] data, String description, Map<String, String> properties) throws IOException {
+  public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
+    throws IOException {
+    String keyName = getKeyName(namespace, name);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data);
     Key key = null;
     writeLock.lock();
     try {
-      if (keyStore.containsAlias(name)) {
-        key = keyStore.getKey(name, password);
+      if (keyStore.containsAlias(keyName)) {
+        key = keyStore.getKey(keyName, password);
       }
-      keyStore.setKeyEntry(name, new KeyStoreEntry(secureStoreData, meta), password, null);
+      keyStore.setKeyEntry(keyName, new KeyStoreEntry(secureStoreData, meta), password, null);
       // Attempt to persist the store.
       flush();
     } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
@@ -114,9 +127,9 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       // Remove the key from the keystore and throw an IOException.
       try {
         if (key == null) {
-          deleteFromStore(name, password);
+          deleteFromStore(keyName, password);
         } else {
-          keyStore.setKeyEntry(name, key, password, null);
+          keyStore.setKeyEntry(keyName, key, password, null);
         }
       } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
         ioe.addSuppressed(new IOException("Failed to recover the store after a failed flush."));
@@ -127,31 +140,18 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     }
   }
 
-  private Key deleteFromStore(String name, char[] password) throws KeyStoreException,
-    UnrecoverableKeyException, NoSuchAlgorithmException {
-    writeLock.lock();
-    try {
-      Key key = null;
-      if (keyStore.containsAlias(name)) {
-        key = keyStore.getKey(name, password);
-        keyStore.deleteEntry(name);
-      }
-      return key;
-    } finally {
-      writeLock.unlock();
-    }
-  }
-
   /**
    * Deletes the element with the given name.
-   * @param name Name of the element to be deleted
+   * @param namespace The namespace this key belongs to.
+   * @param name Name of the element to be deleted.
    */
   @Override
-  public void delete(String name) throws IOException {
+  public void delete(String namespace, String name) throws IOException {
+    String keyName = getKeyName(namespace, name);
     Key key = null;
     writeLock.lock();
     try {
-      key = deleteFromStore(name, password);
+      key = deleteFromStore(keyName, password);
       // Attempt to persist the store. If this fails then the keystore file will have an extra key
       // that the in-memory store does not. This will be remedied the next time a flush happens.
       // If another flush does not happen and the system is restarted, the only time that file is read,
@@ -160,7 +160,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     } catch (IOException ioe) {
       if (key != null) {
         try {
-          keyStore.setKeyEntry(name, key, password, null);
+          keyStore.setKeyEntry(keyName, key, password, null);
         } catch (KeyStoreException e) {
           ioe.addSuppressed(e);
           throw ioe;
@@ -177,17 +177,21 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   /**
    * List of all the entries in the secure store.
    * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
+   * @param namespace The namespace this key belongs to.
    */
   @Override
-  public List<SecureStoreMetadata> list() throws IOException {
+  public List<SecureStoreMetadata> list(String namespace) throws IOException {
     readLock.lock();
     try {
       Enumeration<String> aliases = keyStore.aliases();
-      String name;
       List<SecureStoreMetadata> list = new ArrayList<>();
+      String prefix = namespace + NAME_SEPARATOR;
       while (aliases.hasMoreElements()) {
-        name = aliases.nextElement();
-        list.add(getSecureStoreMetadata(name));
+        String alias = aliases.nextElement();
+        // Filter out elements not in this namespace.
+        if (alias.startsWith(prefix)) {
+          list.add(getSecureStoreMetadata(alias));
+        }
       }
       return list;
     } catch (KeyStoreException e) {
@@ -198,22 +202,43 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   /**
+   * @param namespace The namespace this key belongs to.
    * @param name Name of the data element.
    * @return An object representing the securely stored data associated with the name.
    */
   @Override
-  public SecureStoreData get(String name) throws IOException {
+  public SecureStoreData get(String namespace, String name) throws IOException {
+    String keyName = getKeyName(namespace, name);
     readLock.lock();
     try {
-      if (!keyStore.containsAlias(name)) {
+      if (!keyStore.containsAlias(keyName)) {
         throw new IOException(name + " not found in the secure store.");
       }
-      Key key = keyStore.getKey(name, password);
+      Key key = keyStore.getKey(keyName, password);
       return ((KeyStoreEntry) key).getData();
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
       throw new IOException("Unable to retrieve the key " + name, e);
     } finally {
       readLock.unlock();
+    }
+  }
+
+  private String getKeyName(String namespace, String name) {
+    return namespace + NAME_SEPARATOR + name;
+  }
+
+  private Key deleteFromStore(String name, char[] password) throws KeyStoreException,
+    UnrecoverableKeyException, NoSuchAlgorithmException {
+    writeLock.lock();
+    try {
+      Key key = null;
+      if (keyStore.containsAlias(name)) {
+        key = keyStore.getKey(name, password);
+        keyStore.deleteEntry(name);
+      }
+      return key;
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -264,6 +289,10 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       if (Files.exists(path)) {
         loadFromPath(ks, path, password);
       } else {
+        Path parent = path.getParent();
+        if (!Files.exists(parent)) {
+          Files.createDirectories(parent);
+        }
         // We were not able to load an existing key store. Create a new one.
         ks.load(null, password);
         LOG.info("New Secure Store initialized successfully.");
@@ -311,5 +340,4 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       throw new IOException("Certificate exception storing keystore.", e);
     }
   }
-
 }

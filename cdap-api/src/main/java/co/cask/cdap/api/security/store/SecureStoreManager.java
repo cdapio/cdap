@@ -26,16 +26,20 @@ import java.util.Map;
 public interface SecureStoreManager {
 
   /**
+   * @param namespace The namespace that this key belongs to.
    * @param name This is the identifier that will be used to retrieve this element.
    * @param data The sensitive data that has to be securely stored. Passed in as utf-8 formatted byte array.
    * @param description User provided description of the entry.
-   *@param properties associated with this element  @throws IOException If the attempt to store the element failed.
+   * @param properties associated with this element.
+   * @throws IOException If the attempt to store the element failed.
    */
-  void put(String name, byte[] data, String description, Map<String, String> properties) throws IOException;
+  void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
+    throws IOException;
 
   /**
+   * @param namespace The namespace that this key belongs to.
    * @param name of the element to delete.
    * @throws IOException If the store is not initialized or if the key could not be removed.
    */
-  void delete(String name) throws IOException;
+  void delete(String namespace, String name) throws IOException;
 }

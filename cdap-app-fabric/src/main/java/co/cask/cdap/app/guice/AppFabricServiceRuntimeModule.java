@@ -50,6 +50,7 @@ import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
 import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
@@ -90,6 +91,7 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -133,6 +135,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
+                           new SecureStoreModules().getInMemoryModules(),
                            new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override
@@ -165,6 +168,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
+                           new SecureStoreModules().getStandaloneModules(),
                            new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override
@@ -219,6 +223,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     return Modules.combine(new AppFabricServiceModule(),
                            new ConfigStoreModule().getDistributedModule(),
+                           new SecureStoreModules().getDistributedModules(),
                            new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override
@@ -317,6 +322,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(RemoteRuntimeStoreHandler.class);
+      handlerBinder.addBinding().to(SecureStoreHandler.class);
       handlerBinder.addBinding().to(RemoteLineageWriterHandler.class);
       handlerBinder.addBinding().to(RemoteUsageRegistryHandler.class);
 
