@@ -27,7 +27,7 @@
     </div>
     <div class="metadata text-left">
       <div class="pipeline-name"
-           ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length}"
+           ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length, 'error': HydratorPlusPlusTopPanelCtrl.state.inValidName}"
            ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
            ng-bind="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
            uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.state.metadata['name'] }}"
