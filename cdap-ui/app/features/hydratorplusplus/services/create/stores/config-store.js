@@ -642,10 +642,9 @@ class HydratorPlusPlusConfigStore {
     this.HydratorPlusPlusConsoleActions.resetMessages();
     let name = this.getName();
     if (!name.length) {
-      this.HydratorPlusPlusConsoleActions.addMessage({
-        type: 'error',
-        content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
-      });
+      this.HydratorPlusPlusConsoleActions.addMessage([{
+        type: 'MISSING-NAME',
+      }]);
       return;
     }
     if(!this.getDraftId()) {
