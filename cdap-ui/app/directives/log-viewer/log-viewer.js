@@ -22,7 +22,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   this.warningCount = 0;
   this.loading = true;
   this.loadingMoreLogs = true;
-  this.fromOffset;
 
   this.configOptions = {
     time: true,
@@ -77,6 +76,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
     }
   };
 
+  LogViewerStore.subscribe(() => {
+    this.logStartTime = LogViewerStore.getState().startTime;
+    //Convert start time to seconds
+    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+    requestWithStartTime();
+  });
+
   myLogsApi.nextLogsJson({
     'namespace' : this.namespaceId,
     'appId' : this.appId,
@@ -86,7 +92,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   }).$promise.then(
     (res) => {
 
-      console.log('First API call');
+      this.totalCount = res.length;
 
       angular.forEach(res, (element, index) => {
         if(res[index].log.logLevel === 'WARN'){
@@ -101,14 +107,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
       this.data = res;
       this.loading = false;
       this.fromOffset = res[res.length-1].offset;
-      console.log('the offset is: ', currentOffset);
       this.cacheSize = res.length - this.cacheDecrement;
-      this.totalCount = res.length;
     },
     (err) => {
       console.log('ERROR: ', err);
     });
-
 
   const requestWithOffset = () => {
     myLogsApi.nextLogsJsonOffset({
@@ -120,13 +123,63 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
       'fromOffset' : this.fromOffset
     }).$promise.then(
       (res) => {
-        console.log('Calling NEXT with OFFSET: ', this.fromOffset);
-        //If there is no data
+        console.log('Returned NEXT with OFFSET: ', this.fromOffset);
+
         if(res.length === 0){
           this.loadingMoreLogs = false;
           return;
         }
+
         this.fromOffset = res[res.length-1].offset;
+        this.totalCount += res.length;
+
+        angular.forEach(res, (element, index) => {
+          if(res[index].log.logLevel === 'WARN'){
+            this.warningCount++;
+          } else if(res[index].log.logLevel === 'ERROR'){
+            this.errorCount++;
+          }
+
+          //Format dates properly for rendering and computing
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+        });
+
+        //Append newly fetched data to the current dataset
+        this.data = this.data.concat(res);
+        this.cacheSize = res.length - this.cacheDecrement;
+        console.log('Data returned by request with offset is: ', res);
+        console.log('The offset of the data returned is: ', this.fromOffset);
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+      });
+  };
+
+  const requestWithStartTime = () => {
+   myLogsApi.getLogsStart({
+      'namespace' : this.namespaceId,
+      'appId' : this.appId,
+      'programType' : this.programType,
+      'programId' : this.programId,
+      'runId' : this.runId,
+      'start' : this.startTimeSec
+    }).$promise.then(
+      (res) => {
+
+        //There are no more logs to be returned
+        if(res.length === 0){
+          this.loadingMoreLogs = false;
+          return;
+        }
+
+        //Clear current data
+        this.data = {};
+        this.fromOffset = res[res.length-1].offset;
+        this.totalCount = res.length;
+        this.warningCount = 0;
+        this.errorCount = 0;
         angular.forEach(res, (element, index) => {
           if(res[index].log.logLevel === 'WARN'){
             this.warningCount++;
@@ -138,22 +191,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
           res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
         });
 
-        //Append newly fetched data to the current dataset
-        this.data = this.data.concat(res);
+        //Set data to newly set start time
+        this.data = res;
         this.cacheSize = res.length - this.cacheDecrement;
-        currentOffset = res[length-1].offset;
-        console.log('Data returned by request with offset is: ', res);
-        console.log('The offset of the data returned is: ', res[res.length-1].offset);
       },
       (err) => {
         console.log('ERROR: ', err);
       });
   };
-
-  //Subscribe logStartTime to start time
-  LogViewerStore.subscribe(() => {
-    this.logStartTime = LogViewerStore.getState().startTime;
-  });
 
   angular.forEach($scope.displayOptions, (value, key) => {
     this.configOptions[key] = value;
@@ -201,10 +246,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi) {
     this.loadingMoreLogs = true;
     this.cacheSize -= this.cacheDecrement;
     if(this.cacheSize <= 0){
-      //make request THEN increase view limit
       requestWithOffset();
     }
-    // this.loadingMoreLogs = false;
     this.viewLimit += this.cacheDecrement;
   }, 1000);
 
@@ -233,5 +276,3 @@ angular.module(PKG.name + '.commons')
       controllerAs: 'LogViewer'
     };
   });
-
-
