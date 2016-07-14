@@ -57,6 +57,7 @@ import javax.annotation.Nullable;
 public class ConnectorSource extends BatchSource<LongWritable, Text, StructuredRecord> {
   static final Schema RECORD_WITH_SCHEMA = Schema.recordOf(
     "record",
+    Schema.Field.of("stageName", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("schema", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("record", Schema.of(Schema.Type.STRING)));
   private final String datasetName;

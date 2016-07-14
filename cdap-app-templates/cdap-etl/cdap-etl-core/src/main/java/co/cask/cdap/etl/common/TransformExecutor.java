@@ -76,7 +76,6 @@ public class TransformExecutor<IN> implements Destroyable {
     }
 
     TransformDetail transformDetail = transformDetailMap.get(stageName);
-    transformDetail.setPrevStage(prevStageName);
     Transformation<T, Object> transformation = transformDetail.getTransformation();
 
 

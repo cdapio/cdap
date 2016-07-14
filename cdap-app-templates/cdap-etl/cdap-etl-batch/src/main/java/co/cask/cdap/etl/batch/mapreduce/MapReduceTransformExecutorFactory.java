@@ -38,9 +38,7 @@ import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
-import co.cask.cdap.etl.common.TrackedEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
-import co.cask.cdap.etl.common.TransformDetail;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
@@ -149,8 +147,9 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
    * @param <OUT> type of the output of joiner
    * @param <OUT_KEY> type of the map output
    */
-  private static class MapperJoinerTransformation<JOIN_KEY, INPUT_RECORD, OUT, OUT_KEY extends Writable,
-    OUT_VALUE extends Writable> implements Transformation<INPUT_RECORD, KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> {
+  private static class MapperJoinerTransformation<JOIN_KEY, INPUT_RECORD, OUT, OUT_KEY
+    extends Writable, OUT_VALUE extends Writable>
+    implements Transformation<KeyValue<String, INPUT_RECORD>, KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> {
     private final Joiner<JOIN_KEY, INPUT_RECORD, OUT> joiner;
     private final WritableConversion<JOIN_KEY, OUT_KEY> keyConversion;
     private final WritableConversion<INPUT_RECORD, OUT_VALUE> inputConversion;
@@ -166,19 +165,12 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     }
 
     @Override
-    public void transform(INPUT_RECORD input, Emitter<KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> emitter)
-      throws Exception {
-      String stageName;
-
-      // TODO as per CDAP-6352 use input to get stageName
-      if (emitter instanceof TransformDetail) {
-        stageName = ((TransformDetail) emitter).getPrevStage();
-      } else {
-        stageName = ((TransformDetail) ((TrackedEmitter) emitter).getEmitter()).getPrevStage();
-      }
-      JOIN_KEY key = joiner.joinOn(stageName, input);
+    public void transform(KeyValue<String, INPUT_RECORD> input, Emitter<KeyValue<OUT_KEY,
+      TaggedWritable<OUT_VALUE>>> emitter) throws Exception {
+      String stageName = input.getKey();
+      JOIN_KEY key = joiner.joinOn(stageName, input.getValue());
       TaggedWritable<OUT_VALUE> output = new TaggedWritable<>(stageName,
-                                                            inputConversion.toWritable(input));
+                                                              inputConversion.toWritable(input.getValue()));
       emitter.emit(new KeyValue<>(keyConversion.toWritable(key), output));
     }
   }
