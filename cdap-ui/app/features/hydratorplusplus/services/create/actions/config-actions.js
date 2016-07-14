@@ -88,10 +88,10 @@ class HydratorPlusPlusConfigActions {
             }
           },
           (err) => {
-            this.HydratorPlusPlusConsoleActions.addMessage({
+            this.HydratorPlusPlusConsoleActions.addMessage([{
               type: 'error',
               content: err
-            });
+            }]);
             return this.$q.reject(false);
           }
         )
@@ -117,10 +117,10 @@ class HydratorPlusPlusConfigActions {
         removeFromUserDrafts.bind(this, pipelineName),
         (err) => {
           this.EventPipe.emit('hideLoadingIcon.immediate');
-          this.HydratorPlusPlusConsoleActions.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage([{
             type: 'error',
             content: angular.isObject(err) ? err.data : err
-          });
+          }]);
         }
       );
     };

@@ -255,7 +255,6 @@ class HydratorPlusPlusConfigStore {
   }
   getDisplayConfig() {
     let uniqueNodeNames = {};
-    let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
     this.HydratorPlusPlusConsoleActions.resetMessages();
     this.NonStorePipelineErrorFactory.isUniqueNodeNames(this.getNodes(), (err, node) => {
       if (err) {
@@ -264,12 +263,6 @@ class HydratorPlusPlusConfigStore {
     });
 
     if (Object.keys(uniqueNodeNames).length > 0) {
-      angular.forEach(uniqueNodeNames, (err, nodeName) => {
-        this.HydratorPlusPlusConsoleActions.addMessage({
-          type: 'error',
-          content: nodeName + ': ' + ERROR_MESSAGES[err]
-        });
-      });
       return false;
     }
     var stateCopy = this.getConfigForExport();
@@ -381,7 +374,7 @@ class HydratorPlusPlusConfigStore {
         node.outputSchema = JSON.stringify({ fields: formattedSchema });
       }
     };
-    if (nodesWOutBackendProps) {
+    if (nodesWOutBackendProps.length) {
       nodesWOutBackendProps.forEach( n => {
         listOfPromises.push(this.HydratorPlusPlusHydratorService.fetchBackendProperties(n, this.getAppType()));
       });
@@ -389,30 +382,32 @@ class HydratorPlusPlusConfigStore {
     } else {
       listOfPromises.push(this.$q.when(true));
     }
-    this.$q.all(listOfPromises)
-      .then(
-        () => {
-          if(!this.validateState()) {
-            this.emitChange();
-          }
-          // Once the backend properties are fetched for all nodes, fetch their config jsons.
-          // This will be used for schema propagation where we import/use a predefined app/open a published pipeline
-          // the user should directly click on the last node and see what is the incoming schema
-          // without having to open the subsequent nodes.
-          nodesWOutBackendProps.forEach( n => {
-            // This could happen when the user doesn't provide an artifact information for a plugin & deploys it
-            // using CLI or REST and opens up in UI and clones it. Without this check it will throw a JS error.
-            if (!n.plugin.artifact) { return; }
-            this.HydratorPlusPlusPluginConfigFactory.fetchWidgetJson(
-              n.plugin.artifact.name,
-              n.plugin.artifact.version,
-              n.plugin.artifact.scope,
-              `widgets.${n.plugin.name}-${n.type}`
-            ).then(parseNodeConfig.bind(null, n));
-          });
-        },
-        (err) => console.log('ERROR fetching backend properties for nodes', err)
-      );
+    if (listOfPromises.length) {
+      this.$q.all(listOfPromises)
+        .then(
+          () => {
+            if(!this.validateState()) {
+              this.emitChange();
+            }
+            // Once the backend properties are fetched for all nodes, fetch their config jsons.
+            // This will be used for schema propagation where we import/use a predefined app/open a published pipeline
+            // the user should directly click on the last node and see what is the incoming schema
+            // without having to open the subsequent nodes.
+            nodesWOutBackendProps.forEach( n => {
+              // This could happen when the user doesn't provide an artifact information for a plugin & deploys it
+              // using CLI or REST and opens up in UI and clones it. Without this check it will throw a JS error.
+              if (!n.plugin.artifact) { return; }
+              this.HydratorPlusPlusPluginConfigFactory.fetchWidgetJson(
+                n.plugin.artifact.name,
+                n.plugin.artifact.version,
+                n.plugin.artifact.scope,
+                `widgets.${n.plugin.name}-${n.type}`
+              ).then(parseNodeConfig.bind(null, n));
+            });
+          },
+          (err) => console.log('ERROR fetching backend properties for nodes', err)
+        );
+      }
 
     let setDefaultOutputSchemaForNodes = (node) => {
       var pluginName = node.plugin.name;
@@ -540,12 +535,8 @@ class HydratorPlusPlusConfigStore {
     let nodes = this.state.__ui__.nodes;
     let connections = angular.copy(this.state.config.connections);
     nodes.forEach( node => { node.errorCount = 0;});
-    let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
-    let showConsoleMessage = (errObj) => {
-      if (isShowConsoleMessage) {
-        this.HydratorPlusPlusConsoleActions.addMessage(errObj);
-      }
-    };
+    let errors = [];
+    this.HydratorPlusPlusConsoleActions.resetMessages();
     let setErrorWarningFlagOnNode = (node) => {
       if (node.error) {
         delete node.warning;
@@ -559,19 +550,14 @@ class HydratorPlusPlusConfigStore {
     };
     daglevelvalidation.forEach( validationFn => {
       validationFn(nodes, (err, node) => {
-        let content;
         if (err) {
           isStateValid = false;
           if (node) {
             node.errorCount += 1;
             setErrorWarningFlagOnNode(node);
-            content = node.plugin.label + ' ' + ERROR_MESSAGES[err];
-          } else {
-            content = ERROR_MESSAGES[err];
           }
-          showConsoleMessage({
-            type: 'error',
-            content: content
+          errors.push({
+            type: err
           });
         }
       });
@@ -579,9 +565,8 @@ class HydratorPlusPlusConfigStore {
     errorFactory.hasValidName(name, (err) => {
       if (err) {
         isStateValid = false;
-        showConsoleMessage({
-          type: 'error',
-          content: ERROR_MESSAGES[err]
+        errors.push({
+          type: err
         });
       }
     });
@@ -590,40 +575,31 @@ class HydratorPlusPlusConfigStore {
         isStateValid = false;
         node.errorCount += unFilledRequiredFields;
         setErrorWarningFlagOnNode(node);
-        showConsoleMessage({
-          type: 'error',
-          content: node.plugin.label + ' ' + ERROR_MESSAGES[err]
-        });
       }
     });
-
-    let uniqueNodeNames = {};
     errorFactory.isUniqueNodeNames(nodes, (err, node) => {
       if (err) {
         isStateValid = false;
         node.errorCount += 1;
         setErrorWarningFlagOnNode(node);
-        uniqueNodeNames[node.plugin.label] = node.plugin.label + ERROR_MESSAGES[err];
       }
     });
-    if (Object.keys(uniqueNodeNames).length) {
-      angular.forEach(uniqueNodeNames, err => {
-        showConsoleMessage({
-          type: 'error',
-          content: err
-        });
-      });
-    }
+    let strayNodes = [];
     errorFactory.allNodesConnected(nodes, connections, (errorNode) => {
       if (errorNode) {
         isStateValid = false;
-        showConsoleMessage({
-          type: 'error',
-          content: errorNode.plugin.name + ' ' + this.GLOBALS.en.hydrator.studio.error['MISSING-CONNECTION']
-        });
+        strayNodes.push(errorNode);
       }
     });
-
+    if (strayNodes.length) {
+      errors.push({
+        type: 'STRAY-NODES',
+        payload: {nodes: strayNodes}
+      });
+    }
+    if (errors.length && isShowConsoleMessage) {
+      this.HydratorPlusPlusConsoleActions.addMessage(errors);
+    }
     return isStateValid;
   }
   getInstance() {
@@ -709,18 +685,18 @@ class HydratorPlusPlusConfigStore {
       })
       .then(
         () => {
-          this.HydratorPlusPlusConsoleActions.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage([{
             type: 'success',
             content: `Draft ${config.name} saved successfully.`
-          });
+          }]);
           this.__defaultState = angular.copy(this.state);
           this.emitChange();
         },
         err => {
-          this.HydratorPlusPlusConsoleActions.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage([{
             type: 'error',
             content: err
-          });
+          }]);
         }
       );
   }

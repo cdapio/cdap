@@ -42,9 +42,8 @@ class HydratorPlusPlusConsoleStore {
     return this.state.messages;
   }
 
-  addMessage(message) {
-    message.date = new Date();
-    this.state.messages.push(message);
+  addMessage(messages) {
+    this.state.messages = messages || [];
     this.emitChange();
   }
 
