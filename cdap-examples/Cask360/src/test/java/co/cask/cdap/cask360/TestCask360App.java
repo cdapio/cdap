@@ -16,12 +16,14 @@
 package co.cask.cdap.cask360;
 
 import co.cask.cdap.api.dataset.lib.cask360.Cask360Entity;
+import co.cask.cdap.api.dataset.lib.cask360.Cask360Group;
 import co.cask.cdap.api.dataset.lib.cask360.Cask360Table;
+import co.cask.cdap.api.dataset.lib.cask360.Cask360GroupData.Cask360GroupDataMap;
+import co.cask.cdap.api.dataset.lib.cask360.Cask360GroupData.Cask360GroupDataTime;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.cask360.Cask360App;
 import co.cask.cdap.cask360.Cask360Flow;
 import co.cask.cdap.cask360.Cask360Service.Cask360ServiceResponse;
-import co.cask.cdap.data2.dataset2.lib.cask360.TestCask360Entity;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -46,6 +48,8 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -93,7 +97,7 @@ public class TestCask360App extends TestBase {
     Assert.assertTrue("Expected an error but query was actually successful", response.error == 1);
 
     // Write an entity directly to the table
-    Cask360Entity entity = TestCask360Entity.makeTestEntityOne(id);
+    Cask360Entity entity = makeTestEntityOne(id);
     table.write(id, entity);
     dataSetManager.flush();
 
@@ -125,7 +129,7 @@ public class TestCask360App extends TestBase {
     Assert.assertTrue("Expected an error but query was actually successful", response.error == 1);
 
     // Perform and verify first write to new entity
-    Cask360Entity entityA = TestCask360Entity.makeTestEntityTwo(id);
+    Cask360Entity entityA = makeTestEntityTwo(id);
     table.write(id, entityA);
     dataSetManager.flush();
     Cask360Entity directEntityA = table.read(id);
@@ -135,8 +139,8 @@ public class TestCask360App extends TestBase {
     Assert.assertTrue("Returned entity different from written entity", entityA.equals(response.entity));
 
     // Perform and verify second write to new entity is merged result
-    Cask360Entity entityB = TestCask360Entity.makeTestEntityTwoOverlap(id);
-    Cask360Entity combinedEntity = TestCask360Entity.makeTestEntityTwoCombined(id);
+    Cask360Entity entityB = makeTestEntityTwoOverlap(id);
+    Cask360Entity combinedEntity = makeTestEntityTwoCombined(id);
     table.write(id, entityB);
     dataSetManager.flush();
     Cask360Entity directEntityB = table.read(id);
@@ -150,7 +154,7 @@ public class TestCask360App extends TestBase {
 
     // Attempt to write to existing MAP group and expect failure
     id = "TimeID";
-    Cask360Entity entityTime = TestCask360Entity.makeTestEntityTimeOne(id);
+    Cask360Entity entityTime = makeTestEntityTimeOne(id);
     try {
       table.write(id, entityTime);
       Assert.assertTrue("Expected write operation to fail but did not", false);
@@ -159,9 +163,9 @@ public class TestCask360App extends TestBase {
     }
 
     // Attempt to write TIME data twice to the same entity and verify merge
-    Cask360Entity entityTimeA = TestCask360Entity.makeTestEntityTimeTwoA(id);
-    Cask360Entity entityTimeB = TestCask360Entity.makeTestEntityTimeTwoB(id);
-    Cask360Entity entityTimeAB = TestCask360Entity.makeTestEntityTimeTwoAB(id);
+    Cask360Entity entityTimeA = makeTestEntityTimeTwoA(id);
+    Cask360Entity entityTimeB = makeTestEntityTimeTwoB(id);
+    Cask360Entity entityTimeAB = makeTestEntityTimeTwoAB(id);
 
     // Lookup non-existing new entity
     response = getUrl(serviceURL, entityPath + id);
@@ -316,5 +320,224 @@ public class TestCask360App extends TestBase {
     LOG.info("Response: " + response);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
     return gson.fromJson(response, Cask360ServiceResponse.class);
+  }
+
+  private static Cask360Entity makeTestEntityOne(String id) {
+    Map<String, Cask360Group> testData = new TreeMap<String, Cask360Group>();
+    Map<String, String> mapOne = new TreeMap<String, String>();
+    mapOne.put("a", "b");
+    mapOne.put("c", "d");
+    mapOne.put("e", "f");
+    testData.put("one", new Cask360Group("one", new Cask360GroupDataMap(mapOne)));
+    Map<String, String> mapTwo = new TreeMap<String, String>();
+    mapTwo.put("g", "h");
+    testData.put("two", new Cask360Group("two", new Cask360GroupDataMap(mapTwo)));
+    Map<String, String> mapThree = new TreeMap<String, String>();
+    mapThree.put("i", "j");
+    mapThree.put("k", "l");
+    testData.put("three", new Cask360Group("three", new Cask360GroupDataMap(mapThree)));
+    return new Cask360Entity(id, testData);
+  }
+
+  private static Cask360Entity makeTestEntityTwo(String id) {
+    Map<String, Cask360Group> testData = new TreeMap<String, Cask360Group>();
+    Map<String, String> mapFour = new TreeMap<String, String>();
+    mapFour.put("a", "b");
+    testData.put("four", new Cask360Group("four", new Cask360GroupDataMap(mapFour)));
+    Map<String, String> mapFive = new TreeMap<String, String>();
+    mapFive.put("c", "d");
+    mapFive.put("e", "f");
+    mapFive.put("g", "h");
+    mapFive.put("i", "j");
+    testData.put("five", new Cask360Group("five", new Cask360GroupDataMap(mapFive)));
+    Map<String, String> mapSix = new TreeMap<String, String>();
+    mapSix.put("k", "l");
+    testData.put("six", new Cask360Group("six", new Cask360GroupDataMap(mapSix)));
+    Map<String, String> mapSeven = new TreeMap<String, String>();
+    mapSeven.put("m", "n");
+    mapSeven.put("o", "p");
+    testData.put("seven", new Cask360Group("seven", new Cask360GroupDataMap(mapSeven)));
+    return new Cask360Entity(id, testData);
+  }
+
+  private static Cask360Entity makeTestEntityTwoOverlap(String id) {
+    Map<String, Cask360Group> testData = new TreeMap<String, Cask360Group>();
+    Map<String, String> mapFive = new TreeMap<String, String>();
+    mapFive.put("c", "d");
+    mapFive.put("e", "F");
+    mapFive.put("z", "z");
+    testData.put("five", new Cask360Group("five", new Cask360GroupDataMap(mapFive)));
+    Map<String, String> mapSix = new TreeMap<String, String>();
+    mapSix.put("k", "L");
+    mapSix.put("K", "k");
+    testData.put("six", new Cask360Group("six", new Cask360GroupDataMap(mapSix)));
+    Map<String, String> mapEight = new TreeMap<String, String>();
+    mapEight.put("m", "n");
+    mapEight.put("o", "p");
+    testData.put("eight", new Cask360Group("eight", new Cask360GroupDataMap(mapEight)));
+    return new Cask360Entity(id, testData);
+  }
+
+  private static Cask360Entity makeTestEntityTwoCombined(String id) {
+    Map<String, Cask360Group> testData = new TreeMap<String, Cask360Group>();
+    Map<String, String> mapFour = new TreeMap<String, String>();
+    mapFour.put("a", "b");
+    testData.put("four", new Cask360Group("four", new Cask360GroupDataMap(mapFour)));
+    Map<String, String> mapFive = new TreeMap<String, String>();
+    mapFive.put("c", "d");
+    mapFive.put("e", "F");
+    mapFive.put("z", "z");
+    mapFive.put("g", "h");
+    mapFive.put("i", "j");
+    testData.put("five", new Cask360Group("five", new Cask360GroupDataMap(mapFive)));
+    Map<String, String> mapSix = new TreeMap<String, String>();
+    mapSix.put("k", "L");
+    mapSix.put("K", "k");
+    testData.put("six", new Cask360Group("six", new Cask360GroupDataMap(mapSix)));
+    Map<String, String> mapSeven = new TreeMap<String, String>();
+    mapSeven.put("m", "n");
+    mapSeven.put("o", "p");
+    testData.put("seven", new Cask360Group("seven", new Cask360GroupDataMap(mapSeven)));
+    Map<String, String> mapEight = new TreeMap<String, String>();
+    mapEight.put("m", "n");
+    mapEight.put("o", "p");
+    testData.put("eight", new Cask360Group("eight", new Cask360GroupDataMap(mapEight)));
+    return new Cask360Entity(id, testData);
+  }
+
+  private static Cask360Entity makeTestEntityTimeOne(String id) {
+    Map<String, Cask360Group> testData = new TreeMap<String, Cask360Group>();
+    Map<Long, Map<String, String>> mapOne = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapOne1 = new TreeMap<String, String>();
+    mapOne1.put("aK", "aV");
+    mapOne1.put("bK", "bV");
+    mapOne1.put("cK", "cV");
+    mapOne.put(123L, mapOne1);
+    Map<String, String> mapOne2 = new TreeMap<String, String>();
+    mapOne2.put("aK", "aV");
+    mapOne2.put("cK", "cV");
+    mapOne.put(456L, mapOne2);
+    Map<String, String> mapOne3 = new TreeMap<String, String>();
+    mapOne3.put("zK", "zV");
+    mapOne3.put("cK", "cV");
+    mapOne.put(789L, mapOne3);
+    testData.put("one", new Cask360Group("one", new Cask360GroupDataTime(mapOne)));
+    Map<Long, Map<String, String>> mapFour = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapFour1 = new TreeMap<String, String>();
+    mapFour1.put("xK", "xV");
+    mapFour1.put("yK", "yV");
+    mapFour.put(2L, mapFour1);
+    testData.put("Tfour", new Cask360Group("Tfour", new Cask360GroupDataTime(mapFour)));
+    return new Cask360Entity(id, testData);
+  }
+
+  private static Cask360Entity makeTestEntityTimeTwoA(String id) {
+    Map<String, Cask360Group> testData = new TreeMap<String, Cask360Group>();
+    Map<Long, Map<String, String>> mapOne = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapOne1 = new TreeMap<String, String>();
+    mapOne1.put("aK", "aV");
+    mapOne1.put("bK", "bV");
+    mapOne1.put("cK", "cV");
+    mapOne.put(123L, mapOne1);
+    Map<String, String> mapOne2 = new TreeMap<String, String>();
+    mapOne2.put("aK", "aV");
+    mapOne2.put("cK", "cV");
+    mapOne.put(456L, mapOne2);
+    Map<String, String> mapOne3 = new TreeMap<String, String>();
+    mapOne3.put("zK", "zV");
+    mapOne3.put("cK", "cV");
+    mapOne.put(789L, mapOne3);
+    testData.put("Tone", new Cask360Group("Tone", new Cask360GroupDataTime(mapOne)));
+    Map<Long, Map<String, String>> mapFour = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapFour1 = new TreeMap<String, String>();
+    mapFour1.put("xK", "xV");
+    mapFour1.put("yK", "yV");
+    mapFour.put(2L, mapFour1);
+    testData.put("Tfour", new Cask360Group("Tfour", new Cask360GroupDataTime(mapFour)));
+    return new Cask360Entity(id, testData);
+  }
+
+  private static final long now_ms = System.currentTimeMillis();
+  private static final long now_ns = System.nanoTime();
+
+  private static Cask360Entity makeTestEntityTimeTwoB(String id) {
+    Map<String, Cask360Group> testData = new TreeMap<String, Cask360Group>();
+    Map<Long, Map<String, String>> mapOne = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapOne1 = new TreeMap<String, String>();
+    mapOne1.put("cK", "CV");
+    mapOne1.put("aK", "AV");
+    mapOne.put(123L, mapOne1);
+    Map<String, String> mapOne2 = new TreeMap<String, String>();
+    mapOne2.put("aK", "AV");
+    mapOne2.put("dK", "DV");
+    mapOne.put(456L, mapOne2);
+    Map<String, String> mapOne3 = new TreeMap<String, String>();
+    mapOne3.put("zK", "ZV");
+    mapOne.put(789L, mapOne3);
+    testData.put("Tone", new Cask360Group("Tone", new Cask360GroupDataTime(mapOne)));
+    Map<Long, Map<String, String>> mapFour = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapFour1 = new TreeMap<String, String>();
+    mapFour1.put("xK", "xV");
+    mapFour1.put("yK", "yV");
+    mapFour.put(1L, mapFour1);
+    Map<String, String> mapFour2 = new TreeMap<String, String>();
+    mapFour2.put("xK", "xV");
+    mapFour2.put("yK", "yV");
+    mapFour.put(3L, mapFour2);
+    testData.put("Tfour", new Cask360Group("Tfour", new Cask360GroupDataTime(mapFour)));
+    Map<Long, Map<String, String>> mapFive = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapFive1 = new TreeMap<String, String>();
+    mapFive1.put("xK", "xV");
+    mapFive1.put("yK", "yV");
+    mapFive.put(now_ms, mapFive1);
+    Map<String, String> mapFive2 = new TreeMap<String, String>();
+    mapFive2.put("xK", "xV");
+    mapFive2.put("yK", "yV");
+    mapFive.put(now_ns, mapFive2);
+    testData.put("Tfive", new Cask360Group("Tfive", new Cask360GroupDataTime(mapFive)));
+    return new Cask360Entity(id, testData);
+  }
+
+  private static Cask360Entity makeTestEntityTimeTwoAB(String id) {
+    Map<String, Cask360Group> testData = new TreeMap<String, Cask360Group>();
+
+    Map<Long, Map<String, String>> mapOne = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapOne1 = new TreeMap<String, String>();
+    mapOne1.put("aK", "AV");
+    mapOne1.put("cK", "CV");
+    mapOne.put(123L, mapOne1);
+    Map<String, String> mapOne2 = new TreeMap<String, String>();
+    mapOne2.put("aK", "AV");
+    mapOne2.put("dK", "DV");
+    mapOne.put(456L, mapOne2);
+    Map<String, String> mapOne3 = new TreeMap<String, String>();
+    mapOne3.put("zK", "ZV");
+    mapOne.put(789L, mapOne3);
+    testData.put("Tone", new Cask360Group("Tone", new Cask360GroupDataTime(mapOne)));
+    Map<Long, Map<String, String>> mapFour = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapFour1 = new TreeMap<String, String>();
+    mapFour1.put("xK", "xV");
+    mapFour1.put("yK", "yV");
+    mapFour.put(1L, mapFour1);
+    Map<String, String> mapFour2 = new TreeMap<String, String>();
+    mapFour2.put("xK", "xV");
+    mapFour2.put("yK", "yV");
+    mapFour.put(3L, mapFour2);
+    Map<String, String> mapFour3 = new TreeMap<String, String>();
+    mapFour3.put("xK", "xV");
+    mapFour3.put("yK", "yV");
+    mapFour.put(2L, mapFour3);
+    testData.put("Tfour", new Cask360Group("Tfour", new Cask360GroupDataTime(mapFour)));
+    Map<Long, Map<String, String>> mapFive = new TreeMap<Long, Map<String, String>>().descendingMap();
+    Map<String, String> mapFive1 = new TreeMap<String, String>();
+    mapFive1.put("xK", "xV");
+    mapFive1.put("yK", "yV");
+    mapFive.put(now_ms, mapFive1);
+    Map<String, String> mapFive2 = new TreeMap<String, String>();
+    mapFive2.put("xK", "xV");
+    mapFive2.put("yK", "yV");
+    mapFive.put(now_ns, mapFive2);
+    testData.put("Tfive", new Cask360Group("Tfive", new Cask360GroupDataTime(mapFive)));
+    return new Cask360Entity(id, testData);
   }
 }
