@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Table;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * This interface specifies how the {@link QueueSpecification} is generated
@@ -37,8 +38,9 @@ public interface QueueSpecificationGenerator {
   /**
    * This class represents a node in the DAG.
    */
-  public static final class Node {
+  final class Node {
     private final FlowletConnection.Type type;
+    private final String namespace;
     private final String name;
 
     public static Node flowlet(String name) {
@@ -50,30 +52,51 @@ public interface QueueSpecificationGenerator {
     }
 
     public Node(FlowletConnection.Type type, String name) {
+      this(type, null, name);
+    }
+
+    public Node(FlowletConnection.Type type, @Nullable String namespace, String name) {
       this.type = type;
+      this.namespace = namespace;
       this.name = name;
     }
 
+    /**
+     * @return the type of flowlet connection
+     */
     public FlowletConnection.Type getType() {
       return type;
     }
 
+    /**
+     * @return Namespace of the source. When type == STREAM, it will never return null.
+     * When type != STREAM, it will always return null.
+     */
+    @Nullable
+    public String getNamespace() {
+      return namespace;
+    }
+
+    /**
+     * @return Name of the source
+     */
     public String getName() {
       return name;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(type, name);
+      return Objects.hashCode(type, namespace, name);
     }
 
     @Override
     public boolean equals(Object o) {
-      if (o == null) {
+      if (o == null || !(o instanceof Node)) {
         return false;
       }
       Node other = (Node) o;
-      return Objects.equal(type, other.getType()) && Objects.equal(name, other.getName());
+      return Objects.equal(type, other.getType()) && Objects.equal(namespace, other.getNamespace())
+        && Objects.equal(name, other.getName());
     }
   }
 

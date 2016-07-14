@@ -117,8 +117,27 @@ public interface FlowConfigurer extends DatasetConfigurer {
   /**
    * Connect a {@link Stream} to a destination {@link Flowlet}
    *
+   * @param namespace of the {@link Stream}
+   * @param stream name of the {@link Stream}
+   * @param flowlet destination {@link Flowlet} instance
+   */
+  void connectStream(String namespace, String stream, Flowlet flowlet);
+
+  /**
+   * Connect a {@link Stream} to a destination {@link Flowlet}
+   *
    * @param stream name of the {@link Stream}
    * @param flowlet name of the destination {@link Flowlet}
    */
   void connectStream(String stream, String flowlet);
+
+  /**
+   * Connect a {@link Stream} to a destination {@link Flowlet}
+   *
+   * @param namespace namespace of the {@link Stream}
+   * @param stream name of the {@link Stream}
+   * @param flowlet name of the destination {@link Flowlet}
+   */
+  void connectStream(String namespace, String stream, String flowlet);
+
 }

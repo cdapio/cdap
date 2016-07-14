@@ -32,6 +32,7 @@ import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link FlowConfigurer}.
@@ -83,7 +84,7 @@ public class DefaultFlowConfigurer extends DefaultDatasetConfigurer implements F
 
   @Override
   public void addFlowlet(String name, Flowlet flowlet, int instances) {
-    Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+    Preconditions.checkNotNull(flowlet, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
     FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
     String flowletName = flowletDef.getFlowletSpec().getName();
     Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
@@ -114,29 +115,39 @@ public class DefaultFlowConfigurer extends DefaultDatasetConfigurer implements F
 
   @Override
   public void connect(Flowlet from, String to) {
-    Preconditions.checkArgument(from != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+    Preconditions.checkNotNull(from, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
     connect(getFlowletName(from), to);
   }
 
   @Override
   public void connect(String from, Flowlet to) {
-    Preconditions.checkArgument(to != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+    Preconditions.checkNotNull(to, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
     connect(from, getFlowletName(to));
   }
 
   @Override
   public void connectStream(String stream, Flowlet flowlet) {
-    Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
-    connectStream(stream, getFlowletName(flowlet));
+    connectStream(null, stream, flowlet);
+  }
+
+  @Override
+  public void connectStream(@Nullable String namespace, String stream, Flowlet flowlet) {
+    Preconditions.checkNotNull(flowlet, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+    connectStream(namespace, stream, getFlowletName(flowlet));
   }
 
   @Override
   public void connectStream(String stream, String flowlet) {
-    Preconditions.checkArgument(stream != null, UserMessages.getMessage(UserErrors.INVALID_STREAM_NULL));
-    Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+    connectStream(null, stream, flowlet);
+  }
+
+  @Override
+  public void connectStream(@Nullable String namespace, String stream, String flowlet) {
+    Preconditions.checkNotNull(stream, UserMessages.getMessage(UserErrors.INVALID_STREAM_NULL));
+    Preconditions.checkNotNull(flowlet, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
     Preconditions.checkArgument(flowlets.containsKey(flowlet),
                                 UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
-    connections.add(new FlowletConnection(FlowletConnection.Type.STREAM, stream, flowlet));
+    connections.add(new FlowletConnection(FlowletConnection.Type.STREAM, namespace, stream, flowlet));
   }
 
   public FlowSpecification createSpecification() {

@@ -112,12 +112,20 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
     // NOTE: We should unify the logic here and the queue spec generation, as they are doing the same thing.
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecTable
-            = new SimpleQueueSpecificationGenerator(appId).create(input);
-
+      = new SimpleQueueSpecificationGenerator(appId).create(input);
     // For all connections, there should be an entry in the table.
     for (FlowletConnection connection : input.getConnections()) {
-      QueueSpecificationGenerator.Node node = new QueueSpecificationGenerator.Node(connection.getSourceType(),
-                                                                                   connection.getSourceName());
+      QueueSpecificationGenerator.Node node;
+      if (connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
+        node = new QueueSpecificationGenerator.Node(connection.getSourceType(), connection.getSourceName());
+
+      } else {
+        String sourceNamespace = connection.getSourceNamespace() == null ? appId.getNamespaceId() :
+          connection.getSourceNamespace();
+        node = new QueueSpecificationGenerator.Node(connection.getSourceType(),
+                                                    sourceNamespace,
+                                                    connection.getSourceName());
+      }
       if (!queueSpecTable.contains(node, connection.getTargetName())) {
         return VerifyResult.failure(Err.Flow.NO_INPUT_FOR_OUTPUT,
                                     flowName, connection.getTargetName(),

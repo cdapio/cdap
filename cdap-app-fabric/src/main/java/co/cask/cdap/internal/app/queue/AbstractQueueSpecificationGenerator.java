@@ -72,7 +72,9 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
       }
 
       if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        builder.add(createSpec(QueueName.fromStream(app.getNamespaceId(), outputName),
+        String namespace = connection.getSourceNamespace() == null ? app.getNamespaceId() :
+          connection.getSourceNamespace();
+        builder.add(createSpec(QueueName.fromStream(namespace, outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
         builder.add(createSpec(QueueName.fromFlowlet(app.getNamespaceId(), app.getId(), flow,
@@ -88,7 +90,7 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
    * @return An instance of {@link QueueSpecification} containing the URI for the queue
    * and the matching {@link Schema}
    */
-  protected QueueSpecification createSpec(final QueueName queueName,
+  private QueueSpecification createSpec(final QueueName queueName,
                                           final Schema outputSchema,
                                           final Schema inputSchema) {
     return new QueueSpecification() {
