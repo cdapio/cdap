@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.config.ClientConfig;
@@ -91,7 +92,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   @Override
-  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
     throw new UnsupportedOperationException("Filtering is not supported via Java Client.");
   }
 

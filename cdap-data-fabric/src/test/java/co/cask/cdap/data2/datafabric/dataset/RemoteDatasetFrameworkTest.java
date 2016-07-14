@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
@@ -50,13 +51,22 @@ import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Threads;
@@ -105,6 +115,21 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled
     Impersonator impersonator = new Impersonator(cConf, null, null);
 
+    // TODO: Refactor to use injector for everything
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf, txConf),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new TransactionInMemoryModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Singleton.class);
+          bind(DatasetFramework.class).toInstance(framework);
+        }
+      }
+    );
+
     DatasetAdminService datasetAdminService =
       new DatasetAdminService(framework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore(),
                               impersonator);
@@ -123,14 +148,16 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
+    AuthorizationEnforcementService authorizationEnforcer = injector.getInstance(AuthorizationEnforcementService.class);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
                              txExecutorFactory, mdsFramework, DEFAULT_MODULES),
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, mdsFramework),
       new LocalDatasetOpExecutor(cConf, discoveryService, opExecutorService),
       exploreFacade,
-      cConf,
-      namespaceQueryAdmin);
+      namespaceQueryAdmin,
+      authorizationEnforcer,
+      injector.getInstance(AuthorizerInstantiator.class));
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf,
@@ -142,8 +169,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  new HashSet<DatasetMetricsReporter>(),
-                                 instanceService, namespaceQueryAdmin
-    );
+                                 instanceService, namespaceQueryAdmin,
+                                 authorizationEnforcer);
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

@@ -37,10 +37,12 @@ import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
@@ -55,13 +57,17 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -69,9 +75,11 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import org.apache.commons.httpclient.HttpStatus;
@@ -120,39 +128,23 @@ public abstract class DatasetServiceTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+
   @Before
   public void before() throws Exception {
+    initializeAndStartService(createCommonConf());
+  }
 
+  @After
+  public void after() throws Exception {
+    Services.chainStop(service, opExecutorService, txManager);
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
+    Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
+  }
+
+  protected void initializeAndStartService(CConfiguration cConf) throws Exception {
     // TODO: this whole method is a mess. Streamline it!
-
-    CConfiguration cConf = CConfiguration.create();
-    File dataDir = new File(tmpFolder.newFolder(), "data");
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
-    if (!DirUtils.mkdirs(dataDir)) {
-      throw new RuntimeException(String.format("Could not create DatasetFramework output dir %s", dataDir));
-    }
-    cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, dataDir.getAbsolutePath());
-    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-
     // Starting DatasetService service
     discoveryService = new InMemoryDiscoveryService();
-    MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
-
-    injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new LocationUnitTestModule().getModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new TransactionInMemoryModule());
-
-    // Tx Manager to support working with datasets
-    txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
-    InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
-    TransactionSystemClientService txSystemClientService =
-      new DelegatingTransactionSystemClientService(txSystemClient);
-
     registryFactory = new DatasetDefinitionRegistryFactory() {
       @Override
       public DatasetDefinitionRegistry create() {
@@ -161,10 +153,33 @@ public abstract class DatasetServiceTestBase {
         return registry;
       }
     };
+    dsFramework = new RemoteDatasetFramework(cConf, discoveryService, registryFactory);
+
+    injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocationUnitTestModule().getModule(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new TransactionInMemoryModule(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Singleton.class);
+          bind(DatasetFramework.class).toInstance(dsFramework);
+        }
+      });
+
+    // Tx Manager to support working with datasets
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+    TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
+    TransactionSystemClientService txSystemClientService =
+      new DelegatingTransactionSystemClientService(txSystemClient);
 
     locationFactory = injector.getInstance(LocationFactory.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
-    dsFramework = new RemoteDatasetFramework(cConf, discoveryService, registryFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
 
@@ -175,8 +190,9 @@ public abstract class DatasetServiceTestBase {
                               impersonator);
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
-    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
+    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
+    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
     opExecutorService.startAndWait();
 
     Map<String, DatasetModule> defaultModules =
@@ -197,24 +213,17 @@ public abstract class DatasetServiceTestBase {
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
                                                             txExecutorFactory,
                                                             inMemoryDatasetFramework, defaultModules);
-    instanceService = new DatasetInstanceService(
-      typeManager,
-      new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework),
-      new InMemoryDatasetOpExecutor(dsFramework),
-      exploreFacade,
-      cConf,
-      namespaceAdmin);
+    DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
+    DatasetInstanceManager instanceManager =
+      new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
+    AuthorizationEnforcementService authEnforceService = injector.getInstance(AuthorizationEnforcementService.class);
+    instanceService = new DatasetInstanceService(typeManager, instanceManager, opExecutor, exploreFacade,
+                                                 namespaceAdmin, authEnforceService,
+                                                 injector.getInstance(AuthorizerInstantiator.class));
 
-    service = new DatasetService(cConf,
-                                 namespacedLocationFactory,
-                                 discoveryService,
-                                 discoveryService,
-                                 typeManager,
-                                 metricsCollectionService,
-                                 new InMemoryDatasetOpExecutor(dsFramework),
-                                 new HashSet<DatasetMetricsReporter>(),
-                                 instanceService,
-                                 namespaceAdmin);
+    service = new DatasetService(cConf, namespacedLocationFactory, discoveryService, discoveryService, typeManager,
+                                 metricsCollectionService, opExecutor, new HashSet<DatasetMetricsReporter>(),
+                                 instanceService, namespaceAdmin, authEnforceService);
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -233,13 +242,6 @@ public abstract class DatasetServiceTestBase {
     Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Id.Namespace.DEFAULT));
   }
 
-  @After
-  public void after() throws Exception {
-    Services.chainStop(service, opExecutorService, txManager);
-    namespaceAdmin.delete(Id.Namespace.DEFAULT);
-    Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
-  }
-
   private synchronized int getPort() {
     int attempts = 0;
     while (port < 0 && attempts++ < 10) {
@@ -252,6 +254,19 @@ public abstract class DatasetServiceTestBase {
     }
 
     return port;
+  }
+
+  protected CConfiguration createCommonConf() throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+    File dataDir = new File(tmpFolder.newFolder(), "data");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
+    if (!DirUtils.mkdirs(dataDir)) {
+      throw new RuntimeException(String.format("Could not create DatasetFramework output dir %s", dataDir));
+    }
+    cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, dataDir.getAbsolutePath());
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    return cConf;
   }
 
   protected URL getUrl(String path) throws MalformedURLException {

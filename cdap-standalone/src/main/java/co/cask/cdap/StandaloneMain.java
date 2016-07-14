@@ -63,6 +63,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -507,7 +508,8 @@ public class StandaloneMain {
       new MetadataServiceModule(),
       new RemoteSystemOperationsServiceModule(),
       new AuditModule().getStandaloneModules(),
-      new AuthorizationModule()
+      new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getStandaloneModules()
     );
   }
 }

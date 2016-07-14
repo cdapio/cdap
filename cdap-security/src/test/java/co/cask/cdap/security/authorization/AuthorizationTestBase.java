@@ -16,12 +16,8 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
@@ -29,7 +25,6 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * Base class for authorization tests.
@@ -38,19 +33,7 @@ public class AuthorizationTestBase {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
   protected static final CConfiguration CCONF = CConfiguration.create();
-  protected static final AuthorizationContextFactory AUTH_CONTEXT_FACTORY = new AuthorizationContextFactory() {
-    @Override
-    public AuthorizationContext create(Properties extensionProperties) {
-      Transactional txnl = new Transactional() {
-        @Override
-        public void execute(TxRunnable runnable) throws TransactionFailureException {
-          //no-op
-        }
-      };
-      return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(), txnl,
-                                             null);
-    }
-  };
+  protected static final AuthorizationContextFactory AUTH_CONTEXT_FACTORY = new NoOpAuthorizationContextFactory();
   protected static LocationFactory locationFactory;
 
   @BeforeClass

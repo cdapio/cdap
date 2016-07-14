@@ -41,6 +41,8 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
@@ -98,8 +100,6 @@ public abstract class MetricsSuiteTestBase {
   protected static MetricStore metricStore;
   protected static LogReader logReader;
 
-  private static Injector injector;
-
   @BeforeClass
   public static void beforeClass() throws Exception {
     if (!runBefore) {
@@ -114,7 +114,7 @@ public abstract class MetricsSuiteTestBase {
     conf.setBoolean(Constants.Metrics.CONFIG_AUTHENTICATION_REQUIRED, true);
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
-    injector = startMetricsService(conf);
+    Injector injector = startMetricsService(conf);
     store = injector.getInstance(Store.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     metricStore = injector.getInstance(MetricStore.class);
@@ -147,7 +147,9 @@ public abstract class MetricsSuiteTestBase {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ExploreClientModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules()
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules()
     ).with(new AbstractModule() {
       @Override
       protected void configure() {

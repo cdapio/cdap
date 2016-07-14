@@ -67,6 +67,7 @@ import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.distributed.TransactionService;
@@ -205,6 +206,7 @@ public class UpgradeTool {
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

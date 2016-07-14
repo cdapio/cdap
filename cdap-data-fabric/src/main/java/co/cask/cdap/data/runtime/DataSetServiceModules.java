@@ -18,7 +18,6 @@ package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
@@ -166,15 +165,12 @@ public class DataSetServiceModules extends RuntimeModule {
   private static final class DatasetMdsProvider implements Provider<DatasetFramework> {
     private final DatasetDefinitionRegistryFactory registryFactory;
     private final Map<String, DatasetModule> defaultModules;
-    private final CConfiguration configuration;
 
     @Inject
     DatasetMdsProvider(DatasetDefinitionRegistryFactory registryFactory,
-                       @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
-                       CConfiguration configuration) {
+                       @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
       this.registryFactory = registryFactory;
       this.defaultModules = defaultModules;
-      this.configuration = configuration;
     }
 
     @Override

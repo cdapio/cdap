@@ -35,6 +35,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.TempFolder;
 import co.cask.cdap.internal.app.scheduler.LogPrintingJob;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
@@ -97,6 +99,8 @@ public class DatasetBasedTimeScheduleStoreTest {
                                     new DataSetServiceModules().getInMemoryModules(),
                                     new ExploreClientModule(),
                                     new NamespaceClientRuntimeModule().getInMemoryModules(),
+                                    new AuthorizationTestModule(),
+                                    new AuthorizationEnforcementModule().getInMemoryModules(),
                                     new AbstractModule() {
                                       @Override
                                       protected void configure() {

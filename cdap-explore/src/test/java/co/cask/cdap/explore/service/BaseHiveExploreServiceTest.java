@@ -64,6 +64,8 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
@@ -397,6 +399,8 @@ public class BaseHiveExploreServiceTest {
       new StreamAdminModules().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -458,6 +462,8 @@ public class BaseHiveExploreServiceTest {
       // for namespace admin to default namespace admin which needs a lot more stuff than what is needed for explore
       // unit tests. Since this explore standalone module needs persistent of files this should not affect the tests.
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

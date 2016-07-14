@@ -51,7 +51,8 @@ import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
@@ -89,7 +90,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     injector = createInjector(cConf, hConf);
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.DATASET_EXECUTOR));
   }
@@ -112,7 +113,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new NamespaceStoreModule().getDistributedModules(),
       new MetadataServiceModule(),
-      new AuthorizationModule(),
       new RemoteSystemOperationsServiceModule(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
@@ -120,6 +120,8 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new AuditModule().getDistributedModules(),
       new EntityVerifierModule(),
       new SecureStoreModules().getDistributedModules(),
+      new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

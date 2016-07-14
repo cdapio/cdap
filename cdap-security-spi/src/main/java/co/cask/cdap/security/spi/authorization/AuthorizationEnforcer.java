@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.spi.authorization;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
@@ -54,11 +55,11 @@ public interface AuthorizationEnforcer {
   void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
 
   /**
-   * Filters the specified set of entities to only return the ones that the user has access (READ/WRITE/ADMIN/ALL).
+   * Returns a {@link Predicate} that can be used to filter a set of entities to only return the entities that the
+   * specified {@link Principal} has access (READ/WRITE/ADMIN/ALL) to.
    *
-   * @param unfiltered the set of {@link EntityId entities} to filter
    * @param principal the {@link Principal} for which to filter
    * @return a set of {@link EntityId entities} that the specified user has access to
    */
-  <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception;
+  Predicate<EntityId> createFilter(Principal principal) throws Exception;
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.authorization;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
@@ -59,6 +60,12 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthorizationEnforcementService.class);
   private static final EnumSet<State> SERVICE_AVAILABLE_STATES =
     EnumSet.of(State.STARTING, State.RUNNING, State.STOPPING);
+  private static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
+    @Override
+    public boolean apply(EntityId entityId) {
+      return true;
+    }
+  };
 
   private final PrivilegesFetcher privilegesFetcher;
   private final boolean authorizationEnabled;
@@ -122,8 +129,13 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
     if (!authorizationEnabled) {
       return;
     }
+    // For accessing system datasets for internal operations like recording metadata, usage, lineage, etc
+    if (Principal.SYSTEM.equals(principal)) {
+      return;
+    }
 
     Set<Action> allowedActions = getPrivileges(principal).get(entity);
+    LOG.trace("Enforcing actions {} on {} for {}. Allowed actions are {}", actions, entity, principal, allowedActions);
     if (allowedActions == null) {
       throw new UnauthorizedException(principal, actions, entity);
     }
@@ -136,19 +148,23 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   }
 
   @Override
-  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
+    if (!authorizationEnabled) {
+      return ALLOW_ALL;
+    }
+    // For accessing system datasets for internal operations like recording metadata, usage, lineage, etc
     if (Principal.SYSTEM.equals(principal)) {
-      return unfiltered;
+      return ALLOW_ALL;
     }
-
     Map<EntityId, Set<Action>> privileges = getPrivileges(principal);
-    Set<T> result = new HashSet<>();
-    for (T entityId : unfiltered) {
-      if (privileges.containsKey(entityId)) {
-        result.add(entityId);
+    final Set<EntityId> allowedEntities = privileges != null ? privileges.keySet() : new HashSet<EntityId>();
+
+    return new Predicate<EntityId>() {
+      @Override
+      public boolean apply(EntityId entityId) {
+        return allowedEntities.contains(entityId);
       }
-    }
-    return Collections.unmodifiableSet(result);
+    };
   }
 
   @Override

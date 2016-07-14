@@ -47,6 +47,8 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.ReadRange;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
@@ -99,7 +101,8 @@ public class TestResilientLogging {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new IOModule(), new ZKClientModule(),
+      new IOModule(),
+      new ZKClientModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -110,6 +113,8 @@ public class TestResilientLogging {
       new ExploreClientModule(),
       new LoggingModules().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
