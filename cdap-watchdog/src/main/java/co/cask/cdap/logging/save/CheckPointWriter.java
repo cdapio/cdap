@@ -18,6 +18,8 @@
 package co.cask.cdap.logging.save;
 
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Flushable;
 import java.io.IOException;
@@ -27,6 +29,7 @@ import java.util.Map;
  * Writes checkpoints of kafka partitions and offsets.
  */
 public class CheckPointWriter implements Flushable, Runnable {
+  private static final Logger LOG = LoggerFactory.getLogger(CheckPointWriter.class);
 
   private final Map<Integer, Checkpoint> partitionCheckpoints;
   private final CheckpointManager checkpointManager;
@@ -42,7 +45,11 @@ public class CheckPointWriter implements Flushable, Runnable {
 
   @Override
   public void run() {
-    checkpoint();
+    try {
+      checkpoint();
+    } catch (Exception e) {
+      LOG.error("Got exception while check-pointing: ", e);
+    }
   }
 
   @Override
