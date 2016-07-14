@@ -183,9 +183,7 @@ checkHostNameAndSetClusterName
 
 validateAmbariConnectivity
 
-
 # Update necessary hadoop configuration
 updateFsAzurePageBlobDirForCDAP
 
 exit 0
-
