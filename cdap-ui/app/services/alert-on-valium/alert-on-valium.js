@@ -28,11 +28,17 @@ angular.module(PKG.name + '.services')
         obj.duration = obj.type === 'success' ? SUCCESS_ALERT_DURATION : false;
 
         alertObj = $alert(obj);
+        if (obj.templateUrl) {
+          alertObj.$scope.templateScope = obj.templateScope;
+        }
         alertObj.$scope
         .$on('alert.hide', function() {
           isAnAlertOpened = false;
         });
       } else {
+        if (obj.templateUrl) {
+          alertObj.$scope.templateScope = obj.templateScope;
+        }
         alertObj.$scope.type = obj.type;
         alertObj.$scope.content = obj.content;
         alertObj.$scope.title = obj.title;
