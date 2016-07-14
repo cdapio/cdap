@@ -169,6 +169,13 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'dataset-type': 'dataset'
         }
+      },
+      'sql-select-fields': {
+        element: '<my-sql-selector></my-sql-selector>',
+        attributes: {
+          'ng-model': 'model',
+          'input-schema': 'inputSchema'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
