@@ -15,8 +15,13 @@
 -->
 <div ng-if="!MyPostRunActionsCtrl.actions.length">
   <div class="well well-sm text-center empty-table"
-       ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, false)">
+       ng-if="!MyPostRunActionsCtrl._isDisabled"
+       ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'create')">
     <h1>+</h1>
+  </div>
+  <div class="well well-sm text-center empty-table disabled"
+       ng-if="MyPostRunActionsCtrl._isDisabled">
+    <h2>No Post Action Runs Added</h2>
   </div>
 </div>
 <table class="table table-bordered" ng-if="MyPostRunActionsCtrl.actions.length">
@@ -25,28 +30,34 @@
       <th>Action</th>
       <th>Event</th>
       <th></th>
-      <th></th>
+      <th ng-if="!MyPostRunActionsCtrl._isDisabled"></th>
     </tr>
   </thead>
   <tbody>
     <tr ng-repeat="action in MyPostRunActionsCtrl.actions">
       <td>{{action.plugin.name}}</td>
       <td>{{action.plugin.properties.runCondition}}</td>
-      <td>
-        <a href="" ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, true, action)">
+      <td ng-if="!MyPostRunActionsCtrl._isDisabled">
+        <a href="" ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'edit', action)">
           Edit
         </a>
       </td>
-      <td>
+      <td ng-if="!MyPostRunActionsCtrl._isDisabled">
         <a href ng-click="MyPostRunActionsCtrl.deletePostRunAction(action)">
           <span class="fa text-danger fa-trash"></span>
+        </a>
+      </td>
+      <td ng-if="MyPostRunActionsCtrl._isDisabled">
+        <a href ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'view', action)">
+          View
         </a>
       </td>
     </tr>
     <tr>
       <td colspan="4">
         <div class="well well-sm text-center"
-             ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store)">
+             ng-if="!MyPostRunActionsCtrl._isDisabled"
+             ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'create')">
           <h1>+</h1>
         </div>
       </td>

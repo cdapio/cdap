@@ -17,10 +17,13 @@
 angular.module(PKG.name + '.commons')
   .controller('MyRealtimePipelineSettingsCtrl', function($scope) {
     this.instance = this.store.getInstance();
-    // Debounce method for setting instance
-    const setInstance = _.debounce( () => {
-      this.actionCreator.setInstance(this.instance);
-    }, 1000);
-    var unsub = $scope.$watch('MyRealtimePipelineSettingsCtrl.instance' , setInstance);
-    $scope.$on('$destroy', unsub);
+    this._isDisabled = this.isDisabled === 'true';
+    if (!this._isDisabled) {
+      // Debounce method for setting instance
+      const setInstance = _.debounce( () => {
+        this.actionCreator.setInstance(this.instance);
+      }, 1000);
+      var unsub = $scope.$watch('MyRealtimePipelineSettingsCtrl.instance' , setInstance);
+      $scope.$on('$destroy', unsub);
+    }
   });

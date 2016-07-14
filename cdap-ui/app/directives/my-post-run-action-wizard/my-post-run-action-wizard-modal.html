@@ -14,12 +14,15 @@
   the License.
 -->
 <div class="modal-header clearfix">
-
-  <h4 class="modal-title pull-left" ng-if="!action.plugin.name">
+  <h4 class="modal-title pull-left" ng-if="!action.name">
     Post Run Actions
   </h4>
-  <h4 ng-if="action.plugin.name" class="modal-title pull-left">
-    <span>{{action.plugin.name}}</span>
+  <h4 ng-if="action.name" class="modal-title pull-left">
+    <span>{{action.plugin.name || action.name}}</span>
+    <small>{{action.defaultArtifact.version || action.plugin.artifact.version}}</small>
+    <p>
+      <small>{{action.description}}</small>
+    </p>
   </h4>
   <div class="btn-group pull-right">
     <a class="btn" ng-click="$close()">
@@ -30,8 +33,7 @@
 </div>
 <div class="modal-body config-modal">
   <my-post-run-action-wizard
-    is-edit="isEdit"
-    is-disabled="isDisabled"
+    mode="{{mode}}"
     action-creator="actionCreator"
     store="store"
     action="action">

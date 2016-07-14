@@ -19,26 +19,44 @@ angular.module(PKG.name + '.commons')
     'ngInject';
     var vm = this;
     vm.action = vm.action || {};
-    if (vm.isEdit) {
-      vm.currentStage = 2;
+    if (vm.action && Object.keys(vm.action).length > 1) {
       vm.selectedAction = Object.assign({}, angular.copy(vm.action.plugin), {
         defaultArtifact: vm.action.plugin.artifact
       });
     } else {
+      vm.selectedAction = {};
+    }
+
+    if (vm.mode === 'edit') {
+      vm.currentStage = 2;
+    } else if (vm.mode === 'view') {
+      vm.currentStage = 3;
+      vm.configuredAction = vm.selectedAction;
+    } else if(vm.mode === 'create') {
       vm.currentStage = 1;
     }
     vm.goToPreviousStep = function() {
       vm.currentStage -=1;
+      if (vm.currentStage === 1) {
+        vm.selectedAction = {};
+        $scope.$parent.action = vm.selectedAction;
+      }
     };
     vm.onActionSelect = function(action) {
       vm.selectedAction = action;
+      $scope.$parent.action = vm.selectedAction;
       vm.currentStage = 2;
     };
     vm.onActionConfigure = function(action) {
       vm.configuredAction = action;
+      $scope.$parent.action = vm.configuredAction;
       vm.currentStage += 1;
     };
     vm.onActionConfirm = function(action) {
+      if (!action) {
+        $scope.$parent.$close();
+        return;
+      }
       vm.confirmedAction = {
         name: vm.action.name || action.name + uuid.v4(),
         plugin: {
@@ -46,10 +64,11 @@ angular.module(PKG.name + '.commons')
           type: action.type,
           artifact: action.defaultArtifact,
           properties: action.properties
-        }
+        },
+        description: vm.action.description
       };
       try {
-        if (vm.isEdit) {
+        if (vm.mode === 'edit') {
           vm.actionCreator.editPostAction(vm.confirmedAction);
         } else {
           vm.actionCreator.addPostAction(vm.confirmedAction);

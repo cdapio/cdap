@@ -17,6 +17,7 @@
 class MyBatchPipelineSettingsCtrl {
   constructor(GLOBALS, $scope) {
     this.GLOBALS = GLOBALS;
+    this._isDisabled = this.isDisabled === 'true';
     this.templateType = this.store.getArtifact().name;
     this.scheduleWidget = {
       type: 'basic'
@@ -27,11 +28,12 @@ class MyBatchPipelineSettingsCtrl {
       this.scheduleWidget.type = 'advanced';
     }
     this.engine = this.store.getEngine();
-
-    // Debounce method for setting schedule
-    var setSchedule = _.debounce(() => this.actionCreator.setSchedule(this.cron), 1000);
-    var unsub = $scope.$watch('MyBatchPipelineSettingsCtrl.cron', setSchedule);
-    $scope.$on('$destroy', unsub);
+    if (!this._isDisabled) {
+      // Debounce method for setting schedule
+      var setSchedule = _.debounce(() => this.actionCreator.setSchedule(this.cron), 1000);
+      var unsub = $scope.$watch('MyBatchPipelineSettingsCtrl.cron', setSchedule);
+      $scope.$on('$destroy', unsub);
+    }
   }
 
   checkCron(cron) {

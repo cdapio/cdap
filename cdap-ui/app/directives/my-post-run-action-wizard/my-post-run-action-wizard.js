@@ -18,8 +18,7 @@ angular.module(PKG.name + '.commons')
   .directive('myPostRunActionWizard', function() {
     return {
       scope: {
-        isEdit: '=?',
-        isDisaled: '=?',
+        mode: '@',
         actionCreator: '=?',
         store: '=',
         action: '=?'
@@ -31,24 +30,22 @@ angular.module(PKG.name + '.commons')
     };
   })
   .service('myPostRunActionWizardService', function($uibModal) {
-    this.show = (actionCreator, store, isEdit, action, isDisabled) => {
+    this.show = (actionCreator, store, mode, action) => {
       $uibModal.open({
         templateUrl: 'my-post-run-action-wizard/my-post-run-action-wizard-modal.html',
         backdrop: true,
         resolve: {
           rActionCreator: () => actionCreator || {},
-          rIsEdit: () => isEdit || false,
           rStore: () => store,
-          rIsDisabled: () => isDisabled || false,
-          rAction: () => action || null
+          rAction: () => action || null,
+          rMode: () => mode
         },
         size: 'lg',
         windowClass: 'post-run-actions-modal cdap-modal',
-        controller: ['$scope', 'rActionCreator', 'rIsEdit', 'rStore', 'rAction', 'rIsDisabled', function($scope, rActionCreator, rIsEdit, rStore, rAction, rIsDisabled) {
+        controller: ['$scope', 'rActionCreator', 'rStore', 'rMode', 'rAction', function($scope, rActionCreator, rStore, rMode, rAction) {
           $scope.actionCreator = rActionCreator;
-          $scope.isEdit = rIsEdit;
           $scope.store = rStore;
-          $scope.isDisabled = rIsDisabled;
+          $scope.mode = rMode;
           $scope.action = rAction;
         }]
       });
