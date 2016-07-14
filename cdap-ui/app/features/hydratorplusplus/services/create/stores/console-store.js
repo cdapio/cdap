@@ -32,7 +32,11 @@ class HydratorPlusPlusConsoleStore {
   }
 
   registerOnChangeListener(callback) {
-    this.changeListeners.push(callback);
+    let index = this.changeListeners.push(callback);
+    // un-subscribe for listners.
+    return () => {
+      this.changeListeners.splice(index-1, 1);
+    };
   }
   emitChange() {
     this.changeListeners.forEach( callback => callback() );

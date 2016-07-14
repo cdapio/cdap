@@ -136,10 +136,10 @@ class HydratorPlusPlusConfigActions {
         var appNames = apps.map( (app) => { return app.name; } );
 
         if (appNames.indexOf(config.name) !== -1) {
-          this.HydratorPlusPlusConsoleActions.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage([{
             type: 'error',
             content: this.GLOBALS.en.hydrator.studio.error['NAME-ALREADY-EXISTS']
-          });
+          }]);
           this.EventPipe.emit('hideLoadingIcon.immediate');
         } else {
           publish(config.name);
