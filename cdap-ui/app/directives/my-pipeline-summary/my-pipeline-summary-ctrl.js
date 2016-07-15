@@ -15,11 +15,12 @@
  */
 
 class MyPipelineSummaryCtrl {
-  constructor() {
+  constructor(moment) {
     this.runs = [];
     this.programId = '';
     this.programType = '';
     this.appId = '';
+    this.moment = moment;
     this.setState();
     this.store.registerOnChangeListener(this.setState.bind(this));
   }
@@ -30,8 +31,23 @@ class MyPipelineSummaryCtrl {
     this.programType = params.programType.toUpperCase();
     this.programId = params.programName;
     this.appId = params.app;
+
+    var nextRunTime = this.store.getNextRunTime();
+    if (nextRunTime && nextRunTime.length) {
+      this.nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
+    } else {
+      this.nextRunTime = 'N/A';
+    }
+    var averageRunTime = this.store.getStatistics().avgRunTime;
+    // We get time as seconds from backend. So multiplying it by 1000 to give moment.js in milliseconds.
+    if (averageRunTime) {
+      this.avgRunTime = this.moment.utc( averageRunTime * 1000 ).format('HH:mm:ss');
+    } else {
+      this.avgRunTime = 'N/A';
+    }
   }
 }
+MyPipelineSummaryCtrl.$inject = ['moment'];
 
  angular.module(PKG.name + '.commons')
   .controller('MyPipelineSummaryCtrl', MyPipelineSummaryCtrl);

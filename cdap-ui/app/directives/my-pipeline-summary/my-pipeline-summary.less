@@ -16,10 +16,23 @@
 [my-pipeline-summary] {
   display: flex;
   my-card.summary {
-    flex: 0.25;
+    flex: 0.3;
+    .table {
+      &.borderless {
+        td,
+        th {
+          border: 0;
+          font-size: 13px;
+          padding: 5px;
+        }
+        td {
+          font-size: 12px;
+        }
+      }
+    }
   }
   my-card.history {
-    flex: 0.75;
+    flex: 0.7;
     margin-right: 10px;
 
     my-program-history {
@@ -32,6 +45,8 @@
           > tr {
             > td {
               border: 0;
+              font-size: 12px;
+              padding: 5px;
             }
           }
         }
@@ -39,6 +54,8 @@
           > tr:first-child {
             > th {
               border: 0;
+              font-size: 12px;
+              padding: 5px;
             }
           }
         }

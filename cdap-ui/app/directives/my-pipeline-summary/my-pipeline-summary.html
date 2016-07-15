@@ -22,5 +22,23 @@
     class="history-table"></my-program-history>
 </my-card>
 <my-card title="Summary" class="summary">
-  <h3>Summary</h3>
+  <table class="table borderless">
+    <thead>
+      <tr>
+        <th>Total Runs</th>
+        <th>Average Duration</th>
+        <th>Next Run</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{MyPipelineSummaryCtrl.totalRunsCount}}</td>
+        <td>{{MyPipelineSummaryCtrl.avgRunTime}}</td>
+        <td>
+          {{ MyPipelineSummaryCtrl.nextRunTime | amDateFormat:'h:mm:ss A'}}
+          <small> {{ MyPipelineSummaryCtrl.nextRunTime | amDateFormat:'MM/DD/YYYY'}}</small>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </my-card>
