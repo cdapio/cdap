@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
+import co.cask.cdap.security.store.KMSTokenUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
 import com.google.common.base.Throwables;
@@ -89,6 +90,8 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         HiveTokenUtils.obtainToken(refreshedCredentials);
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
+
+      KMSTokenUtils.obtainToken(hConf, refreshedCredentials);
 
       addDelegationTokens(hConf, locationFactory, refreshedCredentials);
 

@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.security.store.KMSSecureStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -81,10 +82,9 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStore get() {
-      if ("file".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
-        return injector.getInstance(FileSecureStore.class);
+      if ("kms".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
+        return injector.getInstance(KMSSecureStore.class);
       } else {
-        // TODO: Change this to use KMS once that is implemented.
         return injector.getInstance(FileSecureStore.class);
       }
     }
@@ -105,10 +105,9 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStoreManager get() {
-      if ("file".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
-        return injector.getInstance(FileSecureStore.class);
+      if ("kms".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
+        return injector.getInstance(KMSSecureStore.class);
       } else {
-        // TODO: Change this to use KMS once that is implemented.
         return injector.getInstance(FileSecureStore.class);
       }
     }
