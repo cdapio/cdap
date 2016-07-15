@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
@@ -58,6 +60,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final RuntimeStore runtimeStore;
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
   private final CConfiguration cConf;
 
   @Inject
@@ -65,7 +69,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                               RuntimeStore runtimeStore, CConfiguration cConf) {
+                               RuntimeStore runtimeStore, CConfiguration cConf, SecureStore secureStore,
+                               SecureStoreManager secureStoreManager) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -75,6 +80,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.runtimeStore = runtimeStore;
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
     this.cConf = cConf;
   }
 
@@ -103,8 +110,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
     WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                               txClient, runtimeStore, cConf,
-                                               pluginInstantiator);
+                                               txClient, runtimeStore, cConf, pluginInstantiator,
+                                               secureStore, secureStoreManager);
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.
     ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);

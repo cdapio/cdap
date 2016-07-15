@@ -21,6 +21,9 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 
+import java.io.IOException;
+import java.util.Map;
+
 /**
  * A no-op implementation of {@link Admin} for use in tests
  */
@@ -57,6 +60,17 @@ public class NoOpAdmin implements Admin {
 
   @Override
   public void truncateDataset(String name) throws DatasetManagementException {
+    //no-op
+  }
+
+  @Override
+  public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
+    throws IOException {
+    //no-op
+  }
+
+  @Override
+  public void delete(String namespace, String name) throws IOException {
     //no-op
   }
 }

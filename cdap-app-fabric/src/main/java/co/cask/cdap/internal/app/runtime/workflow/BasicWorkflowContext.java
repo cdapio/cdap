@@ -16,6 +16,10 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
@@ -55,12 +59,13 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
                        DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
-                       @Nullable PluginInstantiator pluginInstantiator) {
+                       @Nullable PluginInstantiator pluginInstantiator,
+                       SecureStore secureStore, SecureStoreManager secureStoreManager) {
     super(program, programOptions, (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
                                                              ProgramRunners.getRunId(programOptions).getId()),
-          pluginInstantiator);
+          secureStore, secureStoreManager, pluginInstantiator);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.programWorkflowRunner = programWorkflowRunner;

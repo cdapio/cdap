@@ -28,6 +28,8 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
@@ -97,9 +99,13 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         DatasetFramework dsFramework,
                         StreamAdmin streamAdmin,
                         @Nullable File pluginArchive,
-                        @Nullable PluginInstantiator pluginInstantiator) {
+                        @Nullable PluginInstantiator pluginInstantiator,
+                        SecureStore secureStore,
+                        SecureStoreManager secureStoreManager) {
     super(program, programOptions, Collections.<String>emptySet(), dsFramework, txClient, discoveryServiceClient, false,
-          metricsCollectionService, createMetricsTags(workflowProgramInfo), pluginInstantiator);
+          metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
+          pluginInstantiator);
+
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
     this.spec = spec;

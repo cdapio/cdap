@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.runtime.worker;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
@@ -58,17 +60,22 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
+                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
+                             SecureStore secureStore, SecureStoreManager secureStoreManager) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
   }
 
   @Override
@@ -112,7 +119,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, options, instanceId, instanceCount,
                                                           metricsCollectionService, datasetFramework, txClient,
                                                           discoveryServiceClient, streamWriterFactory,
-                                                          pluginInstantiator);
+                                                          pluginInstantiator, secureStore, secureStoreManager);
+
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.

@@ -521,7 +521,7 @@ final class HttpHandlerGenerator {
      *     try {
      *       txContext.start();
      *       try {
-     *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
+     *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(createHandlerContextClassLoader());
      *         try {
      *           // Only do assignment if handler method returns HttpContentConsumer
      *           [contentConsumer = ]handler.handle(wrapRequest(request), wrappedResponder, ...);
@@ -756,11 +756,10 @@ final class HttpHandlerGenerator {
 
       int throwable = mg.newLocal(Type.getType(Throwable.class));
 
-      // ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
+      // ClassLoader classLoader = ClassLoaders.setContextClassLoader(createHandlerContextClassLoader());
       int classLoader = mg.newLocal(classLoaderType);
-      mg.loadLocal(handler, handlerType);
-      mg.invokeVirtual(Type.getType(Object.class), Methods.getMethod(Class.class, "getClass"));
-      mg.invokeVirtual(Type.getType(Class.class), Methods.getMethod(ClassLoader.class, "getClassLoader"));
+      mg.loadThis();
+      mg.invokeVirtual(classType, Methods.getMethod(ClassLoader.class, "createHandlerContextClassLoader"));
       mg.invokeStatic(Type.getType(ClassLoaders.class),
                       Methods.getMethod(ClassLoader.class, "setContextClassLoader", ClassLoader.class));
       mg.storeLocal(classLoader, classLoaderType);

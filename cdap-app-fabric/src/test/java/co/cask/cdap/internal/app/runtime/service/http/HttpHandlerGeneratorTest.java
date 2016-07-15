@@ -26,6 +26,8 @@ import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
@@ -703,7 +705,28 @@ public class HttpHandlerGeneratorTest {
         public void truncateDataset(String name) {
           // nop-op
         }
+
+        @Override
+        public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
+          throws IOException {
+          //no-op
+        }
+
+        @Override
+        public void delete(String namespace, String name) throws IOException {
+          //no-op
+        }
       };
+    }
+
+    @Override
+    public List<SecureStoreMetadata> list(String namespace) throws IOException {
+      return null;
+    }
+
+    @Override
+    public SecureStoreData get(String namespace, String name) throws IOException {
+      return null;
     }
   }
 }

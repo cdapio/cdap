@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
@@ -137,6 +139,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(final Injector injector) {
     final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     final DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    final SecureStore secureStore = injector.getInstance(SecureStore.class);
+    final SecureStoreManager secureStoreManager = injector.getInstance(SecureStoreManager.class);
     // Multiple instances of BasicMapReduceTaskContext can shares the same program.
     final AtomicReference<Program> programRef = new AtomicReference<>();
 
@@ -181,7 +185,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           program, contextConfig.getProgramOptions(), taskType, key.getTaskAttemptID().getTaskID().toString(),
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
-          contextConfig.getLocalizedResources()
+          contextConfig.getLocalizedResources(), secureStore, secureStoreManager
         );
       }
     };

@@ -21,6 +21,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
@@ -125,15 +126,17 @@ public class AuthorizationModule extends PrivateModule {
   @Singleton
   private static final class AdminProvider implements Provider<Admin> {
     private final DatasetFramework dsFramework;
+    private final SecureStoreManager secureStoreManager;
 
     @Inject
-    private AdminProvider(DatasetFramework dsFramework) {
+    private AdminProvider(DatasetFramework dsFramework, SecureStoreManager secureStoreManager) {
       this.dsFramework = dsFramework;
+      this.secureStoreManager = secureStoreManager;
     }
 
     @Override
     public Admin get() {
-      return new DefaultAdmin(dsFramework, NamespaceId.SYSTEM);
+      return new DefaultAdmin(dsFramework, NamespaceId.SYSTEM, secureStoreManager);
     }
   }
 

@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -57,12 +59,15 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory) {
+                              DataFabricFacadeFactory dataFabricFacadeFactory,
+                              SecureStore secureStore, SecureStoreManager secureStoreManager) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -70,6 +75,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
   }
 
   @Override
@@ -106,7 +113,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           instanceId, instanceCount, serviceAnnouncer,
                                                           metricsCollectionService, datasetFramework,
                                                           dataFabricFacadeFactory, txClient, discoveryServiceClient,
-                                                          pluginInstantiator);
+                                                          pluginInstantiator, secureStore, secureStoreManager);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
       component.addListener(new ServiceListenerAdapter() {

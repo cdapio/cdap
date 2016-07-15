@@ -31,6 +31,10 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -58,6 +62,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +74,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-  implements DatasetContext, RuntimeContext, PluginContext {
+  implements SecureStore, DatasetContext, RuntimeContext, PluginContext {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
@@ -90,6 +95,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final PluginContext pluginContext;
   private final Admin admin;
   private final long logicalStartTime;
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -98,9 +105,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected AbstractContext(Program program, ProgramOptions programOptions,
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
-                            @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags) {
+                            @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
+                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
     this(program, programOptions, datasets, dsFramework, txClient,
-         discoveryServiceClient, multiThreaded, metricsService, metricsTags, null);
+         discoveryServiceClient, multiThreaded, metricsService, metricsTags, secureStore, secureStoreManager, null);
   }
 
   /**
@@ -110,6 +118,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
+                            SecureStore secureStore, SecureStoreManager secureStoreManager,
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program.getId().toEntityId());
 
@@ -141,7 +150,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
-    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId());
+    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId(), secureStoreManager);
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
   }
 
   /**
@@ -365,4 +376,15 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public Admin getAdmin() {
     return admin;
   }
+
+  @Override
+  public List<SecureStoreMetadata> list(String namespace) throws IOException {
+    return secureStore.list(namespace);
+  }
+
+  @Override
+  public SecureStoreData get(String namespace, String name) throws IOException {
+    return secureStore.get(namespace, name);
+  }
+
 }

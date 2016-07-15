@@ -18,6 +18,8 @@ package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
@@ -93,12 +95,14 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
   private final RuntimeStore runtimeStore;
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, TransactionSystemClient txClient,
                      DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
-                     RuntimeStore runtimeStore) {
+                     RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -108,6 +112,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
     this.runtimeStore = runtimeStore;
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
   }
 
   @Override
@@ -154,7 +160,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
-                                                                   pluginInstantiator);
+                                                                   pluginInstantiator, secureStore, secureStoreManager);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import java.io.File
+import java.io.{File, IOException}
 import java.net.URI
 import java.util
 import java.util.concurrent.{CountDownLatch, TimeUnit}
@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
+import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
@@ -133,6 +134,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   override def getServiceDiscoverer: ServiceDiscoverer = new SparkServiceDiscoverer(runtimeContext)
 
   override def getMetrics: Metrics = new SparkUserMetrics(runtimeContext)
+
+  override def getSecureStore: SecureStore = new SparkSecureStore(runtimeContext)
 
   override def getPluginContext: PluginContext = new SparkPluginContext(runtimeContext)
 
@@ -264,6 +267,16 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
         }
       }
     }, TransactionType.IMPLICIT)
+  }
+
+  @throws[IOException]
+  def list(namespace: String): util.List[SecureStoreMetadata] = {
+    return runtimeContext.list(namespace)
+  }
+
+  @throws[IOException]
+  def get(namespace: String, name: String): SecureStoreData = {
+    return runtimeContext.get(namespace, name)
   }
 
   private def configureStreamInput(configuration: Configuration, streamId: StreamId, startTime: Long,

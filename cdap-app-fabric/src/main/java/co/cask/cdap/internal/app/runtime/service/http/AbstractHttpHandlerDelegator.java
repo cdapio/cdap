@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceContext;
@@ -38,6 +39,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.twill.common.Cancellable;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+
+import java.util.Arrays;
 
 /**
  * An abstract base class for all {@link HttpHandler} generated through the {@link HttpHandlerGenerator}.
@@ -80,6 +83,15 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
     Preconditions.checkState(serviceContext instanceof TransactionalHttpServiceContext,
                              "This instance of HttpServiceContext does not support transactions.");
     return ((TransactionalHttpServiceContext) serviceContext).newTransactionContext();
+  }
+
+  /**
+   * Returns a combined class loader of user program class loader and system class loader
+   */
+  @SuppressWarnings("unused")
+  protected final ClassLoader createHandlerContextClassLoader() {
+    return new CombineClassLoader(null, Arrays.asList(getHandler().getClass().getClassLoader(),
+                                                      AbstractHttpServiceHandler.class.getClassLoader()));
   }
 
   /**
