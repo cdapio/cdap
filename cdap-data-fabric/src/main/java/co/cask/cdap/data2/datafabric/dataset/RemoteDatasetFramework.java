@@ -40,7 +40,6 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -270,16 +269,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
     // no-op. The RemoteDatasetFramework doesn't need to do anything. The lineage should be recorded before this point.
-  }
-
-  @Override
-  public void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException {
-    clientCache.getUnchecked(namespaceMeta.getNamespaceId().toId()).createNamespace(namespaceMeta.getConfig());
-  }
-
-  @Override
-  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    clientCache.getUnchecked(namespaceId).deleteNamespace();
   }
 
   private Location createDeploymentJar(Class<?> clz) throws IOException {

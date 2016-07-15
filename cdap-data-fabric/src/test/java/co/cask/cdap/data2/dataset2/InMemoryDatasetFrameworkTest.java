@@ -17,7 +17,8 @@
 package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.proto.NamespaceMeta;
+
+import java.io.IOException;
 
 /**
  *
@@ -28,7 +29,11 @@ public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   protected DatasetFramework getFramework() throws DatasetManagementException {
     InMemoryDatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES);
     framework.setAuditPublisher(inMemoryAuditPublisher);
-    framework.createNamespace(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
+    try {
+      namespacedLocationFactory.get(NAMESPACE_ID).mkdirs();
+    } catch (IOException e) {
+      throw new DatasetManagementException(e.getMessage());
+    }
     return framework;
   }
 }

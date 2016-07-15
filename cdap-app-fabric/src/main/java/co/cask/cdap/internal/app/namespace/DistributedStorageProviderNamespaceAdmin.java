@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service;
+package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -33,36 +34,36 @@ import java.sql.SQLException;
 /**
  * Manages namespaces on underlying systems - HDFS, HBase, Hive, etc.
  */
-public final class DistributedStorageProviderNamespaceAdmin extends StorageProviderNamespaceAdmin {
+public final class DistributedStorageProviderNamespaceAdmin extends AbstractStorageProviderNamespaceAdmin {
 
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
   private HBaseAdmin hBaseAdmin;
 
   @Inject
-  public DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
-                                                  NamespacedLocationFactory namespacedLocationFactory,
-                                                  ExploreFacade exploreFacade, HBaseTableUtil tableUtil) {
+  DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
+                                           NamespacedLocationFactory namespacedLocationFactory,
+                                           ExploreFacade exploreFacade, HBaseTableUtil tableUtil) {
     super(cConf, namespacedLocationFactory, exploreFacade);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
   }
 
   @Override
-  public void create(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
+  public void create(NamespaceMeta namespaceMeta) throws IOException, ExploreException, SQLException {
     // create filesystem directory
-    super.create(namespaceId);
+    super.create(namespaceMeta);
     // TODO: CDAP-1519: Create base directory for filesets under namespace home
     // create HBase namespace
-    tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceId);
+    tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceMeta.getNamespaceId().toId());
   }
 
   @Override
-  public void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
+  public void delete(NamespaceId namespaceId) throws IOException, ExploreException, SQLException {
     // soft delete namespace directory from filesystem
     super.delete(namespaceId);
     // delete HBase namespace
-    tableUtil.deleteNamespaceIfExists(getAdmin(), Id.Namespace.from(namespaceId.getId()));
+    tableUtil.deleteNamespaceIfExists(getAdmin(), namespaceId.toId());
   }
 
   private HBaseAdmin getAdmin() throws IOException {

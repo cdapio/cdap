@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -59,6 +60,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.http.HttpHandler;
@@ -140,6 +142,7 @@ public class BaseHiveExploreServiceTest {
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
   private static NamespaceStore namespaceStore;
+  private static NamespacedLocationFactory namespacedLocationFactory;
 
   protected static Injector injector;
 
@@ -191,16 +194,15 @@ public class BaseHiveExploreServiceTest {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
     namespaceStore = injector.getInstance(NamespaceStore.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
     // create namespaces
-    namespaceStore.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
-    namespaceStore.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
-    namespaceStore.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
-    datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
-    datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
-    datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
+    createNamespace(NamespaceId.DEFAULT);
+    createNamespace(NAMESPACE_ID.toEntityId());
+    createNamespace(OTHER_NAMESPACE_ID.toEntityId());
+
   }
 
   @AfterClass
@@ -210,12 +212,9 @@ public class BaseHiveExploreServiceTest {
     }
 
     // Delete namespaces
-    namespaceStore.delete(Id.Namespace.DEFAULT);
-    namespaceStore.delete(NAMESPACE_ID);
-    namespaceStore.delete(OTHER_NAMESPACE_ID);
-    datasetFramework.deleteNamespace(Id.Namespace.DEFAULT);
-    datasetFramework.deleteNamespace(NAMESPACE_ID);
-    datasetFramework.deleteNamespace(OTHER_NAMESPACE_ID);
+    deleteNamespace(NamespaceId.DEFAULT);
+    deleteNamespace(NAMESPACE_ID.toEntityId());
+    deleteNamespace(OTHER_NAMESPACE_ID.toEntityId());
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
     notificationService.stopAndWait();
@@ -224,6 +223,28 @@ public class BaseHiveExploreServiceTest {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     transactionManager.stopAndWait();
+  }
+
+  /**
+   * Create a namespace because app fabric is not started in explore tests.
+   */
+  protected static void createNamespace(NamespaceId namespaceId) throws IOException, ExploreException, SQLException {
+    namespacedLocationFactory.get(namespaceId.toId()).mkdirs();
+    if (!NamespaceId.DEFAULT.equals(namespaceId)) {
+      exploreService.createNamespace(namespaceId.toId());
+    }
+    namespaceStore.create(new NamespaceMeta.Builder().setName(namespaceId.toId()).build());
+  }
+
+  /**
+   * Delete a namespace because app fabric is not started in explore tests.
+   */
+  protected static void deleteNamespace(NamespaceId namespaceId) throws IOException, ExploreException, SQLException {
+    namespaceStore.delete(namespaceId.toId());
+    namespacedLocationFactory.get(namespaceId.toId()).delete(true);
+    if (!NamespaceId.DEFAULT.equals(namespaceId)) {
+      exploreService.deleteNamespace(namespaceId.toId());
+    }
   }
 
   protected static String getDatasetHiveName(Id.DatasetInstance datasetID) {

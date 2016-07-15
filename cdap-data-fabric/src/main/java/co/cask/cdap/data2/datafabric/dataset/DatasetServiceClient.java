@@ -33,7 +33,6 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -249,20 +248,6 @@ class DatasetServiceClient {
 
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete modules, details: %s", response));
-    }
-  }
-
-  public void createNamespace(NamespaceConfig namespaceConfig) throws DatasetManagementException {
-    HttpResponse response = doPut("admin/create", GSON.toJson(namespaceConfig));
-    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to create namespace, details: %s", response));
-    }
-  }
-
-  public void deleteNamespace() throws DatasetManagementException {
-    HttpResponse response = doDelete("admin/delete");
-    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to delete namespace, details: %s", response));
     }
   }
 

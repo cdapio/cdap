@@ -41,12 +41,10 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -503,35 +501,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     // no-op. The InMemoryDatasetFramework doesn't need to do anything.
     // The lineage should be recorded before this point. In fact, this should not even be called because
     // RemoteDatasetFramework's implementation of this is also a no-op.
-  }
-
-  @Override
-  public void createNamespace(NamespaceMeta namespaceMeta) throws DatasetManagementException {
-    writeLock.lock();
-    try {
-      if (!namespaces.add(namespaceMeta.getNamespaceId().toId())) {
-        throw new DatasetManagementException(String.format("Namespace %s already exists.", namespaceMeta.getName()));
-      }
-    } finally {
-      writeLock.unlock();
-    }
-  }
-
-  @Override
-  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    writeLock.lock();
-    try {
-      Preconditions.checkArgument(!Id.Namespace.SYSTEM.equals(namespaceId),
-                                  "Cannot delete system namespace.");
-      if (!namespaces.remove(namespaceId)) {
-        throw new DatasetManagementException(String.format("Namespace %s does not exist", namespaceId.getId()));
-      }
-      instances.row(namespaceId).clear();
-      moduleClasses.row(namespaceId).clear();
-      registries.remove(namespaceId);
-    } finally {
-      writeLock.unlock();
-    }
   }
 
   // because there may be dependencies between modules, it is important that they are ordered correctly.

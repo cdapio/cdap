@@ -32,8 +32,11 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -62,6 +65,7 @@ import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -110,18 +114,26 @@ public abstract class AbstractDatasetFrameworkTest {
   protected static TransactionExecutorFactory txExecutorFactory;
   protected static InMemoryAuditPublisher inMemoryAuditPublisher;
 
+  protected static LocationFactory locationFactory;
+  protected static NamespacedLocationFactory namespacedLocationFactory;
+
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @BeforeClass
   public static void setup() throws Exception {
     cConf = CConfiguration.create();
+    File dataDir = new File(TMP_FOLDER.newFolder(), "data");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
 
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
       new AuditModule().getInMemoryModules());
+
+    locationFactory = injector.getInstance(LocationFactory.class);
+    namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
 
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     registryFactory = new DatasetDefinitionRegistryFactory() {
@@ -403,15 +415,6 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
-  public void testNamespaceCreationDeletion() throws DatasetManagementException {
-    DatasetFramework framework = getFramework();
-
-    Id.Namespace namespace = Id.Namespace.from("yourspace");
-    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
-    framework.deleteNamespace(namespace);
-  }
-
-  @Test
   @SuppressWarnings("ConstantConditions")
   public void testNamespaceInstanceIsolation() throws Exception {
     DatasetFramework framework = getFramework();
@@ -421,8 +424,8 @@ public abstract class AbstractDatasetFrameworkTest {
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace1).build());
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace1).build());
-    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace2).build());
+    namespacedLocationFactory.get(namespace1).mkdirs();
+    namespacedLocationFactory.get(namespace2).mkdirs();
 
     // create 2 tables, one in each namespace. both tables have the same name.
     Id.DatasetInstance table1ID = Id.DatasetInstance.from(namespace1, "table");
@@ -472,7 +475,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance(table2ID));
 
     // delete one namespace and make sure the other still exists
-    framework.deleteNamespace(namespace1);
+    namespacedLocationFactory.get(namespace1).delete(true);
     Assert.assertTrue(framework.hasInstance(table2ID));
   }
 
@@ -485,8 +488,8 @@ public abstract class AbstractDatasetFrameworkTest {
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace1).build());
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace1).build());
-    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace2).build());
+    namespacedLocationFactory.get(namespace1).mkdirs();
+    namespacedLocationFactory.get(namespace2).mkdirs();
 
     // add modules in each namespace, with one module that shares the same name
     Id.DatasetModule simpleModuleNs1 = Id.DatasetModule.from(namespace1, SimpleKVTable.class.getName());
