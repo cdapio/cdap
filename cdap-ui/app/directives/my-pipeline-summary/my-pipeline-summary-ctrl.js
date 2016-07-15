@@ -15,14 +15,38 @@
  */
 
 class MyPipelineSummaryCtrl {
-  constructor(moment) {
+  constructor($scope, moment, $interval, GLOBALS) {
     this.runs = [];
     this.programId = '';
     this.programType = '';
     this.appId = '';
     this.moment = moment;
     this.setState();
+    var nextRunTimeInterval;
+    var statisticsInterval;
     this.store.registerOnChangeListener(this.setState.bind(this));
+    if (GLOBALS.etlBatchPipelines.indexOf(this.pipelineType) !== -1) {
+      nextRunTimeInterval = $interval(() => {
+        this.actionCreator.getNextRunTime(
+          this.store.getApi(),
+          this.store.getParams()
+        );
+      }, 10000);
+      statisticsInterval = $interval(() => {
+        this.actionCreator.getStatistics(
+          this.store.getApi(),
+          this.store.getParams()
+        );
+      }, 10000);
+    }
+    $scope.$on('$destroy', () => {
+      if (nextRunTimeInterval) {
+        $interval.cancel(nextRunTimeInterval);
+      }
+      if(statisticsInterval) {
+        $interval.cancel(statisticsInterval);
+      }
+    });
   }
   setState() {
     this.totalRunsCount = this.store.getRunsCount();
@@ -47,7 +71,7 @@ class MyPipelineSummaryCtrl {
     }
   }
 }
-MyPipelineSummaryCtrl.$inject = ['moment'];
+MyPipelineSummaryCtrl.$inject = ['$scope', 'moment', '$interval', 'GLOBALS'];
 
  angular.module(PKG.name + '.commons')
   .controller('MyPipelineSummaryCtrl', MyPipelineSummaryCtrl);

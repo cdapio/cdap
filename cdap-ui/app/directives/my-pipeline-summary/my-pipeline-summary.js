@@ -20,7 +20,8 @@ angular.module(PKG.name + '.commons')
       restrict: 'A',
       scope: {
         store: '=',
-        actionCreator: '='
+        actionCreator: '=',
+        pipelineType: '@'
       },
       replace: false,
       templateUrl: 'my-pipeline-summary/my-pipeline-summary.html',
