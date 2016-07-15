@@ -176,6 +176,13 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'input-schema': 'inputSchema'
         }
+      },
+      'multi-checkboxes': {
+        element: '<my-multi-checkboxes></my-multi-checkboxes>',
+        attributes: {
+          'ng-model': 'model',
+          'input-schema': 'inputSchema'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
