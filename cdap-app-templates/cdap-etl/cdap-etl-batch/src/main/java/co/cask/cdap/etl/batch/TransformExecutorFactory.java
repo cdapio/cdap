@@ -28,7 +28,6 @@ import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
-import co.cask.cdap.etl.common.KVJoinerTransformation;
 import co.cask.cdap.etl.common.KVSinkTransformation;
 import co.cask.cdap.etl.common.KVSourceTransformation;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -37,7 +36,6 @@ import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.collect.Sets;
-import org.apache.hadoop.io.Text;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -108,7 +106,7 @@ public abstract class TransformExecutorFactory<T> {
     } else if (pluginType.equalsIgnoreCase("batchsource")) {
       return new KVSourceTransformation<>(transformation, stageName);
     } else if (pluginType.equalsIgnoreCase("batchjoiner")) {
-      return new KVJoinerTransformation(transformation, stageName);
+      return transformation;
     } else if (pluginType.equalsIgnoreCase(Constants.CONNECTOR_TYPE)) {
       return new KVConnectorTransformation(transformation, stageName);
     }
@@ -176,8 +174,7 @@ public abstract class TransformExecutorFactory<T> {
    * @param <IN>
    * @param <OUT>
    */
-  public class KVConnectorTransformation<IN, OUT> implements Transformation<KeyValue<String, IN>,
-    KeyValue<Text, OUT>> {
+  public class KVConnectorTransformation<IN, OUT> implements Transformation<KeyValue<String, IN>, OUT> {
     private final Transformation<KeyValue<String, IN>, OUT> transformation;
     private final String stageName;
 
@@ -187,11 +184,11 @@ public abstract class TransformExecutorFactory<T> {
     }
 
     @Override
-    public void transform(KeyValue<String, IN> input, Emitter<KeyValue<Text, OUT>> emitter) throws Exception {
+    public void transform(KeyValue<String, IN> input, Emitter<OUT> emitter) throws Exception {
       DefaultEmitter<OUT> singleEmitter = new DefaultEmitter<>();
       transformation.transform(input, singleEmitter);
       for (OUT out : singleEmitter.getEntries()) {
-        emitter.emit(new KeyValue<>(new Text(input.getKey()), out));
+        emitter.emit(out);
       }
     }
   }

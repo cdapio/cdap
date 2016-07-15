@@ -131,12 +131,12 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
       .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
       .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
-      .addStage(new ETLStage("testJoiner1", Join.getPlugin("t1.customer_id=t2.cust_id=t3.c_id," +
-                                                            "t1.customer_name=t2.cust_name=t3.c_name",
-                                                          "t1,t2,t3", "", "")))
-      .addStage(new ETLStage("testJoiner2", Join.getPlugin("t1.customer_id=t2.cust_id=t3.c_id," +
-                                                            "t1.customer_name=t2.cust_name=t3.c_name",
-                                                          "t1,t2,t3", "", "")))
+      .addStage(new ETLStage("testJoiner1", Join.getPlugin("t1.customer_id=t2.cust_id," +
+                                                            "t1.customer_name=t2.cust_name",
+                                                          "t1,t2", "", "")))
+      .addStage(new ETLStage("testJoiner2", Join.getPlugin("t4.customer_id=t3.c_id," +
+                                                             "t4.customer_name=t3.c_name",
+                                                           "t4,t5", "", "")))
       .addStage(new ETLStage("sink1", MockSink.getPlugin("joinerOutput")))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")

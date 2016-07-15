@@ -25,17 +25,17 @@ import co.cask.cdap.etl.api.Transformation;
  * @param <IN>
  * @param <OUT>
  */
-public class KVJoinerTransformation<IN, OUT> implements Transformation<KeyValue<String, IN>, KeyValue<String, OUT>> {
-  private final Transformation<KeyValue<String, IN>, OUT> transformation;
+public class KVJoinerTransformation<IN, OUT> implements Transformation<IN, KeyValue<String, OUT>> {
+  private final Transformation<IN, OUT> transformation;
   private final String stageName;
 
-  public KVJoinerTransformation(Transformation<KeyValue<String, IN>, OUT> transformation, String stageName) {
+  public KVJoinerTransformation(Transformation<IN, OUT> transformation, String stageName) {
     this.transformation = transformation;
     this.stageName = stageName;
   }
 
   @Override
-  public void transform(KeyValue<String, IN> input, Emitter<KeyValue<String, OUT>> emitter) throws Exception {
+  public void transform(IN input, Emitter<KeyValue<String, OUT>> emitter) throws Exception {
     DefaultEmitter<OUT> singleEmitter = new DefaultEmitter<>();
     transformation.transform(input, singleEmitter);
     for (OUT out : singleEmitter.getEntries()) {

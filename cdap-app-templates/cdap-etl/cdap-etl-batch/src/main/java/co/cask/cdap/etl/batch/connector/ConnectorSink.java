@@ -46,7 +46,7 @@ import java.util.Map;
  *
  * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
  */
-public class ConnectorSink extends BatchSink<KeyValue<Text, StructuredRecord>, NullWritable, Text> {
+public class ConnectorSink extends BatchSink<KeyValue<String, StructuredRecord>, NullWritable, Text> {
   private final String datasetName;
   private final String phaseName;
   private final boolean writeSchema;
@@ -66,7 +66,7 @@ public class ConnectorSink extends BatchSink<KeyValue<Text, StructuredRecord>, N
   }
 
   @Override
-  public void transform(KeyValue<Text, StructuredRecord> input, Emitter<KeyValue<NullWritable, Text>> emitter)
+  public void transform(KeyValue<String, StructuredRecord> input, Emitter<KeyValue<NullWritable, Text>> emitter)
     throws Exception {
     StructuredRecord taggedInput = input.getValue();
     if (writeSchema) {
@@ -76,8 +76,8 @@ public class ConnectorSink extends BatchSink<KeyValue<Text, StructuredRecord>, N
                                                                .toJsonString(taggedInput))));
   }
 
-  private StructuredRecord modifyRecord(KeyValue<Text, StructuredRecord> input) throws IOException {
-    String stageName = input.getKey().toString();
+  private StructuredRecord modifyRecord(KeyValue<String, StructuredRecord> input) throws IOException {
+    String stageName = input.getKey();
     Schema inputSchema = input.getValue().getSchema();
     return StructuredRecord.builder(ConnectorSource.RECORD_WITH_SCHEMA)
       .set("stageName", stageName)
