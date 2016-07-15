@@ -21,8 +21,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -60,6 +62,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static NamespaceStore namespaceStore;
+  private static NamespaceAdmin namespaceAdmin;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -67,12 +70,13 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       new DataFabricLevelDBModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules()).with(new AbstractModule() {
@@ -92,6 +96,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     namespaceStore = injector.getInstance(NamespaceStore.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
@@ -123,6 +128,11 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected NamespaceStore getNamespaceStore() {
     return namespaceStore;
+  }
+
+  @Override
+  protected NamespaceAdmin getNamespaceAdmin() {
+    return namespaceAdmin;
   }
 
   @Override

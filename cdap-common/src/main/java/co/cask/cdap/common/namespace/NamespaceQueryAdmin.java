@@ -50,3 +50,4 @@ public interface NamespaceQueryAdmin {
    */
   boolean exists(Id.Namespace namespaceId) throws Exception;
 }
+

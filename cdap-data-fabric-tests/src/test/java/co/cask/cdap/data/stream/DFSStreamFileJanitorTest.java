@@ -21,7 +21,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -66,6 +69,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static NamespaceStore namespaceStore;
+  private static NamespaceAdmin namespaceAdmin;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -74,8 +78,10 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
+    namespaceAdmin = new InMemoryNamespaceClient();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
+    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, new RootLocationFactory(lf),
+                                                                               namespaceAdmin);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
@@ -85,6 +91,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
         protected void configure() {
           bind(LocationFactory.class).toInstance(lf);
           bind(NamespacedLocationFactory.class).toInstance(nlf);
+          bind(NamespaceAdmin.class).toInstance(namespaceAdmin);
         }
       },
       new TransactionMetricsModule(),
@@ -150,6 +157,11 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected NamespaceStore getNamespaceStore() {
     return namespaceStore;
+  }
+
+  @Override
+  protected NamespaceAdmin getNamespaceAdmin() {
+    return namespaceAdmin;
   }
 
   @Override

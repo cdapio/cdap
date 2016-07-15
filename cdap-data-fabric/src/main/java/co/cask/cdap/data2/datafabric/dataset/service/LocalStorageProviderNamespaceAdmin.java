@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.inject.Inject;
@@ -28,7 +29,7 @@ public final class LocalStorageProviderNamespaceAdmin extends StorageProviderNam
 
   @Inject
   public LocalStorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
-                                            ExploreFacade exploreFacade) {
-    super(cConf, namespacedLocationFactory, exploreFacade);
+                                            ExploreFacade exploreFacade, NamespaceQueryAdmin namespaceQueryAdmin) {
+    super(cConf, namespacedLocationFactory, exploreFacade, namespaceQueryAdmin);
   }
 }

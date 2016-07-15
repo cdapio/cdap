@@ -137,6 +137,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     }
 
     nsStore.create(metadata);
+
     // Skip authorization grants for the system user
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
       authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));

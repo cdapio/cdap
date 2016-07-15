@@ -17,7 +17,10 @@
 package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -25,8 +28,6 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
 
 /**
  * Tests for {@link DefaultNamespacedLocationFactory}.
@@ -37,14 +38,40 @@ public class DefaultNamespacedLocationFactoryTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Test
-  public void testGet() throws IOException {
+  public void testGet() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
+
+    Id.Namespace ns1 = Id.Namespace.from("ns1");
+    NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build();
+    NamespaceMeta ns1NSMeta = new NamespaceMeta.Builder().setName(ns1).setRootDirectory("/ns1").build();
+
+    nsAdmin.create(defaultNSMeta);
+    nsAdmin.create(ns1NSMeta);
+
+    CConfiguration cConf = CConfiguration.create();
     NamespacedLocationFactory namespacedLocationFactory =
-      new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory);
+      new DefaultNamespacedLocationFactory(cConf, new RootLocationFactory(locationFactory), nsAdmin);
 
     Location defaultLoc = namespacedLocationFactory.get(Id.Namespace.DEFAULT);
-    Id.Namespace ns1 = Id.Namespace.from("ns1");
     Location ns1Loc = namespacedLocationFactory.get(ns1);
+
+    // check if custom mapping location was as expected
+    Location expectedLocation = namespacedLocationFactory.getBaseLocation().append("/ns1");
+    Assert.assertEquals(expectedLocation, ns1Loc);
+
+    String tempLocationRoot = namespacedLocationFactory.getBaseLocation().toString();
+
+    // check that the namespace which does not have custom mapping is created under namespace and namespace dir
+    String defaultNsPath = defaultLoc.toString().split(tempLocationRoot)[1];
+    String ns1Path = ns1Loc.toString().split(tempLocationRoot)[1];
+
+    Assert.assertTrue(defaultNsPath.contains(cConf.get(Constants.CFG_HDFS_NAMESPACE)) &&
+                        defaultNsPath.contains(cConf.get(Constants.Namespace.NAMESPACES_DIR)));
+
+    // check that the namespace which has custom mapping is not created under namespace and namespace dir
+    Assert.assertFalse(ns1Path.contains(cConf.get(Constants.CFG_HDFS_NAMESPACE)) &&
+                         ns1Path.contains(cConf.get(Constants.Namespace.NAMESPACES_DIR)));
 
     // test these are not the same
     Assert.assertNotEquals(defaultLoc, ns1Loc);

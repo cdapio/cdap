@@ -35,6 +35,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -113,8 +114,25 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       NamespaceConfig config = metadata.getConfig();
-      if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
-        builder.setSchedulerQueueName(config.getSchedulerQueueName());
+      if (config != null) {
+        LOG.debug("Namespace {} being created with custom configuration {}", metadata.getName(), config);
+        if (!Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
+          builder.setSchedulerQueueName(config.getSchedulerQueueName());
+        }
+        if (!Strings.isNullOrEmpty(config.getRootDirectory())) {
+          if (!new File(config.getRootDirectory()).isAbsolute()) {
+            throw new BadRequestException(String.format("Cannot create the namespace '%s' with the given custom " +
+                                                          "location %s. Custom location must be absolute path.",
+                                                        namespaceId, config.getRootDirectory()));
+          }
+          builder.setRootDirectory(config.getRootDirectory());
+        }
+        if (!Strings.isNullOrEmpty(config.getHbaseNamespace())) {
+          builder.setHbaseNamespace(config.getHbaseNamespace());
+        }
+        if (!Strings.isNullOrEmpty(config.getHiveDatabase())) {
+          builder.setHiveDatabase(config.getHiveDatabase());
+        }
       }
     }
 

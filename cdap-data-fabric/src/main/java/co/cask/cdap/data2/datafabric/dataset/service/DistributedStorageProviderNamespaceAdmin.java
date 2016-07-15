@@ -17,11 +17,13 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -42,23 +44,25 @@ public final class DistributedStorageProviderNamespaceAdmin extends StorageProvi
   @Inject
   public DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
                                                   NamespacedLocationFactory namespacedLocationFactory,
-                                                  ExploreFacade exploreFacade, HBaseTableUtil tableUtil) {
-    super(cConf, namespacedLocationFactory, exploreFacade);
+                                                  ExploreFacade exploreFacade, HBaseTableUtil tableUtil,
+                                                  NamespaceQueryAdmin namespaceQueryAdmin) {
+    super(cConf, namespacedLocationFactory, exploreFacade, namespaceQueryAdmin);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
   }
 
   @Override
-  public void create(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
+  public void create(Id.Namespace namespaceId, NamespaceConfig namespaceConfig) throws ExploreException, SQLException,
+    IOException {
     // create filesystem directory
-    super.create(namespaceId);
+    super.create(namespaceId, namespaceConfig);
     // TODO: CDAP-1519: Create base directory for filesets under namespace home
     // create HBase namespace
     tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceId);
   }
 
   @Override
-  public void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
+  public void delete(Id.Namespace namespaceId) throws ExploreException, SQLException, IOException {
     // soft delete namespace directory from filesystem
     super.delete(namespaceId);
     // delete HBase namespace

@@ -103,6 +103,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
+      new NamespaceClientRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),

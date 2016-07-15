@@ -86,6 +86,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new KafkaClientModule(),
         new DiscoveryRuntimeModule().getDistributedModules(),
         new LocationRuntimeModule().getDistributedModules(),
+        new NamespaceClientRuntimeModule().getDistributedModules(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new MetricsStoreModule(),
         new DataFabricModules().getDistributedModules(),

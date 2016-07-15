@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -53,7 +54,6 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
-import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -180,12 +180,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf,
-                                   File previewsDir, StreamAdmin streamAdmin, NamespaceStore store,
+                                   File previewsDir, StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                                    ExploreTableNaming tableNaming) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
+    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, namespaceQueryAdmin);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
@@ -1294,11 +1294,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @throws IOException
    * @throws ExploreException
    */
-  protected Map<String, String> startSession() throws IOException, ExploreException {
+  protected Map<String, String> startSession() throws Exception {
     return startSession(null);
   }
 
-  protected Map<String, String> startSession(Id.Namespace namespace) throws IOException, ExploreException {
+  protected Map<String, String> startSession(Id.Namespace namespace) throws Exception {
     Map<String, String> sessionConf = Maps.newHashMap();
 
     QueryHandle queryHandle = QueryHandle.generate();

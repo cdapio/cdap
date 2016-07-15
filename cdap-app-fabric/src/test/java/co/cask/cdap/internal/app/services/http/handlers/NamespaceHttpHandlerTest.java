@@ -43,6 +43,7 @@ import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -137,7 +138,10 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // prepare - create namespace with config in its properties
     String propertiesString = String.format("{\"%s\":\"%s\", \"%s\":\"%s\", \"%s\":%s}",
                                             NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION,
-                                            CONFIG_FIELD, "{\"scheduler.queue.name\":\"testSchedulerQueueName\"}");
+                                            CONFIG_FIELD, "{ \"root.directory\": \"/tmp/myspace\", " +
+                                              "\"scheduler.queue.name\": \"testSchedulerQueueName\" }");
+    // create the custom namespace location first
+    tmpFolder.newFolder("data", "tmp", "myspace");
     HttpResponse response = createNamespace(propertiesString, NAME);
     assertResponseCode(200, response);
     response = getNamespace(NAME);
@@ -147,7 +151,11 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
     Assert.assertEquals("testSchedulerQueueName",
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("scheduler.queue.name").getAsString());
+    Assert.assertEquals("/tmp/myspace",
+                        namespace.get(CONFIG_FIELD).getAsJsonObject().get("root.directory").getAsString());
     response = deleteNamespace(NAME);
+    // check that the custom location for the namespace was not deleted while deleting namespace
+    Assert.assertTrue(new File(tmpFolder.getRoot(), "data/tmp/myspace").exists());
     assertResponseCode(200, response);
   }
 

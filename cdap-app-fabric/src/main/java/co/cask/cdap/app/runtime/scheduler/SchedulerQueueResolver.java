@@ -18,10 +18,10 @@ package co.cask.cdap.app.runtime.scheduler;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Strings;
 
 import javax.annotation.Nullable;
@@ -32,14 +32,14 @@ import javax.annotation.Nullable;
  */
 public class SchedulerQueueResolver {
   private final String defaultQueue;
-  private final NamespaceStore store;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   /**
    * Construct SchedulerQueueResolver with CConfiguration and Store.
    */
-  public SchedulerQueueResolver(CConfiguration cConf, NamespaceStore store) {
+  public SchedulerQueueResolver(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
-    this.store = store;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -56,8 +56,8 @@ public class SchedulerQueueResolver {
    * @return schedule queue at namespace level or default queue.
    */
   @Nullable
-  public String getQueue(Id.Namespace namespaceId) {
-    NamespaceMeta meta = store.get(namespaceId);
+  public String getQueue(Id.Namespace namespaceId) throws Exception {
+    NamespaceMeta meta = namespaceQueryAdmin.get(namespaceId);
     if (meta != null) {
       NamespaceConfig config = meta.getConfig();
       String namespaceQueue = config.getSchedulerQueueName();

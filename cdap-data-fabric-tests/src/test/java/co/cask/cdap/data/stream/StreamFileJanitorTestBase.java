@@ -19,6 +19,7 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -55,6 +56,8 @@ public abstract class StreamFileJanitorTestBase {
 
   protected abstract NamespaceStore getNamespaceStore();
 
+  protected abstract NamespaceAdmin getNamespaceAdmin();
+
   protected abstract CConfiguration getCConfiguration();
 
   protected abstract FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException;
@@ -63,7 +66,7 @@ public abstract class StreamFileJanitorTestBase {
   public void setup() throws Exception {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create, since its an inmemory-namespace admin
-    getNamespaceStore().create(NamespaceMeta.DEFAULT);
+    getNamespaceAdmin().create(NamespaceMeta.DEFAULT);
     getNamespacedLocationFactory().get(Id.Namespace.DEFAULT).mkdirs();
   }
 

@@ -22,10 +22,12 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
@@ -41,7 +43,6 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.InMemoryNamespaceStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
@@ -53,7 +54,6 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.store.NamespaceStore;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -105,8 +105,8 @@ public abstract class DatasetServiceTestBase {
   private InMemoryDiscoveryService discoveryService;
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
-  private LocationFactory locationFactory;
-  private NamespaceStore namespaceStore;
+  protected LocationFactory locationFactory;
+  protected NamespaceAdmin namespaceAdmin;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
   protected InMemoryDatasetFramework inMemoryDatasetFramework;
@@ -140,7 +140,8 @@ public abstract class DatasetServiceTestBase {
 
     injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule());
 
@@ -186,8 +187,8 @@ public abstract class DatasetServiceTestBase {
     inMemoryDatasetFramework = new InMemoryDatasetFramework(registryFactory, modules);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
-    namespaceStore = new InMemoryNamespaceStore();
-    namespaceStore.create(NamespaceMeta.DEFAULT);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
                                                             txExecutorFactory,
@@ -198,7 +199,7 @@ public abstract class DatasetServiceTestBase {
       new InMemoryDatasetOpExecutor(dsFramework),
       exploreFacade,
       cConf,
-      namespaceStore);
+      namespaceAdmin);
 
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
@@ -210,7 +211,7 @@ public abstract class DatasetServiceTestBase {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade), namespaceStore);
+                                                                        exploreFacade, namespaceAdmin), namespaceAdmin);
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -232,7 +233,7 @@ public abstract class DatasetServiceTestBase {
   @After
   public void after() throws Exception {
     Services.chainStop(service, opExecutorService, txManager);
-    namespaceStore.delete(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
     Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
   }
 

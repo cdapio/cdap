@@ -19,10 +19,10 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.store.NamespaceStore;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -37,9 +37,9 @@ public class PropertiesResolver {
   private final SchedulerQueueResolver queueResolver;
 
   @Inject
-  PropertiesResolver(PreferencesStore prefStore, NamespaceStore store, CConfiguration cConf) {
+  PropertiesResolver(PreferencesStore prefStore, NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
     this.prefStore = prefStore;
-    this.queueResolver = new SchedulerQueueResolver(cConf, store);
+    this.queueResolver = new SchedulerQueueResolver(cConf, namespaceQueryAdmin);
   }
 
   public Map<String, String> getUserProperties(Id.Program id) {
@@ -49,7 +49,7 @@ public class PropertiesResolver {
     return userArgs;
   }
 
-  public Map<String, String> getSystemProperties(Id.Program id) {
+  public Map<String, String> getSystemProperties(Id.Program id) throws Exception {
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
     return systemArgs;

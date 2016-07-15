@@ -19,8 +19,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
@@ -45,8 +45,6 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
-
 /**
  * Tests for {@link DistributedStreamCoordinatorClient}
  */
@@ -59,7 +57,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
   private static StreamCoordinatorClient coordinatorClient;
 
   @BeforeClass
-  public static void init() throws IOException {
+  public static void init() throws Exception {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
     zkServer.startAndWait();
 
@@ -68,7 +66,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
+    final NamespacedLocationFactory nlf = new NamespacedLocationFactoryTestClient(cConf, lf);
 
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 

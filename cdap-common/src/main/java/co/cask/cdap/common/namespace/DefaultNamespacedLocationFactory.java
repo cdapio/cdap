@@ -18,10 +18,11 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -31,13 +32,21 @@ import javax.annotation.Nullable;
  */
 public class DefaultNamespacedLocationFactory implements NamespacedLocationFactory {
 
-  private final LocationFactory locationFactory;
+  // we need the RootLocationFactory because we want to work with the root of filesystem for custom namespace mapping
+  // for example if the custom mapping is /user/someuser/ this requires locationfactory which works with root.
+  private final RootLocationFactory locationFactory;
+  private final String hdfsNamespace;
   private final String namespaceDir;
 
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+
   @Inject
-  public DefaultNamespacedLocationFactory(CConfiguration cConf, LocationFactory locationFactory) {
+  public DefaultNamespacedLocationFactory(CConfiguration cConf, RootLocationFactory locationFactory,
+                                          NamespaceQueryAdmin namespaceQueryAdmin) {
+    this.hdfsNamespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -47,7 +56,20 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
 
   @Override
   public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
-    Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
+    String hdfsDirectory;
+    try {
+      hdfsDirectory = namespaceQueryAdmin.get(namespaceId).getConfig().getRootDirectory();
+    } catch (Exception e) {
+      throw new IOException(String.format("Failed to get namespaced location for namespace %s", namespaceId), e);
+    }
+    Location namespaceLocation;
+    if (Strings.isNullOrEmpty(hdfsDirectory)) {
+      // if no custom mapping was specified the use the default namespaces location on hdfs
+      namespaceLocation = locationFactory.create(hdfsNamespace).append(namespaceDir).append(namespaceId.getId());
+    } else {
+      // custom mapping are expected to be given from the root of the filesystem.
+      namespaceLocation = getBaseLocation().append(hdfsDirectory);
+    }
     if (subPath != null) {
       namespaceLocation = namespaceLocation.append(subPath);
     }

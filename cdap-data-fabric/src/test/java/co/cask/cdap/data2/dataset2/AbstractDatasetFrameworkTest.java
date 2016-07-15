@@ -33,7 +33,10 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -52,7 +55,6 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.audit.payload.access.AccessType;
-import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -104,7 +106,8 @@ public abstract class AbstractDatasetFrameworkTest {
   private static final Id.DatasetType SIMPLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID, SimpleKVTable.class.getName());
   private static final Id.DatasetType DOUBLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID,
                                                                            DoubleWrappedKVTable.class.getName());
-  protected static final NamespaceStore NAMESPACE_STORE = new InMemoryNamespaceStore();
+  protected static NamespaceAdmin namespaceAdmin;
+  protected static NamespaceQueryAdmin namespaceQueryAdmin;
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static CConfiguration cConf;
   protected static TransactionExecutorFactory txExecutorFactory;
@@ -119,8 +122,9 @@ public abstract class AbstractDatasetFrameworkTest {
 
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new TransactionInMemoryModule(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AuditModule().getInMemoryModules());
 
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
@@ -132,8 +136,10 @@ public abstract class AbstractDatasetFrameworkTest {
         return registry;
       }
     };
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
-    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }
 
   @Test
@@ -403,11 +409,14 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
-  public void testNamespaceCreationDeletion() throws DatasetManagementException {
+  public void testNamespaceCreationDeletion() throws Exception {
     DatasetFramework framework = getFramework();
 
     Id.Namespace namespace = Id.Namespace.from("yourspace");
-    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+    NamespaceMeta yourspaceMeta = new NamespaceMeta.Builder().setName(namespace).build();
+    framework.createNamespace(yourspaceMeta);
+    // framework.delete uses namespace query admin to look up namespace meta so add the meta to that too
+    namespaceAdmin.create(yourspaceMeta);
     framework.deleteNamespace(namespace);
   }
 
@@ -419,8 +428,8 @@ public abstract class AbstractDatasetFrameworkTest {
     // create 2 namespaces
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
-    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace1).build());
-    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace2).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
     framework.createNamespace(new NamespaceMeta.Builder().setName(namespace1).build());
     framework.createNamespace(new NamespaceMeta.Builder().setName(namespace2).build());
 
@@ -483,8 +492,8 @@ public abstract class AbstractDatasetFrameworkTest {
     // create 2 namespaces
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
-    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace1).build());
-    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace2).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
     framework.createNamespace(new NamespaceMeta.Builder().setName(namespace1).build());
     framework.createNamespace(new NamespaceMeta.Builder().setName(namespace2).build());
 

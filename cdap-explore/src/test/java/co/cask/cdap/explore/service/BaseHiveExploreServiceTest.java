@@ -23,6 +23,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -59,8 +61,6 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.store.NamespaceStore;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
@@ -139,7 +139,7 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreTableManager exploreTableManager;
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
-  private static NamespaceStore namespaceStore;
+  private static NamespaceAdmin namespaceAdmin;
 
   protected static Injector injector;
 
@@ -190,12 +190,12 @@ public class BaseHiveExploreServiceTest {
 
     streamAdmin = injector.getInstance(StreamAdmin.class);
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
-    namespaceStore = injector.getInstance(NamespaceStore.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
 
     // create namespaces
-    namespaceStore.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
-    namespaceStore.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
-    namespaceStore.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
     datasetFramework.createNamespace(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
@@ -210,12 +210,12 @@ public class BaseHiveExploreServiceTest {
     }
 
     // Delete namespaces
-    namespaceStore.delete(Id.Namespace.DEFAULT);
-    namespaceStore.delete(NAMESPACE_ID);
-    namespaceStore.delete(OTHER_NAMESPACE_ID);
     datasetFramework.deleteNamespace(Id.Namespace.DEFAULT);
     datasetFramework.deleteNamespace(NAMESPACE_ID);
     datasetFramework.deleteNamespace(OTHER_NAMESPACE_ID);
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(NAMESPACE_ID);
+    namespaceAdmin.delete(OTHER_NAMESPACE_ID);
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
     notificationService.stopAndWait();
@@ -348,6 +348,7 @@ public class BaseHiveExploreServiceTest {
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf,
                                                     TemporaryFolder tmpFolder) throws IOException {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
+    configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     configuration.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
     configuration.set(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, tmpFolder.newFolder("tx").getAbsolutePath());
     configuration.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
@@ -356,7 +357,7 @@ public class BaseHiveExploreServiceTest {
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -367,7 +368,6 @@ public class BaseHiveExploreServiceTest {
       new StreamAdminModules().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
-      new NamespaceStoreModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -424,8 +424,7 @@ public class BaseHiveExploreServiceTest {
       new ViewAdminModules().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
-      new NamespaceStoreModule().getStandaloneModules(),
+      new NamespaceClientRuntimeModule().getStandaloneModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
