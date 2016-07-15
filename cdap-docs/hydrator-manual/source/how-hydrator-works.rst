@@ -38,6 +38,8 @@ Logical versus Physical Pipelines
 
  **Logical** and **Physical** Pipelines, converted by a **Planner**
 
+.. _cask-hydrator-how-hydrator-works-logical-start:
+
 Within CDAP, there is the concept of *logical* and *physical* pipelines, converted by a
 planner, and then run in an execution environment.
 
@@ -62,6 +64,7 @@ A **planner** is responsible for converting the logical pipeline to a physical p
 planner analyzes the logical view of the pipeline and converts it to a physical execution
 plan, performing optimizations, and bundling functions into one or more jobs.
 
+.. _cask-hydrator-how-hydrator-works-logical-end:
 
 Execution Environment
 =====================
@@ -188,7 +191,7 @@ manage the different versions of both the application templates and the plugins.
 
 
 Building of a Pipeline
-----------------------
+======================
 Here is how the Hydrator Studio works with CDAP to build a pipeline, beginning with a user
 creating a new pipeline in Hydrator Studio. First, the components of Hydrator Studio:
 

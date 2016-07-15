@@ -18,13 +18,11 @@ Plugins Reference
     Shared Plugins <shared-plugins/index>
     Action Plugins <actions/index>
     Pre- and Post-run Plugins <pre-post-run/index>
-    Adding Third-Party Plugins <third-party>
-    Installing Plugins <installing>
 
 .. rubric:: Available Plugins
 
-Shipped with CDAP, these plugins (Hydrator Version |cdap-hydrator-version|) are available
-for creating ETL, data pipelines, and other applications.
+These plugins (from Hydrator Version |cdap-hydrator-version|) are shipped with CDAP, both in the
+SDK and Distributed CDAP:
 
 - :doc:`Batch Plugins <batch/index>`
 
@@ -55,13 +53,6 @@ Details on the available plugins and the required properties for sources, transf
 (transforms), sinks and other plugin types can be obtained  and explored using the
 :ref:`Artifact HTTP RESTful API <http-restful-api-artifact>`.
 
-
-.. rubric:: Third-Party Plugins: Deploying a JDBC Driver
-
-Covers using :ref:`pre-built third-party JARs <cask-hydrator-third-party-plugins>` so that they
-are accessible to other plugins and applications.
-
-
 .. rubric:: Creating Custom Plugins
 
 If these plugins don't meet your requirements, you can :ref:`create a custom
@@ -69,13 +60,3 @@ plugin <cask-hydrator-developing-plugins>`.
 
 If you are creating a custom plugin that extends the **existing system artifacts,** its name
 should not collide with existing names, for ease-of-use in the CDAP UI and Cask Hydrator Studio.
-
-
-.. rubric:: Installing Plugins: Packaging, Presentation, and Deployment
-
-To **package, present,** and **deploy** your plugin, see these instructions:
-
-- `Plugin Packaging: <installing#plugin-packaging>`__ packaging in a JAR
-- `Plugin Presentation: <installing#plugin-presentation>`__ controlling how your plugin appears in the Hydrator Studio
-- `Plugin Deployment: <installing#deploying-a-system-artifact>`__ deploying as either a system or user *artifact*
-- `Deployment Verification: <installing#deployment-verification>`__ verifying an artifact was added successfully

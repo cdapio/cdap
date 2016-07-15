@@ -75,6 +75,7 @@ fi
 API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
 CHECK_INCLUDES=''
+LOCAL_INCLUDES=''
 
 if [[ "x${COLOR_LOGS}" != "x" ]]; then
   SPHINX_COLOR=''
@@ -119,6 +120,7 @@ function usage() {
   echo "    build-web            Clean build and zip for placing on docs.cask.co webserver (no Javadocs)"
   echo "    build-docs           Clean build of docs (no Javadocs)"
   echo "    docs                 alias for 'build-docs'"
+  echo "    docs-local           Clean build of docs (no Javadocs), using local copies of downloaded files"
   echo
   echo "    license-pdfs         Clean build of License Dependency PDFs"
   echo "    check-includes       Check if included files have changed from source"
@@ -147,6 +149,11 @@ function build_docs() {
   check_includes
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${SOURCE} ${TARGET}/html
   consolidate_messages
+}
+
+function build_docs_local() {
+  LOCAL_INCLUDES="${TRUE}"
+  build_docs
 }
 
 function build_docs_google() {
@@ -493,6 +500,7 @@ function run_command() {
     check-includes|display-version)               "${1/-/_}";;
     license-pdfs)                                 "build_license_pdfs";;
     docs)                                         "build_docs";;
+    docs-local)                                   "build_docs_local";;
     *)                                            usage;;
   esac
 }

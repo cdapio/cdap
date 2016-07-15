@@ -15,19 +15,18 @@ Cask Hydrator Overview
 
 .. topic:: Annotation System
 
-  To review this document, I have implemented an annotation system, running on a server in
-  our cloud.
+  *To review this document, an annotation system is running on a server in our cloud.*
 
-  To add an annotation, select some text, click the popup-button, and enter your comment
-  in the window.
+  *To add an annotation, select some text, click the popup-button, and enter your comment
+  in the window.*
 
-  Enter your name, handle or initials as a tag.
+  *Enter your name, handle, or initials as a tag.*
 
-  Ignore the checkboxes (and the bug that causes them to be duplicated!) as the auth
-  system is disabled.
+  *Ignore the checkboxes (and the bug that causes them to be duplicated!) as the auth
+  system is disabled.*
 
-  Annotations are saved using the URL, and so will not appear on subsequent builds in the
-  same branch, which is intended.
+  *Annotations are saved using the URL, and so will not appear on subsequent builds in the
+  same branch, which is as-intended.*
 
 .. SIDEBAR ON ANNOTATION SYSTEM END
 
@@ -93,7 +92,7 @@ to enable the building, deploying, and managing of data pipelines.
 .. |how-hydrator-works| replace:: **How Hydrator Works:**
 .. _how-hydrator-works: how-hydrator-works.html
 
-- |how-hydrator-works|_ How it **works "behind-the-scenes"**
+- |how-hydrator-works|_ A **"behind-the-scenes"** of how it works
     
   
 .. |faqs| replace:: **FAQs:**

@@ -125,13 +125,12 @@ The format of the ``config`` object:
    * - ``connections``
      - List of connection objects
    * - ``engine``
-     - One of "mapreduce" or "spark", used only in batch pipelines such as
-       ``cdap-data-pipeline`` and ``cdap-etl-batch``
+     - One of "mapreduce" or "spark", used only in batch pipelines
    * - ``postActions``
      - List of post-action objects; optional, can be an empty list
    * - ``instances``
      - Positive integer of the number of worker instances, defaults to 1 if not specified,
-       used only in real time pipelines such as ``cdap-etl-realtime``
+       used only in real-time pipelines
        
    * - ``resources``
      - A map defining the resources to be used for worker instance of pipeline, such as
@@ -142,8 +141,7 @@ The format of the ``config`` object:
        
        
    * - ``schedule``
-     - String in ``cron`` file format, used only in batch pipelines such as
-       ``cdap-data-pipeline`` and ``cdap-etl-batch``
+     - String in ``cron`` file format, used only in batch pipelines
    * - ``stages``
      - List of stage objects
 

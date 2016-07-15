@@ -152,10 +152,15 @@ intersphinx_mapping.update(intersphinx_mapping_cdap_extensions)
 # Used by the sphinx.ext.extlinks extension, these are available using this example syntax:
 # :cdap-ui-apps-programs:`application overview page, programs tab <ClicksAndViews>`
 extlinks = {
+    'cdap-ui': ('http://localhost:9999/ns/default/%s', None),
     'cdap-ui-apps': ('http://localhost:9999/ns/default/apps/%s', None),
     'cdap-ui-apps-programs': ('http://localhost:9999/ns/default/apps/%s/overview/programs', None),
     'cdap-ui-datasets': ('http://localhost:9999/ns/default/datasets/%s', None),
     'cdap-ui-datasets-explore': ('http://localhost:9999/ns/default/datasets/%s/overview/explore', None),
+    'cdap-ui-datasets-explore': ('http://localhost:9999/ns/default/datasets/%s/overview/explore', None),
+    'cask-hydrator': ('http://localhost:9999/ns/default/hydrator/%s', None),
+    'cask-hydrator-studio': ('http://localhost:9999/ns/default/hydrator/studio/%s', None),
+    'cask-hydrator-studio-artifact': ('http://localhost:9999/ns/default/hydrator/studio?artifactType=%s', None),
 }
 
 # Add any paths that contain templates here, relative to this directory.

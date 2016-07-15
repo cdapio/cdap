@@ -165,23 +165,40 @@ function extract_table() {
 }
 
 function download_includes() {
-  echo_red_bold "Downloading Markdown doc file includes from GitHub repo caskdata/hydrator-plugins..."
-  set_version
-
-  # Copy the source _includes files so they can be populated with the markdown files
   local hydrator_plugins="hydrator-plugins"
   local plugins="plugins"
+  local current_directory=$(pwd)
+
+  set_version
+
+  if [ "x${LOCAL_INCLUDES}" == "x${TRUE}" ]; then
+    local base_source="file://${PROJECT_PATH}/../${hydrator_plugins}"
+    echo_red_bold "Copying a local copy of Markdown doc file includes from ${base_source}"
+    HYDRATOR_SOURCE="${base_source}"
+  else
+    echo_red_bold "Downloading Markdown doc file includes from GitHub repo caskdata/hydrator-plugins..."
+    local base_source="https://raw.githubusercontent.com/caskdata/${hydrator_plugins}"
+    if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
+      local hydrator_branch="develop"
+    else
+      local hydrator_branch="${GIT_BRANCH_CDAP_HYDRATOR}"
+    fi
+  
+    HYDRATOR_SOURCE="${base_source}/${hydrator_branch}"
+  fi
+
+  # Copy the source _includes files so they can be populated with the markdown files
   BASE_TARGET="${1}/${plugins}"
   cp -R "${SCRIPT_PATH}/source/_includes/${plugins}" "${1}"
   
-  local base_source="https://raw.githubusercontent.com/caskdata/${hydrator_plugins}"
-  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
-    local hydrator_branch="develop"
-  else
-    local hydrator_branch="${GIT_BRANCH_CDAP_HYDRATOR}"
-  fi
+#   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
+#     local hydrator_branch="develop"
+#   else
+#     local hydrator_branch="${GIT_BRANCH_CDAP_HYDRATOR}"
+#   fi
+#   
+#   HYDRATOR_SOURCE="${base_source}/${hydrator_branch}"
   
-  HYDRATOR_SOURCE="${base_source}/${hydrator_branch}"
   echo_red_bold "Using ${HYDRATOR_SOURCE}"
   get_hydrator_version ${BASE_TARGET} ${HYDRATOR_SOURCE}
   
@@ -189,7 +206,7 @@ function download_includes() {
   # Parameter      1                 2                         3
   # Definition     source_dir        source_file_name          append_file (optional)
   
-  download_md_file cassandra-plugins Cassandra-batchsink.md 
+  download_md_file cassandra-plugins Cassandra-batchsink.md
   download_md_file cassandra-plugins Cassandra-batchsource.md 
   download_md_file cassandra-plugins Cassandra-realtimesink.md 
 

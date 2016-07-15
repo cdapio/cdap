@@ -13,10 +13,14 @@ Developing Plugins
 Overview
 ========
 This section is intended for developers writing custom plugins. Users of these should
-refer to the documentation on :ref:`using plugins <cask-hydrator-introduction-what-is-a-plugin>`.
+refer to the documentation on :ref:`using plugins
+<cask-hydrator-introduction-what-is-a-plugin>`.
 
-CDAP provides for the creation of custom plugins to extend the existing ``cdap-etl-batch``,
-``cdap-etl-realtime``, and ``cdap-data-pipeline`` system artifacts.
+CDAP provides for the creation of custom plugins to extend the existing
+``cdap-data-pipeline`` and ``cdap-etl-realtime`` system artifacts.
+
+*Note:* The ``cdap-etl-batch`` artifact has been deprecated and replaced with the
+``cdap-data-pipeline`` effective with CDAP 3.5.0.
 
 
 Plugin Types and Maven Archetypes
@@ -122,10 +126,15 @@ This plugin takes two configuration properties. The first is named ``input-path`
 The second is named ``cleanOutput`` and is optional. Note that optional configuration fields should
 have their default values set in the no-argument constructor.
 
+
+Creating a Plugin
+=================
+
+
 .. highlight:: java
 
-Creating a Batch Source
-=======================
+Batch Source Plugin
+-------------------
 In order to implement a Batch Source (to be used in either the ETL Batch or Data Pipeline artifacts), you extend the
 ``BatchSource`` class. You need to define the types of the KEY and VALUE that the Batch
 Source will receive and the type of object that the Batch Source will emit to the
@@ -269,8 +278,8 @@ Example::
     }
   }
 
-Creating a Batch Sink
-=====================
+Batch Sink Plugin
+-----------------
 In order to implement a Batch Sink (to be used in either the ETL Batch or Data Pipeline artifacts), you extend the
 ``BatchSink`` class. Similar to a Batch Source, you need to define the types of the KEY and
 VALUE that the Batch Sink will write in the Batch job and the type of object that it will
@@ -1004,7 +1013,7 @@ application artifact and mock plugins, as well as the artifact containing your c
    * Unit tests for our plugins.
    */
   public class PipelineTest extends HydratorTestBase {
-    private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("data-pipeline", "1.0.0");
+    private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("cdap-data-pipeline", "1.0.0");
     @ClassRule
     public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 

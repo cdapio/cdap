@@ -10,16 +10,18 @@ Introduction to Hydrator
 
 What is Cask Hydrator?
 ======================
-Cask Hydrator (*Hydrator*) is a self-service, reconfigurable, extendable framework to
-develop, run, automate, and operate data pipelines on Hadoop. Completely open source, it
+Cask Hydrator (or simply *Hydrator*) is a self-service, reconfigurable, extendable framework to
+develop, run, automate, and operate **data pipelines** on Hadoop. Completely open source, it
 is licensed under the Apache 2.0 license.
 
 Hydrator is an extension to CDAP and includes the *Cask Hydrator Studio*, a visual
 drag-and-drop interface for building data pipelines from an included library of pre-built
 plugins.
 
-It provides an operational view of the resulting pipeline that allows for lifecycle
-control and monitoring of the metrics, logs, and other runtime information.
+Hydrator provides an operational view of the resulting pipeline that allows for lifecycle
+control and monitoring of the metrics, logs, and other runtime information. The pipeline
+can also be run directly in CDAP with tools such as the CDAP UI, the CDAP CLI, or command
+line tools.
 
 Though the typical uses of pipelines vary from ETL (extract-transform-load) of data to
 sentiment analysis through to the preparation of daily aggregations and reports, Hydrator
@@ -28,28 +30,26 @@ can be adapted to an increasing number of situations and requirements.
 What is a Pipeline?
 ===================
 Pipelines are applications |---| specifically for the processing of data flows |---|
-created from artifacts. The data flows can be either batch or real-time, and a variety of
-processing paradigms (MapReduce, Spark, etc.) can be used.
+created from artifacts. 
 
-A pipeline can be thought of as consisting of a series of *stages*. Each stage is a usage
-of a *plugin*, an extension to CDAP that provides a specific functionality.
+An **artifact** is an "application template"; an application is created by CDAP by using a
+configuration file that defines the desired application, along with the artifacts
+specified inside the configuration. 
 
-A stage's configuration properties describes what that plugin is to do (read from a
-stream, write to a table, run a script), and is dependent on the particular plugin used.
+Basic artifacts for creating data pipelines are supplied with CDAP.
 
-All stages are connected together in a directed acyclic graph (or DAG), which is
-represented in *Hydrator Studio* as a connected series of icons:
+Logical versus Physical Pipelines
+---------------------------------
 
-.. image:: /_images/forkInPipeline.png
-   :width: 6in
-   :align: center
-
-After the pipeline has been run, "post-action" plugins can be called, to perform actions
-such as emailing notifications, moving files, and running database queries, even if the
-pipeline run succeeded or failed.
+.. include:: /how-hydrator-works.rst
+   :start-after: .. _cask-hydrator-how-hydrator-works-logical-start:
+   :end-before:  .. _cask-hydrator-how-hydrator-works-logical-end:
 
 Types of Pipelines
 ------------------
+The data flows of a pipeline can be either batch or real-time, and a variety of
+processing paradigms (MapReduce, Spark, etc.) can be used.
+
 Batch applications can be scheduled to run periodically using a cron expression and can
 read data from batch sources using a MapReduce job. The batch application then performs
 any of a number of optional transformations before writing to one or more batch sinks.
@@ -58,39 +58,58 @@ Real-time applications are designed to poll sources periodically to fetch the da
 perform any optional transformations required, and then write to one or more real-time
 sinks.
 
+A pipeline can be thought of as consisting of a series of *stages*. Each stage is a usage
+of a *plugin*, an extension to CDAP that provides a specific functionality.
+
+A stage's configuration properties describes what that plugin is to do (read from a
+stream, write to a table, run a script), and is dependent on the particular plugin used.
+
+All stages are connected together in a directed acyclic graph (or DAG), which is
+shown in *Hydrator Studio* and in CDAP as a connected series of icons:
+
+.. image:: /_images/forkInPipeline.png
+   :width: 6in
+   :align: center
+
+After the pipeline has been run, "post-run" plugins can be called, to perform actions such
+as emailing notifications, moving files, and running database queries, regardless if the
+pipeline run succeeded or failed.
+
 Creating Pipelines
 ------------------
 Pipelines are created from artifacts. A number of artifacts are supplied with CDAP, and
-custom artifacts can be created by developers. An artifact is a blueprint or template
-that |---| with the addition of a configuration file |---| is used to create an application.
+custom artifacts can be created by developers. An artifact is a blueprint or template that
+|---| with the addition of a configuration file |---| is used to create an application.
 
 A pipeline application is created by preparing a configuration that specifies the artifact
-and which source, transformations (also known as transforms), and sinks are used to create
-the application. The configuration can either be written as a JSON file or, in the case of
-the CDAP UI, specified in-memory.
+and which source, transformations (also known as transforms), and sinks are
+to be used to create the application. 
 
-CDAP currently provides three artifacts |---| ``cdap-etl-batch``, ``data-pipeline``, and
-``cdap-etl-realtime``, referred to as system artifacts |---| which can be used to create
-different kinds of applications that work in either batch (``cdap-etl-batch``,
-``data-pipeline``) or real-time (``cdap-etl-realtime``). They work with a collection of
-sources, transformations, sinks, and other plugins, either those that are packaged as part
-of CDAP or ones that have been installed separately.
+The sources, transformations, and sinks are packaged as extensions to CDAP known as
+**plugins**, and can include actions to be taken at the start of pipeline run, at the end,
+and after the run has been completed. The plugins can be either
+those that are packaged as part of CDAP or ones that have been installed separately.
+
+The configuration can either be written as a JSON
+file or, in the case of the Hydrator Studio, specified in-memory.
+
+CDAP currently provides two artifacts |---| ``cdap-data-pipeline`` and ``cdap-etl-realtime``,
+referred to as system artifacts |---| which can be used to create different kinds of
+applications that work in either batch (``cdap-data-pipeline``) or real-time
+(``cdap-etl-realtime``). (A third system artifact, ``cdap-etl-batch`` has been deprecated
+and replaced by the ``cdap-data-pipeline`` artifact, as of CDAP 3.5.0.)
 
 An additional system artifact (``cdap-etl-lib``) provides common resources for the other
 system artifacts, and can be used by developers of custom plugins.
 
 Pipelines can be created using Cask Hydrator's included visual editor (*Cask Hydrator
-Studio*), using command-line tools such the CDAP CLI and curl, or programmatically with
-scripts or Java programs.
+Studio*), using command-line tools such the CDAP CLI and ``curl``, or programmatically
+with scripts or Java programs.
 
 Pipeline Lifecycle
 ------------------
-- cover
-
-User "workflow" to create and run a pipeline
-
-CDAP steps to deploy and run a pipeline.
-
+Similar to other CDAP applications, pipelines have a lifecycle, and can be managed and controlled
+using the tools supplied by CDAP.
 
 
 .. rubric:: **Sidebar:** *What is ETL?*
@@ -124,7 +143,7 @@ wishes, they can write a plugin to add their own capability.
 
 Some plugins |---| such as the *JavaScript*, *Python Evaluator*, and *Validator*
 transforms |---| are designed to be customized by end-users with their own code from
-within Hydrator Studio. With those, you can create your own data validators either by
+within Hydrator Studio. For instance, you can create your own data validators either by
 using the functions supplied in the CoreValidator plugin or by implementing and supplying
 your own custom validation function.
 
@@ -142,7 +161,7 @@ These are the basic plugin types in |cdap-hydrator-version|:
 - Compute
 - Model
 - Shared
-- Post-action (called after the pipeline has run)
+- Post-run (called after the pipeline has run)
 
 Additional types of plugins are under development, and developers can create and
 add their own plugins and plugin types.
@@ -156,8 +175,8 @@ work with, depending on the particular functionality they provide.
 For instance, certain model (*NaiveBayesTrainer*) and compute (*NaiveBayesClassifier*) plugins
 only work with batch pipelines.
 
-Action plugins (supported only in pipelines based on the ``data-pipeline`` artifact) can
-be added to run either before a source or after a sink. A "post-action" plugin can be
+Action plugins (supported only in pipelines based on the ``cdap-data-pipeline`` artifact) can
+be added to run either before a source or after a sink. A "post-run" plugin can be
 specified that runs after the entire pipeline has run.
 
 A reference lists and describes all :ref:`plugins included with CDAP <cask-hydrator-plugins>`.
@@ -182,25 +201,50 @@ those pipelines are created from the artifacts as specified in the plugin templa
 time of creation.
 
 
-What is a Structured Record?
-============================
-Each stage of a pipeline that emits data (basically, all stages except for *actions* and
-*sinks*) emits in the form of a ``Structured Record``, which can be thought of simply as
-data, in the form of a map of key-value pairs, with an included schema that describes the
-record. In general, sinks usually accept a ``Structured Record``, and sources often
-(though not always) emit them. There are transform plugins that convert either to or from
-Structured Records to other formats as required.
-
-
 What are Properties?
 ====================
 Each stage in a pipeline represents the configuration of a specific plugin, and that
-configuration requires certain properties. At a minimum, a unique name for the stage and the
-plugin being used is required, with any additional properties required dependent on the
-particular plugin used.
+configuration usually requires that certain properties be specified. At a minimum, a
+unique name for the stage and the plugin being used is required, with any additional
+properties required dependent on the particular plugin used.
 
 See the :ref:`reference section <cask-hydrator-plugins>` for details on the properties
 required and supported for each plugin.
+
+
+Schema
+======
+Each stage of a pipeline that emits data (basically, all stages except for *actions* and
+*sinks*) emits data with a schema that is set for that stage. Schemas need to match
+appropriately from stage to stage, and controls within *Hydrator Studio* allow the
+propagation of a schema to subsequent stages.
+
+The schema allows you to control which fields and their types are used in all stages of
+pipeline. Certain plugins require specific schemas, and transform plugins are available to
+convert data to required formats and schemas.
+
+
+Macros
+======
+You may want to create a pipeline that has several configuration settings that are not
+known at pipeline creation time, but that are set at the start of the each pipeline run.
+
+For instance, you might want a pipeline that reads from a database (a source) and writes
+to a table (a sink). The name of the database source and name of the table sink might
+change from run to run and you need to specify those values as input before starting a
+run.
+
+Or, you might want to create a pipeline with a particular action at the start of the run.
+The action might, based on some logic, provide the name of the database to use as a source
+and the name of the table to write as a sink. The next stage in the pipeline might use
+this information to read and write from appropriate sources and sinks.
+
+To do this, Hydrator supports the use of macros that will, at runtime, will be evaluated
+and substituted for. The macros support recursive (nested) expansion and use a simple
+syntax.
+
+Details of usage and examples are explained in the section on :ref:`runtime arguments and
+macros <cask-hydrator-runtime-arguments-macros>`.
 
 
 .. _cask-hydrator-introduction_hydrator_studio:
