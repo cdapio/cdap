@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -56,6 +57,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -427,6 +429,26 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new NotFoundException(appId);
     }
     deleteApp(appId, spec);
+  }
+
+  /**
+   * Get detail about the plugin in the specified application
+   *
+   * @param appId the id of the application
+   * @return list of plugins in the application
+   * @throws ApplicationNotFoundException if the specified application does not exist
+   */
+  public List<PluginInstanceDetail> getPlugins(ApplicationId appId)
+    throws ApplicationNotFoundException {
+    ApplicationSpecification appSpec = store.getApplication(appId.toId());
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(appId.toId());
+    }
+    List<PluginInstanceDetail> pluginInstanceDetails = new ArrayList<>();
+    for (Map.Entry<String, Plugin> entry : appSpec.getPlugins().entrySet()) {
+      pluginInstanceDetails.add(new PluginInstanceDetail(entry.getKey(), entry.getValue()));
+    }
+    return pluginInstanceDetails;
   }
 
   private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {

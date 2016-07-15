@@ -28,9 +28,11 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -172,6 +174,30 @@ public class ApplicationClient {
       throw new ApplicationNotFoundException(appId);
     }
     return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject();
+  }
+
+  /**
+   * Get plugins in the specified application.
+   *
+   * @param appId the id of the application to get
+   * @return list of plugins in the application
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<PluginInstanceDetail> getPlugins(ApplicationId appId)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+
+    HttpResponse response = restClient.execute(HttpMethod.GET,
+                                               config.resolveNamespacedURLV3(
+                                                 appId.getParent().toId(),
+                                                 "apps/" + appId.getApplication() + "/plugins"),
+                                               config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ApplicationNotFoundException(appId.toId());
+    }
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<PluginInstanceDetail>>() { }).getResponseObject();
   }
 
   /**

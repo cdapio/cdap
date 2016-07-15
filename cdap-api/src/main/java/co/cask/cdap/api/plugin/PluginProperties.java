@@ -17,11 +17,13 @@
 package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.macro.Macros;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Plugin instance properties.
@@ -33,17 +35,38 @@ public class PluginProperties implements Serializable {
 
   // Currently only support String->String map.
   private final Map<String, String> properties;
+  private final Macros macros;
+
+  private PluginProperties(Map<String, String> properties, @Nullable Macros macros) {
+    this.properties = properties;
+    this.macros = macros;
+  }
 
   public static Builder builder() {
     return new Builder();
   }
 
   private PluginProperties(Map<String, String> properties) {
-    this.properties = properties;
+    this(properties, new Macros());
   }
 
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  public Macros getMacros() {
+    return  (macros == null) ? new Macros() : macros;
+  }
+
+  /**
+   * Creates and returns a new instance of Plugin properties with current properties and the passed macros parameter.
+   * Note this is used internally by the CDAP Platform and it is advisable
+   * that plugin developers not use this method.
+   * @param macros set of macros used by this plugin.
+   * @return new instance of plugin properties with macros set.
+   */
+  public PluginProperties setMacros(Macros macros) {
+    return new PluginProperties(getProperties(), macros);
   }
 
   /**
