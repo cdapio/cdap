@@ -2472,6 +2472,7 @@
         <module>cdap-test</module>
         <module>cdap-integration-test</module>
         <module>cdap-ui</module>
+        <module>cdap-kms</module>
       </modules>
     </profile>
     <profile>
