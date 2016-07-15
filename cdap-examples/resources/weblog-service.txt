@@ -1,2 +1,2 @@
-deploy app \$CDAP_HOME/examples/CubeService/target/CubeServiceApp-3.3.5-SNAPSHOT.jar
+deploy app \$CDAP_HOME/examples/CubeService/target/CubeServiceApp-3.3.6-SNAPSHOT.jar
 start service CubeServiceApp.CubeService 
