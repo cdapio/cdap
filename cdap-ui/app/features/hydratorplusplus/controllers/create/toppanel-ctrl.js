@@ -20,11 +20,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.consoleStore.registerOnChangeListener(() => {
       let messages = this.consoleStore.getMessages() || [];
       let filteredMessages = messages.filter( message => message.type === 'MISSING-NAME');
-      if (filteredMessages.length) {
-        this.state.inValidName = true;
-      } else {
-        this.state.inValidName = false;
-      }
+      this.state.inValidName = (filteredMessages.length ? true : false);
     });
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.GLOBALS = GLOBALS;
