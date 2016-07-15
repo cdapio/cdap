@@ -14,6 +14,57 @@
   the License.
 -->
 
-<h1>hi</h1>
+<div class="sql-select-fields-container">
 
-<pre>{{ SqlSelector.inputSchema | json: 4 }}</pre>
+  <div ng-repeat="stage in SqlSelector.parsedInputSchemas">
+    <h4 ng-click="stage.expanded = !stage.expanded">
+      <span class="fa" ng-class="{ 'fa-caret-right': !stage.expanded, 'fa-caret-down': stage.expanded}"></span>
+      <span>{{ stage.name }}</span>
+    </h4>
+
+    <div ng-if="stage.expanded">
+      <table class="table">
+        <thead>
+          <th>Name</th>
+          <th>
+            <div class="btn-group" uib-dropdown dropdown-append-to-body>
+              <button class="btn btn-default" uib-dropdown-toggle>
+                Select <span class="fa fa-chevron-down"></span>
+              </button>
+              <ul class="dropdown-menu sql-select-dropwdown"
+                  uib-dropdown-menu
+                  role="menu">
+                <li role="menuitem">
+                  <a ng-click="SqlSelector.toggleAllFields(stage, true)">All</a>
+                </li>
+                <li role="menuitem">
+                  <a ng-click="SqlSelector.toggleAllFields(stage, false)">None</a>
+                </li>
+              </ul>
+            </div>
+
+          </th>
+          <th>Alias</th>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="field in stage.schema">
+            <td>{{ field.name }}</td>
+            <td>
+              <input type="checkbox"
+                     ng-model="field.selected"
+                     ng-change="SqlSelector.formatOutput()">
+            </td>
+            <td>
+              <input type="text"
+                     class="form-control"
+                     ng-model="field.alias"
+                     ng-blur="SqlSelector.formatOutput()"
+                     ng-disabled="!field.selected">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

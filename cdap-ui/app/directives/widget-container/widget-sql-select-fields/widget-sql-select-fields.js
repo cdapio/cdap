@@ -16,6 +16,78 @@
 
 function SqlSelectorController() {
   'ngInject';
+
+  let vm = this;
+
+  vm.parsedInputSchemas = [];
+
+  function init() {
+    let initialModel = {};
+
+    if (vm.model) {
+      let model = vm.model.split(',');
+
+      angular.forEach(model, (entry) => {
+        let split = entry.split(' as ');
+        let fieldInfo = split[0].split('.');
+
+        if (!initialModel[fieldInfo[0]]) {
+          initialModel[fieldInfo[0]] = {};
+        }
+        initialModel[fieldInfo[0]][fieldInfo[1]] = split[1] ? split[1] : true;
+      });
+    }
+
+    angular.forEach(vm.inputSchema, (input) => {
+      let schema = JSON.parse(input.schema).fields.map((field) => {
+        if (initialModel[input.name] && initialModel[input.name][field.name]) {
+          field.selected = true;
+          field.alias = initialModel[input.name][field.name] === true ? '' : initialModel[input.name][field.name];
+        } else {
+          field.selected = false;
+          field.alias = '';
+        }
+
+        return field;
+      });
+
+      vm.parsedInputSchemas.push({
+        name: input.name,
+        schema: schema,
+        expanded: false
+      });
+    });
+  }
+
+  init();
+
+  vm.formatOutput = () => {
+    let outputArr = [];
+
+    angular.forEach(vm.parsedInputSchemas, (input) => {
+      angular.forEach(input.schema, (field) => {
+        if (!field.selected) { return; }
+
+        let outputField = input.name + '.' + field.name;
+
+        if (field.alias) {
+          outputField += ' as ' + field.alias;
+        }
+
+        outputArr.push(outputField);
+      });
+    });
+
+    vm.model = outputArr.join(',');
+  };
+
+  vm.toggleAllFields = (stage, isSelected) => {
+    angular.forEach(stage.schema, (field) => {
+      field.selected = isSelected;
+    });
+
+    vm.formatOutput();
+  };
 }
 
 angular.module(PKG.name + '.commons')
