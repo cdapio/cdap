@@ -281,7 +281,7 @@ angular.module(PKG.name + '.feature.tracker')
             controllerAs: 'UsageController',
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
-              highlightTab: 'usage'
+              highlightTab: 'search'
             }
           })
           .state('tracker.detail.entity.preview', {
