@@ -37,12 +37,10 @@ angular.module(PKG.name + '.services')
         suspend: myHelpers.getConfig('POST', 'REQUEST', schedulePath + '/suspend'),
         scheduleStatus: myHelpers.getConfig('GET', 'REQUEST', schedulePath + '/status'),
 
-        pollStatistics: myHelpers.getConfig('GET', 'POLL', basePath + '/statistics'),
-
+        getStatistics: myHelpers.getConfig('GET', 'REQUEST', basePath + '/statistics'),
         getRuns: myHelpers.getConfig('GET', 'REQUEST', runsPath),
         pollRuns: myHelpers.getConfig('GET', 'POLL', basePath + '/runs', true),
-        nextRunTime: myHelpers.getConfig('GET', 'REQUEST', basePath + '/nextruntime', true),
-        pollNextRunTime: myHelpers.getConfig('GET', 'POLL', basePath + '/nextruntime', true)
+        nextRunTime: myHelpers.getConfig('GET', 'REQUEST', basePath + '/nextruntime', true)
       }
     );
   });
