@@ -18,6 +18,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.GLOBALS = GLOBALS;
     this.myAlertOnValium = myAlertOnValium;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
+    this.HydratorPlusPlusDetailRunsStore = HydratorPlusPlusDetailRunsStore;
     this.HydratorPlusPlusDetailActions = HydratorPlusPlusDetailActions;
     this.config = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
     this.app = {
