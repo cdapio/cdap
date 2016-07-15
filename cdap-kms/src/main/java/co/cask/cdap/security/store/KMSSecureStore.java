@@ -43,7 +43,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
   private final Configuration conf;
 
   @Inject
-  KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
+  public KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
     this.conf = conf;
     URI providerUri = new URI(conf.get(KeyProviderFactory.KEY_PROVIDER_PATH));
     provider = KMSClientProvider.Factory.get(providerUri, conf);
