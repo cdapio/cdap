@@ -62,7 +62,7 @@
           <p>Last 7 days</p>
         </div>
         <div class="metric-container">
-          <table ng-if="MainController.serviceUnavailable === false && MainController.topDatasets.length >= 3"
+          <table ng-if="MainController.serviceUnavailable === false && MainController.topDatasets.length > 0"
                 class="table">
             <thead>
               <th class="text-center">Dataset</th>
@@ -113,9 +113,9 @@
               </tr>
             </tbody>
           </table>
-          <div ng-if="MainController.topDatasets.length < 3"
+          <div ng-if="MainController.topDatasets.length === 0"
               class="well">
-            <p>Not enough datasets found</p>
+            <p>No datasets to display</p>
           </div>
           <div ng-if="MainController.serviceUnavailable === true"
               class="well">
