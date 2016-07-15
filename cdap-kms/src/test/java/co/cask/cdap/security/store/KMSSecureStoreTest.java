@@ -54,14 +54,6 @@ public class KMSSecureStoreTest {
 
   @Test
   public void put() throws Exception {
-    conf.set("hadoop.security.authentication", "kerberos");
-    conf.set("hadoop.kms.authentication.token.validity", "1");
-    conf.set("hadoop.kms.authentication.type", "kerberos");
-    conf.set("hadoop.kms.authentication.kerberos.principal", "cdap");
-    conf.set("hadoop.kms.authentication.kerberos.name.rules", "DEFAULT");
-    UserGroupInformation.setConfiguration(conf);
-
-    secureStoreManager.put(NS1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
   }
 
   public void delete() throws Exception {
