@@ -46,6 +46,9 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +100,7 @@ public class TestCask360App extends TestBase {
     // Write an entity directly to the table
     Cask360Entity entity = makeTestEntityOne(id);
     table.write(id, entity);
+    int id1count = entity.size();
     dataSetManager.flush();
 
     // Read entity back directly from table (twice)
@@ -147,6 +151,21 @@ public class TestCask360App extends TestBase {
     response = getUrl(serviceURL, entityPath + id);
     Assert.assertTrue("Expected success but lookup failed", response.error == 0);
     Assert.assertTrue("Returned entity different from written entity", combinedEntity.equals(response.entity));
+
+    // Verify count via SQL
+
+    int id2count = combinedEntity.size();
+    int expectedCount = id1count + id2count;
+
+    // 
+    Connection conn = getQueryClient();
+    Statement st = conn.createStatement();
+    ResultSet res = st.executeQuery("SELECT * FROM dataset_" + Cask360App.TABLE_NAME);
+    int sqlCount = 0;
+    while (res.next()) {
+      sqlCount++;
+    }
+    Assert.assertEquals(expectedCount, sqlCount);
 
     // Now try writing with the TIME type
 
