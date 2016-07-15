@@ -165,6 +165,9 @@
   </div>
 
   <div class="pipeline-specific-section">
+    <div class="btn" ng-click="TopPanelCtrl.viewSummary = !TopPanelCtrl.viewSummary">
+      <span class="fa fa-line-chart"></span>
+    </div>
     <div class="btn" ng-click="TopPanelCtrl.viewSettings = !TopPanelCtrl.viewSettings">
       <span class="fa fa-sliders"></span>
     </div>
@@ -198,8 +201,8 @@
     </div>
   </div>
   <div class="pipeline-settings-backdrop"
-       ng-if="TopPanelCtrl.viewSettings"
-       ng-click="TopPanelCtrl.viewSettings = false"></div>
+       ng-if="TopPanelCtrl.viewSettings || TopPanelCtrl.viewSummary"
+       ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false"></div>
   <div class="pipeline-settings">
     <div
       store="TopPanelCtrl.HydratorPlusPlusDetailNonRunsStore"
@@ -208,6 +211,14 @@
       is-disabled="true"
       template-type="{{TopPanelCtrl.config.artifact.name}}"
       my-pipeline-settings>
+    </div>
+  </div>
+  <div class="pipeline-settings">
+    <div
+      store="TopPanelCtrl.HydratorPlusPlusDetailRunsStore"
+      action-creator="TopPanelCtrl.HydratorPlusPlusDetailActions"
+      ng-if="TopPanelCtrl.viewSummary"
+      my-pipeline-summary>
     </div>
   </div>
 </div>
