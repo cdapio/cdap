@@ -29,7 +29,6 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -63,7 +62,6 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
 
   private final CConfiguration cConf;
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
-  private final HttpRequestConfig httpRequestConfig;
 
   @Inject
   public RemoteDatasetOpExecutor(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
@@ -74,8 +72,6 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
         return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_EXECUTOR));
       }
     });
-    int httpTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
-    this.httpRequestConfig = new HttpRequestConfig(httpTimeoutMs, httpTimeoutMs);
   }
 
   @Override
@@ -120,7 +116,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
     HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "create"))
       .withBody(GSON.toJson(creationParams))
       .build();
-    HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
+    HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
 
     return ObjectResponse.fromJsonBody(response, DatasetSpecification.class).getResponseObject();
@@ -134,7 +130,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
     HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "update"))
       .withBody(GSON.toJson(updateParams))
       .build();
-    HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
+    HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
 
     return ObjectResponse.fromJsonBody(response, DatasetSpecification.class).getResponseObject();
@@ -146,7 +142,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
     InternalDatasetDropParams dropParams = new InternalDatasetDropParams(typeMeta, spec);
     HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "drop"))
       .withBody(GSON.toJson(dropParams)).build();
-    HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
+    HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
   }
 
@@ -163,8 +159,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
   private DatasetAdminOpResponse executeAdminOp(Id.DatasetInstance datasetInstanceId, String opName)
     throws IOException, HandlerException, ConflictException {
 
-    HttpResponse httpResponse = HttpRequests.execute(HttpRequest.post(resolve(datasetInstanceId, opName)).build(),
-                                                      httpRequestConfig);
+    HttpResponse httpResponse = HttpRequests.execute(HttpRequest.post(resolve(datasetInstanceId, opName)).build());
     verifyResponse(httpResponse);
 
     return GSON.fromJson(new String(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
