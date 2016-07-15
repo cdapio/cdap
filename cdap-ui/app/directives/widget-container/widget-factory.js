@@ -183,6 +183,13 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'input-schema': 'inputSchema'
         }
+      },
+      'sql-conditions': {
+        element: '<my-sql-conditions></my-sql-conditions>',
+        attributes: {
+          'ng-model': 'model',
+          'input-schema': 'inputSchema'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
