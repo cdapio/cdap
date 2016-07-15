@@ -38,8 +38,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   //viewLimit and cacheDecrement should match
-  this.viewLimit = 10;
-  this.cacheDecrement = 10;
+  this.viewLimit = 50;
+  this.cacheDecrement = 50;
   this.cacheSize = 0;
 
   //Collapsing LogViewer Table Columns
@@ -193,8 +193,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }).$promise.then(
       (res) => {
 
-        this.viewLimit = 10;
-        this.cacheDecrement = 10;
+        this.viewLimit = 50;
+        this.cacheDecrement = 50;
         this.cacheSize = 0;
         this.loadingMoreLogs = true;
 
@@ -267,9 +267,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     included[eventType] = !included[eventType];
   };
 
-  this.eventFilter = function(log){
-    if(numEvents === 0 || included[log.level]){
-      return log;
+  this.eventFilter = function(entry){
+    if(numEvents === 0 || included[entry.log.logLevel]){
+      return entry;
     }
     return;
   };

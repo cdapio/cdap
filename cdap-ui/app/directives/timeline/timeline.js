@@ -247,7 +247,9 @@ function link (scope, element) {
 
   scope.updatePinScale = function (val) {
     if(pinHandle !== undefined){
-      updatePin(xScale(val));
+      console.log('the updated time is: ', val);
+      //console.log('the updated pin position is: ', xScale(Math.floor(val/1000)));
+      //updatePin(xScale(val)));
     }
   };
 
@@ -258,12 +260,7 @@ function link (scope, element) {
     if(val > sliderLimit){
       val = sliderLimit;
     }
-
     sliderX = val;
-
-    if(sliderX >= pinX){
-      updatePin(sliderX);
-    }
 
     sliderHandle.attr('x', val);
     sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
