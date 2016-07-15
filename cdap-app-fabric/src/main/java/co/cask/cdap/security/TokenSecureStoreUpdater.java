@@ -22,6 +22,7 @@ import co.cask.cdap.common.security.SecureStoreUtils;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
+import co.cask.cdap.security.store.KMSTokenUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
 import com.google.common.base.Throwables;

@@ -23,6 +23,7 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.security.SecureStoreUtils;
 import co.cask.cdap.security.store.DummyKMSStore;
 import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.security.store.KMSSecureStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
