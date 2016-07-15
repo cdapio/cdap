@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package co.cask.cdap.common.metadata;
 
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.metadata.AbstractMetadataClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -44,56 +41,38 @@ import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 
-/**
- * Provides ways to interact with CDAP Metadata.
+/*
+ * Common implementation of methods to interact with metadata over HTTP.
  */
-public class MetadataClient extends AbstractMetadataClient {
-
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec()).create();
-  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
+public abstract  class AbstractMetadataClient {
   private static final Type SET_METADATA_SEARCH_RESULT_TYPE =
     new TypeToken<Set<MetadataSearchResultRecord>>() { }.getType();
+  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec()).create();
 
-  private final RESTClient restClient;
-  private final ClientConfig config;
+  /**
+   * Executes an HTTP request.
+   */
+  protected abstract  HttpResponse execute(HttpRequest request,  int... allowedErrorCodes)
+    throws IOException, UnauthenticatedException;
 
-  @Inject
-  public MetadataClient(ClientConfig config, RESTClient restClient) {
-    this.config = config;
-    this.restClient = restClient;
-  }
+  /**
+   * Resolves the specified URL.
+   */
+  protected abstract URL resolve(Id.Namespace namesapace, String resource) throws IOException;
 
-  public MetadataClient(ClientConfig config) {
-    this(config, new RESTClient(config));
-  }
-
-  @Override
-  protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException, UnauthenticatedException {
-    // the allowed codes are the ones that AbstractNamespaceClient expects to be able to handle
-    return restClient.execute(request, config.getAccessToken(),
-                              HttpURLConnection.HTTP_BAD_REQUEST,
-                              HttpURLConnection.HTTP_NOT_FOUND,
-                              HttpURLConnection.HTTP_FORBIDDEN);
-  }
-
-  @Override
-  protected URL resolve(Id.Namespace namespace, String resource) throws MalformedURLException {
-    return config.resolveNamespacedURLV3(namespace, resource);
-  }
-
-/*  *//**
+  /**
    * Searches entities in the specified namespace whose metadata matches the specified query.
    *
    * @param namespace the namespace to search in
    * @param query the query string with which to search
    * @param target the target type. If null, all possible types will be searched
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
-   *//*
+   */
   public Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespace, String query,
                                                         @Nullable MetadataSearchTargetType target)
     throws IOException, UnauthenticatedException {
@@ -104,14 +83,15 @@ public class MetadataClient extends AbstractMetadataClient {
     return searchMetadata(namespace, query, targets);
   }
 
-  *//**
+
+  /**
    * Searches entities in the specified namespace whose metadata matches the specified query.
    *
    * @param namespace the namespace to search in
    * @param query the query string with which to search
    * @param targets {@link MetadataSearchTargetType}s to search. If empty, all possible types will be searched
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
-   *//*
+   */
   public Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespace, String query,
                                                         Set<MetadataSearchTargetType> targets)
     throws IOException, UnauthenticatedException {
@@ -120,28 +100,27 @@ public class MetadataClient extends AbstractMetadataClient {
     for (MetadataSearchTargetType t : targets) {
       path += "&target=" + t;
     }
-    URL searchURL = config.resolveNamespacedURLV3(namespace, path);
-    HttpResponse response = restClient.execute(HttpRequest.get(searchURL).build(),
-                                               config.getAccessToken());
+    URL searchURL = resolve(namespace, path);
+    HttpResponse response = execute(HttpRequest.get(searchURL).build());
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_SEARCH_RESULT_TYPE);
   }
 
-  *//**
+  /**
    * @param id the entity for which to retrieve metadata across {@link MetadataScope#SYSTEM} and
    * {@link MetadataScope#USER}
    * @return The metadata for the entity.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id id)
     throws UnauthenticatedException, BadRequestException, NotFoundException, IOException {
     return getMetadata(id, null);
   }
 
-  *//**
+  /**
    * @param id the entity for which to retrieve metadata
    * @param scope the {@link MetadataScope} to retrieve the metadata from. If null, this method retrieves
    *              metadata from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata for the entity.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -164,22 +143,22 @@ public class MetadataClient extends AbstractMetadataClient {
     throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
   }
 
-  *//**
+  /**
    * @param id the entity for which to retrieve metadata properties across {@link MetadataScope#SYSTEM} and
    * {@link MetadataScope#USER}
    * @return The metadata properties for the entity.
-   *//*
+   */
   public Map<String, String> getProperties(Id id)
     throws UnauthenticatedException, BadRequestException, NotFoundException, IOException {
     return getProperties(id, null);
   }
 
-  *//**
+  /**
    * @param id the entity for which to retrieve metadata properties
    * @param scope the {@link MetadataScope} to retrieve the properties from. If null, this method retrieves
    *              properties from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the entity.
-   *//*
+   */
   public Map<String, String> getProperties(Id id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -200,22 +179,22 @@ public class MetadataClient extends AbstractMetadataClient {
     throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
   }
 
-  *//**
+  /**
    * @param id the entity for which to retrieve metadata tags across {@link MetadataScope#SYSTEM} and
    * {@link MetadataScope#USER}
    * @return The metadata tags for the entity.
-   *//*
+   */
   public Set<String> getTags(Id id)
     throws UnauthenticatedException, BadRequestException, NotFoundException, IOException {
     return getTags(id, null);
   }
 
-  *//**
+  /**
    * @param id the entity for which to retrieve metadata tags
    * @param scope the {@link MetadataScope} to retrieve the tags from. If null, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the entity.
-   *//*
+   */
   public Set<String> getTags(Id id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -236,10 +215,10 @@ public class MetadataClient extends AbstractMetadataClient {
     throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
   }
 
-  *//**
+  /**
    * @param id the entity for which to add metadata properties
    * @param properties the metadata properties
-   *//*
+   */
   public void addProperties(Id id, Map<String, String> properties)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -260,10 +239,10 @@ public class MetadataClient extends AbstractMetadataClient {
     }
   }
 
-  *//**
+  /**
    * @param id the entity for which to add metadata tags
    * @param tags the metadata tags
-   *//*
+   */
   public void addTags(Id id, Set<String> tags)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -284,9 +263,9 @@ public class MetadataClient extends AbstractMetadataClient {
     }
   }
 
-  *//**
+  /**
    * @param id the entity for which to remove metadata
-   *//*
+   */
   public void removeMetadata(Id id)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -307,9 +286,9 @@ public class MetadataClient extends AbstractMetadataClient {
     }
   }
 
-  *//**
+  /**
    * @param id the entity for which to remove metadata properties
-   *//*
+   */
   public void removeProperties(Id id)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -330,9 +309,9 @@ public class MetadataClient extends AbstractMetadataClient {
     }
   }
 
-  *//**
+  /**
    * @param id the entity for which to remove metadata tags
-   *//*
+   */
   public void removeTags(Id id)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -353,10 +332,10 @@ public class MetadataClient extends AbstractMetadataClient {
     }
   }
 
-  *//**
+  /**
    * @param id the entity for which to remove a metadata property
    * @param property the property to remove
-   *//*
+   */
   public void removeProperty(Id id, String property)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -377,10 +356,10 @@ public class MetadataClient extends AbstractMetadataClient {
     }
   }
 
-  *//**
+  /**
    * @param id the entity for which to remove a metadata tag
    * @param tag the tag to remove
-   *//*
+   */
   public void removeTag(Id id, String tag)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException {
 
@@ -403,64 +382,64 @@ public class MetadataClient extends AbstractMetadataClient {
     }
   }
 
-  *//**
+  /**
    * @param appId the app for which to retrieve metadata
    * @return The metadata for the application.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id.Application appId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return doGetMetadata(appId, constructPath(appId), scope);
   }
 
-  *//**
+  /**
    * @param artifactId the artifact for which to retrieve metadata
    * @return The metadata for the artifact.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id.Artifact artifactId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return doGetMetadata(artifactId, constructPath(artifactId), scope);
   }
 
-  *//**
+  /**
    * @param datasetInstance the dataset for which to retrieve metadata
    * @return The metadata for the dataset.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id.DatasetInstance datasetInstance, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return doGetMetadata(datasetInstance, constructPath(datasetInstance), scope);
   }
 
-  *//**
+  /**
    * @param streamId the stream for which to retrieve metadata
    * @return The metadata for the stream.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id.Stream streamId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return doGetMetadata(streamId, constructPath(streamId), scope);
   }
 
-  *//**
+  /**
    * @param viewId the view for which to retrieve metadata
    * @return The metadata for the view.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id.Stream.View viewId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return doGetMetadata(viewId, constructPath(viewId), scope);
   }
 
-  *//**
+  /**
    * @param programId the program for which to retrieve metadata
    * @return The metadata for the program.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id.Program programId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return doGetMetadata(programId, constructPath(programId), scope);
   }
 
-  *//**
+  /**
    * @param runId the run for which to retrieve metadata
    * @return The metadata for the run.
-   *//*
+   */
   public Set<MetadataRecord> getMetadata(Id.Run runId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return doGetMetadata(runId, constructPath(runId));
@@ -480,67 +459,70 @@ public class MetadataClient extends AbstractMetadataClient {
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
   }
 
-  *//**
+
+
+
+  /**
    * @param appId the app for which to retrieve metadata properties
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the application.
-   *//*
+   */
   public Map<String, String> getProperties(Id.Application appId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getProperties(appId, constructPath(appId), scope);
   }
 
-  *//**
+  /**
    * @param artifactId the artifact for which to retrieve metadata properties
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the artifact.
-   *//*
+   */
   public Map<String, String> getProperties(Id.Artifact artifactId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getProperties(artifactId, constructPath(artifactId), scope);
   }
 
-  *//**
+  /**
    * @param datasetInstance the dataset for which to retrieve metadata properties
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the dataset.
-   *//*
+   */
   public Map<String, String> getProperties(Id.DatasetInstance datasetInstance, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getProperties(datasetInstance, constructPath(datasetInstance), scope);
   }
 
-  *//**
+  /**
    * @param streamId the stream for which to retrieve metadata properties
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the stream.
-   *//*
+   */
   public Map<String, String> getProperties(Id.Stream streamId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getProperties(streamId, constructPath(streamId), scope);
   }
 
-  *//**
+  /**
    * @param viewId the view for which to retrieve metadata properties
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the view.
-   *//*
+   */
   public Map<String, String> getProperties(Id.Stream.View viewId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getProperties(viewId, constructPath(viewId), scope);
   }
 
-  *//**
+  /**
    * @param programId the program for which to retrieve metadata properties
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the program.
-   *//*
+   */
   public Map<String, String> getProperties(Id.Program programId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getProperties(programId, constructPath(programId), scope);
@@ -555,67 +537,67 @@ public class MetadataClient extends AbstractMetadataClient {
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
 
-  *//**
+  /**
    * @param appId the app for which to retrieve metadata tags
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the application.
-   *//*
+   */
   public Set<String> getTags(Id.Application appId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getTags(appId, constructPath(appId), scope);
   }
 
-  *//**
+  /**
    * @param artifactId the artifact for which to retrieve metadata tags
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the artifact.
-   *//*
+   */
   public Set<String> getTags(Id.Artifact artifactId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getTags(artifactId, constructPath(artifactId), scope);
   }
 
-  *//**
+  /**
    * @param datasetInstance the dataset for which to retrieve metadata tags
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the dataset.
-   *//*
+   */
   public Set<String> getTags(Id.DatasetInstance datasetInstance, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getTags(datasetInstance, constructPath(datasetInstance), scope);
   }
 
-  *//**
+  /**
    * @param streamId the stream for which to retrieve metadata tags
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the stream.
-   *//*
+   */
   public Set<String> getTags(Id.Stream streamId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getTags(streamId, constructPath(streamId), scope);
   }
 
-  *//**
+  /**
    * @param viewId the view for which to retrieve metadata tags
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the view.
-   *//*
+   */
   public Set<String> getTags(Id.Stream.View viewId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getTags(viewId, constructPath(viewId), scope);
   }
 
-  *//**
+  /**
    * @param programId the program for which to retrieve metadata tags
    * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the program.
-   *//*
+   */
   public Set<String> getTags(Id.Program programId, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getTags(programId, constructPath(programId), scope);
@@ -629,67 +611,67 @@ public class MetadataClient extends AbstractMetadataClient {
     return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
 
-  *//**
+  /**
    * Adds tags to an application.
    *
    * @param appId app to add tags to
    * @param tags tags to be added
-   *//*
+   */
   public void addTags(Id.Application appId, Set<String> tags)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addTags(appId, constructPath(appId), tags);
   }
 
-  *//**
+  /**
    * Adds tags to an artifact.
    *
    * @param artifactId artifact to add tags to
    * @param tags tags to be added
-   *//*
+   */
   public void addTags(Id.Artifact artifactId, Set<String> tags)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addTags(artifactId, constructPath(artifactId), tags);
   }
 
-  *//**
+  /**
    * Adds tags to a dataset.
    *
    * @param datasetInstance dataset to add tags to
    * @param tags tags to be added
-   *//*
+   */
   public void addTags(Id.DatasetInstance datasetInstance, Set<String> tags)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addTags(datasetInstance, constructPath(datasetInstance), tags);
   }
 
-  *//**
+  /**
    * Adds tags to a stream.
    *
    * @param streamId stream to add tags to
    * @param tags tags to be added
-   *//*
+   */
   public void addTags(Id.Stream streamId, Set<String> tags)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addTags(streamId, constructPath(streamId), tags);
   }
 
-  *//**
+  /**
    * Adds tags to a view.
    *
    * @param viewId view to add tags to
    * @param tags tags to be added
-   *//*
+   */
   public void addTags(Id.Stream.View viewId, Set<String> tags)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addTags(viewId, constructPath(viewId), tags);
   }
 
-  *//**
+  /**
    * Adds tags to a program.
    *
    * @param programId program to add tags to
    * @param tags tags to be added
-   *//*
+   */
   public void addTags(Id.Program programId, Set<String> tags)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addTags(programId, constructPath(programId), tags);
@@ -701,67 +683,67 @@ public class MetadataClient extends AbstractMetadataClient {
     makeRequest(namespacedId, path, HttpMethod.POST, GSON.toJson(tags));
   }
 
-  *//**
+  /**
    * Adds properties to an application.
    *
    * @param appId app to add properties to
    * @param properties properties to be added
-   *//*
+   */
   public void addProperties(Id.Application appId, Map<String, String> properties)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addProperties(appId, constructPath(appId), properties);
   }
 
-  *//**
+  /**
    * Adds properties to an artifact.
    *
    * @param artifactId artifact to add properties to
    * @param properties properties to be added
-   *//*
+   */
   public void addProperties(Id.Artifact artifactId, Map<String, String> properties)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addProperties(artifactId, constructPath(artifactId), properties);
   }
 
-  *//**
+  /**
    * Adds properties to a dataset.
    *
    * @param datasetInstance dataset to add properties to
    * @param properties properties to be added
-   *//*
+   */
   public void addProperties(Id.DatasetInstance datasetInstance, Map<String, String> properties)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addProperties(datasetInstance, constructPath(datasetInstance), properties);
   }
 
-  *//**
+  /**
    * Adds properties to a stream.
    *
    * @param streamId stream to add properties to
    * @param properties properties to be added
-   *//*
+   */
   public void addProperties(Id.Stream streamId, Map<String, String> properties)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addProperties(streamId, constructPath(streamId), properties);
   }
 
-  *//**
+  /**
    * Adds properties to a view.
    *
    * @param viewId view to add properties to
    * @param properties properties to be added
-   *//*
+   */
   public void addProperties(Id.Stream.View viewId, Map<String, String> properties)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addProperties(viewId, constructPath(viewId), properties);
   }
 
-  *//**
+  /**
    * Adds properties to a program.
    *
    * @param programId program to add properties to
    * @param properties properties to be added
-   *//*
+   */
   public void addProperties(Id.Program programId, Map<String, String> properties)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     addProperties(programId, constructPath(programId), properties);
@@ -773,67 +755,67 @@ public class MetadataClient extends AbstractMetadataClient {
     makeRequest(namespacedId, path, HttpMethod.POST, GSON.toJson(properties));
   }
 
-  *//**
+  /**
    * Removes a property from an application.
    *
    * @param appId app to remove property from
    * @param propertyToRemove property to be removed
-   *//*
+   */
   public void removeProperty(Id.Application appId, String propertyToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperty(appId, constructPath(appId), propertyToRemove);
   }
 
-  *//**
+  /**
    * Removes a property from an artifact.
    *
    * @param artifactId artifact to remove property from
    * @param propertyToRemove property to be removed
-   *//*
+   */
   public void removeProperty(Id.Artifact artifactId, String propertyToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperty(artifactId, constructPath(artifactId), propertyToRemove);
   }
 
-  *//**
+  /**
    * Removes a property from a dataset.
    *
    * @param datasetInstance dataset to remove property from
    * @param propertyToRemove property to be removed
-   *//*
+   */
   public void removeProperty(Id.DatasetInstance datasetInstance, String propertyToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperty(datasetInstance, constructPath(datasetInstance), propertyToRemove);
   }
 
-  *//**
+  /**
    * Removes a property from a stream.
    *
    * @param streamId stream to remove property from
    * @param propertyToRemove property to be removed
-   *//*
+   */
   public void removeProperty(Id.Stream streamId, String propertyToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperty(streamId, constructPath(streamId), propertyToRemove);
   }
 
-  *//**
+  /**
    * Removes a property from a view.
    *
    * @param viewId view to remove property from
    * @param propertyToRemove property to be removed
-   *//*
+   */
   public void removeProperty(Id.Stream.View viewId, String propertyToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperty(viewId, constructPath(viewId), propertyToRemove);
   }
 
-  *//**
+  /**
    * Removes a property from a program.
    *
    * @param programId program to remove property from
    * @param propertyToRemove property to be removed
-   *//*
+   */
   public void removeProperty(Id.Program programId, String propertyToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperty(programId, constructPath(programId), propertyToRemove);
@@ -846,61 +828,61 @@ public class MetadataClient extends AbstractMetadataClient {
   }
 
 
-  *//**
+  /**
    * Removes all properties from an application.
    *
    * @param appId app to remove properties from
-   *//*
+   */
   public void removeProperties(Id.Application appId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperties(appId, constructPath(appId));
   }
 
-  *//**
+  /**
    * Removes all properties from an artifact.
    *
    * @param artifactId artifact to remove properties from
-   *//*
+   */
   public void removeProperties(Id.Artifact artifactId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperties(artifactId, constructPath(artifactId));
   }
 
-  *//**
+  /**
    * Removes all properties from a dataset.
    *
    * @param datasetInstance dataset to remove properties from
-   *//*
+   */
   public void removeProperties(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperties(datasetInstance, constructPath(datasetInstance));
   }
 
-  *//**
+  /**
    * Removes all properties from a stream.
    *
    * @param streamId stream to remove properties from
-   *//*
+   */
   public void removeProperties(Id.Stream streamId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperties(streamId, constructPath(streamId));
   }
 
-  *//**
+  /**
    * Removes all properties from a view.
    *
    * @param viewId view to remove properties from
-   *//*
+   */
   public void removeProperties(Id.Stream.View viewId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperties(viewId, constructPath(viewId));
   }
 
-  *//**
+  /**
    * Removes all properties from a program.
    *
    * @param programId program to remove properties from
-   *//*
+   */
   public void removeProperties(Id.Program programId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeProperties(programId, constructPath(programId));
@@ -912,68 +894,68 @@ public class MetadataClient extends AbstractMetadataClient {
     makeRequest(namespacedId, path, HttpMethod.DELETE);
   }
 
-  *//**
+  /**
    * Removes a tag from an application.
    *
    * @param appId app to remove tag from
    * @param tagToRemove tag to be removed
-   *//*
+   */
   public void removeTag(Id.Application appId, String tagToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTag(appId, constructPath(appId), tagToRemove);
   }
 
-  *//**
+  /**
    * Removes a tag from an artifact.
    *
    * @param artifactId artifact to remove tag from
    * @param tagToRemove tag to be removed
-   *//*
+   */
   public void removeTag(Id.Artifact artifactId, String tagToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTag(artifactId, constructPath(artifactId), tagToRemove);
   }
 
 
-  *//**
+  /**
    * Removes a tag from a dataset.
    *
    * @param datasetInstance dataset to remove tag from
    * @param tagToRemove tag to be removed
-   *//*
+   */
   public void removeTag(Id.DatasetInstance datasetInstance, String tagToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTag(datasetInstance, constructPath(datasetInstance), tagToRemove);
   }
 
-  *//**
+  /**
    * Removes a tag from a stream.
    *
    * @param streamId stream to remove tag from
    * @param tagToRemove tag to be removed
-   *//*
+   */
   public void removeTag(Id.Stream streamId, String tagToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTag(streamId, constructPath(streamId), tagToRemove);
   }
 
-  *//**
+  /**
    * Removes a tag from a view.
    *
    * @param viewId view to remove tag from
    * @param tagToRemove tag to be removed
-   *//*
+   */
   public void removeTag(Id.Stream.View viewId, String tagToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTag(viewId, constructPath(viewId), tagToRemove);
   }
 
-  *//**
+  /**
    * Removes a tag from a program.
    *
    * @param programId program to remove tag from
    * @param tagToRemove tag to be removed
-   *//*
+   */
   public void removeTag(Id.Program programId, String tagToRemove)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTag(programId, constructPath(programId), tagToRemove);
@@ -985,61 +967,61 @@ public class MetadataClient extends AbstractMetadataClient {
     makeRequest(namespacedId, path, HttpMethod.DELETE);
   }
 
-  *//**
+  /**
    * Removes all tags from an application.
    *
    * @param appId app to remove tags from
-   *//*
+   */
   public void removeTags(Id.Application appId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTags(appId, constructPath(appId));
   }
 
-  *//**
+  /**
    * Removes all tags from an artifact.
    *
    * @param artifactId artifact to remove tags from
-   *//*
+   */
   public void removeTags(Id.Artifact artifactId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTags(artifactId, constructPath(artifactId));
   }
 
-  *//**
+  /**
    * Removes all tags from a dataset.
    *
    * @param datasetInstance dataset to remove tags from
-   *//*
+   */
   public void removeTags(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTags(datasetInstance, constructPath(datasetInstance));
   }
 
-  *//**
+  /**
    * Removes all tags from a stream.
    *
    * @param streamId stream to remove tags from
-   *//*
+   */
   public void removeTags(Id.Stream streamId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTags(streamId, constructPath(streamId));
   }
 
-  *//**
+  /**
    * Removes all tags from a view.
    *
    * @param viewId view to remove tags from
-   *//*
+   */
   public void removeTags(Id.Stream.View viewId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTags(viewId, constructPath(viewId));
   }
 
-  *//**
+  /**
    * Removes all tags from a program.
    *
    * @param programId program to remove tags from
-   *//*
+   */
   public void removeTags(Id.Program programId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeTags(programId, constructPath(programId));
@@ -1051,61 +1033,61 @@ public class MetadataClient extends AbstractMetadataClient {
     makeRequest(namespacedId, path, HttpMethod.DELETE);
   }
 
- *//**
-  * Removes metadata from an application.
-  *
-  * @param appId app to remove metadata from
-  *//*
+  /**
+   * Removes metadata from an application.
+   *
+   * @param appId app to remove metadata from
+   */
   public void removeMetadata(Id.Application appId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeMetadata(appId, constructPath(appId));
   }
 
-  *//**
+  /**
    * Removes metadata from an artifact.
    *
    * @param artifactId artifact to remove metadata from
-   *//*
+   */
   public void removeMetadata(Id.Artifact artifactId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeMetadata(artifactId, constructPath(artifactId));
   }
 
-  *//**
+  /**
    * Removes metadata from a dataset.
    *
    * @param datasetInstance dataset to remove metadata from
-   *//*
+   */
   public void removeMetadata(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeMetadata(datasetInstance, constructPath(datasetInstance));
   }
 
-  *//**
+  /**
    * Removes metadata from a stream.
    *
    * @param streamId stream to remove metadata from
-   *//*
+   */
   public void removeMetadata(Id.Stream streamId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeMetadata(streamId, constructPath(streamId));
   }
 
-  *//**
+  /**
    * Removes metadata from a view.
    *
    * @param viewId view to remove metadata from
-   *//*
+   */
   public void removeMetadata(Id.Stream.View viewId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeMetadata(viewId, constructPath(viewId));
   }
 
-  *//**
+  /**
    * Removes metadata from a program.
    *
    * @param programId program to remove metadata from
-   *//*
+   */
   public void removeMetadata(Id.Program programId)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     removeMetadata(programId, constructPath(programId));
@@ -1126,12 +1108,12 @@ public class MetadataClient extends AbstractMetadataClient {
   private HttpResponse makeRequest(Id.NamespacedId namespacedId, String path,
                                    HttpMethod httpMethod, @Nullable String body)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
-    URL url = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
+    URL url = resolve(namespacedId.getNamespace(), path);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
     if (body != null) {
       builder.withBody(body);
     }
-    HttpResponse response = restClient.execute(builder.build(), config.getAccessToken(),
+    HttpResponse response = execute(builder.build(),
                                                HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
@@ -1143,7 +1125,6 @@ public class MetadataClient extends AbstractMetadataClient {
   }
 
   // construct a component of the path, specific to each entity type
-
   private String constructPath(Id.Application appId) {
     return String.format("apps/%s", appId.getId());
   }
@@ -1174,5 +1155,5 @@ public class MetadataClient extends AbstractMetadataClient {
 
   private String constructPath(Id.Stream.View viewId) {
     return String.format("streams/%s/views/%s", viewId.getStreamId(), viewId.getId());
-  }*/
+  }
 }
