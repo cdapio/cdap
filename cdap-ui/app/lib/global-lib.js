@@ -35,4 +35,7 @@ angular.module(`${PKG.name}.commons`)
   })
   .factory('avsc', function ($window) {
     return $window.avsc;
+  })
+  .factory('moment', function($window) {
+    return $window.moment;
   });
