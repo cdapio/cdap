@@ -358,4 +358,24 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
       return new Cask360Entity(id, groups);
     }
   }
+
+  /**
+   * Calculates and returns the total number of individual data elements in this
+   * instance of a {@link Cask360Entity}.
+   * <p>
+   * The number of data elements is calculated by adding the number of key-value
+   * pairs in any map-type groups and the number of timestamp-key-value pairs
+   * in any time-type groups.
+   * <p>
+   * This number should line up with the number of {@link Cask360Record}s
+   * generated when running SQL queries on a {@link Cask360Table}.
+   * @return total number of data elements in this entity instance
+   */
+  public int size() {
+    int size = 0;
+    for (Map.Entry<String, Cask360Group> entry : groups.entrySet()) {
+      size += entry.getValue().size();
+    }
+    return size;
+  }
 }

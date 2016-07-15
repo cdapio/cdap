@@ -246,6 +246,17 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
   }
 
   @Override
+  public int size() {
+    switch (type) {
+    case MAP:
+      return map.size();
+    case TIME:
+      return time.size();
+    }
+    return -1;
+  }
+
+  @Override
   public void readJson(JsonElement json) {
     JsonObject obj = json.getAsJsonObject();
     Cask360GroupType readType = Cask360GroupType.fromJsonName(obj.get("type").getAsString());
@@ -419,6 +430,22 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
         String value = entry.getValue().getAsString();
         data.put(key, value);
       }
+    }
+
+    /**
+     * Calculates and returns the total number of individual data elements in this
+     * instance of a {@link Cask360GroupDataMap}.
+     * <p>
+     * The number of data elements is calculated by adding the number of key-value
+     * pairs in this map.
+     * <p>
+     * This number should line up with the number of {@link Cask360Record}s
+     * generated when running SQL queries on a {@link Cask360Table}.
+     * @return total number of data elements in this map
+     */
+    @Override
+    public int size() {
+      return data.size();
     }
   }
 
@@ -635,6 +662,26 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
         }
        data.put(time, map);
       }
+    }
+
+    /**
+     * Calculates and returns the total number of individual data elements in this
+     * instance of a {@link Cask360GroupDataTime}.
+     * <p>
+     * The number of data elements is calculated by adding the total number of
+     * key-value pairs within each map of each timestamp in this group.
+     * <p>
+     * This number should line up with the number of {@link Cask360Record}s
+     * generated when running SQL queries on a {@link Cask360Table}.
+     * @return total number of data elements in this time data
+     */
+    @Override
+    public int size() {
+      int size = 0;
+      for (Map.Entry<Long, Map<String, String>> entry : data.entrySet()) {
+        size += entry.getValue().size();
+      }
+      return size;
     }
   }
 }

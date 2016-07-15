@@ -73,6 +73,20 @@ public interface Cask360GroupDataSpec {
    */
   JsonElement toJson();
 
+  /**
+   * Calculates and returns the total number of individual data elements in this
+   * instance of a {@link Cask360GroupData}.
+   * <p>
+   * The number of data elements is calculated by adding the number of key-value
+   * pairs if this is a map-type group and the number of timestamp-key-value pairs
+   * if this is a time-type group.
+   * <p>
+   * This number should line up with the number of {@link Cask360Record}s
+   * generated when running SQL queries on a {@link Cask360Table}.
+   * @return total number of data elements in this entity group data instance
+   */
+  int size();
+
   @Override
   String toString();
 }

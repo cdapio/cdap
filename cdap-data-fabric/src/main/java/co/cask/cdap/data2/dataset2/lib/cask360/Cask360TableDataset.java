@@ -346,9 +346,9 @@ public class Cask360TableDataset extends AbstractDataset implements Cask360Table
   public RecordScanner<Cask360Record> createSplitRecordScanner(Split split) {
     return new RecordScanner<Cask360Record>() {
       private SplitReader<byte[], Row> splitReader;
-      private String id = null;
-      private Iterator<KeyValue<byte[], byte[]>> columnIterator = null;
-      private Iterator<Cask360Record> recordIterator = null;
+      private String id;
+      private Iterator<KeyValue<byte[], byte[]>> columnIterator;
+      private Iterator<Cask360Record> recordIterator;
 
       @Override
       public void initialize(Split split) throws InterruptedException {
@@ -372,7 +372,7 @@ public class Cask360TableDataset extends AbstractDataset implements Cask360Table
             return false;
           }
           id = Bytes.toString(this.splitReader.getCurrentKey());
-          columnIterator = columnIterator(this.splitReader.getCurrentValue());
+          columnIterator = createColumnIterator(this.splitReader.getCurrentValue());
           return columnIterator.hasNext();
         } else if (!columnIterator.hasNext()) {
           // When current iterator is done
@@ -380,14 +380,14 @@ public class Cask360TableDataset extends AbstractDataset implements Cask360Table
             return false;
           }
           id = Bytes.toString(this.splitReader.getCurrentKey());
-          columnIterator = columnIterator(this.splitReader.getCurrentValue());
+          columnIterator = createColumnIterator(this.splitReader.getCurrentValue());
           return columnIterator.hasNext();
         }
         // Current iterator still has columns
         return true;
       }
 
-      private Iterator<KeyValue<byte[], byte[]>> columnIterator(Row currentValue) {
+      private Iterator<KeyValue<byte[], byte[]>> createColumnIterator(Row currentValue) {
         Map<byte[], byte[]> columns = currentValue.getColumns();
         List<KeyValue<byte[], byte[]>> kvList = new ArrayList<KeyValue<byte[], byte[]>>(columns.size());
         for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
