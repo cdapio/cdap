@@ -18,16 +18,20 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.base.Strings;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
 
 /**
@@ -39,12 +43,17 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   private final CConfiguration cConf;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ExploreFacade exploreFacade;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
-  AbstractStorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
-                                        ExploreFacade exploreFacade) {
+
+  AbstractStorageProviderNamespaceAdmin(CConfiguration cConf,
+                                        NamespacedLocationFactory namespacedLocationFactory,
+                                        ExploreFacade exploreFacade,
+                                        NamespaceQueryAdmin namespaceQueryAdmin) {
     this.cConf = cConf;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.exploreFacade = exploreFacade;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -57,19 +66,8 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
    */
   @Override
   public void create(NamespaceMeta namespaceMeta) throws IOException, ExploreException, SQLException {
-    Location namespaceHome = namespacedLocationFactory.get(namespaceMeta.getNamespaceId().toId());
-    if (namespaceHome.exists()) {
-      LOG.warn("Home directory '{}' for namespace '{}' already exists. Deleting it.",
-               namespaceHome, namespaceMeta.getName());
-      if (!namespaceHome.delete(true)) {
-        throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
-                                            namespaceHome, namespaceMeta.getName()));
-      }
-    }
-    if (!namespaceHome.mkdirs()) {
-      throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
-                                          namespaceHome, namespaceMeta.getName()));
-    }
+
+    createLocation(namespaceMeta);
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreFacade.createNamespace(namespaceMeta.getNamespaceId().toId());
@@ -86,21 +84,70 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
    */
   @Override
   public void delete(NamespaceId namespaceId) throws IOException, ExploreException, SQLException {
-    // TODO: CDAP-1581: Implement soft delete
-    Location namespaceHome = namespacedLocationFactory.get(namespaceId.toId());
-    if (namespaceHome.exists()) {
-      if (!namespaceHome.delete(true)) {
-        throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
-                                            namespaceHome, namespaceId.getNamespace()));
-      }
-    } else {
-      // warn that namespace home was not found and skip delete step
-      LOG.warn(String.format("Home directory '%s' for namespace '%s' does not exist.",
-                             namespaceHome, namespaceId));
-    }
+
+    deleteLocation(namespaceId);
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreFacade.removeNamespace(namespaceId.toId());
     }
+  }
+
+  private void deleteLocation(NamespaceId namespaceId) throws IOException {
+    // TODO: CDAP-1581: Implement soft delete
+    Location namespaceHome = namespacedLocationFactory.get(namespaceId.toId());
+    try {
+      if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId.toId()))) {
+        LOG.debug("Custom location mapping %s was found while deleting namespace %s. Skipping location delete.",
+                  namespaceHome, namespaceId);
+      } else {
+        // a custom location was not provided for this namespace so cdap is responsible for managing the lifecycle of
+        // the location hence delete it.
+        if (namespaceHome.exists() && !namespaceHome.delete(true)) {
+          throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
+                                              namespaceHome, namespaceId));
+        }
+      }
+    } catch (Exception e) {
+      throw new IOException(String.format("Error while deleting home directory %s for namespace %s ", namespaceHome,
+                                          namespaceId), e);
+    }
+  }
+
+  private void createLocation(NamespaceMeta namespaceMeta) throws IOException {
+    Location namespaceHome;
+    if (hasCustomLocation(namespaceMeta)) {
+      // a custom location was provided
+      // check that its an absolute path
+      File customLocation = new File(namespaceMeta.getConfig().getRootDirectory());
+      if (!customLocation.isAbsolute()) {
+        throw new IOException(String.format("Cannot create the namespace '%s' with the given custom " +
+                                              "location %s. Custom location must be absolute path.",
+                                            namespaceMeta.getName(), customLocation));
+      }
+      // since this is a custom location we expect it to exists
+      if (!customLocation.exists()) {
+        // TODO: Add username in the below exception message.
+        throw new IOException(String.format(
+          "The provided home directory '%s' for namespace '%s' does not exists. Please create it on filesystem " +
+            "with sufficient privileges for the user and then try creating a namespace.", customLocation.toString(),
+          namespaceMeta.getNamespaceId()));
+      }
+    } else {
+      // no namespace custom location was provided one must be created by cdap
+      namespaceHome = namespacedLocationFactory.get(namespaceMeta.getNamespaceId().toId());
+      if (namespaceHome.exists()) {
+        throw new FileAlreadyExistsException(namespaceHome.toString());
+
+      }
+      // create namespace home dir
+      if (!namespaceHome.mkdirs()) {
+        throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
+                                            namespaceHome, namespaceMeta.getNamespaceId()));
+      }
+    }
+  }
+
+  private boolean hasCustomLocation(NamespaceMeta namespaceMeta) {
+    return !Strings.isNullOrEmpty(namespaceMeta.getConfig().getRootDirectory());
   }
 }

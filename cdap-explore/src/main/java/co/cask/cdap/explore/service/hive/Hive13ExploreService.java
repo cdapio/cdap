@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service.hive;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -26,7 +27,6 @@ import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,11 +56,11 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   public Hive13ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                               CConfiguration cConf, Configuration hConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
-                              StreamAdmin streamAdmin, NamespaceStore store,
+                              StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                               ExploreTableNaming tableNaming) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir,
-          streamAdmin, store, datasetInstantiatorFactory, tableNaming);
+          streamAdmin, namespaceQueryAdmin, datasetInstantiatorFactory, tableNaming);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");

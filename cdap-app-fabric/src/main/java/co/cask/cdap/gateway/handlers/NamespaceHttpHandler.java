@@ -23,11 +23,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -104,20 +102,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
                                                   namespaceId, namespaceId));
     }
 
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespace);
-
-    // Handle optional params
-    if (metadata != null) {
-      if (metadata.getDescription() != null) {
-        builder.setDescription(metadata.getDescription());
-      }
-
-      NamespaceConfig config = metadata.getConfig();
-      if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
-        builder.setSchedulerQueueName(config.getSchedulerQueueName());
-      }
-    }
-
+    NamespaceMeta.Builder builder = metadata == null ? new NamespaceMeta.Builder() :
+      new NamespaceMeta.Builder(metadata);
+    builder.setName(namespace);
     try {
       namespaceAdmin.create(builder.build());
       responder.sendString(HttpResponseStatus.OK,

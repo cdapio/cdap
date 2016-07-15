@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
@@ -25,6 +26,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.File;
 
 /**
  * Tests for {@link DefaultNamespaceAdmin}
@@ -107,6 +110,37 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // Verify NotFoundException's contents as well, instead of just checking namespaceService.exists = false
     verifyNotFound(namespaceId);
+  }
+
+  @Test
+  public void testConfigUpdateFailures() throws Exception {
+    String namespace = "custompaceNamespace";
+    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    // check that root directory for a namespace cannot be updated
+    // create the custom directory
+    File customspaceDir = tmpFolder.newFolder("customspace");
+    NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
+      .setRootDirectory(customspaceDir.toString()).build();
+    namespaceAdmin.create(nsMeta);
+    Assert.assertTrue(namespaceAdmin.exists(namespaceId));
+
+    // Updating the root directory for a namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+                                      new NamespaceMeta.Builder(nsMeta).setRootDirectory("/newloc").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      //expected
+    }
+
+    // removing the root directory mapping for a namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+                                      new NamespaceMeta.Builder(nsMeta).setRootDirectory("").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      //expected
+    }
   }
 
   private static void verifyNotFound(Id.Namespace namespaceId) throws Exception {

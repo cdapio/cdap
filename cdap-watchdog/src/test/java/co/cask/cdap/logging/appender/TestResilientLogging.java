@@ -28,6 +28,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -44,7 +45,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.ReadRange;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Iterables;
 import com.google.inject.Guice;
@@ -106,7 +106,7 @@ public class TestResilientLogging {
       new TransactionMetricsModule(),
       new ExploreClientModule(),
       new LoggingModules().getInMemoryModules(),
-      new NamespaceStoreModule().getInMemoryModules());
+      new NamespaceClientRuntimeModule().getInMemoryModules());
 
     TransactionManager txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();

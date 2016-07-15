@@ -21,7 +21,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -32,7 +33,6 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.TempFolder;
 import co.cask.cdap.internal.app.scheduler.LogPrintingJob;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
@@ -86,14 +86,14 @@ public class DatasetBasedTimeScheduleStoreTest {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
     injector = Guice.createInjector(new ConfigModule(conf),
-                                    new LocationRuntimeModule().getInMemoryModules(),
+                                    new LocationUnitTestModule().getModule(),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new MetricsClientRuntimeModule().getInMemoryModules(),
                                     new DataFabricModules().getInMemoryModules(),
                                     new DataSetsModules().getStandaloneModules(),
                                     new DataSetServiceModules().getInMemoryModules(),
                                     new ExploreClientModule(),
-                                    new NamespaceStoreModule().getInMemoryModules());
+                                    new NamespaceClientRuntimeModule().getInMemoryModules());
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpsService = injector.getInstance(DatasetOpExecutor.class);

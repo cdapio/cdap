@@ -23,7 +23,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -41,8 +43,6 @@ import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.notifications.service.TxRetryPolicy;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.store.NamespaceStore;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -87,7 +87,7 @@ public abstract class NotificationTest {
   private static TransactionManager txManager;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
-  private static NamespaceStore namespaceStore;
+  private static NamespaceAdmin namespaceAdmin;
   private static NotificationService notificationService;
 
   private static final Id.Namespace namespace = Id.Namespace.from("namespace");
@@ -105,11 +105,11 @@ public abstract class NotificationTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new DataFabricModules().getInMemoryModules(),
-      new NamespaceStoreModule().getInMemoryModules()
+      new NamespaceClientRuntimeModule().getInMemoryModules()
     );
   }
 
@@ -128,7 +128,7 @@ public abstract class NotificationTest {
     datasetService.startAndWait();
 
     txClient = injector.getInstance(TransactionSystemClient.class);
-    namespaceStore = injector.getInstance(NamespaceStore.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
   }
 
   public static void stopServices() throws Exception {
@@ -172,7 +172,7 @@ public abstract class NotificationTest {
     // clear the feeds
     feedManager.deleteFeed(FEED1);
     feedManager.deleteFeed(FEED2);
-    namespaceStore.delete(namespace);
+    namespaceAdmin.delete(namespace);
     Assert.assertEquals(0, feedManager.listFeeds(namespace).size());
   }
 
@@ -190,7 +190,7 @@ public abstract class NotificationTest {
   public void useTransactionTest() throws Exception {
     // Performing admin operations to create dataset instance
     // keyValueTable is a system dataset module
-    namespaceStore.create(new NamespaceMeta.Builder().setName(namespace).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     Id.DatasetInstance myTableInstance = Id.DatasetInstance.from(namespace, "myTable");
     dsFramework.addInstance("keyValueTable", myTableInstance, DatasetProperties.EMPTY);
 
@@ -249,7 +249,7 @@ public abstract class NotificationTest {
     } finally {
       dsFramework.deleteInstance(myTableInstance);
       feedManager.deleteFeed(FEED1);
-      namespaceStore.delete(namespace);
+      namespaceAdmin.delete(namespace);
     }
   }
 

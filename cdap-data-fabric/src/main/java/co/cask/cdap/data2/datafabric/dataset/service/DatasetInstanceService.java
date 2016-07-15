@@ -27,6 +27,7 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -41,7 +42,6 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.store.NamespaceStore;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -67,7 +67,7 @@ public class DatasetInstanceService {
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
-  private final NamespaceStore nsStore;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   private AuditPublisher auditPublisher;
 
@@ -77,12 +77,12 @@ public class DatasetInstanceService {
   @Inject
   public DatasetInstanceService(DatasetTypeManager typeManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
-                                NamespaceStore nsStore) {
+                                NamespaceQueryAdmin namespaceQueryAdmin) {
     this.opExecutorClient = opExecutorClient;
     this.typeManager = typeManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
-    this.nsStore = nsStore;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.metaCache = CacheBuilder.newBuilder().build(
       new CacheLoader<Id.DatasetInstance, DatasetMeta>() {
         @Override
@@ -388,7 +388,7 @@ public class DatasetInstanceService {
    */
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
-      if (nsStore.get(namespace) == null) {
+      if (namespaceQueryAdmin.get(namespace) == null) {
         throw new NamespaceNotFoundException(namespace);
       }
     }

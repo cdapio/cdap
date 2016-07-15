@@ -19,12 +19,12 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -44,23 +44,23 @@ public final class StreamFileJanitor {
   private final StreamAdmin streamAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final String streamBaseDirPath;
-  private final NamespaceStore namespaceStore;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin,
                            NamespacedLocationFactory namespacedLocationFactory,
-                           NamespaceStore namespaceStore) {
+                           NamespaceQueryAdmin namespaceQueryAdmin) {
     this.streamAdmin = streamAdmin;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.namespaceStore = namespaceStore;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
    * Performs file cleanup for all streams.
    */
   public void cleanAll() throws Exception {
-    List<NamespaceMeta> namespaces = namespaceStore.list();
+    List<NamespaceMeta> namespaces = namespaceQueryAdmin.list();
 
     for (NamespaceMeta namespace : namespaces) {
       Location streamBaseLocation =

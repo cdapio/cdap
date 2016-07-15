@@ -22,6 +22,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
@@ -148,6 +149,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
       new DataSetsModules().getInMemoryModules(),

@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
@@ -134,13 +135,18 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     }
 
+    // store the meta first in the namespace store because namespacedlocationfactory need to look up location
+    // mapping from namespace config
+    nsStore.create(metadata);
+
     try {
       storageProviderNamespaceAdmin.create(metadata);
     } catch (IOException | ExploreException | SQLException e) {
+      // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
+      nsStore.delete(metadata.getNamespaceId().toId());
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
 
-    nsStore.create(metadata);
     // Skip authorization grants for the system user
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
       authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
@@ -258,8 +264,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     }
     authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
                                                 Action.ADMIN);
-    NamespaceMeta metadata = nsStore.get(namespaceId);
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(metadata);
+    NamespaceMeta existingMeta = nsStore.get(namespaceId);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
 
     if (namespaceMeta.getDescription() != null) {
       builder.setDescription(namespaceMeta.getDescription());
@@ -268,6 +274,14 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     NamespaceConfig config = namespaceMeta.getConfig();
     if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
       builder.setSchedulerQueueName(config.getSchedulerQueueName());
+    }
+
+    // we already checked namespace existence so the meta cannot be null here
+    if (config != null && config.getRootDirectory() != null) {
+      // if a root directory was given for update and it's not same as existing one throw exception
+      if (!config.getRootDirectory().equals(existingMeta.getConfig().getRootDirectory())) {
+        throw new BadRequestException(String.format("%s cannot be updated.", NamespaceConfig.ROOT_DIRECTORY));
+      }
     }
 
     nsStore.update(builder.build());

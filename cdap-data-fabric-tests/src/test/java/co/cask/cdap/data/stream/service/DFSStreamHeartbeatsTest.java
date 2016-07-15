@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -121,7 +121,7 @@ public class DFSStreamHeartbeatsTest {
         new DataFabricModules().getInMemoryModules(),
         new ConfigModule(cConf, new Configuration()),
         new DiscoveryRuntimeModule().getInMemoryModules(),
-        new LocationRuntimeModule().getInMemoryModules(),
+        new LocationUnitTestModule().getModule(),
         new ExploreClientModule(),
         new DataSetServiceModules().getInMemoryModules(),
         new DataSetsModules().getStandaloneModules(),
