@@ -43,18 +43,34 @@ class TrackerTagsController{
         angular.forEach(response.preferredTags, (count, tag) => {
           this.tags.preferredTags.push({
             name: tag,
-            count: count
+            count: count,
+            empty: false
           });
         });
+        // Calculate number of empty rows needed so that table maintains a consistent height
+        if ((this.tags.preferredTags.length % 10) !== 0) {
+          let emptyRows = 10 - (this.tags.preferredTags.length % 10);
+          this.tags.emptyPreferredTags = {
+            emptyArr: Array(emptyRows),
+            numPages: Math.ceil(this.tags.preferredTags.length / 10)
+          };
+        }
 
         angular.forEach((response.userTags), (count, tag) => {
           this.tags.userTags.push({
             name: tag,
-            count: count
+            count: count,
+            empty: false
           });
         });
-        console.log('this.tags.preferredTags', this.tags.preferredTags);
-        console.log('this.tags.userTags', this.tags.userTags);
+        // Calculate number of empty rows needed so that table maintains a consistent height
+        if ((this.tags.userTags.length % 10) !== 0) {
+          let emptyRows = 10 - (this.tags.userTags.length % 10);
+          this.tags.emptyUserTags = {
+            emptyArr: Array(emptyRows),
+            numPages: Math.ceil(this.tags.userTags.length / 10)
+          };
+        }
       }, (err) => {
         console.log('Error', err);
       });
@@ -95,7 +111,7 @@ class TrackerTagsController{
   showDeleteModal(tag) {
     let modal = this.$uibModal.open({
       templateUrl: '/assets/features/tracker/templates/partial/delete-preferred-tags-popover.html',
-      size: 'md',
+      size: 'sm',
       backdrop: true,
       keyboard: true,
       windowTopClass: 'tracker-modal delete-modal',
@@ -118,7 +134,7 @@ class TrackerTagsController{
   showAddModal() {
     let modal = this.$uibModal.open({
       templateUrl: '/assets/features/tracker/templates/partial/add-preferred-tags-popover.html',
-      size: 'md',
+      size: 'sm',
       backdrop: true,
       keyboard: true,
       windowTopClass: 'tracker-modal add-preferred-tags-modal',
@@ -137,14 +153,19 @@ class TrackerTagsController{
 function AddPreferredTagsModalCtrl (myTrackerApi, $scope, $state) {
   'ngInject';
   this.proceedToNextStep = false;
-  this.validatePreferredTags = () => {
-    let tags = [];
 
-    angular.forEach(this.tags.split('\n'), (line) => {
-      tags = tags.concat(line.split(',').map((tag) => {
+  function parseTags(tags) {
+    let parsedTags = [];
+    angular.forEach(tags.split('\n'), (line) => {
+      parsedTags = parsedTags.concat(line.split(',').map((tag) => {
         return tag.trim();
       }));
     });
+
+    return parsedTags;
+  }
+  this.validatePreferredTags = () => {
+    let tags = parseTags(this.tags);
 
     let validateParams = {
       namespace: $state.params.namespace,
@@ -168,11 +189,23 @@ function AddPreferredTagsModalCtrl (myTrackerApi, $scope, $state) {
     };
     myTrackerApi.promoteUserTags(addParams, tags)
       .$promise
-      .then((response) => {
+      .then(() => {
         $scope.$close('success');
       }, (err) => {
         console.log('Error', err);
       });
+  };
+  this.importTags = () => {
+    document.getElementById('file-select').click();
+  };
+  this.importFiles = (files) => {
+    let reader = new FileReader();
+    reader.readAsText(files[0], 'UTF-8');
+
+    reader.onload = (evt) => {
+      let data = evt.target.result;
+      this.tags = data;
+    };
   };
 }
 
@@ -187,7 +220,7 @@ function DeletePreferredTagsModalCtrl (tag, myTrackerApi, $scope, $state, myAler
     };
     myTrackerApi.deletePreferredTags(deleteParams)
       .$promise
-      .then((response) => {
+      .then(() => {
         $scope.$close('success');
       }, (err) => {
         myAlertOnValium.show({

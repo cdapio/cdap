@@ -18,7 +18,7 @@
     <span ng-if="AddTags.proceedToNextStep === false">Add Preferred Tags</span>
     <span ng-if="AddTags.proceedToNextStep === true">Preview</span>
   </h3>
-  <span class="fa fa-times pull-right" ng-click="$close()"></span>
+  <span class="fa fa-times pull-right" ng-click="$dismiss('cancel')"></span>
 </div>
 <div class="modal-body">
   <div ng-if="AddTags.proceedToNextStep === false"
@@ -38,22 +38,25 @@
       <div>
         <span class="fa fa-cloud-upload"
               aria-hidden="true"></span>
-        <div>Drag N Drop or<br />
-          <a href="#">Browse</a> CSV, TXT
+        <div>Drag &amp; Drop or<br />
+          <a class="file-import-link" ng-click="AddTags.importTags()">Browse</a> CSV, TXT
         </div>
+        <my-file-select class="sr-only" id="file-select" data-button-icon="fa-upload" on-file-select="AddTags.importFiles($files)" data-button-label="Import">
+        </my-file-select>
       </div>
     </div>
   </div>
-  <div ng-if="AddTags.proceedToNextStep === true">
+  <div ng-if="AddTags.proceedToNextStep === true"
+      class="text-left">
     <div class="valid-tags">
       <p>{{ AddTags.tagList.validTags.length }} tags loaded.</p>
-      <span ng-repeat="(key, value) in AddTags.tagList.validTags"
-            class="tag">{{ value }}</a>
+      <span ng-repeat="(key, value) in AddTags.tagList.validTags track by $index"
+            class="tag preferred">{{ value }}</a>
     </div>
     <div ng-if="AddTags.tagList.invalidTags.length"
         class="invalid-tags">
       <p class="text-danger">{{ AddTags.tagList.invalidTags.length }} tags failed to load.</p>
-      <span ng-repeat="(key, value) in AddTags.tagList.invalidTags">{{ value }}</span>
+      <span ng-repeat="(key, value) in AddTags.tagList.invalidTags track by $index">{{ value }}</span>
     </div>
   </div>
 </div>
@@ -61,7 +64,7 @@
   <p class="pull-left text-danger"
     ng-if="AddTags.proceedToNextStep === false && AddTags.tagList.invalidTags.length">Oops! Invalid format.</p>
   <button class="btn btn-default"
-          ng-click="close()">Cancel</button>
+          ng-click="$dismiss('cancel')">Cancel</button>
   <button ng-if="AddTags.proceedToNextStep === false"
           class="btn btn-success"
           ng-click="AddTags.validatePreferredTags()"
