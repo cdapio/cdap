@@ -22,14 +22,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         template: '/assets/features/hydratorplusplus/templates/detail/tabs/log.html'
       },
       {
-        title: 'Metrics',
-        template: '/assets/features/hydratorplusplus/templates/detail/tabs/metrics.html'
-      },
-      {
-        title: 'Configuration',
-        template: '/assets/features/hydratorplusplus/templates/detail/tabs/configuration.html'
-      },
-      {
         title: 'Datasets',
         template: '/assets/features/hydratorplusplus/templates/detail/tabs/datasets.html'
       }
