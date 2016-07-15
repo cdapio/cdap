@@ -88,7 +88,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   LogViewerStore.subscribe(() => {
     this.logStartTime = LogViewerStore.getState().startTime;
-    // console.log('The log start time is: ' , this.logStartTime);
     //Convert start time to seconds
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
     requestWithStartTime();
@@ -102,7 +101,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     'runId' : this.runId
   }).$promise.then(
     (res) => {
-      // console.log('this is the data: ', res);
       this.totalCount = res.length;
 
       angular.forEach(res, (element, index) => {
@@ -164,25 +162,25 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
   };
 
-  const computeSliderPosition = () => {
-    let scrollTime;
+  // const computePinPosition = () => {
+  //   let scrollTime;
 
-    console.log('lets test it');
+  //   //Condition: waiting for more data ; poll for more
+  //   if(this.data.length < this.viewLimit){
+  //     scrollTime = this.data[this.data.length - 1].log.timestamp;
+  //     //Poll for data and update table when it comes available
+  //   } else {
+  //     //If polling, stop
+  //     scrollTime = this.data[this.viewLimit - 1].log.timestamp;
+  //   }
 
-    if(this.data.length < this.viewLimit){
-      scrollTime = this.data[this.data.length - 1].log.timestamp;
-    } else {
-      scrollTime = this.data[this.viewLimit - 1].log.timestamp;
-    }
-    if(typeof scrollTime === 'number'){
-      console.log('its a number');
-    } else {
-      scrollTime = new Date(scrollTime).getTime();
-      console.log('it wasnt a number but now it is: ', scrollTime);
-    }
+  //   //If returns date in readable format
+  //   if(typeof scrollTime !== 'number'){
+  //     scrollTime = new Date(scrollTime).getTime();
+  //   }
 
-    this.updateScrollPositionInStore(scrollTime);
-  };
+  //   this.updateScrollPositionInStore(scrollTime);
+  // };
 
   const requestWithStartTime = () => {
    myLogsApi.getLogsStart({
@@ -200,14 +198,17 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         this.cacheSize = 0;
         this.loadingMoreLogs = true;
 
+        console.log('Returned with new start time: ', res);
+        console.log('Start time: ', this.startTimeSec);
+
         //There are no more logs to be returned
         if(res.length === 0){
           this.loadingMoreLogs = false;
           return;
         }
+        //clear the current array
+        this.data.length = 0;
 
-        //Clear current data
-        this.data = [];
         // console.log('this is the new response:')
         this.fromOffset = res[res.length-1].offset;
         this.totalCount = res.length;
@@ -224,8 +225,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
         });
         this.data = res;
-        //Set data to newly set start time
-        // this.data = this.data.concat(res);
         this.cacheSize = res.length - this.cacheDecrement;
       },
       (err) => {
@@ -281,7 +280,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     if(this.cacheSize <= 0){
       requestWithOffset();
     }
-    computeSliderPosition();
+    // computePinPosition();
     this.viewLimit += this.cacheDecrement;
   }, 1000);
 

@@ -61,8 +61,10 @@ function link (scope, element) {
     height = 50;
     paddingLeft = 15;
     paddingRight = 15;
-    maxRange = width - paddingLeft - paddingRight;
-    sliderLimit = maxRange + 24;
+    // maxRange = width - paddingLeft - paddingRight;
+    maxRange = width - paddingRight + 8;
+    sliderLimit = maxRange;
+    // sliderLimit = maxRange + 24;
     pinX = 0;
     sliderX = 0;
     timelineStack = {};
@@ -108,6 +110,7 @@ function link (scope, element) {
     renderBrushAndSlider();
   };
 
+
   // -------------------------Build Brush / Sliders------------------------- //
   function renderBrushAndSlider(){
 
@@ -121,8 +124,27 @@ function link (scope, element) {
         .x(xScale)
         .on('brush', function(){
           if(d3.event.sourceEvent) {
-            let index = d3.mouse(this)[0];
-            updateSlider(index);
+            let val = d3.mouse(this)[0];
+            if(val < 0){
+              val = 0;
+            }
+            if(val > maxRange){
+              val = maxRange;
+            }
+            sliderHandle.attr('x', val);
+            sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
+          }
+        })
+        .on('brushend', function() {
+          if(d3.event.sourceEvent){
+            let val = d3.mouse(this)[0];
+            if(val < 0){
+              val = 0;
+            }
+            if(val > maxRange){
+              val = maxRange;
+            }
+            updateSlider(val);
           }
         });
 
@@ -215,7 +237,7 @@ function link (scope, element) {
 
     if(pinX < 0){
       pinX = 0;
-    } else if(pinx > maxRange){
+    } else if(pinX > maxRange){
       pinX = maxRange;
     }
 
