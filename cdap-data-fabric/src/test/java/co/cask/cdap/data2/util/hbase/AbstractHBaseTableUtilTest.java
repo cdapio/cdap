@@ -25,6 +25,7 @@ import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -200,6 +201,17 @@ public abstract class AbstractHBaseTableUtilTest {
       Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
       Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace2")));
     }
+  }
+
+  @Test
+  public void testCDAPVersion() throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    TableId tableId = TableId.from("default", "test.dataset");
+    create(tableId);
+    HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(hAdmin, tableId);
+    Assert.assertTrue(!Strings.isNullOrEmpty(tableDescriptor.getValue(HBaseTableUtil.CDAP_VERSION)));
+    tableUtil.disableTable(hAdmin, tableId);
+    tableUtil.deleteTable(hAdmin, tableId);
   }
 
   @Test

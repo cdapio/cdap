@@ -53,6 +53,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.util.Strings;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.utils.Dependencies;
@@ -78,6 +79,8 @@ import javax.annotation.Nullable;
  * Common utilities for dealing with HBase.
  */
 public abstract class HBaseTableUtil {
+
+  public static final String CDAP_VERSION = "cdap.version";
 
   /**
    * Represents the compression types supported for HBase tables.
@@ -114,8 +117,12 @@ public abstract class HBaseTableUtil {
   }
 
   protected boolean isCDAPTable(HTableDescriptor hTableDescriptor) {
-    String hTableName = hTableDescriptor.getNameAsString();
-    return hTableName.startsWith(tablePrefix + ".") || hTableName.startsWith(tablePrefix + "_");
+    // TODO: Once all system tables are upgraded to have CDAP_VERSION in their descriptor, we can then solely rely on
+    // that key being present in the descriptor to identify a CDAP Table
+    String tableName = hTableDescriptor.getNameAsString();
+    String value = hTableDescriptor.getValue(CDAP_VERSION);
+    return tableName.startsWith(tablePrefix + ".") || tableName.startsWith(tablePrefix + "_") ||
+      !Strings.isEmpty(value);
   }
 
   /**
@@ -159,7 +166,7 @@ public abstract class HBaseTableUtil {
       return;
     }
     setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
-
+    tableDescriptor = setVersion(tableDescriptor);
     try {
       LOG.debug("Attempting to create table '{}' if it does not exist", tableId);
       // HBaseAdmin.createTable can handle null splitKeys.
@@ -204,8 +211,22 @@ public abstract class HBaseTableUtil {
     }
   }
 
+  public HTableDescriptor setVersion(HTableDescriptor tableDescriptor) {
+    HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
+    setVersion(builder);
+    return builder.build();
+  }
+
   // For simplicity we allow max 255 splits per bucket for now
   private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
+
+  public static void setVersion(HTableDescriptorBuilder tableDescriptorBuilder) {
+    tableDescriptorBuilder.setValue(CDAP_VERSION, ProjectInfo.getVersion().toString());
+  }
+
+  public static ProjectInfo.Version getVersion(HTableDescriptor tableDescriptor) {
+    return new ProjectInfo.Version(tableDescriptor.getValue(CDAP_VERSION));
+  }
 
   public static byte[][] getSplitKeys(int splits, int buckets, AbstractRowKeyDistributor keyDistributor) {
     // "1" can be used for queue tables that we know are not "hot", so we do not pre-split in this case

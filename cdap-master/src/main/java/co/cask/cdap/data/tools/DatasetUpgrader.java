@@ -156,6 +156,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
   // Note: This check can be safely used for user table since we create meta.
   // CDAP-2963 should be fixed so that we can make use of this check generically for all cdap tables
   private boolean isTableCreatedByCDAP(HTableDescriptor desc) {
-    return (desc.getValue("cdap.version") != null);
+    return (desc.getValue(HBaseTableUtil.CDAP_VERSION) != null);
   }
 }
