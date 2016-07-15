@@ -220,7 +220,6 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
         group = new Cask360Group(entry.getKey(), entry.getValue().getType());
         group.getData().put(entry.getValue().getData());
         groups.put(entry.getKey(), group);
-        continue;
       }
     }
   }

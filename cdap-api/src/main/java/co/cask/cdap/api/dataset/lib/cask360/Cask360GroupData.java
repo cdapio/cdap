@@ -341,8 +341,8 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
      * this group data map. Behavior is the same as {@link TreeMap#putAll(Map)}.
      * @param data
      */
-    public void putAll(Map<String, String> data) {
-      data.putAll(data);
+    public void putAll(Map<String, String> map) {
+      data.putAll(map);
     }
 
     /**
@@ -350,13 +350,13 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
      * group data map. Behavior is the same as {@link TreeMap#putAll(Map)}.
      * @param data
      */
-    public void put(Cask360GroupDataMap data) {
-      putAll(data.getData());
+    public void put(Cask360GroupDataMap mapData) {
+      putAll(mapData.getData());
     }
 
     @Override
-    public void put(Cask360GroupData data) {
-      put(data.getDataAsMap());
+    public void put(Cask360GroupData groupData) {
+      put(groupData.getDataAsMap());
     }
 
     @Override

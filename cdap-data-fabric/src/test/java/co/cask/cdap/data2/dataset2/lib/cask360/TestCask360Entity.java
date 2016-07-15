@@ -38,14 +38,20 @@ public class TestCask360Entity {
   public void testCombining() throws Exception {
 
     Cask360Entity one = makeTestEntityTwo("1");
+    LOG.info("One      [0] = " + one.toString());
     Cask360Entity two = makeTestEntityTwoOverlap("1");
+    LOG.info("Two      [0] = " + two.toString());
     Cask360Entity truth = makeTestEntityTwoCombined("1");
+    LOG.info("Truth    [0] = " + truth.toString());
 
     Cask360Entity combined = new Cask360Entity("1");
+    LOG.info("Combined [0] = " + combined.toString());
     combined.write(one);
+    LOG.info("Combined [1] = " + combined.toString());
     combined.write(two);
+    LOG.info("Combined [2] = " + combined.toString());
 
-    String msg = "Combined:\n" + combined.toString() + "\nTruth:\n" + truth.toString();
+    String msg = "\nCombined:\n" + combined.toString() + "\nTruth:\n" + truth.toString();
     LOG.info(msg);
     Assert.assertTrue("Combined does not match expected result:\n" + msg, combined.equals(truth));
 
