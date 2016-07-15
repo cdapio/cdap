@@ -46,7 +46,7 @@ import java.util.Map;
  *
  * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
  */
-public class ConnectorSink extends BatchSink<StructuredRecord, NullWritable, Text> {
+public class ConnectorSink extends BatchSink<KeyValue<Text, StructuredRecord>, NullWritable, Text> {
   private final String datasetName;
   private final String phaseName;
   private final boolean writeSchema;
@@ -66,18 +66,23 @@ public class ConnectorSink extends BatchSink<StructuredRecord, NullWritable, Tex
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<KeyValue<NullWritable, Text>> emitter) throws Exception {
+  public void transform(KeyValue<Text, StructuredRecord> input, Emitter<KeyValue<NullWritable, Text>> emitter)
+    throws Exception {
+    StructuredRecord taggedInput = input.getValue();
     if (writeSchema) {
-      input = modifyRecord(input);
+      taggedInput = modifyRecord(input);
     }
-    emitter.emit(new KeyValue<>(NullWritable.get(), new Text(StructuredRecordStringConverter.toJsonString(input))));
+    emitter.emit(new KeyValue<>(NullWritable.get(), new Text(StructuredRecordStringConverter
+                                                               .toJsonString(taggedInput))));
   }
 
-  private StructuredRecord modifyRecord(StructuredRecord input) throws IOException {
-    Schema inputSchema = input.getSchema();
+  private StructuredRecord modifyRecord(KeyValue<Text, StructuredRecord> input) throws IOException {
+    String stageName = input.getKey().toString();
+    Schema inputSchema = input.getValue().getSchema();
     return StructuredRecord.builder(ConnectorSource.RECORD_WITH_SCHEMA)
+      .set("stageName", stageName)
       .set("schema", inputSchema.toString())
-      .set("record", StructuredRecordStringConverter.toJsonString(input))
+      .set("record", StructuredRecordStringConverter.toJsonString(input.getValue()))
       .build();
   }
 }

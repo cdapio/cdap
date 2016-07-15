@@ -27,11 +27,20 @@ import java.util.Collection;
  * Encapsulates {@link Transformation} list of next stages, current stage name, and {@link DefaultEmitter}.
  */
 public class TransformDetail implements Emitter<Object> {
+  private final String stageName;
   private final Transformation transformation;
   private final Collection<String> nextStages;
   private final DefaultEmitter<Object> defaultEmitter;
 
   public TransformDetail(Transformation transformation, Collection<String> nextStages) {
+    this.stageName = "";
+    this.transformation = transformation;
+    this.nextStages = nextStages;
+    this.defaultEmitter = new DefaultEmitter<>();
+  }
+
+  public TransformDetail(String stageName, Transformation transformation, Collection<String> nextStages) {
+    this.stageName = stageName;
     this.transformation = transformation;
     this.nextStages = nextStages;
     this.defaultEmitter = new DefaultEmitter<>();

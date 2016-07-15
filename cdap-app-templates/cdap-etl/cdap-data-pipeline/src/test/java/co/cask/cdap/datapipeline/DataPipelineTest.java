@@ -60,7 +60,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -132,17 +131,21 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
       .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
       .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
-      .addStage(new ETLStage("testJoiner", Join.getPlugin("t1.customer_id=t2.cust_id=t3.c_id," +
+      .addStage(new ETLStage("testJoiner1", Join.getPlugin("t1.customer_id=t2.cust_id=t3.c_id," +
+                                                            "t1.customer_name=t2.cust_name=t3.c_name",
+                                                          "t1,t2,t3", "", "")))
+      .addStage(new ETLStage("testJoiner2", Join.getPlugin("t1.customer_id=t2.cust_id=t3.c_id," +
                                                             "t1.customer_name=t2.cust_name=t3.c_name",
                                                           "t1,t2,t3", "", "")))
       .addStage(new ETLStage("sink1", MockSink.getPlugin("joinerOutput")))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")
       .addConnection("source3", "t3")
-      .addConnection("t1", "testJoiner")
-      .addConnection("t2", "testJoiner")
-      .addConnection("t3", "testJoiner")
-      .addConnection("testJoiner", "sink1")
+      .addConnection("t1", "testJoiner1")
+      .addConnection("t2", "testJoiner1")
+      .addConnection("t3", "testJoiner2")
+      .addConnection("testJoiner1", "testJoiner2")
+      .addConnection("testJoiner2", "sink1")
       .setEngine(Engine.MAPREDUCE)
       .build();
 

@@ -17,19 +17,27 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.StageLifecycle;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.KVJoinerTransformation;
+import co.cask.cdap.etl.common.KVSinkTransformation;
+import co.cask.cdap.etl.common.KVSourceTransformation;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.io.Text;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +80,7 @@ public abstract class TransformExecutorFactory<T> {
    * @param pipeline the pipeline to create a transform executor for
    * @return executor for the pipeline
    * @throws InstantiationException if there was an error instantiating a plugin
-   * @throws Exception if there was an error initializing a plugin
+   * @throws Exception              if there was an error initializing a plugin
    */
   public TransformExecutor<T> create(PipelinePhase pipeline) throws Exception {
     Map<String, TransformDetail> transformations = new HashMap<>();
@@ -82,7 +90,9 @@ public abstract class TransformExecutorFactory<T> {
         outputSchema = stageInfo.getOutputSchema();
         perStageInputSchemas.put(stageName, stageInfo.getInputSchemas());
         transformations.put(stageName,
-                            new TransformDetail(getTransformation(pluginType, stageName),
+                            new TransformDetail(stageName,
+                                                wrappedKVTransformation(stageName, pluginType,
+                                                                        getTransformation(pluginType, stageName)),
                                                 pipeline.getStageOutputs(stageName)));
       }
     }
@@ -92,13 +102,26 @@ public abstract class TransformExecutorFactory<T> {
     return new TransformExecutor<>(transformations, startingPoints);
   }
 
+  private Transformation wrappedKVTransformation(String stageName, String pluginType, TrackedTransform transformation) {
+    if (pluginType.equalsIgnoreCase("batchsink")) {
+      return new KVSinkTransformation<>(transformation, stageName);
+    } else if (pluginType.equalsIgnoreCase("batchsource")) {
+      return new KVSourceTransformation<>(transformation, stageName);
+    } else if (pluginType.equalsIgnoreCase("batchjoiner")) {
+      return new KVJoinerTransformation(transformation, stageName);
+    } else if (pluginType.equalsIgnoreCase(Constants.CONNECTOR_TYPE)) {
+      return new KVConnectorTransformation(transformation, stageName);
+    }
+    return new KVWrappedTransformation(transformation, stageName);
+  }
+
   /**
    * Instantiates and initializes the plugin for the stage.
    *
    * @param stageName the stage name.
    * @return the initialized Transformation
    * @throws InstantiationException if the plugin for the stage could not be instantiated
-   * @throws Exception if there was a problem initializing the plugin
+   * @throws Exception              if there was a problem initializing the plugin
    */
   protected <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
   getInitializedTransformation(String stageName) throws Exception {
@@ -124,4 +147,54 @@ public abstract class TransformExecutorFactory<T> {
     return new TrackedTransform<>(transform, stageMetrics, null, TrackedTransform.RECORDS_OUT);
   }
 
+  /**
+   *
+   * @param <IN>
+   * @param <OUT>
+   */
+  public class KVWrappedTransformation<IN, OUT> implements Transformation<KeyValue<String, IN>, KeyValue<String, OUT>> {
+    private final Transformation<IN, OUT> transformation;
+    private final String stageName;
+
+    public KVWrappedTransformation(Transformation<IN, OUT> transformation, String stageName) {
+      this.transformation = transformation;
+      this.stageName = stageName;
+    }
+
+    @Override
+    public void transform(KeyValue<String, IN> input, Emitter<KeyValue<String, OUT>> emitter) throws Exception {
+      DefaultEmitter<OUT> singleEmitter = new DefaultEmitter<>();
+      transformation.transform(input.getValue(), singleEmitter);
+      for (OUT out : singleEmitter.getEntries()) {
+        emitter.emit(new KeyValue<>(stageName, out));
+      }
+    }
+  }
+
+  /**
+   *
+   * @param <IN>
+   * @param <OUT>
+   */
+  public class KVConnectorTransformation<IN, OUT> implements Transformation<KeyValue<String, IN>,
+    KeyValue<Text, OUT>> {
+    private final Transformation<KeyValue<String, IN>, OUT> transformation;
+    private final String stageName;
+
+    public KVConnectorTransformation(Transformation<KeyValue<String, IN>, OUT> transformation, String stageName) {
+      this.transformation = transformation;
+      this.stageName = stageName;
+    }
+
+    @Override
+    public void transform(KeyValue<String, IN> input, Emitter<KeyValue<Text, OUT>> emitter) throws Exception {
+      DefaultEmitter<OUT> singleEmitter = new DefaultEmitter<>();
+      transformation.transform(input, singleEmitter);
+      for (OUT out : singleEmitter.getEntries()) {
+        emitter.emit(new KeyValue<>(new Text(input.getKey()), out));
+      }
+    }
+  }
+
 }
+

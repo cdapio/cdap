@@ -54,7 +54,7 @@ import javax.annotation.Nullable;
  *
  * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
  */
-public class ConnectorSource extends BatchSource<LongWritable, Text, StructuredRecord> {
+public class ConnectorSource extends BatchSource<LongWritable, Text, KeyValue<String, StructuredRecord>> {
   static final Schema RECORD_WITH_SCHEMA = Schema.recordOf(
     "record",
     Schema.Field.of("stageName", Schema.of(Schema.Type.STRING)),
@@ -95,18 +95,19 @@ public class ConnectorSource extends BatchSource<LongWritable, Text, StructuredR
 
   @Override
   public void transform(KeyValue<LongWritable, Text> input,
-                        Emitter<StructuredRecord> emitter) throws Exception {
+                        Emitter<KeyValue<String, StructuredRecord>> emitter) throws Exception {
     StructuredRecord output;
     String inputStr = input.getValue().toString();
+    StructuredRecord recordWithSchema =
+      StructuredRecordStringConverter.fromJsonString(inputStr, RECORD_WITH_SCHEMA);
+    String stageName = recordWithSchema.get("stageName");
     if (schema == null) {
-      StructuredRecord recordWithSchema =
-        StructuredRecordStringConverter.fromJsonString(inputStr, RECORD_WITH_SCHEMA);
       Schema outputSchema = Schema.parseJson((String) recordWithSchema.get("schema"));
       output = StructuredRecordStringConverter.fromJsonString((String) recordWithSchema.get("record"), outputSchema);
     } else {
       output = StructuredRecordStringConverter.fromJsonString(inputStr, schema);
     }
-    emitter.emit(output);
+    emitter.emit(new KeyValue<>(stageName, output));
   }
 
 }
