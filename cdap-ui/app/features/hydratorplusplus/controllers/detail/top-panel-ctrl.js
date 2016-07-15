@@ -15,8 +15,9 @@
  */
 
 class HydratorDetailTopPanelController {
-  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium) {
+  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService) {
     this.GLOBALS = GLOBALS;
+    this.myPipelineExportModalService = myPipelineExportModalService;
     this.myAlertOnValium = myAlertOnValium;
     this.$state = $state;
     this.moment = moment;
@@ -80,6 +81,15 @@ class HydratorDetailTopPanelController {
     } else {
       return false;
     }
+  }
+  exportConfig() {
+    let config = angular.copy(this.HydratorPlusPlusDetailNonRunsStore.getConfigJson());
+    config.stages = config.stages.map( stage => ({
+      name: stage.name,
+      plugin: stage.plugin
+    }));
+    let exportConfig = this.HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
+    this.myPipelineExportModalService.show(config, exportConfig);
   }
   do(action) {
     switch(action) {
@@ -188,6 +198,6 @@ class HydratorDetailTopPanelController {
   }
 }
 
-HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium'];
+HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorDetailTopPanelController', HydratorDetailTopPanelController);
