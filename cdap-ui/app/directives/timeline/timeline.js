@@ -175,7 +175,7 @@ function link (scope, element) {
           }
 
           if(xPos > sliderX){
-            updatePin(xPos-11);
+            updatePin(xPos);
           }
         });
 
@@ -210,8 +210,23 @@ function link (scope, element) {
   }
 
   var updatePin = function (val) {
+    val = Math.floor(val);
     pinX = val - 13;
+
+    if(pinX < 0){
+      pinX = 0;
+    } else if(pinx > maxRange){
+      pinX = maxRange;
+    }
+
+    console.log('updating the pin to position: ', pinX);
     pinHandle.attr('x', pinX);
+  };
+
+  scope.updatePinScale = function (val) {
+    if(pinHandle !== undefined){
+      updatePin(xScale(val));
+    }
   };
 
   function updateSlider(val) {

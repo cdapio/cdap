@@ -17,6 +17,7 @@
 function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource) {
 
   var dataSrc = new MyCDAPDataSource($scope);
+  this.pinScrollPosition = 0;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -61,6 +62,13 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       console.log('ERROR: ', err);
     });
   }
+
+LogViewerStore.subscribe(() => {
+  this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+  if($scope.updatePinScale !== undefined){
+    $scope.updatePinScale(this.pinScrollPosition);
+  }
+});
 
   myLogsApi.getLogsMetadata({
     'namespace' : this.namespaceId,

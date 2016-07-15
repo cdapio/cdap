@@ -32,6 +32,30 @@
 @error-color: #f65454;
 @warning-color: #f6b354;
 
+.tooltip {
+  font-size: 11px;
+  &.top {
+    margin-top: -2px;
+    .tooltip-arrow {
+      bottom: 0;
+      left: 50%;
+      margin-left: -5px;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+    }
+  }
+}
+
+.tooltip-inner {
+  background-color: black;
+  border: 1px solid black;
+  color: white;
+  padding: 7px;
+  word-wrap: break-word;
+  text-align: left;
+  .border-radius(3px);
+}
+
 my-log-viewer {
 
   .log-viewer-container {
@@ -206,6 +230,8 @@ my-log-viewer {
         border-color: @border-color;
       }
 
+      font-weight: 300;
+
       .expand-all-btn {
         width: 75px;
         height: 20px;
@@ -298,20 +324,28 @@ my-log-viewer {
       }
 
       .time {
-        width: 15%;
-        min-width: 15%;
+        width: 4%;
+        min-width: 130px;
         padding-left: 15px;
       }
       .time.log-header {
-        padding-left: 20px;
+        padding-left: 15px;
       }
       .time div {
         padding-left: 10px;
       }
 
+      .level ul {
+        padding: 0;
+        margin: 0;
+      }
+
       .level,
       .level-header {
         padding-right: 10px;
+        padding-left: 15px;
+        width: 5%;
+        min-width: 90px;
       }
 
       .source,
@@ -328,26 +362,33 @@ my-log-viewer {
 
       .message-header {
         width: 100%;
+
+        .fa-arrow-left,
+        .fa-arrow-right {
+          color: #acacac;
+        }
       }
 
       .message {
         width: 100%;
         max-width: 50%;
         clear: both;
+        padding-left: 15px;
 
         .message-main {
           cursor: pointer;
           height: 20px;
+          width: 100%;
           max-width: 0;
         }
 
         .message-text {
-          padding-right: 40px;
+          padding-left: 15px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-          max-width: 0;
-          width: 100%;
+          width: 80%;
+          max-width: 500px;
         }
 
         .fa {

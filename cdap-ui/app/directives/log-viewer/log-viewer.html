@@ -77,7 +77,16 @@
 
         <th class='level level-header'
             ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-            Level
+          <span uib-dropdown>
+            <span uib-dropdown-toggle>
+              Level <span class="fa fa-caret-down"></span>
+            </span>
+            <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
+              <li ng-repeat="option in LogViewer.logEvents">
+                <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span>{{option}}</span>
+              </li>
+            </ul>
+          </span>
         </th>
 
         <th class="source source-header log-header"
@@ -122,6 +131,7 @@
               tooltip-append-to-body="true"
               tooltip-placement="top"
               tooltip-popup-delay="500"
+              tooltip-class="source-tooltip"
               >
               {{ ::entry.log.threadName }}
           </td>
@@ -136,7 +146,7 @@
               <div class="icon-column"
                    ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)"
                    ng-class="Logviewer.message-class">
-                <span class="fa"
+                <span class="fa message-arrow"
                       ng-class="{'fa-minus': entry.isStackTraceExpanded}">
                 </span>
               </div>
@@ -152,8 +162,8 @@
           </td>
         </tr>
         <tr class="well well-sm">
-          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading more logs...</td>
-          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No more logs to show.</td>
+          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading logs...</td>
+          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No new logs to show</td>
         </tr>
       </tbody>
     </table>
