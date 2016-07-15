@@ -334,7 +334,7 @@ public class Cask360TableDataset extends AbstractDataset implements Cask360Table
   @SuppressWarnings("serial")
   @Override
   public Type getRecordType() {
-    return new TypeToken<Cask360Record>() {}.getType();
+    return new TypeToken<Cask360Record>() { }.getType();
   }
 
   @Override

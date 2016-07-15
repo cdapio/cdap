@@ -85,7 +85,8 @@ public class TestCask360Entity {
 
     // Verify slightly more complex JSON turns into expected entity
 
-    jsonLine = "{'id':'4','data':{'group1':{'type':'map','data':{'key1':'val1', 'key2':'val2'}},'group2':{'type':'map','data':{'key3':'val3'}}}}";
+    jsonLine = "{'id':'4','data':{'group1':{'type':'map','data':{'key1':'val1', " +
+        "'key2':'val2'}},'group2':{'type':'map','data':{'key3':'val3'}}}}";
     Cask360Entity manualEntity = new Cask360Entity("4");
     manualEntity.write("group1", "key1", "val1");
     manualEntity.write("group1", "key2", "val2");
