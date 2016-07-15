@@ -18,6 +18,10 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -41,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.store.KMSSecureStore;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -74,6 +79,7 @@ import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.immutable.List;
 
 import java.io.Closeable;
 import java.io.File;
@@ -81,6 +87,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.security.Permission;
 import java.util.Arrays;
 import java.util.Map;
@@ -195,6 +203,39 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
+    }
+    kms();
+  }
+
+  private void kms() {
+    String ns = "default";
+    try {
+      LOG.warn("nsquare: Before init");
+      KMSSecureStore kmsSecureStore = new KMSSecureStore(hConf);
+      SecureStore secureStore = kmsSecureStore;
+      SecureStoreManager secureStoreManager = kmsSecureStore;
+
+      java.util.List<SecureStoreMetadata> metas = secureStore.list(ns);
+      LOG.warn("nsquare: Before listing");
+      for (SecureStoreMetadata meta : metas) {
+        LOG.warn("nsquare:" + meta.getName());
+      }
+
+      LOG.warn("nsquare: Before adding a key.");
+      String key = String.valueOf(System.currentTimeMillis());
+      Map<String, String> prop = ImmutableMap.of("creator", "Nishith");
+      secureStoreManager.put(ns, key, "caskisgreat".getBytes(), "This is a secret key", prop);
+      LOG.warn("nsquare: Added key:" + key + "\n Now getting it");
+      SecureStoreData data = secureStore.get(ns, key);
+      LOG.warn("nsquare: Returned value:" + new String(data.get(), StandardCharsets.UTF_8));
+      metas.clear();
+      metas = secureStore.list(ns);
+      LOG.warn("nsquare: Before second listing");
+      for (SecureStoreMetadata meta : metas) {
+        LOG.warn("nsquare:" + meta.getName());
+      }
+    } catch (IOException | URISyntaxException e) {
+      e.printStackTrace();
     }
   }
 

@@ -60,7 +60,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
    * @throws IOException If the authority or the port could not be read from the provider URI.
    */
   @Inject
-  KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
+  public KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
     this.conf = conf;
     try {
       URI providerUri = new URI(conf.get(KeyProviderFactory.KEY_PROVIDER_PATH));
