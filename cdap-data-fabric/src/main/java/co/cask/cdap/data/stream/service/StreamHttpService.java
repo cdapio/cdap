@@ -37,9 +37,9 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.jboss.netty.buffer.HeapChannelBufferFactory;
 
+import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * A Http service endpoint that host the stream handler.
@@ -63,6 +63,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Stream.STREAM_HANDLER)))
       .setHost(cConf.get(Constants.Stream.ADDRESS))
+      .setPort(cConf.getInt(Constants.Stream.PORT))
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(0)         // Execution happens in the io worker thread directly
       .setConnectionBacklog(20000)
