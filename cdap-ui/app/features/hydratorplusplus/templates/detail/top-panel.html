@@ -182,6 +182,10 @@
     </div>
 
     <div class="btn"
+         ng-click="TopPanelCtrl.exportConfig()">
+      <span class="fa icon-export"></span>
+    </div>
+    <div class="btn"
          ui-sref="apps.detail.overview.status({ appId: TopPanelCtrl.app.name })">
          <span class="icon-fist"
                uib-tooltip="View in CDAP"
