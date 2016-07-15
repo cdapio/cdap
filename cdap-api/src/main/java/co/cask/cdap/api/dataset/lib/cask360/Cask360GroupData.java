@@ -51,12 +51,24 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
   private static final Gson gson = Cask360Entity.getGson();
 
+  /** The group type */
   private Cask360GroupType type;
 
+  /** The group data, if map type (null if time) */
   private Cask360GroupDataMap map;
 
+  /** The group data, if time type (null if map) */
   private Cask360GroupDataTime time;
 
+  /**
+   * Internal constructor. Constructs a new instance with the specified type and
+   * either the specified map or time data.
+   * <p>
+   * This verifies that the specified type lines up with the specified data.
+   * @param type group data type
+   * @param map group map data, or null if time type
+   * @param time group time data, or null if map type
+   */
   private Cask360GroupData(Cask360GroupType type, Cask360GroupDataMap map, Cask360GroupDataTime time) {
     if (((type == Cask360GroupType.MAP) && ((map == null) || (time != null)))
         || ((type == Cask360GroupType.TIME) && ((time == null) || (map != null)))) {
@@ -70,7 +82,7 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
   /**
    * Constructs an empty group data of the specified type.
-   * @param type
+   * @param type group data type
    */
   public Cask360GroupData(Cask360GroupType type) {
     this(type, type == Cask360GroupType.MAP ? new Cask360GroupDataMap() : null,
@@ -79,8 +91,8 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
   /**
    * Constructs a group data of map type with the specified map data.
-   * @param type
-   * @param map
+   * @param type group data type (should be {@link Cask360GroupType#MAP})
+   * @param map group map data
    */
   public Cask360GroupData(Cask360GroupType type, Cask360GroupDataMap map) {
     this(type, map, null);
@@ -88,8 +100,8 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
   /**
    * Constructs a group data of time type with the specified time data.
-   * @param type
-   * @param time
+   * @param type group data type (should be {@link Cask360GroupType#TIME})
+   * @param time group time data
    */
   public Cask360GroupData(Cask360GroupType type, Cask360GroupDataTime time) {
     this(type, null, time);
@@ -97,28 +109,45 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
   @Override
   public Cask360GroupType getType() {
-    return this.type;
+    return type;
   }
 
+  /**
+   * Returns the group data for map type.
+   * @return group map data, or null if this group is time type
+   */
   public Cask360GroupDataMap getDataAsMap() {
-    return this.map;
+    return map;
   }
 
+  /**
+   * Returns the group data for time type.
+   * @return group time data, or null if this group is map type
+   */
   public Cask360GroupDataTime getDataAsTime() {
-    return this.time;
+    return time;
   }
 
+  /**
+   * Returns the group data based on the group type.
+   * @return either group map or group time data based on group type
+   */
   public Cask360GroupDataSpec getData() {
-    switch (this.type) {
+    switch (type) {
     case MAP:
-      return this.map;
+      return map;
     case TIME:
-      return this.time;
+      return time;
     default:
       return null;
     }
   }
 
+  /**
+   * Constructs a new instance from the specified JSON representation.
+   * @param json JSON representation of {@link Cask360GroupData}
+   * @return instance generated from JSON representation
+   */
   public static Cask360GroupData fromJson(JsonObject json) {
     String typeString = json.get("type").getAsString();
     if (typeString.equals("map")) {
@@ -134,6 +163,15 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
     }
   }
 
+  /**
+   * Generates a new Iterator for the specified entity ID, meta, and serialized
+   * column name and value.
+   * @param id entity id
+   * @param meta entity meta
+   * @param column serialized column name
+   * @param value serialized value
+   * @return record iterator
+   */
   public static Iterator<Cask360Record> newRecordIterator(String id, Cask360GroupMeta meta, byte[] column,
       byte[] value) {
     List<Cask360Record> records = new LinkedList<Cask360Record>();
@@ -158,14 +196,14 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
   @Override
   public int compareTo(Cask360GroupData o) {
-    if (this.type.compareTo(o.getType()) != 0) {
-      return this.type.compareTo(o.getType());
+    if (type.compareTo(o.getType()) != 0) {
+      return type.compareTo(o.getType());
     }
-    switch (this.type) {
+    switch (type) {
     case MAP:
-      return this.map.compareTo(o.getDataAsMap());
+      return map.compareTo(o.getDataAsMap());
     case TIME:
-      return this.time.compareTo(o.getDataAsTime());
+      return time.compareTo(o.getDataAsTime());
     default:
       return 0;
     }
@@ -173,11 +211,11 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
   @Override
   public Map<byte[], byte[]> getBytesMap(byte[] prefix) {
-    switch (this.type) {
+    switch (type) {
     case MAP:
-      return this.map.getBytesMap(prefix);
+      return map.getBytesMap(prefix);
     case TIME:
-      return this.time.getBytesMap(prefix);
+      return time.getBytesMap(prefix);
     default:
       return null;
     }
@@ -185,24 +223,24 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
   @Override
   public void put(Cask360GroupData data) {
-    switch (this.type) {
+    switch (type) {
     case MAP:
-      this.map.put(data);
+      map.put(data);
       return;
     case TIME:
-      this.time.put(data);
+      time.put(data);
       return;
     }
   }
 
   @Override
   public void put(byte[] column, byte[] value) {
-    switch (this.type) {
+    switch (type) {
     case MAP:
-      this.map.put(column, value);
+      map.put(column, value);
       return;
     case TIME:
-      this.time.put(column, value);
+      time.put(column, value);
       return;
     }
   }
@@ -210,18 +248,18 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
   @Override
   public void readJson(JsonElement json) {
     JsonObject obj = json.getAsJsonObject();
-    Cask360GroupType type = Cask360GroupType.fromJsonName(obj.get("type").getAsString());
+    Cask360GroupType readType = Cask360GroupType.fromJsonName(obj.get("type").getAsString());
     switch (type) {
       case MAP: {
-        this.type = type;
-        this.map = new Cask360GroupDataMap();
-        this.map.readJson(obj.get("data"));
+        type = readType;
+        map = new Cask360GroupDataMap();
+        map.readJson(obj.get("data"));
         break;
       }
       case TIME: {
-        this.type = type;
-        this.time = new Cask360GroupDataTime();
-        this.time.readJson(obj.get("data"));
+        type = readType;
+        time = new Cask360GroupDataTime();
+        time.readJson(obj.get("data"));
         break;
       }
       default: {
@@ -233,14 +271,14 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
   @Override
   public JsonElement toJson() {
     JsonObject outer = new JsonObject();
-    outer.addProperty("type", this.type.toJsonName());
+    outer.addProperty("type", type.toJsonName());
     JsonElement data = null;
-    switch (this.type) {
+    switch (type) {
     case MAP:
-      data = this.map.toJson();
+      data = map.toJson();
       break;
     case TIME:
-      data = this.time.toJson();
+      data = time.toJson();
       break;
     }
     outer.add("data", data);
@@ -260,24 +298,47 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
   public static class Cask360GroupDataMap
   implements Cask360GroupDataSpec, Comparable<Cask360GroupDataMap> {
 
+    /** Data map */
     private Map<String, String> data;
 
+    /**
+     * Constructs an empty group data map with an empty underlying map.
+     */
     public Cask360GroupDataMap() {
       this(new TreeMap<String, String>());
     }
 
+    /**
+     * Constructs a group data map with the specified map of data.
+     * @param data
+     */
     public Cask360GroupDataMap(Map<String, String> data) {
       this.data = data;
     }
 
+    /**
+     * Write the specified key and value to this group data map.
+     * @param key
+     * @param value
+     */
     public void put(String key, String value) {
-      this.data.put(key, value);
+      data.put(key, value);
     }
 
+    /**
+     * Writes all the specified keys and values in the specified map to
+     * this group data map. Behavior is the same as {@link TreeMap#putAll(Map)}.
+     * @param data
+     */
     public void putAll(Map<String, String> data) {
-      this.data.putAll(data);
+      data.putAll(data);
     }
 
+    /**
+     * Writes all the specified data in the specified group data map to this
+     * group data map. Behavior is the same as {@link TreeMap#putAll(Map)}.
+     * @param data
+     */
     public void put(Cask360GroupDataMap data) {
       putAll(data.getData());
     }
@@ -299,14 +360,21 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
       return Cask360GroupType.MAP;
     }
 
+    /**
+     * Returns the internal structure storing the data of this group.
+     * <p>
+     * The map is an ascending order {@link TreeMap} of {@link String} to
+     * {@link String}. 
+     * @return reference to internal map of data
+     */
     public Map<String, String> getData() {
-      return this.data;
+      return data;
     }
 
     @Override
     public Map<byte[], byte[]> getBytesMap(byte[] prefix) {
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-      for (Map.Entry<String, String> entry : this.data.entrySet()) {
+      for (Map.Entry<String, String> entry : data.entrySet()) {
         map.put(Bytes.add(prefix, Bytes.toBytes(entry.getKey())), Bytes.toBytes(entry.getValue()));
       }
       return map;
@@ -314,14 +382,14 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
     @Override
     public int compareTo(Cask360GroupDataMap other) {
-      if (this.getType() != other.getType()) {
-        return this.getType().compareTo(other.getType());
+      if (getType() != other.getType()) {
+        return getType().compareTo(other.getType());
       }
       Cask360GroupDataMap otherMap = other;
       if (data.size() != otherMap.getData().size()) {
         return data.size() < otherMap.getData().size() ? -1 : 1;
       }
-      for (Map.Entry<String, String> entry : this.data.entrySet()) {
+      for (Map.Entry<String, String> entry : data.entrySet()) {
         String otherValue = otherMap.getData().get(entry.getKey());
         if (otherValue == null) {
           return 1;
@@ -337,7 +405,7 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
     @Override
     public JsonElement toJson() {
       JsonObject obj = new JsonObject();
-      for (Map.Entry<String, String> entry : this.data.entrySet()) {
+      for (Map.Entry<String, String> entry : data.entrySet()) {
         obj.addProperty(entry.getKey(), entry.getValue());
       }
       return obj;
@@ -345,11 +413,11 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
     @Override
     public void readJson(JsonElement json) {
-      JsonObject data = json.getAsJsonObject();
-      for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
+      JsonObject jsonData = json.getAsJsonObject();
+      for (Map.Entry<String, JsonElement> entry : jsonData.entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue().getAsString();
-        this.data.put(key, value);
+        data.put(key, value);
       }
     }
   }
@@ -401,7 +469,7 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
     public void put(Long time, String key, String value) {
       Map<String, String> map = new TreeMap<String, String>();
       map.put(key, value);
-      this.data.put(time, map);
+      data.put(time, map);
     }
 
     /**
@@ -411,12 +479,12 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
      * data.
      *
      * @param time
-     * @param data
+     * @param dataMap
      */
-    public void put(Long time, Map<String, String> data) {
+    public void put(Long time, Map<String, String> dataMap) {
       Map<String, String> map = new TreeMap<String, String>();
-      map.putAll(data);
-      this.data.put(time, map);
+      map.putAll(dataMap);
+      data.put(time, map);
     }
 
     /**
@@ -462,14 +530,22 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
       return Cask360GroupType.TIME;
     }
 
+    /**
+     * Returns the internal structure storing the data of this group.
+     * <p>
+     * The map is a descending order {@link TreeMap} with a {@link Long} key and
+     * value of another {@link TreeMap} but ascending order of {@link String} to
+     * {@link String}. 
+     * @return reference to internal map of data
+     */
     public Map<Long, Map<String, String>> getData() {
-      return this.data;
+      return data;
     }
 
     @Override
     public Map<byte[], byte[]> getBytesMap(byte[] prefix) {
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-      for (Map.Entry<Long, Map<String, String>> timeEntry : this.data.entrySet()) {
+      for (Map.Entry<Long, Map<String, String>> timeEntry : data.entrySet()) {
         byte[] column = Cask360GroupDataTime.toBytesColumn(prefix, timeEntry.getKey());
         byte[] value = Cask360GroupDataTime.toBytesValue(timeEntry.getValue());
         map.put(column, value);
@@ -499,14 +575,14 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
 
     @Override
     public int compareTo(Cask360GroupDataTime other) {
-      if (this.getType() != other.getType()) {
-        return this.getType().compareTo(other.getType());
+      if (getType() != other.getType()) {
+        return getType().compareTo(other.getType());
       }
       Cask360GroupDataTime otherTime = other;
       if (data.size() != otherTime.getData().size()) {
         return data.size() < otherTime.getData().size() ? -1 : 1;
       }
-      for (Map.Entry<Long, Map<String, String>> entry : this.data.entrySet()) {
+      for (Map.Entry<Long, Map<String, String>> entry : data.entrySet()) {
         Map<String, String> otherMap = otherTime.getData().get(entry.getKey());
         if (otherMap == null) {
           return 1;
@@ -532,7 +608,7 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
     @Override
     public JsonElement toJson() {
       JsonArray arr = new JsonArray();
-      for (Map.Entry<Long, Map<String, String>> entry : this.data.entrySet()) {
+      for (Map.Entry<Long, Map<String, String>> entry : data.entrySet()) {
         JsonObject obj = new JsonObject();
         obj.addProperty("time", entry.getKey());
         JsonObject data = new JsonObject();
@@ -552,12 +628,12 @@ public class Cask360GroupData implements Cask360GroupDataSpec, Comparable<Cask36
       for (int i = 0; i < size; i++) {
         JsonObject obj = arr.get(i).getAsJsonObject();
         Long time = obj.get("time").getAsLong();
-        JsonObject data = obj.get("data").getAsJsonObject();
+        JsonObject jsonData = obj.get("data").getAsJsonObject();
         Map<String, String> map = new TreeMap<String, String>();
-        for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : jsonData.entrySet()) {
           map.put(entry.getKey(), entry.getValue().getAsString());
         }
-        this.data.put(time, map);
+       data.put(time, map);
       }
     }
   }

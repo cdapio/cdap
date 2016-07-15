@@ -30,16 +30,47 @@ import java.util.Map;
  */
 public interface Cask360GroupDataSpec {
 
+  /**
+   * Gets the data type for this group.
+   * @return the group type
+   */
   Cask360GroupType getType();
 
+  /**
+   * Generates and returns the column-to-value map of data that can be
+   * written into the persistent table.
+   * @param prefix serialized group prefix
+   * @return map of bytes to bytes that can be written as columns and values
+   */
   Map<byte[], byte[]> getBytesMap(byte[] prefix);
 
+  /**
+   * Adds the specified group data to this group data.
+   * <p>
+   * The group types must match. Data will be joined with the same behavior as
+   * {@link java.util.TreeMap#putAll(Map)}.
+   * @param data group data of the same type as this group
+   */
   void put(Cask360GroupData data);
 
+  /**
+   * Adds the group data as specified in the serialized column name and value.
+   * @param column serialized column name
+   * @param value serialized column value
+   */
   void put(byte[] column, byte[] value);
 
+  /**
+   * Reads the specified JSON group representation and deserializes all data
+   * into this group spec.
+   * @param json JSON serialized form of a group data spec
+   */
   void readJson(JsonElement json);
 
+  /**
+   * Generates and returns the JSON serialized representation of this group.
+   * @return JSON seiralized form of this group data spec
+   */
   JsonElement toJson();
 
   @Override

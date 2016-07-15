@@ -112,14 +112,14 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
    *          the data value
    */
   public void write(String name, String key, String value) {
-    Cask360Group group = this.groups.get(name);
+    Cask360Group group = groups.get(name);
     if (group != null) {
       group.getDataAsMap().put(key, value);
     } else {
       Cask360GroupDataMap dataMap = new Cask360GroupDataMap();
       dataMap.put(key, value);
       group = new Cask360Group(name, dataMap);
-      this.groups.put(name, group);
+      groups.put(name, group);
     }
   }
 
@@ -135,14 +135,14 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
    *          the data
    */
   public void write(String name, Map<String, String> data) {
-    Cask360Group group = this.groups.get(name);
+    Cask360Group group = groups.get(name);
     if (group != null) {
       group.getDataAsMap().putAll(data);
     } else {
       Cask360GroupDataMap dataMap = new Cask360GroupDataMap();
       dataMap.putAll(data);
       group = new Cask360Group(name, dataMap);
-      this.groups.put(name, group);
+      groups.put(name, group);
     }
   }
 
@@ -163,14 +163,14 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
    *          the data value
    */
   public void write(String name, Long time, String key, String value) {
-    Cask360Group group = this.groups.get(name);
+    Cask360Group group = groups.get(name);
     if (group != null) {
       group.getDataAsTime().put(time, key, value);
     } else {
       Cask360GroupDataTime dataTime = new Cask360GroupDataTime();
       dataTime.put(time, key, value);
       group = new Cask360Group(name, dataTime);
-      this.groups.put(name, group);
+      groups.put(name, group);
     }
   }
 
@@ -189,14 +189,14 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
    *          the data
    */
   public void writeTime(String name, Map<Long, Map<String, String>> data) {
-    Cask360Group group = this.groups.get(name);
+    Cask360Group group = groups.get(name);
     if (group != null) {
       group.getDataAsTime().putAll(data);
     } else {
       Cask360GroupDataTime dataTime = new Cask360GroupDataTime();
       dataTime.putAll(data);
       group = new Cask360Group(name, dataTime);
-      this.groups.put(name, group);
+      groups.put(name, group);
       return;
     }
   }
@@ -213,13 +213,13 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
    */
   public void write(Cask360Entity other) {
     for (Map.Entry<String, Cask360Group> entry : other.getGroups().entrySet()) {
-      Cask360Group group = this.groups.get(entry.getKey());
+      Cask360Group group = groups.get(entry.getKey());
       if (group != null) {
         group.getData().put(entry.getValue().getData());
       } else {
         group = new Cask360Group(entry.getKey(), entry.getValue().getType());
         group.getData().put(entry.getValue().getData());
-        this.groups.put(entry.getKey(), group);
+        groups.put(entry.getKey(), group);
         continue;
       }
     }
@@ -235,15 +235,15 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
       return 1;
     }
     // Confirm same id
-    if (!this.id.equals(other.id)) {
-      return this.id.compareTo(other.id);
+    if (!id.equals(other.id)) {
+      return id.compareTo(other.id);
     }
     // Confirm same number of groups
-    if (this.groups.size() != other.groups.size()) {
-      return this.groups.size() > other.groups.size() ? 1 : -1;
+    if (groups.size() != other.groups.size()) {
+      return groups.size() > other.groups.size() ? 1 : -1;
     }
     // Iterate groups and verify each is completely the same
-    for (Map.Entry<String, Cask360Group> entry : this.groups.entrySet()) {
+    for (Map.Entry<String, Cask360Group> entry : groups.entrySet()) {
       Cask360Group thisGroup = entry.getValue();
       Cask360Group otherGroup = other.getGroups().get(entry.getKey());
       // Group must exist
@@ -270,11 +270,11 @@ public class Cask360Entity implements Comparable<Cask360Entity> {
       return false;
     }
     Cask360Entity other = (Cask360Entity) o;
-    return this.compareTo(other) == 0;
+    return compareTo(other) == 0;
   }
 
   public boolean isEmpty() {
-    return (this.groups == null) || this.groups.isEmpty();
+    return groups == null || groups.isEmpty();
   }
 
   @Override

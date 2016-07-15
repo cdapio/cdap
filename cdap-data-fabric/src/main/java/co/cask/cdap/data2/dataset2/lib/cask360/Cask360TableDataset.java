@@ -331,11 +331,10 @@ public class Cask360TableDataset extends AbstractDataset implements Cask360Table
   // Implementations of RecordScannable
   // Flattens the table into (id, group, key, value) rather than a complex type
 
+  @SuppressWarnings("serial")
   @Override
   public Type getRecordType() {
-    return new TypeToken<Cask360Record>() {
-      private static final long serialVersionUID = Cask360Record.serialVersionUID;
-    }.getType();
+    return new TypeToken<Cask360Record>() {}.getType();
   }
 
   @Override

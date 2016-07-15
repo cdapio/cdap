@@ -116,7 +116,7 @@ public class Cask360Group implements Comparable<Cask360Group> {
    * @return group string name
    */
   public String getName() {
-    return this.name;
+    return name;
   }
 
   /**
@@ -125,7 +125,7 @@ public class Cask360Group implements Comparable<Cask360Group> {
    * @return group type
    */
   public Cask360GroupType getType() {
-    return this.type;
+    return type;
   }
 
   /**
@@ -134,7 +134,7 @@ public class Cask360Group implements Comparable<Cask360Group> {
    * @return reference to group data
    */
   public Cask360GroupData getData() {
-    return this.data;
+    return data;
   }
 
   /**
@@ -144,13 +144,13 @@ public class Cask360Group implements Comparable<Cask360Group> {
    * @return reference to group data as map type
    */
   public Cask360GroupDataMap getDataAsMap() {
-    if (this.type != Cask360GroupType.MAP) {
-      throw new IllegalArgumentException("Group type expected to be MAP but is " + this.type.toString());
+    if (type != Cask360GroupType.MAP) {
+      throw new IllegalArgumentException("Group type expected to be MAP but is " + type.toString());
     }
-    if (this.data.getType() != Cask360GroupType.MAP) {
+    if (data.getType() != Cask360GroupType.MAP) {
       throw new ClassCastException("Group data is not an instance of " + Cask360GroupDataMap.class.getName());
     }
-    return this.data.getDataAsMap();
+    return data.getDataAsMap();
   }
 
   /**
@@ -160,26 +160,26 @@ public class Cask360Group implements Comparable<Cask360Group> {
    * @return reference to group data as map type
    */
   public Cask360GroupDataTime getDataAsTime() {
-    if (this.type != Cask360GroupType.TIME) {
-      throw new IllegalArgumentException("Group type expected to be TIME but is " + this.type.toString());
+    if (type != Cask360GroupType.TIME) {
+      throw new IllegalArgumentException("Group type expected to be TIME but is " + type.toString());
     }
-    if (this.data.getType() != Cask360GroupType.TIME) {
+    if (data.getType() != Cask360GroupType.TIME) {
       throw new ClassCastException("Group data is not an instance of " + Cask360GroupDataTime.class.getName());
     }
-    return this.data.getDataAsTime();
+    return data.getDataAsTime();
   }
 
   @Override
   public int compareTo(Cask360Group other) {
-    int cmp = this.name.compareTo(other.getName());
+    int cmp = name.compareTo(other.getName());
     if (cmp != 0) {
       return cmp;
     }
-    cmp = this.type.compareTo(other.getType());
+    cmp = type.compareTo(other.getType());
     if (cmp != 0) {
       return cmp;
     }
-    return this.data.compareTo(other.getData());
+    return data.compareTo(other.getData());
   }
 
   /**
@@ -215,30 +215,64 @@ public class Cask360Group implements Comparable<Cask360Group> {
       this.type = type;
     }
 
+    /**
+     * Returns the name of the group.
+     * @return group name
+     */
     public byte[] getName() {
-      return this.name;
+      return name;
     }
 
+    /**
+     * Returns the number of the group.
+     * @return group number
+     */
     public short getNumber() {
-      return this.number;
+      return number;
     }
 
+    /**
+     * Returns the type of the group.
+     * @return group type
+     */
     public Cask360GroupType getType() {
-      return this.type;
+      return type;
     }
 
+    /**
+     * Gets the bytes prefix for this group to be used in column names.
+     * @return bytes prefix for column names for this group
+     */
     public byte[] getPrefix() {
       return Cask360GroupMeta.getPrefix(getNumber());
     }
 
+    /**
+     * Gets the bytes prefix for a group with the specified group number.
+     * @param number group number
+     * @return bytes prefix for column names for the specified group number
+     */
     public static byte[] getPrefix(short number) {
       return Bytes.toBytes(number);
     }
 
+    /**
+     * Returns the serialized bytes representation of this group meta.
+     * <p>
+     * The inverse method for this is {@link #fromBytes(byte[])}.
+     * @return serialized bytes of this group meta
+     */
     public byte[] toBytes() {
-      return Bytes.add(this.type.toBytes(), Bytes.toBytes(getNumber()), this.name);
+      return Bytes.add(type.toBytes(), Bytes.toBytes(getNumber()), name);
     }
 
+    /**
+     * Returns an group meta instance generated from the specified serialized bytes.
+     * <p>
+     * The inverse method for this is {@link #toBytes()}.
+     * @param bytes serialized bytes of group meta
+     * @return group meta instance from specified bytes
+     */
     public static Cask360GroupMeta fromBytes(byte[] bytes) {
       if (bytes == null) {
         return null;
@@ -254,19 +288,19 @@ public class Cask360Group implements Comparable<Cask360Group> {
       if (!(o instanceof Cask360GroupMeta)) {
         return false;
       }
-      return this.compareTo((Cask360GroupMeta) o) == 0;
+      return compareTo((Cask360GroupMeta) o) == 0;
     }
 
     @Override
     public int compareTo(Cask360GroupMeta other) {
-      if (this.type != other.getType()) {
-        return this.type.compareTo(other.getType());
+      if (type != other.getType()) {
+        return type.compareTo(other.getType());
       }
-      if (!Bytes.equals(this.name, other.getName())) {
-        return Bytes.compareTo(this.name, other.getName());
+      if (!Bytes.equals(name, other.getName())) {
+        return Bytes.compareTo(name, other.getName());
       }
-      if (this.number != other.getNumber()) {
-        return Short.compare(this.number, other.getNumber());
+      if (number != other.getNumber()) {
+        return Short.compare(number, other.getNumber());
       }
       return 0;
     }
@@ -287,6 +321,10 @@ public class Cask360Group implements Comparable<Cask360Group> {
     /** Descending ordered map of long to string */
     TIME;
 
+    /**
+     * Get the {@link byte[]} representation for this group type.
+     * @return serialized bytes for this group type
+     */
     public byte[] toBytes() {
       switch (this) {
       case MAP:
@@ -298,6 +336,11 @@ public class Cask360Group implements Comparable<Cask360Group> {
       }
     }
 
+    /**
+     * Generates a new instance of the underlying {@link Cask360GroupData}
+     * implementation based on this group type.
+     * @return new instance of {@link Cask360GroupData} based on this group type
+     */
     public Cask360GroupData newDataInstance() {
       switch (this) {
       case MAP:
@@ -309,6 +352,10 @@ public class Cask360Group implements Comparable<Cask360Group> {
       }
     }
 
+    /**
+     * Get the {@link String} JSON representation for this group type.
+     * @return serialized JSON String name for this group type
+     */
     public String toJsonName() {
       switch (this) {
       case MAP:
@@ -320,6 +367,13 @@ public class Cask360Group implements Comparable<Cask360Group> {
       }
     }
 
+    /**
+     * Returns the {@link Cask360GroupType} based on the specified JSON String name.
+     * <p>
+     * Inverse method of {@link #toJsonName()}.
+     * @param name JSON String name of the group type
+     * @return group type based on specified group name
+     */
     public static Cask360GroupType fromJsonName(String name) {
       if (name.equals("map")) {
         return MAP;
@@ -330,10 +384,26 @@ public class Cask360Group implements Comparable<Cask360Group> {
       }
     }
 
+    /**
+     * Returns the {@link Cask360GroupType} based on the specified bytes.
+     * <p>
+     * Inverse method of {@link #toBytes()}.
+     * @param bytes serialized bytes of the group type
+     * @return group type based on specified bytes
+     */
     public static Cask360GroupType fromBytes(byte[] bytes) {
       return Cask360GroupType.fromBytes(bytes, 0, 1);
     }
 
+    /**
+     * Returns the {@link Cask360GroupType} based on the specified bytes.
+     * <p>
+     * Inverse method of {@link #toBytes()}.
+     * @param bytes serialized bytes of the group type
+     * @param offset offset into serialized bytes
+     * @param length length of serialized bytes, from offset (should be 1)
+     * @return group type based on specified bytes
+     */
     public static Cask360GroupType fromBytes(byte[] bytes, int offset, int length) {
       if ((length != 1) || (offset > (bytes.length - 1))) {
         throw new RuntimeException("Invalid Cask360GroupType");

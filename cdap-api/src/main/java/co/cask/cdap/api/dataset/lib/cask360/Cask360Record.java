@@ -26,7 +26,6 @@ import java.text.ParseException;
  * for the flattened SQL table schema used in {@link Cask360Table}.
  */
 public class Cask360Record implements Comparable<Cask360Record> {
-  public static final long serialVersionUID = 1L;
 
   private static final Gson gson = new Gson();
 
