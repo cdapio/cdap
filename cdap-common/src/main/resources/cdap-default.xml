@@ -1084,6 +1084,32 @@
     </description>
   </property>
 
+  <!-- Remote System Operation Service Configuration -->
+
+  <property>
+    <name>remote.system.op.exec.threads</name>
+    <value>${http.service.exec.threads}</value>
+    <description>
+      Number of Netty service executor threads for Remote System Operation HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>remote.system.op.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Remote System Operation HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>remote.system.op.worker.threads</name>
+    <value>${http.service.worker.threads}</value>
+    <description>
+      Number of Netty service IO worker threads for Remote System Operation HTTP service
+    </description>
+  </property>
+
 
   <!-- Metadata Configuration -->
 

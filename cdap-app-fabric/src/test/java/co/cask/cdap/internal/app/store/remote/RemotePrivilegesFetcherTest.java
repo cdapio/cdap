@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store;
+package co.cask.cdap.internal.app.store.remote;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.internal.app.store.remote.RemotePrivilegesFetcher;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramType;
@@ -62,6 +62,7 @@ public class RemotePrivilegesFetcherTest {
   private static PrivilegesFetcher privilegesFetcher;
   private static TransactionManager txManager;
   private static DatasetService datasetService;
+  private static RemoteSystemOperationsService remoteSysOpService;
   private static AppFabricServer appFabricServer;
 
   @BeforeClass
@@ -79,6 +80,8 @@ public class RemotePrivilegesFetcherTest {
     txManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+    remoteSysOpService = injector.getInstance(RemoteSystemOperationsService.class);
+    remoteSysOpService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
@@ -106,6 +109,7 @@ public class RemotePrivilegesFetcherTest {
   @AfterClass
   public static void tearDown() {
     appFabricServer.stopAndWait();
+    remoteSysOpService.stopAndWait();
     datasetService.stopAndWait();
     txManager.stopAndWait();
   }

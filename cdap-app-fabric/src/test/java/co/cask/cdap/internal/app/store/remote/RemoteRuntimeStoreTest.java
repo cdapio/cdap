@@ -14,13 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store;
+package co.cask.cdap.internal.app.store.remote;
 
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
+import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;

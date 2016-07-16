@@ -36,6 +36,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -143,6 +144,7 @@ public abstract class AppFabricTestBase {
   private static MetricsQueryService metricsService;
   private static MetricsCollectionService metricsCollectionService;
   private static DatasetOpExecutor dsOpService;
+  private static RemoteSystemOperationsService remoteSysOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamService streamService;
@@ -172,6 +174,8 @@ public abstract class AppFabricTestBase {
     txManager.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
+    remoteSysOpService = injector.getInstance(RemoteSystemOperationsService.class);
+    remoteSysOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -206,6 +210,7 @@ public abstract class AppFabricTestBase {
     metricsCollectionService.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();
+    remoteSysOpService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
     serviceStore.stopAndWait();
