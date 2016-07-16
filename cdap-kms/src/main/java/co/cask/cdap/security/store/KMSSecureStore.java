@@ -39,9 +39,18 @@ import java.util.Map;
  */
 public class KMSSecureStore implements SecureStore, SecureStoreManager {
 
+  /**
+   * Hadoop KeyProvider interface. This is used to interact with KMS.
+   */
   private final KeyProvider provider;
   private final Configuration conf;
 
+  /**
+   * Sets up the key provider.
+   * @param conf Hadoop configuration. core-site.xml contains the key provider URI.
+   * @throws URISyntaxException If the key provider path is not a valid URI.
+   * @throws IOException If the authority or the port could not be read from the provider URI.
+   */
   @Inject
   public KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
     this.conf = conf;
@@ -49,6 +58,16 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     provider = KMSClientProvider.Factory.get(providerUri, conf);
   }
 
+  /**
+   * Stores an element in the secure store. The key is stored as namespace:name in the backing store,
+   * assuming ":" to be the separator.
+   * @param namespace The namespace this key belongs to.
+   * @param name Name of the element to store.
+   * @param data The data that needs to be securely stored.
+   * @param description User provided description of the entry.
+   * @param properties Metadata associated with the data
+   * @throws IOException If it failed to store the key in the store.
+   */
   @Override
   public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
     throws IOException {
@@ -56,33 +75,47 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     options.setDescription(description);
     options.setAttributes(properties);
     options.setBitLength(data.length * Byte.SIZE);
-    provider.createKey(SecureStoreUtils.getKeyName(namespace, name), data, options);
+    try {
+      provider.createKey(SecureStoreUtils.getKeyName(namespace, name), data, options);
+    } catch (IOException e) {
+      throw new IOException("Failed to store the key. ", e);
+    }
   }
 
   @Override
   public void delete(String namespace, String name) throws IOException {
-    provider.deleteKey(SecureStoreUtils.getKeyName(namespace, name));
+    try {
+      provider.deleteKey(SecureStoreUtils.getKeyName(namespace, name));
+    } catch (IOException e) {
+      throw new IOException("Failed to delete the key. ", e);
+    }
   }
 
   @Override
   public List<SecureStoreMetadata> list(String namespace) throws IOException {
     String prefix = namespace + SecureStoreUtils.NAME_SEPARATOR;
     List<String> keysInNamespace = new ArrayList<>();
-    for (String key : provider.getKeys()) {
-      if (key.startsWith(prefix)) {
-        keysInNamespace.add(key);
+    KeyProvider.Metadata[] metadatas;
+    List<SecureStoreMetadata> secureStoreMetadatas;
+    try {
+      for (String key : provider.getKeys()) {
+        if (key.startsWith(prefix)) {
+          keysInNamespace.add(key);
+        }
       }
+      metadatas = provider.getKeysMetadata(keysInNamespace.toArray(new String[0]));
+      secureStoreMetadatas = new ArrayList<>();
+    } catch (IOException e) {
+      throw new IOException("Failed to get the list of elements from the secure store.", e);
     }
-    KeyProvider.Metadata[] metadatas = provider.getKeysMetadata(keysInNamespace.toArray(new String[0]));
-    List<SecureStoreMetadata> list = new ArrayList<>();
     for (int i = 0; i < metadatas.length; i++) {
       KeyProvider.Metadata metadata = metadatas[i];
       SecureStoreMetadata meta = SecureStoreMetadata.of(keysInNamespace.get(i).substring(prefix.length()),
                                                         metadata.getDescription(),
                                                         metadata.getAttributes());
-      list.add(meta);
+      secureStoreMetadatas.add(meta);
     }
-    return list;
+    return secureStoreMetadatas;
   }
 
   @Override
@@ -94,7 +127,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     return new SecureStoreData(meta, keyVersion.getMaterial());
   }
 
-  public KeyProvider getProvider() {
+  KeyProvider getProvider() {
     return provider;
   }
 }

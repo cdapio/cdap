@@ -16,15 +16,23 @@
 
 package co.cask.cdap.common.security;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+
 /**
- *
+ * Utility class for the Secure store.
  */
 public class SecureStoreUtils {
   /** Separator between the namespace name and the key name */
   public static final String NAME_SEPARATOR = ":";
 
+  private static final String KMS_BACKED = "kms";
 
-  public static String getKeyName(String namespace, String name) {
+  public static String getKeyName(final String namespace, final String name) {
     return namespace + NAME_SEPARATOR + name;
+  }
+
+  public static boolean isKMSBacked(final CConfiguration cConf) {
+   return SecureStoreUtils.KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
   }
 }

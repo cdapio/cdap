@@ -100,7 +100,8 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param name Name of the element to store.
    * @param data The data that needs to be securely stored.
    * @param description User provided description of the entry.
-   * @param properties Metadata associated with the data  @throws IOException
+   * @param properties Metadata associated with the data
+   * @throws IOException If it failed to store the key in the store.
    */
   @Override
   public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)

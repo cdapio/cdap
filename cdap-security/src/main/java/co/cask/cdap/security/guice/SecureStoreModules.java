@@ -19,8 +19,8 @@ package co.cask.cdap.security.guice;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.common.security.SecureStoreUtils;
 import co.cask.cdap.security.store.FileSecureStore;
 import co.cask.cdap.security.store.KMSSecureStore;
 import com.google.inject.AbstractModule;
@@ -82,7 +82,7 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStore get() {
-      if ("kms".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
+      if (SecureStoreUtils.isKMSBacked(cConf)) {
         return injector.getInstance(KMSSecureStore.class);
       } else {
         return injector.getInstance(FileSecureStore.class);
@@ -105,7 +105,7 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStoreManager get() {
-      if ("kms".equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
+      if (SecureStoreUtils.isKMSBacked(cConf)) {
         return injector.getInstance(KMSSecureStore.class);
       } else {
         return injector.getInstance(FileSecureStore.class);

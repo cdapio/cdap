@@ -18,11 +18,13 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.SecureStoreUtils;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
+import co.cask.cdap.security.store.KMSSecureStore;
 import co.cask.cdap.security.store.KMSTokenUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -61,17 +63,27 @@ import java.util.concurrent.TimeUnit;
  */
 public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(TokenSecureStoreUpdater.class);
+
   private final YarnConfiguration hConf;
   private final LocationFactory locationFactory;
+  private final SecureStore secureStore;
   private final long updateInterval;
   private final boolean secureExplore;
+  private final boolean isKMSBacked;
 
   @Inject
-  public TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf, LocationFactory locationFactory) {
+  public TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
+                                 LocationFactory locationFactory, SecureStore secureStore) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
+    this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
+    isKMSBacked = isKMSBackedStore(cConf, secureStore);
     updateInterval = calculateUpdateInterval();
+  }
+
+  private boolean isKMSBackedStore(CConfiguration cConf, SecureStore secureStore) {
+    return SecureStoreUtils.isKMSBacked(cConf) && secureStore instanceof KMSSecureStore;
   }
 
   private Credentials refreshCredentials() {
@@ -91,7 +103,9 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
-      KMSTokenUtils.obtainToken(hConf, refreshedCredentials);
+      if (isKMSBacked) {
+        KMSTokenUtils.obtainToken((KMSSecureStore) secureStore, refreshedCredentials);
+      }
 
       addDelegationTokens(hConf, locationFactory, refreshedCredentials);
 
