@@ -72,7 +72,7 @@ my-log-viewer {
     }
 
     .stat-count {
-      padding-top: 1px;
+      padding-top: 2px;
     }
 
     .log-stats-container {
@@ -226,11 +226,6 @@ my-log-viewer {
       }
     }
 
-    table.scroll tbody,
-    table.scroll thead {
-      color: #000000;
-    }
-
     table.scroll th {
       border-bottom: none;
     }
@@ -244,9 +239,15 @@ my-log-viewer {
       height: ~"-webkit-calc(100vh - 510px)";
       height: ~"calc(100vh - 510px)";
       overflow: auto;
+
+      tbody td {
+        color: #666666;
+      }
+
       th {
         line-height: 25px;
         border-color: @border-color;
+        color: #333333;
       }
 
       font-weight: 300;

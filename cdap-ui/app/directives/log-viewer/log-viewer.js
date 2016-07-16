@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource) {
   'ngInject';
 
   this.data = {};
@@ -22,6 +22,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.warningCount = 0;
   this.loading = true;
   this.loadingMoreLogs = true;
+  var dataSrc = new MyCDAPDataSource($scope);
+  var pollPromise;
 
   this.configOptions = {
     time: true,
@@ -77,7 +79,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   this.updateScrollPositionInStore = function(val) {
-    console.log('updating scroll position in store');
     LogViewerStore.dispatch({
       type: LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION,
       payload: {
@@ -141,6 +142,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
 
   const requestWithOffset = () => {
+
+    if(pollPromise){
+      console.log('Stopping polling!!!!');
+      dataSrc.stopPoll(pollPromise.__pollId__);
+      pollPromise = null;
+    }
+
     myLogsApi.nextLogsJsonOffset({
       'namespace' : this.namespaceId,
       'appId' : this.appId,
@@ -151,13 +159,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }).$promise.then(
       (res) => {
 
-        if(res.length === 0){
-          this.loadingMoreLogs = false;
-          return;
-        }
-
         this.fromOffset = res[res.length-1].offset;
         this.totalCount += res.length;
+
+        if(res.length === 0){
+          this.loadingMoreLogs = false;
+          getStatus();
+          return;
+        }
 
         angular.forEach(res, (element, index) => {
           if(res[index].log.logLevel === 'WARN'){
@@ -178,6 +187,44 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       (err) => {
         console.log('ERROR: ', err);
       });
+  };
+
+
+  const getStatus = () => {
+      myLogsApi.getLogsMetadata({
+        'namespace' : this.namespaceId,
+        'appId' : this.appId,
+        'programType' : this.programType,
+        'programId' : this.programId,
+        'runId' : this.runId
+      }).$promise.then(
+        (statusRes) => {
+          if(statusRes.status === 'RUNNING'){
+            console.log('Polling for new logs!!!!!!');
+            pollForNewLogs();
+          }
+        },
+        (statusErr) => {
+          console.log('ERROR: ', statusErr);
+        }
+      );
+  };
+
+  const pollForNewLogs = () => {
+    pollPromise = dataSrc.poll({
+      _cdapPath: '/namespaces/' + this.namespaceId + '/apps/' + this.appId + '/flows/' + this.programType + '/runs/' + this.runId + '/logs?format=json&start=' + this.startTimeSec,
+      method: 'GET'
+    },
+    function(res) {
+      if(res.length > 0){
+        console.log('Stopping polls!!!!');
+        this.data = res;
+        dataSrc.stopPoll(pollPromise.__pollId__);
+        pollPromise = null;
+      }
+    }, function(err){
+      console.log('ERROR: ', err);
+    });
   };
 
   // const computePinPosition = () => {
@@ -201,6 +248,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   // };
 
   const requestWithStartTime = () => {
+    if(pollPromise){
+      dataSrc.stopPoll(pollPromise.__pollId__);
+      console.log('Stopping poll!!!!!!');
+      pollPromise = null;
+    }
+
    myLogsApi.getLogsStart({
       'namespace' : this.namespaceId,
       'appId' : this.appId,
@@ -222,6 +275,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         //There are no more logs to be returned
         if(res.length === 0){
           this.loadingMoreLogs = false;
+          getStatus();
           return;
         }
         //clear the current array
@@ -330,13 +384,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 }
 
-//LogViewer Link Function
-// 1. Increase the size of the red / yellow / white spaces with number of logs
-// function logViewerLink(scope, element) {
-
-
-// }
-
 angular.module(PKG.name + '.commons')
   .directive('myLogViewer', function () {
     return {
@@ -350,7 +397,6 @@ angular.module(PKG.name + '.commons')
         programId: '@',
         runId: '@'
       },
-     // link: logViewerLink,
       bindToController: true,
       controllerAs: 'LogViewer'
     };
