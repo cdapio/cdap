@@ -17,43 +17,34 @@
 package co.cask.cdap.security.store;
 
 import com.google.common.base.Throwables;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
 import org.apache.hadoop.crypto.key.KeyProviderDelegationTokenExtension;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 /**
- *
+ * Helper class for getting KMS security delegation token.
  */
 public class KMSTokenUtils {
   private static final Logger LOG = LoggerFactory.getLogger(KMSTokenUtils.class);
 
-  public static Credentials obtainToken(Configuration conf, Credentials credentials) {
+  public static Credentials obtainToken(final KMSSecureStore secureStore, Credentials credentials) {
     try {
       String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
-      KMSSecureStore kmsSecureStore = new KMSSecureStore(conf);
-      KeyProvider keyProvider = kmsSecureStore.getProvider();
+      KeyProvider keyProvider = secureStore.getProvider();
       KeyProviderDelegationTokenExtension keyProviderDelegationTokenExtension =
         KeyProviderDelegationTokenExtension.
           createKeyProviderDelegationTokenExtension(keyProvider);
-      Token<?>[] kpTokens = keyProviderDelegationTokenExtension.addDelegationTokens(renewer, credentials);
-    } catch (IOException | URISyntaxException e) {
+      keyProviderDelegationTokenExtension.addDelegationTokens(renewer, credentials);
+    } catch (IOException e) {
       LOG.error("Failed to get secure token for KMS.", e);
       throw Throwables.propagate(e);
     }
 
     return credentials;
-  }
-
-  private static <T extends TokenIdentifier> Token<T> castToken(Object obj) {
-    return (Token<T>) obj;
   }
 }

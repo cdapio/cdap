@@ -24,6 +24,7 @@ import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
+import co.cask.cdap.security.store.KMSSecureStore;
 import co.cask.cdap.security.store.KMSTokenUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
