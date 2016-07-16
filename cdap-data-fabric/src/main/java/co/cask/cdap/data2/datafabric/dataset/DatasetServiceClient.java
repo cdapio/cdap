@@ -302,7 +302,7 @@ class DatasetServiceClient {
         HttpRequest.builder(method, new URL(url))
           .addHeaders(headers)
           .withBody(body)
-      ).build());
+      ).build(), httpRequestConfig);
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
