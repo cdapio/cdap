@@ -132,7 +132,7 @@ public class PipelinePlanner {
     // now split the logical pipeline into pipeline phases, using the connectors as split points
     Map<String, Dag> subdags = new HashMap<>();
     // assign some name to each subdag
-    for (Dag subdag : cdag.splitOnConnectors()) {
+    for (Dag subdag : cdag.split()) {
       String name = getPhaseName(subdag.getSources(), subdag.getSinks());
       subdags.put(name, subdag);
     }

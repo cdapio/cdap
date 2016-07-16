@@ -228,6 +228,193 @@ public class DagTest {
   }
 
   @Test
+  public void testParentsOf() {
+    /*
+        n1 -> n2
+              |
+              v
+        n3 -> n4 --> n8
+              ^
+              |
+        n5-------> n6 -> n7
+     */
+    Dag dag = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n2", "n4"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "n8"),
+      new Connection("n5", "n4"),
+      new Connection("n5", "n6"),
+      new Connection("n6", "n7")));
+    Assert.assertEquals(ImmutableSet.of("n1"), dag.parentsOf("n1"));
+    Assert.assertEquals(ImmutableSet.of("n1", "n2"), dag.parentsOf("n2"));
+    Assert.assertEquals(ImmutableSet.of("n3"), dag.parentsOf("n3"));
+    Assert.assertEquals(ImmutableSet.of("n1", "n2", "n3", "n4", "n5"), dag.parentsOf("n4"));
+    Assert.assertEquals(ImmutableSet.of("n5"), dag.parentsOf("n5"));
+    Assert.assertEquals(ImmutableSet.of("n5", "n6"), dag.parentsOf("n6"));
+    Assert.assertEquals(ImmutableSet.of("n5", "n6", "n7"), dag.parentsOf("n7"));
+    Assert.assertEquals(ImmutableSet.of("n1", "n2", "n3", "n4", "n5", "n8"), dag.parentsOf("n8"));
+
+    // these stop nodes are not parents, shouldn't have any effect
+    Assert.assertEquals(ImmutableSet.of("n1", "n2", "n3", "n4", "n5", "n8"),
+                        dag.parentsOf("n8", ImmutableSet.of("n6", "n7")));
+    Assert.assertEquals(ImmutableSet.of("n5", "n6", "n7"),
+                        dag.parentsOf("n7", ImmutableSet.of("n4")));
+    // these stop nodes cut off all paths except itself
+    Assert.assertEquals(ImmutableSet.of("n6", "n7"), dag.parentsOf("n7", ImmutableSet.of("n5", "n6")));
+    // these stop nodes cut off some paths
+    Assert.assertEquals(ImmutableSet.of("n2", "n3", "n5", "n4", "n8"),
+                        dag.parentsOf("n8", ImmutableSet.of("n2", "n3")));
+    Assert.assertEquals(ImmutableSet.of("n2", "n3", "n4", "n5"),
+                        dag.parentsOf("n4", ImmutableSet.of("n2", "n3")));
+  }
+
+  @Test
+  public void testSubsetAround() {
+    /*
+         n1 --> n2 --|
+                     |--> n3 --> n4 --|
+         n7 --> n8 --|                |--> n5 --> n6
+                                      |
+         n9 --------------------------|
+     */
+    Dag fullDag = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "n5"),
+      new Connection("n5", "n6"),
+      new Connection("n7", "n8"),
+      new Connection("n8", "n3"),
+      new Connection("n9", "n5")));
+
+    // test without stop nodes
+
+    /*
+         n1 --> n2 --|
+                     |--> n3 --> n4 --|
+                                      |--> n5 --> n6
+     */
+    Dag expected = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "n5"),
+      new Connection("n5", "n6")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n2", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+    Assert.assertEquals(expected, fullDag.subsetAround("n1", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+
+    /*
+         n1 --> n2 --|
+                     |--> n3 --> n4 --|
+         n7 --> n8 --|                |--> n5 --> n6
+     */
+    expected = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "n5"),
+      new Connection("n5", "n6"),
+      new Connection("n7", "n8"),
+      new Connection("n8", "n3")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n3", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+    Assert.assertEquals(expected, fullDag.subsetAround("n4", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+
+    Assert.assertEquals(fullDag, fullDag.subsetAround("n5", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+    Assert.assertEquals(fullDag, fullDag.subsetAround("n6", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+
+    /*
+                     |--> n3 --> n4 --|
+         n7 --> n8 --|                |--> n5 --> n6
+     */
+    expected = new Dag(ImmutableSet.of(
+      new Connection("n3", "n4"),
+      new Connection("n4", "n5"),
+      new Connection("n5", "n6"),
+      new Connection("n7", "n8"),
+      new Connection("n8", "n3")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n7", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+    Assert.assertEquals(expected, fullDag.subsetAround("n8", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+
+    /*
+                                      |--> n5 --> n6
+                                      |
+         n9 --------------------------|
+     */
+    expected = new Dag(ImmutableSet.of(
+      new Connection("n5", "n6"),
+      new Connection("n9", "n5")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n9", ImmutableSet.<String>of(), ImmutableSet.<String>of()));
+
+    // test with stop nodes
+
+    /*
+         n1 --> n2 --|
+                     |--> n3 --> n4
+                n8 --|
+     */
+    expected = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n8", "n3")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n3", ImmutableSet.of("n4"), ImmutableSet.of("n1", "n8")));
+
+    /*
+         n1 --> n2 --|
+                     |--> n3 --> n4
+     */
+    expected = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n2", ImmutableSet.of("n4"), ImmutableSet.of("n1", "n8")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n1", ImmutableSet.of("n4"), ImmutableSet.of("n1", "n8")));
+
+    /*
+                          n3 --> n4 --|
+                                      |--> n5 --> n6
+                                      |
+         n9 --------------------------|
+     */
+    expected = new Dag(ImmutableSet.of(
+      new Connection("n3", "n4"),
+      new Connection("n4", "n5"),
+      new Connection("n5", "n6"),
+      new Connection("n9", "n5")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n5", ImmutableSet.of("n6"), ImmutableSet.of("n3", "n9")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n6", ImmutableSet.of("n6"), ImmutableSet.of("n3", "n9")));
+
+    /*
+                n2 --|
+                     |--> n3 --> n4 --|
+                n8 --|                |--> n5
+                                      |
+         n9 --------------------------|
+     */
+    expected = new Dag(ImmutableSet.of(
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "n5"),
+      new Connection("n5", "n6"),
+      new Connection("n8", "n3"),
+      new Connection("n9", "n5")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n5", ImmutableSet.of("n6"), ImmutableSet.of("n2", "n8")));
+
+    /*
+                n2 --|
+                     |--> n3 --> n4 --|
+                n8 --|                |--> n5
+     */
+    expected = new Dag(ImmutableSet.of(
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "n5"),
+      new Connection("n8", "n3")));
+    Assert.assertEquals(expected, fullDag.subsetAround("n4", ImmutableSet.of("n5"), ImmutableSet.of("n2", "n8")));
+  }
+
+  @Test
   public void testSubset() {
     /*
         n1 -- n2

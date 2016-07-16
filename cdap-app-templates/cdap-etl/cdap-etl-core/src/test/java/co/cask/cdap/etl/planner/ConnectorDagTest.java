@@ -270,9 +270,10 @@ public class ConnectorDagTest {
              |                    |                                    |-- n11
              |--- n4(r) ----------|
 
-        in this example, n2, n3, n4, n6, and n9 should all have connectors
+        in this example, n2, n3, n4, n7, and n9 should all have connectors
         n2, n3, n4 all have connectors because n1 is writing to multiple reduce nodes
-        n9 has a connector because it is connected to reduce node n7
+        n7 has a connector because reduce nodes n2, n3, and n4 are connected to it
+        n9 has a connector because reduce node n7 is connected to it
      */
     ConnectorDag cdag = ConnectorDag.builder()
       .addConnection("n1", "n2")
@@ -290,7 +291,7 @@ public class ConnectorDagTest {
       .addReduceNodes("n2", "n3", "n4", "n7", "n9")
       .build();
     cdag.insertConnectors();
-    Set<Dag> actual = new HashSet<>(cdag.splitOnConnectors());
+    Set<Dag> actual = new HashSet<>(cdag.split());
     // dag_source_sink(s)
     Dag dag1 = new Dag(
       ImmutableSet.of(
@@ -350,7 +351,7 @@ public class ConnectorDagTest {
       .addReduceNodes("n2", "n3")
       .build();
     cdag.insertConnectors();
-    actual = new HashSet<>(cdag.splitOnConnectors());
+    actual = new HashSet<>(cdag.split());
 
     /*
              |--> n2.connector
@@ -372,6 +373,63 @@ public class ConnectorDagTest {
     dag3 = new Dag(ImmutableSet.of(
       new Connection("n3.connector", "n3"),
       new Connection("n3", "n4")));
+    expected = ImmutableSet.of(dag1, dag2, dag3);
+    Assert.assertEquals(expected, actual);
+
+
+    /*
+         n1 --> n2 --|
+                     |--> n3(r) --> n4 --|
+         n7 --> n8 --|                   |--> n5(r) --> n6
+                                         |
+         n9 -----------------------------|
+
+        only n5 should have a connector inserted in front of it to become:
+
+         n1 --> n2 --|
+                     |--> n3(r) --> n4 --|
+         n7 --> n8 --|                   |--> n5.connector --> n5(r) --> n6
+                                         |
+         n9 -----------------------------|
+     */
+    cdag = ConnectorDag.builder()
+      .addConnection("n1", "n2")
+      .addConnection("n2", "n3")
+      .addConnection("n3", "n4")
+      .addConnection("n4", "n5")
+      .addConnection("n5", "n6")
+      .addConnection("n7", "n8")
+      .addConnection("n8", "n3")
+      .addConnection("n9", "n5")
+      .addReduceNodes("n3", "n5")
+      .build();
+    cdag.insertConnectors();
+    actual = new HashSet<>(cdag.split());
+
+    /*
+         n1 --> n2 --|
+                     |--> n3(r) --> n4 --|
+         n7 --> n8 --|                   |--> n5.connector
+     */
+    dag1 = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "n5.connector"),
+      new Connection("n7", "n8"),
+      new Connection("n8", "n3")));
+    /*
+                                         |--> n5.connector
+                                         |
+         n9 -----------------------------|
+     */
+    dag2 = new Dag(ImmutableSet.of(new Connection("n9", "n5.connector")));
+    /*
+         n5.connector --> n5(r) --> n6
+     */
+    dag3 = new Dag(ImmutableSet.of(
+      new Connection("n5.connector", "n5"),
+      new Connection("n5", "n6")));
     expected = ImmutableSet.of(dag1, dag2, dag3);
     Assert.assertEquals(expected, actual);
   }
