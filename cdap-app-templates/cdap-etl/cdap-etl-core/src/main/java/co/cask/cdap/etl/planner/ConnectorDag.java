@@ -239,7 +239,9 @@ public class ConnectorDag extends Dag {
     }
 
     Set<String> remainingSources = Sets.intersection(remainingNodes, possibleNewSources);
-    dags.add(subsetFrom(remainingSources, possibleNewSinks));
+    if (!remainingSources.isEmpty()) {
+      dags.add(subsetFrom(remainingSources, possibleNewSinks));
+    }
     return dags;
   }
 
