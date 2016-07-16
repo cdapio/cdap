@@ -63,6 +63,8 @@
       <div class="text-left"
           ng-if="TagsController.tags.preferredTags.length > 10">
         <uib-pagination total-items="TagsController.tags.preferredTags.length"
+                        max-size="10"
+                        force-ellipses="true"
                         ng-model="TagsController.currentPreferredPage"></uib-pagination>
       </div>
     </div>
@@ -103,6 +105,8 @@
       <div class="text-left"
           ng-if="TagsController.tags.userTags.length > 10">
         <uib-pagination total-items="TagsController.tags.userTags.length"
+                        max-size="10"
+                        force-ellipses="true"
                         ng-model="TagsController.currentUserPage"></uib-pagination>
       </div>
     </div>
