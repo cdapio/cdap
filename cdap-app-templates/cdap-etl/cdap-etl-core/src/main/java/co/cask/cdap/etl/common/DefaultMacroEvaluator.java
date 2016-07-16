@@ -16,9 +16,12 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.etl.common.macro.LogicalStartTimeMacro;
+import com.google.common.base.Preconditions;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -30,28 +33,46 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
   private final WorkflowToken workflowToken;
   private final Map<String, String> runtimeArguments;
   private final long logicalStartTime;
+  private final LogicalStartTimeMacro logicalStartTimeMacro;
+
+  private static final String LOGICAL_START_TIME_FUNCTION_NAME = "logicalStartTime";
+  private static final String SECURE_FUNCTION_NAME = "secure";
 
   public DefaultMacroEvaluator(WorkflowToken workflowToken, Map<String, String> runtimeArguments,
                                long logicalStartTime) {
     this.workflowToken = workflowToken;
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
+    this.logicalStartTimeMacro = new LogicalStartTimeMacro();
   }
 
   @Override
   @Nullable
   public String lookup(String property) {
+    // try workflow token
+    Preconditions.checkNotNull(workflowToken, "Workflow token is null, you may not be running a workflow.");
     Value tokenValue = workflowToken.get(property);
     if (tokenValue != null) {
       return tokenValue.toString();
     }
-    return runtimeArguments.get(property);
+
+    // try runtime arguments
+    String runtimeArgumentMacro = runtimeArguments.get(property);
+    if (runtimeArgumentMacro == null) {
+      throw new InvalidMacroException(String.format("Macro '%s' not defined.", property));
+    }
+    return runtimeArgumentMacro;
   }
 
   @Override
   @Nullable
-  public String evaluate(String macroFunction, String... arguments) {
-    // todo: use secure store macro function or logicalStartTime macro function.
-    return null;
+  public String evaluate(String macroFunction, String... arguments) throws InvalidMacroException {
+    if (macroFunction.equals(LOGICAL_START_TIME_FUNCTION_NAME)) {
+      return logicalStartTimeMacro.evaluate(logicalStartTime, arguments);
+    } else if (macroFunction.equals(SECURE_FUNCTION_NAME)) {
+      // todo lookup secure store, when available
+      return "";
+    }
+    throw new InvalidMacroException(String.format("Unsupport macro function %s", macroFunction));
   }
 }

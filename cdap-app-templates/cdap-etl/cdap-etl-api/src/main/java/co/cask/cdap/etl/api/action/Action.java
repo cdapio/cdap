@@ -14,21 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline;
+package co.cask.cdap.etl.api.action;
 
-import co.cask.cdap.api.customaction.CustomAction;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.etl.api.PipelineConfigurable;
 
 /**
- * Adds workflow programs.
- * This is required because {@link WorkflowForkConfigurer} doesn't extend {@link WorkflowConfigurer}.
+ * Represents custom logic to be executed in the pipeline.
  */
-public interface WorkflowProgramAdder {
+public abstract class Action implements PipelineConfigurable {
+  public static final String PLUGIN_TYPE = "action";
 
-  void addMapReduce(String name);
-
-  void addSpark(String name);
-
-  void addAction(CustomAction action);
+  /**
+   * Implement this method to execute the code as a part of action run.
+   * @param context the action context, containing information about the pipeline run
+   * @throws Exception when there is failure in method execution
+   */
+  public abstract void run(ActionContext context) throws Exception;
 }

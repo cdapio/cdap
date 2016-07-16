@@ -42,7 +42,8 @@ public abstract class PluginConfig extends Config implements Serializable {
   }
 
   /**
-   * Returns true if property value contains a macro; false otherwise.
+   * Returns true if property value contains a macro; false otherwise. At runtime, properties that are macro-enabled
+   * and contained macro syntax will still return "true" to indicate that a macro was present at configuration time.
    * @param fieldName name of the field
    * @return whether the field contains a macro or not
    */

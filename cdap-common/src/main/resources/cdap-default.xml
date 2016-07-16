@@ -47,9 +47,11 @@
     <name>instance.name</name>
     <value>${root.namespace}</value>
     <description>
-      Determines a unique identifier for a CDAP instance. It is used for providing authorization to a particular CDAP
-      instance. Must be alphanumeric, and should not be changed after CDAP has been started. If it is changed, there is
-      a risk of losing data (for example, authorization policies).
+      Determines a unique identifier for a CDAP instance. It is used for
+      providing authorization to a particular CDAP instance. Must be
+      alphanumeric, and should not be changed after CDAP has been started.
+      If it is changed, there is a risk of losing data (for example,
+      authorization policies).
     </description>
   </property>
 
@@ -57,7 +59,8 @@
     <name>local.data.dir</name>
     <value>data</value>
     <description>
-      Data directory for standalone mode and the master process in distributed CDAP
+      Data directory for Standalone CDAP and the master process in
+      Distributed CDAP
     </description>
   </property>
 
@@ -75,8 +78,43 @@
     <name>mapreduce.jobclient.connect.max.retries</name>
     <value>2</value>
     <description>
-      Indicates the maximum number of retries JobClient will make to
+      Indicates the maximum number of retries the JobClient will make to
       establish a service connection when retrieving job status and history
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.classes</name>
+    <value></value>
+    <description>
+      Comma-separated list of classnames for checks that will be run before
+      the CDAP Master starts up. If any of the checks fails, the CDAP Master
+      will not start up. Checks will only be run if
+      ${master.startup.checks.enabled} is set to true.
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.enabled</name>
+    <value>true</value>
+    <description>
+      Whether checks should be run before startup to determine if the CDAP
+      Master can be run correctly. Which checks are run is determined by the
+      ${master.startup.checks.packages} and ${master.startup.checks.classes}
+      settings. If any checks fail, the CDAP Master will fail to start
+      instead of waiting for the problem to be fixed. This setting only
+      affects Distributed CDAP. It does not apply to Standalone CDAP.
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.packages</name>
+    <value>co.cask.cdap.master.startup</value>
+    <description>
+      Comma-separated list of packages containing checks that will be run
+      before the CDAP Master starts up. If any of the checks fails, the CDAP
+      Master will not start up. Checks will only be run if
+      master.startup.checks.enabled is set to true.
     </description>
   </property>
 
@@ -96,36 +134,6 @@
       ZooKeeper, as the directory under which all CDAP data and metadata is
       stored in HDFS, and as the prefix for all HBase tables created by
       CDAP; must be composed of alphanumeric characters
-    </description>
-  </property>
-
-  <property>
-    <name>master.startup.checks.enabled</name>
-    <value>true</value>
-    <description>
-      Whether checks should be run before startup to determine if the CDAP Master can be run correctly.
-      Which checks are run is determined by the master.startup.checks.packages and master.startup.checks.classes
-      settings. If any checks fail, the CDAP Master will fail to start instead of waiting for the problem to be fixed.
-      This setting only affects Distributed CDAP. It does not apply to Standalone CDAP.
-    </description>
-  </property>
-
-  <property>
-    <name>master.startup.checks.packages</name>
-    <value>co.cask.cdap.master.startup</value>
-    <description>
-      Comma-separated list of packages containing checks that will be run before the CDAP Master starts up.
-      If any of the checks fails, the CDAP Master will not start up.
-      Checks will only be run if master.startup.checks.enabled is set to true.
-    </description>
-  </property>
-
-  <property>
-    <name>master.startup.checks.classes</name>
-    <description>
-      Comma-separated list of classnames for checks that will be run before the CDAP Master starts up.
-      If any of the checks fails, the CDAP Master will not start up.
-      Checks will only be run if master.startup.checks.enabled is set to true.
     </description>
   </property>
 
@@ -179,8 +187,8 @@
     <name>zookeeper.quorum</name>
     <value>127.0.0.1:2181/${root.namespace}</value>
     <description>
-      ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute the quorum
-      (FQDN1:2181,FQDN2:2181,...) for the components shown here
+      ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute
+      the quorum (FQDN1:2181,FQDN2:2181,...) for the components shown here
     </description>
   </property>
 
@@ -222,8 +230,8 @@
     <name>app.artifact.dir</name>
     <value>/opt/cdap/master/artifacts</value>
     <description>
-      Semicolon-separated list of local directories scanned for system artifacts
-      to add to the artifact repository
+      Semicolon-separated list of local directories scanned for system
+      artifacts to add to the artifact repository
     </description>
   </property>
 
@@ -245,7 +253,7 @@
 
   <property>
     <name>app.program.extra.classpath</name>
-    <value/>
+    <value></value>
     <description>
       Extra Java classpath for CDAP programs
     </description>
@@ -272,7 +280,8 @@
     <name>app.program.runtime.extensions.dir</name>
     <value>/opt/cdap/master/ext/runtimes</value>
     <description>
-      Semicolon-separated list of local directories that are scanned for program runtime extensions
+      Semicolon-separated list of local directories that are scanned for
+      program runtime extensions
     </description>
   </property>
 
@@ -329,14 +338,15 @@
     </description>
   </property>
 
+
   <!-- Datasets Configuration -->
 
   <property>
     <name>data.local.storage</name>
     <value>${local.data.dir}/ldb</value>
     <description>
-      Database directory for LevelDB, used for data fabric in standalone
-      mode
+      Database directory for LevelDB, used for data fabric in Standalone
+      CDAP
     </description>
   </property>
 
@@ -344,7 +354,7 @@
     <name>data.local.storage.blocksize</name>
     <value>1024</value>
     <description>
-      Block size in bytes for data fabric when in standalone mode
+      Block size in bytes for data fabric when in Standalone CDAP
     </description>
   </property>
 
@@ -352,7 +362,7 @@
     <name>data.local.storage.cachesize</name>
     <value>104857600</value>
     <description>
-      Cache size in bytes for data fabric when in standalone mode
+      Cache size in bytes for data fabric when in Standalone CDAP
     </description>
   </property>
 
@@ -376,8 +386,8 @@
     <name>data.tx.client.count</name>
     <value>50</value>
     <description>
-      The number of pooled instances of the transaction client;
-      increase this to increase transaction concurrency
+      The number of pooled instances of the transaction client; increase
+      this to increase transaction concurrency
     </description>
   </property>
 
@@ -498,7 +508,7 @@
     <value>${local.data.dir}/tx.snapshot</value>
     <description>
       Storage directory on the local filesystem of snapshot and logs of
-      transaction state when in standalone mode
+      transaction state when in Standalone CDAP
     </description>
   </property>
 
@@ -633,7 +643,16 @@
     <name>explore.executor.container.instances</name>
     <value>1</value>
     <description>
-      Number of explore executor instances (deprecated: instance count is always set to 1) 
+      Number of explore executor instances (deprecated: instance count is
+      always set to 1)
+    </description>
+  </property>
+
+  <property>
+    <name>explore.executor.container.memory.mb</name>
+    <value>1024</value>
+    <description>
+      Size of memory in megabytes for each explore executor instance
     </description>
   </property>
 
@@ -646,18 +665,11 @@
   </property>
 
   <property>
-    <name>explore.executor.container.memory.mb</name>
-    <value>1024</value>
-    <description>
-      Size of Memory in megabytes for each explore executor instance
-    </description>
-  </property>
-
-  <property>
     <name>explore.executor.max.instances</name>
     <value>1</value>
     <description>
-      Maximum number of explore executor instances (deprecated: instance count is always set to 1)
+      Maximum number of explore executor instances (deprecated: instance
+      count is always set to 1)
     </description>
   </property>
 
@@ -674,7 +686,7 @@
     <name>explore.local.data.dir</name>
     <value>${local.data.dir}/explore</value>
     <description>
-      Data directory for CDAP Explore Service when in standalone mode
+      Data directory for CDAP Explore Service when in Standalone CDAP
     </description>
   </property>
 
@@ -684,8 +696,8 @@
     <description>
       Determines the start-up of the CDAP Explore Service (ad-hoc SQL
       queries); if false, the explore service starts up when CDAP is
-      started; if true, the CDAP Explore Service will start upon the first query
-      it receives
+      started; if true, the CDAP Explore Service will start upon the first
+      query it receives
     </description>
   </property>
 
@@ -740,7 +752,8 @@
     <name>kafka.bind.address</name>
     <value>${kafka.server.host.name}</value>
     <description>
-      CDAP Kafka service bind port (deprecated: replaced with kafka.server.host.name)
+      CDAP Kafka service bind port (deprecated: replaced with
+      ${kafka.server.host.name})
     </description>
   </property>
 
@@ -748,7 +761,8 @@
     <name>kafka.bind.port</name>
     <value>${kafka.server.port}</value>
     <description>
-      CDAP Kafka service bind port (deprecated: replaced with kafka.server.port)
+      CDAP Kafka service bind port (deprecated: replaced with
+      ${kafka.server.port})
     </description>
   </property>
 
@@ -756,7 +770,8 @@
     <name>kafka.default.replication.factor</name>
     <value>${kafka.server.default.replication.factor}</value>
     <description>
-      CDAP Kafka service replication factor (deprecated: replaced with kafka.server.default.replication.factor)
+      CDAP Kafka service replication factor (deprecated: replaced with
+      ${kafka.server.default.replication.factor})
     </description>
   </property>
 
@@ -764,7 +779,8 @@
     <name>kafka.log.dir</name>
     <value>${kafka.server.log.dirs}</value>
     <description>
-      CDAP Kafka service log storage directory (deprecated: replaced with kafka.server.log.dirs)
+      CDAP Kafka service log storage directory (deprecated: replaced with
+      ${kafka.server.log.dirs})
     </description>
   </property>
 
@@ -772,8 +788,8 @@
     <name>kafka.log.retention.hours</name>
     <value>${kafka.server.log.retention.hours}</value>
     <description>
-      The number of hours to keep a log file before deleting it (deprecated: replaced with
-      kafka.server.log.retention.hours)
+      The number of hours to keep a log file before deleting it (deprecated:
+      replaced with ${kafka.server.log.retention.hours})
     </description>
   </property>
 
@@ -782,7 +798,7 @@
     <value>${kafka.server.num.partitions}</value>
     <description>
       Default number of partitions for a topic (deprecated: replaced with
-      kafka.server.num.partitions)
+      ${kafka.server.num.partitions})
     </description>
   </property>
 
@@ -790,8 +806,8 @@
     <name>kafka.seed.brokers</name>
     <value>127.0.0.1:9092</value>
     <description>
-      Comma-separated list of CDAP Kafka service brokers; for distributed CDAP,
-      replace with list of FQDN:port brokers
+      Comma-separated list of CDAP Kafka service brokers; for distributed
+      CDAP, replace with list of FQDN:port brokers
     </description>
   </property>
 
@@ -799,12 +815,12 @@
     <name>kafka.server.default.replication.factor</name>
     <value>1</value>
     <description>
-      CDAP Kafka service replication factor; used to replicate Kafka messages across
-      multiple machines to prevent data loss in the event of a hardware
-      failure. The recommended setting is to run at least two CDAP Kafka servers.
-      If you are running two CDAP Kafka servers, set this value to 2; otherwise,
-      set it to the maximum number of tolerated machine failures
-      plus one (assuming you have that number of machines).
+      CDAP Kafka service replication factor; used to replicate Kafka
+      messages across multiple machines to prevent data loss in the event of
+      a hardware failure. The recommended setting is to run at least two
+      CDAP Kafka servers. If you are running two CDAP Kafka servers, set
+      this value to 2; otherwise, set it to the maximum number of tolerated
+      machine failures plus one (assuming you have that number of machines).
     </description>
   </property>
 
@@ -828,7 +844,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length at which will force an fsync of data written to the log.
+      The interval length at which will force an fsync of data written to
+      the log
     </description>
   </property>
 
@@ -860,7 +877,8 @@
     <name>kafka.server.zookeeper.connection.timeout.ms</name>
     <value>1000000</value>
     <description>
-      The maximum time (in milliseconds) that the client will wait to establish a connection to Zookeeper
+      The maximum time (in milliseconds) that the client will wait to
+      establish a connection to Zookeeper
     </description>
   </property>
 
@@ -868,8 +886,9 @@
     <name>kafka.zookeeper.connection.timeout.ms</name>
     <value>${kafka.server.zookeeper.connection.timeout.ms}</value>
     <description>
-      The maximum time (in milliseconds) that the client will wait to establish a connection to Zookeeper (deprecated:
-      replaced with kafka.server.zookeeper.connection.timeout.ms)
+      The maximum time (in milliseconds) that the client will wait to
+      establish a connection to Zookeeper (deprecated: replaced with
+      ${kafka.server.zookeeper.connection.timeout.ms})
     </description>
   </property>
 
@@ -904,7 +923,7 @@
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
-      Root location for collecting logs when in standalone mode
+      Root location for collecting logs when in Standalone CDAP
     </description>
   </property>
 
@@ -1011,8 +1030,9 @@
     <name>master.collect.app.containers.log.level</name>
     <value>ERROR</value>
     <description>
-      The log level of application container logs that are streamed back to the CDAP Master process log.
-      The levels supported are [ ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF ].
+      The log level of application container logs that are streamed back to
+      the CDAP Master process log. The levels supported are [ ALL, TRACE,
+      DEBUG, INFO, WARN, ERROR, OFF ].
     </description>
   </property>
 
@@ -1020,7 +1040,8 @@
     <name>master.collect.containers.log</name>
     <value>true</value>
     <description>
-      Determines if master service container logs are streamed back to the CDAP Master process log
+      Determines if master service container logs are streamed back to the
+      CDAP Master process log
     </description>
   </property>
 
@@ -1052,13 +1073,17 @@
     <name>master.startup.service.timeout.seconds</name>
     <value>600</value>
     <description>
-      Timeout in seconds for master services to wait for their dependent services to be available.
-      For example, the dataset executor master service requires the transaction service, and will wait for
-      the transaction service to become available while it is starting up.
-      If the timeout is hit, the service will fail to start and the master service will shut itself down.
-      If set to 0 or below, master services will not wait for their dependent services to start before starting themselves.
+      Timeout in seconds for master services to wait for their dependent
+      services to be available. For example, the dataset executor master
+      service requires the transaction service, and will wait for the
+      transaction service to become available while it is starting up. If
+      the timeout is hit, the service will fail to start and the master
+      service will shut itself down. If set to 0 or below, master services
+      will not wait for their dependent services to start before starting
+      themselves.
     </description>
   </property>
+
 
   <!-- Metadata Configuration -->
 
@@ -1098,7 +1123,8 @@
     <name>metadata.updates.kafka.broker.list</name>
     <value>127.0.0.1:${kafka.bind.port}</value>
     <description>
-      Apache Kafka broker list to which metadata update notifications are published (deprecated)
+      Apache Kafka broker list to which metadata update notifications are
+      published (deprecated)
     </description>
   </property>
 
@@ -1106,7 +1132,8 @@
     <name>metadata.updates.kafka.topic</name>
     <value>cdap-metadata-updates</value>
     <description>
-      Apache Kafka topic name to which metadata update notifications are published (deprecated)
+      Apache Kafka topic name to which metadata update notifications are
+      published (deprecated)
     </description>
   </property>
 
@@ -1341,7 +1368,8 @@
     <name>notification.transport.system</name>
     <value>kafka</value>
     <description>
-      Transport system used by the notification system; can be either 'kafka' or 'stream'
+      Transport system used by the notification system; can be either
+      'kafka' or 'stream'
     </description>
   </property>
 
@@ -1396,26 +1424,33 @@
   <property>
     <name>router.client.boss.threads</name>
     <value>1</value>
-    <description>The number of boss threads in the CDAP Router service client</description>
+    <description>
+      The number of boss threads in the CDAP Router service client
+    </description>
   </property>
 
   <property>
     <name>router.client.worker.threads</name>
     <value>10</value>
-    <description>The number of worker threads in the CDAP Router service client</description>
+    <description>
+      The number of worker threads in the CDAP Router service client
+    </description>
   </property>
 
   <property>
     <name>router.connection.backlog</name>
     <value>20000</value>
-    <description>The connection backlog in the CDAP Router service</description>
+    <description>
+      The connection backlog in the CDAP Router service
+    </description>
   </property>
 
   <property>
     <name>router.connection.idle.timeout.secs</name>
     <value>15</value>
     <description>
-      The number of seconds after an HTTP request completes that idle router connections are closed
+      The number of seconds after an HTTP request completes that idle router
+      connections are closed
     </description>
   </property>
 
@@ -1430,7 +1465,9 @@
   <property>
     <name>router.server.boss.threads</name>
     <value>1</value>
-    <description>The number of boss threads in the CDAP Router service</description>
+    <description>
+      The number of boss threads in the CDAP Router service
+    </description>
   </property>
 
   <property>
@@ -1444,7 +1481,9 @@
   <property>
     <name>router.server.worker.threads</name>
     <value>10</value>
-    <description>The number of worker threads in the CDAP Router service</description>
+    <description>
+      The number of worker threads in the CDAP Router service
+    </description>
   </property>
 
   <property>
@@ -1482,7 +1521,8 @@
     <name>router.webapp.enabled</name>
     <value>false</value>
     <description>
-      Determines if the webapp listening service should be started (deprecated)
+      Determines if the webapp listening service should be started
+      (deprecated)
     </description>
   </property>
 
@@ -1493,8 +1533,8 @@
     <name>cdap.master.kerberos.keytab</name>
     <value></value>
     <description>
-      The full path to the Kerberos keytab file containing the CDAP Master service's
-      credentials
+      The full path to the Kerberos keytab file containing the CDAP Master
+      service's credentials
     </description>
   </property>
 
@@ -1554,7 +1594,7 @@
     <name>security.authentication.basic.realmfile</name>
     <value></value>
     <description>
-      Username / password file to use when basic authentication is
+      Username and password file to use when basic authentication is
       configured
     </description>
   </property>
@@ -1574,24 +1614,30 @@
     <description>
       JAAS LoginModule implementation to use when
       co.cask.security.server.JAASAuthenticationHandler is configured for
-      security.authentication.handlerClassName
+      ${security.authentication.handlerClassName}
     </description>
   </property>
 
   <property>
     <name>security.authorization.cache.enabled</name>
     <value>true</value>
-    <description>Determines if authorization policies can be cached by programs. Defaults to true.</description>
+    <description>
+      Determines if authorization policies can be cached by programs;
+      defaults to true
+    </description>
   </property>
 
   <property>
     <name>security.authorization.cache.refresh.interval.secs</name>
     <value>50</value>
     <description>
-      Determines the interval in seconds after which a background thread will refresh cached authorization policies.
-      Defaults to 50 seconds. It is recommended to keep this value slightly lower than
-      ${security.authorization.cache.ttl.secs}, so the cached authorization policies do not expire, unless they have
-      been explicitly revoked. This setting only takes effect if ${security.authorization.cache.enabled} is set to true.
+      Determines the interval in seconds after which a background thread
+      will refresh cached authorization policies. Defaults to 50 seconds. It
+      is recommended to keep this value slightly lower than
+      ${security.authorization.cache.ttl.secs}, so that the cached
+      authorization policies do not expire unless they have been explicitly
+      revoked. This setting only takes effect if
+      ${security.authorization.cache.enabled} is set to true.
     </description>
   </property>
 
@@ -1599,8 +1645,10 @@
     <name>security.authorization.cache.ttl.secs</name>
     <value>60</value>
     <description>
-      Determines the time to live in seconds for entries in the authorization cache used by programs. Defaults to 60
-      seconds. This setting only takes effect if ${security.authorization.cache.enabled} is set to true.
+      Determines the time to live in seconds for entries in the
+      authorization cache used by programs. Defaults to 60 seconds. This
+      setting only takes effect if ${security.authorization.cache.enabled}
+      is set to true.
     </description>
   </property>
 
@@ -1608,8 +1656,9 @@
     <name>security.authorization.enabled</name>
     <value>false</value>
     <description>
-      When set to true, all operations in CDAP are authorized using the authorizer implementation found at the
-      property security.authorization.extension.jar.path.
+      When set to true, all operations in CDAP are authorized using the
+      authorizer implementation found at the property
+      ${security.authorization.extension.jar.path}
     </description>
   </property>
 
@@ -1617,9 +1666,11 @@
     <name>security.authorization.extension.jar.path</name>
     <value></value>
     <description>
-      If an external authorization system is used for authorizing operations on CDAP entities, this property sets
-      the path to the bundled JAR file containing the extension code. This jar is only used when
-      authorization is enabled by setting security.authorization.enabled to true.
+      If an external authorization system is used for authorizing operations
+      on CDAP entities, this property sets the path to the bundled JAR file
+      containing the extension code. This jar is only used when
+      authorization is enabled by setting ${security.authorization.enabled}
+      to true.
     </description>
   </property>
 
@@ -1627,7 +1678,7 @@
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>
-      Path to the secret key file (only used in standalone mode)
+      Path to the secret key file (only used in Standalone CDAP)
     </description>
   </property>
 
@@ -1671,15 +1722,7 @@
     <name>security.server.token.expiration.ms</name>
     <value>86400000</value>
     <description>
-      AccessToken expiration time in milliseconds (defaults to 24 hours)
-    </description>
-  </property>
-
-  <property>
-    <name>security.store.provider</name>
-    <value>file</value>
-    <description>
-      Backend provider for the secure store.
+      Access token expiration time in milliseconds; defaults to 24 hours
     </description>
   </property>
 
@@ -1687,7 +1730,7 @@
     <name>security.store.file.name</name>
     <value>securestore</value>
     <description>
-      Name of the secure store file.
+      Name of the secure store file
     </description>
   </property>
 
@@ -1695,7 +1738,7 @@
     <name>security.store.file.password</name>
     <value>cdapsecret</value>
     <description>
-      Password to access the key store.
+      Password to access the key store
     </description>
   </property>
 
@@ -1703,7 +1746,15 @@
     <name>security.store.file.path</name>
     <value>${local.data.dir}/store</value>
     <description>
-      Location of the encrypted file which holds the secure store entries.
+      Location of the encrypted file which holds the secure store entries
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.provider</name>
+    <value>file</value>
+    <description>
+      Backend provider for the secure store
     </description>
   </property>
 
@@ -1749,6 +1800,7 @@
       Determines if SSL is enabled
     </description>
   </property>
+
 
   <!-- Stream Configuration -->
 
@@ -1805,8 +1857,8 @@
     <name>stream.container.instance.id</name>
     <value>0</value>
     <description>
-      Instance ID for the stream service container; the actual value will be set
-      at runtime by the system automatically
+      Instance ID for the stream service container; the actual value will be
+      set at runtime by the system automatically
     </description>
   </property>
 
@@ -1814,8 +1866,8 @@
     <name>stream.container.instances</name>
     <value>1</value>
     <description>
-      Number of YARN container instances for the stream handler; 
-      in standalone mode, it's always one
+      Number of YARN container instances for the stream handler; in
+      Standalone CDAP, it is always one
     </description>
   </property>
 
@@ -1850,7 +1902,8 @@
     <name>stream.file.cleanup.period</name>
     <value>300000</value>
     <description>
-      Default time interval in milliseconds for running the stream file cleanup process
+      Default time interval in milliseconds for running the stream file
+      cleanup process
     </description>
   </property>
 
@@ -1937,8 +1990,9 @@
     <name>dashboard.router.check.timeout.secs</name>
     <value>0</value>
     <description>
-      Amount of time, in seconds, CDAP UI waits before exiting when unable to connect to
-      CDAP Router service on startup; use a timeout of 0 to wait indefinitely
+      Amount of time, in seconds, CDAP UI waits before exiting when unable
+      to connect to CDAP Router service on startup; use a timeout of 0 to
+      wait indefinitely
     </description>
   </property>
 

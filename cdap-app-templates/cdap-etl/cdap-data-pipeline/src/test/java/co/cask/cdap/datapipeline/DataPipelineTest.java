@@ -28,6 +28,7 @@ import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
@@ -98,6 +99,70 @@ public class DataPipelineTest extends HydratorTestBase {
   @After
   public void cleanupTest() throws Exception {
     getMetricsManager().resetAll();
+  }
+
+  @Test
+  public void testPipelineWithActions() throws Exception {
+
+    String actionTable = "actionTable";
+    String action1RowKey = "action1.row";
+    String action1ColumnKey = "action1.column";
+    String action1Value = "action1.value";
+    String action2RowKey = "action2.row";
+    String action2ColumnKey = "action2.column";
+    String action2Value = "action2.value";
+    String action3RowKey = "action3.row";
+    String action3ColumnKey = "action3.column";
+    String action3Value = "action3.value";
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, action1RowKey, action1ColumnKey,
+                                                             action1Value)))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, action2RowKey, action2ColumnKey,
+                                                             action2Value)))
+      .addStage(new ETLStage("action3", MockAction.getPlugin(actionTable, action3RowKey, action3ColumnKey,
+                                                             action3Value)))
+      .addStage(new ETLStage("source", MockSource.getPlugin("myInput")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("myOutput")))
+      .addConnection("source", "sink")
+      .addConnection("action1", "action2")
+      .addConnection("action2", "source")
+      .addConnection("sink", "action3")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MyApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    // write records to source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "myInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset("myOutput");
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    DataSetManager<Table> actionTableDS = getDataset(actionTable);
+    Assert.assertEquals(action1Value, MockAction.readOutput(actionTableDS, action1RowKey, action1ColumnKey));
+    Assert.assertEquals(action2Value, MockAction.readOutput(actionTableDS, action2RowKey, action2ColumnKey));
+    Assert.assertEquals(action3Value, MockAction.readOutput(actionTableDS, action3RowKey, action3ColumnKey));
+
+    validateMetric(2, appId, "source.records.out");
+    validateMetric(2, appId, "sink.records.in");
   }
 
   @Test

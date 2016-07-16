@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.plugins.test;
 
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -35,15 +36,15 @@ public class TestPlugin implements Callable<String> {
   @Override
   public String call() throws Exception {
     if (config.timeout % 2 == 0) {
-      return Class.forName(config.className).getName();
+      return config.name;
     }
     return null;
   }
 
   public static final class Config extends PluginConfig {
 
-    @Name("class.name")
-    private String className;
+    @Macro
+    private String name;
 
     @Nullable
     private Long timeout;

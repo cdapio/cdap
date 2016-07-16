@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.customaction;
 
+import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.workflow.Workflow;
 
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.Map;
 /**
  * Configurer for configuring the {@link CustomAction} in the {@link Workflow}.
  */
-public interface CustomActionConfigurer {
+public interface CustomActionConfigurer extends PluginConfigurer {
 
   /**
    * Sets the name of the {@link CustomAction}.

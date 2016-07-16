@@ -5,6 +5,10 @@
       "kafka.log.dir": "/var/cdap/kafka-logs",
       "explore.enabled": "{{EXPLORE_ENABLED}}"
     },
+    "cdap_env": {
+      "tez_home": "/usr/hdp/{{HDP_VERSION}}/tez",
+      "tez_conf_dir": "/etc/tez/conf"
+    },
     "fs_superuser": "root",
     "skip_prerequisites": "true",
     "version": "{{CDAP_VERSION}}"
