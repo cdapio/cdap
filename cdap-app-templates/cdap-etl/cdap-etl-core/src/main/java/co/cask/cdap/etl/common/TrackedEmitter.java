@@ -36,10 +36,6 @@ public class TrackedEmitter<T> implements Emitter<T> {
     this.emitMetricName = emitMetricName;
   }
 
-  public Emitter<T> getEmitter() {
-    return delegate;
-  }
-
   @Override
   public void emit(T value) {
     delegate.emit(value);

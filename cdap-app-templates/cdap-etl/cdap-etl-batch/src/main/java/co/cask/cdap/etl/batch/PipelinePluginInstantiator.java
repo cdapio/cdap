@@ -59,7 +59,7 @@ public class PipelinePluginInstantiator {
       return (T) new ConnectorSource(datasetName, null);
     } else if (connectorSinks.contains(stageName)) {
       String datasetName = phaseSpec.getConnectorDatasets().get(stageName);
-      return (T) new ConnectorSink(datasetName, phaseSpec.getPhaseName(), true);
+      return (T) new ConnectorSink(datasetName, phaseSpec.getPhaseName());
     }
 
     return pluginContext.newPluginInstance(stageName, macroEvaluator);
