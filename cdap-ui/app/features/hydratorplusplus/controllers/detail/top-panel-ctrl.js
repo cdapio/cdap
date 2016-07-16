@@ -31,6 +31,10 @@ class HydratorDetailTopPanelController {
       description: this.config.description,
       type: this.config.artifact.name
     };
+    this.runPlayer = {
+      view: false,
+      action: null
+    };
     this.pipelineType = HydratorPlusPlusDetailNonRunsStore.getPipelineType();
     this.myLoadingService = myLoadingService;
     this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
@@ -92,82 +96,32 @@ class HydratorDetailTopPanelController {
     this.myPipelineExportModalService.show(config, exportConfig);
   }
   do(action) {
+    let isRunTimeArguments = true; // This will be later replaced by macros we get for a pipeline.
     switch(action) {
       case 'Start':
-        this.appStatus = 'STARTING';
-        this.HydratorPlusPlusDetailActions.startPipeline(
-          this.HydratorPlusPlusDetailRunsStore.getApi(),
-          this.HydratorPlusPlusDetailRunsStore.getParams()
-        ).then(
-          () => {},
-          (err) => {
-            this.myAlertOnValium.show({
-              type: 'danger',
-              title: 'Unable to start a new run',
-              content: angular.isObject(err)? err.data: err
-            });
-          }
-        );
+        if (!isRunTimeArguments) {
+          this.appStatus = 'STARTING';
+          this.startPipeline();
+        } else {
+          this.runPlayer.view = true;
+          this.runPlayer.action = 'STARTING';
+        }
         break;
       case 'Schedule':
-        this.scheduleStatus = 'SCHEDULING';
-        this.HydratorPlusPlusDetailActions.schedulePipeline(
-          this.HydratorPlusPlusDetailRunsStore.getApi(),
-          this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
-        )
-          .then(
-            () => {
-              this.HydratorPlusPlusDetailActions.fetchScheduleStatus(
-                this.HydratorPlusPlusDetailRunsStore.getApi(),
-                this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
-              );
-            },
-            (err) => {
-              this.myAlertOnValium.show({
-                type: 'danger',
-                title: 'Unable to schedule the pipeline',
-                content: angular.isObject(err)? err.data: err
-              });
-            }
-          );
+        if (!isRunTimeArguments) {
+          this.scheduleStatus = 'SCHEDULING';
+          this.schedulePipeline();
+        } else {
+          this.runPlayer.view = true;
+          this.runPlayer.action = 'SCHEDULING';
+        }
         break;
       case 'Suspend':
-        this.scheduleStatus = 'SUSPENDING';
-        this.HydratorPlusPlusDetailActions.suspendSchedule(
-          this.HydratorPlusPlusDetailRunsStore.getApi(),
-          this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
-        )
-          .then(
-            () => {
-              this.HydratorPlusPlusDetailActions.fetchScheduleStatus(
-                this.HydratorPlusPlusDetailRunsStore.getApi(),
-                this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
-              );
-            },
-            (err) => {
-              this.myAlertOnValium.show({
-                type: 'danger',
-                title: 'Unable to suspend the pipeline',
-                content: angular.isObject(err)? err.data: err
-              });
-            }
-          );
+        this.suspendPipeline();
         break;
       case 'Stop':
         this.appStatus = 'STOPPING';
-        this.HydratorPlusPlusDetailActions.stopPipeline(
-          this.HydratorPlusPlusDetailRunsStore.getApi(),
-          this.HydratorPlusPlusDetailRunsStore.getParams()
-        ).then(
-          () => {},
-          (err) => {
-            this.myAlertOnValium.show({
-              type: 'danger',
-              title: 'Unable to stop the current run',
-              content: angular.isObject(err)? err.data: err
-            });
-          }
-        );
+        this.stopPipeline();
         break;
       case 'Delete':
         this.myLoadingService.showLoadingIcon();
@@ -195,6 +149,84 @@ class HydratorDetailTopPanelController {
             }
           );
     }
+  }
+  startPipeline() {
+    this.appStatus = 'STARTING';
+    this.runPlayer.view = false;
+    this.runPlayer.action = null;
+    this.HydratorPlusPlusDetailActions.startPipeline(
+      this.HydratorPlusPlusDetailRunsStore.getApi(),
+      this.HydratorPlusPlusDetailRunsStore.getParams()
+    ).then(
+      () => {},
+      (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          title: 'Unable to start a new run',
+          content: angular.isObject(err)? err.data: err
+        });
+      }
+    );
+  }
+  stopPipeline() {
+    this.HydratorPlusPlusDetailActions.stopPipeline(
+      this.HydratorPlusPlusDetailRunsStore.getApi(),
+      this.HydratorPlusPlusDetailRunsStore.getParams()
+    ).then(
+      () => {},
+      (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          title: 'Unable to stop the current run',
+          content: angular.isObject(err)? err.data: err
+        });
+      }
+    );
+  }
+  schedulePipeline() {
+    this.runPlayer.view = false;
+    this.runPlayer.action = null;
+    this.scheduleStatus = 'SCHEDULING';
+    this.HydratorPlusPlusDetailActions.schedulePipeline(
+      this.HydratorPlusPlusDetailRunsStore.getApi(),
+      this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
+    )
+      .then(
+        () => {
+          this.HydratorPlusPlusDetailActions.fetchScheduleStatus(
+            this.HydratorPlusPlusDetailRunsStore.getApi(),
+            this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
+          );
+        },
+        (err) => {
+          this.myAlertOnValium.show({
+            type: 'danger',
+            title: 'Unable to schedule the pipeline',
+            content: angular.isObject(err)? err.data: err
+          });
+        }
+      );
+  }
+  suspendPipeline() {
+    this.HydratorPlusPlusDetailActions.suspendSchedule(
+      this.HydratorPlusPlusDetailRunsStore.getApi(),
+      this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
+    )
+      .then(
+        () => {
+          this.HydratorPlusPlusDetailActions.fetchScheduleStatus(
+            this.HydratorPlusPlusDetailRunsStore.getApi(),
+            this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
+          );
+        },
+        (err) => {
+          this.myAlertOnValium.show({
+            type: 'danger',
+            title: 'Unable to suspend the pipeline',
+            content: angular.isObject(err)? err.data: err
+          });
+        }
+      );
   }
 }
 
