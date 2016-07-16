@@ -34,6 +34,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -110,13 +113,13 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
   }
 
   @Test
-  public void testAuthCache() throws Exception {
+  public void testAuthCacheEnforce() throws Exception {
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+      Authorizer authorizer = authorizerInstantiator.get();
       DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), CCONF);
+        new DefaultAuthorizationEnforcementService(authorizer, CCONF);
       authEnforcementService.startAndWait();
       try {
-        Authorizer authorizer = authorizerInstantiator.get();
         // update privileges for alice. Currently alice has not been granted any privileges.
         assertAuthorizationFailure(authEnforcementService, new NamespaceId("ns"), ALICE, Action.ADMIN);
         Assert.assertEquals(2, authEnforcementService.getCache().size());
@@ -131,8 +134,8 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
         Assert.assertEquals(ImmutableSet.of(new Privilege(NS, Action.READ), new Privilege(NS, Action.WRITE)),
                             authEnforcementService.getCache().get(ALICE));
         // auth enforcement for alice should succeed on ns for actions read and write
-        authEnforcementService.enforce(NS, ALICE, Action.READ);
-        authEnforcementService.enforce(NS, ALICE, Action.WRITE);
+        authEnforcementService.enforce(NS, ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
+        assertAuthorizationFailure(authEnforcementService, NS, ALICE, EnumSet.allOf(Action.class));
         // but it should fail for the dataset as well as for the admin action
         assertAuthorizationFailure(authEnforcementService, ds, ALICE, Action.READ);
         assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.ADMIN);
@@ -156,12 +159,61 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     }
   }
 
+  @Test
+  public void testAuthCacheFilter() throws Exception {
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+      Authorizer authorizer = authorizerInstantiator.get();
+      NamespaceId ns1 = new NamespaceId("ns1");
+      NamespaceId ns2 = new NamespaceId("ns1");
+      DatasetId ds11 = ns1.dataset("ds1");
+      DatasetId ds12 = ns1.dataset("ds2");
+      DatasetId ds21 = ns2.dataset("ds1");
+      DatasetId ds22 = ns2.dataset("ds2");
+      DatasetId ds23 = ns2.dataset("ds3");
+      Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
+      Set<DatasetId> datasets = ImmutableSet.of(ds11, ds12, ds21, ds22, ds23);
+      authorizer.grant(ns1, ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(ns2, ALICE, Collections.singleton(Action.ADMIN));
+      authorizer.grant(ds11, ALICE, Collections.singleton(Action.READ));
+      authorizer.grant(ds11, BOB, Collections.singleton(Action.ADMIN));
+      authorizer.grant(ds21, ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(ds12, BOB, Collections.singleton(Action.WRITE));
+      authorizer.grant(ds12, BOB, Collections.singleton(Action.ALL));
+      authorizer.grant(ds21, ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(ds23, ALICE, Collections.singleton(Action.ADMIN));
+      authorizer.grant(ds22, BOB, Collections.singleton(Action.ADMIN));
+      DefaultAuthorizationEnforcementService authEnforcementService =
+        new DefaultAuthorizationEnforcementService(authorizer, CCONF);
+      authEnforcementService.startAndWait();
+      try {
+        Assert.assertEquals(namespaces, authEnforcementService.filter(namespaces, ALICE));
+        Assert.assertTrue(authEnforcementService.filter(namespaces, BOB).isEmpty());
+        Assert.assertEquals(ImmutableSet.of(ds11, ds21, ds23), authEnforcementService.filter(datasets, ALICE));
+        Assert.assertEquals(ImmutableSet.of(ds11, ds12, ds22), authEnforcementService.filter(datasets, BOB));
+      } finally {
+        authEnforcementService.stopAndWait();
+      }
+    }
+  }
+
   private void assertAuthorizationFailure(DefaultAuthorizationEnforcementService authEnforcementService,
                                           EntityId entityId, Principal principal, Action action) throws Exception {
     try {
       authEnforcementService.enforce(entityId, principal, action);
-      Assert.fail(String.format("Expected %s to not have %s permission on %s but it does.",
+      Assert.fail(String.format("Expected %s to not have '%s' privilege on %s but it does.",
                                 principal, action, entityId));
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
+  }
+
+  private void assertAuthorizationFailure(DefaultAuthorizationEnforcementService authEnforcementService,
+                                          EntityId entityId, Principal principal,
+                                          Set<Action> actions) throws Exception {
+    try {
+      authEnforcementService.enforce(entityId, principal, actions);
+      Assert.fail(String.format("Expected %s to not have '%s' privileges on %s but it does.",
+                                principal, actions, entityId));
     } catch (UnauthorizedException expected) {
       // expected
     }

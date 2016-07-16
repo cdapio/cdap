@@ -39,7 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -80,7 +82,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
         @SuppressWarnings("NullableProblems")
         @Override
         public Set<Privilege> load(Principal principal) throws Exception {
-          return getPrivileges(principal);
+          return fetchPrivileges(principal);
         }
       });
   }
@@ -111,14 +113,45 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
 
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+    enforce(entity, principal, Collections.singleton(action));
+  }
+
+  @Override
+  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     if (!authorizationEnabled) {
       return;
     }
-    Set<Privilege> privileges = cacheEnabled ? authPolicyCache.get(principal) : getPrivileges(principal);
-    privileges = privileges == null ? ImmutableSet.<Privilege>of() : privileges;
-    if (!privileges.contains(new Privilege(entity, action))) {
-      throw new UnauthorizedException(principal, action, entity);
+    Set<Privilege> privileges = getPrivileges(principal);
+    // If a principal has ALL privileges on the entity, authorization should succeed
+    if (privileges.contains(new Privilege(entity, Action.ALL))) {
+      return;
     }
+    // Otherwise check for the specific action requested
+    for (Action action : actions) {
+      if (!privileges.contains(new Privilege(entity, action))) {
+        throw new UnauthorizedException(principal, action, entity);
+      }
+    }
+  }
+
+  @Override
+  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+    if (Principal.SYSTEM.equals(principal)) {
+      return unfiltered;
+    }
+
+    Set<Privilege> privileges = getPrivileges(principal);
+    Set<EntityId> allowedEntities = new HashSet<>();
+    for (Privilege privilege : privileges) {
+      allowedEntities.add(privilege.getEntity());
+    }
+    Set<T> result = new HashSet<>();
+    for (T entityId : unfiltered) {
+      if (allowedEntities.contains(entityId)) {
+        result.add(entityId);
+      }
+    }
+    return Collections.unmodifiableSet(result);
   }
 
   @Override
@@ -143,7 +176,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
     return authPolicyCache.asMap();
   }
 
-  private Set<Privilege> getPrivileges(Principal principal) throws Exception {
+  private Set<Privilege> fetchPrivileges(Principal principal) throws Exception {
     State serviceState = state();
     // The only states in which the service can be used are:
     // 1. STARTING - while pre-populating the cache with the current user's privileges
@@ -158,6 +191,10 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
     return privilegesFetcher.listPrivileges(principal);
   }
 
+  private Set<Privilege> getPrivileges(Principal principal) throws Exception {
+    Set<Privilege> privileges = cacheEnabled ? authPolicyCache.get(principal) : fetchPrivileges(principal);
+    return privileges == null ? ImmutableSet.<Privilege>of() : privileges;
+  }
   /**
    * On an authorization-enabled cluster, if caching is enabled too, updates the cache in the
    * {@link AuthorizationEnforcementService} with the privileges of the user running the program.
@@ -185,7 +222,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
    * Updates privileges of the specified user in the cache.
    */
   private void updatePrivileges(Principal principal) throws Exception {
-    Set<Privilege> privileges = getPrivileges(principal);
+    Set<Privilege> privileges = fetchPrivileges(principal);
     authPolicyCache.put(principal, privileges);
     LOG.debug("Updated privileges for principal {} as {}", principal, privileges);
   }

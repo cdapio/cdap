@@ -21,6 +21,8 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 
+import java.util.Set;
+
 /**
  * Enforces authorization for a {@link Principal} to perform an {@link Action} on an {@link EntityId}.
  */
@@ -32,10 +34,31 @@ public interface AuthorizationEnforcer {
    * {@link EntityId}.
    *
    * @param entity the {@link EntityId} on which authorization is to be enforced
-   * @param principal the {@link Principal} that performs the actions
+   * @param principal the {@link Principal} that performs the action
    * @param action the {@link Action} being performed
-   * @throws UnauthorizedException if the principal is not authorized to perform action on the entity
+   * @throws UnauthorizedException if the principal is not authorized to perform the specified action on the entity
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
   void enforce(EntityId entity, Principal principal, Action action) throws Exception;
+
+  /**
+   * Enforces authorization for the specified {@link Principal} for the specified {@link Action actions} on the
+   * specified {@link EntityId}.
+   *
+   * @param entity the {@link EntityId} on which authorization is to be enforced
+   * @param principal the {@link Principal} that performs the actions
+   * @param actions the {@link Action actions} being performed
+   * @throws UnauthorizedException if the principal is not authorized to perform the specified actions on the entity
+   * @throws Exception if any other errors occurred while performing the authorization enforcement check
+   */
+  void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
+
+  /**
+   * Filters the specified set of entities to only return the ones that the user has access (READ/WRITE/ADMIN/ALL).
+   *
+   * @param unfiltered the set of {@link EntityId entities} to filter
+   * @param principal the {@link Principal} for which to filter
+   * @return a set of {@link EntityId entities} that the specified user has access to
+   */
+  <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception;
 }

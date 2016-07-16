@@ -31,7 +31,6 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
@@ -294,8 +293,18 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
     }
 
     @Override
-    public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
+    public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
       // no-op
+    }
+
+    @Override
+    public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+      // no-op
+    }
+
+    @Override
+    public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+      return unfiltered;
     }
   }
 
