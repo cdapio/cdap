@@ -76,8 +76,8 @@ public class MetricHBaseTableUtilTest {
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
     HBaseAdmin hAdmin = TEST_HBASE.getHBaseAdmin();
-    HTableDescriptor desc =
-      hBaseTableUtil.getHTableDescriptor(hAdmin, TableId.from(Id.Namespace.SYSTEM.getId(), spec.getName()));
+    TableId hTableId = hBaseTableUtil.createHTableId(Id.Namespace.SYSTEM, spec.getName());
+    HTableDescriptor desc = hBaseTableUtil.getHTableDescriptor(hAdmin, hTableId);
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_8_OR_HIGHER, util.getVersion(desc));
 
     // Verify HBase table without coprocessor is properly recognized as 2.6- version

@@ -21,12 +21,14 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TransactionSystemTest;
@@ -105,7 +107,12 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
-      new DataFabricModules().getDistributedModules(),
+      Modules.override(new DataFabricModules().getDistributedModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+        }
+      }),
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {

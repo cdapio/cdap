@@ -169,7 +169,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     //create HBase namespace
     hbaseAdmin = TEST_HBASE.getHBaseAdmin();
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.setNamespaceQueryAdmin(new SimpleNamespaceQueryAdmin());
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(Id.Namespace.SYSTEM));
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID));
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
