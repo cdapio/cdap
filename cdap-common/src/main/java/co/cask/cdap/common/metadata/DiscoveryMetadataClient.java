@@ -61,10 +61,10 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
   }
 
   @Override
-  protected URL resolve(Id.Namespace namespace, String path) throws MalformedURLException {
+  protected URL resolve(Id.Namespace namespace, String resource) throws MalformedURLException {
     InetSocketAddress addr = getMetadataServiceAddress();
     String url = String.format("http://%s:%d%s/%s", addr.getHostName(), addr.getPort(),
-                               Constants.Gateway.API_VERSION_3, namespace + path); //Not sure
+                               Constants.Gateway.API_VERSION_3,resource); //Not sure
     return new URL(url);
   }
 
