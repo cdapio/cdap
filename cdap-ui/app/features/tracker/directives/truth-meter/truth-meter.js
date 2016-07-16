@@ -21,11 +21,13 @@ angular.module(PKG.name + '.feature.tracker')
       restrict: 'E',
       scope: {
         score: '=',
-        width: '@'
+        width: '@',
+        showInfoIcon: '='
       },
       templateUrl: '/assets/features/tracker/directives/truth-meter/truth-meter.html',
       controller: function() {
         this.score = this.score || 0;
+        this.showInfoIcon = this.showInfoIcon || false;
       },
       bindToController: true,
       controllerAs: 'TruthMeter'
