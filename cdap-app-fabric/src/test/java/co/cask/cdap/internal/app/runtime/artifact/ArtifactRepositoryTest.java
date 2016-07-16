@@ -50,6 +50,7 @@ import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import co.cask.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
@@ -80,6 +81,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -285,36 +287,51 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testPlugin() throws Exception {
-    File pluginDir = DirUtils.createTempDir(tmpDir);
-    // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
-    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+    File pluginDir = getFile();
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPlugins();
+    copyArtifacts(pluginDir, plugins);
 
-    // add the artifact
-    Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
-      new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
-    artifactRepository.addArtifact(artifactId, jarFile, parents);
-
-    // check the parent can see the plugins
-    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
-      artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);
-    Assert.assertEquals(1, plugins.size());
-    Assert.assertEquals(2, plugins.get(plugins.firstKey()).size());
-
-    ArtifactDescriptor descriptor = plugins.firstKey();
-    Files.copy(Locations.newInputSupplier(descriptor.getLocation()),
-      new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
     // Instantiate the plugins and execute them
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
           Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
-                                           .add("timeout", "10").build());
+                                           .add("timeout", "10")
+                                           .add("name", "${macro}")
+                                           .build());
           Callable<String> plugin = instantiator.newInstance(pluginInfo);
-          Assert.assertEquals(TEST_EMPTY_CLASS, plugin.call());
+          Assert.assertEquals("${macro}", plugin.call());
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testMacroPlugin() throws Exception {
+    File pluginDir = getFile();
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPlugins();
+    copyArtifacts(pluginDir, plugins);
+
+    // set up test macro evaluator's substitutions
+    Map<String, String> propertySubstitutions = ImmutableMap.<String, String>builder()
+      .put("macro", "expandedProperty")
+      .build();
+
+    // Instantiate the plugins and execute them
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+      for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
+        for (PluginClass pluginClass : entry.getValue()) {
+          Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
+                                         PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
+                                           .add("timeout", "10")
+                                           .add("name", "${macro}")
+                                           .build());
+
+          TestMacroEvaluator testMacroEvaluator = new TestMacroEvaluator(propertySubstitutions,
+                                                                         new HashMap<String, String>());
+          Callable<String> plugin = instantiator.newInstance(pluginInfo, testMacroEvaluator);
+          Assert.assertEquals("expandedProperty", plugin.call());
         }
       }
     }
@@ -529,6 +546,38 @@ public class ArtifactRepositoryTest {
     for (DatasetClass datasetClass : expectedDatasets) {
       Assert.assertTrue(artifactDatasets.contains(datasetClass));
     }
+  }
+
+  private static File getFile() throws Exception {
+    File pluginDir = DirUtils.createTempDir(tmpDir);
+    // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
+    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
+    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+
+    // add the artifact
+    Set<ArtifactRange> parents = ImmutableSet.of(
+      new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
+                        new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
+    artifactRepository.addArtifact(artifactId, jarFile, parents);
+    return pluginDir;
+  }
+
+  private static SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins() throws IOException,
+    ArtifactNotFoundException {
+    // check the parent can see the plugins
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
+      artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);
+    Assert.assertEquals(1, plugins.size());
+    Assert.assertEquals(2, plugins.get(plugins.firstKey()).size());
+    return plugins;
+  }
+
+  private static void copyArtifacts(File pluginDir, SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins)
+    throws IOException {
+    ArtifactDescriptor descriptor = plugins.firstKey();
+    Files.copy(Locations.newInputSupplier(descriptor.getLocation()),
+               new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
   }
 
   private static ProgramClassLoader createAppClassLoader(File jarFile) throws IOException {

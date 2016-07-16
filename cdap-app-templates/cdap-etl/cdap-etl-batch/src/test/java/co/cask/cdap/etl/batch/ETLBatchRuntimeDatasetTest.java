@@ -16,9 +16,6 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
-import co.cask.cdap.etl.batch.spark.ETLSpark;
-import co.cask.cdap.etl.batch.spark.ETLSparkProgram;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
 import co.cask.cdap.etl.proto.Engine;
@@ -27,12 +24,12 @@ import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.WorkflowManager;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,15 +38,15 @@ import java.util.concurrent.TimeUnit;
 public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
 
   @Test
-  public void testDatasetCreationInMapReducePipelinePrepareRun() throws Exception {
+  public void testMacrosMapReducePipeline() throws Exception {
     /*
      * Trivial MapReduce pipeline from batch source to batch sink.
      *
      * source --------- sink
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput")))
-      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput")))
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput", "${runtime${source}}")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput", "${runtime}${sink}")))
       .addConnection("source", "sink")
       .build();
 
@@ -57,16 +54,32 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MRApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
-    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
-    mrManager.start();
-    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("runtime", "mockRuntime",
+                                                                           "sink", "MRSinkDataset",
+                                                                           "source", "Source",
+                                                                           "runtimeSource",
+                                                                           "mockRuntimeMRSourceDataset");
 
-    Assert.assertNotNull(getDataset("mockRuntimeSourceDataset").get());
-    Assert.assertNotNull(getDataset("mockRuntimeSinkDataset").get());
+    // make sure the datasets don't exist beforehand
+    Assert.assertNull(getDataset("mockRuntimeMRSourceDataset").get());
+    Assert.assertNull(getDataset("mockRuntimeMRSinkDataset").get());
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    workflowManager.setRuntimeArgs(runtimeArguments);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // now the datasets should exist
+    Assert.assertNotNull(getDataset("mockRuntimeMRSourceDataset").get());
+    Assert.assertNotNull(getDataset("mockRuntimeMRSinkDataset").get());
   }
 
+  /**
+   * Tests that if macros are provided
+   */
   @Test
-  public void testDatasetCreationInSparkPipelinePrepareRun() throws Exception {
+  public void testMacrosSparkPipeline() throws Exception {
     /*
      * Trivial Spark pipeline from batch source to batch sink.
      *
@@ -74,8 +87,8 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .setEngine(Engine.SPARK)
-      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("sparkinput")))
-      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("sparkoutput")))
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("sparkinput", "${runtime${source}}")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("sparkoutput", "${runtime}${sink}")))
       .addConnection("source", "sink")
       .build();
 
@@ -83,11 +96,63 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SparkApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("runtime", "mockRuntime",
+                                                                           "sink", "SparkSinkDataset",
+                                                                           "source", "Source",
+                                                                           "runtimeSource",
+                                                                           "mockRuntimeSparkSourceDataset");
+
     WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    workflowManager.setRuntimeArgs(runtimeArguments);
+
+    // make sure the datasets don't exist beforehand
+    Assert.assertNull(getDataset("mockRuntimeSparkSourceDataset").get());
+    Assert.assertNull(getDataset("mockRuntimeSparkSinkDataset").get());
+
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    Assert.assertNotNull(getDataset("mockRuntimeSourceDataset").get());
-    Assert.assertNotNull(getDataset("mockRuntimeSinkDataset").get());
+    // now the datasets should exist
+    Assert.assertNotNull(getDataset("mockRuntimeSparkSourceDataset").get());
+    Assert.assertNotNull(getDataset("mockRuntimeSparkSinkDataset").get());
+  }
+
+
+  /**
+   * Tests that if no macro is provided to the dataset name property, datasets will be created at config time.
+   */
+  @Test
+  public void testNoMacroMapReduce() throws Exception {
+    /*
+     * Trivial MapReduce pipeline from batch source to batch sink.
+     *
+     * source --------- sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput", "configTimeMockSourceDataset")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput", "configTimeMockSinkDataset")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MRApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("runtime", "mockRuntime",
+                                                                           "sink", "SinkDataset",
+                                                                           "source", "Source",
+                                                                           "runtimeSource", "mockRuntimeSourceDataset");
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+
+    // make sure the datasets were created at configure time
+    Assert.assertNotNull(getDataset("configTimeMockSourceDataset").get());
+    Assert.assertNotNull(getDataset("configTimeMockSinkDataset").get());
+
+    workflowManager.setRuntimeArgs(runtimeArguments);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
   }
 }

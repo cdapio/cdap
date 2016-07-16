@@ -66,10 +66,10 @@ public class DefaultPluginContext implements PluginContext {
   @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
     try {
-      Plugin plugin = getPlugin(pluginId);
       if (pluginInstantiator == null) {
         throw new UnsupportedOperationException("Plugin is not supported");
       }
+      Plugin plugin = getPlugin(pluginId);
       return pluginInstantiator.loadClass(plugin);
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
@@ -82,12 +82,17 @@ public class DefaultPluginContext implements PluginContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return newPluginInstance(pluginId, null);
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId, @Nullable MacroEvaluator evaluator) throws InstantiationException {
     try {
       Plugin plugin = getPlugin(pluginId);
       if (pluginInstantiator == null) {
         throw new UnsupportedOperationException("Plugin is not supported");
       }
-      return pluginInstantiator.newInstance(plugin);
+      return pluginInstantiator.newInstance(plugin, evaluator);
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);
@@ -95,12 +100,6 @@ public class DefaultPluginContext implements PluginContext {
       // This is fatal, since jar cannot be expanded.
       throw Throwables.propagate(e);
     }
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
-    // todo : use pluginInstantiator#newPluginInstance(String pluginId, MacroEvaluator evaluator)
-    return newPluginInstance(pluginId);
   }
 
   private Plugin getPlugin(String pluginId) {
