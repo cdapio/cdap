@@ -23,6 +23,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 
 /**
  * Function that uses a BatchSource to transform a pair of objects into a single object.
+ * Non-serializable fields are lazily created since this is used in a Spark closure.
  */
 public class TransformFunction implements FlatMapFunction<Object, Object> {
   private final PluginFunctionContext pluginFunctionContext;

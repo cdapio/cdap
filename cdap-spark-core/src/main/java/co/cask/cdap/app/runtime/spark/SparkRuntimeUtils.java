@@ -91,6 +91,9 @@ public final class SparkRuntimeUtils {
         }
         return true;
       }
+      if (resource.startsWith("com/google/common/base/Optional")) {
+        return true;
+      }
       return defaultFilter.acceptResource(resource);
     }
 

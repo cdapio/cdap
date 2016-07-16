@@ -26,6 +26,7 @@ import scala.Tuple2;
 
 /**
  * Function that uses a BatchAggregator to perform the aggregate part of the aggregator.
+ * Non-serializable fields are lazily created since this is used in a Spark closure.
  */
 public class AggregatorAggregateFunction implements FlatMapFunction<Tuple2<Object, Iterable<Object>>, Object> {
   private final PluginFunctionContext pluginFunctionContext;

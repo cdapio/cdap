@@ -22,6 +22,7 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
@@ -133,6 +134,12 @@ public class ETLSpark extends AbstractSpark {
         aggregator.prepareRun(aggregatorContext);
         finishers.add(aggregator, aggregatorContext);
         stagePartitions.put(stageName, aggregatorContext.getNumPartitions());
+      } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
+        BatchJoiner joiner = context.newPluginInstance(stageName, evaluator);
+        SparkJoinerContext sparkJoinerContext = new SparkJoinerContext(stageName, context);
+        joiner.prepareRun(sparkJoinerContext);
+        finishers.add(joiner, sparkJoinerContext);
+        stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
       }
     }
 

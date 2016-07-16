@@ -26,6 +26,7 @@ import scala.Tuple2;
 
 /**
  * Function that uses a BatchSink to transform one object into a pair.
+ * Non-serializable fields are lazily created since this is used in a Spark closure.
  */
 public class BatchSinkFunction implements PairFlatMapFunction<Object, Object, Object> {
   private final PluginFunctionContext pluginFunctionContext;

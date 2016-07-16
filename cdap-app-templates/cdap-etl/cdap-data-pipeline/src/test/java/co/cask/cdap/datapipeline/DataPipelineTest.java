@@ -731,7 +731,16 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testInnerJoin() throws Exception {
+  public void testInnerJoinMR() throws Exception {
+    testInnerJoin(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testInnerJoinSpark() throws Exception {
+    testInnerJoin(Engine.SPARK);
+  }
+
+  public void testInnerJoin(Engine engine) throws Exception {
     Schema inputSchema1 = Schema.recordOf(
       "customerRecord",
       Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
@@ -753,25 +762,31 @@ public class DataPipelineTest extends HydratorTestBase {
       Schema.Field.of("c_name", Schema.of(Schema.Type.STRING))
     );
 
+    String input1Name = "source1InnerJoinInput-" + engine;
+    String input2Name = "source2InnerJoinInput-" + engine;
+    String input3Name = "source3InnerJoinInput-" + engine;
+    String outputName = "innerJoinOutput-" + engine;
+    String joinerName = "innerJoiner-" + engine;
+    String sinkName = "innerJoinSink-" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin("source1InnerJoinInput")))
-      .addStage(new ETLStage("source2", MockSource.getPlugin("source2InnerJoinInput")))
-      .addStage(new ETLStage("source3", MockSource.getPlugin("source3InnerJoinInput")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name)))
       .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
       .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
       .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
-      .addStage(new ETLStage("testJoiner", MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
+      .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
                                                                   "t1.customer_name=t2.cust_name=t3.c_name",
                                                                 "t1,t2,t3", "")))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin("innerJoinOutput")))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")
       .addConnection("source3", "t3")
-      .addConnection("t1", "testJoiner")
-      .addConnection("t2", "testJoiner")
-      .addConnection("t3", "testJoiner")
-      .addConnection("testJoiner", "sink1")
-      .setEngine(Engine.MAPREDUCE)
+      .addConnection("t1", joinerName)
+      .addConnection("t2", joinerName)
+      .addConnection("t3", joinerName)
+      .addConnection(joinerName, sinkName)
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -809,11 +824,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("c_name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "source1InnerJoinInput");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, input1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "source2InnerJoinInput");
+    inputManager = getDataset(Id.Namespace.DEFAULT, input2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "source3InnerJoinInput");
+    inputManager = getDataset(Id.Namespace.DEFAULT, input3Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -831,17 +846,26 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("item_id", "22").set("item_price", 100L).set("cust_id", "3").set("cust_name", "jane")
       .set("t_id", "2").set("c_id", "3").set("c_name", "jane").build();
 
-    DataSetManager<Table> sinkManager = getDataset("innerJoinOutput");
+    DataSetManager<Table> sinkManager = getDataset(outputName);
     Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    validateMetric(2, appId, "testJoiner.records.out");
-    validateMetric(2, appId, "sink1.records.in");
+    validateMetric(2, appId, joinerName + ".records.out");
+    validateMetric(2, appId, sinkName + ".records.in");
   }
 
   @Test
-  public void testOuterJoin() throws Exception {
+  public void testOuterJoinMR() throws Exception {
+    testOuterJoin(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testOuterJoinSpark() throws Exception {
+    testOuterJoin(Engine.SPARK);
+  }
+
+  public void testOuterJoin(Engine engine) throws Exception {
     Schema inputSchema1 = Schema.recordOf(
       "customerRecord",
       Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
@@ -863,24 +887,30 @@ public class DataPipelineTest extends HydratorTestBase {
       Schema.Field.of("c_name", Schema.of(Schema.Type.STRING))
     );
 
+    String input1Name = "source1OuterJoinInput-" + engine;
+    String input2Name = "source2OuterJoinInput-" + engine;
+    String input3Name = "source3OuterJoinInput-" + engine;
+    String outputName = "outerJoinOutput-" + engine;
+    String joinerName = "outerJoiner-" + engine;
+    String sinkName = "outerJoinSink-" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin("source1OuterJoinInput")))
-      .addStage(new ETLStage("source2", MockSource.getPlugin("source2OuterJoinInput")))
-      .addStage(new ETLStage("source3", MockSource.getPlugin("source3OuterJoinInput")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name)))
       .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
       .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
       .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
-      .addStage(new ETLStage("testJoiner", MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
+      .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
                                                                   "t1.customer_name=t2.cust_name=t3.c_name", "t1", "")))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin("outerJoinOutput")))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")
       .addConnection("source3", "t3")
-      .addConnection("t1", "testJoiner")
-      .addConnection("t2", "testJoiner")
-      .addConnection("t3", "testJoiner")
-      .addConnection("testJoiner", "sink1")
-      .setEngine(Engine.MAPREDUCE)
+      .addConnection("t1", joinerName)
+      .addConnection("t2", joinerName)
+      .addConnection("t3", joinerName)
+      .addConnection(joinerName, sinkName)
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -921,11 +951,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("c_name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "source1OuterJoinInput");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, input1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane, recordMartha));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "source2OuterJoinInput");
+    inputManager = getDataset(Id.Namespace.DEFAULT, input2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "source3OuterJoinInput");
+    inputManager = getDataset(Id.Namespace.DEFAULT, input3Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasPlane, recordTrasBike));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -950,17 +980,26 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord joinRecordMartha = StructuredRecord.builder(outSchema)
       .set("customer_id", "4").set("customer_name", "martha").build();
 
-    DataSetManager<Table> sinkManager = getDataset("outerJoinOutput");
+    DataSetManager<Table> sinkManager = getDataset(outputName);
     Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane, joinRecordBob, joinRecordMartha);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    validateMetric(4, appId, "testJoiner.records.out");
-    validateMetric(4, appId, "sink1.records.in");
+    validateMetric(4, appId, joinerName + ".records.out");
+    validateMetric(4, appId, sinkName + ".records.in");
   }
 
   @Test
-  public void testMultiPhaseJoiner() throws Exception {
+  public void testMultiPhaseJoinerMR() throws Exception {
+    testMultipleJoiner(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testMultipleJoinerSpark() throws Exception {
+    testMultipleJoiner(Engine.SPARK);
+  }
+
+  private void testMultipleJoiner(Engine engine) throws Exception {
     /*
      * source1 ----> t1 ------
      *                        | --> innerjoin ----> t4 ------
@@ -1014,10 +1053,12 @@ public class DataPipelineTest extends HydratorTestBase {
       Schema.Field.of("cust_name", Schema.nullableOf(Schema.of(Schema.Type.STRING)))
     );
 
-    String source1MulitJoinInput = "source1";
-    String source2MultiJoinInput = "source2";
-    String source3MultiJoinInput = "source3";
-
+    String source1MulitJoinInput = "multiJoinSource1-" + engine;
+    String source2MultiJoinInput = "multiJoinSource2-" + engine;
+    String source3MultiJoinInput = "multiJoinSource3-" + engine;
+    String outputName = "multiJoinOutput-" + engine;
+    String sinkName = "multiJoinOutputSink-" + engine;
+    String outerJoinName = "multiJoinOuter-" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1MulitJoinInput)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2MultiJoinInput)))
@@ -1028,19 +1069,19 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("t4", FieldsPrefixTransform.getPlugin("", outSchema1.toString())))
       .addStage(new ETLStage("innerjoin", MockJoiner.getPlugin("t1.customer_id=t2.cust_id",
                                                                "t1,t2", "")))
-      .addStage(new ETLStage("outerjoin", MockJoiner.getPlugin("t4.item_id=t3.i_id",
+      .addStage(new ETLStage(outerJoinName, MockJoiner.getPlugin("t4.item_id=t3.i_id",
                                                                "", "")))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin("multiJoinOutput")))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")
       .addConnection("source3", "t3")
       .addConnection("t1", "innerjoin")
       .addConnection("t2", "innerjoin")
       .addConnection("innerjoin", "t4")
-      .addConnection("t3", "outerjoin")
-      .addConnection("t4", "outerjoin")
-      .addConnection("outerjoin", "sink1")
-      .setEngine(Engine.MAPREDUCE)
+      .addConnection("t3", outerJoinName)
+      .addConnection("t4", outerJoinName)
+      .addConnection(outerJoinName, sinkName)
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -1092,14 +1133,13 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord joinRecordPlane = StructuredRecord.builder(outSchema2)
       .set("t_id", "3").set("c_id", "4").set("i_id", "33").build();
 
-    DataSetManager<Table> sinkManager = getDataset("multiJoinOutput");
+    DataSetManager<Table> sinkManager = getDataset(outputName);
     Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane, joinRecordPlane);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    validateMetric(3, appId, "outerjoin.records.out");
-    validateMetric(3, appId, "sink1.records.in");
-
+    validateMetric(3, appId, outerJoinName + ".records.out");
+    validateMetric(3, appId, sinkName + ".records.in");
   }
 
   private void validateMetric(long expected, Id.Application appId,
