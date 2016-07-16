@@ -20,8 +20,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.data = {};
   this.errorCount = 0;
   this.warningCount = 0;
-  this.loading = true;
-  this.loadingMoreLogs = true;
+  this.loading = false;
+  this.loadingMoreLogs = false;
   var dataSrc = new MyCDAPDataSource($scope);
   var pollPromise;
 
@@ -47,6 +47,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   //Collapsing LogViewer Table Columns
   var theColumns = [];
   var cols = this.configOptions;
+  var collapseCount = 0;
 
   if(cols['source']){
     theColumns.push('source');
@@ -58,7 +59,30 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     theColumns.push('time');
   }
 
-  var collapseCount = 0;
+  angular.forEach($scope.displayOptions, (value, key) => {
+    this.configOptions[key] = value;
+  });
+
+  this.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+
+  let included = {
+    'ERROR' : false,
+    'WARN' : false,
+    'INFO' : false,
+    'DEBUG' : false,
+    'TRACE' : false
+  };
+
+  let numEvents = 0;
+  this.toggleExpandAll = false;
+
+  LogViewerStore.subscribe(() => {
+    this.logStartTime = LogViewerStore.getState().startTime;
+    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+    this.loadingMoreLogs = true;
+    requestWithStartTime();
+  });
+
   this.collapseColumns = () => {
     if(this.isMessageExpanded){
       this.isMessageExpanded = !this.isMessageExpanded;
@@ -86,60 +110,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       }
     });
   };
-
-  LogViewerStore.subscribe(() => {
-    this.logStartTime = LogViewerStore.getState().startTime;
-    //Convert start time to seconds
-    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
-    this.loadingMoreLogs = true;
-    requestWithStartTime();
-  });
-
-  myLogsApi.nextLogsJson({
-    'namespace' : this.namespaceId,
-    'appId' : this.appId,
-    'programType' : this.programType,
-    'programId' : this.programId,
-    'runId' : this.runId
-  }).$promise.then(
-    (res) => {
-      this.totalCount = res.length;
-
-      angular.forEach(res, (element, index) => {
-        if(res[index].log.logLevel === 'WARN'){
-          this.warningCount++;
-        } else if(res[index].log.logLevel === 'ERROR'){
-          this.errorCount++;
-        }
-        let formattedDate = new Date(res[index].log.timestamp);
-        let month = formattedDate.getMonth() + 1;
-        let day = formattedDate.getDate();
-        let year = formattedDate.getFullYear();
-        let hours = formattedDate.getHours();
-        let minutes = formattedDate.getMinutes();
-        let seconds = formattedDate.getSeconds();
-
-        if(minutes < 10){
-          minutes = '0' + minutes.toString();
-        }
-        if(hours < 10){
-          hours = '0' + hours.toString();
-        }
-        if(seconds < 10){
-          seconds = '0' + seconds.toString();
-        }
-
-        res[index].log.timestamp = formattedDate;
-        res[index].log.displayTime = month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
-      });
-      this.data = res;
-      this.loading = false;
-      this.fromOffset = res[res.length-1].offset;
-      this.cacheSize = res.length - this.cacheDecrement;
-    },
-    (err) => {
-      console.log('ERROR: ', err);
-    });
 
   const requestWithOffset = () => {
 
@@ -189,7 +159,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
   };
 
-
   const getStatus = () => {
       myLogsApi.getLogsMetadata({
         'namespace' : this.namespaceId,
@@ -200,7 +169,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       }).$promise.then(
         (statusRes) => {
           if(statusRes.status === 'RUNNING'){
-            console.log('Polling for new logs!!!!!!');
+            console.log('Polling for new logs!');
             pollForNewLogs();
           }
         },
@@ -227,30 +196,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   };
 
-  // const computePinPosition = () => {
-  //   let scrollTime;
-
-  //   //Condition: waiting for more data ; poll for more
-  //   if(this.data.length < this.viewLimit){
-  //     scrollTime = this.data[this.data.length - 1].log.timestamp;
-  //     //Poll for data and update table when it comes available
-  //   } else {
-  //     //If polling, stop
-  //     scrollTime = this.data[this.viewLimit - 1].log.timestamp;
-  //   }
-
-  //   //If returns date in readable format
-  //   if(typeof scrollTime !== 'number'){
-  //     scrollTime = new Date(scrollTime).getTime();
-  //   }
-
-  //   this.updateScrollPositionInStore(scrollTime);
-  // };
-
   const requestWithStartTime = () => {
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
-      console.log('Stopping poll!!!!!!');
+      console.log('If the current poll is activated, stop since we are updating start time');
       pollPromise = null;
     }
 
@@ -267,13 +216,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         this.viewLimit = 50;
         this.cacheDecrement = 50;
         this.cacheSize = 0;
-        this.loadingMoreLogs = true;
 
-        console.log('Returned with new start time: ', res);
-        console.log('Start time: ', this.startTimeSec);
-
+        //If there are no logs yet to be retrieved let viewer know
+        if(res.length < this.viewLimit){
+          this.loadingMoreLogs = false;
+        } else {
+          this.loadingMoreLogs = true;
+        }
         //There are no more logs to be returned
         if(res.length === 0){
+        //if(res.length < this.viewLimit) { //|| res.length < this.viewLimit){
           this.loadingMoreLogs = false;
           getStatus();
           return;
@@ -323,23 +275,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
     return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
   }
-
-  angular.forEach($scope.displayOptions, (value, key) => {
-    this.configOptions[key] = value;
-  });
-
-  this.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
-
-  let included = {
-    'ERROR' : false,
-    'WARN' : false,
-    'INFO' : false,
-    'DEBUG' : false,
-    'TRACE' : false
-  };
-
-  let numEvents = 0;
-  this.toggleExpandAll = false;
 
   this.toggleLogExpansion = function() {
     this.toggleExpandAll = !this.toggleExpandAll;

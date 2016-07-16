@@ -65,12 +65,12 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     });
   }
 
-LogViewerStore.subscribe(() => {
-  this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
-  if($scope.updatePinScale !== undefined){
-    $scope.updatePinScale(this.pinScrollPosition);
-  }
-});
+  LogViewerStore.subscribe(() => {
+    this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+    if($scope.updatePinScale !== undefined){
+      $scope.updatePinScale(this.pinScrollPosition);
+    }
+  });
 
   myLogsApi.getLogsMetadata({
     'namespace' : this.namespaceId,

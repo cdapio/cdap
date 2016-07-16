@@ -28,6 +28,7 @@ function link (scope, element) {
       timelineStack,
       startTime,
       endTime,
+      pinOffset,
       firstRun = true;
 
   //Components
@@ -64,6 +65,7 @@ function link (scope, element) {
     // maxRange = width - paddingLeft - paddingRight;
     maxRange = width - paddingRight + 8;
     sliderLimit = maxRange;
+    pinOffset = 13;
     // sliderLimit = maxRange + 24;
     pinX = 0;
     sliderX = 0;
@@ -133,7 +135,7 @@ function link (scope, element) {
             }
             sliderHandle.attr('x', val);
             sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
-            pinHandle.attr('x', val-13);
+            pinHandle.attr('x', val-pinOffset);
           }
         })
         .on('brushend', function() {
@@ -146,6 +148,7 @@ function link (scope, element) {
               val = maxRange;
             }
             updateSlider(val);
+            pinHandle.attr('x', val-pinOffset);
           }
         });
 
@@ -213,25 +216,15 @@ function link (scope, element) {
       .attr('width', 40)
       .attr('height', 60)
       .attr('xlink:href', '/assets/img/scrollPin.svg')
-      .attr('x', xValue - 13)
+      .attr('x', xValue - pinOffset)
       .attr('y', 0);
   }
-
-  // var updatePin = function (val) {
-  //   if(pinX < 0){
-  //     pinX = 0;
-  //   } else if(pinX > maxRange){
-  //     pinX = maxRange;
-  //   }
-  //   console.log('updating the pin to position: ', pinX);
-  //   pinHandle.attr('x', pinX);
-  // };
 
   scope.updatePinScale = function (val) {
     if(pinHandle !== undefined){
       console.log('the updated time is: ', val);
-      //console.log('the updated pin position is: ', xScale(Math.floor(val/1000)));
-      //updatePin(xScale(val)));
+      console.log('the updated pin position is: ', xScale(Math.floor(val/1000)));
+      pinHandle.attr('x', xScale(Math.floor(val/1000)));
     }
   };
 
