@@ -83,10 +83,6 @@ public class KafkaServerMain extends DaemonMain {
 
     kafkaProperties = generateKafkaConfig(cConf);
 
-    for (Object key: kafkaProperties.keySet()) {
-      LOG.warn("key " + key + " with value " + kafkaProperties.get(key));
-    }
-
     Preconditions.checkState(Integer.parseInt(
       kafkaProperties.getProperty("num.partitions")) > 0,
                              "Num partitions should be greater than zero.");
@@ -150,7 +146,6 @@ public class KafkaServerMain extends DaemonMain {
       String key = pair.getKey();
       String trimmedKey = key.substring(13);
       prop.setProperty(trimmedKey, pair.getValue());
-      LOG.warn("got key " + trimmedKey + " with value " + pair.getValue());
     }
     return prop;
   }
