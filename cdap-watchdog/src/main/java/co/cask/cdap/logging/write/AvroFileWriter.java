@@ -156,13 +156,19 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
     AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment(logBaseDir));
+
+    // If the file is not open then set reference to null so that a new one gets created
+    if (avroFile != null && !avroFile.isOpen()) {
+      avroFile = null;
+    }
+
     if (avroFile == null) {
       avroFile = createAvroFile(loggingContext, timestamp);
     }
     return avroFile;
   }
 
-  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
+  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws IOException {
     long currentTs = System.currentTimeMillis();
     Location location = createLocation(loggingContext.getLogPathFragment(logBaseDir), currentTs);
     LOG.info("Creating Avro file {}", location);
@@ -193,7 +199,6 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {
     if (avroFile.getPos() > maxFileSize) {
       LOG.info("Rotating file {}", avroFile.getLocation());
-      flush();
       avroFile.close();
       return createAvroFile(loggingContext, timestamp);
     }
@@ -202,9 +207,12 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private void closeAndDelete(AvroFile avroFile) {
     try {
-      avroFile.close();
-      if (avroFile.getLocation().exists()) {
-        avroFile.getLocation().delete();
+      try {
+        avroFile.close();
+      } finally {
+        if (avroFile.getLocation().exists()) {
+          avroFile.getLocation().delete();
+        }
       }
     } catch (IOException e) {
       LOG.error("Error while closing and deleting file {}", avroFile.getLocation(), e);
@@ -213,6 +221,9 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   /**
    * Represents an Avro file.
+   *
+   * Since there is no way to check the state of the underlying file on an exception,
+   * all methods of this class assume that the file state is bad on any exception and close the file.
    */
   public class AvroFile implements Closeable {
     private final Location location;
@@ -226,17 +237,27 @@ public final class AvroFileWriter implements Closeable, Flushable {
     }
 
     /**
-     * Opens the underlying file for writing. If open throws an exception, then @{link #close()} needs to be called to
-     * free resources.
+     * Opens the underlying file for writing.
+     * If open throws an exception then underlying file may still need to be deleted.
+     *
      * @throws IOException
      */
     void open() throws IOException {
-      this.outputStream = new FSDataOutputStream(location.getOutputStream(), null);
-      this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
-      this.dataFileWriter.create(schema, this.outputStream);
-      this.dataFileWriter.setSyncInterval(syncIntervalBytes);
-      this.lastModifiedTs = System.currentTimeMillis();
+      try {
+        this.outputStream = new FSDataOutputStream(location.getOutputStream(), null);
+        this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
+        this.dataFileWriter.create(schema, this.outputStream);
+        this.dataFileWriter.setSyncInterval(syncIntervalBytes);
+        this.lastModifiedTs = System.currentTimeMillis();
+      } catch (Exception e) {
+        close();
+        throw e;
+      }
       this.isOpen = true;
+    }
+
+    public boolean isOpen() {
+      return isOpen;
     }
 
     public Location getLocation() {
@@ -244,12 +265,22 @@ public final class AvroFileWriter implements Closeable, Flushable {
     }
 
     public void append(LogWriteEvent event) throws IOException {
-      dataFileWriter.append(event.getGenericRecord());
-      lastModifiedTs = System.currentTimeMillis();
+      try {
+        dataFileWriter.append(event.getGenericRecord());
+        lastModifiedTs = System.currentTimeMillis();
+      } catch (Exception e) {
+        close();
+        throw e;
+      }
     }
 
     public long getPos() throws IOException {
-      return outputStream.getPos();
+      try {
+        return outputStream.getPos();
+      } catch (Exception e) {
+        close();
+        throw e;
+      }
     }
 
     public long getLastModifiedTs() {
@@ -257,13 +288,23 @@ public final class AvroFileWriter implements Closeable, Flushable {
     }
 
     public void flush() throws IOException {
-      dataFileWriter.flush();
-      outputStream.hflush();
+      try {
+        dataFileWriter.flush();
+        outputStream.hflush();
+      } catch (Exception e) {
+        close();
+        throw e;
+      }
     }
 
     public void sync() throws IOException {
-      dataFileWriter.flush();
-      outputStream.hsync();
+      try {
+        dataFileWriter.flush();
+        outputStream.hsync();
+      } catch (Exception e) {
+        close();
+        throw e;
+      }
     }
 
     @Override
@@ -271,6 +312,9 @@ public final class AvroFileWriter implements Closeable, Flushable {
       if (!isOpen) {
         return;
       }
+
+      LOG.trace("Closing file {}", location);
+      isOpen = false;
 
       try {
         if (dataFileWriter != null) {
@@ -281,9 +325,6 @@ public final class AvroFileWriter implements Closeable, Flushable {
           outputStream.close();
         }
       }
-
-      LOG.trace("Closing file {}", location);
-      isOpen = false;
     }
   }
 }
