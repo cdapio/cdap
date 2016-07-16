@@ -381,7 +381,7 @@ body.theme-cdap {
           align-items: center;
           justify-content: center;
           padding: 5px;
-          border-right: 1px solid #dddddd;
+          border-right: 0;
           border-left: 1px solid #dddddd;
           &.status-green span {
             color: @brand-success;
@@ -395,6 +395,12 @@ body.theme-cdap {
           .metric-value {
             margin-right: 5px;
           }
+        }
+        .app-status-container {
+          display: flex;
+          justify-content: space-between;
+          flex: 1;
+          position: relative;
         }
       }
       .btn {
@@ -429,6 +435,13 @@ body.theme-cdap {
       }
       .pipeline-settings {
         width: 100%;
+        &.pipeline-run-section {
+          position: absolute;
+          left: 0;
+          top: 43px;
+          background: #ebebeb;
+          max-height: 400px;
+        }
       }
     }
   }
