@@ -90,6 +90,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.logStartTime = LogViewerStore.getState().startTime;
     //Convert start time to seconds
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+    this.loadingMoreLogs = true;
     requestWithStartTime();
   });
 
@@ -110,8 +111,25 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           this.errorCount++;
         }
         let formattedDate = new Date(res[index].log.timestamp);
+        let month = formattedDate.getMonth() + 1;
+        let day = formattedDate.getDate();
+        let year = formattedDate.getFullYear();
+        let hours = formattedDate.getHours();
+        let minutes = formattedDate.getMinutes();
+        let seconds = formattedDate.getSeconds();
+
+        if(minutes < 10){
+          minutes = '0' + minutes.toString();
+        }
+        if(hours < 10){
+          hours = '0' + hours.toString();
+        }
+        if(seconds < 10){
+          seconds = '0' + seconds.toString();
+        }
+
         res[index].log.timestamp = formattedDate;
-        res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+        res[index].log.displayTime = month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
       });
       this.data = res;
       this.loading = false;
@@ -222,7 +240,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           }
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+          res[index].log.displayTime = formatDate(formattedDate);
         });
         this.data = res;
         this.cacheSize = res.length - this.cacheDecrement;
@@ -231,6 +249,26 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         console.log('ERROR: ', err);
       });
   };
+
+  function formatDate(date) {
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+    let year = date.getFullYear();
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    let seconds = date.getSeconds();
+
+    if(minutes < 10){
+      minutes = '0' + minutes.toString();
+    }
+    if(hours < 10){
+      hours = '0' + hours.toString();
+    }
+    if(seconds < 10){
+      seconds = '0' + seconds.toString();
+    }
+    return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+  }
 
   angular.forEach($scope.displayOptions, (value, key) => {
     this.configOptions[key] = value;
@@ -292,6 +330,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 }
 
+//LogViewer Link Function
+// 1. Increase the size of the red / yellow / white spaces with number of logs
+// function logViewerLink(scope, element) {
+
+
+// }
+
 angular.module(PKG.name + '.commons')
   .directive('myLogViewer', function () {
     return {
@@ -305,6 +350,7 @@ angular.module(PKG.name + '.commons')
         programId: '@',
         runId: '@'
       },
+     // link: logViewerLink,
       bindToController: true,
       controllerAs: 'LogViewer'
     };

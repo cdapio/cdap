@@ -18,6 +18,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 
   var dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
+  this.isLoading = true;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -58,6 +59,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       }
+      this.isLoading = false;
     }, function(err) {
       console.log('ERROR: ', err);
     });

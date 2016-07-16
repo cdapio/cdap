@@ -32,37 +32,51 @@
 @error-color: #f65454;
 @warning-color: #f6b354;
 
-.tooltip {
-  font-size: 11px;
-  &.top {
-    margin-top: -2px;
-    .tooltip-arrow {
-      bottom: 0;
-      left: 50%;
-      margin-left: -5px;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
+body.state-flows-detail {
+  .source-tooltip.tooltip {
+    .tooltip-inner {
+      background-color: black;
+      border: 1px solid black;
+      color: white;
+      padding: 7px;
+      word-wrap: break-word;
+      text-align: left;
+      .border-radius(3px);
+      font-size: 11px;
+      max-width: 100%;
+      &.top {
+        margin-top: -2px;
+        .tooltip-arrow {
+          bottom: 0;
+          left: 50%;
+          margin-left: -5px;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+        }
+      }
     }
   }
-}
-
-.tooltip-inner {
-  background-color: black;
-  border: 1px solid black;
-  color: white;
-  padding: 7px;
-  word-wrap: break-word;
-  text-align: left;
-  .border-radius(3px);
 }
 
 my-log-viewer {
 
   .log-viewer-container {
 
+    .source-tooltip {
+      overflow: visible;
+    }
+
     .stat-count-number {
       padding-left: 5px;
       padding-right: 5px;
+    }
+
+    .stat-count {
+      padding-top: 1px;
+    }
+
+    .log-stats-container {
+      padding-top: 4px;
     }
 
     .jumbotron {
@@ -370,7 +384,7 @@ my-log-viewer {
 
         .fa-arrow-left,
         .fa-arrow-right {
-          color: #acacac;
+          color: #525252;
         }
       }
 

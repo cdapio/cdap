@@ -133,6 +133,7 @@ function link (scope, element) {
             }
             sliderHandle.attr('x', val);
             sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
+            pinHandle.attr('x', val-13);
           }
         })
         .on('brushend', function() {
@@ -184,22 +185,7 @@ function link (scope, element) {
 
     //Append the Top slider
     scrollPinBrush = d3.svg.brush()
-        .x(xScale)
-        .on('brush', function(){
-          let xPos = d3.mouse(this)[0];
-
-          if(xPos < 0){
-            xPos = 0;
-          }
-
-          if(xPos > width - 8){
-            xPos = width - 8;
-          }
-
-          if(xPos > sliderX){
-            updatePin(xPos);
-          }
-        });
+        .x(xScale);
 
     scrollPinSvg = d3.select('.top-bar').append('svg')
         .attr('width', width)
@@ -231,19 +217,15 @@ function link (scope, element) {
       .attr('y', 0);
   }
 
-  var updatePin = function (val) {
-    val = Math.floor(val);
-    pinX = val - 13;
-
-    if(pinX < 0){
-      pinX = 0;
-    } else if(pinX > maxRange){
-      pinX = maxRange;
-    }
-
-    console.log('updating the pin to position: ', pinX);
-    pinHandle.attr('x', pinX);
-  };
+  // var updatePin = function (val) {
+  //   if(pinX < 0){
+  //     pinX = 0;
+  //   } else if(pinX > maxRange){
+  //     pinX = maxRange;
+  //   }
+  //   console.log('updating the pin to position: ', pinX);
+  //   pinHandle.attr('x', pinX);
+  // };
 
   scope.updatePinScale = function (val) {
     if(pinHandle !== undefined){
