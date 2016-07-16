@@ -55,7 +55,7 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
 
     getLevelDBTableAdmin(tableId).create();
     String levelDBTableName =
-      PrefixedNamespaces.namespace(cConf, tableId.getNamespace().getId(), tableId.getTableName());
+      PrefixedNamespaces.namespace(cConf, tableId.getNamespace(), tableId.getTableName());
     LevelDBTableCore coreTable = new LevelDBTableCore(levelDBTableName, tableService);
     return new LevelDBStreamConsumerStateStore(streamConfig, coreTable);
   }
@@ -71,6 +71,6 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
     LevelDBTableDefinition tableDefinition = new LevelDBTableDefinition("tableDefinition");
     DatasetSpecification spec = tableDefinition.configure(tableId.getTableName(), props);
 
-    return new LevelDBTableAdmin(DatasetContext.from(tableId.getNamespace().getId()), spec, tableService, cConf);
+    return new LevelDBTableAdmin(DatasetContext.from(tableId.getNamespace()), spec, tableService, cConf);
   }
 }

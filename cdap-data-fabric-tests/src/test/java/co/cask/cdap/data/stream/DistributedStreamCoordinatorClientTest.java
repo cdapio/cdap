@@ -20,6 +20,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -30,6 +31,7 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
@@ -76,7 +78,12 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
       new ConfigModule(cConf),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      Modules.override(new DataFabricModules().getDistributedModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+        }
+      }),
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {

@@ -30,6 +30,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -46,8 +47,7 @@ import javax.annotation.Nullable;
 /**
  * Simple implementation of hbase non-tx {@link NoTxKeyValueTable}.
  */
-public class HBaseKVTableDefinition
-  extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin>
+public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin>
   implements Reconfigurable {
 
   private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
@@ -100,7 +100,7 @@ public class HBaseKVTableDefinition
                              Configuration hConf) throws IOException {
       this.admin = new HBaseAdmin(hConf);
       this.tableUtil = tableUtil;
-      this.tableId = TableId.from(datasetContext.getNamespaceId(), tableName);
+      this.tableId = tableUtil.createHTableId(Id.Namespace.from(datasetContext.getNamespaceId()), tableName);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class HBaseKVTableDefinition
     public KVTableImpl(DatasetContext datasetContext, String tableName, CConfiguration cConf, Configuration hConf,
                        HBaseTableUtil tableUtil) throws IOException {
       this.tableUtil = tableUtil;
-      TableId tableId = TableId.from(datasetContext.getNamespaceId(), tableName);
+      TableId tableId = tableUtil.createHTableId(Id.Namespace.from(datasetContext.getNamespaceId()), tableName);
       this.table = this.tableUtil.createHTable(hConf, tableId);
     }
 

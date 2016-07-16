@@ -16,23 +16,29 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.data2.util.TableId;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+
+import java.util.List;
 
 /**
- * Utility methods for dealing with HBase table name conversions in HBase 1.0 (CDH550).
+ *
  */
-public class HTable10CDH550NameConverter extends HTableNameConverter {
+public class SimpleNamespaceQueryAdmin implements NamespaceQueryAdmin {
 
   @Override
-  public TableId from(HTableDescriptor htd) {
-    TableName tableName = htd.getTableName();
-    return fromHBaseTableName(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+  public List<NamespaceMeta> list() throws Exception {
+    throw new Exception("Unsupported Operation");
   }
 
   @Override
-  public TableName toTableName(String tablePrefix, TableId tableId) {
-    return TableName.valueOf(tableId.getNamespace(), getHBaseTableName(tablePrefix, tableId));
+  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
+    return new NamespaceMeta.Builder().setName(namespaceId.getId()).build();
+  }
+
+  @Override
+  public boolean exists(Id.Namespace namespaceId) throws Exception {
+    throw new Exception("Unsupported Operation");
   }
 }

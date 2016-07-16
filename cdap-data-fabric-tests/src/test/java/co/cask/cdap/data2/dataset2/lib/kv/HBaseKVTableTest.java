@@ -23,6 +23,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -44,17 +45,19 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   @ClassRule
   public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
-  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory(CConfiguration.create()).get();
+  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory(CConfiguration.create(),
+                                                                           new SimpleNamespaceQueryAdmin()).get();
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
+    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
+                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
+    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
+    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
   @Override

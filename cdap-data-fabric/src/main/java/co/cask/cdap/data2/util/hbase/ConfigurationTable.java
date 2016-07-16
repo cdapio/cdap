@@ -43,7 +43,7 @@ import java.util.Map;
  */
 public class ConfigurationTable {
   /**
-   * Defines the types of configurations to save in the table.  Each type is used as a row key.
+   * Defines the types of configurations to save in the table. Each type is used as a row key.
    */
   public enum Type {
     DEFAULT
@@ -69,12 +69,12 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while writing the configuration
    */
   public void write(Type type, CConfiguration cConf) throws IOException {
-    TableId tableId = TableId.from(Id.Namespace.SYSTEM, TABLE_NAME);
     // must create the table if it doesn't exist
     HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
     try {
-      HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+      HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf, null).get();
+      TableId tableId = tableUtil.createHTableId(Id.Namespace.SYSTEM, TABLE_NAME);
       HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
       tableUtil.createTableIfNotExists(admin, tableId, htd.build());

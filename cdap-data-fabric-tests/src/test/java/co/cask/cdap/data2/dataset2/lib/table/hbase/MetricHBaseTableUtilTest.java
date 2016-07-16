@@ -26,6 +26,7 @@ import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -53,8 +54,9 @@ public class MetricHBaseTableUtilTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     cConf = CConfiguration.create();
-    hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    hBaseTableUtil = new HBaseTableUtilFactory(cConf, new SimpleNamespaceQueryAdmin()).get();
+    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
+                                              hBaseTableUtil.getHBaseNamespace(Id.Namespace.SYSTEM));
   }
 
   @AfterClass
@@ -74,8 +76,8 @@ public class MetricHBaseTableUtilTest {
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
     HBaseAdmin hAdmin = TEST_HBASE.getHBaseAdmin();
-    HTableDescriptor desc =
-      hBaseTableUtil.getHTableDescriptor(hAdmin, TableId.from(Id.Namespace.SYSTEM.getId(), spec.getName()));
+    TableId hTableId = hBaseTableUtil.createHTableId(Id.Namespace.SYSTEM, spec.getName());
+    HTableDescriptor desc = hBaseTableUtil.getHTableDescriptor(hAdmin, hTableId);
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_8_OR_HIGHER, util.getVersion(desc));
 
     // Verify HBase table without coprocessor is properly recognized as 2.6- version

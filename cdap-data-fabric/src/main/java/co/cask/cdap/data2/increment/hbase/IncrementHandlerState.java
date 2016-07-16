@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.increment.hbase;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.tephra.TxConstants;
@@ -77,7 +78,8 @@ public class IncrementHandlerState {
   }
 
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(HTableDescriptor htd, Configuration conf) {
-    String sysConfigTablePrefix = hTableNameConverter.getSysConfigTablePrefix(htd);
+    String tablePrefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
+    String sysConfigTablePrefix = hTableNameConverter.getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
 
