@@ -20,13 +20,13 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -214,12 +214,13 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testCDAPVersion() throws IOException {
+  public void testHTableDescriptor() throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId tableId = TableId.from("default", "test.dataset");
     create(tableId);
     HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(hAdmin, tableId);
-    Assert.assertTrue(!Strings.isNullOrEmpty(tableDescriptor.getValue(HBaseTableUtil.CDAP_VERSION)));
+    Assert.assertEquals(ProjectInfo.getVersion().toString(), tableDescriptor.getValue(HBaseTableUtil.CDAP_VERSION));
+    Assert.assertEquals(getPrefix(), tableDescriptor.getValue(Constants.Dataset.TABLE_PREFIX));
     tableUtil.disableTable(hAdmin, tableId);
     tableUtil.deleteTable(hAdmin, tableId);
   }
@@ -229,6 +230,7 @@ public abstract class AbstractHBaseTableUtilTest {
     HBaseTableUtil tableUtil = getTableUtil();
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("default", "my.dataset");
+    TableId hTableId = tableUtil.createHTableId(Id.Namespace.from(tableId.getNamespace()), tableId.getTableName());
     create(tableId);
 
     TableId resultTableId = getTableId("default", "my.dataset");
@@ -236,25 +238,27 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals("default", resultTableId.getNamespace());
     Assert.assertEquals("cdap.user.my.dataset", getNameConverter().getHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
-                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
+                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("default", "system.queue.config");
+    hTableId = tableUtil.createHTableId(Id.Namespace.from(tableId.getNamespace()), tableId.getTableName());
     create(tableId);
 
     resultTableId = getTableId("default", "system.queue.config");
     Assert.assertEquals("default", resultTableId.getNamespace());
     Assert.assertEquals("cdap.system.queue.config", getNameConverter().getHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
-                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
+                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("myspace", "could.be.any.table.name");
+    hTableId = tableUtil.createHTableId(Id.Namespace.from(tableId.getNamespace()), tableId.getTableName());
     createNamespace("myspace");
     create(tableId);
     resultTableId = getTableId("myspace", "could.be.any.table.name");
     Assert.assertEquals("cdap_myspace", resultTableId.getNamespace());
     Assert.assertEquals("could.be.any.table.name", getNameConverter().getHBaseTableName(tablePrefix, resultTableId));
-    Assert.assertEquals(getTableNameAsString(tableId),
-                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
+    Assert.assertEquals(getTableNameAsString(hTableId),
+                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
     drop(tableId);
     deleteNamespace("myspace");
   }
