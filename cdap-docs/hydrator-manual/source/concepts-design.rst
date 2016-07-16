@@ -8,8 +8,6 @@
 Introduction to Hydrator
 ========================
 
-What is Cask Hydrator?
-======================
 Cask Hydrator (or simply *Hydrator*) is a self-service, reconfigurable, extendable framework to
 develop, run, automate, and operate **data pipelines** on Hadoop. Completely open source, it
 is licensed under the Apache 2.0 license.
@@ -27,8 +25,8 @@ Though the typical uses of pipelines vary from ETL (extract-transform-load) of d
 sentiment analysis through to the preparation of daily aggregations and reports, Hydrator
 can be adapted to an increasing number of situations and requirements.
 
-What is a Pipeline?
-===================
+Pipelines
+=========
 Pipelines are applications |---| specifically for the processing of data flows |---|
 created from artifacts. 
 
@@ -37,13 +35,6 @@ configuration file that defines the desired application, along with the artifact
 specified inside the configuration. 
 
 Basic artifacts for creating data pipelines are supplied with CDAP.
-
-Logical versus Physical Pipelines
----------------------------------
-
-.. include:: /how-hydrator-works.rst
-   :start-after: .. _cask-hydrator-how-hydrator-works-logical-start:
-   :end-before:  .. _cask-hydrator-how-hydrator-works-logical-end:
 
 Types of Pipelines
 ------------------
@@ -74,6 +65,15 @@ shown in *Hydrator Studio* and in CDAP as a connected series of icons:
 After the pipeline has been run, "post-run" plugins can be called, to perform actions such
 as emailing notifications, moving files, and running database queries, regardless if the
 pipeline run succeeded or failed.
+
+.. rubric:: **Sidebar:** *Logical versus Physical Pipelines*
+
+.. container:: inline-sidebar
+
+  .. include:: /how-hydrator-works.rst
+     :start-after: .. _cask-hydrator-how-hydrator-works-logical-start:
+     :end-before:  .. _cask-hydrator-how-hydrator-works-logical-end:
+
 
 Creating Pipelines
 ------------------
@@ -134,8 +134,8 @@ using the tools supplied by CDAP.
 
 .. _cask-hydrator-introduction-what-is-a-plugin:
 
-What is a Plugin?
-=================
+Plugins
+=======
 Sources, transformations (called *transforms* for short), and sinks are generically called
 *plugins*. Plugins provide a way to extend the functionality of existing artifacts. An
 application can be created with the existing plugins included with CDAP or, if a user
@@ -151,17 +151,17 @@ Types of Plugins
 ----------------
 These are the basic plugin types in |cdap-hydrator-version|:
 
-- Actions
-- Batch Source
-- Batch Sink
-- Real-time Source
-- Real-time Sink
-- Transformation (Transform)
+- Action
 - Aggregator
+- Batch Sink
+- Batch Source
 - Compute
 - Model
-- Shared
 - Post-run (called after the pipeline has run)
+- Real-time Sink
+- Real-time Source
+- Shared
+- Transformation (Transform)
 
 Additional types of plugins are under development, and developers can create and
 add their own plugins and plugin types.
@@ -201,8 +201,8 @@ those pipelines are created from the artifacts as specified in the plugin templa
 time of creation.
 
 
-What are Properties?
-====================
+Properties
+==========
 Each stage in a pipeline represents the configuration of a specific plugin, and that
 configuration usually requires that certain properties be specified. At a minimum, a
 unique name for the stage and the plugin being used is required, with any additional
@@ -277,19 +277,19 @@ monitoring of metrics, logs, and other runtime information:
    :class: bordered-image
 
    **Cask Hydrator Pipelines:** Administration of created pipelines showing their current status
-   
-
 
 Hydrator Studio Tips
 --------------------
 *[Note: this section may be best elsewhere, but for now this will keep it in a visible location.]*
 
-- After clicking on a node, a dialog comes up to allow for configuring of the node. This
-  dialog can be closed either with the close button or the *escape* key.
+- After clicking on a node, a dialog comes up to allow for **configuring of the node**. As any
+  changes are automatically saved, you can just close the dialog by either hitting the close
+  button (an *X* in the upper-right corner), the *escape* key on your keyboard, or clicking
+  outside the dialog box.
   
-- When a connection has been made from one node to a target node, you can remove the
+- **To edit a connection** made from one node to another node, you can remove the
   connection by grabbing the end with the arrow symbol and dragging it off the target node.
 
-- All pipelines must have unique names, and a pipeline **cannot be saved over an existing
+- All **pipelines must have unique names**, and a pipeline **cannot be saved over an existing
   pipeline** of the same name. Instead, increment the name (from *Demo* to *Demo-1*) with
   each new cloning of a pipeline.

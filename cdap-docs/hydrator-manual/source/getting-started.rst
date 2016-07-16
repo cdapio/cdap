@@ -12,15 +12,15 @@ A quick tutorial, covering the basics of Hydrator. It assumes that you are famil
 CDAP, and the concepts of streams, datasets, and applications in CDAP and basic operations
 in the CDAP UI, such as entering events into a stream and exploring a dataset:
 
-  1. :ref:`Installing CDAP and starting Hydrator Studio <cask-hydrator-getting-started-installing>`
+  1. :ref:`Install CDAP and start Hydrator Studio <cask-hydrator-getting-started-install>`
   #. :ref:`Quick Tour of Hydrator Studio Components <cask-hydrator-getting-started-studio>`
   #. :ref:`Creating a Simple Pipeline <cask-hydrator-getting-started-simple>`
 
 
-.. _cask-hydrator-getting-started-installing:
+.. _cask-hydrator-getting-started-install:
 
-Installing CDAP and starting Hydrator Studio
-============================================
+Install CDAP and start Hydrator Studio
+======================================
 
 - If you haven't already, :ref:`download and install the CDAP SDK <standalone-index>`.
 - :ref:`Start CDAP <start-stop-cdap>`, open up a web browser, and go to the :cdap-ui:`CDAP UI <>`.
@@ -58,10 +58,10 @@ Installing CDAP and starting Hydrator Studio
 
 .. _cask-hydrator-getting-started-studio:
 
-Quick Tour of Hydrator Studio Components
-========================================
+Quick Tour of Hydrator Studio
+=============================
 
-Before we begin with the examples, let's look at the Studio and its different components:
+Before we begin an example, let's look at the Studio and its different components:
 
 .. figure:: /_images/hydrator-studio-annotated.png
    :figwidth: 100%
@@ -112,12 +112,12 @@ Now, let's create a pipeline!
 
 Creating a Simple Pipeline
 ==========================
-In this first example, we'll create a pipeline that reads a log file events from a source,
+In this example, we'll create a pipeline that reads log file events from a source,
 parses them into separate fields, and writes them as individual records to a table.
 
-1. Start by clicking on *Stream* source in the left panel to add a *Stream* icon to the canvas.
+1. Start by clicking on the *Stream* source in the left panel to add a *Stream* icon to the canvas.
 #. Click on the disclosure triangle to the left of the *Transform* label section to show
-   the *Transforms*, and then click the *LogParser* transform to add an icon to the canvas.
+   the *Transforms*, and then click the *LogParser* transform to add another icon to the canvas.
 
 #. Click on the disclosure triangle to the left of the *Sink* label section to show the
    *Sinks*, and then click the *Table* transform to add another icon to the canvas.

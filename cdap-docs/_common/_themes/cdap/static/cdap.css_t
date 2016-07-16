@@ -573,7 +573,7 @@ div.admin-manual-step-images.container {
 /* -- Styles for custom "inline-sidebar" ------------- */
 
 div.inline-sidebar.container {
-    border: 2px solid #d8d8d8;
-    padding: 10px;
     background-color: #F9FAFB;
+    border: 2px solid #d8d8d8;
+    padding: 0 10px 0 10px;
 }

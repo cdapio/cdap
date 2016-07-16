@@ -4,36 +4,17 @@
 
 .. _cask-hydrator-developing-pipelines:
 
-==============================
-Creating and Running Pipelines
-==============================
+====================
+Developing Pipelines
+====================
 
 .. highlight:: console
 
-Creating a Pipeline
-===================
-*[To Be Completed]*
-
-
-
-Creating a logical pipeline 
-----------------------------
-*[To Be Completed]*
-
-
-    - Structured Records
-    - Input and Output schemas
-    
-Data Flow 
-----------
-*[To Be Completed]*
-
-
-
-Pipelines can be created using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`,
-the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create a pipeline,
-a pipeline configuration is required that specifies,  the source, transformations, and sinks
-along with their properties.  (In the Hydrator Studio, the user interface prompts you for the required
+Pipelines can be created using the :ref:`Lifecycle RESTful API
+<http-restful-api-lifecycle-create-app>`, the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI
+<cdap-ui>`. In order to create a pipeline, a pipeline configuration is required that
+specifies the source, transformations, sinks, and other plugins to be used along with
+their properties.  (In Hydrator Studio, the user interface prompts you for the required
 information.)
 
 
@@ -195,8 +176,8 @@ The format of a ``plugin`` object:
      - Map of properties, contents of which are determined by the particular plugin used
 
 
-Creating a Hydrator Batch Pipeline
-----------------------------------
+Creating a Batch Pipeline
+=========================
 With a Hydrator batch pipeline, it requires a ``schedule`` property with a cron entry
 specifying the frequency of the Batch job run, such as every day or every hour.
 
@@ -323,8 +304,8 @@ To create this pipeline, called *streamETLApp*, you can use either the HTTP REST
 where ``config.json`` is the file that contains the pipeline configuration shown above.
 
 
-Creating a Hydrator Real-Time Pipeline
---------------------------------------
+Creating a Real-Time Pipeline
+=============================
 To create a real-time pipeline that reads from a source such as Twitter and writes to a
 stream after performing a projection transformation, you can use a configuration such as:
 
@@ -424,13 +405,12 @@ that it will use as the content for the data to be written.
 
 
 Non-linear Executions in Pipelines
-----------------------------------
-
+==================================
 Hydrator supports directed acyclic graphs in pipelines, which allows for the non-linear
 execution of pipeline stages.
 
 Fork in Pipeline
-................
+----------------
 In this example, a pipeline reads from the stream ``purchaseStats``. It writes the stream events
 to the table ``replicaTable``, while at the same time it writes just the ``userIds`` to the ``usersTable``
 when a user's purchase price is greater than 1000. This filtering logic is applied by using an included script
@@ -546,7 +526,7 @@ sent to two or more configured stages; in the above example, the output record f
 ``purchaseStats`` will be sent to both ``replicaTable`` and ``spendingUsersScript`` stages.
 
 Merging Stages in Pipeline
-..........................
+--------------------------
 Forked transform stages can merge together at a transform or a sink stage.
 
 A merge does not join, or modify records in any way. It simply means that multiple stages can write to the same stage.
@@ -704,9 +684,11 @@ The rewards records are merged at the sink ``rewardsSink``; note that the incomi
     }
 
 Sample Pipeline Configurations
-------------------------------
+==============================
 
-**Database:** Sample configuration for using a Database Source and a Database Sink:
+Database Source and Sink
+------------------------
+Sample configuration for using a Database Source and a Database Sink:
 
 .. container:: highlight
 
@@ -763,7 +745,9 @@ Sample Pipeline Configurations
       }
     }
   
-**Kafka:** A Kafka cluster needs to be setup, and certain minimum properties specified when
+Kafka
+-----
+A Kafka cluster needs to be setup, and certain minimum properties specified when
 creating the source:
 
 .. container:: highlight
@@ -812,38 +796,8 @@ creating the source:
     }
 
 
-**Prebuilt JARs:** In a case where you'd like to use prebuilt third-party JARs (such as a
+Prebuilt JARs
+-------------
+In a case where you'd like to use prebuilt third-party JARs (such as a
 JDBC driver) as a plugin, please refer to the section on :ref:`Using Third-Party Jars
 <cdap-apps-third-party-jars>`. 
-
-
-
-
-Configuring Plugins 
-====================
-*[To Be Completed]*
-
-
-  - Plugin Properties
-  - Reference 
-
-
-Publishing a Pipeline
-=====================
-*[To Be Completed]*
-
-Pipelines can be published two different ways:
-
-- Using the Cask Hydrator UI
-- Using the Application Lifecycle RESTful API
-
-
-Running a Pipeline
-==================
-*[To Be Completed]*
-
-Once a pipeline has been published, it can be run either by:
-
-- Using the Cask Hydrator UI
-- Using the Program Lifecycle RESTful API
-

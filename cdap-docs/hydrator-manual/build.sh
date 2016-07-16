@@ -26,7 +26,8 @@ EXTRACT_TABLE_TOOL="../tools/docs-extract-table.py"
 DOUBLE_RETURN_STRING="\
 
 "
-PRE_POST_RUN="pre-post-run"
+# PRE_POST_RUN="pre-post-run"
+PRE_POST_RUN="post-run-plugin"
 VERSION_STRING="Hydrator Version"
 
 function get_hydrator_version() {
@@ -70,16 +71,19 @@ function download_md_file() {
       
     # FIXME: this type "postaction" is going away
     elif [[ "x${type}" == "xpostaction" ]]; then
-      plugin_category="${PRE_POST_RUN}"
+#       plugin_category="${PRE_POST_RUN}"
+      plugin_category=''
       plugin_type="post-run-plugin"
     # END FIXME
     
-    elif [[ "x${type}" == "xprerun" ]]; then
-      plugin_category="${PRE_POST_RUN}"
-      plugin_type="pre-run"
-    elif [[ "x${type}" == "xpostrun" ]]; then
-      plugin_category="${PRE_POST_RUN}"
-      plugin_type="post-run"
+    # FIXME: these types "prerun" and  "postrun" are currently not used
+#     elif [[ "x${type}" == "xprerun" ]]; then
+#       plugin_category="${PRE_POST_RUN}"
+#       plugin_type="pre-run"
+#     elif [[ "x${type}" == "xpostrun" ]]; then
+#       plugin_category=''
+#       plugin_type="post-run"
+    # END FIXME
     elif [[ "x${type}" == "xaction" ]]; then
       plugin_category=''
       plugin_type="action"
@@ -97,9 +101,9 @@ function download_md_file() {
     # Directories are plural, though types are singular
     local target_dir="batch/${plugin_type}s"
     local target_dir_extra="realtime/${plugin_type}s"
-  elif [[ "${plugin_type}" == "action" ]]; then
+  elif [[ ( "${plugin_type}" == "action" ) || ( "${plugin_type}" == "${PRE_POST_RUN}" ) ]]; then
     local target_dir="${plugin_type}s"
-    local target_dir_extra=''
+    local target_dir_extra='' 
   fi
   
   local target="${BASE_TARGET}/${target_dir}/${target_file_name}"
@@ -172,8 +176,8 @@ function download_includes() {
   set_version
 
   if [ "x${LOCAL_INCLUDES}" == "x${TRUE}" ]; then
+    echo_red_bold "Copying local copies of Markdown doc file includes..."
     local base_source="file://${PROJECT_PATH}/../${hydrator_plugins}"
-    echo_red_bold "Copying a local copy of Markdown doc file includes from ${base_source}"
     HYDRATOR_SOURCE="${base_source}"
   else
     echo_red_bold "Downloading Markdown doc file includes from GitHub repo caskdata/hydrator-plugins..."
@@ -183,21 +187,12 @@ function download_includes() {
     else
       local hydrator_branch="${GIT_BRANCH_CDAP_HYDRATOR}"
     fi
-  
     HYDRATOR_SOURCE="${base_source}/${hydrator_branch}"
   fi
 
   # Copy the source _includes files so they can be populated with the markdown files
   BASE_TARGET="${1}/${plugins}"
   cp -R "${SCRIPT_PATH}/source/_includes/${plugins}" "${1}"
-  
-#   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
-#     local hydrator_branch="develop"
-#   else
-#     local hydrator_branch="${GIT_BRANCH_CDAP_HYDRATOR}"
-#   fi
-#   
-#   HYDRATOR_SOURCE="${base_source}/${hydrator_branch}"
   
   echo_red_bold "Using ${HYDRATOR_SOURCE}"
   get_hydrator_version ${BASE_TARGET} ${HYDRATOR_SOURCE}

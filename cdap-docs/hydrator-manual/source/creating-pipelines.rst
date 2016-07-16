@@ -8,8 +8,118 @@
 Creating Pipelines
 ==================
 
+Batch Pipelines
+===============
+
+Introduction
+------------
+To Be Completed
+
+Types of Plugins
+----------------
+To Be Completed
+
+How does it work ?
+------------------
+To Be Completed
+
+Building a Pipeline
+-------------------
+To Be Completed
+
+Real-time Pipelines
+===================
+
+Introduction
+------------
+To Be Completed
+
+Types of Plugins
+----------------
+To Be Completed
+
+How does it work ?
+------------------
+To Be Completed
+
+Building a Pipeline
+-------------------
+To Be Completed
+
+
+
+Scheduling
+==========
+To Be Completed
+
+
+Macros
+======
+To Be Completed
+
+
+Engine
+======
+To Be Completed
+
+
+Validation
+==========
+To Be Completed
+
+
+Publishing
+==========
+To Be Completed
+
+
+Using and Re-using Existing Sources
+===================================
+To Be Completed
+
+Cloning
+-------
+To Be Completed
+
+
+Pipeline Drafts
+---------------
+To Be Completed
+
+
+Creating Plugin Templates
+-------------------------
+
+From within Hydrator Studio, you can create a **plugin template,** a variation
+of a plugin that you can configure with particular settings for re-use. 
+
+To create a plugin-template:
+
+- From within Hydrator Studio, hover your mouse over the plugin you would like to use
+  for your template, such as the *Stream* source plugin.
+
+- In the on-hover menu that appears, click the "+ Template" button.
+
+- The window that appears will allow you to specify the version of the plugin to use. Once
+  you do, the window will expand to allow you to specify the particular properties of that
+  plugin.
+
+- The template will require a name that uniquely identifies it. 
+
+- You can lock individual properties of the configuration so that they are not editable
+  when the template is used.
+
+- When the plugin template is successfully saved, it will appear in with the other plugins, with
+  an additional "T" icon to indicate that it is a template.
+
+- Templates can be either edited or deleted after they are created, using buttons that
+  will appear in their on-hover menu.
+
+Once created, you can use the plugin template just as you would any other plugin, with the
+advantage that it can be pre-configured with settings that you re-use or require.
+
 Preconfigured Pipelines
-=======================
+-----------------------
 
 A collection of predefined and preconfigured pipelines are available from within Hydrator
 Studio through the controls at the top of the left side-bar. These templates can be used
@@ -47,33 +157,13 @@ as the starting point for either your own pipelines or your own pipeline templat
   - **Log Data Aggregator:** Aggregate log data by grouping IP and HTTP Status
 
 
-Creating Plugin Templates
-=========================
+Importing
+---------
+To Be Completed
 
-From within Hydrator Studio, you can create a **plugin template,** a variation
-of a plugin that you can configure with particular settings for re-use. 
 
-To create a plugin-template:
+Exporting
+---------
+To Be Completed
 
-- From within Hydrator Studio, hover your mouse over the plugin you would like to use
-  for your template, such as the *Stream* source plugin.
 
-- In the on-hover menu that appears, click the "+ Template" button.
-
-- The window that appears will allow you to specify the version of the plugin to use. Once
-  you do, the window will expand to allow you to specify the particular properties of that
-  plugin.
-
-- The template will require a name that uniquely identifies it. 
-
-- You can lock individual properties of the configuration so that they are not editable
-  when the template is used.
-
-- When the plugin template is successfully saved, it will appear in with the other plugins, with
-  an additional "T" icon to indicate that it is a template.
-
-- Templates can be either edited or deleted after they are created, using buttons that
-  will appear in their on-hover menu.
-
-Once created, you can use the plugin template just as you would any other plugin, with the
-advantage that it can be pre-configured with settings that you re-use or require.

@@ -2,131 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-developing-plugins:
+.. _cask-hydrator-creating-a-plugin:
 
-==================
-Developing Plugins
-==================
-
-.. highlight:: java
-
-Overview
-========
-This section is intended for developers writing custom plugins. Users of these should
-refer to the documentation on :ref:`using plugins
-<cask-hydrator-introduction-what-is-a-plugin>`.
-
-CDAP provides for the creation of custom plugins to extend the existing
-``cdap-data-pipeline`` and ``cdap-etl-realtime`` system artifacts.
-
-*Note:* The ``cdap-etl-batch`` artifact has been deprecated and replaced with the
-``cdap-data-pipeline`` effective with CDAP 3.5.0.
-
-
-Plugin Types and Maven Archetypes
-=================================
-In Cask Hydrator, there are |--| at present |---| eight plugin types:
-
-- Batch Source (*batchsource*)
-- Batch Sink (*batchsink*)
-- Real-time Source (*realtimesource*)
-- Real-time Sink (*realtimesink*)
-- Transformation (*transform*)
-- Batch Aggregator (*batchaggregator*)
-- Spark Compute (*sparkcompute*)
-- Spark Sink (*sparksink*) 
-
-To get started, you can use one of these Maven archetypes to create your project: 
-
-- ``cdap-data-pipeline-plugins-archetype`` (contains all batch plugin types)
-- ``cdap-etl-realtime-source-archetype`` (contains a realtime source)
-- ``cdap-etl-realtime-sink-archetype`` (contains a realtime sink)
-- ``cdap-etl-transform-archetype`` (contains a transform)
-
-This command will create a project from an archetype:
-
-.. container:: highlight
-
-  .. parsed-literal::
-
-    |$| mvn archetype:generate \\
-          -DarchetypeGroupId=co.cask.cdap \\
-          -DarchetypeArtifactId=<archetype> \\
-          -DarchetypeVersion=\ |release| \\
-          -DgroupId=org.example.plugin
-          
-where ``<archetype>`` is one of the archetypes listed above.
-
-You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
-
-Plugin Basics
-=============
-
-Plugin Class Annotations
-------------------------
-These annotations are used for plugin classes:
-
-- ``@Plugin``: The class to be exposed as a plugin needs to be annotated with the ``@Plugin``
-  annotation and the type of the plugin must be specified.
-
-- ``@Name``: Annotation used to name the plugin.
-
-- ``@Description``: Annotation used to add a description of the plugin.
-
-Plugin Config
--------------
-Each plugin can define a plugin config that specifies what properties the plugin requires.
-When a user creates a pipeline, they will need to provide these properties in order to
-use the plugin. This is done by extending the ``PluginConfig`` class, and populating that
-class with the fields your plugin requires. Each field can be annotated to provide more
-information to users:
-
-- ``@Name``: The name of the field. Defaults to the Java field name. You may want to use this
-  if you want the user-facing name to use syntax that is not legal Java syntax.
-
-- ``@Description``: A description for the field.
-
-- ``@Nullable``: Indicates that the specific configuration property is
-  optional. Such a plugin class can be used without that property being specified.
-
-At this time, fields in a ``PluginConfig`` must be primitive Java types (boxed or unboxed).
-
-.. highlight:: java
-
-Example::
- 
-  @Plugin(type = BatchSource.PLUGIN_TYPE)
-  @Name("MyBatchSource")
-  @Description("This is my Batch Source.")
-  public class MyBatchSource extends BatchSource<LongWritable, Text, StructuredRecord> {
-    private final Conf conf;
-
-    public MyBatchSource(Conf conf) {
-      this.conf = conf;
-    )
-
-    public static class Conf extends PluginConfig {
-      @Name("input-path")
-      @Description("Input path for the source.")
-      private String inputPath;
-
-      @Nullable
-      @Description("Whether to clean up the previous run's output. Defaults to false.")
-      private Boolean cleanOutput;
-
-      public Conf() {
-        cleanOutput = false;
-      }
-    }
-    ...
-  }
-
-In this example, we have a plugin of type ``batchsource``, named ``MyBatchSource``.
-This plugin takes two configuration properties. The first is named ``input-path`` and is required.
-The second is named ``cleanOutput`` and is optional. Note that optional configuration fields should
-have their default values set in the no-argument constructor.
-
-
+=================
 Creating a Plugin
 =================
 
@@ -134,7 +12,7 @@ Creating a Plugin
 .. highlight:: java
 
 Batch Source Plugin
--------------------
+===================
 In order to implement a Batch Source (to be used in either the ETL Batch or Data Pipeline artifacts), you extend the
 ``BatchSource`` class. You need to define the types of the KEY and VALUE that the Batch
 Source will receive and the type of object that the Batch Source will emit to the
@@ -279,7 +157,7 @@ Example::
   }
 
 Batch Sink Plugin
------------------
+=================
 In order to implement a Batch Sink (to be used in either the ETL Batch or Data Pipeline artifacts), you extend the
 ``BatchSink`` class. Similar to a Batch Source, you need to define the types of the KEY and
 VALUE that the Batch Sink will write in the Batch job and the type of object that it will
@@ -408,8 +286,8 @@ Example::
 
 .. highlight:: java
 
-Creating a Real-Time Source
-===========================
+Real-Time Source Plugin
+=======================
 The only method that needs to be implemented is::
 
   poll()
@@ -539,8 +417,8 @@ of failures.
 
 .. highlight:: java
 
-Creating a Real-Time Sink
-=========================
+Real-Time Sink Plugin
+=====================
 The only method that needs to be implemented is::
 
   write()
@@ -577,8 +455,8 @@ Example::
 
 .. highlight:: java
 
-Creating a Transformation
-=========================
+Transformation Plugin
+=====================
 The only method that needs to be implemented is::
 
   transform()
@@ -704,8 +582,8 @@ functions as part of your JavaScript::
   if (!coreValidator.isDate(input.date)) {
   . . .
 
-Creating a Batch Aggregator
-===========================
+Batch Aggregator Plugin
+=======================
 In order to implement a Batch Aggregator (to be used in the Data Pipeline artifact), you extend the
 ``BatchAggregator`` class. Unlike a ``Transform``, which operates on a single record at a time, a
 ``BatchAggregator`` operates on a collection of records. 
@@ -822,13 +700,13 @@ Example::
     }
   }
 
-Creating a SparkCompute Plugin
-==============================
-In order to implement a SparkCompute Plugin (to be used in the Data Pipeline artifact), you extend the
-``SparkCompute`` class. A ``SparkCompute`` plugin is similar to a ``Transform``, except instead of
-transforming its input record by record, it transforms an entire collection of records into another
-collection of records. In a ``SparkCompute`` plugin, you are given access to anything you would be
-able to do in a Spark program. 
+Spark Compute Plugin
+====================
+In order to implement a Spark Compute Plugin (to be used in the Data Pipeline artifact),
+you extend the ``SparkCompute`` class. A ``SparkCompute`` plugin is similar to a
+``Transform``, except instead of transforming its input record by record, it transforms an
+entire collection of records into another collection of records. In a ``SparkCompute``
+plugin, you are given access to anything you would be able to do in a Spark program. 
 
 .. highlight:: java
 
@@ -901,12 +779,12 @@ Example::
     }
   }
 
-Creating a Spark Sink
-=====================
-In order to implement a SparkSink Plugin (to be used in the Data Pipeline artifact), you
-extend the ``SparkSink`` class. A ``SparkSink`` is like a ``SparkCompute`` plugin except
-that it has no output. This means other plugins cannot be connected to it. In this way, it
-is similar to a ``BatchSink``. 
+Spark Sink Plugin
+=================
+In order to implement a Spark Sink Plugin (to be used in the Data Pipeline artifact), you
+extend the ``SparkSink`` class. A ``SparkSink`` is similar to a ``SparkCompute`` plugin
+except that it has no output. This means other plugins cannot be connected to it. In this
+way, it is similar to a ``BatchSink``.
 
 In a ``SparkSink``, you are given access to anything you would be able to do in a Spark
 program. For example, one common use case is to train a machine-learning model in this
@@ -976,64 +854,3 @@ Example::
       sparkExecutionPluginContext.saveAsDataset(outputRDD, config.tableName);
     }
   }
-
-Test Framework for Plugins
-==========================
-
-.. highlight:: java
-
-.. include:: /../../developers-manual/source/testing/testing.rst
-   :start-after: .. _test-framework-strategies-artifacts:
-   :end-before:  .. _test-framework-validating-sql:
-
-Hydrator Test Module
---------------------
-Additional information on unit testing with CDAP is in the Developers’ Manual section
-on :ref:`Testing a CDAP Application <test-framework>`.
-
-.. highlight:: xml
-
-In addition, CDAP provides a ``hydrator-test`` module that contains several mock plugins
-for you to use in tests with your custom plugins. To use the module, add a dependency to
-your ``pom.xml``::
-
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>hydrator-test</artifactId>
-      <version>${cdap.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-.. highlight:: java
-
-Then extend the ``HydratorTestBase`` class, and create a method that will setup up the
-application artifact and mock plugins, as well as the artifact containing your custom plugins::
-
-  /**
-   * Unit tests for our plugins.
-   */
-  public class PipelineTest extends HydratorTestBase {
-    private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("cdap-data-pipeline", "1.0.0");
-    @ClassRule
-    public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
-
-    @BeforeClass
-    public static void setupTestClass() throws Exception {
-      ArtifactId parentArtifact = NamespaceId.DEFAULT.artifact(APP_ARTIFACT.getName(), APP_ARTIFACT.getVersion());
-
-      // Add the data pipeline artifact and mock plugins.
-      setupBatchArtifacts(parentArtifact, DataPipelineApp.class);
-
-      // Add our plugins artifact with the data pipeline artifact as its parent.
-      // This will make our plugins available to the data pipeline.
-      addPluginArtifact(NamespaceId.DEFAULT.artifact("example-plugins", "1.0.0"),
-                        parentArtifact,
-                        TextFileSetSource.class,
-                        TextFileSetSink.class,
-                        WordCountAggregator.class,
-                        WordCountCompute.class,
-                        WordCountSink.class);
-    }
-
-You can then add test cases as you see fit. The ``cdap-data-pipeline-plugins-archetype``
-includes an example of this unit test.

@@ -7,7 +7,7 @@ Cask Hydrator: Table of Contents
 ================================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
     Overview <index>
     Concepts and Design <concepts-design>
@@ -16,7 +16,7 @@ Cask Hydrator: Table of Contents
     Running Pipelines <running-pipelines>
     Plugin Management <plugin-management>
     Plugin Reference <plugins/index>
-    Developing Plugins <developing-plugins>
+    Developing Plugins <developing-plugins/index>
     Developing Pipelines <developing-pipelines>
     Administration and Operation <administration-operation>
     How Hydrator Works <how-hydrator-works>

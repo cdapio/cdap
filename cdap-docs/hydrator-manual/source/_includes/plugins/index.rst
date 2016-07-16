@@ -6,24 +6,24 @@
 
 .. _cask-hydrator-plugins:
 
-=================
-Plugins Reference
-=================
+================
+Plugin Reference
+================
 
 .. toctree::
    :maxdepth: 2
    
+    Action Plugins <actions/index>
     Batch Plugins <batch/index>
     Real-time Plugins <realtime/index>
     Shared Plugins <shared-plugins/index>
-    Action Plugins <actions/index>
-    Pre- and Post-run Plugins <pre-post-run/index>
+    Post-run Plugins <post-run-plugins/index>
 
-.. rubric:: Available Plugins
 
 These plugins (from Hydrator Version |cdap-hydrator-version|) are shipped with CDAP, both in the
 SDK and Distributed CDAP:
 
+- :doc:`Action Plugins <actions/index>`
 - :doc:`Batch Plugins <batch/index>`
 
   - :doc:`Source Plugins <batch/sources/index>`
@@ -43,8 +43,7 @@ SDK and Distributed CDAP:
 
   - :doc:`CoreValidator Plugin <shared-plugins/core>`
 
-- :doc:`Action Plugins <actions/index>`
-- :doc:`Post-run Plugins <pre-post-run/post-run-plugins/index>`
+- :doc:`Post-run Plugins <post-run-plugins/index>`
 
 
 .. rubric:: Exploring Plugin Details
