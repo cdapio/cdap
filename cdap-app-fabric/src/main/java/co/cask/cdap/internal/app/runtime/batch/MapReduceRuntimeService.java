@@ -193,7 +193,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Configuration mapredConf = job.getConfiguration();
 
       classLoader = new MapReduceClassLoader(injector, cConf, mapredConf, context.getProgram().getClassLoader(),
-                                             context.getPlugins(),
+                                             context.getApplicationSpecification().getPlugins(),
                                              context.getPluginInstantiator());
       cleanupTask = createCleanupTask(cleanupTask, classLoader);
 

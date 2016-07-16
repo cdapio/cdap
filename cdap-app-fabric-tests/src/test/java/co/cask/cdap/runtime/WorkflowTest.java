@@ -24,20 +24,13 @@ import co.cask.cdap.OneActionWorkflowApp;
 import co.cask.cdap.ScheduleAppWithMissingWorkflow;
 import co.cask.cdap.WorkflowApp;
 import co.cask.cdap.WorkflowSchedulesWithSameNameApp;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Predicate;
@@ -60,7 +53,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.InetAddress;
 import javax.annotation.Nullable;
 
 /**
@@ -92,8 +84,6 @@ public class WorkflowTest {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
     final Injector injector = AppFabricTestHelper.getInjector();
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-
     final ProgramDescriptor programDescriptor = Iterators.filter(
       app.getPrograms().iterator(), new Predicate<ProgramDescriptor>() {
         @Override
@@ -102,26 +92,19 @@ public class WorkflowTest {
         }
       }).next();
 
-    ProgramRunner programRunner = runnerFactory.create(programDescriptor.getProgramId().getType());
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
-    final String runId = RunIds.generate().getId();
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
-      ProgramOptionConstants.RUN_ID, runId,
-      ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
-    ));
     BasicArguments userArgs = new BasicArguments(ImmutableMap.of("inputPath", inputPath, "outputPath", outputPath));
-    final Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
-                                                              programRunner, TEMP_FOLDER_SUPPLIER);
-    ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, userArgs);
-
     final SettableFuture<String> completion = SettableFuture.create();
-    programRunner.run(program, options).addListener(new AbstractListener() {
-
+    final ProgramController controller = AppFabricTestHelper.submit(app,
+                                                                    programDescriptor.getSpecification().getClassName(),
+                                                                    userArgs, TEMP_FOLDER_SUPPLIER);
+    controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Starting");
-        injector.getInstance(Store.class).setStart(program.getId(), runId, System.currentTimeMillis());
+        injector.getInstance(Store.class).setStart(controller.getProgramId(),
+                                                   controller.getRunId().getId(), System.currentTimeMillis());
       }
 
       @Override
@@ -214,8 +197,6 @@ public class WorkflowTest {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(OneActionWorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
     final Injector injector = AppFabricTestHelper.getInjector();
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-
     final ProgramDescriptor programDescriptor = Iterators.filter(
       app.getPrograms().iterator(), new Predicate<ProgramDescriptor>() {
         @Override
@@ -224,23 +205,16 @@ public class WorkflowTest {
         }
       }).next();
 
-    ProgramRunner programRunner = runnerFactory.create(programDescriptor.getProgramId().getType());
-    final String runId = RunIds.generate().getId();
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
-      ProgramOptionConstants.RUN_ID, runId,
-      ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
-    ));
-
-    final Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
-                                                              programRunner, TEMP_FOLDER_SUPPLIER);
-    ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments());
-
     final SettableFuture<String> completion = SettableFuture.create();
-    programRunner.run(program, options).addListener(new AbstractListener() {
+    final ProgramController controller = AppFabricTestHelper.submit(app,
+                                                                    programDescriptor.getSpecification().getClassName(),
+                                                                    new BasicArguments(), TEMP_FOLDER_SUPPLIER);
+    controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Initializing");
-        injector.getInstance(Store.class).setStart(program.getId(), runId, System.currentTimeMillis());
+        injector.getInstance(Store.class).setStart(controller.getProgramId(),
+                                                   controller.getRunId().getId(), System.currentTimeMillis());
       }
 
       @Override

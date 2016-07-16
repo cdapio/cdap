@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,18 +17,13 @@
 package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.AppWithWorker;
-import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -43,8 +38,6 @@ import co.cask.cdap.internal.TempFolder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -73,7 +66,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -217,7 +209,8 @@ public class WorkerProgramRunnerTest {
   private ProgramController startProgram(ApplicationWithPrograms app, Class<?> programClass)
     throws Throwable {
     final AtomicReference<Throwable> errorCause = new AtomicReference<>();
-    final ProgramController controller = submit(app, programClass, RuntimeArguments.NO_ARGUMENTS);
+    final ProgramController controller = AppFabricTestHelper.submit(app, programClass.getName(),
+                                                                    new BasicArguments(), TEMP_FOLDER_SUPPLIER);
     runningPrograms.add(controller);
     controller.addListener(new AbstractListener() {
       @Override
@@ -273,18 +266,5 @@ public class WorkerProgramRunnerTest {
     if (t != null) {
       throw t;
     }
-  }
-
-  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass,
-                                   Map<String, String> userArgs) throws Exception {
-
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    Program program = AppFabricTestHelper.createProgram(app, programClass, TEMP_FOLDER_SUPPLIER);
-    Assert.assertNotNull(program);
-    ProgramRunner runner = runnerFactory.create(program.getType());
-
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                   RunIds.generate().getId()));
-    return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments(userArgs)));
   }
 }

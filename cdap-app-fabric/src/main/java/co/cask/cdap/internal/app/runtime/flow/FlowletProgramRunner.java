@@ -72,6 +72,7 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -79,7 +80,6 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Function;
@@ -100,7 +100,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,9 +179,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       int instanceCount = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
       Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
-      String runIdOption = options.getArguments().getOption(ProgramOptionConstants.RUN_ID);
-      Preconditions.checkNotNull(runIdOption, "Missing runId");
-      RunId runId = RunIds.fromString(runIdOption);
+      RunId runId = ProgramRunners.getRunId(options);
 
       ApplicationSpecification appSpec = program.getApplicationSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -213,10 +210,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 
       // Creates flowlet context
-      flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
-                                               runId, instanceCount,
-                                               flowletDef.getDatasets(),
-                                               options.getUserArguments(), flowletDef.getFlowletSpec(),
+      flowletContext = new BasicFlowletContext(program, options, flowletName, instanceId, instanceCount,
+                                               flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, txClient, dsFramework);
 
       // Creates tx related objects

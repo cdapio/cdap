@@ -134,8 +134,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
-
-    final RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
+    RunId runId = ProgramRunners.getRunId(options);
 
     WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
     DatasetFramework programDatasetFramework = workflowInfo == null ?
@@ -165,7 +164,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       }
 
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
+        new BasicMapReduceContext(program, options, spec,
                                   workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator);

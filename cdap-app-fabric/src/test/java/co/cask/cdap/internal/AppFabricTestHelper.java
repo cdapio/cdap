@@ -25,7 +25,11 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -39,7 +43,11 @@ import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRangeCodec;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
@@ -48,9 +56,12 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -61,9 +72,11 @@ import com.google.inject.util.Modules;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import javax.annotation.Nullable;
 
 /**
@@ -73,6 +86,9 @@ import javax.annotation.Nullable;
  */
 public class AppFabricTestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
+    .create();
 
   public static CConfiguration configuration;
   private static Injector injector;
@@ -166,28 +182,39 @@ public class AppFabricTestHelper {
   }
 
   /**
-   * Creates a {@link Program} by searching for a program name inside the given {@link ApplicationWithPrograms}.
+   * Submits a program execution.
+   *
+   * @param app the application containing the program
+   * @param programClassName name of the program class
+   * @param userArgs runtime arguments
+   * @param folderSupplier a Supplier of temporary folder
+   * @return a {@link ProgramController} for controlling the program execution.
    */
-  @Nullable
-  public static Program createProgram(ApplicationWithPrograms app, Class<?> programClass,
-                                      Supplier<File> folderSupplier) throws Exception {
-    return createProgram(app, programClass, null, folderSupplier);
-  }
-
-  /**
-   * Creates a {@link Program} by searching for a program name inside the given {@link ApplicationWithPrograms}.
-   * If {@link ProgramRunner} is not {@code null}, it will be used to create the program classloader.
-   */
-  @Nullable
-  public static Program createProgram(ApplicationWithPrograms app, Class<?> programClass,
-                                      @Nullable ProgramRunner programRunner,
-                                      Supplier<File> folderSupplier) throws Exception {
+  public static ProgramController submit(ApplicationWithPrograms app, String programClassName,
+                                         Arguments userArgs, Supplier<File> folderSupplier) throws Exception {
+    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
+    ProgramRunner runner = null;
+    Program program = null;
     for (ProgramDescriptor programDescriptor : app.getPrograms()) {
-      if (programClass.getName().equals(programDescriptor.getSpecification().getClassName())) {
-        return createProgram(programDescriptor, app.getArtifactLocation(), programRunner, folderSupplier);
+      if (programDescriptor.getSpecification().getClassName().equals(programClassName)) {
+        runner = runnerFactory.create(programDescriptor.getProgramId().getType());
+        program = createProgram(programDescriptor, app.getArtifactLocation(), runner, folderSupplier);
+        break;
       }
     }
-    return null;
+
+    Assert.assertNotNull(program);
+
+    co.cask.cdap.proto.id.ArtifactId artifactId = app.getArtifactId();
+    ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
+      ProgramOptionConstants.RUN_ID, RunIds.generate().getId(),
+      ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(artifactId),
+      ProgramOptionConstants.ARTIFACT_META, GSON.toJson(artifactRepository.getArtifact(artifactId.toId()).getMeta()),
+      ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
+    ));
+
+    return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs));
   }
 
   /**
@@ -198,10 +225,10 @@ public class AppFabricTestHelper {
    * @param programRunner an optional program runner that will be used to run the program
    * @param folderSupplier a {@link Supplier} to provide a folder that the artifact jar will be expanded to.
    */
-  public static Program createProgram(ProgramDescriptor programDescriptor,
-                                      Location artifactLocation,
-                                      @Nullable ProgramRunner programRunner,
-                                      Supplier<File> folderSupplier) throws Exception {
+  private static Program createProgram(ProgramDescriptor programDescriptor,
+                                       Location artifactLocation,
+                                       ProgramRunner programRunner,
+                                       Supplier<File> folderSupplier) throws Exception {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     return Programs.create(cConf, programRunner, programDescriptor, artifactLocation,
                            BundleJarUtil.unJar(artifactLocation, folderSupplier.get()));

@@ -22,19 +22,20 @@ import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -157,19 +158,19 @@ public final class SparkRuntimeContextProvider {
         datasetFramework :
         NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
                                                                  contextConfig.getApplicationSpecification());
-
       // Setup dataset framework context, if required
       if (programDatasetFramework instanceof ProgramContextAware) {
-        Id.Run id = new Id.Run(contextConfig.getProgramId().toId(), contextConfig.getRunId().getId());
-        ((ProgramContextAware) programDatasetFramework).initContext(id);
+        ProgramRunId programRunId = program.getId().toEntityId()
+          .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
+        ((ProgramContextAware) programDatasetFramework).initContext(programRunId.toId());
       }
 
-      PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, hConf, program.getClassLoader());
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, contextConfig, program.getClassLoader());
 
       // Create the context object
       sparkRuntimeContext = new SparkRuntimeContext(
         contextConfig.getConfiguration(),
-        program, contextConfig.getRunId(), contextConfig.getArguments(),
+        program, contextConfig.getProgramOptions(),
         injector.getInstance(TransactionSystemClient.class),
         programDatasetFramework,
         injector.getInstance(DiscoveryServiceClient.class),
@@ -199,17 +200,20 @@ public final class SparkRuntimeContextProvider {
                                        SparkRuntimeContextConfig contextConfig) throws IOException {
     File programJar = new File(PROGRAM_JAR_NAME);
     File programDir = new File(PROGRAM_JAR_EXPANDED_NAME);
-    ClassLoader classLoader = SparkRuntimeUtils.createProgramClassLoader(
-      cConf, programDir, SparkRuntimeContextProvider.class.getClassLoader());
+
+    ClassLoader parentClassLoader = new FilterClassLoader(SparkRuntimeContextProvider.class.getClassLoader(),
+                                               SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
+    ClassLoader classLoader = new ProgramClassLoader(cConf, programDir, parentClassLoader);
     return new DefaultProgram(new ProgramDescriptor(contextConfig.getProgramId(),
                                                     contextConfig.getApplicationSpecification()),
                               Locations.toLocation(programJar), classLoader);
   }
 
   @Nullable
-  private static PluginInstantiator createPluginInstantiator(CConfiguration cConf, Configuration hConf,
+  private static PluginInstantiator createPluginInstantiator(CConfiguration cConf,
+                                                             SparkRuntimeContextConfig contextConfig,
                                                              ClassLoader parentClassLoader) {
-    String pluginArchive = hConf.get(Constants.Plugin.ARCHIVE);
+    String pluginArchive = contextConfig.getPluginArchive();
     if (pluginArchive == null) {
       return null;
     }

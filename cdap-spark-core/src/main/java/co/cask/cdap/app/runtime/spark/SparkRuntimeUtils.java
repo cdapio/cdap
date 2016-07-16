@@ -151,15 +151,6 @@ public final class SparkRuntimeUtils {
   };
 
   /**
-   * Creates a program {@link ClassLoader} that have Spark classes visible.
-   */
-  public static ClassLoader createProgramClassLoader(CConfiguration cConf, File dir,
-                                                     ClassLoader unfilteredClassLoader) {
-    ClassLoader parent = new FilterClassLoader(unfilteredClassLoader, SPARK_PROGRAM_CLASS_LOADER_FILTER);
-    return new ProgramClassLoader(cConf, dir, parent);
-  }
-
-  /**
    * Creates a zip file which contains a serialized {@link Properties} with a given zip entry name, together with
    * all files under the given directory. This is called from Client.createConfArchive() as a workaround for the
    * SPARK-13441 bug.

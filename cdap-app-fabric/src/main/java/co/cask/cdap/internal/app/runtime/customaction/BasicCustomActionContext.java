@@ -19,17 +19,11 @@ import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -37,13 +31,11 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.util.HashMap;
 import javax.annotation.Nullable;
 
 /**
@@ -54,10 +46,9 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
   private static final Logger LOG = LoggerFactory.getLogger(BasicCustomActionContext.class);
   private final CustomActionSpecification customActionSpecification;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final Metrics userMetrics;
   private ProgramState state;
 
-  public BasicCustomActionContext(Program workflow, RunId runId, Arguments runtimeArguments,
+  public BasicCustomActionContext(Program workflow, ProgramOptions programOptions,
                                   CustomActionSpecification customActionSpecification,
                                   WorkflowProgramInfo workflowProgramInfo,
                                   MetricsCollectionService metricsCollectionService,
@@ -65,40 +56,12 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   DiscoveryServiceClient discoveryServiceClient,
                                   @Nullable PluginInstantiator pluginInstantiator) {
 
-    super(workflow, runId, runtimeArguments, customActionSpecification.getDatasets(),
-          getMetricCollector(workflow, runId.getId(), metricsCollectionService), datasetFramework, txClient,
-          discoveryServiceClient, false, pluginInstantiator);
+    super(workflow, programOptions, customActionSpecification.getDatasets(),
+          datasetFramework, txClient, discoveryServiceClient, false,
+          metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()),
+          pluginInstantiator);
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;
-    if (metricsCollectionService != null) {
-      this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
-    } else {
-      this.userMetrics = null;
-    }
-  }
-
-  @Nullable
-  private static MetricsContext getMetricCollector(Program program, String runId,
-                                                   @Nullable MetricsCollectionService service) {
-    if (service == null) {
-      return null;
-    }
-    Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
-    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
-    tags.put(ProgramTypeMetricTag.getTagName(program.getType()), program.getName());
-    tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, runId);
-    return service.getContext(tags);
-  }
-
-  @Override
-  public Metrics getMetrics() {
-    return userMetrics;
-  }
-
-  @Override
-  public Map<String, Plugin> getPlugins() {
-    return null;
   }
 
   @Override

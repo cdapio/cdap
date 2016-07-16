@@ -110,12 +110,10 @@ class CustomActionExecutor {
     Class<?> clz = Class.forName(context.getSpecification().getClassName(), true, classLoader);
     Preconditions.checkArgument(CustomAction.class.isAssignableFrom(clz), "%s is not a CustomAction.", clz);
     CustomAction action = instantiator.get(TypeToken.of((Class<? extends CustomAction>) clz)).create();
-    Metrics metrics = new ProgramUserMetrics(
-      context.getProgramMetrics().childContext(Constants.Metrics.Tag.NODE, context.getSpecification().getName()));
     Reflections.visit(action, action.getClass(),
                       new PropertyFieldSetter(context.getSpecification().getProperties()),
                       new DataSetFieldSetter(context),
-                      new MetricsFieldSetter(metrics));
+                      new MetricsFieldSetter(context.getMetrics()));
     return action;
   }
 

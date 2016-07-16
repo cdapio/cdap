@@ -16,11 +16,15 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.twill.api.RunId;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
@@ -81,6 +85,17 @@ public final class ProgramRunners {
         "%s is set to an invalid value %s. Please ensure it is a timestamp in milliseconds.",
         ProgramOptionConstants.LOGICAL_START_TIME, value));
     }
+  }
+
+  /**
+   * Returns the {@link RunId} stored inside the given {@link ProgramOptions#getArguments()}.
+   *
+   * @throws IllegalArgumentException if the given options doesn't contain run id.
+   */
+  public static RunId getRunId(ProgramOptions programOptions) {
+    String id = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
+    Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.RUN_ID + " in program options");
+    return RunIds.fromString(id);
   }
 
   private ProgramRunners() {
