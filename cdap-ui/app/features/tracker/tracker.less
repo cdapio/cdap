@@ -340,16 +340,19 @@ body.state-tracker {
 
       .title-bar {
         background-color: @filter-sidebar-background-color;
-
+        h3 { margin-right: 5px; }
         .btn.btn-grey {
-          margin-left: 10px;
+          margin-right: 15px;
           background-color: #cccccc;
           color: @active-font;
           padding: 4px 10px 7px; // aligning text with Sort by
           font-weight: 500;
           .caret { margin-left: 20px; }
         }
-
+        .dropdown-menu > li > a {
+          &:hover,
+          &:focus { cursor: pointer; }
+        }
         .results-count {
           display: inline-block;
           color: @tracker-grey;
@@ -368,9 +371,8 @@ body.state-tracker {
         padding-bottom: 51px; // This is to offset the top sort panel
 
         h4,
-        h5,
-        p { font-weight: 500; }
-
+        h5 { font-weight: 500; }
+        p { color: @tracker-grey; }
         h4,
         h4 a {
           font-size: 16px;
