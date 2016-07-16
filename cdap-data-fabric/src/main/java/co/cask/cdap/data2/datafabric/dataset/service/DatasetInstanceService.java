@@ -265,7 +265,7 @@ public class DatasetInstanceService {
       publishAudit(newInstance, AuditType.CREATE);
 
       // Enable explore
-      enableExplore(newInstance, props);
+      enableExplore(newInstance, spec, props);
     } catch (Exception e) {
       // there was a problem in creating the dataset instance. so revoke the privileges.
       authorizer.revoke(datasetId);
@@ -302,8 +302,6 @@ public class DatasetInstanceService {
         ConversionHelpers.toDatasetTypeId(instance.getNamespace(), existing.getType()));
     }
 
-    disableExplore(instance);
-
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec = opExecutorClient.update(instance, typeMeta, DatasetProperties.of(properties), existing);
     instanceManager.add(instance.getNamespace(), spec);
@@ -312,7 +310,7 @@ public class DatasetInstanceService {
     DatasetInstanceConfiguration creationProperties =
       new DatasetInstanceConfiguration(existing.getType(), properties, null);
 
-    enableExplore(instance, creationProperties);
+    updateExplore(instance, creationProperties, existing, spec);
     publishAudit(instance, AuditType.UPDATE);
   }
 
@@ -457,11 +455,28 @@ public class DatasetInstanceService {
     }
   }
 
-  private void enableExplore(Id.DatasetInstance datasetInstance, DatasetInstanceConfiguration creationProperties) {
+  private void enableExplore(Id.DatasetInstance datasetInstance, DatasetSpecification spec,
+                             DatasetInstanceConfiguration creationProperties) {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
-      exploreFacade.enableExploreDataset(datasetInstance);
+      exploreFacade.enableExploreDataset(datasetInstance, spec);
+    } catch (Exception e) {
+      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
+                                 datasetInstance, creationProperties.getProperties(), e.getMessage());
+      LOG.error(msg, e);
+      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+      //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //return;
+    }
+  }
+
+  private void updateExplore(Id.DatasetInstance datasetInstance, DatasetInstanceConfiguration creationProperties,
+                             DatasetSpecification oldSpec, DatasetSpecification newSpec) {
+    // Enable ad-hoc exploration of dataset
+    // Note: today explore enable is not transactional with dataset create - CDAP-8
+    try {
+      exploreFacade.updateExploreDataset(datasetInstance, oldSpec, newSpec);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
                                  datasetInstance, creationProperties.getProperties(), e.getMessage());

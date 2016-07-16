@@ -16,10 +16,28 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.QueryHandle;
 import com.google.common.util.concurrent.Service;
+
+import java.sql.SQLException;
 
 /**
  * Interface for service exploring datasets.
  */
 public interface ExploreService extends Service, Explore {
+
+  /**
+   * Execute a sequence of Hive SQL statements. All but the last statement are executed synchronously, and
+   * the last statement is run asynchronously. The returned {@link QueryHandle} can be used to get the
+   * status/result of the operation.
+   *
+   * @param namespace namespace to run the query in.
+   * @param statements SQL statement.
+   * @return {@link QueryHandle} representing the operation.
+   * @throws ExploreException on any error executing statement.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  QueryHandle execute(Id.Namespace namespace, String[] statements) throws ExploreException, SQLException;
+
 }

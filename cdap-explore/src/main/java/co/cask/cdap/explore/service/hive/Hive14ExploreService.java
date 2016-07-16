@@ -91,7 +91,13 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
+  protected OperationHandle executeSync(SessionHandle sessionHandle, String statement)
+    throws HiveSQLException, ExploreException {
+    return getCliService().executeStatement(sessionHandle, statement, new HashMap<String, String>());
+  }
+
+  @Override
+  protected OperationHandle executeAsync(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatementAsync(sessionHandle, statement, new HashMap<String, String>());
   }
