@@ -221,16 +221,26 @@ public class ConnectorDag extends Dag {
   }
 
   /**
-   * Split this dag into multiple dags. Each connector is used as a split point where it is a sink of one dag and the
-   * source of another dag.
+   * Split this dag into multiple dags. Each subdag will contain at most a single reduce node.
    *
-   * @return list of dags split on connectors.
+   * @return list of subdags.
    */
-  public List<Dag> splitOnConnectors() {
+  public List<Dag> split() {
     List<Dag> dags = new ArrayList<>();
-    dags.add(subsetFrom(sources, connectors));
-    for (String connector : connectors) {
-      dags.add(subsetFrom(connector, connectors));
+
+    Set<String> remainingNodes = new HashSet<>();
+    remainingNodes.addAll(nodes);
+    Set<String> possibleNewSources = Sets.union(sources, connectors);
+    Set<String> possibleNewSinks = Sets.union(sinks, connectors);
+    for (String reduceNode : reduceNodes) {
+      Dag subdag = subsetAround(reduceNode, possibleNewSources, possibleNewSinks);
+      remainingNodes.removeAll(subdag.getNodes());
+      dags.add(subdag);
+    }
+
+    Set<String> remainingSources = Sets.intersection(remainingNodes, possibleNewSources);
+    if (!remainingSources.isEmpty()) {
+      dags.add(subsetFrom(remainingSources, possibleNewSinks));
     }
     return dags;
   }
