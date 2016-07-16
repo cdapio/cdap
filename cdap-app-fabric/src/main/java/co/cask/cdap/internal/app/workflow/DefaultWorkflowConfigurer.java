@@ -51,14 +51,18 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
   implements WorkflowConfigurer, WorkflowForkJoiner, WorkflowConditionAdder {
 
   private final String className;
+  private final Map<String, DatasetCreationSpec> localDatasetSpecs = new HashMap<>();
+  private final DatasetConfigurer datasetConfigurer;
+  private final Id.Namespace deployNamespace;
+  private final Id.Artifact artifactId;
+  private final ArtifactRepository artifactRepository;
+  private final PluginInstantiator pluginInstantiator;
+  private final List<WorkflowNode> nodes = Lists.newArrayList();
+
+  private int nodeIdentifier = 0;
   private String name;
   private String description;
   private Map<String, String> properties;
-  private final Map<String, DatasetCreationSpec> localDatasetSpecs = new HashMap<>();
-  private int nodeIdentifier = 0;
-  private final DatasetConfigurer datasetConfigurer;
-
-  private final List<WorkflowNode> nodes = Lists.newArrayList();
 
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
                                    Id.Namespace deployNamespace, Id.Artifact artifactId,
@@ -68,6 +72,10 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
     this.datasetConfigurer = datasetConfigurer;
+    this.deployNamespace = deployNamespace;
+    this.artifactId = artifactId;
+    this.artifactRepository = artifactRepository;
+    this.pluginInstantiator = pluginInstantiator;
   }
 
   @Override
@@ -102,18 +110,21 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
 
   @Override
   public void addAction(CustomAction action) {
-    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
+    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
+                                                                 artifactRepository, pluginInstantiator));
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
-    return new DefaultWorkflowForkConfigurer<>(this);
+    return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, artifactRepository,
+                                               pluginInstantiator);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
-                                                    predicate.getClass().getName());
+                                                    predicate.getClass().getName(), deployNamespace, artifactId,
+                                                    artifactRepository, pluginInstantiator);
   }
 
   private void checkArgument(boolean condition, String template, Object...args) {
