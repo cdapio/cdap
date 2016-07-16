@@ -62,8 +62,8 @@ public class Dag {
     validate();
   }
 
-  private Dag(SetMultimap<String, String> outgoingConnections,
-              SetMultimap<String, String> incomingConnections) {
+  protected Dag(SetMultimap<String, String> outgoingConnections,
+                SetMultimap<String, String> incomingConnections) {
     this.outgoingConnections = HashMultimap.create(outgoingConnections);
     this.incomingConnections = HashMultimap.create(incomingConnections);
     this.sources = new HashSet<>();
@@ -153,7 +153,7 @@ public class Dag {
   }
 
   /**
-   * Return all stages accessible from the specified stage.
+   * Return all stages accessible from a starting stage.
    *
    * @param stage the stage to start at
    * @return all stages accessible from that stage
@@ -163,7 +163,8 @@ public class Dag {
   }
 
   /**
-   * Return all stages accessible from the specified stage, without going past any node in stopNodes.
+   * Return all stages accessible from a starting stage, without going past any node in stopNodes.
+   * The starting stage is not treated as a stop node, even if it is in the stop nodes set.
    *
    * @param stage the stage to start at
    * @param stopNodes set of nodes to stop traversal on
@@ -174,7 +175,7 @@ public class Dag {
   }
 
   /**
-   * Return all stages accessible from the specified stage, without going past any node in stopNodes.
+   * Return all stages accessible from the starting stages, without going past any node in stopNodes.
    *
    * @param stages the stages to start at
    * @param stopNodes set of nodes to stop traversal on
@@ -183,8 +184,33 @@ public class Dag {
   public Set<String> accessibleFrom(Set<String> stages, Set<String> stopNodes) {
     Set<String> accessible = new HashSet<>();
     for (String stage : stages) {
-      accessible.addAll(traverse(stage, accessible, stopNodes));
+      accessible.addAll(traverseForwards(stage, accessible, stopNodes));
     }
+    return accessible;
+  }
+
+  /**
+   * Return all stages that are parents of an ending stage. Stage X is a parent of stage Y if there is a path
+   * from X to Y.
+   *
+   * @param stage the stage to start at
+   * @return all parents of that stage
+   */
+  public Set<String> parentsOf(String stage) {
+    return parentsOf(stage, ImmutableSet.<String>of());
+  }
+
+  /**
+   * Return all stages that are parents of an ending stage, without going past any node in stopNodes.
+   * A stage counts as a parent of itself.
+   *
+   * @param stage the stage to start at
+   * @param stopNodes set of nodes to stop traversal on
+   * @return all parents of that stage
+   */
+  public Set<String> parentsOf(String stage, Set<String> stopNodes) {
+    Set<String> accessible = new HashSet<>();
+    accessible.addAll(traverseBackwards(stage, accessible, stopNodes));
     return accessible;
   }
 
@@ -232,6 +258,31 @@ public class Dag {
    */
   public Dag subsetFrom(Set<String> stages, Set<String> stopNodes) {
     Set<String> nodes = accessibleFrom(stages, stopNodes);
+    Set<Connection> connections = new HashSet<>();
+    for (String node : nodes) {
+      for (String outputNode : outgoingConnections.get(node)) {
+        if (nodes.contains(outputNode)) {
+          connections.add(new Connection(node, outputNode));
+        }
+      }
+    }
+    return new Dag(connections);
+  }
+
+  /**
+   * Return a subset of this dag starting from the specified stage, without going past any node in the
+   * child stop nodes and parent stop nodes. If the parent or child stop nodes contain the starting stage, it
+   * will be ignored.
+   * This is equivalent to taking the nodes from {@link #accessibleFrom(Set, Set)}, {@link #parentsOf(String, Set)},
+   * and building a dag from them.
+   *
+   * @param stage the stage to start at
+   * @param childStopNodes set of nodes to stop traversing forwards on
+   * @param parentStopNodes set of nodes to stop traversing backwards on
+   * @return a dag created from the stages given and child nodes of those stages and parent nodes of those stages.
+   */
+  public Dag subsetAround(String stage, Set<String> childStopNodes, Set<String> parentStopNodes) {
+    Set<String> nodes = Sets.union(accessibleFrom(stage, childStopNodes), parentsOf(stage, parentStopNodes));
     Set<Connection> connections = new HashSet<>();
     for (String node : nodes) {
       for (String outputNode : outgoingConnections.get(node)) {
@@ -335,11 +386,20 @@ public class Dag {
     sources.remove(node);
   }
 
-  private Set<String> traverse(String stage, Set<String> alreadySeen, Set<String> stopNodes) {
+  private Set<String> traverseForwards(String stage, Set<String> alreadySeen, Set<String> stopNodes) {
+    return traverse(stage, alreadySeen, stopNodes, outgoingConnections);
+  }
+
+  private Set<String> traverseBackwards(String stage, Set<String> alreadySeen, Set<String> stopNodes) {
+    return traverse(stage, alreadySeen, stopNodes, incomingConnections);
+  }
+
+  private Set<String> traverse(String stage, Set<String> alreadySeen, Set<String> stopNodes,
+                               SetMultimap<String, String> connections) {
     if (!alreadySeen.add(stage)) {
       return alreadySeen;
     }
-    Collection<String> outputs = outgoingConnections.get(stage);
+    Collection<String> outputs = connections.get(stage);
     if (outputs.isEmpty()) {
       return alreadySeen;
     }
@@ -348,7 +408,7 @@ public class Dag {
         alreadySeen.add(output);
         continue;
       }
-      alreadySeen.addAll(traverse(output, alreadySeen, stopNodes));
+      alreadySeen.addAll(traverse(output, alreadySeen, stopNodes, connections));
     }
     return alreadySeen;
   }
