@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -80,8 +81,18 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+    enforce(entity, principal, Collections.singleton(action));
+  }
+
+  @Override
+  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     throw new UnsupportedOperationException("Enforcement is not supported via Java Client. Please instead use the " +
                                               "listPrivileges method to view the privileges for a principal.");
+  }
+
+  @Override
+  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+    throw new UnsupportedOperationException("Filtering is not supported via Java Client.");
   }
 
   @Override

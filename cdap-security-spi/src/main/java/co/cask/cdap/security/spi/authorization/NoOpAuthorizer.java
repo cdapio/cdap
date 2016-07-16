@@ -31,8 +31,18 @@ import java.util.Set;
 public class NoOpAuthorizer extends AbstractAuthorizer {
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
+  public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
     // no-op
+  }
+
+  @Override
+  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+    // no-op
+  }
+
+  @Override
+  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+    return unfiltered;
   }
 
   @Override
