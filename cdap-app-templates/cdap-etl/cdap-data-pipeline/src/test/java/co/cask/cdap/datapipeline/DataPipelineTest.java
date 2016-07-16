@@ -438,17 +438,21 @@ public class DataPipelineTest extends HydratorTestBase {
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .setEngine(engine)
-      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("source1", MockSource.getPlugin("source1")))
+      .addStage(new ETLStage("source2", MockSource.getPlugin("source2")))
+      .addStage(new ETLStage("source3", MockSource.getPlugin("source3")))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
       .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("name", "bob")))
       .addStage(new ETLStage("filter2", StringValueFilterTransform.getPlugin("name", "jane")))
       .addStage(new ETLStage("aggregator1", IdentityAggregator.getPlugin()))
       .addStage(new ETLStage("aggregator2", IdentityAggregator.getPlugin()))
-      .addConnection("source", "filter1")
+      .addConnection("source1", "filter1")
       .addConnection("filter1", "aggregator1")
+      .addConnection("source2", "filter2")
+      .addConnection("filter2", "aggregator1")
       .addConnection("aggregator1", "aggregator2")
-      .addConnection("aggregator2", "filter2")
-      .addConnection("filter2", "sink")
+      .addConnection("source3", "aggregator2")
+      .addConnection("aggregator2", "sink")
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -465,8 +469,14 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceName);
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "source1");
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    DataSetManager<Table> inputManager1 = getDataset(Id.Namespace.DEFAULT, "source2");
+    MockSource.writeInput(inputManager1, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    DataSetManager<Table> inputManager2 = getDataset(Id.Namespace.DEFAULT, "source3");
+    MockSource.writeInput(inputManager2, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
