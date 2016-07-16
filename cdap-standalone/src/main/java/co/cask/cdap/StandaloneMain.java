@@ -49,6 +49,7 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -504,6 +505,7 @@ public class StandaloneMain {
       new StreamAdminModules().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
+      new RemoteSystemOperationsServiceModule(),
       new AuditModule().getStandaloneModules(),
       new AuthorizationModule()
     );

@@ -36,6 +36,7 @@ import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.MetadataServiceManager;
+import co.cask.cdap.data2.datafabric.dataset.RemoteSystemOperationServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
@@ -56,10 +57,6 @@ import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
-import co.cask.cdap.gateway.handlers.meta.RemoteLineageWriterHandler;
-import co.cask.cdap.gateway.handlers.meta.RemotePrivilegeFetcherHandler;
-import co.cask.cdap.gateway.handlers.meta.RemoteRuntimeStoreHandler;
-import co.cask.cdap.gateway.handlers.meta.RemoteUsageRegistryHandler;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -258,6 +255,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
                                         .to(MetadataServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.REMOTE_SYSTEM_OPERATION)
+                                        .to(RemoteSystemOperationServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(ExploreServiceManager.class);
 
@@ -329,11 +328,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
-      handlerBinder.addBinding().to(RemoteRuntimeStoreHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);
-      handlerBinder.addBinding().to(RemoteLineageWriterHandler.class);
-      handlerBinder.addBinding().to(RemoteUsageRegistryHandler.class);
-      handlerBinder.addBinding().to(RemotePrivilegeFetcherHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

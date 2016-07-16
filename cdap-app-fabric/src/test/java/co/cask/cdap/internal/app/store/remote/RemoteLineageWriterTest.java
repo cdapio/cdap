@@ -14,14 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store;
+package co.cask.cdap.internal.app.store.remote;
 
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;

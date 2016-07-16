@@ -76,6 +76,7 @@ public final class Constants {
     public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String DATASET_MANAGER = "dataset.service";
     public static final String DATASET_EXECUTOR = "dataset.executor";
+    public static final String REMOTE_SYSTEM_OPERATION = "remote.system.operation";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
@@ -968,6 +969,17 @@ public final class Constants {
     public static final String UPDATES_PUBLISH_ENABLED = "metadata.updates.publish.enabled";
     public static final String UPDATES_KAFKA_BROKER_LIST = "metadata.updates.kafka.broker.list";
     public static final String MAX_CHARS_ALLOWED = "metadata.max.allowed.chars";
+  }
+
+  /**
+   * Constants for Remote System Operation Service.
+   */
+  public static final class RemoteSystemOpService {
+    public static final String EXEC_THREADS = "remote.system.op.exec.threads";
+    public static final String WORKER_THREADS = "remote.system.op.worker.threads";
+    public static final String SERVICE_DESCRIPTION = "Service to perform system operations through HTTP requests.";
+    public static final String SERVICE_BIND_ADDRESS = "remote.system.op.service.bind.address";
+    public static final String HANDLERS_NAME = "remote.system.op.handlers";
   }
 
   /**
