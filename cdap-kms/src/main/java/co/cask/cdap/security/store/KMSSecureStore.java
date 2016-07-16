@@ -82,6 +82,11 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     }
   }
 
+  /**
+   * Deletes the element with the given name.
+   * @param namespace The namespace this key belongs to.
+   * @param name Name of the element to be deleted.
+   */
   @Override
   public void delete(String namespace, String name) throws IOException {
     try {
@@ -91,6 +96,11 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     }
   }
 
+  /**
+   * List of all the entries in the secure store.
+   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
+   * @param namespace The namespace this key belongs to.
+   */
   @Override
   public List<SecureStoreMetadata> list(String namespace) throws IOException {
     String prefix = namespace + SecureStoreUtils.NAME_SEPARATOR;
@@ -118,6 +128,11 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     return secureStoreMetadatas;
   }
 
+  /**
+   * @param namespace The namespace this key belongs to.
+   * @param name Name of the data element.
+   * @return An object representing the securely stored data associated with the name.
+   */
   @Override
   public SecureStoreData get(String namespace, String name) throws IOException {
     String keyName = SecureStoreUtils.getKeyName(namespace, name);
