@@ -40,11 +40,16 @@ public class MacroParser {
 
   /**
    * Substitutes the provided string with a given macro evaluator. Expands macros from right-to-left recursively.
+   * If the string passed to parse is null, then null will be returned.
    * @param str the raw string containing macro syntax
    * @return the original string with all macros expanded and substituted
    * @throws InvalidMacroException
    */
-  public String parse(String str) throws InvalidMacroException {
+  @Nullable
+  public String parse(@Nullable String str) throws InvalidMacroException {
+    if (str == null) {
+      return null;
+    }
     // final string should have escapes that are not directly embedded in macro syntax replaced
     return replaceEscapedSyntax(parse(str, 0));
   }
@@ -64,6 +69,10 @@ public class MacroParser {
 
     MacroMetadata macroPosition = findRightmostMacro(str);
     while (macroPosition != null) {
+      // in the case that the MacroEvaluator does not internally handle unspecified macros
+      if (macroPosition.substitution == null) {
+        throw new InvalidMacroException(String.format("Unable to substitute macro in string %s.", str));
+      }
       str = str.substring(0, macroPosition.startIndex) +
             parse(macroPosition.substitution, depth + 1) +
             str.substring(macroPosition.endIndex + 1);
