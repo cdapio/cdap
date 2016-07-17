@@ -32,6 +32,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -63,7 +64,12 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
+  public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+    enforce(entity, principal, Collections.singleton(action));
+  }
+
+  @Override
+  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws UnauthorizedException {
     // super users do not have any enforcement
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
       return;
@@ -76,9 +82,24 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
         allowed.addAll(getActions(entity, role));
       }
     }
-    if (!(allowed.contains(Action.ALL) || allowed.contains(action))) {
-      throw new UnauthorizedException(principal, action, entity);
+    if (!(allowed.contains(Action.ALL) || allowed.containsAll(actions))) {
+      throw new UnauthorizedException(principal, Sets.difference(allowed, actions), entity);
     }
+  }
+
+  @Override
+  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+    // super users do not have any enforcement
+    if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
+      return unfiltered;
+    }
+    Set<EntityId> allowedEntities = table.column(principal).keySet();
+    if (principal.getType() != Principal.PrincipalType.ROLE) {
+      for (Role role : listRoles(principal)) {
+        allowedEntities.addAll(table.column(role).keySet());
+      }
+    }
+    return Sets.intersection(unfiltered, allowedEntities);
   }
 
   @Override

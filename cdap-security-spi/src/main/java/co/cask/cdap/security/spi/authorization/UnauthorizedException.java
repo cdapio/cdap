@@ -22,6 +22,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 
 import java.net.HttpURLConnection;
+import java.util.Set;
 
 /**
  * Exception thrown when Authentication is successful, but a {@link Principal} is not authorized to perform an
@@ -32,6 +33,11 @@ public class UnauthorizedException extends Exception implements HttpErrorStatusP
   public UnauthorizedException(Principal principal, Action action, EntityId entityId) {
     super(String.format("Principal '%s' is not authorized to perform action '%s' on entity '%s'",
                         principal, action, entityId));
+  }
+
+  public UnauthorizedException(Principal principal, Set<Action> actions, EntityId entityId) {
+    super(String.format("Principal '%s' is not authorized to perform actions '%s' on entity '%s'",
+                        principal, actions, entityId));
   }
 
   public UnauthorizedException(String message) {
