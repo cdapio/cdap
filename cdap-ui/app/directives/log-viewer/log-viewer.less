@@ -60,6 +60,14 @@ body.state-flows-detail {
 
 my-log-viewer {
 
+  .log-viewer-container.full-screen {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50px;
+    z-index: 1000;
+  }
+
   .log-viewer-container {
 
     .source-tooltip {
@@ -235,10 +243,16 @@ my-log-viewer {
       border-bottom: 1px solid #cccccc;
     }
 
+    .logs-table.table-full-screen {
+      height: ~"-moz-calc(100vh - 166px)";
+      height: ~"-webkit-calc(100vh - 166px)";
+      height: ~"calc(100vh - 166px)";
+    }
+
     .logs-table {
-      height: ~"-moz-calc(100vh - 510px)";
-      height: ~"-webkit-calc(100vh - 510px)";
-      height: ~"calc(100vh - 510px)";
+      height: ~"-moz-calc(100vh - 450px)";
+      height: ~"-webkit-calc(100vh - 450px)";
+      height: ~"calc(100vh - 450px)";
       overflow: auto;
 
       tbody td {

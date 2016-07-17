@@ -22,6 +22,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.warningCount = 0;
   this.loading = false;
   this.loadingMoreLogs = false;
+  this.fullScreen = false;
+
   var dataSrc = new MyCDAPDataSource($scope);
   var pollPromise;
 
@@ -114,7 +116,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   const requestWithOffset = () => {
 
     if(pollPromise){
-      console.log('Stopping polling!!!!');
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;
     }
@@ -199,7 +200,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   const requestWithStartTime = () => {
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
-      console.log('If the current poll is activated, stop since we are updating start time');
       pollPromise = null;
     }
 

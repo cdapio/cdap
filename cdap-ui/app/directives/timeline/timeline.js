@@ -155,7 +155,7 @@ function link (scope, element) {
             scrollNeedle.attr('x1', val + 8)
                         .attr('x2', val + 8);
           }
-        });
+       });
 
     //Creates the top slider and trailing dark background
     sliderBar = timescaleSvg.append('g')
@@ -235,8 +235,6 @@ function link (scope, element) {
 
   scope.updatePinScale = function (val) {
     if(pinHandle !== undefined){
-      console.log('the updated time is: ', val);
-      console.log('the updated pin position is: ', xScale(Math.floor(val/1000)));
       pinHandle.attr('x', xScale(Math.floor(val/1000)));
       scrollNeedle.attr('x', xScale(Math.floor(val/1000)));
     }
