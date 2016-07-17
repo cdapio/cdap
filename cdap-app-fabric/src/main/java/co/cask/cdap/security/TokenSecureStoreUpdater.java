@@ -77,12 +77,8 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
-    isKMSBacked = isKMSBackedStore(cConf, secureStore);
+    isKMSBacked = SecureStoreUtils.KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
     updateInterval = calculateUpdateInterval();
-  }
-
-  private boolean isKMSBackedStore(CConfiguration cConf, co.cask.cdap.api.security.store.SecureStore secureStore) {
-    return SecureStoreUtils.isKMSBacked(cConf);
   }
 
   private Credentials refreshCredentials() {

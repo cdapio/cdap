@@ -37,9 +37,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Secure Store implementation backed by Hadoop KMS
+ * Secure Store implementation backed by Hadoop KMS. This class is loaded using reflection if
+ * the provider is set to kms and Hadoop version is 2.6.0 or higher.
  */
-public class KMSSecureStore implements SecureStore, SecureStoreManager {
+@SuppressWarnings("unused")
+class KMSSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
@@ -81,7 +83,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     try {
       provider.createKey(SecureStoreUtils.getKeyName(namespace, name), data, options);
     } catch (IOException e) {
-      throw new IOException("Failed to store the key. ", e);
+      throw new IOException("Failed to store the key. " + name + " under namespace " + namespace, e);
     }
   }
 
@@ -95,7 +97,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     try {
       provider.deleteKey(SecureStoreUtils.getKeyName(namespace, name));
     } catch (IOException e) {
-      throw new IOException("Failed to delete the key. ", e);
+      throw new IOException("Failed to delete the key. " + name + " under namespace " + namespace, e);
     }
   }
 
@@ -109,7 +111,6 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     String prefix = namespace + SecureStoreUtils.NAME_SEPARATOR;
     List<String> keysInNamespace = new ArrayList<>();
     KeyProvider.Metadata[] metadatas;
-    List<SecureStoreMetadata> secureStoreMetadatas;
     try {
       for (String key : provider.getKeys()) {
         if (key.startsWith(prefix)) {
@@ -117,10 +118,11 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
         }
       }
       metadatas = provider.getKeysMetadata(keysInNamespace.toArray(new String[0]));
-      secureStoreMetadatas = new ArrayList<>();
     } catch (IOException e) {
       throw new IOException("Failed to get the list of elements from the secure store.", e);
     }
+
+    List<SecureStoreMetadata> secureStoreMetadatas = new ArrayList<>();
     for (int i = 0; i < metadatas.length; i++) {
       KeyProvider.Metadata metadata = metadatas[i];
       SecureStoreMetadata meta = SecureStoreMetadata.of(keysInNamespace.get(i).substring(prefix.length()),

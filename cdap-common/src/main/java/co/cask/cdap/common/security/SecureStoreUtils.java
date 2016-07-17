@@ -26,7 +26,7 @@ public class SecureStoreUtils {
   /** Separator between the namespace name and the key name */
   public static final String NAME_SEPARATOR = ":";
 
-  private static final String KMS_BACKED = "kms";
+  public static final String KMS_BACKED = "kms";
 
   public static String getKeyName(final String namespace, final String name) {
     return namespace + NAME_SEPARATOR + name;

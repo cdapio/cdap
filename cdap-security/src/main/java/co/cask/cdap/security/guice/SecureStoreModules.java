@@ -85,8 +85,8 @@ public class SecureStoreModules extends RuntimeModule {
       if (SecureStoreUtils.isKMSBacked(cConf)) {
         try {
           // Check if required KMS classes are present.
-          Class c = Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
-          // No Exception was thrown, that means the classses are available, load our provider
+          Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
+          // No Exception was thrown, that means the classes are available, load our provider
           return (SecureStore) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
         } catch (ClassNotFoundException e) {
           // Required KMS classes are not present.
@@ -116,8 +116,8 @@ public class SecureStoreModules extends RuntimeModule {
       if (SecureStoreUtils.isKMSBacked(cConf)) {
         try {
           // Check if required KMS classes are present.
-          Class c = Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
-          // No Exception was thrown, that means the classses are available, load our provider
+          Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
+          // No Exception was thrown, that means the classes are available, load our provider
           return (SecureStoreManager) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
         } catch (ClassNotFoundException e) {
           // Required KMS classes are not present.
