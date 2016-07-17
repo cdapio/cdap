@@ -42,8 +42,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   //viewLimit and cacheDecrement should match
-  this.viewLimit = 50;
-  this.cacheDecrement = 50;
+  this.viewLimit = 100;
+  this.cacheDecrement = 100;
   this.cacheSize = 0;
 
   //Collapsing LogViewer Table Columns
@@ -213,8 +213,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }).$promise.then(
       (res) => {
 
-        this.viewLimit = 50;
-        this.cacheDecrement = 50;
+        this.viewLimit = 100;
+        this.cacheDecrement = 100;
         this.cacheSize = 0;
 
         //If there are no logs yet to be retrieved let viewer know
@@ -228,8 +228,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           getStatus();
           return;
         }
-        //clear the current array
-        this.data.length = 0;
 
         this.fromOffset = res[res.length-1].offset;
         this.totalCount = res.length;
@@ -275,7 +273,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   }
 
   this.highlight = (text) => {
-    if(!this.searchText){
+    if(!this.searchText || (this.searchText && !this.searchText.length)){
       return $sce.trustAsHtml(text);
     }
     return $sce.trustAsHtml(text.replace(new RegExp(this.searchText, 'gi'), '<span class="highlightedText">$&</span>'));
@@ -314,7 +312,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
     // computePinPosition();
     this.viewLimit += this.cacheDecrement;
-  }, 1000);
+  }, 500);
 
   this.filterByStartDate = (entry) => {
     if(this.logStartTime > entry.log.timestamp) {

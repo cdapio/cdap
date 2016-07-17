@@ -113,13 +113,13 @@
           <!-- TIME -->
           <td class="time"
               ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
-              {{ ::entry.log.displayTime }}
+              {{ entry.log.displayTime }}
           </td>
 
           <!-- LEVEL -->
           <td class="level"
               ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-              {{ ::entry.log.logLevel }}
+              {{ entry.log.logLevel }}
           </td>
 
           <!-- SOURCE -->
@@ -132,7 +132,7 @@
               tooltip-popup-delay="500"
               tooltip-class="source-tooltip"
               >
-              {{ ::entry.log.threadName }}
+              {{ entry.log.threadName }}
           </td>
 
           <!-- MESSAGE -->
@@ -160,11 +160,13 @@
 
           </td>
         </tr>
+
         <tr class="well well-sm">
           <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading logs...</td>
           <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No new logs to show</td>
         </tr>
       </tbody>
     </table>
+    <div class="empty-buffer"></div>
   </div>
 </div>

@@ -59,6 +59,9 @@ body.state-flows-detail {
 }
 
 my-log-viewer {
+  .empty-buffer {
+    display: none;
+  }
 
   .log-viewer-container.full-screen {
     position: absolute;
@@ -66,6 +69,18 @@ my-log-viewer {
     right: 0;
     top: 50px;
     z-index: 1000;
+
+    .empty-buffer {
+      display: block;
+      position: absolute;
+      top: 100px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      overflow: none;
+      background-color: white;
+      z-index: -50;
+    }
   }
 
   .highlightedText {
