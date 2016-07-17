@@ -21,8 +21,8 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.security.SecureStoreUtils;
+import co.cask.cdap.security.store.DummyKMSStore;
 import co.cask.cdap.security.store.FileSecureStore;
-import co.cask.cdap.security.store.KMSSecureStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -83,7 +83,15 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     public SecureStore get() {
       if (SecureStoreUtils.isKMSBacked(cConf)) {
-        return injector.getInstance(KMSSecureStore.class);
+        try {
+          // Check if required KMS classes are present.
+          Class c = Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
+          // No Exception was thrown, that means the classses are available, load our provider
+          return (SecureStore) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
+        } catch (ClassNotFoundException e) {
+          // Required KMS classes are not present.
+          return (SecureStore) injector.getInstance(DummyKMSStore.class);
+        }
       } else {
         return injector.getInstance(FileSecureStore.class);
       }
@@ -106,7 +114,15 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     public SecureStoreManager get() {
       if (SecureStoreUtils.isKMSBacked(cConf)) {
-        return injector.getInstance(KMSSecureStore.class);
+        try {
+          // Check if required KMS classes are present.
+          Class c = Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
+          // No Exception was thrown, that means the classses are available, load our provider
+          return (SecureStoreManager) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
+        } catch (ClassNotFoundException e) {
+          // Required KMS classes are not present.
+          return (SecureStoreManager) injector.getInstance(DummyKMSStore.class);
+        }
       } else {
         return injector.getInstance(FileSecureStore.class);
       }

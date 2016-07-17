@@ -26,6 +26,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
 import org.apache.hadoop.crypto.key.KeyProviderFactory;
 import org.apache.hadoop.crypto.key.kms.KMSClientProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -38,7 +40,7 @@ import java.util.Map;
  * Secure Store implementation backed by Hadoop KMS
  */
 public class KMSSecureStore implements SecureStore, SecureStoreManager {
-
+  private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
    */
@@ -56,6 +58,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager {
     this.conf = conf;
     URI providerUri = new URI(conf.get(KeyProviderFactory.KEY_PROVIDER_PATH));
     provider = KMSClientProvider.Factory.get(providerUri, conf);
+    LOG.info("Secure Store initialized successfully.");
   }
 
   /**

@@ -24,8 +24,6 @@ import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
-import co.cask.cdap.security.store.KMSSecureStore;
-import co.cask.cdap.security.store.KMSTokenUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -66,14 +64,15 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
 
   private final YarnConfiguration hConf;
   private final LocationFactory locationFactory;
-  private final SecureStore secureStore;
+  private final co.cask.cdap.api.security.store.SecureStore secureStore;
   private final long updateInterval;
   private final boolean secureExplore;
   private final boolean isKMSBacked;
 
   @Inject
   public TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
-                                 LocationFactory locationFactory, SecureStore secureStore) {
+                                 LocationFactory locationFactory,
+                                 co.cask.cdap.api.security.store.SecureStore secureStore) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
@@ -82,8 +81,8 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     updateInterval = calculateUpdateInterval();
   }
 
-  private boolean isKMSBackedStore(CConfiguration cConf, SecureStore secureStore) {
-    return SecureStoreUtils.isKMSBacked(cConf) && secureStore instanceof KMSSecureStore;
+  private boolean isKMSBackedStore(CConfiguration cConf, co.cask.cdap.api.security.store.SecureStore secureStore) {
+    return SecureStoreUtils.isKMSBacked(cConf);
   }
 
   private Credentials refreshCredentials() {
@@ -104,7 +103,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
       }
 
       if (isKMSBacked) {
-        KMSTokenUtils.obtainToken((KMSSecureStore) secureStore, refreshedCredentials);
+        KMSTokenUtils.obtainToken(secureStore, refreshedCredentials);
       }
 
       addDelegationTokens(hConf, locationFactory, refreshedCredentials);

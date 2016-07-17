@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package co.cask.cdap.security;
 
+import co.cask.cdap.api.security.store.SecureStore;
 import com.google.common.base.Throwables;
-import org.apache.hadoop.crypto.key.KeyProvider;
-import org.apache.hadoop.crypto.key.KeyProviderDelegationTokenExtension;
+import org.apache.hadoop.hbase.io.crypto.KeyProvider;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
@@ -29,10 +29,10 @@ import java.io.IOException;
 /**
  * Helper class for getting KMS security delegation token.
  */
-public class KMSTokenUtils {
+class KMSTokenUtils {
   private static final Logger LOG = LoggerFactory.getLogger(KMSTokenUtils.class);
 
-  public static Credentials obtainToken(final KMSSecureStore secureStore, Credentials credentials) {
+  static Credentials obtainToken(final SecureStore secureStore, Credentials credentials) {
     try {
       String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
       KeyProvider keyProvider = secureStore.getProvider();
