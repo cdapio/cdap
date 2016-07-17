@@ -43,7 +43,8 @@ function link (scope, element) {
       timescaleSvg,
       scrollPinSvg,
       xAxis,
-      sliderBar;
+      sliderBar,
+      scrollNeedle;
 
   //Initialize charting
   scope.initialize = () => {
@@ -74,6 +75,7 @@ function link (scope, element) {
     pinHandle = undefined;
     sliderBrush = undefined;
     scrollPinBrush = undefined;
+    scrollNeedle = undefined;
     xScale = undefined;
     slide = undefined;
     slider = undefined;
@@ -112,7 +114,6 @@ function link (scope, element) {
     renderBrushAndSlider();
   };
 
-
   // -------------------------Build Brush / Sliders------------------------- //
   function renderBrushAndSlider(){
 
@@ -135,7 +136,9 @@ function link (scope, element) {
             }
             sliderHandle.attr('x', val);
             sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
-            pinHandle.attr('x', val-pinOffset);
+            pinHandle.attr('x', val-pinOffset+1);
+            scrollNeedle.attr('x1', val + 8)
+                        .attr('x2', val + 8);
           }
         })
         .on('brushend', function() {
@@ -148,7 +151,9 @@ function link (scope, element) {
               val = maxRange;
             }
             updateSlider(val);
-            pinHandle.attr('x', val-pinOffset);
+            pinHandle.attr('x', val-pinOffset+1);
+            scrollNeedle.attr('x1', val + 8)
+                        .attr('x2', val + 8);
           }
         });
 
@@ -218,6 +223,14 @@ function link (scope, element) {
       .attr('xlink:href', '/assets/img/scrollPin.svg')
       .attr('x', xValue - pinOffset)
       .attr('y', 0);
+
+    scrollNeedle = slide.append('line')
+      .attr('x1', xValue + pinOffset - 6)
+      .attr('x2', xValue + pinOffset - 6)
+      .attr('y1', -10)
+      .attr('y2', 40)
+      .attr('stroke-width', 1)
+      .attr('stroke', 'grey');
   }
 
   scope.updatePinScale = function (val) {
@@ -225,6 +238,7 @@ function link (scope, element) {
       console.log('the updated time is: ', val);
       console.log('the updated pin position is: ', xScale(Math.floor(val/1000)));
       pinHandle.attr('x', xScale(Math.floor(val/1000)));
+      scrollNeedle.attr('x', xScale(Math.floor(val/1000)));
     }
   };
 
@@ -244,16 +258,13 @@ function link (scope, element) {
 
   scope.updateSlider = updateSlider;
 
-  function generateEventCircles(){
+  var generateEventCircles = function (){
     let circleClass;
 
     if(timelineData.qid.series.length > 0){
       for(let i = 0; i < timelineData.qid.series.length; i++){
 
         switch(timelineData.qid.series[i].metricName){
-          case 'system.app.log.info':
-            circleClass = 'red-circle';
-            break;
           case 'system.app.log.error':
             circleClass = 'red-circle';
             break;
@@ -286,7 +297,8 @@ function link (scope, element) {
         }
       }
     }
-  }
+  };
+  scope.generateEventCircles = generateEventCircles;
 }
 
 angular.module(PKG.name + '.commons')
