@@ -17,10 +17,13 @@
 <div class="sql-select-fields-container">
 
   <div class="button-container">
-    <button class="btn btn-sm btn-default">
-      Expand All
+    <button class="btn btn-sm btn-default"
+            ng-click="SqlSelector.toggleAll(SqlSelector.expandedButton)">
+      <span ng-if="SqlSelector.expandedButton">Expand All</span>
+      <span ng-if="!SqlSelector.expandedButton">Collapse All</span>
     </button>
-    <button class="btn btn-sm btn-reset">
+    <button class="btn btn-sm btn-reset"
+            ng-click="SqlSelector.resetAll()">
       Reset All
     </button>
   </div>

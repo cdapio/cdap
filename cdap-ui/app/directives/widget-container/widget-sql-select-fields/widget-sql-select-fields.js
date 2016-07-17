@@ -19,47 +19,23 @@ function SqlSelectorController() {
 
   let vm = this;
 
+  vm.expandedButton = true;
+
   vm.parsedInputSchemas = [];
 
-  function init() {
-    let initialModel = {};
+  let modelCopy = angular.copy(vm.model);
 
-    if (vm.model) {
-      let model = vm.model.split(',');
-
-      angular.forEach(model, (entry) => {
-        let split = entry.split(' as ');
-        let fieldInfo = split[0].split('.');
-
-        if (!initialModel[fieldInfo[0]]) {
-          initialModel[fieldInfo[0]] = {};
-        }
-        initialModel[fieldInfo[0]][fieldInfo[1]] = split[1] ? split[1] : true;
-      });
-    }
-
-    angular.forEach(vm.inputSchema, (input) => {
-      let schema = JSON.parse(input.schema).fields.map((field) => {
-        if (initialModel[input.name] && initialModel[input.name][field.name]) {
-          field.selected = true;
-          field.alias = initialModel[input.name][field.name] === true ? '' : initialModel[input.name][field.name];
-        } else {
-          field.selected = false;
-          field.alias = '';
-        }
-
-        return field;
-      });
-
-      vm.parsedInputSchemas.push({
-        name: input.name,
-        schema: schema,
-        expanded: false
-      });
+  vm.toggleAll = (expansion) => {
+    angular.forEach(vm.parsedInputSchemas, (stage) => {
+      stage.expanded = expansion;
     });
-  }
+    vm.expandedButton = !vm.expandedButton;
+  };
 
-  init();
+  vm.resetAll = () => {
+    vm.parsedInputSchemas = [];
+    init(modelCopy);
+  };
 
   vm.formatOutput = () => {
     let outputArr = [];
@@ -88,6 +64,49 @@ function SqlSelectorController() {
 
     vm.formatOutput();
   };
+
+  function init(model) {
+    let initialModel = {};
+
+    if (model) {
+      let model = model.split(',');
+
+      angular.forEach(model, (entry) => {
+        let split = entry.split(' as ');
+        let fieldInfo = split[0].split('.');
+
+        if (!initialModel[fieldInfo[0]]) {
+          initialModel[fieldInfo[0]] = {};
+        }
+        initialModel[fieldInfo[0]][fieldInfo[1]] = split[1] ? split[1] : true;
+      });
+    }
+
+    angular.forEach(vm.inputSchema, (input) => {
+      let schema = JSON.parse(input.schema).fields.map((field) => {
+        if (initialModel[input.name] && initialModel[input.name][field.name]) {
+          field.selected = true;
+          field.alias = initialModel[input.name][field.name] === true ? '' : initialModel[input.name][field.name];
+        } else {
+          field.selected = model ? false : true;
+          field.alias = field.name;
+        }
+
+        return field;
+      });
+
+      vm.parsedInputSchemas.push({
+        name: input.name,
+        schema: schema,
+        expanded: false
+      });
+    });
+
+    vm.formatOutput();
+  }
+
+  init(vm.model);
+
 }
 
 angular.module(PKG.name + '.commons')
