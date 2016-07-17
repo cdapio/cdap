@@ -133,6 +133,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),

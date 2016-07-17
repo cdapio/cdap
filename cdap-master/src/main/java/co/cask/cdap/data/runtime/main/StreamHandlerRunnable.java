@@ -141,6 +141,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         protected void configure() {
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
         }
-      });
+      }
+    );
   }
 }

@@ -27,6 +27,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -60,6 +61,7 @@ public class LevelDBTableServiceTest {
       new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule(),
+      new AuthorizationEnforcementModule().getStandaloneModules(),
       new AuthenticationContextModules().getMasterModule());
     service = injector.getInstance(LevelDBTableService.class);
   }

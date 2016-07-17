@@ -14,15 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.app.customds;
-
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetSpecification;
+package co.cask.cdap.data2.dataset2.customds;
 
 /**
- *
+ * An interface for testing dataset class rewrite.
  */
-public interface TopLevelExtendsDataset extends Dataset {
+public interface CustomOperations {
 
-  DatasetSpecification getSpecification();
+  void read();
+
+  void write();
+
+  void readWrite();
+
+  void invalidRead();
+
+  void invalidWrite();
+
+  void invalidReadFromWriteOnly();
+
+  void invalidWriteFromReadOnly();
 }

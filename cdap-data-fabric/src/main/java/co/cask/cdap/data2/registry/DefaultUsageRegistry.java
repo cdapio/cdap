@@ -19,7 +19,6 @@ package co.cask.cdap.data2.registry;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -31,7 +30,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 import java.io.IOException;
 import java.util.Set;
@@ -54,9 +52,7 @@ public class DefaultUsageRegistry implements UsageRegistry {
   protected final LoadingCache<DatasetUsageKey, Boolean> usageCache;
 
   @Inject
-  public DefaultUsageRegistry(
-    TransactionExecutorFactory executorFactory,
-    @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework) {
+  public DefaultUsageRegistry(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework) {
 
     this.executorFactory = executorFactory;
     this.datasetFramework = datasetFramework;

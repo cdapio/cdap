@@ -27,6 +27,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -36,6 +38,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.Location;
+import sun.security.krb5.internal.AuthContext;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +65,8 @@ public class StreamTailer {
                                              new ExploreClientModule(),
                                              new ViewAdminModules().getDistributedModules(),
                                              new StreamAdminModules().getDistributedModules(),
+                                             new AuthorizationEnforcementModule().getDistributedModules(),
+                                             new AuthenticationContextModules().getProgramContainerModule(),
                                              new NotificationFeedClientModule());
 
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);

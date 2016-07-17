@@ -30,21 +30,15 @@ import java.util.Set;
 @Beta
 public final class ArtifactClasses {
   private final Set<ApplicationClass> apps;
-  private final Set<DatasetClass> datasets;
   private final Set<PluginClass> plugins;
 
-  private ArtifactClasses(Set<ApplicationClass> apps, Set<DatasetClass> datasets, Set<PluginClass> plugins) {
+  private ArtifactClasses(Set<ApplicationClass> apps, Set<PluginClass> plugins) {
     this.apps = apps;
-    this.datasets = datasets;
     this.plugins = plugins;
   }
 
   public Set<ApplicationClass> getApps() {
     return apps;
-  }
-
-  public Set<DatasetClass> getDatasets() {
-    return datasets;
   }
 
   public Set<PluginClass> getPlugins() {
@@ -62,20 +56,18 @@ public final class ArtifactClasses {
 
     ArtifactClasses that = (ArtifactClasses) o;
     return Objects.equals(apps, that.apps) &&
-      Objects.equals(datasets, that.datasets) &&
       Objects.equals(plugins, that.plugins);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(apps, datasets, plugins);
+    return Objects.hash(apps, plugins);
   }
 
   @Override
   public String toString() {
     return "ArtifactClasses{" +
       "apps=" + apps +
-      ", datasets=" + datasets +
       ", plugins=" + plugins +
       '}';
   }
@@ -90,7 +82,6 @@ public final class ArtifactClasses {
   public static class Builder {
 
     private final Set<ApplicationClass> apps = new HashSet<>();
-    private final Set<DatasetClass> datasets = new HashSet<>();
     private final Set<PluginClass> plugins = new HashSet<>();
 
     public Builder addApps(ApplicationClass... apps) {
@@ -107,18 +98,6 @@ public final class ArtifactClasses {
 
     public Builder addApp(ApplicationClass app) {
       apps.add(app);
-      return this;
-    }
-
-    public Builder addDatasets(Iterable<DatasetClass> datasets) {
-      for (DatasetClass dataset : datasets) {
-        this.datasets.add(dataset);
-      }
-      return this;
-    }
-
-    public Builder addDataset(DatasetClass dataset) {
-      datasets.add(dataset);
       return this;
     }
 
@@ -141,7 +120,6 @@ public final class ArtifactClasses {
 
     public ArtifactClasses build() {
       return new ArtifactClasses(Collections.unmodifiableSet(apps),
-                                 Collections.unmodifiableSet(datasets),
                                  Collections.unmodifiableSet(plugins));
     }
   }

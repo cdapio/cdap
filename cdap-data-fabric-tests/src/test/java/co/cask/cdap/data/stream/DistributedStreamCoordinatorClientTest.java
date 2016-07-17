@@ -110,6 +110,8 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
           }
         }),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule()
     );
 

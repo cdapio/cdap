@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.app.customds;
+package co.cask.cdap.api.annotation;
 
 import co.cask.cdap.api.dataset.Dataset;
 
-import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- *
+ * Annotation to denote if a {@link Dataset} constructor or method performs both read and write operations.
  */
-public class TopLevelDirectDataset implements Dataset {
-
-  @Override
-  public void close() throws IOException {
-    // no-op
-  }
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
+public @interface ReadWrite {
 }

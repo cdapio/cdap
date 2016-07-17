@@ -438,38 +438,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   @Override
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader,
-                                          @Nullable Iterable<? extends Id> owners) throws IOException {
-    readLock.lock();
-    try {
-      DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
-      if (spec == null) {
-        return null;
-      }
-      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
-      DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
-      return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
-                                 spec, arguments, classLoader));
-    } finally {
-      readLock.unlock();
-    }
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
-                                          Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader) throws IOException {
-    return getDataset(datasetInstanceId, arguments, classLoader, null);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
-                                          @Nullable Map<String, String> arguments,
-                                          @Nullable ClassLoader parentClassLoader,
-                                          DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends Id> owners) throws IOException {
-    return getDataset(datasetInstanceId, arguments, parentClassLoader, classLoaderProvider, owners, AccessType.UNKNOWN);
+    return getDataset(datasetInstanceId, arguments, classLoader,
+                      new ConstantClassLoaderProvider(classLoader), null, AccessType.UNKNOWN);
   }
 
   @Nullable

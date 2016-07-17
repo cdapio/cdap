@@ -27,11 +27,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
@@ -183,6 +184,7 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(SecureStore.class),
         injector.getInstance(SecureStoreManager.class)
       );
+      LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -208,6 +210,7 @@ public final class SparkRuntimeContextProvider {
     ClassLoader parentClassLoader = new FilterClassLoader(SparkRuntimeContextProvider.class.getClassLoader(),
                                                SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
     ClassLoader classLoader = new ProgramClassLoader(cConf, programDir, parentClassLoader);
+
     return new DefaultProgram(new ProgramDescriptor(contextConfig.getProgramId(),
                                                     contextConfig.getApplicationSpecification()),
                               Locations.toLocation(programJar), classLoader);

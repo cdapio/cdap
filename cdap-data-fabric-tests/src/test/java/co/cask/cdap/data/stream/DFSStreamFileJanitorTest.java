@@ -132,6 +132,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
           bind(NamespaceStore.class).to(InMemoryNamespaceStore.class);
         }
       },
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule()
     );
 
