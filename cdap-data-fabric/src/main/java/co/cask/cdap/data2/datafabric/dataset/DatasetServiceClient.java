@@ -35,7 +35,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -50,7 +50,6 @@ import com.google.common.collect.Sets;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -77,12 +76,13 @@ class DatasetServiceClient {
   private static final Type MODULE_META_LIST_TYPE = new TypeToken<List<DatasetModuleMeta>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
-  private final Id.Namespace namespaceId;
+  private final NamespaceId namespaceId;
   private final HttpRequestConfig httpRequestConfig;
   private final boolean securityEnabled;
+  private final AuthenticationContext authenticationContext;
 
-  DatasetServiceClient(final DiscoveryServiceClient discoveryClient, Id.Namespace namespaceId,
-                       CConfiguration cConf) {
+  DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
+                       CConfiguration cConf, AuthenticationContext authenticationContext) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -93,6 +93,7 @@ class DatasetServiceClient {
     int httpTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
     this.httpRequestConfig = new HttpRequestConfig(httpTimeoutMs, httpTimeoutMs);
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
+    this.authenticationContext = authenticationContext;
   }
 
   @Nullable
@@ -314,19 +315,18 @@ class DatasetServiceClient {
     if (!securityEnabled) {
       return builder;
     }
-    // If the request originated from the router and was forwarded to any service other than dataset service, before
-    // going to dataset service via dataset service client, the userId could be set in the SecurityRequestContext.
-    // e.g. deploying an app that contains a dataset
-    String userId = SecurityRequestContext.getUserId();
-    if (NamespaceId.SYSTEM.equals(namespaceId.toEntityId())) {
+    String userId;
+    if (NamespaceId.SYSTEM.equals(namespaceId)) {
       // For getting a system dataset like MDS, use the system principal. It is ok to do so, since DatasetServiceClient
       // is an internal client that is not exposed to users.
-      // TODO: CDAP-6583: This is dangerous. Remove.
       userId = Principal.SYSTEM.getName();
-    } else if (userId == null) {
+    } else {
+      // If the request originated from the router and was forwarded to any service other than dataset service, before
+      // going to dataset service via dataset service client, the userId could be set in the SecurityRequestContext.
+      // e.g. deploying an app that contains a dataset
       // For user datasets, if a dataset call is happening from a program runtime, then find the userId from
       // UserGroupInformation#getCurrentUser()
-      userId = UserGroupInformation.getCurrentUser().getShortUserName();
+      userId = authenticationContext.getPrincipal().getName();
     }
     return builder.addHeader(Constants.Security.Headers.USER_ID, userId);
   }
@@ -342,6 +342,6 @@ class DatasetServiceClient {
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
     return String.format("http://%s:%s%s/namespaces/%s/data/%s", addr.getHostName(), addr.getPort(),
-                         Constants.Gateway.API_VERSION_3, namespaceId.getId(), resource);
+                         Constants.Gateway.API_VERSION_3, namespaceId.getNamespace(), resource);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -58,7 +59,8 @@ public class LevelDBTableServiceTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule());
+      new TransactionMetricsModule(),
+      new AuthenticationContextModules().getMasterModule());
     service = injector.getInstance(LevelDBTableService.class);
   }
 
@@ -68,8 +70,8 @@ public class LevelDBTableServiceTest {
     String table2 = "cdap_default.table2";
     TableId tableId1 = TableId.from("default", "table1");
     TableId tableId2 = TableId.from("default", "table2");
-    Assert.assertNull(service.getTableStats().get(table1));
-    Assert.assertNull(service.getTableStats().get(table2));
+    Assert.assertNull(service.getTableStats().get(tableId1));
+    Assert.assertNull(service.getTableStats().get(tableId2));
 
     service.ensureTableExists(table1);
     service.ensureTableExists(table2);

@@ -50,6 +50,7 @@ import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.Transaction;
@@ -227,6 +228,7 @@ public class ExploreDisabledTest {
         new NamespaceClientRuntimeModule().getInMemoryModules(),
         new AuthorizationTestModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getMasterModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

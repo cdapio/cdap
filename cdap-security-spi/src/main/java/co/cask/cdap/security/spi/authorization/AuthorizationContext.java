@@ -19,6 +19,8 @@ package co.cask.cdap.security.spi.authorization;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 
 import java.util.Properties;
 
@@ -31,9 +33,10 @@ import java.util.Properties;
  *   <li>Perform admin operations such as create/update/truncate/drop/exists on a dataset.</li>
  *   <li>Instantiate datasets and obtain objects for them.</li>
  *   <li>Execute operations on datasets inside transactions.</li>
+ *   <li>Determine the authentication details of the {@link Principal} making the authorization request.</li>
  * </ol>
  */
-public interface AuthorizationContext extends DatasetContext, Admin, Transactional {
+public interface AuthorizationContext extends DatasetContext, Admin, Transactional, AuthenticationContext {
   /**
    * Returns the properties for the authorization extension. These properties are composed of all the properties
    * defined in {@code cdap-site.xml} with the prefix {@code security.authorization.extension.config.}.

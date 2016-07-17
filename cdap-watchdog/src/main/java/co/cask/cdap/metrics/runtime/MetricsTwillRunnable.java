@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,9 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -77,7 +79,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
 
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.METRICS));
 
@@ -106,7 +108,8 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
     services.add(metricsQueryService);
   }
 
-  public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -122,7 +125,8 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
-      new AuditModule().getDistributedModules()
+      new AuditModule().getDistributedModules(),
+      new AuthenticationContextModules().getMasterModule()
     );
   }
 }

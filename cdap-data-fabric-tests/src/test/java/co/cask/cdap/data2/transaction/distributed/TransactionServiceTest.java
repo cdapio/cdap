@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -105,7 +106,8 @@ public class TransactionServiceTest {
           protected void configure() {
             bind(MetadataStore.class).to(NoOpMetadataStore.class);
           }
-        })
+        }),
+        new AuthenticationContextModules().getMasterModule()
       );
 
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
@@ -159,7 +161,7 @@ public class TransactionServiceTest {
         // releasing resources
         third.stop();
       } finally {
-        dropTable("myTable", cConf);
+        dropTable("myTable");
         zkClient.stopAndWait();
       }
 
@@ -188,7 +190,7 @@ public class TransactionServiceTest {
     return new InMemoryTable(tableName);
   }
 
-  private void dropTable(String tableName, CConfiguration cConf) throws Exception {
+  private void dropTable(String tableName) throws Exception {
     InMemoryTableService.drop(tableName);
   }
 
