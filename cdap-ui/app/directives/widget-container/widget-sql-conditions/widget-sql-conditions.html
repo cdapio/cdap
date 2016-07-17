@@ -15,40 +15,61 @@
 -->
 
 <div class="sql-conditions-container">
-  <div class="clearfix" ng-repeat="rule in SqlConditions.rules track by $index">
-    <div class="col-xs-5">
-      <select class="form-control"
-              ng-model="rule.left.stageName"
-              ng-options="option as option for option in SqlConditions.stageList"
-              ng-change="SqlConditions.formatOutput()">
-      </select>
-    </div>
-    <div class="col-xs-5">
-      <select class="form-control"
-              ng-model="rule.left.fieldName"
-              ng-options="option as option for option in SqlConditions.mapInputSchema[rule.left.stageName]"
-              ng-change="SqlConditions.formatOutput()">
-      </select>
-    </div>
-    <div class="col-xs-2">
-      <span>=</span>
+  <div class="rule clearfix"
+       ng-repeat="rule in SqlConditions.rules track by $index"
+       ng-mouseenter="rule.hover = true"
+       ng-mouseleave="rule.hover = false">
+    <div class="select-fields-group">
+      <span class="delete-field-button"
+            ng-if="rule.hover && !$first"
+            ng-click="SqlConditions.deleteRule($index)">x</span>
+
+      <div class="select-field">
+        <select class="form-control"
+                ng-model="rule.left.stageName"
+                ng-options="option as option for option in SqlConditions.stageList"
+                ng-change="SqlConditions.formatOutput()">
+        </select>
+      </div>
+      <div class="select-field">
+        <select class="form-control"
+                ng-model="rule.left.fieldName"
+                ng-options="option as option for option in SqlConditions.mapInputSchema[rule.left.stageName]"
+                ng-change="SqlConditions.formatOutput()">
+        </select>
+      </div>
+      <div class="field-equality">
+        <span>=</span>
+      </div>
+
+      <div class="select-field">
+        <select class="form-control"
+                ng-model="rule.right.stageName"
+                ng-options="option as option for option in SqlConditions.stageList"
+                ng-change="SqlConditions.formatOutput()">
+        </select>
+      </div>
+      <div class="select-field">
+        <select class="form-control"
+                ng-model="rule.right.fieldName"
+                ng-options="option as option for option in SqlConditions.mapInputSchema[rule.right.stageName]"
+                ng-change="SqlConditions.formatOutput()">
+        </select>
+      </div>
     </div>
 
-    <div class="col-xs-5">
-      <select class="form-control"
-              ng-model="rule.right.stageName"
-              ng-options="option as option for option in SqlConditions.stageList"
-              ng-change="SqlConditions.formatOutput()">
-      </select>
-    </div>
-    <div class="col-xs-5">
-      <select class="form-control"
-              ng-model="rule.right.fieldName"
-              ng-options="option as option for option in SqlConditions.mapInputSchema[rule.right.stageName]"
-              ng-change="SqlConditions.formatOutput()">
-      </select>
-    </div>
+    <div class="action-buttons">
+      <span class="btn btn-sm btn-field-actions"
+            ng-if="!$last">
+        AND
+      </span>
 
+      <button class="btn btn-sm btn-field-actions"
+              ng-if="$last"
+              ng-click="SqlConditions.addRule()">
+        <i class="fa fa-plus"></i>
+      </button>
+    </div>
   </div>
 
   <pre>{{ SqlConditions.model }}</pre>

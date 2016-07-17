@@ -57,18 +57,20 @@ function SqlConditionsController() {
     vm.rules.push({
       left: {
         stageName: vm.stageList[0],
-        fieldName: vm.mapInputSchema[vm.stageList[0]]
+        fieldName: vm.mapInputSchema[vm.stageList[0]][0]
       },
       right: {
         stageName: vm.stageList[0],
-        fieldName: vm.mapInputSchema[vm.stageList[0]]
+        fieldName: vm.mapInputSchema[vm.stageList[0]][0]
       },
       isEqual: true
     });
+    vm.formatOutput();
   };
 
   vm.deleteRule = (index) => {
     vm.rules.splice(index, 1);
+    vm.formatOutput();
   };
 
   function initializeOptions() {
@@ -84,17 +86,7 @@ function SqlConditionsController() {
   function init() {
     initializeOptions();
 
-    vm.rules.push({
-      left: {
-        stageName: vm.stageList[0],
-        fieldName: vm.mapInputSchema[vm.stageList[0]]
-      },
-      right: {
-        stageName: vm.stageList[0],
-        fieldName: vm.mapInputSchema[vm.stageList[0]]
-      },
-      isEqual: true
-    });
+    vm.addRule();
 
   }
 
