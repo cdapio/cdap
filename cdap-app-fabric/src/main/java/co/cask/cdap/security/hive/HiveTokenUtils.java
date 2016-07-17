@@ -63,8 +63,7 @@ public final class HiveTokenUtils {
       credentials.addToken(delegationToken.getService(), delegationToken);
       return credentials;
     } catch (Exception e) {
-      LOG.error("Exception when fetching delegation token from Hive MetaStore", e);
-      throw Throwables.propagate(e);
+      throw Throwables.propagate(new Exception("Exception when fetching delegation token from Hive MetaStore", e));
     } finally {
       Thread.currentThread().setContextClassLoader(contextClassloader);
     }

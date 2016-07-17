@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Helper class for getting KMS security delegation token.
@@ -32,17 +34,42 @@ import java.io.IOException;
 class KMSTokenUtils {
   private static final Logger LOG = LoggerFactory.getLogger(KMSTokenUtils.class);
 
+  private static boolean supportsKMS;
+
+  KMSTokenUtils() {
+    try {
+      // Check if required KMS classes are present.
+      Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
+      supportsKMS = true;
+    } catch (ClassNotFoundException ex) {
+      // KMS is not supported.
+      supportsKMS = false;
+    }
+  }
+
+
   static Credentials obtainToken(final SecureStore secureStore, Credentials credentials) {
+    if (!supportsKMS) {
+      return credentials;
+    }
+
     try {
       String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
-      KeyProvider keyProvider = secureStore.getProvider();
-      KeyProviderDelegationTokenExtension keyProviderDelegationTokenExtension =
-        KeyProviderDelegationTokenExtension.
-          createKeyProviderDelegationTokenExtension(keyProvider);
-      keyProviderDelegationTokenExtension.addDelegationTokens(renewer, credentials);
+      Class store = Class.forName("co.cask.cdap.security.store.KMSSecureStore");
+      @SuppressWarnings("unchecked")
+      Method obtainToken = store.getMethod("getProvider");
+      KeyProvider keyProvider = (KeyProvider) obtainToken.invoke(secureStore);
+      Class tokenExtension = Class.forName("org.apache.hadoop.crypto.key.KeyProviderDelegationTokenExtension");
+      @SuppressWarnings("unchecked")
+      Method m = tokenExtension.getMethod("createKeyProviderDelegationTokenExtension");
+      Object delegationTokenExtension = m.invoke(null, keyProvider);
+      @SuppressWarnings("unchecked")
+      Method addToken = tokenExtension.getMethod("addDelegationTokens");
+      addToken.invoke(delegationTokenExtension, renewer, credentials);
     } catch (IOException e) {
-      LOG.error("Failed to get secure token for KMS.", e);
-      throw Throwables.propagate(e);
+      throw Throwables.propagate(new IOException("Failed to get secure token for KMS.", e));
+    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+      e.printStackTrace();
     }
 
     return credentials;
