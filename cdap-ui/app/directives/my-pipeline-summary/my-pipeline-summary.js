@@ -14,19 +14,19 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailHistoryCtrl', function(HydratorPlusPlusDetailRunsStore) {
-    var vm = this;
-
-    vm.history = [];
-
-    vm.setState = function() {
-      vm.history = HydratorPlusPlusDetailRunsStore.getRuns();
-      var params = HydratorPlusPlusDetailRunsStore.getParams();
-      vm.programType = params.programType.toUpperCase();
-      vm.programId = params.programName;
-      vm.appId = params.app;
+angular.module(PKG.name + '.commons')
+  .directive('myPipelineSummary', function() {
+    return {
+      restrict: 'A',
+      scope: {
+        store: '=',
+        actionCreator: '=',
+        pipelineType: '@'
+      },
+      replace: false,
+      templateUrl: 'my-pipeline-summary/my-pipeline-summary.html',
+      controller: 'MyPipelineSummaryCtrl',
+      controllerAs: 'MyPipelineSummaryCtrl',
+      bindToController: true
     };
-    vm.setState();
-    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(vm.setState);
   });
