@@ -35,7 +35,7 @@ public abstract class PluginConfig extends Config implements Serializable {
   private Set<String> macroFields;
 
   /**
-   * Returns the {@link PluginProperties}.
+   * Returns the {@link PluginProperties}. All the property values are resolved.
    */
   public final PluginProperties getProperties() {
     return properties;
