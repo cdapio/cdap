@@ -376,9 +376,9 @@
 
   <property>
     <name>data.tx.bind.port</name>
-    <value>15165</value>
+    <value>0</value>
     <description>
-      Transaction service bind port
+      Transaction service bind port. Binds to random port by default.
     </description>
   </property>
 
