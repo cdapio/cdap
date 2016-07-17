@@ -26,6 +26,14 @@ class MyPipelineSummaryCtrl {
     var statisticsInterval;
     this.store.registerOnChangeListener(this.setState.bind(this));
     if (GLOBALS.etlBatchPipelines.indexOf(this.pipelineType) !== -1) {
+      this.actionCreator.getNextRunTime(
+        this.store.getApi(),
+        this.store.getParams()
+      );
+      this.actionCreator.getStatistics(
+        this.store.getApi(),
+        this.store.getParams()
+      );
       nextRunTimeInterval = $interval(() => {
         this.actionCreator.getNextRunTime(
           this.store.getApi(),

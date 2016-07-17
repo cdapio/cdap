@@ -48,8 +48,10 @@ class HydratorDetailTopPanelController {
         HydratorPlusPlusDetailRunsStore.getScheduleParams()
       );
     }
-    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(this.setAppStatus.bind(this));
-    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(this.setState.bind(this));
+    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(() => {
+      this.setAppStatus();
+      this.setState();
+    });
     HydratorPlusPlusDetailNonRunsStore.registerOnChangeListener(this.setScheduleStatus.bind(this));
   }
   setState() {
@@ -163,7 +165,7 @@ class HydratorDetailTopPanelController {
         this.myAlertOnValium.show({
           type: 'danger',
           title: 'Unable to start a new run',
-          content: angular.isObject(err)? err.data: err
+          content: angular.isObject(err) ? err.data: err
         });
       }
     );
@@ -178,7 +180,7 @@ class HydratorDetailTopPanelController {
         this.myAlertOnValium.show({
           type: 'danger',
           title: 'Unable to stop the current run',
-          content: angular.isObject(err)? err.data: err
+          content: angular.isObject(err) ? err.data: err
         });
       }
     );
@@ -202,7 +204,7 @@ class HydratorDetailTopPanelController {
           this.myAlertOnValium.show({
             type: 'danger',
             title: 'Unable to schedule the pipeline',
-            content: angular.isObject(err)? err.data: err
+            content: angular.isObject(err) ? err.data: err
           });
         }
       );
@@ -223,7 +225,7 @@ class HydratorDetailTopPanelController {
           this.myAlertOnValium.show({
             type: 'danger',
             title: 'Unable to suspend the pipeline',
-            content: angular.isObject(err)? err.data: err
+            content: angular.isObject(err) ? err.data: err
           });
         }
       );
