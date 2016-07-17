@@ -86,7 +86,34 @@ function SqlConditionsController() {
   function init() {
     initializeOptions();
 
-    vm.addRule();
+    if (!vm.model) {
+      vm.addRule();
+      return;
+    }
+
+    let modelSplit = vm.model.split(' AND ').map((rule) => {
+      return rule.trim();
+    });
+
+    angular.forEach(modelSplit, (rule) => {
+      let ruleSplit = rule.split(' = ').map((field) => {
+        return field.trim().split('.');
+      });
+
+      let ruleObj = {
+        left: {
+          stageName: ruleSplit[0][0],
+          fieldName: ruleSplit[0][1]
+        },
+        right: {
+          stageName: ruleSplit[1][0],
+          fieldName: ruleSplit[1][1]
+        },
+        isEqual: true
+      };
+
+      vm.rules.push(ruleObj);
+    });
 
   }
 
