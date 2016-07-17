@@ -25,6 +25,9 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.LineageStore;
+import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
+import co.cask.cdap.data2.metadata.lineage.LineageStoreWriter;
 import co.cask.cdap.data2.metadata.publisher.KafkaMetadataChangePublisher;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
@@ -51,7 +54,7 @@ import com.google.inject.name.Names;
  */
 public class DataSetsModules extends RuntimeModule {
 
-  public static final String BASIC_DATASET_FRAMEWORK = "basicDatasetFramework";
+  public static final String BASE_DATASET_FRAMEWORK = "basicDatasetFramework";
 
   @Override
   public Module getInMemoryModules() {
@@ -66,9 +69,13 @@ public class DataSetsModules extends RuntimeModule {
         expose(MetadataStore.class);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
           .to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
-        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(LineageStoreReader.class).to(LineageStore.class);
+        bind(LineageStoreWriter.class).to(LineageStore.class);
+        // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
+        expose(LineageStoreReader.class);
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
@@ -101,9 +108,13 @@ public class DataSetsModules extends RuntimeModule {
         expose(MetadataStore.class);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
-        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(LineageStoreReader.class).to(LineageStore.class);
+        bind(LineageStoreWriter.class).to(LineageStore.class);
+        // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
+        expose(LineageStoreReader.class);
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
@@ -136,9 +147,13 @@ public class DataSetsModules extends RuntimeModule {
         expose(MetadataStore.class);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
-        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(LineageStoreReader.class).to(LineageStore.class);
+        bind(LineageStoreWriter.class).to(LineageStore.class);
+        // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
+        expose(LineageStoreReader.class);
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);

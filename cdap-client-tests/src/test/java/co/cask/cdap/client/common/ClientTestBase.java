@@ -19,12 +19,15 @@ package co.cask.cdap.client.common;
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.client.AbstractClientTest;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.test.SingletonExternalResource;
 import org.junit.ClassRule;
+import org.junit.runner.RunWith;
 
 /**
  * Common base test class for all client unit-tests that doesn't need explore service.
  */
+@RunWith(TestRunner.class)
 public abstract class ClientTestBase extends AbstractClientTest {
 
   @ClassRule

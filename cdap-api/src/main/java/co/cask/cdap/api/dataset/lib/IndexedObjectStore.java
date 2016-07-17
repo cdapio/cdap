@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
@@ -66,6 +68,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   /**
    * See {@link ObjectStore#read(byte[])}.
    */
+  @ReadOnly
   public T read(byte[] key) {
     return objectStore.read(key);
   }
@@ -73,6 +76,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   /**
    * See {@link ObjectStore#read(String)}.
    */
+  @ReadOnly
   public T read(String key) {
     return objectStore.read(key);
   }
@@ -84,6 +88,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
    * @param secondaryKey for the lookup.
    * @return List of Objects matching the secondaryKey.
    */
+  @ReadOnly
   public List<T> readAllByIndex(byte[] secondaryKey) {
     List<T> resultList = new ArrayList<>();
     //Lookup the secondaryKey and get all the keys in primary
@@ -140,6 +145,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
    * @param object object to be stored
    * @param secondaryKeys indices that can be used to lookup the object
    */
+  @WriteOnly
   public void write(byte[] key, T object, byte[][] secondaryKeys) {
     writeToObjectStore(key, object);
 
@@ -185,6 +191,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
     objectStore.write(key, object);
   }
 
+  @WriteOnly
   public void write(byte[] key, T object) {
     Row row = index.get(getPrefixedPrimaryKey(key));
     if (!row.isEmpty()) {
@@ -216,6 +223,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
    * @param key key for the object
    * @param secondaryKey index to be pruned
    */
+  @WriteOnly
   public void pruneIndex(byte[] key, byte[] secondaryKey) {
     this.index.delete(secondaryKey, key);
     this.index.delete(getPrefixedPrimaryKey(key), secondaryKey);
@@ -227,6 +235,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
    * @param key key for the object
    * @param secondaryKey index to be pruned
    */
+  @WriteOnly
   public void updateIndex(byte[] key, byte[] secondaryKey) {
     this.index.put(secondaryKey, key, EMPTY_VALUE);
     this.index.put(getPrefixedPrimaryKey(key), secondaryKey, EMPTY_VALUE);

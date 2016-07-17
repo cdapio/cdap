@@ -14,24 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.app.customds;
+package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
-
-import java.io.IOException;
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 
 /**
- *
+ * A provider for for program classloading creation.
  */
-public class DefaultTopLevelExtendsDataset implements TopLevelExtendsDataset {
+public interface ProgramClassLoaderProvider {
 
-  @Override
-  public DatasetSpecification getSpecification() {
-    return null;
-  }
-
-  @Override
-  public void close() throws IOException {
-
-  }
+  /**
+   * Creates a {@link ClassLoader} that will be used as the parent {@link ClassLoader} of
+   * {@link ProgramClassLoader}.
+   *
+   * @return an instance of {@link ClassLoader}
+   */
+  ClassLoader createProgramClassLoaderParent();
 }

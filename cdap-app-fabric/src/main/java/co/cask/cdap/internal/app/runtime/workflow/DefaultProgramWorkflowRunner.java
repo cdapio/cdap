@@ -26,7 +26,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -34,17 +33,16 @@ import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
@@ -53,6 +51,8 @@ import org.apache.twill.common.Threads;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -66,8 +66,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
-  private final Arguments userArguments;
-  private final Arguments systemArguments;
+  private final ProgramOptions workflowProgramOptions;
   private final Program workflowProgram;
   private final String nodeId;
   private final Map<String, WorkflowNodeState> nodeStates;
@@ -81,11 +80,10 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
                                WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates,
                                ProgramType programType) {
     this.cConf = cConf;
-    this.userArguments = workflowProgramOptions.getUserArguments();
     this.workflowProgram = workflowProgram;
+    this.workflowProgramOptions = workflowProgramOptions;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowSpec = workflowSpec;
-    this.systemArguments = workflowProgramOptions.getArguments();
     this.token = token;
     this.nodeId = nodeId;
     this.nodeStates = nodeStates;
@@ -112,24 +110,24 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    * @return a {@link Runnable} for this {@link Program}
    */
   private Runnable getProgramRunnable(String name, final ProgramRunner programRunner, final Program program) {
-    Map<String, String> systemArgumentsMap = Maps.newHashMap();
-    systemArgumentsMap.putAll(systemArguments.asMap());
+    Map<String, String> systemArgumentsMap = new HashMap<>(workflowProgramOptions.getArguments().asMap());
+
     // Generate the new RunId here for the program running under Workflow
     systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, RunIds.generate().getId());
 
     // Add Workflow specific system arguments to be passed to the underlying program
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NAME, workflowSpec.getName());
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID,
-                           systemArguments.getOption(ProgramOptionConstants.RUN_ID));
+                           ProgramRunners.getRunId(workflowProgramOptions).getId());
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, nodeId);
     systemArgumentsMap.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, name);
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
 
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),
-      new BasicArguments(ImmutableMap.copyOf(systemArgumentsMap)),
+      new BasicArguments(Collections.unmodifiableMap(systemArgumentsMap)),
       new BasicArguments(RuntimeArguments.extractScope(Scope.scopeFor(program.getType().getCategoryName()), name,
-                                                       userArguments.asMap()))
+                                                       workflowProgramOptions.getUserArguments().asMap()))
     );
 
     return new Runnable() {
@@ -158,7 +156,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
                                         programType, programName);
     ApplicationSpecification appSpec = workflowProgram.getApplicationSpecification();
     return Programs.create(cConf, programRunner, new ProgramDescriptor(programId, appSpec),
-                    workflowProgram.getJarLocation(), ((ProgramClassLoader) classLoader).getDir());
+                           workflowProgram.getJarLocation(), ((ProgramClassLoader) classLoader).getDir());
   }
 
   private void runAndWait(ProgramRunner programRunner, Program program, ProgramOptions options) throws Exception {

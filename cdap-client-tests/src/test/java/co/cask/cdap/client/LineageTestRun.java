@@ -268,7 +268,9 @@ public class LineageTestRun extends MetadataTestBase {
             new Relation(dataset3, spark, AccessType.WRITE, sparkRunId),
             new Relation(dataset, mapreduce, AccessType.WRITE, workflowMrRunId),
             new Relation(dataset, service, AccessType.UNKNOWN, serviceRunId),
+            new Relation(dataset, service, AccessType.WRITE, serviceRunId),
             new Relation(dataset, worker, AccessType.UNKNOWN, workerRunId),
+            new Relation(dataset, worker, AccessType.WRITE, workerRunId),
 
             // Stream access
             new Relation(stream, flow, AccessType.READ, flowRunId,

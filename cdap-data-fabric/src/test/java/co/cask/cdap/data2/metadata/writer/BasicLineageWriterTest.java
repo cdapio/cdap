@@ -98,7 +98,7 @@ public class BasicLineageWriterTest {
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
           bind(DatasetFramework.class)
-            .annotatedWith(Names.named(DataSetsModules.BASIC_DATASET_FRAMEWORK))
+            .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
             .to(InMemoryDatasetFramework.class);
           bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
           bind(MetadataStore.class).to(DefaultMetadataStore.class);

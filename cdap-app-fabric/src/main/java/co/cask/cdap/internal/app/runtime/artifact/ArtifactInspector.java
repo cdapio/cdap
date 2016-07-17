@@ -25,7 +25,6 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.EndpointPluginContext;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -42,9 +41,7 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
-import co.cask.cdap.proto.artifact.DatasetClass;
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
@@ -70,24 +67,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipException;
 import javax.annotation.Nullable;
@@ -151,42 +142,6 @@ final class ArtifactInspector {
     }
   }
 
-  /**
-   * Extracts all dataset classes defined under the given artifact directory. It will scan every .class files under
-   * the artifact directory as well as .class files inside .jar files in the artifact directory.
-   * This method uses bytecode inspection, hence the actual class is not loaded. This is because loading every single
-   * class is a very slow and memory consumption process.
-   *
-   * @param unpackedArtifactDir directory that the artifact jar was expanded to
-   * @param artifactClassLoader an artifact {@link ClassLoader} defined based on the unpacked directory
-   * @param builder for adding dataset classes information
-   * @return the given {@link ArtifactClasses.Builder}.
-   * @throws IOException if failed to extract dataset classes information due to failure in reading the .class files.
-   */
-  private ArtifactClasses.Builder extractDatasets(File unpackedArtifactDir,
-                                                  final ClassLoader artifactClassLoader,
-                                                  ArtifactClasses.Builder builder) throws IOException {
-    final Set<String> classes = scanClasses(unpackedArtifactDir.toPath(), new HashSet<String>());
-    Function<String, URL> resourceProvider = new Function<String, URL>() {
-      @Nullable
-      @Override
-      public URL apply(String className) {
-        String resourceName = className.replace('.', '/') + ".class";
-        URL resource = artifactClassLoader.getResource(resourceName);
-        return resource != null ? resource : getClass().getClassLoader().getResource(resourceName);
-      }
-    };
-
-    Map<String, Boolean> cache = new HashMap<>();
-    for (String className : classes) {
-      if (isSubTypeOf(className, Dataset.class.getName(), resourceProvider, cache)) {
-        builder.addDataset(new DatasetClass(className));
-      }
-    }
-
-    return builder;
-  }
-
   private ArtifactClasses.Builder inspectApplications(Id.Artifact artifactId,
                                                       ArtifactClasses.Builder builder,
                                                       Location artifactLocation,
@@ -217,8 +172,6 @@ final class ArtifactInspector {
     }
 
     try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir)) {
-      extractDatasets(unpackedDir, artifactClassLoader, builder);
-
       Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
       if (!(appMain instanceof Application)) {
         // we don't want to error here, just don't record an application class.
@@ -254,52 +207,6 @@ final class ArtifactInspector {
     }
 
     return builder;
-  }
-
-  /**
-   * Scans the given artifact directory for all classes. It scans classes inside .jar file as well.
-   */
-  private Set<String> scanClasses(final Path unpackedDir, final Set<String> result) throws IOException {
-    Files.walkFileTree(unpackedDir, new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        Path relativePath = unpackedDir.relativize(file);
-        String pathString = relativePath.toString();
-        if (pathString.endsWith(".jar")) {
-          // Only index top level jars and jars inside the "lib/" directory.
-          int nameCount = relativePath.getNameCount();
-          if (nameCount == 1 || nameCount == 2 && relativePath.getName(0).equals(Paths.get("lib"))) {
-            scanJarClasses(file, result);
-          }
-        } else if (pathString.endsWith(".class")) {
-          String className = Joiner.on('.').join(relativePath);
-          className = className.substring(0, className.length() - ".class".length());
-          result.add(className);
-        }
-        return FileVisitResult.CONTINUE;
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * Scans the given jar file and for classes.
-   */
-  private Set<String> scanJarClasses(final Path jarFilePath, Set<String> result) throws IOException {
-    try (JarInputStream jarInput = new JarInputStream(Files.newInputStream(jarFilePath))) {
-      JarEntry jarEntry;
-      while ((jarEntry = jarInput.getNextJarEntry()) != null) {
-        // Only index the .class files inside the jar
-        String entryName = jarEntry.getName();
-        if (entryName.endsWith(".class")) {
-          String className = entryName.replace('/', '.');
-          className = className.substring(0, className.length() - ".class".length());
-          result.add(className);
-        }
-      }
-    }
-    return result;
   }
 
   /**
@@ -607,70 +514,5 @@ final class ArtifactInspector {
       LOG.warn("Failed to open class file for {}", className, e);
       return false;
     }
-  }
-
-  /**
-   * Checks if the given class extends or implements a super type.
-   *
-   * @param className name of the class to check
-   * @param superTypeName name of the super type
-   * @param resourceProvider a {@link Function} to provide {@link URL} of a class from the class name
-   * @param cache a cache for memorizing previous decision for classes of the same super type
-   * @return true if the given class name is a sub-class of the given super type
-   * @throws IOException if failed to read class information
-   */
-  private boolean isSubTypeOf(String className, final String superTypeName,
-                              final Function<String, URL> resourceProvider,
-                              final Map<String, Boolean> cache) throws IOException {
-    // Base case
-    if (superTypeName.equals(className)) {
-      cache.put(className, true);
-      return true;
-    }
-
-    // Check the cache first
-    Boolean cachedResult = cache.get(className);
-    if (cachedResult != null) {
-      return cachedResult;
-    }
-
-    // Try to get the URL resource of the given class
-    URL url = resourceProvider.apply(className);
-    if (url == null) {
-      // Ignore it if cannot find the class file for the given class.
-      // Normally this shouldn't happen, however it is to guard against mis-packaged artifact jar that included
-      // invalid/incomplete jars. Anyway, if this happen, the class won't be loadable in runtime.
-      return false;
-    }
-
-    // Inspect the bytecode and check the super class/interfaces recursively
-    boolean result = false;
-    try (InputStream input = url.openStream()) {
-      ClassReader cr = new ClassReader(input);
-      String superName = cr.getSuperName();
-      if (superName != null) {
-        result = isSubTypeOf(Type.getObjectType(superName).getClassName(), superTypeName, resourceProvider, cache);
-      }
-
-      if (!result) {
-        String[] interfaces = cr.getInterfaces();
-        if (interfaces != null) {
-          for (String intf : interfaces) {
-            if (isSubTypeOf(Type.getObjectType(intf).getClassName(), superTypeName, resourceProvider, cache)) {
-              result = true;
-              break;
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      if (e.getCause() != null) {
-        Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
-      }
-      throw e;
-    }
-
-    cache.put(className, result);
-    return result;
   }
 }

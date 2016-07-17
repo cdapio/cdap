@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -30,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -49,7 +51,7 @@ import javax.annotation.Nullable;
  * ...
  * </pre>
  */
-public class DirectoryClassLoader extends URLClassLoader {
+public class DirectoryClassLoader extends InterceptableClassLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(DirectoryClassLoader.class);
 
@@ -59,8 +61,12 @@ public class DirectoryClassLoader extends URLClassLoader {
     this(dir, "", parent, ImmutableSet.copyOf(libDirs));
   }
 
-  public DirectoryClassLoader(File dir, String extraClassPath, ClassLoader parent, String...libDirs) {
-    this(dir, extraClassPath, parent, ImmutableSet.copyOf(libDirs));
+  public DirectoryClassLoader(CConfiguration cConf, File dir, ClassLoader parent, String...libDirs) {
+    this(cConf, dir, parent, Arrays.asList(libDirs));
+  }
+
+  public DirectoryClassLoader(CConfiguration cConf, File dir, ClassLoader parent, Iterable<String> libDirs) {
+    this(dir, cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH), parent, libDirs);
   }
 
   public DirectoryClassLoader(File dir, String extraClassPath, ClassLoader parent, Iterable<String> libDirs) {
@@ -82,11 +88,26 @@ public class DirectoryClassLoader extends URLClassLoader {
   }
 
   /**
-   * Returns the {@link Manifest} in the program jar or {@code null} if there is no manifest available.
+   * Returns the {@link Manifest} in the directory if it contains the file
+   * {@link JarFile#MANIFEST_NAME} or {@code null} if there is no manifest available.
    */
   @Nullable
   public Manifest getManifest() {
     return manifest;
+  }
+
+  /**
+   * Always return {@code false} as this class won't do any class rewriting. Subclasses overriding this method
+   * should also override {@link #rewriteClass(String, InputStream)}.
+   */
+  @Override
+  protected boolean needIntercept(String className) {
+    return false;
+  }
+
+  @Override
+  public byte[] rewriteClass(String className, InputStream input) throws IOException {
+    throw new UnsupportedOperationException("Class rewriting of class '" + className + "' is not supported");
   }
 
   private static URL[] getClassPathURLs(File dir, String extraClassPath, Set<String> libDirs) {

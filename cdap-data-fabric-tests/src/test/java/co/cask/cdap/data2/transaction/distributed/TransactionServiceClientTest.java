@@ -30,6 +30,8 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TransactionSystemTest;
@@ -120,7 +122,9 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
           bind(MetadataStore.class).to(NoOpMetadataStore.class);
         }
       }),
-      new AuthenticationContextModules().getMasterModule());
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getNoOpModule());
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();

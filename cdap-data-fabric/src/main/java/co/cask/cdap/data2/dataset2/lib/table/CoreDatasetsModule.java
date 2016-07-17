@@ -31,7 +31,6 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.lib.TimeseriesTableDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.MemoryTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
@@ -67,7 +66,6 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
 
     // in-memory table
-    registry.add(new InMemoryTableDefinition(MemoryTable.class.getName()));
     registry.add(new InMemoryTableDefinition("memoryTable"));
   }
 }

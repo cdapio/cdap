@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
@@ -44,6 +46,7 @@ import co.cask.tephra.TxConstants;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -54,12 +57,16 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -121,7 +128,11 @@ public class HBaseTable extends BufferingTable {
   }
 
   @Override
-  public List<Map<byte[], byte[]>> getPersisted(List<co.cask.cdap.api.dataset.table.Get> gets) {
+  protected List<Map<byte[], byte[]>> getPersisted(List<co.cask.cdap.api.dataset.table.Get> gets) {
+    if (gets.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     List<Get> hbaseGets = new ArrayList<>();
     for (co.cask.cdap.api.dataset.table.Get get : gets) {
       List<byte[]> cols = get.getColumns();
@@ -133,23 +144,32 @@ public class HBaseTable extends BufferingTable {
       }
     }
 
-    try {
-      Result[] hbaseResults = hTable.get(hbaseGets);
+    if (hbaseGets.isEmpty()) {
+      return Collections.emptyList();
+    }
 
-      List<Map<byte[], byte[]>> results = new ArrayList<>(gets.size());
-      int hbaseResultsIndex = 0;
-      for (co.cask.cdap.api.dataset.table.Get get : gets) {
-        List<byte[]> cols = get.getColumns();
-        if (cols == null || !cols.isEmpty()) {
-          Result hbaseResult = hbaseResults[hbaseResultsIndex++];
-          Map<byte[], byte[]> familyMap = hbaseResult.getFamilyMap(columnFamily);
-          results.add(familyMap != null ? familyMap : ImmutableMap.<byte[], byte[]>of());
-        } else {
-          results.add(ImmutableMap.<byte[], byte[]>of());
-        }
+    Result[] hbaseResults = hbaseGet(hbaseGets);
+
+    List<Map<byte[], byte[]>> results = new ArrayList<>(gets.size());
+    int hbaseResultsIndex = 0;
+    for (co.cask.cdap.api.dataset.table.Get get : gets) {
+      List<byte[]> cols = get.getColumns();
+      if (cols == null || !cols.isEmpty()) {
+        Result hbaseResult = hbaseResults[hbaseResultsIndex++];
+        Map<byte[], byte[]> familyMap = hbaseResult.getFamilyMap(columnFamily);
+        results.add(familyMap != null ? familyMap : ImmutableMap.<byte[], byte[]>of());
+      } else {
+        results.add(ImmutableMap.<byte[], byte[]>of());
       }
+    }
 
-      return results;
+    return results;
+  }
+
+  @ReadOnly
+  private Result[] hbaseGet(List<Get> gets) {
+    try {
+      return hTable.get(gets);
     } catch (IOException ioe) {
       throw new DataSetException("Multi-get failed on table " + hTableName, ioe);
     }
@@ -170,9 +190,13 @@ public class HBaseTable extends BufferingTable {
   }
 
   @Override
-  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) throws Exception {
+  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> updates) throws Exception {
+    if (updates.isEmpty()) {
+      return;
+    }
+
     List<Put> puts = Lists.newArrayList();
-    for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : buff.entrySet()) {
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : updates.entrySet()) {
       PutBuilder put = tableUtil.buildPut(row.getKey());
       Put incrementPut = null;
       for (Map.Entry<byte[], Update> column : row.getValue().entrySet()) {
@@ -207,11 +231,16 @@ public class HBaseTable extends BufferingTable {
       }
     }
     if (!puts.isEmpty()) {
-      hTable.put(puts);
-      hTable.flushCommits();
+      hbasePut(puts);
     } else {
       LOG.info("No writes to persist!");
     }
+  }
+
+  @WriteOnly
+  private void hbasePut(List<Put> puts) throws InterruptedIOException, RetriesExhaustedWithDetailsException {
+    hTable.put(puts);
+    hTable.flushCommits();
   }
 
   private Put getIncrementalPut(Put existing, byte[] row) {
@@ -225,6 +254,10 @@ public class HBaseTable extends BufferingTable {
 
   @Override
   protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
+    if (persisted.isEmpty()) {
+      return;
+    }
+
     // NOTE: we use Delete with the write pointer as the specific version to delete.
     List<Delete> deletes = Lists.newArrayList();
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : persisted.entrySet()) {
@@ -241,6 +274,14 @@ public class HBaseTable extends BufferingTable {
       }
       deletes.add(delete.build());
     }
+
+    if (!deletes.isEmpty()) {
+      hbaseDelete(deletes);
+    }
+  }
+
+  @WriteOnly
+  private void hbaseDelete(List<Delete> deletes) throws IOException {
     hTable.delete(deletes);
     hTable.flushCommits();
   }
@@ -258,6 +299,7 @@ public class HBaseTable extends BufferingTable {
     return getInternal(row, columns);
   }
 
+  @ReadOnly
   @Override
   protected Scanner scanPersisted(co.cask.cdap.api.dataset.table.Scan scan) throws Exception {
     ScanBuilder hScan = tableUtil.buildScan();
@@ -279,7 +321,7 @@ public class HBaseTable extends BufferingTable {
     setFilterIfNeeded(hScan, scan.getFilter());
     hScan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
 
-    ResultScanner resultScanner = hTable.getScanner(hScan.build());
+    ResultScanner resultScanner = wrapResultScanner(hTable.getScanner(hScan.build()));
     return new HBaseScanner(resultScanner, columnFamily);
   }
 
@@ -334,6 +376,7 @@ public class HBaseTable extends BufferingTable {
   }
 
   // columns being null means to get all rows; empty columns means get no rows.
+  @ReadOnly
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
     if (columns != null && columns.length == 0) {
       return EMPTY_ROW_MAP;
@@ -366,5 +409,57 @@ public class HBaseTable extends BufferingTable {
     }
 
     return unwrapDeletes(rowMap);
+  }
+
+  // The following methods assist the Dataset authorization when the ResultScanner is used.
+
+  @ReadOnly
+  private Result next(ResultScanner scanner) throws IOException {
+    return scanner.next();
+  }
+
+  @ReadOnly
+  private Result[] next(ResultScanner scanner, int nbRows) throws IOException {
+    return scanner.next(nbRows);
+  }
+
+  @ReadOnly
+  private <T> boolean hasNext(Iterator<T> iterator) {
+    return iterator.hasNext();
+  }
+
+  @ReadOnly
+  private <T> T next(Iterator<T> iterator) {
+    return iterator.next();
+  }
+
+  private ResultScanner wrapResultScanner(final ResultScanner scanner) {
+    return new ResultScanner() {
+      @Override
+      public Result next() throws IOException {
+        return HBaseTable.this.next(scanner);
+      }
+
+      @Override
+      public Result[] next(int nbRows) throws IOException {
+        return HBaseTable.this.next(scanner, nbRows);
+      }
+
+      @Override
+      public void close() {
+        scanner.close();
+      }
+
+      @Override
+      public Iterator<Result> iterator() {
+        final Iterator<Result> iterator = scanner.iterator();
+        return new AbstractIterator<Result>() {
+          @Override
+          protected Result computeNext() {
+            return HBaseTable.this.hasNext(iterator) ? HBaseTable.this.next(iterator) : endOfData();
+          }
+        };
+      }
+    };
   }
 }

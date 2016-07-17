@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package co.cask.cdap.api.annotation;
+
+import co.cask.cdap.api.dataset.Dataset;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * A {@link Table} that stores all data in memory.
+ * Annotation to denote if a {@link Dataset} constructor or method performs both read and write operations.
  */
-public interface MemoryTable extends Table {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
+public @interface ReadWrite {
 }
