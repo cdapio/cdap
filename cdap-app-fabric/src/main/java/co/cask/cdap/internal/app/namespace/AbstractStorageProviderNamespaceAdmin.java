@@ -124,8 +124,9 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
                                               "location %s. Custom location must be absolute path.",
                                             namespaceMeta.getName(), customLocation));
       }
-      // since this is a custom location we expect it to exists
-      if (!customLocation.exists()) {
+      // since this is a custom location we expect it to exists. Get the custom location for the namespace from
+      // namespaceLocationFactory since the location needs to be aware of local/distributed fs.
+      if (!namespacedLocationFactory.get(namespaceMeta.getNamespaceId().toId()).exists()) {
         // TODO: Add username in the below exception message.
         throw new IOException(String.format(
           "The provided home directory '%s' for namespace '%s' does not exists. Please create it on filesystem " +
