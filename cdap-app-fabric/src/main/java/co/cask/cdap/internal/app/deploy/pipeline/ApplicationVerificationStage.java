@@ -109,7 +109,12 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
                             ApplicationSpecification specification) throws DatasetManagementException {
     // NOTE: no special restrictions on dataset module names, etc
     VerifyResult result;
+    MacroChecker macroChecker = new MacroChecker();
     for (DatasetCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
+      if (macroChecker.isMacro(dataSetCreateSpec.getInstanceName())) {
+        // skip id check for macro enabled dataset names.
+        continue;
+      }
       result = getVerifier(DatasetCreationSpec.class).verify(appId, dataSetCreateSpec);
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());
@@ -126,6 +131,10 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     }
 
     for (StreamSpecification spec : specification.getStreams().values()) {
+      if (macroChecker.isMacro(spec.getName())) {
+        // skip id check for macro enabled stream names.
+        continue;
+      }
       result = getVerifier(StreamSpecification.class).verify(appId, spec);
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());

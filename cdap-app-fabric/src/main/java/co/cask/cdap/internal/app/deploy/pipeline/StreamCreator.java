@@ -42,7 +42,12 @@ final class StreamCreator {
    * @throws Exception if there was an exception creating a stream
    */
   void createStreams(NamespaceId namespaceId, Iterable<StreamSpecification> streamSpecs) throws Exception {
+    MacroChecker macroChecker = new MacroChecker();
     for (StreamSpecification spec : streamSpecs) {
+      if (macroChecker.isMacro(spec.getName())) {
+        // skip stream creation for macro enabled fields.
+        continue;
+      }
       Properties props = new Properties();
       if (spec.getDescription() != null) {
         props.put(Constants.Stream.DESCRIPTION, spec.getDescription());

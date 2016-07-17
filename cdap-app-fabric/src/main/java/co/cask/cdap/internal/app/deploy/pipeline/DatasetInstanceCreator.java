@@ -21,6 +21,8 @@ import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.plugin.MacroParser;
+import co.cask.cdap.internal.app.runtime.plugin.TrackingMacroEvaluator;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -51,8 +53,13 @@ final class DatasetInstanceCreator {
    */
   void createInstances(NamespaceId namespaceId, Map<String, DatasetCreationSpec> datasets) throws Exception {
     // create dataset instances
+    MacroChecker macroChecker = new MacroChecker();
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : datasets.entrySet()) {
       String instanceName = instanceEntry.getKey();
+      if (macroChecker.isMacro(instanceName)) {
+        // skip dataset creation for macros
+        continue;
+      }
       DatasetId instanceId = namespaceId.dataset(instanceName);
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
       DatasetSpecification existingSpec = datasetFramework.getDatasetSpec(instanceId.toId());
