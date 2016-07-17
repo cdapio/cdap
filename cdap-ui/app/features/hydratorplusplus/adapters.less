@@ -43,13 +43,9 @@ body.theme-cdap {
     my-dag-plus {
       width: 100%;
       // Dag-Height 60% on smaller screen
-      height: 61.5vh;
-      &:not(.canvas-scroll) {
-        // Subtract navbar, top panel, collapsed bottom panel and footer from total viewport height
-        height: ~"-moz-calc(100vh - 145px)";
-        height: ~"-webkit-calc(100vh - 145px)";
-        height: ~"calc(100vh - 145px)";
-      }
+      height: ~"-moz-calc(100vh - 142px)";
+      height: ~"-webkit-calc(100vh - 142px)";
+      height: ~"calc(100vh - 142px)";
 
       @media (min-height: 800px) {
         height: 40vh;
@@ -134,7 +130,9 @@ body.theme-cdap {
     .detail-canvas-container {
       position: relative;
     }
-
+    my-dag-plus {
+      height: 61.5vh;
+    }
     my-program-history {
       ul.pagination {
         margin-right: 15px;

@@ -36,10 +36,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       {
         title: 'Datasets',
         template: '/assets/features/hydratorplusplus/templates/detail/tabs/datasets.html'
-      },
-      {
-        title: 'Post-Run Actions',
-        template: '/assets/features/hydratorplusplus/templates/detail/tabs/postactions-detail.html'
       }
     ];
 

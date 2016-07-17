@@ -15,8 +15,13 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers) {
-
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore) {
+    this.consoleStore = HydratorPlusPlusConsoleStore;
+    this.consoleStore.registerOnChangeListener(() => {
+      let messages = this.consoleStore.getMessages() || [];
+      let filteredMessages = messages.filter( message => message.type === 'MISSING-NAME');
+      this.state.inValidName = (filteredMessages.length ? true : false);
+    });
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
@@ -150,10 +155,10 @@ class HydratorPlusPlusTopPanelCtrl{
     this.HydratorPlusPlusConsoleActions.resetMessages();
     let isStateValid = this.HydratorPlusPlusConfigStore.validateState(true);
     if (isStateValid) {
-      this.HydratorPlusPlusConsoleActions.addMessage({
+      this.HydratorPlusPlusConsoleActions.addMessage([{
         type: 'success',
         content: 'Validation success! Pipeline ' + this.HydratorPlusPlusConfigStore.getName() + ' is valid.'
-      });
+      }]);
     }
   }
   onPublish() {
@@ -164,7 +169,7 @@ class HydratorPlusPlusTopPanelCtrl{
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

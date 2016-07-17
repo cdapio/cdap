@@ -32,7 +32,11 @@ class HydratorPlusPlusConsoleStore {
   }
 
   registerOnChangeListener(callback) {
-    this.changeListeners.push(callback);
+    let index = this.changeListeners.push(callback);
+    // un-subscribe for listners.
+    return () => {
+      this.changeListeners.splice(index-1, 1);
+    };
   }
   emitChange() {
     this.changeListeners.forEach( callback => callback() );
@@ -42,9 +46,8 @@ class HydratorPlusPlusConsoleStore {
     return this.state.messages;
   }
 
-  addMessage(message) {
-    message.date = new Date();
-    this.state.messages.push(message);
+  addMessage(messages) {
+    this.state.messages = messages || [];
     this.emitChange();
   }
 
