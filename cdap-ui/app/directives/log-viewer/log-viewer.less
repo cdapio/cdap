@@ -27,7 +27,7 @@
 @stack-trace-font-color: #cccccc;
 @message-expanded-color: #dedede;
 @searchbar-placeholder-color: #787878;
-@searchbar-input-color: blue;
+@searchbar-input-color: #9cbcfc;
 @timeline-buffer-color: #a6a6a6;
 @error-color: #f65454;
 @warning-color: #f6b354;
@@ -86,6 +86,7 @@ my-log-viewer {
   .highlightedText {
     background: #9cd0fc;
     border-radius: 5px;
+    color: #000000;
   }
 
   .log-viewer-container {
@@ -270,9 +271,6 @@ my-log-viewer {
     }
 
     .logs-table {
-      height: ~"-moz-calc(100vh - 450px)";
-      height: ~"-webkit-calc(100vh - 450px)";
-      height: ~"calc(100vh - 450px)";
       overflow: auto;
 
       tbody td {
@@ -418,6 +416,11 @@ my-log-viewer {
 
       .message-header {
         width: 100%;
+
+        .fa {
+          position: relative;
+          bottom: 1px;
+        }
 
         .fa-arrow-left,
         .fa-arrow-right {

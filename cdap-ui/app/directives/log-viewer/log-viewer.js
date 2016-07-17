@@ -170,7 +170,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       }).$promise.then(
         (statusRes) => {
           if(statusRes.status === 'RUNNING'){
-            console.log('Polling for new logs!');
             pollForNewLogs();
           }
         },
@@ -187,7 +186,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     },
     function(res) {
       if(res.length > 0){
-        console.log('Stopping polls!!!!');
         this.data = res;
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;

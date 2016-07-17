@@ -102,14 +102,14 @@
                 ng-click="LogViewer.collapseColumns()"></span>
           <span>Message</span>
           <div class="expand-all-btn text-center"
-               ng-click="LogViewer.toggleLogExpansion()">Expand All</div>
+               ng-click="LogViewer.toggleLogExpansion()"><span ng-if="!LogViewer.toggleExpandAll">Expand All</span><span ng-if="LogViewer.toggleExpandAll">Collapse All</span></div>
         </th>
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
              infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.data.length"
              infinite-scroll-container="'.logs-table'"
              >
-        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:LogViewer.eventFilter | filter:searchText | limitTo: LogViewer.viewLimit track by $index">
+        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:searchText | filter:LogViewer.eventFilter | limitTo: LogViewer.viewLimit track by $index">
           <!-- TIME -->
           <td class="time"
               ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
