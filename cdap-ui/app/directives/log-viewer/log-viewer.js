@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce) {
   'ngInject';
 
   this.data = {};
@@ -225,19 +225,17 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         }
         //There are no more logs to be returned
         if(res.length === 0){
-        //if(res.length < this.viewLimit) { //|| res.length < this.viewLimit){
-          this.loadingMoreLogs = false;
           getStatus();
           return;
         }
         //clear the current array
         this.data.length = 0;
 
-        // console.log('this is the new response:')
         this.fromOffset = res[res.length-1].offset;
         this.totalCount = res.length;
         this.warningCount = 0;
         this.errorCount = 0;
+
         angular.forEach(res, (element, index) => {
           if(res[index].log.logLevel === 'WARN'){
             this.warningCount++;
@@ -275,6 +273,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
     return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
   }
+
+  this.highlight = (text) => {
+    if(!this.searchText){
+      return $sce.trustAsHtml(text);
+    }
+    return $sce.trustAsHtml(text.replace(new RegExp(this.searchText, 'gi'), '<span class="highlightedText">$&</span>'));
+  };
 
   this.toggleLogExpansion = function() {
     this.toggleExpandAll = !this.toggleExpandAll;

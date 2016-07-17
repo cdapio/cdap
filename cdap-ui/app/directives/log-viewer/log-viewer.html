@@ -41,7 +41,7 @@
         <button class="log-action-btn">View Raw</button>
         <button class="log-action-btn">Download All</button>
         <div class="search">
-          <input type="text" class="log-searchbar" placeholder="Search" ng-model="searchText">
+          <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText">
           <span class="fa fa-search"></span>
         </div>
         <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewer.fullScreen = !LogViewer.fullScreen"></i>
@@ -149,7 +149,7 @@
                       ng-class="{'fa-minus': entry.isStackTraceExpanded}">
                 </span>
               </div>
-              <span class="message-text">{{ ::entry.log.message}}</span>
+              <span class="message-text"><span ng-bind-html="LogViewer.highlight(entry.log.message)"></span></span>
             </div>
 
             <div class="stack-trace"
