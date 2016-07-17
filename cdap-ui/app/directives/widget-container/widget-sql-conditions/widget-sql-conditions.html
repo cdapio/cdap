@@ -21,7 +21,7 @@
        ng-mouseleave="rule.hover = false">
     <div class="select-fields-group">
       <span class="delete-field-button"
-            ng-if="rule.hover && !$first"
+            ng-if="rule.hover && SqlConditions.rules.length !== 1"
             ng-click="SqlConditions.deleteRule($index)">x</span>
 
       <div class="select-field">
@@ -71,6 +71,4 @@
       </button>
     </div>
   </div>
-
-  <pre>{{ SqlConditions.model }}</pre>
 </div>
