@@ -20,19 +20,10 @@ import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.test.AppJarHelper;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.proto.security.Role;
-import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
-import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -41,7 +32,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
-import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -240,82 +230,14 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
     return externalAuthJar;
   }
 
-  public static class NoOpAbstractAuthorizer extends AbstractAuthorizer {
-
-    @Override
-    public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-      // no-op
-    }
-
-    @Override
-    public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-      // no-op
-    }
-
-    @Override
-    public void revoke(EntityId entity) {
-      // no-op
-    }
-
-    @Override
-    public Set<Privilege> listPrivileges(Principal principal) {
-      return ImmutableSet.of();
-    }
-
-    @Override
-    public void createRole(Role role) throws RoleAlreadyExistsException {
-      // no-op
-    }
-
-    @Override
-    public void dropRole(Role role) throws RoleNotFoundException {
-      // no-op
-    }
-
-    @Override
-    public void addRoleToPrincipal(Role role, Principal principal) {
-      // no-op
-    }
-
-    @Override
-    public void removeRoleFromPrincipal(Role role, Principal principal) {
-      // no-op
-    }
-
-    @Override
-    public Set<Role> listRoles(Principal principal) {
-      return ImmutableSet.of();
-    }
-
-    @Override
-    public Set<Role> listAllRoles() {
-      return ImmutableSet.of();
-    }
-
-    @Override
-    public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
-      // no-op
-    }
-
-    @Override
-    public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-      // no-op
-    }
-
-    @Override
-    public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
-      return unfiltered;
-    }
-  }
-
-  public static final class ExceptionInInitialize extends NoOpAbstractAuthorizer {
+  public static final class ExceptionInInitialize extends NoOpAuthorizer {
     @Override
     public void initialize(AuthorizationContext context) throws Exception {
       throw new IllegalStateException("Testing exception during initialize");
     }
   }
 
-  public static final class ValidExternalAuthorizer extends NoOpAbstractAuthorizer {
+  public static final class ValidExternalAuthorizer extends NoOpAuthorizer {
     private Properties properties;
     @Override
     public void initialize(AuthorizationContext context) throws Exception {

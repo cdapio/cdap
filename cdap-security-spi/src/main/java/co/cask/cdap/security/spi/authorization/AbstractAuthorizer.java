@@ -16,6 +16,15 @@
 
 package co.cask.cdap.security.spi.authorization;
 
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Abstract class that implements {@link Authorizer} and provides default no-op implementations of
  * {@link Authorizer#initialize(AuthorizationContext)} and {@link Authorizer#destroy()} so classes extending it do not
@@ -26,6 +35,7 @@ public abstract class AbstractAuthorizer implements Authorizer {
   /**
    * Default no-op implementation of {@link Authorizer#initialize(AuthorizationContext)}.
    */
+  @Override
   public void initialize(AuthorizationContext context) throws Exception {
     // default no-op implementation
   }
@@ -33,7 +43,33 @@ public abstract class AbstractAuthorizer implements Authorizer {
   /**
    * Default no-op implementation of {@link Authorizer#destroy()}.
    */
+  @Override
   public void destroy() throws Exception {
     // default no-op implementation
+  }
+
+  @Override
+  public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+    enforce(entity, principal, Collections.singleton(action));
+  }
+
+  @Override
+  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+    if (Principal.SYSTEM.equals(principal)) {
+      return unfiltered;
+    }
+
+    Set<Privilege> privileges = listPrivileges(principal);
+    Set<EntityId> allowedEntities = new HashSet<>();
+    for (Privilege privilege : privileges) {
+      allowedEntities.add(privilege.getEntity());
+    }
+    Set<T> result = new HashSet<>();
+    for (T entityId : unfiltered) {
+      if (allowedEntities.contains(entityId)) {
+        result.add(entityId);
+      }
+    }
+    return Collections.unmodifiableSet(result);
   }
 }
