@@ -39,6 +39,9 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -80,7 +83,10 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                              new LocationRuntimeModule().getDistributedModules(),
                                              new NamespaceClientUnitTestModule().getModule(),
                                              new SystemDatasetRuntimeModule().getDistributedModules(),
-                                             new DataSetsModules().getInMemoryModules());
+                                             new DataSetsModules().getInMemoryModules(),
+                                             new AuthorizationTestModule(),
+                                             new AuthorizationEnforcementModule().getInMemoryModules(),
+                                             new AuthenticationContextModules().getNoOpModule());
 
     dsFramework = injector.getInstance(DatasetFramework.class);
     tableUtil = injector.getInstance(HBaseTableUtil.class);

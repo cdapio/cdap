@@ -592,7 +592,6 @@ public class ArtifactRepository {
     } else {
       return ArtifactClasses.builder()
         .addApps(artifactClasses.getApps())
-        .addDatasets(artifactClasses.getDatasets())
         .addPlugins(artifactClasses.getPlugins())
         .addPlugins(additionalPlugins)
         .build();

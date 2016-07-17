@@ -15,11 +15,11 @@
  */
 package co.cask.cdap.app.program;
 
+import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
@@ -49,15 +49,15 @@ public final class Programs {
   public static Program create(CConfiguration cConf, @Nullable ProgramRunner programRunner,
                                ProgramDescriptor programDescriptor,
                                Location programJarLocation, File unpackedDir) throws IOException {
-    ClassLoader programParentClassLoader;
+    ClassLoader parentClassLoader;
     if (programRunner instanceof ProgramClassLoaderProvider) {
-      programParentClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent();
+      parentClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent();
     } else {
-      programParentClassLoader = FilterClassLoader.create(Programs.class.getClassLoader());
+      parentClassLoader = FilterClassLoader.create(Programs.class.getClassLoader());
     }
 
     return new DefaultProgram(programDescriptor, programJarLocation,
-                              new ProgramClassLoader(cConf, unpackedDir, programParentClassLoader));
+                              new ProgramClassLoader(cConf, unpackedDir, parentClassLoader));
   }
 
   private Programs() {

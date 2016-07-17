@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
-import co.cask.cdap.proto.id.ArtifactId;
-
 /**
  * Defines constants used across different modules.
  */
@@ -73,20 +70,9 @@ public final class ProgramOptionConstants {
   public static final String PLUGIN_ARCHIVE = "pluginArchive";
 
   /**
-   * Option to a json encoded {@link ArtifactId} of the artifact containing the program.
-   */
-  public static final String ARTIFACT_ID = "artifactId";
-
-  /**
-   * Option to a json encoded {@link ArtifactMeta} of the artifact containing the program.
-   */
-  public static final String ARTIFACT_META = "artifactMeta";
-
-  /**
    * Options for impersonation
    */
   public static final String PRINCIPAL = "principal";
 
   public static final String KEYTAB_URI = "keytabURI";
-
 }

@@ -16,16 +16,16 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;

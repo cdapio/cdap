@@ -30,6 +30,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import co.cask.tephra.TransactionSystemClient;
@@ -109,7 +111,9 @@ public class HBaseTableExporter {
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedServiceRuntimeModule().getDistributedModules()
+      new NotificationFeedServiceRuntimeModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
+      new AuthenticationContextModules().getMasterModule()
     );
   }
 

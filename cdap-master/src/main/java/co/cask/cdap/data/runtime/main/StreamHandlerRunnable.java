@@ -47,6 +47,7 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
@@ -127,12 +128,14 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
         }
-      });
+      }
+    );
   }
 }

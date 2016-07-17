@@ -29,6 +29,9 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.ImmutableMap;
@@ -57,6 +60,9 @@ public class AbstractSystemMetadataWriterTest {
     CConfiguration cConf = CConfiguration.create();
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       Modules.override(
         new DataSetsModules().getInMemoryModules()).with(new AbstractModule() {
         @Override

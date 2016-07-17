@@ -26,10 +26,6 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.app.customds.CustomDatasetApp;
-import co.cask.cdap.app.customds.DefaultTopLevelExtendsDataset;
-import co.cask.cdap.app.customds.TopLevelDataset;
-import co.cask.cdap.app.customds.TopLevelDirectDataset;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.InvalidArtifactException;
@@ -38,13 +34,13 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
 import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.EmptyClass;
@@ -57,7 +53,6 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.DatasetClass;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -586,27 +581,6 @@ public class ArtifactRepositoryTest {
       artifactRepository.clear(NamespaceId.SYSTEM);
       artifactRepository.clear(namespace1);
       artifactRepository.clear(namespace2);
-    }
-  }
-
-  @Test
-  public void testArtifactDataset() throws Exception {
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
-
-    // The artifact being created in the setupData method is using dependency tracing
-    // hence it will pick all classes under the cdap-app-fabric/src/test/main
-
-    Set<DatasetClass> expectedDatasets = ImmutableSet.of(
-      new DatasetClass(CustomDatasetApp.InnerStaticInheritDataset.class.getName()),
-      new DatasetClass(CustomDatasetApp.InnerDataset.class.getName()),
-      new DatasetClass(TopLevelDataset.class.getName()),
-      new DatasetClass(TopLevelDirectDataset.class.getName()),
-      new DatasetClass(DefaultTopLevelExtendsDataset.class.getName())
-    );
-
-    Set<DatasetClass> artifactDatasets = artifactDetail.getMeta().getClasses().getDatasets();
-    for (DatasetClass datasetClass : expectedDatasets) {
-      Assert.assertTrue(artifactDatasets.contains(datasetClass));
     }
   }
 

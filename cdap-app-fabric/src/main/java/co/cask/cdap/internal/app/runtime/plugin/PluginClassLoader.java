@@ -20,7 +20,7 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.PackageFilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;

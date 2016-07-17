@@ -38,6 +38,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -125,6 +126,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +150,7 @@ import java.util.jar.Manifest;
  *
  * @see TestConfiguration
  */
+@RunWith(TestRunner.class)
 public class TestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestBase.class);

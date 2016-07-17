@@ -48,6 +48,7 @@ import co.cask.cdap.hive.stream.StreamSerDe;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
@@ -134,6 +135,7 @@ public class ContextManager {
       new NotificationFeedClientModule(),
       new KafkaClientModule(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override

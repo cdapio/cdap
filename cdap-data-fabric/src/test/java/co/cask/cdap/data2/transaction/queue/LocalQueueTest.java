@@ -21,42 +21,23 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricLocalModule;
-import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.queue.QueueProducer;
-import co.cask.cdap.data2.security.UGIProvider;
-import co.cask.cdap.data2.security.UnsupportedUGIProvider;
-import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
-import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.util.Modules;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
 
 /**
  * Tests that injection for local mode uses in-memory for queues.
@@ -79,9 +60,11 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new DataSetsModules().getStandaloneModules(),
-      new DataFabricLocalModule(),
-      new AuthenticationContextModules().getMasterModule());
+      new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -90,33 +73,5 @@ public class LocalQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
     LevelDBTableService.getInstance().clearTables();
-  }
-
-  @Test
-  public void testInjection() throws IOException {
-    Injector injector = Guice.createInjector(
-      new ConfigModule(conf),
-      new NonCustomLocationUnitTestModule().getModule(),
-      new DiscoveryRuntimeModule().getStandaloneModules(),
-      new TransactionMetricsModule(),
-      new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getStandaloneModules(),
-      new ExploreClientModule(),
-      new ViewAdminModules().getStandaloneModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new NamespaceClientRuntimeModule().getStandaloneModules(),
-      Modules.override(new StreamAdminModules().getStandaloneModules())
-        .with(new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
-            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
-            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-          }
-        }));
-    QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
-    QueueProducer producer = factory.createProducer(QueueName.fromFlowlet(
-      NamespaceId.DEFAULT.getNamespace(), "app", "my", "flowlet", "output"));
-    Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
 }
