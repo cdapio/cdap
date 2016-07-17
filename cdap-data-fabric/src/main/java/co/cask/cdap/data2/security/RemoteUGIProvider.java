@@ -87,7 +87,7 @@ public class RemoteUGIProvider implements UGIProvider {
   }
 
   private HttpResponse executeRequest(ImpersonationInfo impersonationInfo) {
-    String resolvedUrl = resolve("/impersonation/credentials");
+    String resolvedUrl = resolve("impersonation/credentials");
     try {
       URL url = new URL(resolvedUrl);
       HttpRequest.Builder builder = HttpRequest.post(url).withBody(GSON.toJson(impersonationInfo));
