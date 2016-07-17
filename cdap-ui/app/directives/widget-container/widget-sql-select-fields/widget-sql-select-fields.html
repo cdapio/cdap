@@ -16,17 +16,29 @@
 
 <div class="sql-select-fields-container">
 
-  <div ng-repeat="stage in SqlSelector.parsedInputSchemas">
-    <h4 ng-click="stage.expanded = !stage.expanded">
+  <div class="button-container">
+    <button class="btn btn-sm btn-default">
+      Expand All
+    </button>
+    <button class="btn btn-sm btn-reset">
+      Reset All
+    </button>
+  </div>
+
+  <div ng-repeat="stage in SqlSelector.parsedInputSchemas"
+       class="stage-container">
+    <h4 ng-click="stage.expanded = !stage.expanded"
+        ng-class="{'expanded': stage.expanded }">
       <span class="fa" ng-class="{ 'fa-caret-right': !stage.expanded, 'fa-caret-down': stage.expanded}"></span>
       <span>{{ stage.name }}</span>
     </h4>
 
-    <div ng-if="stage.expanded">
+    <div class="table-container"
+         ng-if="stage.expanded">
       <table class="table">
         <thead>
           <th>Name</th>
-          <th>
+          <th class="checkbox-column">
             <div class="btn-group" uib-dropdown dropdown-append-to-body>
               <button class="btn btn-default" uib-dropdown-toggle>
                 Select <span class="fa fa-chevron-down"></span>
@@ -50,7 +62,7 @@
         <tbody>
           <tr ng-repeat="field in stage.schema">
             <td>{{ field.name }}</td>
-            <td>
+            <td class="checkbox-column">
               <input type="checkbox"
                      ng-model="field.selected"
                      ng-change="SqlSelector.formatOutput()">
