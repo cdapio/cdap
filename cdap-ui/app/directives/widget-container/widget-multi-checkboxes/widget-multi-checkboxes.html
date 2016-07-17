@@ -17,20 +17,20 @@
 <div class="multi-checkboxes-container">
   <select class="form-control"
           ng-model="MultiCheckboxes.joinType"
-          ng-change="MultiCheckboxes.changeJoinType()">
-    <option value="INNER">Inner</option>
-    <option value="OUTER">Outer</option>
+          ng-change="MultiCheckboxes.changeJoinType()"
+          ng-options="option as option for option in MultiCheckboxes.optionsDropdown">
   </select>
 
   <div class="checkboxes-group"
-       ng-if="MultiCheckboxes.joinType === 'OUTER'">
-    <h4>Required Inputs</h4>
+       ng-if="MultiCheckboxes.joinType === 'Outer'">
+    <div class="subtitle">Required Inputs</div>
 
     <div class="row checkboxes">
-      <div class="col-xs-6" ng-repeat="input in MultiCheckboxes.inputs">
-        {{ input.name }}
+      <div class="col-xs-6 clearfix" ng-repeat="input in MultiCheckboxes.inputs">
+        <span class="input-name">{{ input.name }}</span>
 
         <input type="checkbox"
+               class="checkbox"
                ng-model="input.selected"
                ng-change="MultiCheckboxes.formatOutput()">
       </div>

@@ -19,8 +19,10 @@ function MultiCheckboxes() {
 
   let vm = this;
 
+  vm.optionsDropdown = ['Inner', 'Outer'];
+
   vm.changeJoinType = () => {
-    if (vm.joinType === 'INNER') {
+    if (vm.joinType === 'Inner') {
       angular.forEach(vm.inputs, (input) => {
         input.selected = true;
       });
@@ -42,7 +44,7 @@ function MultiCheckboxes() {
   };
 
   function init() {
-    vm.joinType = 'INNER';
+    vm.joinType = 'Outer';
     vm.inputs = [];
 
     if (!vm.model) {
@@ -50,7 +52,7 @@ function MultiCheckboxes() {
       angular.forEach(vm.inputSchema, (input) => {
         vm.inputs.push({
           name: input.name,
-          selected: true
+          selected: false
         });
       });
       vm.formatOutput();
@@ -62,11 +64,16 @@ function MultiCheckboxes() {
     });
 
     if (initialModel.length === vm.inputSchema.length) {
+      vm.joinType = 'Inner';
+      angular.forEach(vm.inputSchema, (input) => {
+        vm.inputs.push({
+          name: input.name,
+          selected: true
+        });
+      });
       vm.formatOutput();
       return;
     }
-
-    vm.joinType = 'OUTER';
 
     angular.forEach(vm.inputSchema, (input) => {
       vm.inputs.push({
