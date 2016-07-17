@@ -111,7 +111,7 @@ public class PluginService extends AbstractIdleService {
   public PluginEndpoint getPluginEndpoint(NamespaceId namespace,
                                           Id.Artifact artifactId, String pluginType,
                                           String pluginName, String methodName)
-    throws IOException, NotFoundException, ClassNotFoundException {
+    throws Exception {
     // should not happen
     if (!isRunning()) {
       throw new ServiceUnavailableException("Plugin Service is not running currently");
@@ -119,11 +119,12 @@ public class PluginService extends AbstractIdleService {
 
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return getPluginEndpoint(namespace, artifactDetail, pluginType, pluginName,
-                             pickParentArtifact(artifactDetail, artifactId), methodName);
+                             pickParentArtifact(namespace, artifactDetail, artifactId), methodName);
   }
 
-  private ArtifactDescriptor pickParentArtifact(ArtifactDetail artifactDetail, Id.Artifact artifact)
-    throws ArtifactNotFoundException, IOException {
+  private ArtifactDescriptor pickParentArtifact(NamespaceId namespace, ArtifactDetail artifactDetail,
+                                                Id.Artifact artifact)
+    throws Exception {
 
     // get parent artifacts
     Set<ArtifactRange> parentArtifactRanges = artifactDetail.getMeta().getUsableBy();
@@ -134,7 +135,7 @@ public class PluginService extends AbstractIdleService {
     // just pick the first parent artifact from the set.
     ArtifactRange parentArtifactRange = parentArtifactRanges.iterator().next();
 
-    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(parentArtifactRange);
+    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(namespace, parentArtifactRange);
     if (artifactDetails.isEmpty()) {
       // should not happen
       throw new ArtifactNotFoundException(artifact);

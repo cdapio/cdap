@@ -147,7 +147,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
   }
 
-  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
     return artifactRepository.getArtifact(artifactId.toId());
   }
 
@@ -234,7 +234,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * @return the copy of the program options with locations of plugin artifacts included in them
    */
   private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId, File tempDir,
-                                              @Nullable ApplicationSpecification appSpec) throws IOException {
+                                              @Nullable ApplicationSpecification appSpec) throws Exception {
     // appSpec is null in an unit test
     if (appSpec == null || appSpec.getPlugins().isEmpty()) {
       return options;

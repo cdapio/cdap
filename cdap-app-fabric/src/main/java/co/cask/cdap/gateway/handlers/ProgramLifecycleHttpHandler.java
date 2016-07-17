@@ -224,7 +224,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") String appId,
                         @PathParam("type") String type,
-                        @PathParam("id") String id) throws NotFoundException, SchedulerException, BadRequestException {
+                        @PathParam("id") String id) throws Exception {
     if (type.equals("schedules")) {
       getScheduleStatus(responder, appId, namespaceId, id);
       return;
@@ -401,7 +401,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit)
-    throws BadRequestException, NotFoundException {
+    throws Exception {
     ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Program history is not supported for program type '%s'.",
@@ -542,7 +542,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/status")
   public void getStatuses(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) throws IOException, BadRequestException {
+                          @PathParam("namespace-id") String namespaceId) throws Exception {
 
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
 
@@ -966,7 +966,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getServiceInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId)  {
+                                  @PathParam("service-id") String serviceId) throws Exception {
     try {
       ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
       if (!store.programExists(programId.toId())) {
@@ -996,7 +996,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getServiceAvailability(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
-                                     @PathParam("service-id") String serviceId) throws NotFoundException {
+                                     @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
     ProgramStatus status = lifecycleService.getProgramStatus(programId);
     if (status == ProgramStatus.STOPPED) {

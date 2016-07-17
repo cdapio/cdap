@@ -47,11 +47,14 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -104,12 +107,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final PropertiesResolver propertiesResolver;
   private final PreferencesStore preferencesStore;
   private final AuthorizerInstantiator authorizerInstantiator;
+  private final AuthorizationEnforcementService authorizationEnforcementService;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
-                          PreferencesStore preferencesStore,
-                          AuthorizerInstantiator authorizerInstantiator) {
+                          NamespacedLocationFactory namespacedLocationFactory, PreferencesStore preferencesStore,
+                          AuthorizerInstantiator authorizerInstantiator,
+                          AuthorizationEnforcementService authorizationEnforcementService) {
     this.store = store;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
@@ -118,6 +123,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.cConf = cConf;
     this.preferencesStore = preferencesStore;
     this.authorizerInstantiator = authorizerInstantiator;
+    this.authorizationEnforcementService = authorizationEnforcementService;
   }
 
   @Override
@@ -153,7 +159,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @return the status of the program
    * @throws NotFoundException if the application to which this program belongs was not found
    */
-  public ProgramStatus getProgramStatus(ProgramId programId) throws NotFoundException {
+  public ProgramStatus getProgramStatus(ProgramId programId) throws Exception {
     // check that app exists
     ApplicationSpecification appSpec = store.getApplication(programId.toId().getApplication());
     if (appSpec == null) {
@@ -170,6 +176,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
           // program doesn't exist
           throw new NotFoundException(programId);
         }
+        ensureAccess(programId);
+
         if ((programId.getType() == ProgramType.MAPREDUCE || programId.getType() == ProgramType.SPARK) &&
           !store.getRuns(programId.toId(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
           // MapReduce program exists and running as a part of Workflow
@@ -189,7 +197,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
    */
   @Nullable
-  public ProgramSpecification getProgramSpecification(ProgramId programId) {
+  public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
+    ensureAccess(programId);
     ApplicationSpecification appSpec;
     appSpec = store.getApplication(Ids.namespace(programId.getNamespace()).app(programId.getApplication()).toId());
     if (appSpec == null) {
@@ -424,7 +433,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
                                    programId.getProgram(), runtimeArgs);
   }
 
-  private boolean isRunning(ProgramId programId) throws BadRequestException, NotFoundException {
+  private boolean isRunning(ProgramId programId) throws Exception {
     return ProgramStatus.STOPPED != getProgramStatus(programId);
   }
 
@@ -786,6 +795,20 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   /**
+   * Ensures that the logged-in user has a {@link Action privilege} on the specified dataset instance.
+   *
+   * @param programId the {@link ProgramId} to check for privileges
+   * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
+   */
+  private void ensureAccess(ProgramId programId) throws Exception {
+    Principal principal = SecurityRequestContext.toPrincipal();
+    co.cask.cdap.api.Predicate<EntityId> filter = authorizationEnforcementService.createFilter(principal);
+    if (!Principal.SYSTEM.equals(principal) && !filter.apply(programId)) {
+      throw new UnauthorizedException(principal, Action.READ, programId);
+    }
+  }
+
+  /**
    * Helper method to get program id for a run record if it exists in the store.
    *
    * @return instance of {@link ProgramId} if exist for the runId or null if does not
@@ -809,7 +832,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     private final ProgramLifecycleService programLifecycleService;
 
-    public RunRecordsCorrectorRunnable(ProgramLifecycleService programLifecycleService) {
+    RunRecordsCorrectorRunnable(ProgramLifecycleService programLifecycleService) {
       this.programLifecycleService = programLifecycleService;
     }
 

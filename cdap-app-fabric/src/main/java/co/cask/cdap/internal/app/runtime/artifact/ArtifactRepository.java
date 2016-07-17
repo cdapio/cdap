@@ -44,16 +44,21 @@ import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -86,7 +91,8 @@ public class ArtifactRepository {
   private final List<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
   private final MetadataStore metadataStore;
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final Authorizer authorizer;
+  private final AuthorizationEnforcer authorizationEnforcer;
   private final InstanceId instanceId;
   private final Impersonator impersonator;
 
@@ -94,7 +100,8 @@ public class ArtifactRepository {
   @Inject
   public ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
                             AuthorizerInstantiator authorizerInstantiator,
-                            ProgramRunnerFactory programRunnerFactory, Impersonator impersonator) {
+                            ProgramRunnerFactory programRunnerFactory, Impersonator impersonator,
+                            AuthorizationEnforcer authorizationEnforcer) {
     this.artifactStore = artifactStore;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
@@ -109,9 +116,10 @@ public class ArtifactRepository {
     }
     this.configReader = new ArtifactConfigReader();
     this.metadataStore = metadataStore;
-    this.authorizerInstantiator = authorizerInstantiator;
+    this.authorizer = authorizerInstantiator.get();
     this.instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
     this.impersonator = impersonator;
+    this.authorizationEnforcer = authorizationEnforcer;
   }
 
   /**
@@ -148,12 +156,13 @@ public class ArtifactRepository {
    * @return an unmodifiable list of artifacts that belong to the given namespace
    * @throws IOException if there as an exception reading from the meta store
    */
-  public List<ArtifactSummary> getArtifacts(NamespaceId namespace, boolean includeSystem) throws IOException {
+  public List<ArtifactSummary> getArtifacts(final NamespaceId namespace, boolean includeSystem) throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
     if (includeSystem) {
       convertAndAdd(summaries, artifactStore.getArtifacts(NamespaceId.SYSTEM));
     }
-    return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace)));
+    List<ArtifactSummary> artifacts = convertAndAdd(summaries, artifactStore.getArtifacts(namespace));
+    return Collections.unmodifiableList(Lists.newArrayList(filterAuthorizedArtifacts(artifacts, namespace)));
   }
 
   /**
@@ -167,9 +176,10 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if no artifacts of the given name in the given namespace exist
    */
   public List<ArtifactSummary> getArtifacts(NamespaceId namespace, String name)
-    throws IOException, ArtifactNotFoundException {
+    throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
-    return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name)));
+    List<ArtifactSummary> artifacts = convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name));
+    return Collections.unmodifiableList(Lists.newArrayList(filterAuthorizedArtifacts(artifacts, namespace)));
   }
 
   /**
@@ -181,19 +191,33 @@ public class ArtifactRepository {
    * @throws IOException if there as an exception reading from the meta store
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public ArtifactDetail getArtifact(Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
+  public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
+    ensureAccess(artifactId.toEntityId());
     return artifactStore.getArtifact(artifactId);
   }
 
   /**
    * Get all artifacts that match artifacts in the given ranges.
    *
+   * @namespace namespace
    * @param range the range to match artifacts in
    * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
    *         is returned
    */
-  public List<ArtifactDetail> getArtifacts(final ArtifactRange range) {
-    return artifactStore.getArtifacts(range);
+  public List<ArtifactDetail> getArtifacts(final NamespaceId namespace, final ArtifactRange range) throws Exception {
+    List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range);
+
+    Principal principal = SecurityRequestContext.toPrincipal();
+    final co.cask.cdap.api.Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    return Lists.newArrayList(
+      Iterables.filter(artifacts, new Predicate<ArtifactDetail>() {
+        @Override
+        public boolean apply(ArtifactDetail artifactDetail) {
+          ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
+          return filter.apply(namespace.artifact(artifactId.getName(), artifactId.getVersion().getVersion()));
+        }
+      })
+    );
   }
 
   /**
@@ -334,7 +358,6 @@ public class ArtifactRepository {
    * @param artifactFile the artifact to inspect and store
    * @return detail about the newly added artifact
    * @throws IOException if there was an exception reading from the artifact store
-   * @throws WriteConflictException if there was a write conflict writing to the ArtifactStore
    * @throws ArtifactAlreadyExistsException if the artifact already exists
    * @throws InvalidArtifactException if the artifact is invalid. For example, if it is not a zip file,
    *                                  or the application class given is not an Application.
@@ -357,8 +380,6 @@ public class ArtifactRepository {
    *                        If null, the given artifact does not extend another artifact
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
-   * @throws WriteConflictException if there was a write conflict writing to the metatable. Should not happen often,
-   *                                and it should be possible to retry the operation if it occurs.
    * @throws ArtifactAlreadyExistsException if the artifact already exists and is not a snapshot version
    * @throws InvalidArtifactException if the artifact is invalid. Can happen if it is not a zip file,
    *                                  if the application class given is not an Application,
@@ -402,12 +423,12 @@ public class ArtifactRepository {
     // This method is used to add user app artifacts, so enforce authorization on the specified, non-system namespace
     Principal principal = SecurityRequestContext.toPrincipal();
     NamespaceId namespace = artifactId.getNamespace().toEntityId();
-    authorizerInstantiator.get().enforce(namespace, principal, Action.WRITE);
+    authorizer.enforce(namespace, principal, Action.WRITE);
 
     ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
                                                 Collections.<String, String>emptyMap());
     // artifact successfully added. now grant ALL permissions on the artifact to the current user
-    authorizerInstantiator.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    authorizer.grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
     return artifactDetail;
   }
 
@@ -479,8 +500,7 @@ public class ArtifactRepository {
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
   public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
-    authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                         Action.ADMIN);
+    authorizer.enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -502,8 +522,7 @@ public class ArtifactRepository {
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
   public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
-    authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                         Action.ADMIN);
+    authorizer.enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -526,8 +545,8 @@ public class ArtifactRepository {
    *                               able to remove a property, users must have admin privileges on the artifact
    */
   public void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception {
-    authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                         Action.ADMIN);
+    authorizer.enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+                             Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -552,8 +571,8 @@ public class ArtifactRepository {
    *                               able to remove properties, users must have admin privileges on the artifact
    */
   public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
-    authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                         Action.ADMIN);
+    authorizer.enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+                             Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -584,8 +603,6 @@ public class ArtifactRepository {
    * If the artifact already exists it will not be added again unless it is a snapshot version.
    *
    * @throws IOException if there was some IO error adding the system artifacts
-   * @throws WriteConflictException if there was a write conflicting adding the system artifact. This shouldn't happen,
-   *                                but if it does, it should be ok to retry the operation.
    */
   public void addSystemArtifacts() throws Exception {
     // this method is called from two places:
@@ -598,7 +615,7 @@ public class ArtifactRepository {
       LOG.trace("Skipping authorization enforcement since it is being called with the system principal. This is " +
                   "so the SystemArtifactLoader can load system artifacts.");
     } else {
-      authorizerInstantiator.get().enforce(instanceId, principal, Action.WRITE);
+      authorizer.enforce(instanceId, principal, Action.WRITE);
     }
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
@@ -713,12 +730,12 @@ public class ArtifactRepository {
     // for deleting non-system artifacts, users need admin privileges on the artifact being deleted.
     Principal principal = SecurityRequestContext.toPrincipal();
     if (NamespaceId.SYSTEM.equals(artifactId.getNamespace().toEntityId())) {
-      authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
+      authorizer.enforce(instanceId, principal, Action.ADMIN);
     } else {
-      authorizerInstantiator.get().enforce(artifactId.toEntityId(), principal, Action.ADMIN);
+      authorizer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
     }
     // revoke all privileges on the artifact
-    authorizerInstantiator.get().revoke(artifactId.toEntityId());
+    authorizer.revoke(artifactId.toEntityId());
     artifactStore.delete(artifactId);
     metadataStore.removeMetadata(artifactId);
   }
@@ -729,6 +746,41 @@ public class ArtifactRepository {
       summaries.add(ArtifactSummary.from(detail.getDescriptor().getArtifactId()));
     }
     return summaries;
+  }
+
+  /**
+   * Filter a list of {@link ArtifactSummary} that ensures the logged-in user has a {@link Action privilege} on
+   *
+   * @param artifacts the {@link List<ArtifactSummary>} to filter with
+   * @param namespace namespace of the artifacts
+   * @return filtered list of {@link ArtifactSummary}
+   */
+  private List<ArtifactSummary> filterAuthorizedArtifacts(List<ArtifactSummary> artifacts, final NamespaceId namespace)
+    throws Exception {
+    final co.cask.cdap.api.Predicate<EntityId> filter =
+      authorizationEnforcer.createFilter(SecurityRequestContext.toPrincipal());
+    return Lists.newArrayList(
+      Iterables.filter(artifacts, new Predicate<ArtifactSummary>() {
+        @Override
+        public boolean apply(ArtifactSummary artifactSummary) {
+          return filter.apply(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
+        }
+      })
+    );
+  }
+
+  /**
+   * Ensures that the logged-in user has a {@link Action privilege} on the specified dataset instance.
+   *
+   * @param artifactId the {@link co.cask.cdap.proto.id.ArtifactId} to check for privileges
+   * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
+   */
+  private void ensureAccess(co.cask.cdap.proto.id.ArtifactId artifactId) throws Exception {
+    Principal principal = SecurityRequestContext.toPrincipal();
+    co.cask.cdap.api.Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    if (!Principal.SYSTEM.equals(principal) && !filter.apply(artifactId)) {
+      throw new UnauthorizedException(principal, artifactId);
+    }
   }
 
   /**

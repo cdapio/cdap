@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -72,7 +73,8 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory(),
-                                                             new Impersonator(CConfiguration.create(), null, null));
+                                                             new Impersonator(CConfiguration.create(), null, null),
+                                                             new NoOpAuthorizer());
 
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
@@ -103,7 +105,8 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory(),
-                                                             new Impersonator(CConfiguration.create(), null, null));
+                                                             new Impersonator(CConfiguration.create(), null, null),
+                                                             new NoOpAuthorizer());
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     // Create a configurator that is testable. Provide it a application.

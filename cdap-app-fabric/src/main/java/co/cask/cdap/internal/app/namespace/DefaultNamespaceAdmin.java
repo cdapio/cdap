@@ -48,6 +48,7 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.store.NamespaceStore;
@@ -99,8 +100,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                         ArtifactRepository artifactRepository,
                         AuthorizerInstantiator authorizerInstantiator,
                         CConfiguration cConf, StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                        Impersonator impersonator) {
-    super(nsStore);
+                        Impersonator impersonator, AuthorizationEnforcementService authorizationEnforcementService) {
+    super(nsStore, authorizationEnforcementService);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = store;
