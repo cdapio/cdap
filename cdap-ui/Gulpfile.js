@@ -238,7 +238,8 @@ function getEs6Directives(isNegate) {
     'my-post-run-action-wizard',
     'my-post-run-actions',
     'widget-container/widget-complex-schema-editor',
-    'timeline'
+    'timeline',
+    'my-pipeline-summary'
   ];
 
   return es6directives.map(function (directive) {
@@ -356,7 +357,8 @@ gulp.task('tpl', function() {
   return merge(
 
     gulp.src([
-      './app/directives/**/*.html'
+      './app/directives/**/*.html',
+      './app/services/**/*.html'
     ])
       .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(plug.angularTemplatecache({
@@ -528,6 +530,6 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch(jsAppBabelSource, ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
-  gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);
+  gulp.watch(['./app/directives/**/*.html', './app/services/**/*.html', './app/features/home/home.html'], ['tpl']);
   gulp.watch('./app/features/**/*.html', ['html:partials']);
 });

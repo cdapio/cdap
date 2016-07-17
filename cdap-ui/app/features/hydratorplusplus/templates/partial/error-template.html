@@ -30,6 +30,7 @@
           ></span>
   </span>
   <span ng-if="!title && templateScope.currentIndex == $index"
+        class="message-content"
         ng-repeat="message in templateScope.content"
         ng-bind="message">
   </span>

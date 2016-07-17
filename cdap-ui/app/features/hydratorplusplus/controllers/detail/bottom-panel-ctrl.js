@@ -18,20 +18,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusDetailBottomPanelCtrl', function(HydratorPlusPlusBottomPanelStore, $scope, HydratorPlusPlusBottomPanelActions) {
     this.tabs = [
       {
-        title: 'History',
-        template: '/assets/features/hydratorplusplus/templates/detail/tabs/history.html'
-      },
-      {
         title: 'Log',
         template: '/assets/features/hydratorplusplus/templates/detail/tabs/log.html'
-      },
-      {
-        title: 'Metrics',
-        template: '/assets/features/hydratorplusplus/templates/detail/tabs/metrics.html'
-      },
-      {
-        title: 'Configuration',
-        template: '/assets/features/hydratorplusplus/templates/detail/tabs/configuration.html'
       },
       {
         title: 'Datasets',

@@ -311,11 +311,24 @@ body.theme-cdap {
       display: flex;
       justify-content: space-between;
       .run-specific-section {
+        display: flex;
+        flex-wrap: wrap;
+        flex: 1;
+        flex-basis: 60vw;
+        border-right: 0;
         .hydrator-detail-metadata {
           display: flex;
-          flex-grow: 0.5;
           overflow: hidden;
           padding: 2px 10px;
+
+          // Had to do this because for pipelines with large description
+          // we can always show description in tooltip but the start & duration
+          // of the last/current run cannot be shown. Hence on smaller screens
+          // screens < 1200px we need to reduce the size of decription and give
+          // more room for start & duration.
+          @media(max-width: @screen-lg-min) {
+            flex: 0.3;
+          }
           div.pipeline-type {
             text-decoration: none;
             padding: 0 10px 0 0;
@@ -370,6 +383,9 @@ body.theme-cdap {
               h5 {
                 margin: 0;
               }
+              &:first-child {
+                margin-right: 10px;
+              }
             }
           }
         }
@@ -381,7 +397,7 @@ body.theme-cdap {
           align-items: center;
           justify-content: center;
           padding: 5px;
-          border-right: 1px solid #dddddd;
+          border-right: 0;
           border-left: 1px solid #dddddd;
           &.status-green span {
             color: @brand-success;
@@ -395,6 +411,11 @@ body.theme-cdap {
           .metric-value {
             margin-right: 5px;
           }
+        }
+        .app-status-container {
+          display: flex;
+          flex: 1;
+          position: relative;
         }
       }
       .btn {
@@ -421,14 +442,18 @@ body.theme-cdap {
           font-weight: 600;
         }
       }
-      .run-specific-section,
       .pipeline-specific-section {
         display: flex;
-        flex-grow: 0.5;
-        border-left: 1px solid @table-border-color;
       }
       .pipeline-settings {
         width: 100%;
+        &.pipeline-run-section {
+          position: absolute;
+          left: 0;
+          top: 43px;
+          background: #ebebeb;
+          max-height: 400px;
+        }
       }
     }
   }

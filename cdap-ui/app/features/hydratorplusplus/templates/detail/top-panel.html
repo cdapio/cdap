@@ -47,10 +47,11 @@
       </div>
     </div>
     <!-- IF ETL BATCH -->
-    <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1"  class="btn">
+    <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
       <div ng-if="['SUSPENDED', 'SCHEDULING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
 
         <div ng-click="TopPanelCtrl.do('Schedule')"
+            class="btn"
           ng-disabled="TopPanelCtrl.scheduleStatus === 'SCHEDULING' || TopPanelCtrl.scheduleStatus.error">
           <span ng-if="TopPanelCtrl.scheduleStatus === 'SUSPENDED' || TopPanelCtrl.scheduleStatus.error">
             <span class="icon-calendar"
@@ -66,6 +67,7 @@
       </div>
       <div ng-if="['SCHEDULED', 'SUSPENDING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1">
         <div ng-click="TopPanelCtrl.do('Suspend')"
+             class="btn"
           ng-disabled="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
           <span ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED'">
             <span class="icon-suspend"
@@ -80,9 +82,10 @@
         </div>
       </div>
     </div>
-    <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1" class="btn">
+    <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
       <div ng-if="['STARTING', 'STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(TopPanelCtrl.appStatus) !== -1">
         <div ng-click="TopPanelCtrl.do('Start')"
+             class="btn"
              ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
           <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
             <span class="icon-start"
@@ -98,7 +101,8 @@
       </div>
       <div ng-if="['STOPPING', 'RUNNING'].indexOf(TopPanelCtrl.appStatus) !== -1">
         <div ng-click="TopPanelCtrl.do('Stop')"
-          ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
+             class="btn"
+             ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
           <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">
           <span class="icon-stopped"
                 uib-tooltip="Stop"
@@ -143,21 +147,44 @@
       </span>
     </div>
 
-    <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.isGreenStatus(), 'status-red': !TopPanelCtrl.isGreenStatus() }">
-      <span class="fa fa-circle metric-value"></span>
-      <span class="metric-label">{{ TopPanelCtrl.appStatus }}</span>
-    </div>
-    <div class="last-run text-left">
-      <div class="last-run-container">
-        <div class="metric">
-          <span class="metric-value" ng-if="TopPanelCtrl.lastFinished">{{ TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'h:mm:ss A'}} <small>{{ TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'MM/DD/YYYY'}}</small></span>
-          <span class="metric-value" ng-if="!TopPanelCtrl.lastFinished"> &mdash; </span>
-          <h5><small>Start</small></h5>
+    <div class="app-status-container">
+      <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.isGreenStatus(), 'status-red': !TopPanelCtrl.isGreenStatus() }">
+        <span class="fa fa-circle metric-value"></span>
+        <span class="metric-label">{{ TopPanelCtrl.appStatus }}</span>
+      </div>
+      <div class="last-run text-left">
+        <div class="last-run-container">
+          <div class="metric">
+            <span class="metric-value" ng-if="TopPanelCtrl.lastFinished">{{ TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'h:mm:ss A'}} <small>{{ TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'MM/DD/YYYY'}}</small></span>
+            <span class="metric-value" ng-if="!TopPanelCtrl.lastFinished"> &mdash; </span>
+            <h5><small>Start</small></h5>
+          </div>
+          <div class="metric">
+            <span class="metric-value" ng-if="TopPanelCtrl.lastRunTime === 'N/A'"> &mdash; </span>
+            <span class="metric-value" ng-if="TopPanelCtrl.lastRunTime !== 'N/A'">{{ TopPanelCtrl.lastRunTime }}</span>
+            <h5><small>Duration</small></h5>
+          </div>
         </div>
-        <div class="metric">
-          <span class="metric-value" ng-if="TopPanelCtrl.lastRunTime === 'N/A'"> &mdash; </span>
-          <span class="metric-value" ng-if="TopPanelCtrl.lastRunTime !== 'N/A'">{{ TopPanelCtrl.lastRunTime }}</span>
-          <h5><small>Duration</small></h5>
+      </div>
+      <div class="pipeline-settings pipeline-run-section" ng-if="TopPanelCtrl.runPlayer.view">
+        <div>
+          <div class="well well-sm">
+            <h5>Placeholder for run-time (macro) arguments</h5>
+          </div>
+        </div>
+        <div class="clearfix">
+          <div class="pull-right">
+            <div class="btn btn-success"
+                 ng-if="TopPanelCtrl.runPlayer.action === 'STARTING'"
+                 ng-click="TopPanelCtrl.startPipeline()">
+              Start Now
+            </div>
+            <div class="btn btn-success"
+                 ng-if="TopPanelCtrl.runPlayer.action === 'SCHEDULING'"
+                 ng-click="TopPanelCtrl.schedulePipeline()">
+              Schedule
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -165,6 +192,9 @@
   </div>
 
   <div class="pipeline-specific-section">
+    <div class="btn" ng-click="TopPanelCtrl.viewSummary = !TopPanelCtrl.viewSummary">
+      <span class="fa fa-line-chart"></span>
+    </div>
     <div class="btn" ng-click="TopPanelCtrl.viewSettings = !TopPanelCtrl.viewSettings">
       <span class="fa fa-sliders"></span>
     </div>
@@ -178,6 +208,10 @@
       </span>
     </div>
 
+    <div class="btn"
+         ng-click="TopPanelCtrl.exportConfig()">
+      <span class="fa icon-export"></span>
+    </div>
     <div class="btn"
          ui-sref="apps.detail.overview.status({ appId: TopPanelCtrl.app.name })">
          <span class="icon-fist"
@@ -198,8 +232,8 @@
     </div>
   </div>
   <div class="pipeline-settings-backdrop"
-       ng-if="TopPanelCtrl.viewSettings"
-       ng-click="TopPanelCtrl.viewSettings = false"></div>
+       ng-if="TopPanelCtrl.viewSettings || TopPanelCtrl.viewSummary || TopPanelCtrl.runPlayer.view"
+       ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false; TopPanelCtrl.runPlayer.view = false"></div>
   <div class="pipeline-settings">
     <div
       store="TopPanelCtrl.HydratorPlusPlusDetailNonRunsStore"
@@ -208,6 +242,15 @@
       is-disabled="true"
       template-type="{{TopPanelCtrl.config.artifact.name}}"
       my-pipeline-settings>
+    </div>
+  </div>
+  <div class="pipeline-settings">
+    <div
+      store="TopPanelCtrl.HydratorPlusPlusDetailRunsStore"
+      action-creator="TopPanelCtrl.HydratorPlusPlusDetailActions"
+      pipeline-type="{{TopPanelCtrl.pipelineType}}"
+      ng-if="TopPanelCtrl.viewSummary"
+      my-pipeline-summary>
     </div>
   </div>
 </div>
