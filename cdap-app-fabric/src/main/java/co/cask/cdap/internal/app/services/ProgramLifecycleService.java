@@ -576,7 +576,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param programType The type of program the run records need to validate and update.
    * @param processedInvalidRunRecordIds the {@link Set} of processed invalid run record ids.
    */
-  void validateAndCorrectRunningRunRecords(final ProgramType programType, Set<String> processedInvalidRunRecordIds) {
+  void validateAndCorrectRunningRunRecords(final ProgramType programType,
+                                           final Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
     LOG.trace("Start getting run records not actually running ...");
@@ -610,6 +611,22 @@ public class ProgramLifecycleService extends AbstractIdleService {
           }
         }
       });
+
+    // don't correct run records for programs running inside a workflow
+    // for instance, a MapReduce running in a Workflow will not be contained in the runtime info in this class
+    invalidRunRecords = Collections2.filter(invalidRunRecords, new Predicate<RunRecordMeta>() {
+      @Override
+      public boolean apply(RunRecordMeta invalidRunRecordMeta) {
+        boolean shouldCorrect = shouldCorrectForWorkflowChildren(invalidRunRecordMeta, processedInvalidRunRecordIds);
+        if (!shouldCorrect) {
+          LOG.trace("Will not correct invalid run record {} since it's parent workflow still running.",
+                    invalidRunRecordMeta);
+          return false;
+        }
+        return true;
+      }
+    });
+
     LOG.trace("End getting invalid run records.");
 
     if (!invalidRunRecords.isEmpty()) {
@@ -622,13 +639,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     // Now lets correct the invalid RunRecords
     for (RunRecordMeta invalidRunRecordMeta : invalidRunRecords) {
-      boolean shouldCorrect = shouldCorrectForWorkflowChildren(invalidRunRecordMeta, processedInvalidRunRecordIds);
-      if (!shouldCorrect) {
-        LOG.trace("Will not correct invalid run record {} since it's parent workflow still running.",
-                  invalidRunRecordMeta);
-        continue;
-      }
-
       String runId = invalidRunRecordMeta.getPid();
       ProgramId targetProgramId = runIdToProgramId.get(runId);
 
