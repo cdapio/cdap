@@ -50,30 +50,37 @@
   </div>
 
   <!-- LOGS TIMELINE -->
-  <my-timeline timeline-data="LogViewer.data"></my-timeline>
+  <my-timeline
+    ng-if="!LogViewer.loading"
+    namespace-id="{{LogViewer.namespaceId}}"
+    app-id="{{LogViewer.appId}}"
+    program-type="{{LogViewer.programType}}"
+    program-id="{{LogViewer.programId}}"
+    run-id="{{LogViewer.runId}}">
+  </my-timeline>
 
+  <!-- NO DATA MESSAGE -->
+  <div ng-if="LogViewer.data.length === 0" class="well well-lg">
+    No logs to be displayed.
+  </div>
+  <div ng-if="LogViewer.loading" class="jumbotron well well-lg">
+    Loading Logs...
+  </div>
   <!-- LOGS TABLE -->
-  <div class="logs-table">
-    <table class="table table-bordered">
+  <div ng-if="LogViewer.data.length > 0 && !LogViewer.loading" class="logs-table">
+    <table class="table table-bordered scroll scroll-table">
       <thead>
-        <th class="time log-header"
+        <th class="time time-header log-header"
             ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
           Time
         </th>
 
-        <th class="level log-header header-level"
+        <th class='level level-header'
             ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-          <span uib-dropdown>
-            <span uib-dropdown-toggle>Level <span class="fa fa-caret-down"></span></span>
-            <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
-              <li ng-repeat="option in LogViewer.logEvents">
-                <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span>{{option}}</span></li>
-              </li>
-            </ul>
-          </span>
+            Level
         </th>
 
-        <th class="source log-header"
+        <th class="source source-header log-header"
             ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
           Source
         </th>
@@ -90,52 +97,63 @@
                ng-click="LogViewer.toggleLogExpansion()">Expand All</div>
         </th>
       </thead>
-
-      <tbody>
-        <tr ng-repeat="log in LogViewer.data | filter:LogViewer.filterByStartDate | filter:LogViewer.eventFilter | filter:searchText">
+      <tbody infinite-scroll="LogViewer.scrollFn()"
+             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.data.length"
+             infinite-scroll-container="'.logs-table'"
+             >
+        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:LogViewer.eventFilter | filter:searchText | limitTo: LogViewer.viewLimit track by $index">
           <!-- TIME -->
           <td class="time"
               ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
-            <div class="table-text-content">{{ ::log.displayTime }}</div>
+              {{ ::entry.log.displayTime }}
           </td>
 
           <!-- LEVEL -->
           <td class="level"
               ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-            <div class="table-text-content">{{ ::log.level }}</div>
+              {{ ::entry.log.logLevel }}
           </td>
 
           <!-- SOURCE -->
           <td class="source"
-              ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
-            <div class="table-text-content">{{ ::log.source }}</div>
+              ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
+              tooltip="testing"
+              uib-tooltip="{{ ::entry.log.threadName}}:{{::entry.log.lineNumber}}"
+              tooltip-append-to-body="true"
+              tooltip-placement="top"
+              tooltip-popup-delay="500"
+              >
+              {{ ::entry.log.threadName }}
           </td>
 
           <!-- MESSAGE -->
           <td class="message"
               ng-if="LogViewer.configOptions.message"
-              ng-class="{'stack-trace-expanded': log.message.stackTrace && log.isStackTraceExpanded,
-                'stack-trace-available': log.message.stackTrace }">
+              ng-class="{'stack-trace-expanded': entry.isStackTraceExpanded,
+                'stack-trace-available': entry.log.stackTrace.length > 0 }">
             <div class="message-main"
-                 ng-click="log.message.stackTrace && (log.isStackTraceExpanded = !log.isStackTraceExpanded)">
+                 ng-click="entry.log.stackTrace.length > 0 && (entry.isStackTraceExpanded = !entry.isStackTraceExpanded)">
               <div class="icon-column"
-                   ng-if="(log.message.stackTrace && log.isStackTraceExpanded)">
+                   ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)"
+                   ng-class="Logviewer.message-class">
                 <span class="fa"
-                      ng-class="{'fa-minus': log.message.stackTrace && log.isStackTraceExpanded}">
+                      ng-class="{'fa-minus': entry.isStackTraceExpanded}">
                 </span>
               </div>
-              <div class="message-column">
-                &nbsp;&nbsp;{{ ::log.message.content }}
-              </div>
+              <span class="message-text">{{ ::entry.log.message}}</span>
             </div>
 
             <div class="stack-trace"
                  ng-class="{'expanded': LogViewer.isMessageExpanded}"
-                 ng-if="log.message.stackTrace && log.isStackTraceExpanded">
-              <pre>{{ log.message.stackTrace }}</pre>
+                 ng-if="entry.isStackTraceExpanded">
+              <pre>{{ ::entry.log.stackTrace }}</pre>
             </div>
 
           </td>
+        </tr>
+        <tr class="well well-sm">
+          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading more logs...</td>
+          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No more logs to show.</td>
         </tr>
       </tbody>
     </table>

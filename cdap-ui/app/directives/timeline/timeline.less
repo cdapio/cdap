@@ -23,6 +23,12 @@ my-timeline {
   .timeline-container {
     color: white;
 
+    .tick line {
+      opacity: 0.4;
+      stroke-width: 2px;
+      shape-rendering: crispEdges;
+    }
+
     .fill-bar {
       stroke: #171717;
       stroke-opacity: 0.75;
@@ -68,13 +74,11 @@ my-timeline {
         .xaxis path {
           fill: none;
           stroke: none;
-          shape-rendering: crispEdges;
         }
 
         .xaxis line {
           fill: none;
           stroke: red;
-          shape-rendering: crispEdges;
         }
 
         .xaxis text {

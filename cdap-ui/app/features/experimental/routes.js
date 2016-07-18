@@ -73,7 +73,7 @@ angular.module(PKG.name+'.feature.experimental')
           url: '/logs',
           templateUrl: '/assets/features/experimental/templates/logs.html',
           controller: 'LogsController',
-          controllerAs: 'vm',
+          controllerAs: 'LogsController',
           ncyBreadcrumb: {
             label: 'Log',
             parent: 'experimental.home'

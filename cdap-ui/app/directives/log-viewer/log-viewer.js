@@ -14,12 +14,14 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi) {
   'ngInject';
 
-  LogViewerStore.subscribe(() => {
-    this.logStartTime = LogViewerStore.getState().startTime;
-  });
+  this.data = {};
+  this.errorCount = 0;
+  this.warningCount = 0;
+  this.loading = true;
+  this.loadingMoreLogs = true;
 
   this.configOptions = {
     time: true,
@@ -35,6 +37,12 @@ function LogViewerController ($scope, LogViewerStore) {
     message: false
   };
 
+  //viewLimit and cacheDecrement should match
+  this.viewLimit = 10;
+  this.cacheDecrement = 10;
+  this.cacheSize = 0;
+
+  //Collapsing LogViewer Table Columns
   var theColumns = [];
   var cols = this.configOptions;
 
@@ -68,6 +76,130 @@ function LogViewerController ($scope, LogViewerStore) {
     }
   };
 
+  LogViewerStore.subscribe(() => {
+    this.logStartTime = LogViewerStore.getState().startTime;
+    //Convert start time to seconds
+    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+    requestWithStartTime();
+  });
+
+  myLogsApi.nextLogsJson({
+    'namespace' : this.namespaceId,
+    'appId' : this.appId,
+    'programType' : this.programType,
+    'programId' : this.programId,
+    'runId' : this.runId
+  }).$promise.then(
+    (res) => {
+
+      this.totalCount = res.length;
+
+      angular.forEach(res, (element, index) => {
+        if(res[index].log.logLevel === 'WARN'){
+          this.warningCount++;
+        } else if(res[index].log.logLevel === 'ERROR'){
+          this.errorCount++;
+        }
+        let formattedDate = new Date(res[index].log.timestamp);
+        res[index].log.timestamp = formattedDate;
+        res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+      });
+      this.data = res;
+      this.loading = false;
+      this.fromOffset = res[res.length-1].offset;
+      this.cacheSize = res.length - this.cacheDecrement;
+    },
+    (err) => {
+      console.log('ERROR: ', err);
+    });
+
+  const requestWithOffset = () => {
+    myLogsApi.nextLogsJsonOffset({
+      'namespace' : this.namespaceId,
+      'appId' : this.appId,
+      'programType' : this.programType,
+      'programId' : this.programId,
+      'runId' : this.runId,
+      'fromOffset' : this.fromOffset
+    }).$promise.then(
+      (res) => {
+        console.log('Returned NEXT with OFFSET: ', this.fromOffset);
+
+        if(res.length === 0){
+          this.loadingMoreLogs = false;
+          return;
+        }
+
+        this.fromOffset = res[res.length-1].offset;
+        this.totalCount += res.length;
+
+        angular.forEach(res, (element, index) => {
+          if(res[index].log.logLevel === 'WARN'){
+            this.warningCount++;
+          } else if(res[index].log.logLevel === 'ERROR'){
+            this.errorCount++;
+          }
+
+          //Format dates properly for rendering and computing
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+        });
+
+        //Append newly fetched data to the current dataset
+        this.data = this.data.concat(res);
+        this.cacheSize = res.length - this.cacheDecrement;
+        console.log('Data returned by request with offset is: ', res);
+        console.log('The offset of the data returned is: ', this.fromOffset);
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+      });
+  };
+
+  const requestWithStartTime = () => {
+   myLogsApi.getLogsStart({
+      'namespace' : this.namespaceId,
+      'appId' : this.appId,
+      'programType' : this.programType,
+      'programId' : this.programId,
+      'runId' : this.runId,
+      'start' : this.startTimeSec
+    }).$promise.then(
+      (res) => {
+
+        //There are no more logs to be returned
+        if(res.length === 0){
+          this.loadingMoreLogs = false;
+          return;
+        }
+
+        //Clear current data
+        this.data = {};
+        this.fromOffset = res[res.length-1].offset;
+        this.totalCount = res.length;
+        this.warningCount = 0;
+        this.errorCount = 0;
+        angular.forEach(res, (element, index) => {
+          if(res[index].log.logLevel === 'WARN'){
+            this.warningCount++;
+          } else if(res[index].log.logLevel === 'ERROR'){
+            this.errorCount++;
+          }
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
+        });
+
+        //Set data to newly set start time
+        this.data = res;
+        this.cacheSize = res.length - this.cacheDecrement;
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+      });
+  };
+
   angular.forEach($scope.displayOptions, (value, key) => {
     this.configOptions[key] = value;
   });
@@ -82,153 +214,18 @@ function LogViewerController ($scope, LogViewerStore) {
     'TRACE' : false
   };
 
-  this.data = [
-    {
-      time: '2016-03-04 16:28:40',
-      level: 'INFO',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
-        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
-      }
-    },
-    {
-      time: '2016-03-04 16:28:43',
-      level: 'ERROR',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Some Other log data that is irrelevant for this demo.'
-      }
-    },
-    {
-      time: '2016-03-04 16:28:45',
-      level: 'ERROR',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Some Other log data that is irrelevant for this demo.'
-      }
-    },
-    {
-      time: '2016-03-04 16:28:45',
-      level: 'ERROR',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Some Other log data that is irrelevant for this demo.'
-      }
-    },
-    {
-      time: '2016-03-04 16:28:45',
-      level: 'WARN',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
-        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
-      }
-    },
-    {
-      time: '2016-03-04 16:28:47',
-      level: 'DEBUG',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
-        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
-      }
-    },
-    {
-      time: '2016-03-04 16:28:51',
-      level: 'TRACE',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Some Other log data that is irrelevant for this demo.'
-      }
-    },
-    {
-      time: '2016-03-04 16:28:57',
-      level: 'INFO',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
-        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
-      }
-    },
-    {
-      time: '2016-03-04 16:29:00',
-      level: 'ERROR',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Some Other log data that is irrelevant for this demo.'
-      }
-    },
-    {
-      time: '2016-03-04 16:29:15',
-      level: 'WARN',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
-        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
-      }
-    },
-    {
-      time: '2016-03-04 16:29:35',
-      level: 'DEBUG',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
-        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
-      }
-    },
-    {
-      time: '2016-03-04 16:29:46',
-      level: 'TRACE',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Some Other log data that is irrelevant for this demo.'
-      }
-    },
-    {
-      time: '2016-03-04 16:29:55',
-      level: 'INFO',
-      source: 'leader-election-election-metrics-processor-part-0',
-      message: {
-        content: 'Got exception publishing audit message AuditMessage{version=1, time=1465850244499, entityId=dataset:default._kafkaOffset, user=\'\', type=ACCESS, payload=AccessPayload{accessType=UNKNOWN, accessor=program_run:default._Tracker.flow.AuditLogFlow.a1e96ae1-31a6-11e6-8c41-e285682178e6} AuditPayload{}}.',
-        stackTrace: 'java.util.concurrent.ExecutionException: java.lang.IllegalStateException: No kafka producer available.\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.getValue(AbstractFuture.java:294) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture$Sync.get(AbstractFuture.java:281) ~[guava-13.0.1.jar:na]\n\tat com.google.common.util.concurrent.AbstractFuture.get(AbstractFuture.java:116) ~[guava-13.0.1.jar:na]\n\tat co.cask.cdap.data2.audit.KafkaAuditPublisher.publish(KafkaAuditPublisher.java:72) ~[classes/:na]\n\tat co.cask.cdap.data2.audit.AuditPublishers.publishAccess(AuditPublishers.java:90) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.doWriteLineage(LineageWriterDatasetFramework.java:187) [classes/:na]\n\tat co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework.writeLineage(LineageWriterDatasetFramework.java:169) [classes/:na]\n\tat co.cask.cdap.data.dataset.SystemDatasetInstantiator.writeLineage(SystemDatasetInstantiator.java:108) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:143) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache$LineageRecordingDatasetCache.get(SingleThreadDatasetCache.java:127) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.SingleThreadDatasetCache.getDataset(SingleThreadDatasetCache.java:170) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:150) [classes/:na]\n\tat co.cask.cdap.data2.dataset2.DynamicDatasetCache.getDataset(DynamicDatasetCache.java:126) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:179) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:174) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.AbstractContext.getDataset(AbstractContext.java:168) [classes/:na]\n\tat co.cask.tracker.AuditLogConsumer.configureKafka(AuditLogConsumer.java:92) [unpacked/:na]\n\tat co.cask.cdap.kafka.flow.KafkaConsumerFlowlet.initialize(KafkaConsumerFlowlet.java:101) [cdap-kafka-flow-core-0.9.0.jar:na]\n\tat co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet.initialize(Kafka08ConsumerFlowlet.java:97) [cdap-kafka-flow-compat-0.8-0.9.0.jar:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService$1.apply(FlowletRuntimeService.java:115) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:92) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor$3.apply(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeOnce(DynamicTransactionExecutor.java:125) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.executeWithRetry(DynamicTransactionExecutor.java:104) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:61) [classes/:na]\n\tat co.cask.cdap.data2.transaction.DynamicTransactionExecutor.execute(DynamicTransactionExecutor.java:89) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.initFlowlet(FlowletRuntimeService.java:109) [classes/:na]\n\tat co.cask.cdap.internal.app.runtime.flow.FlowletRuntimeService.startUp(FlowletRuntimeService.java:71) [classes/:na]\n\tat com.google.common.util.concurrent.AbstractIdleService$1$1.run(AbstractIdleService.java:43) [guava-13.0.1.jar:na]\n\tat java.lang.Thread.run(Thread.java:745) [na:1.7.0_80]'
-      }
-    },
-  ];
-
-  angular.forEach(this.data, (element, index) => {
-    let formattedDate = new Date(this.data[index].time);
-    this.data[index].time = formattedDate;
-    this.data[index].displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + formattedDate.getMinutes() + ':' + formattedDate.getSeconds());
-  });
-
-  this.totalCount = this.data.length;
-  let errorCount = 0;
-  let warningCount = 0;
   let numEvents = 0;
-
-  //Compute Total
-  for(let k = 0; k < this.data.length; k++){
-    let currentItem = this.data[k].level;
-    if(currentItem === 'ERROR'){
-      errorCount++;
-    } else if(currentItem === 'WARN'){
-      warningCount++;
-    }
-  }
-
-  this.errorCount = errorCount;
-  this.warningCount = warningCount;
   this.toggleExpandAll = false;
 
   this.toggleLogExpansion = function() {
     this.toggleExpandAll = !this.toggleExpandAll;
     angular.forEach(this.data, (data) => {
-      data.isStackTraceExpanded = this.toggleExpandAll;
+      if(data.log.stackTrace.length > 0){
+        data.isStackTraceExpanded = this.toggleExpandAll;
+      }
     });
   };
 
-  //New 'includeEvent' function
   this.includeEvent = function(eventType){
     if(included[eventType]){
       numEvents--;
@@ -245,11 +242,20 @@ function LogViewerController ($scope, LogViewerStore) {
     return;
   };
 
-  this.filterByStartDate = (log) => {
-    if(this.logStartTime > log.time) {
+  this.scrollFn = _.debounce(function(){
+    this.loadingMoreLogs = true;
+    this.cacheSize -= this.cacheDecrement;
+    if(this.cacheSize <= 0){
+      requestWithOffset();
+    }
+    this.viewLimit += this.cacheDecrement;
+  }, 1000);
+
+  this.filterByStartDate = (entry) => {
+    if(this.logStartTime > entry.log.timestamp) {
       return;
     }
-    return log;
+    return entry;
   };
 }
 
@@ -259,8 +265,14 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'log-viewer/log-viewer.html',
       controller: LogViewerController,
       scope: {
-        displayOptions: '=?'
+        displayOptions: '=?',
+        namespaceId: '@',
+        appId: '@',
+        programType: '@',
+        programId: '@',
+        runId: '@'
       },
+      bindToController: true,
       controllerAs: 'LogViewer'
     };
   });

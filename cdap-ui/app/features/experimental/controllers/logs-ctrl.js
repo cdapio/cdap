@@ -17,5 +17,9 @@
 angular.module(`${PKG.name}.feature.experimental`)
   .controller('LogsController', function() {
 
-    this.test = 'hi!';
+    this.namespaceId = 'default';
+    this.appId = '_Tracker';
+    this.programType = 'flows';
+    this.programId = 'AuditLogFlow';
+    this.runId = '9417a6b1-46e2-11e6-b588-56219b501a22';
   });

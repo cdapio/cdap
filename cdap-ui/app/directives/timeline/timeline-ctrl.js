@@ -14,7 +14,9 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource) {
+
+  var dataSrc = new MyCDAPDataSource($scope);
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -24,6 +26,57 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS) {
       }
     });
   };
+
+  var pollPromise = null;
+
+  var apiSettings = {
+    metric : {
+      context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.run.${this.runId}`,
+      names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
+      startTime : '',
+      endTime : '',
+      resolution: '1m'
+    }
+  };
+
+  function pollForMetadata() {
+    pollPromise = dataSrc.poll({
+      _cdapPath: '/metrics/query',
+      method: 'POST',
+      body: MyMetricsQueryHelper.constructQuery(
+        'qid',
+        MyMetricsQueryHelper.contextToTags(apiSettings.metric.context),
+        apiSettings.metric
+      )
+    },
+    function (res) {
+      $scope.metadata = res;
+      $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
+      $scope.initialize();
+      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED') {
+        dataSrc.stopPoll(pollPromise.__pollId__);
+        pollPromise = null;
+      }
+    }, function(err) {
+      console.log('ERROR: ', err);
+    });
+  }
+
+  myLogsApi.getLogsMetadata({
+    'namespace' : this.namespaceId,
+    'appId' : this.appId,
+    'programType' : this.programType,
+    'programId' : this.programId,
+    'runId' : this.runId,
+  }).$promise.then(
+    (res) => {
+      apiSettings.metric.startTime = res.start;
+      apiSettings.metric.endTime = 'now';
+      pollForMetadata();
+    },
+    (err) => {
+      console.log('ERROR: ', err);
+    });
 }
 
 angular.module(PKG.name + '.commons')
