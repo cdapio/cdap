@@ -43,8 +43,7 @@ class TrackerTagsController{
         angular.forEach(response.preferredTags, (count, tag) => {
           this.tags.preferredTags.push({
             name: tag,
-            count: count,
-            empty: false
+            count: count
           });
         });
         // Calculate number of empty rows needed so that table maintains a consistent height
@@ -59,8 +58,7 @@ class TrackerTagsController{
         angular.forEach((response.userTags), (count, tag) => {
           this.tags.userTags.push({
             name: tag,
-            count: count,
-            empty: false
+            count: count
           });
         });
         // Calculate number of empty rows needed so that table maintains a consistent height
