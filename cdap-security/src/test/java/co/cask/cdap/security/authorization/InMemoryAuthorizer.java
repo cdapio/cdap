@@ -64,11 +64,6 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
-    enforce(entity, principal, Collections.singleton(action));
-  }
-
-  @Override
   public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws UnauthorizedException {
     // super users do not have any enforcement
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
@@ -93,13 +88,7 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
       return unfiltered;
     }
-    Set<EntityId> allowedEntities = table.column(principal).keySet();
-    if (principal.getType() != Principal.PrincipalType.ROLE) {
-      for (Role role : listRoles(principal)) {
-        allowedEntities.addAll(table.column(role).keySet());
-      }
-    }
-    return Sets.intersection(unfiltered, allowedEntities);
+    return super.filter(unfiltered, principal);
   }
 
   @Override
