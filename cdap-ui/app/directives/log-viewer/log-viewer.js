@@ -20,7 +20,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.data = {};
   this.errorCount = 0;
   this.warningCount = 0;
-  this.loading = false;
+  this.totalCount = 0;
+  this.loading = true;
   this.loadingMoreLogs = false;
   this.fullScreen = false;
 
@@ -210,18 +211,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       'start' : this.startTimeSec
     }).$promise.then(
       (res) => {
-
+        this.loading = false;
         this.viewLimit = 100;
         this.cacheDecrement = 100;
         this.cacheSize = 0;
 
         //If there are no logs yet to be retrieved let viewer know
-        if(res.length < this.viewLimit){
-          this.loadingMoreLogs = false;
-        } else {
-          this.loadingMoreLogs = true;
-        }
-
         this.loadingMoreLogs = res.length < this.viewLimit ? false : true;
 
         //There are no more logs to be returned
