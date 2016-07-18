@@ -16,7 +16,6 @@
 
 package co.cask.cdap.pipeline;
 
-import co.cask.cdap.internal.pipeline.StageContext;
 import com.google.common.reflect.TypeToken;
 
 /**

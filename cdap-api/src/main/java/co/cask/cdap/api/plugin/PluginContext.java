@@ -28,6 +28,9 @@ public interface PluginContext {
 
   /**
    * Gets the {@link PluginProperties} associated with the given plugin id.
+   * These are properties provided at configure time, if there were any macros in
+   * the properties, those properties would be unresolved. if you want to use resolved properties at run time use
+   * {@link PluginConfig#getProperties()}
    *
    * @param pluginId the unique identifier provide when declaring plugin usage in the program.
    * @return the {@link PluginProperties}.
