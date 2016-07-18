@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.spark;
+package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
