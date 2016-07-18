@@ -31,7 +31,6 @@ import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.security.Key;
-import java.util.HashMap;
 
 /**
  * An adapter between a KeyStore Key and our entry. This is used to store
