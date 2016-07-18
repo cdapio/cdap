@@ -23,6 +23,15 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope, SchemaHelp
   vm.items = {};
   let timeout;
 
+  vm.changeType = () => {
+    if (SCHEMA_TYPES.simpleTypes.indexOf(vm.items.displayType) !== -1) {
+      vm.items.type = vm.items.displayType;
+      vm.formatOutput();
+    } else {
+      vm.items.type = null;
+    }
+  };
+
   vm.formatOutput = () => {
     vm.error = '';
 
@@ -95,12 +104,17 @@ angular.module(PKG.name+'.commons')
     replace: true,
     scope: {
       model: '=ngModel',
-      type: '@',
       parentFormatOutput: '&',
       isDisabled: '='
     },
     link: (scope, element) => {
-      $compile('<my-array-schema ng-model="model" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-array-schema')(scope, (cloned) => {
+      let elemString = `<my-array-schema
+                          ng-model="model"
+                          parent-format-output="parentFormatOutput()"
+                          is-disabled="isDisabled">
+                        </my-array-schema>`;
+
+      $compile(elemString)(scope, (cloned) => {
         element.append(cloned);
       });
     }

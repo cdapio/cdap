@@ -55,6 +55,15 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
     vm.formatOutput();
   };
 
+  vm.changeType = (field) => {
+    if (SCHEMA_TYPES.simpleTypes.indexOf(field.displayType) !== -1) {
+      field.type = field.displayType;
+      vm.formatOutput();
+    } else {
+      field.type = null;
+    }
+  };
+
   function init(strJson) {
     if (!strJson || strJson === 'record') {
       recordName = vm.recordName || 'a' + uuid.v4().split('-').join('');
@@ -166,7 +175,8 @@ angular.module(PKG.name+'.commons')
       recordName: '=',
       hideHeader: '=',
       parentFormatOutput: '&',
-      isDisabled: '='
+      isDisabled: '=',
+      schemaPrefix: '='
     }
   };
 })
@@ -178,10 +188,20 @@ angular.module(PKG.name+'.commons')
       model: '=ngModel',
       recordName: '=',
       parentFormatOutput: '&',
-      isDisabled: '='
+      isDisabled: '=',
+      schemaPrefix: '='
     },
     link: (scope, element) => {
-      $compile('<my-complex-schema ng-model="model" record-name="recordName" hide-header="true" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-complex-schema')(scope, (cloned) => {
+      let elemString = `<my-complex-schema
+                          ng-model="model"
+                          record-name="recordName"
+                          hide-header="true"
+                          parent-format-output="parentFormatOutput()"
+                          is-disabled="isDisabled"
+                          schema-prefix="schemaPrefix"
+                        </my-complex-schema>`;
+
+      $compile(elemString)(scope, (cloned) => {
         element.append(cloned);
       });
     }

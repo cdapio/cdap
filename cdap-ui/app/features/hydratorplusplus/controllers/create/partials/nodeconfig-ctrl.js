@@ -227,11 +227,6 @@ class HydratorPlusPlusNodeConfigCtrl {
               );
             }
             if (!this.state.node.outputSchema) {
-              // this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || JSON.stringify({
-              //   name: 'etlSchemaBody',
-              //   type: 'record',
-              //   fields: []
-              // });
               this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || '';
             }
             // Mark the configfetched to show that configurations have been received.

@@ -373,6 +373,10 @@ class HydratorPlusPlusConfigStore {
         });
         node.outputSchema = JSON.stringify({ fields: formattedSchema });
       }
+      if (!node.outputSchema && nodeConfig.outputSchema.schemaProperties['default-schema']) {
+        node.outputSchema = nodeConfig.outputSchema.schemaProperties['default-schema'];
+        node.plugin.properties[node.outputSchemaProperty] = node.outputSchema;
+      }
     };
     if (nodesWOutBackendProps.length) {
       nodesWOutBackendProps.forEach( n => {
@@ -382,6 +386,7 @@ class HydratorPlusPlusConfigStore {
     } else {
       listOfPromises.push(this.$q.when(true));
     }
+
     if (listOfPromises.length) {
       this.$q.all(listOfPromises)
         .then(
@@ -407,38 +412,7 @@ class HydratorPlusPlusConfigStore {
           },
           (err) => console.log('ERROR fetching backend properties for nodes', err)
         );
-      }
-
-    let setDefaultOutputSchemaForNodes = (node) => {
-      var pluginName = node.plugin.name;
-      var pluginToSchemaMap = {
-        'Stream': [
-          {
-            readonly: true,
-            name: 'ts',
-            type: 'long'
-          },
-          {
-            readonly: true,
-            name: 'headers',
-            type: {
-              type: 'map',
-              keys: 'string',
-              values: 'string'
-            }
-          }
-        ]
-      };
-      if (pluginToSchemaMap[pluginName]){
-        if (!node.outputSchema) {
-          node.outputSchema = {
-            fields: [{ name: 'body', type: 'string' }]
-          };
-          node.outputSchema = JSON.stringify({ fields: pluginToSchemaMap[pluginName].concat(node.outputSchema.fields)});
-        }
-      }
-    };
-    this.state.__ui__.nodes.forEach(node=> setDefaultOutputSchemaForNodes(node));
+    }
   }
   setConnections(connections) {
     this.state.config.connections = connections;
