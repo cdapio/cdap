@@ -66,10 +66,9 @@ class KMSTokenUtils {
       @SuppressWarnings("unchecked")
       Method addToken = tokenExtension.getMethod("addDelegationTokens");
       addToken.invoke(delegationTokenExtension, renewer, credentials);
-    } catch (IOException e) {
+    } catch (IOException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+      IllegalAccessException e) {
       throw Throwables.propagate(new IOException("Failed to get secure token for KMS.", e));
-    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-      e.printStackTrace();
     }
 
     return credentials;
