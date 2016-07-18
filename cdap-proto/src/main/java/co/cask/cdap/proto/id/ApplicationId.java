@@ -30,6 +30,7 @@ import java.util.Objects;
 public class ApplicationId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String application;
+  private transient Integer hashCode;
 
   public ApplicationId(String namespace, String application) {
     super(EntityType.APPLICATION);
@@ -95,7 +96,11 @@ public class ApplicationId extends EntityId implements NamespacedId, ParentedId<
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, application);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application);
+    }
+    return hashCode;
   }
 
   @SuppressWarnings("unused")

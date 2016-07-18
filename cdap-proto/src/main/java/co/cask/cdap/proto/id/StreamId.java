@@ -29,6 +29,7 @@ import java.util.Objects;
 public class StreamId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String stream;
+  private transient Integer hashCode;
 
   public StreamId(String namespace, String stream) {
     super(EntityType.STREAM);
@@ -61,7 +62,11 @@ public class StreamId extends EntityId implements NamespacedId, ParentedId<Names
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, stream);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, stream);
+    }
+    return hashCode;
   }
 
   @Override

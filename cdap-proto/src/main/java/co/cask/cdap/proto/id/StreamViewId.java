@@ -30,6 +30,7 @@ public class StreamViewId extends EntityId implements NamespacedId, ParentedId<S
   private final String namespace;
   private final String stream;
   private final String view;
+  private transient Integer hashCode;
 
   public StreamViewId(String namespace, String stream, String view) {
     super(EntityType.STREAM_VIEW);
@@ -68,7 +69,11 @@ public class StreamViewId extends EntityId implements NamespacedId, ParentedId<S
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, stream, view);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, stream, view);
+    }
+    return hashCode;
   }
 
   @Override

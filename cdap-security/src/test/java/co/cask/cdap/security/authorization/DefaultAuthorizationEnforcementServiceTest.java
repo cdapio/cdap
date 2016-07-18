@@ -24,7 +24,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
@@ -122,17 +121,18 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
       try {
         // update privileges for alice. Currently alice has not been granted any privileges.
         assertAuthorizationFailure(authEnforcementService, new NamespaceId("ns"), ALICE, Action.ADMIN);
-        Assert.assertEquals(2, authEnforcementService.getCache().size());
-        Assert.assertEquals(ImmutableSet.<Privilege>of(), authEnforcementService.getCache().get(ALICE));
+        Assert.assertTrue(authEnforcementService.getCache().get(ALICE).isEmpty());
+
         // grant some test privileges
         DatasetId ds = NS.dataset("ds");
         authorizer.grant(NS, ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
         authorizer.grant(ds, BOB, ImmutableSet.of(Action.ADMIN));
         // Running an iteration should update alice's privileges
         authEnforcementService.runOneIteration();
-        Assert.assertEquals(2, authEnforcementService.getCache().size());
-        Assert.assertEquals(ImmutableSet.of(new Privilege(NS, Action.READ), new Privilege(NS, Action.WRITE)),
-                            authEnforcementService.getCache().get(ALICE));
+
+        Assert.assertEquals(EnumSet.of(Action.READ, Action.WRITE),
+                            authEnforcementService.getCache().get(ALICE).get(NS));
+
         // auth enforcement for alice should succeed on ns for actions read and write
         authEnforcementService.enforce(NS, ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
         assertAuthorizationFailure(authEnforcementService, NS, ALICE, EnumSet.allOf(Action.class));
@@ -146,10 +146,9 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
         authorizer.revoke(NS);
         // run another iteration. Both alice and bob's privileges should have been updated in the cache now
         authEnforcementService.runOneIteration();
-        Assert.assertEquals(3, authEnforcementService.getCache().size());
-        Assert.assertEquals(ImmutableSet.<Privilege>of(), authEnforcementService.getCache().get(ALICE));
-        Assert.assertEquals(ImmutableSet.of(new Privilege(ds, Action.ADMIN)),
-                            authEnforcementService.getCache().get(BOB));
+
+        Assert.assertTrue(authEnforcementService.getCache().get(ALICE).isEmpty());
+        Assert.assertEquals(EnumSet.of(Action.ADMIN), authEnforcementService.getCache().get(BOB).get(ds));
         assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.READ);
         assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.WRITE);
         authEnforcementService.enforce(ds, BOB, Action.ADMIN);

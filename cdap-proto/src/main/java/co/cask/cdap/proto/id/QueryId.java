@@ -28,6 +28,7 @@ import java.util.Objects;
 public class QueryId extends EntityId {
 
   private final String handle;
+  private transient Integer hashCode;
 
   public QueryId(String handle) {
     super(EntityType.QUERY);
@@ -49,7 +50,11 @@ public class QueryId extends EntityId {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), handle);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), handle);
+    }
+    return hashCode;
   }
 
   @Override

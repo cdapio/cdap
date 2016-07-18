@@ -33,6 +33,7 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
   private final ProgramType type;
   private final String program;
   private final String run;
+  private transient Integer hashCode;
 
   public ProgramRunId(String namespace, String application, ProgramType type, String program, String run) {
     super(EntityType.PROGRAM_RUN);
@@ -83,7 +84,11 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, application, type, program, run);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, type, program, run);
+    }
+    return hashCode;
   }
 
   @Override

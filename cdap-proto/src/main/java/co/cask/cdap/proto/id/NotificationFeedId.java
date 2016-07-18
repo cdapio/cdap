@@ -31,6 +31,7 @@ public class NotificationFeedId extends EntityId implements NamespacedId, Parent
   private final String namespace;
   private final String category;
   private final String feed;
+  private transient Integer hashCode;
 
   public NotificationFeedId(String namespace, String category, String feed) {
     super(EntityType.NOTIFICATION_FEED);
@@ -69,7 +70,11 @@ public class NotificationFeedId extends EntityId implements NamespacedId, Parent
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, category, feed);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, category, feed);
+    }
+    return hashCode;
   }
 
   @Override

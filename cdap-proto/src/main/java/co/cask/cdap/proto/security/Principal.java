@@ -38,10 +38,12 @@ public class Principal {
 
   private final String name;
   private final PrincipalType type;
+  private final int hashCode;
 
   public Principal(String name, PrincipalType type) {
     this.name = name;
     this.type = type;
+    this.hashCode = Objects.hash(name, type);
   }
 
   public String getName() {
@@ -69,7 +71,7 @@ public class Principal {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type);
+    return hashCode;
   }
 
   @Override

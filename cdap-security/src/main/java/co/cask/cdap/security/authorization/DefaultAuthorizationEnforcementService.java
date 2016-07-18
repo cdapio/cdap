@@ -29,7 +29,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -64,7 +65,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   private final boolean cacheEnabled;
   private final int cacheTtlSecs;
   private final int cacheRefreshIntervalSecs;
-  private final LoadingCache<Principal, Set<Privilege>> authPolicyCache;
+  private final LoadingCache<Principal, Map<EntityId, Set<Action>>> authPolicyCache;
 
   private ScheduledExecutorService executor;
 
@@ -78,10 +79,10 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
     validateCacheConfig();
     this.authPolicyCache = CacheBuilder.newBuilder()
       .expireAfterWrite(cacheTtlSecs, TimeUnit.SECONDS)
-      .build(new CacheLoader<Principal, Set<Privilege>>() {
+      .build(new CacheLoader<Principal, Map<EntityId, Set<Action>>>() {
         @SuppressWarnings("NullableProblems")
         @Override
-        public Set<Privilege> load(Principal principal) throws Exception {
+        public Map<EntityId, Set<Action>> load(Principal principal) throws Exception {
           return fetchPrivileges(principal);
         }
       });
@@ -121,16 +122,16 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
     if (!authorizationEnabled) {
       return;
     }
-    Set<Privilege> privileges = getPrivileges(principal);
-    // If a principal has ALL privileges on the entity, authorization should succeed
-    if (privileges.contains(new Privilege(entity, Action.ALL))) {
-      return;
+
+    Set<Action> allowedActions = getPrivileges(principal).get(entity);
+    if (allowedActions == null) {
+      throw new UnauthorizedException(principal, actions, entity);
     }
-    // Otherwise check for the specific action requested
-    for (Action action : actions) {
-      if (!privileges.contains(new Privilege(entity, action))) {
-        throw new UnauthorizedException(principal, action, entity);
-      }
+
+    // If a principal has ALL privileges on the entity, authorization should succeed
+    // Otherwise check for the specific actions requested
+    if (!allowedActions.contains(Action.ALL) && !allowedActions.containsAll(actions)) {
+      throw new UnauthorizedException(principal, Sets.difference(actions, allowedActions), entity);
     }
   }
 
@@ -140,14 +141,10 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
       return unfiltered;
     }
 
-    Set<Privilege> privileges = getPrivileges(principal);
-    Set<EntityId> allowedEntities = new HashSet<>();
-    for (Privilege privilege : privileges) {
-      allowedEntities.add(privilege.getEntity());
-    }
+    Map<EntityId, Set<Action>> privileges = getPrivileges(principal);
     Set<T> result = new HashSet<>();
     for (T entityId : unfiltered) {
-      if (allowedEntities.contains(entityId)) {
+      if (privileges.containsKey(entityId)) {
         result.add(entityId);
       }
     }
@@ -172,11 +169,11 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   }
 
   @VisibleForTesting
-  Map<Principal, Set<Privilege>> getCache() {
+  Map<Principal, Map<EntityId, Set<Action>>> getCache() {
     return authPolicyCache.asMap();
   }
 
-  private Set<Privilege> fetchPrivileges(Principal principal) throws Exception {
+  private Map<EntityId, Set<Action>> fetchPrivileges(Principal principal) throws Exception {
     State serviceState = state();
     // The only states in which the service can be used are:
     // 1. STARTING - while pre-populating the cache with the current user's privileges
@@ -188,12 +185,26 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
                       AuthorizationEnforcementService.class.getName(), serviceState)
       );
     }
-    return privilegesFetcher.listPrivileges(principal);
+    Map<EntityId, Set<Action>> result = new HashMap<>();
+    Set<Privilege> privileges = privilegesFetcher.listPrivileges(principal);
+    if (privileges == null) {
+      return result;
+    }
+
+    for (Privilege privilege : privileges) {
+      Set<Action> actions = result.get(privilege.getEntity());
+      if (actions == null) {
+        actions = EnumSet.noneOf(Action.class);
+        result.put(privilege.getEntity(), actions);
+      }
+      actions.add(privilege.getAction());
+    }
+
+    return result;
   }
 
-  private Set<Privilege> getPrivileges(Principal principal) throws Exception {
-    Set<Privilege> privileges = cacheEnabled ? authPolicyCache.get(principal) : fetchPrivileges(principal);
-    return privileges == null ? ImmutableSet.<Privilege>of() : privileges;
+  private Map<EntityId, Set<Action>> getPrivileges(Principal principal) throws Exception {
+    return cacheEnabled ? authPolicyCache.get(principal) : fetchPrivileges(principal);
   }
   /**
    * On an authorization-enabled cluster, if caching is enabled too, updates the cache in the
@@ -222,7 +233,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
    * Updates privileges of the specified user in the cache.
    */
   private void updatePrivileges(Principal principal) throws Exception {
-    Set<Privilege> privileges = fetchPrivileges(principal);
+    Map<EntityId, Set<Action>> privileges = fetchPrivileges(principal);
     authPolicyCache.put(principal, privileges);
     LOG.debug("Updated privileges for principal {} as {}", principal, privileges);
   }
