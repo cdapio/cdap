@@ -66,7 +66,7 @@
     Loading Logs...
   </div>
   <!-- LOGS TABLE -->
-  <div ng-if="LogViewer.data.length > 0 && !LogViewer.loading" class="logs-table" ng-class="{'table-full-screen': LogViewer.fullScreen}">
+  <div ng-if="LogViewer.data.length > 0 && !LogViewer.loading" class="logs-table">
     <table class="table table-bordered scroll scroll-table">
       <thead>
         <th class="time time-header log-header"
@@ -102,7 +102,10 @@
                 ng-click="LogViewer.collapseColumns()"></span>
           <span>Message</span>
           <div class="expand-all-btn text-center"
-               ng-click="LogViewer.toggleLogExpansion()"><span ng-if="!LogViewer.toggleExpandAll">Expand All</span><span ng-if="LogViewer.toggleExpandAll">Collapse All</span></div>
+               ng-click="LogViewer.toggleLogExpansion()">
+            <span ng-if="!LogViewer.toggleExpandAll">Expand All</span>
+            <span ng-if="LogViewer.toggleExpandAll">Collapse All</span>
+          </div>
         </th>
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
@@ -145,7 +148,7 @@
               <div class="icon-column"
                    ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)"
                    ng-class="Logviewer.message-class">
-                <span class="fa message-arrow"
+                <span class="fa"
                       ng-class="{'fa-minus': entry.isStackTraceExpanded}">
                 </span>
               </div>

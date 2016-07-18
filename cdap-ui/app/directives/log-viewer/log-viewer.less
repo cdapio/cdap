@@ -41,7 +41,7 @@ body.state-flows-detail {
       padding: 7px;
       word-wrap: break-word;
       text-align: left;
-      .border-radius(3px);
+      border-radius: 3px;
       font-size: 11px;
       max-width: 100%;
       &.top {
@@ -81,9 +81,16 @@ my-log-viewer {
       background-color: white;
       z-index: -50;
     }
+
+    .logs-table {
+      height: ~"-moz-calc(100vh - 166px)";
+      height: ~"-webkit-calc(100vh - 166px)";
+      height: ~"calc(100vh - 166px)";
+    }
+
   }
 
-  .highlightedText {
+  .highlighted-text {
     background: #9cd0fc;
     border-radius: 5px;
     color: #000000;
@@ -264,14 +271,11 @@ my-log-viewer {
       border-bottom: 1px solid #cccccc;
     }
 
-    .logs-table.table-full-screen {
-      height: ~"-moz-calc(100vh - 166px)";
-      height: ~"-webkit-calc(100vh - 166px)";
-      height: ~"calc(100vh - 166px)";
-    }
-
     .logs-table {
       overflow: auto;
+      height: ~"-moz-calc(100vh - 450px)";
+      height: ~"-webkit-calc(100vh - 450px)";
+      height: ~"calc(100vh - 450px)";
 
       tbody td {
         color: #666666;

@@ -221,6 +221,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         } else {
           this.loadingMoreLogs = true;
         }
+
+        this.loadingMoreLogs = res.length < this.viewLimit ? false : true;
+
         //There are no more logs to be returned
         if(res.length === 0){
           getStatus();
@@ -274,7 +277,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     if(!this.searchText || (this.searchText && !this.searchText.length)){
       return $sce.trustAsHtml(text);
     }
-    return $sce.trustAsHtml(text.replace(new RegExp(this.searchText, 'gi'), '<span class="highlightedText">$&</span>'));
+    return $sce.trustAsHtml(text.replace(new RegExp(this.searchText, 'gi'), '<span class="highlighted-text">$&</span>'));
   };
 
   this.toggleLogExpansion = function() {

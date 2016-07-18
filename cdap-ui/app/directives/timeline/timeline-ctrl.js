@@ -41,7 +41,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     }
   };
 
-  function pollForMetadata() {
+  const pollForMetadata = () => {
     pollPromise = dataSrc.poll({
       _cdapPath: '/metrics/query',
       method: 'POST',
@@ -51,7 +51,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
         apiSettings.metric
       )
     },
-    function (res) {
+    (res) => {
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
@@ -60,10 +60,10 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
         pollPromise = null;
       }
       this.isLoading = false;
-    }, function(err) {
+    }, (err) => {
       console.log('ERROR: ', err);
     });
-  }
+  };
 
   LogViewerStore.subscribe(() => {
     this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
