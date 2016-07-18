@@ -104,7 +104,8 @@ angular.module(PKG.name + '.commons')
                   .$promise
                   .then(function (res) {
                     mvm.error = null;
-                    mvm.resolvedSchema = res.fields;
+
+                    mvm.resolvedSchema = angular.copy(res.fields);
                     mvm.schema = res.fields.filter(function (field) {
                       if (angular.isArray(field.type)) {
                         field.type = field.type[0];
@@ -126,8 +127,7 @@ angular.module(PKG.name + '.commons')
 
               mvm.apply = function () {
                 $scope.$close({
-                  schema: mvm.resolvedSchema,
-                  query: mvm.query
+                  schema: mvm.resolvedSchema
                 });
               };
 
@@ -142,7 +142,6 @@ angular.module(PKG.name + '.commons')
 
           modal.result.then(function (obj) {
             EventPipe.emit('schema.import', JSON.stringify(obj.schema));
-            $scope.node.plugin.properties.importQuery = obj.query;
           });
         };
 
