@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-realtime-transformations:
+.. _cask-hydrator-plugins-real-time-transformations:
 
 ================================
 Real-time Transformation Plugins

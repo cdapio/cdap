@@ -218,22 +218,22 @@ Real-time pipelines, based on the ``cdap-etl-realtime`` application template, ca
 
 - :ref:`Actions <cask-hydrator-action-plugins>`
 
-- :ref:`Real-time Sink Source Plugins <cask-hydrator-plugins-realtime-sources>`
+- :ref:`Real-time Sink Source Plugins <cask-hydrator-plugins-real-time-sources>`
 
-- :ref:`Real-time Transformation Plugins <cask-hydrator-plugins-realtime-transformations>`
+- :ref:`Real-time Transformation Plugins <cask-hydrator-plugins-real-time-transformations>`
 
-- :ref:`Real-time Sink Plugins <cask-hydrator-plugins-realtime-sinks>`
+- :ref:`Real-time Sink Plugins <cask-hydrator-plugins-real-time-sinks>`
 
 How Does It Work?
 -----------------
-The realtime pipeline is created by taking a "virtual" pipeline (in the form of a
+A real-time pipeline is created by taking a "virtual" pipeline (in the form of a
 configuration file) and then creating a "physical" pipeline as a CDAP application with
 appropriate CDAP programs to implement the configuration.
 
 The programs used will depend on the plugins used to build the pipeline. The available
 plugins are determined by those plugins that will work with the *ETL Realtime* (the
 ``cdap-etl-realtime`` artifact), and listed as :ref:`real-time plugins
-<cask-hydrator-plugins-realtime>`.
+<cask-hydrator-plugins-real-time>`.
 
 The application created will consist of a worker to be run continuously, polling as required.
 
@@ -248,7 +248,7 @@ To use Hydrator Studio to create a real-time pipeline:
 
 - Click the icons in the left-sidebar to select the plugins you would like included in
   your pipeline. In addition to the :ref:`action plugins <cask-hydrator-action-plugins>`,
-  you can use any of the :ref:`real-time plugins <cask-hydrator-plugins-realtime>`.
+  you can use any of the :ref:`real-time plugins <cask-hydrator-plugins-real-time>`.
 
 - Typically, you will need at a minimum a source, a sink, and any optional transformations
   that are needed being the source and sink stages.
@@ -276,7 +276,7 @@ At this point you can run your pipeline, either from within Hydrator or from wit
 
 Details and an example of using command line tools to create a real-time pipeline are in the
 section on :ref:`developing pipelines: creating a real-time pipeline
-<hydrator-developing-pipelines-creating-realtime>`.
+<hydrator-developing-pipelines-creating-real-time>`.
 
 
 
