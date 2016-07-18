@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.store.remote;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.data2.registry.DatasetUsageKey;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.proto.Id;

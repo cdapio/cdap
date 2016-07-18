@@ -14,7 +14,7 @@
 * the License.
 */
 
-package co.cask.cdap.internal.app.store.remote;
+package co.cask.cdap.common.internal.remote;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -54,7 +54,7 @@ import javax.annotation.Nullable;
 /**
  * Common HTTP client functionality for remote operations from programs.
  */
-class RemoteOpsClient {
+public class RemoteOpsClient {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
@@ -66,7 +66,7 @@ class RemoteOpsClient {
   private final HttpRequestConfig httpRequestConfig;
 
   @Inject
-  RemoteOpsClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
+  protected RemoteOpsClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {

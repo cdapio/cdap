@@ -18,7 +18,7 @@ package co.cask.cdap.gateway.handlers.meta;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.internal.app.store.remote.MethodArgument;
+import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;

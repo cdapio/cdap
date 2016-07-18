@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store.remote;
+package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.gateway.handlers.meta.RemotePrivilegeFetcherHandler;
+import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
@@ -38,10 +38,9 @@ import java.lang.reflect.Type;
 import java.util.Set;
 
 /**
- * An {@link PrivilegesFetcher} that is used to make an HTTP call to {@link RemotePrivilegeFetcherHandler} to fetch
- * privileges of a given principal. Communication over HTTP is necessary because program containers, which use this
- * class (and run as the user running the program) may not be white-listed to make calls to authorization providers
- * (like Apache Sentry).
+ * An {@link PrivilegesFetcher} that is used to make an HTTP call to to fetch privileges of a given principal.
+ * Communication over HTTP is necessary because program containers, which use this class (and run as the user running
+ * the program) may not be white-listed to make calls to authorization providers (like Apache Sentry).
  */
 public class RemotePrivilegesFetcher extends RemoteOpsClient implements PrivilegesFetcher {
   private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesFetcher.class);

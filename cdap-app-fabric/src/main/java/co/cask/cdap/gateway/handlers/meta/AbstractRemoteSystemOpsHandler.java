@@ -17,7 +17,7 @@
 package co.cask.cdap.gateway.handlers.meta;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.internal.app.store.remote.MethodArgument;
+import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.http.AbstractHttpHandler;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
