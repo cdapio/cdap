@@ -21,19 +21,21 @@ import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.File;
 
 /**
  * Tests for {@link DefaultNamespaceAdmin}
  */
 public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   private static final NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+  private static final NamespacedLocationFactory namespacedLocationFactory =
+    getInjector().getInstance(NamespacedLocationFactory.class);
 
   @Test
   public void testNamespaces() throws Exception {
@@ -117,10 +119,11 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     String namespace = "custompaceNamespace";
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     // check that root directory for a namespace cannot be updated
-    // create the custom directory
-    File customspaceDir = tmpFolder.newFolder("customspace");
+    // create the custom directory since the namespace is being created with custom root directory it needs to exist
+    Location customlocation = namespacedLocationFactory.get(namespaceId);
+    Assert.assertTrue(customlocation.mkdirs());
     NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
-      .setRootDirectory(customspaceDir.toString()).build();
+      .setRootDirectory(customlocation.toString()).build();
     namespaceAdmin.create(nsMeta);
     Assert.assertTrue(namespaceAdmin.exists(namespaceId));
 

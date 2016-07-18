@@ -126,12 +126,13 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       }
       // since this is a custom location we expect it to exists. Get the custom location for the namespace from
       // namespaceLocationFactory since the location needs to be aware of local/distributed fs.
-      if (!namespacedLocationFactory.get(namespaceMeta.getNamespaceId().toId()).exists()) {
+      Location customNamespacedLocation = namespacedLocationFactory.get(namespaceMeta.getNamespaceId().toId());
+      if (!customNamespacedLocation.exists()) {
         // TODO: Add username in the below exception message.
         throw new IOException(String.format(
           "The provided home directory '%s' for namespace '%s' does not exists. Please create it on filesystem " +
-            "with sufficient privileges for the user and then try creating a namespace.", customLocation.toString(),
-          namespaceMeta.getNamespaceId()));
+            "with sufficient privileges for the user and then try creating a namespace.",
+          customNamespacedLocation.toString(), namespaceMeta.getNamespaceId()));
       }
     } else {
       // no namespace custom location was provided one must be created by cdap

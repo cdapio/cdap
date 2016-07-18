@@ -44,7 +44,6 @@ import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -137,15 +136,15 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testCreateWithConfig() throws Exception {
-    // create the custom namespace location first
-    File customSpaceDir = tmpFolder.newFolder("data", "tmp", "myspace");
+    // create the custom namespace location first since we will set the root directory the location needs to exists
+    NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
+    Location customLocation = namespacedLocationFactory.get(NAME_ID);
+    Assert.assertTrue(customLocation.mkdirs());
     // prepare - create namespace with config in its properties
-
-
     Map<String, String> namespaceConfigString = ImmutableMap.of(NamespaceConfig.SCHEDULER_QUEUE_NAME,
                                                                 "testSchedulerQueueName",
                                                                 NamespaceConfig.ROOT_DIRECTORY,
-                                                                customSpaceDir.toString());
+                                                                customLocation.toString());
 
     String propertiesString = GSON.toJson(ImmutableMap.of(NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION,
                                                           CONFIG_FIELD, namespaceConfigString));
@@ -159,12 +158,14 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
     Assert.assertEquals("testSchedulerQueueName",
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("scheduler.queue.name").getAsString());
-    Assert.assertEquals(customSpaceDir.toString(),
+    Assert.assertEquals(customLocation.toString(),
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("root.directory").getAsString());
     response = deleteNamespace(NAME);
-    // check that the custom location for the namespace was not deleted while deleting namespace
-    Assert.assertTrue(new File(tmpFolder.getRoot(), "data/tmp/myspace").exists());
     assertResponseCode(200, response);
+    // check that the custom location for the namespace was not deleted while deleting namespace
+    Assert.assertTrue(customLocation.exists());
+    // delete it manually
+    Assert.assertTrue(customLocation.delete(true));
   }
 
   @Test
