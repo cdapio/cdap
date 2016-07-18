@@ -70,6 +70,26 @@ public class SecureStoreModules extends RuntimeModule {
     };
   }
 
+  private static Object getStore(final CConfiguration cConf, Injector injector) {
+    if (AbstractSecureStore.isKMSBacked(cConf)) {
+      try {
+        if (AbstractSecureStore.isKMSCapable()) {
+          return injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
+        } else {
+          LOG.warn("Could not find classes required for supporting KMS provider.");
+          // No Exception was thrown, that means the classes are available, load our provider
+          return injector.getInstance(DummyKMSStore.class);
+        }
+      } catch (ClassNotFoundException e) {
+        // KMSSecureStore could not be loaded
+        LOG.warn("Could not find classes required for supporting KMS based secure store.");
+        return injector.getInstance(DummyKMSStore.class);
+      }
+    } else {
+      return injector.getInstance(FileSecureStore.class);
+    }
+  }
+
   private static class SecureStoreProvider implements Provider<SecureStore> {
     private final CConfiguration cConf;
     private final Injector injector;
@@ -85,23 +105,7 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStore get() {
-      if (AbstractSecureStore.isKMSBacked(cConf)) {
-        try {
-          if (AbstractSecureStore.isKMSCapable()) {
-            return (SecureStore) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
-          } else {
-            LOG.warn("Could not find classes required for supporting KMS provider.");
-            // No Exception was thrown, that means the classes are available, load our provider
-            return injector.getInstance(DummyKMSStore.class);
-          }
-        } catch (ClassNotFoundException e) {
-          // KMSSecureStore could not be loaded
-          LOG.warn("Could not find classes required for supporting KMS based secure store.");
-          return injector.getInstance(DummyKMSStore.class);
-        }
-      } else {
-        return injector.getInstance(FileSecureStore.class);
-      }
+      return (SecureStore) getStore(cConf, injector);
     }
   }
 
@@ -120,24 +124,7 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStoreManager get() {
-      if (AbstractSecureStore.isKMSBacked(cConf)) {
-        try {
-          if (AbstractSecureStore.isKMSCapable()) {
-            return (SecureStoreManager) injector.getInstance(
-              Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
-          } else {
-            LOG.warn("Could not find classes required for supporting KMS provider.");
-            // No Exception was thrown, that means the classes are available, load our provider
-            return injector.getInstance(DummyKMSStore.class);
-          }
-        } catch (ClassNotFoundException e) {
-          // KMSSecureStore could not be loaded
-          LOG.warn("Could not find classes required for supporting KMS based secure store.");
-          return injector.getInstance(DummyKMSStore.class);
-        }
-      } else {
-        return injector.getInstance(FileSecureStore.class);
-      }
+      return (SecureStoreManager) getStore(cConf, injector);
     }
   }
 }
