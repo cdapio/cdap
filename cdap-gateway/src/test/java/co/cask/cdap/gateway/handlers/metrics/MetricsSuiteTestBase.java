@@ -25,7 +25,8 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -38,7 +39,6 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
@@ -137,7 +137,7 @@ public abstract class MetricsSuiteTestBase {
   public static Injector startMetricsService(CConfiguration conf) {
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -145,7 +145,7 @@ public abstract class MetricsSuiteTestBase {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getInMemoryModules()
+      new NamespaceClientRuntimeModule().getInMemoryModules()
     ).with(new AbstractModule() {
       @Override
       protected void configure() {

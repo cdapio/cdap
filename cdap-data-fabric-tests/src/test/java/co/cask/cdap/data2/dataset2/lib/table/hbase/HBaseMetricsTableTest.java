@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -76,6 +77,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                              new DiscoveryRuntimeModule().getDistributedModules(),
                                              new TransactionMetricsModule(),
                                              new LocationRuntimeModule().getDistributedModules(),
+                                             new NamespaceClientRuntimeModule().getInMemoryModules(),
                                              new SystemDatasetRuntimeModule().getDistributedModules(),
                                              new DataSetsModules().getInMemoryModules());
 

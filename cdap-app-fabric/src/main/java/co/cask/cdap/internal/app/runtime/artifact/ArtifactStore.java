@@ -616,8 +616,8 @@ public class ArtifactStore {
       }
     }
 
-    Location fileDirectory =
-      namespacedLocationFactory.get(artifactId.getNamespace(), ARTIFACTS_PATH).append(artifactId.getName());
+    Location fileDirectory = namespacedLocationFactory.get(artifactId.getNamespace(),
+                                                           ARTIFACTS_PATH).append(artifactId.getName());
     Locations.mkdirsIfNotExists(fileDirectory);
 
     // write the file contents

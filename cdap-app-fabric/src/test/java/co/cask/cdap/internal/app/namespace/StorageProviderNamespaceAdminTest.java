@@ -18,22 +18,28 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.explore.service.ExploreException;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.store.NamespaceStore;
+import co.cask.tephra.TransactionManager;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.apache.twill.filesystem.Location;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 
 /**
  * Tests for {@link StorageProviderNamespaceAdmin}
@@ -45,24 +51,79 @@ public class StorageProviderNamespaceAdminTest {
 
   private static NamespacedLocationFactory namespacedLocationFactory;
   private static StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
+  private static NamespaceStore namespaceStore;
+  private static TransactionManager transactionManager;
+  private static DatasetService datasetService;
 
   @BeforeClass
   public static void setup() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
-    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
+    Injector injector = Guice.createInjector(Modules.override(new AppFabricTestModule(cConf)).with(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // use the DefaultNamespacedLocationFactory here to test proper namespace creation in storage handler and
+          // not the NamespacedLocationFactoryTestClient
+          bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
+        }
+      }
+    ));
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     storageProviderNamespaceAdmin = injector.getInstance(StorageProviderNamespaceAdmin.class);
+    // start the dataset service for namespace store to work
+    transactionManager = injector.getInstance(TransactionManager.class);
+    transactionManager.startAndWait();
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
+    // we don't use namespace admin here but the store because namespaceadmin will try to create the
+    // home directory for namespace which we don't want. We just want to store the namespace meta in store
+    // to look up during the delete.
+    namespaceStore = injector.getInstance(NamespaceStore.class);
   }
 
   @Test
-  public void test() throws ExploreException, SQLException, IOException {
+  public void test() throws Exception {
     NamespaceId myspace = new NamespaceId("myspace");
-    storageProviderNamespaceAdmin.create(new NamespaceMeta.Builder().setName(myspace.getNamespace()).build());
+    NamespaceMeta myspaceMeta = new NamespaceMeta.Builder().setName(myspace.getNamespace()).build();
+    // the create/delete will look up meta so store that too
+    namespaceStore.create(myspaceMeta);
+    storageProviderNamespaceAdmin.create(myspaceMeta);
     Location namespaceLocation = namespacedLocationFactory.get(myspace.toId());
     Assert.assertTrue(namespaceLocation.exists());
     storageProviderNamespaceAdmin.delete(myspace);
     Assert.assertFalse(namespaceLocation.exists());
+  }
+
+  @Test
+  public void testNSWithCustomLocation() throws Exception {
+    NamespaceId customSpace = new NamespaceId("custom");
+    NamespaceMeta customSpaceMeta = new NamespaceMeta.Builder().setName(customSpace.getNamespace())
+      .setRootDirectory(TEMP_FOLDER.getRoot().toString() + "/" + customSpace.getNamespace()).build();
+    // the create/delete will look up meta so store that too
+    namespaceStore.create(customSpaceMeta);
+    try {
+      storageProviderNamespaceAdmin.create(customSpaceMeta);
+      Assert.fail("Expected exception to be thrown while creating namespace with custom location since the custom " +
+                    "location does not exist at this point.");
+    } catch (IOException e) {
+      // expected
+    }
+
+    // create the custom location
+    File custom = TEMP_FOLDER.newFolder(customSpace.getNamespace());
+    storageProviderNamespaceAdmin.create(customSpaceMeta);
+    storageProviderNamespaceAdmin.delete(customSpace);
+    namespaceStore.delete(customSpace.toId());
+    // custom namespace location should still exists
+    Assert.assertTrue(custom.exists());
+    custom.delete();
+  }
+
+  @AfterClass
+  public static void cleanup() throws Exception {
+    transactionManager.stopAndWait();
+    datasetService.stopAndWait();
   }
 }

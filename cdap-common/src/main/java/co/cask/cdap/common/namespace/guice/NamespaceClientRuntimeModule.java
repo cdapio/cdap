@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.namespace.guice;
 
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.namespace.DiscoveryNamespaceClient;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.LocalNamespaceClient;
@@ -25,10 +24,12 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 
 /**
- * Module to define Guice bindings for {@link AbstractNamespaceClient}
+ * Module to define Guice bindings for {@link NamespaceAdmin}.
+ * {@link NamespaceAdmin} and {@link NamespaceQueryAdmin} are binded in Singleton to make sure
+ * they use the same instance of the client.
  */
 public class NamespaceClientRuntimeModule extends RuntimeModule {
   @Override
@@ -36,8 +37,9 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(NamespaceAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
-        bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+        bind(InMemoryNamespaceClient.class).in(Singleton.class);
+        bind(NamespaceAdmin.class).to(InMemoryNamespaceClient.class);
+        bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceClient.class);
       }
     };
   }
@@ -47,6 +49,7 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
+        bind(LocalNamespaceClient.class).in(Singleton.class);
         bind(NamespaceAdmin.class).to(LocalNamespaceClient.class);
         bind(NamespaceQueryAdmin.class).to(LocalNamespaceClient.class);
       }
@@ -58,6 +61,7 @@ public class NamespaceClientRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
+        bind(DiscoveryNamespaceClient.class).in(Singleton.class);
         bind(NamespaceAdmin.class).to(DiscoveryNamespaceClient.class);
         bind(NamespaceQueryAdmin.class).to(DiscoveryNamespaceClient.class);
       }

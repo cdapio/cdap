@@ -48,7 +48,7 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -67,7 +67,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -126,7 +125,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new LocalDatasetOpExecutor(cConf, discoveryService, opExecutorService),
       exploreFacade,
       cConf,
-      NAMESPACE_STORE);
+      namespaceQueryAdmin);
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf,
@@ -138,8 +137,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  new HashSet<DatasetMetricsReporter>(),
-                                 instanceService,
-                                 NAMESPACE_STORE
+                                 instanceService, namespaceQueryAdmin
     );
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -155,8 +153,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     startLatch.await(5, TimeUnit.SECONDS);
 
-    namespacedLocationFactory.get(Id.Namespace.SYSTEM).mkdirs();
-    namespacedLocationFactory.get(NAMESPACE_ID).mkdirs();
+    createNamespace(Id.Namespace.SYSTEM);
+    createNamespace(NAMESPACE_ID);
   }
 
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
@@ -187,10 +185,25 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     }
   }
 
+  private void createNamespace (Id.Namespace namespaceId) throws Exception {
+    // since the namespace admin here is an in memory one we need to create the location explicitly
+    namespacedLocationFactory.get(namespaceId).mkdirs();
+    // the framework.delete looks up namespace config through namespaceadmin add the meta there too.
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+  }
+
+  private void deleteNamespace (Id.Namespace namespaceId) throws Exception {
+    // since the namespace admin here is an in memory one we need to delete the location explicitly
+    namespacedLocationFactory.get(namespaceId).delete(true);
+    namespaceAdmin.delete(namespaceId);
+  }
+
   @After
-  public void after() throws IOException {
-    namespacedLocationFactory.get(NAMESPACE_ID).delete(true);
-    namespacedLocationFactory.get(NamespaceId.SYSTEM.toId()).delete(true);
+  public void after() throws Exception {
+    // since we stored namespace meta through admin so that framework.delete can lookup namespaceconfig clean the
+    // meta from there too
+    deleteNamespace(NAMESPACE_ID);
+    deleteNamespace(Id.Namespace.SYSTEM);
     Futures.getUnchecked(Services.chainStop(service, opExecutorService, txManager));
   }
 
