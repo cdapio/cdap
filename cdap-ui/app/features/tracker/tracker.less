@@ -29,6 +29,7 @@
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
 @tag-bg: #464a57;
+@preferred-tag-bg: #8a8c94;
 @well-bg: #d3d3d3;
 @search-top-bar-container-size: 60px;
 @navbar-size: 50px;
@@ -70,31 +71,6 @@ body[class*='state-tracker'] {
       }
     }
   }
-
-  .tracker-modal {
-    h3.modal-title {
-      font-size: 16px;
-
-      @media (max-width: @screen-sm-max) {
-        max-width: 100%;
-      }
-    }
-    .modal-header {
-      background-color: transparent;
-      border-bottom: 0;
-      box-shadow: none;
-      span.fa-times {
-        margin-top: 15px;
-        margin-right: 15px;
-        color: @tracker-grey;
-        -webkit-text-stroke: 1px white;
-        &:hover,
-        &:focus { cursor: pointer; }
-      }
-    }
-    .modal-body { padding: 15px; }
-  }
-
   div.well {
     background-color: @well-bg;
     p {
@@ -181,7 +157,6 @@ body.state-tracker-detail-entity-usage {
             max-width: 100%;
           }
         }
-        &.empty-row > td { height: 38px; }
       }
     }
     div.well { height: 234px; }
@@ -416,14 +391,100 @@ body.state-tracker {
           border-bottom: 1px solid @border-color;
           padding: 0 15px 15px;
         }
-
-        .pagination li a { z-index: 0; }
       }
     }
   }
 
   .time-range-picker-group {
     .dropdown-menu { margin: 0; }
+  }
+
+  ul.pagination {
+    margin-top: 0;
+    > li {
+      a,
+      a:hover,
+      a:focus,
+      span {
+        background-color: transparent;
+        border: 0;
+        color: @tracker-green;
+      }
+      a,
+      span { padding: 6px; }
+      a {
+        z-index: 0;
+        &:focus { outline: 0; }
+      }
+      &.active,
+      &.disabled {
+        a,
+        a:hover,
+        a:focus,
+        span {
+          background-color: transparent;
+          border: 0;
+          color: @tracker-grey;
+        }
+      }
+    }
+  }
+
+  .modal.tracker-modal {
+    .modal-sm {
+      .modal-header {
+        padding: 15px;
+      }
+
+      @media (min-width: @screen-sm-min) {
+        width: 540px;
+      }
+    }
+    .modal-md {
+      .modal-header { padding: 15px 15px 0; }
+      .modal-body { padding: 0 15px 15px; }
+      .modal-footer {
+        padding-top: 0;
+      }
+    }
+    div.modal-header {
+      background-color: transparent;
+      border-bottom: 0;
+      box-shadow: none;
+      height: auto;
+      h3.modal-title {
+        font-size: 16px;
+        line-height: inherit;
+        padding-left: 0;
+        text-align: left;
+        max-width: 90%;
+      }
+      span.fa-times {
+        color: @tracker-grey;
+        -webkit-text-stroke: 1px white;
+        &:hover,
+        &:focus { cursor: pointer; }
+      }
+    }
+    .modal-footer {
+      text-align: right;
+      .btn {
+        color: #ffffff;
+        font-weight: 500;
+        padding-right: 16px;
+        padding-left: 16px;
+        &:last-child {
+          border: 1px solid transparent;
+          margin-left: 15px;
+        }
+      }
+      .btn-default { background-color: @border-color; }
+      .btn-danger { background-color: @alert-danger-bg; }
+    }
+  }
+
+  table.table {
+    tr.empty-row > td { height: 38px; }
   }
 }
 
@@ -1011,8 +1072,18 @@ body.state-tracker-detail-entity-usage {
 }
 
 body.state-tracker-tags {
+  .tag {
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    padding: 5px 10px;
+    &.preferred { background-color: @preferred-tag-bg; }
+    &.user { background-color: @tag-bg; }
+    &:focus { outline: 0; }
+  }
+
   main {
-    a.add-tags {
+    button.add-tags {
       border-color: @border-color;
       font-size: 12px;
       font-weight: 500;
@@ -1048,6 +1119,7 @@ body.state-tracker-tags {
         th,
         td { border: 1px solid @table-border-color; }
         td {
+          padding: 7px 10px;
           span {
             font-size: 12px;
             &.tagged-entities {
@@ -1058,20 +1130,22 @@ body.state-tracker-tags {
               color: @alert-danger-bg;
               font-size: 16px;
             }
-          }
-          a {
             &.action-link {
               color: @tracker-green;
               font-size: 13px;
             }
-            &.tag {
-              background-color: @tag-bg;
-              border-radius: 4px;
-              color: white;
-              font-size: 12px;
-              padding: 5px;
-              &:focus { outline: 0; }
+            &:not(.tagged-entities) {
+              &:hover,
+              &:focus {
+                cursor: pointer;
+                text-decoration: underline;
+              }
             }
+          }
+          a.tag {
+            color: white;
+            display: inline-block;
+            line-height: 1.1;
           }
         }
       }
@@ -1084,8 +1158,8 @@ body.state-tracker-tags {
   div.add-preferred-tags-modal {
     .flex-box {
       .flexbox();
-      justify-content: space-between;
-      margin-bottom: 30px;
+      .justify-content(@justify: space-between);
+      margin: 15px auto 10px;
       .flex-item {
         height: 130px;
         &:first-child,
@@ -1111,19 +1185,49 @@ body.state-tracker-tags {
       textarea {
         border: 0;
         height: 100%;
-        padding-top: 3.5em;
-        text-align: center;
+        &.empty {
+          padding-top: 3.5em;
+          text-align: center;
+        }
         &:focus {
           padding-top: 6px;
           text-align: left;
           .placeholder(@color: transparent);
         }
       }
+      a.file-import-link {
+        color: #098cf9;
+        &:hover,
+        &:focus {
+          cursor: pointer;
+          text-decoration: underline;
+        }
+      }
     }
     span.fa-cloud-upload { font-size: 36px; }
-    .btn-row .btn:last-child {
-      border: 1px solid transparent;
-      margin-left: 20px;
+    p.text-danger {
+      color: @alert-danger-bg;
+      font-weight: 500;
+      margin: 0;
+    }
+    div.valid-tags,
+    div.invalid-tags {
+      p {
+        font-weight: 500;
+        margin-bottom: 5px;
+      }
+    }
+    div.valid-tags span.tag {
+      display: inline-block;
+      margin-bottom: 5px;
+      &:not(:last-child) { margin-right: 5px; }
+    }
+    div.invalid-tags {
+      p { margin-top: 10px; }
+      span {
+        word-wrap: break-word;
+        &:not(:last-child):after { content: ", "; }
+      }
     }
   }
 }
