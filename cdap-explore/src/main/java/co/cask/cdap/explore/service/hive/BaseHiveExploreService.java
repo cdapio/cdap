@@ -74,6 +74,7 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
@@ -724,10 +725,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  @Override
   public QueryHandle createNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
     startAndWait();
 
+    String customHiveDatabase = null;
     try {
       // Even with the "IF NOT EXISTS" in the create command, Hive still logs a non-fatal warning internally
       // when attempting to create the "default" namespace (since it already exists in Hive).
@@ -740,22 +741,50 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
 
+      // Get custom Hive database name if one was  provided
+      customHiveDatabase = getCustomHiveDatabaseIfExists(namespace.getId());
       try {
         sessionHandle = cliService.openSession("", "", sessionConf);
-
-        String database = getHiveDatabase(namespace.getId());
-        // "IF NOT EXISTS" so that this operation is idempotent.
-        String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
-        operationHandle = doExecute(sessionHandle, statement);
-        QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
-        LOG.info("Creating database {} with handle {}", namespace, handle);
-        return handle;
+        if (Strings.isNullOrEmpty(customHiveDatabase)) {
+          // if no custom hive database was provided get the hive database according to cdap format and create it
+          // if one does not exists since cdap is responsible for managing the lifecycle of such databases
+          String database = getHiveDatabase(namespace.getId());
+          // "IF NOT EXISTS" so that this operation is idempotent.
+          String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
+          operationHandle = doExecute(sessionHandle, statement);
+          QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
+          LOG.info("Creating database {} with handle {}", namespace, handle);
+          return handle;
+        } else {
+          // a custom database name was provided so check its existence
+          // there is no way to check if a hive database exists or not other than trying to use it and see whether
+          // it fails or not. So, run a USE databaseName command and see if it throws exception
+          // Other way can be to list all database and check if the database exists or not but we are doing USE to
+          // make sure that user can acutally use the database once we have impersonation.
+          String statement = String.format("USE %s", customHiveDatabase);
+          // if the database does not exists the below line will throw exception from hive
+          operationHandle = doExecute(sessionHandle, statement);
+          // if we didn't got an exception on the line above we know that the database exists
+          QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement,
+                                                     customHiveDatabase);
+          LOG.debug("Custom database {} existence verified with handle {}", customHiveDatabase, handle);
+          return handle;
+        }
       } catch (Throwable e) {
         closeInternal(getQueryHandle(sessionConf),
                       new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
         throw e;
       }
     } catch (HiveSQLException e) {
+      // Earlier we checked if the hive database exists or not for custom mapped namespacce. If it did not exists
+      // then we will get an exception from Hive with error code 10072 which represent database was not found
+      if (e.toTStatus().getErrorCode() == ErrorMsg.DATABASE_NOT_EXISTS.getErrorCode()) {
+        //TODO: Add username here
+        throw new ExploreException(String.format("A custom Hive Database %s was provided for namespace %s which does " +
+                                                   "not exists. Please create the database in hive for the user and " +
+                                                   "try creating the namespace again.",
+                                                 customHiveDatabase, namespace), e);
+      }
       throw getSqlException(e);
     } catch (Throwable e) {
       throw new ExploreException(e);
@@ -765,30 +794,37 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
     startAndWait();
-
-    try {
-      SessionHandle sessionHandle = null;
-      OperationHandle operationHandle = null;
-      Map<String, String> sessionConf = startSession();
-
+    String customHiveDatabase = getCustomHiveDatabaseIfExists(namespace.getId());
+    if (Strings.isNullOrEmpty(customHiveDatabase)) {
       try {
-        sessionHandle = openHiveSession(sessionConf);
+        SessionHandle sessionHandle = null;
+        OperationHandle operationHandle = null;
+        Map<String, String> sessionConf = startSession();
 
-        String database = getHiveDatabase(namespace.getId());
-        String statement = String.format("DROP DATABASE %s", database);
-        operationHandle = doExecute(sessionHandle, statement);
-        QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
-        LOG.info("Deleting database {} with handle {}", database, handle);
-        return handle;
+        try {
+          sessionHandle = openHiveSession(sessionConf);
+
+          String database = getHiveDatabase(namespace.getId());
+          String statement = String.format("DROP DATABASE %s", database);
+          operationHandle = doExecute(sessionHandle, statement);
+          QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
+          LOG.info("Deleting database {} with handle {}", database, handle);
+          return handle;
+        } catch (Throwable e) {
+          closeInternal(getQueryHandle(sessionConf),
+                        new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+          throw e;
+        }
+      } catch (HiveSQLException e) {
+        throw getSqlException(e);
       } catch (Throwable e) {
-        closeInternal(getQueryHandle(sessionConf),
-                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
-        throw e;
+        throw new ExploreException(e);
       }
-    } catch (HiveSQLException e) {
-      throw getSqlException(e);
-    } catch (Throwable e) {
-      throw new ExploreException(e);
+    } else {
+      // a custom hive database was provided for this namespace do we don't need to delete it.
+      LOG.debug("Custom hive database {} found for namespace {}. Skipping delete.", customHiveDatabase,
+                namespace);
+      return QueryHandle.NO_OP;
     }
   }
 
@@ -1141,15 +1177,43 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       if (namespace.equals(Id.Namespace.DEFAULT.getId())) {
         return namespace;
-      } else if (!Strings.isNullOrEmpty(
-        namespaceQueryAdmin.get(Id.Namespace.from(namespace)).getConfig().getHiveDatabase())) {
-        return namespaceQueryAdmin.get(Id.Namespace.from(namespace)).getConfig().getHiveDatabase();
       } else {
-        String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-        return String.format("%s_%s", tablePrefix, namespace);
+        String hiveDatabase = getCustomHiveDatabaseIfExists(namespace);
+        if (!Strings.isNullOrEmpty(hiveDatabase)) {
+          return hiveDatabase;
+        } else {
+          String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+          return String.format("%s_%s", tablePrefix, namespace);
+        }
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Return the custom database for a given namespace if one exists else return null
+   *
+   * @param namespace the namespace for which we need to look up custom mapping
+   * @return the custom hive database name if one exists else null
+   * @throws ExploreException if failed to get NamespaceMeta for the given namespace
+   */
+  @Nullable
+  private String getCustomHiveDatabaseIfExists(@Nullable String namespace) throws ExploreException {
+    // null namespace implies that the operation happens across all databases
+    if (namespace == null) {
+      return null;
+    }
+    try {
+      // if this is not default namespace then only try to look up custom mapping as we currently don't support
+      // mapping default cdap namespace to custom database
+      if (!namespace.equals(Id.Namespace.DEFAULT.getId())) {
+        String hiveDatabase = namespaceQueryAdmin.get(Id.Namespace.from(namespace)).getConfig().getHiveDatabase();
+        return Strings.isNullOrEmpty(hiveDatabase) ? null : hiveDatabase;
+      }
+      return null;
+    } catch (Exception e) {
+      throw new ExploreException(String.format("Failed to get namespace meta for namespace %s", namespace), e);
     }
   }
 

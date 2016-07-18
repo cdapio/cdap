@@ -57,7 +57,13 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
     super.create(namespaceMeta);
     // TODO: CDAP-1519: Create base directory for filesets under namespace home
     // create HBase namespace
-    tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceMeta.getNamespaceId().toId());
+    try {
+      tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceMeta.getNamespaceId().toId());
+    } catch (IOException e) {
+      // if we failed to create a namespace in hbase then do clean up for above creations
+      super.delete(namespaceMeta.getNamespaceId());
+      throw e;
+    }
   }
 
   @Override
