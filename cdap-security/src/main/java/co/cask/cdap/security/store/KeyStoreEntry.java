@@ -31,6 +31,7 @@ import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.security.Key;
+import java.util.HashMap;
 
 /**
  * An adapter between a KeyStore Key and our entry. This is used to store
@@ -123,5 +124,28 @@ class KeyStoreEntry implements Key, Serializable {
 
   SecureStoreMetadata getMetadata() {
     return metadata;
+  }
+
+  byte[] toByteArray() {
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    OutputStreamWriter out = new OutputStreamWriter(buffer, Charset.forName("UTF-8"));
+    KeyStoreEntry.GSON.toJson(metadata, out);
+    KeyStoreEntry.GSON.toJson(data, out);
+    try {
+      out.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return buffer.toByteArray();
+  }
+
+  void fromByteArray(byte[] buff) {
+    try (JsonReader reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(buff),
+                                                                  Charset.forName("UTF-8")))) {
+      metadata = GSON.fromJson(reader, SecureStoreMetadata.class);
+      data = GSON.fromJson(reader, SecureStoreData.class);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 }

@@ -17,7 +17,6 @@
 package co.cask.cdap.api.security.store;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -26,9 +25,6 @@ import java.util.Objects;
  * Represents the metadata for the data stored in the Secure Store.
  */
 public final class SecureStoreMetadata {
-
-  private static final String DESCRIPTION_FIELD = "description";
-  private static final String DESCRIPTION_DEFAULT = "";
 
   private final String name;
   private final String description;

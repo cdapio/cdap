@@ -56,5 +56,10 @@
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-security</artifactId>
+      <version>3.5.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 </project>

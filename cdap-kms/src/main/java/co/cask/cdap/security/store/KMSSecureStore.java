@@ -46,7 +46,7 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
    */
-  private final KeyProvider provider;
+  private KeyProvider provider;
   private final Configuration conf;
 
   /**
@@ -56,10 +56,17 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
    * @throws IOException If the authority or the port could not be read from the provider URI.
    */
   @Inject
-  public KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
+  KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
     this.conf = conf;
-    URI providerUri = new URI(conf.get(KeyProviderFactory.KEY_PROVIDER_PATH));
-    provider = KMSClientProvider.Factory.get(providerUri, conf);
+    try {
+      URI providerUri = new URI(conf.get(KeyProviderFactory.KEY_PROVIDER_PATH));
+      provider = KMSClientProvider.Factory.get(providerUri, conf);
+    } catch (URISyntaxException e) {
+      throw new URISyntaxException("Secure store could not be loaded. The value for hadoop.security.key.provider.path" +
+                                     "in core-site.xml is not a valid URI.", e.getReason());
+    } catch (IOException e) {
+      throw new IOException("Secure store could not be loaded. KMS KeyProvider failed to initialize", e);
+    }
     LOG.info("Secure Store initialized successfully.");
   }
 
@@ -79,9 +86,15 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
     KeyProvider.Options options = new KeyProvider.Options(conf);
     options.setDescription(description);
     options.setAttributes(properties);
-    options.setBitLength(data.length * Byte.SIZE);
+    SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
+    SecureStoreData secureStoreData = new SecureStoreData(meta, data);
+    byte[] keyStoreBytes = (new KeyStoreEntry(secureStoreData, meta)).toByteArray();
+    options.setBitLength(keyStoreBytes.length * Byte.SIZE);
+    String keyName = SecureStoreUtils.getKeyName(namespace, name);
     try {
-      provider.createKey(SecureStoreUtils.getKeyName(namespace, name), data, options);
+      provider.createKey(keyName,
+                         keyStoreBytes,
+                         options);
     } catch (IOException e) {
       throw new IOException("Failed to store the key. " + name + " under namespace " + namespace, e);
     }
@@ -94,8 +107,14 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public void delete(String namespace, String name) throws IOException {
+    String keyName = SecureStoreUtils.getKeyName(namespace, name);
     try {
-      provider.deleteKey(SecureStoreUtils.getKeyName(namespace, name));
+      provider.getCurrentKey(keyName);
+    } catch (IOException e) {
+      throw new IOException("Failed to delete the key. " + name + " under namespace " + namespace, e);
+    }
+    try {
+      provider.deleteKey(keyName);
     } catch (IOException e) {
       throw new IOException("Failed to delete the key. " + name + " under namespace " + namespace, e);
     }
