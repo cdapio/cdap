@@ -215,12 +215,13 @@ public class PluginInstantiator implements Closeable {
     Map<String, String> properties = new HashMap<>();
     Map<String, PluginPropertyField> pluginPropertyFieldMap = plugin.getPluginClass().getProperties();
     MacroParser macroParser = new MacroParser(macroEvaluator);
-    for (Map.Entry<String, PluginPropertyField> pluginEntry : pluginPropertyFieldMap.entrySet()) {
-      if (pluginEntry.getValue().isMacroSupported()) {
-        String macroValue = plugin.getProperties().getProperties().get(pluginEntry.getKey());
-        properties.put(pluginEntry.getKey(), macroParser.parse(macroValue));
+
+    for (Map.Entry<String, String> property : plugin.getProperties().getProperties().entrySet()) {
+      PluginPropertyField field = pluginPropertyFieldMap.get(property.getKey());
+      if (field != null && field.isMacroSupported()) {
+        properties.put(property.getKey(), macroParser.parse(property.getValue()));
       } else {
-        properties.put(pluginEntry.getKey(), plugin.getProperties().getProperties().get(pluginEntry.getKey()));
+        properties.put(property.getKey(), property.getValue());
       }
     }
     return PluginProperties.builder().addAll(properties).build();
