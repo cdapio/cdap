@@ -28,12 +28,21 @@
     </button>
   </div>
 
+  <div class="text-danger error-message"
+       ng-if="SqlSelector.errors.exist">
+    {{ SqlSelector.errors.message }}
+  </div>
+
   <div ng-repeat="stage in SqlSelector.parsedInputSchemas"
        class="stage-container">
     <h4 ng-click="stage.expanded = !stage.expanded"
         ng-class="{'expanded': stage.expanded }">
       <span class="fa" ng-class="{ 'fa-caret-right': !stage.expanded, 'fa-caret-down': stage.expanded}"></span>
       <span>{{ stage.name }}</span>
+      <span class="badge badge-danger"
+            ng-if="SqlSelector.errors.stageCount[stage.name] > 0">
+        {{ SqlSelector.errors.stageCount[stage.name] }}
+      </span>
     </h4>
 
     <div class="table-container"
@@ -63,7 +72,8 @@
         </thead>
 
         <tbody>
-          <tr ng-repeat="field in stage.schema">
+          <tr ng-repeat="field in stage.schema"
+              ng-class="{'error': SqlSelector.aliases[field.alias] > 1}">
             <td>{{ field.name }}</td>
             <td class="checkbox-column">
               <input type="checkbox"

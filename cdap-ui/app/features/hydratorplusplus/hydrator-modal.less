@@ -158,6 +158,12 @@
             border: 1px solid @table-border-color;
 
             .node-config {
+              .plugin-function-bottom {
+                plugin-functions > * {
+                  top: 25px;
+                }
+              }
+
               ul.nav.nav-tabs {
                 li {
                   color: #666666;
@@ -178,6 +184,11 @@
                 height: ~"-webkit-calc(100vh - 220px)";
                 .reference-tab {
                   padding: 0 10px;
+                }
+
+                .btn-hydrator {
+                  background-color: @hydrator-blue;
+                  color: white;
                 }
 
                 @media (min-width: @screen-lg-min) {

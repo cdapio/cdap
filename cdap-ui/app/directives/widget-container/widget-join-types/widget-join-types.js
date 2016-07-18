@@ -14,7 +14,7 @@
  * the License.
  */
 
-function MultiCheckboxes() {
+function JoinTypesController() {
   'ngInject';
 
   let vm = this;
@@ -88,16 +88,16 @@ function MultiCheckboxes() {
 }
 
 angular.module(PKG.name + '.commons')
-  .directive('myMultiCheckboxes', function() {
+  .directive('myJoinTypes', function() {
     return {
       restrict: 'E',
-      templateUrl: 'widget-container/widget-multi-checkboxes/widget-multi-checkboxes.html',
+      templateUrl: 'widget-container/widget-join-types/widget-join-types.html',
       bindToController: true,
       scope: {
         model: '=ngModel',
         inputSchema: '='
       },
-      controller: MultiCheckboxes,
-      controllerAs: 'MultiCheckboxes'
+      controller: JoinTypesController,
+      controllerAs: 'JoinTypes'
     };
   });

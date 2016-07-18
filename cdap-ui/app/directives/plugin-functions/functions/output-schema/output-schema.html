@@ -14,7 +14,7 @@
   the License.
 -->
 
-<button class="btn btn-default pull-right"
+<button class="btn {{ OutputSchemaController.btnClass }} pull-right"
         ng-disabled="OutputSchemaController.requiredProperties.indexOf('') !== -1"
         ng-click="OutputSchemaController.openModal()">
   <span ng-if="OutputSchemaController.requiredProperties.indexOf('') !== -1"
@@ -22,5 +22,5 @@
         tooltip-append-to-body="true">
     <i class="fa fa-exclamation-triangle text-warning"></i>
   </span>
-  <span>Get Schema</span>
+  <span>{{ OutputSchemaController.label }}</span>
 </button>

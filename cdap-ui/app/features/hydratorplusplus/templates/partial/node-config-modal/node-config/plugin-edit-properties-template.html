@@ -41,7 +41,7 @@
               <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
             </label>
 
-            <span ng-if="field['plugin-function']">
+            <span ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top')">
               <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
               </plugin-functions>
             </span>
@@ -80,6 +80,12 @@
                      widget-container>
                 </div>
               </div>
+
+              <span class="plugin-function-bottom"
+                ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom'">
+                <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
+                </plugin-functions>
+              </span>
             </div>
           </div>
 

@@ -28,6 +28,9 @@ angular.module(PKG.name + '.commons')
         var fnConfig = $scope.fnConfig;
         var methodName = fnConfig['plugin-method'] || 'getSchema';
         var methodType = fnConfig.method || 'GET';
+        vm.label = fnConfig['label'] || 'Get Schema';
+        vm.btnClass = fnConfig['button-class'] || 'btn-default';
+
         var getPluginMethodApi = function(methodType) {
           switch(methodType) {
             case 'POST':
@@ -43,6 +46,7 @@ angular.module(PKG.name + '.commons')
         var pluginMethodApi = getPluginMethodApi(methodType);
         vm.node = $scope.node;
         var getRequiredFields = function() {
+          if (!fnConfig['required-fields']) { return []; }
           return fnConfig['required-fields'].map( function(field) { return $scope.node.plugin.properties[field]; } );
         };
         vm.requiredProperties = getRequiredFields();
@@ -64,13 +68,23 @@ angular.module(PKG.name + '.commons')
               mvm.fetchSchema = function () {
                 var config = mvm.node.plugin.properties;
                 // This is lame where we stringify the input schema from the formatOutputSchema function but again parse it here to send it as an object to the backend.
-                var firstNode = nodeInfo.inputSchema[0];
-                var fields;
-                try {
-                  fields = JSON.parse(firstNode.schema).fields || [];
-                  config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(fields));
-                } catch(e) {
-                  config.inputSchema = '';
+                if (!fnConfig['multiple-inputs'] || fnConfig['multiple-inputs'] === 'false') {
+                  var firstNode = nodeInfo.inputSchema[0];
+                  var fields;
+                  try {
+                    fields = JSON.parse(firstNode.schema).fields || [];
+                    config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(fields));
+                  } catch(e) {
+                    config.inputSchema = '';
+                  }
+                } else {
+                  var obj = {};
+
+                  angular.forEach(nodeInfo.inputSchema, (input) => {
+                    obj[input.name] = JSON.parse(input.schema);
+                  });
+
+                  config.inputSchemas = obj;
                 }
 
                 mvm.showLoading = true;

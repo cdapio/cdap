@@ -177,8 +177,8 @@ angular.module(PKG.name + '.commons')
           'input-schema': 'inputSchema'
         }
       },
-      'multi-checkboxes': {
-        element: '<my-multi-checkboxes></my-multi-checkboxes>',
+      'join-types': {
+        element: '<my-join-types></my-join-types>',
         attributes: {
           'ng-model': 'model',
           'input-schema': 'inputSchema'

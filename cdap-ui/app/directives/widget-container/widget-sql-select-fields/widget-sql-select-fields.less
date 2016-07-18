@@ -24,7 +24,7 @@ my-sql-selector {
     .button-container {
       position: absolute;
       right: 0;
-      top: -20px;
+      top: -30px;
 
       .btn {
         padding: 2px 7px;
@@ -43,15 +43,27 @@ my-sql-selector {
       }
     }
 
+    .error-message { margin-bottom: 10px; }
+
     .stage-container {
       h4 {
         cursor: pointer;
         span { color: #666666; }
 
         &.expanded {
-          span { color: #333333; }
+          span {
+            color: #333333;
+            &.badge-danger { color: white; }
+          }
           margin-bottom: 5px;
         }
+      }
+
+      .badge-danger {
+        background-color: #ff6666;
+        color: white;
+        font-size: 9px;
+        margin-bottom: 3px;
       }
 
       .table-container {
@@ -96,6 +108,11 @@ my-sql-selector {
               border-top: 1px solid #dedede;
 
               td { border: 0; }
+
+              &.error {
+                background-color: #fde2e2;
+                border: 1px solid #ff6666;
+              }
 
               .checkbox-column { padding-left: 15px; }
             }

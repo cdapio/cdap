@@ -22,6 +22,12 @@ function SqlSelectorController() {
   vm.expandedButton = true;
 
   vm.parsedInputSchemas = [];
+  vm.aliases = {};
+  vm.errors = {
+    stageCount: {},
+    message: 'Please create one or more aliases for duplicate field names.',
+    exist: false
+  };
 
   let modelCopy = angular.copy(vm.model);
 
@@ -37,9 +43,28 @@ function SqlSelectorController() {
     init(modelCopy);
   };
 
+  function getStageError() {
+    angular.forEach(vm.parsedInputSchemas, (input) => {
+      angular.forEach(input.schema, (field) => {
+        if (vm.aliases[field.alias] > 1) {
+          if (!vm.errors.stageCount[input.name]) {
+            vm.errors.stageCount[input.name] = 1;
+          } else {
+            vm.errors.stageCount[input.name]++;
+          }
+        }
+      });
+    });
+  }
+
+
   vm.formatOutput = () => {
     let outputArr = [];
 
+    vm.errors.stageCount = {};
+    vm.errors.exist = false;
+
+    vm.aliases = {};
     angular.forEach(vm.parsedInputSchemas, (input) => {
       angular.forEach(input.schema, (field) => {
         if (!field.selected) { return; }
@@ -50,9 +75,18 @@ function SqlSelectorController() {
           outputField += ' as ' + field.alias;
         }
 
+        if (!vm.aliases[field.alias]) {
+          vm.aliases[field.alias] = 1;
+        } else {
+          vm.aliases[field.alias]++;
+          vm.errors.exist = true;
+        }
+
         outputArr.push(outputField);
       });
     });
+
+    getStageError();
 
     vm.model = outputArr.join(',');
   };
@@ -65,11 +99,11 @@ function SqlSelectorController() {
     vm.formatOutput();
   };
 
-  function init(model) {
+  function init(inputModel) {
     let initialModel = {};
 
-    if (model) {
-      let model = model.split(',');
+    if (inputModel) {
+      let model = inputModel.split(',');
 
       angular.forEach(model, (entry) => {
         let split = entry.split(' as ');
@@ -88,7 +122,7 @@ function SqlSelectorController() {
           field.selected = true;
           field.alias = initialModel[input.name][field.name] === true ? '' : initialModel[input.name][field.name];
         } else {
-          field.selected = model ? false : true;
+          field.selected = inputModel ? false : true;
           field.alias = field.name;
         }
 
