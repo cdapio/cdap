@@ -41,7 +41,9 @@ import java.util.Map;
 /**
  * Secure Store implementation backed by Hadoop KMS. This class is loaded using reflection if
  * the provider is set to kms and Hadoop version is 2.6.0 or higher.
+ * The class is public to allow javadoc to build.
  */
+// TODO: Find a better way to handle javadoc so this class does not need to be public.
 @SuppressWarnings("unused")
 public class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
@@ -50,7 +52,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
    */
-  private final KeyProvider provider;
+  private KeyProvider provider;
   private final Configuration conf;
 
   /**
@@ -60,7 +62,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
    * @throws IOException If the authority or the port could not be read from the provider URI.
    */
   @Inject
-  public KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
+  KMSSecureStore(Configuration conf) throws IOException, URISyntaxException {
     this.conf = conf;
     try {
       URI providerUri = new URI(conf.get(KeyProviderFactory.KEY_PROVIDER_PATH));
