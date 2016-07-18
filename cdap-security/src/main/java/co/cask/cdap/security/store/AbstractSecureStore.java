@@ -35,4 +35,15 @@ public abstract class AbstractSecureStore {
   public static boolean isKMSBacked(final CConfiguration cConf) {
     return AbstractSecureStore.KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
   }
+
+  public static boolean isKMSCapable() {
+    try {
+      // Check if required KMS classes are present.
+      Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
+      return true;
+    } catch (ClassNotFoundException ex) {
+      // KMS is not supported.
+      return false;
+    }
+  }
 }

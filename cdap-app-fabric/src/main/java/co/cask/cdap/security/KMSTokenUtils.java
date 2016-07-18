@@ -21,8 +21,6 @@ import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.io.crypto.KeyProvider;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -32,27 +30,9 @@ import java.lang.reflect.Method;
  * Helper class for getting KMS security delegation token.
  */
 class KMSTokenUtils {
-  private static final Logger LOG = LoggerFactory.getLogger(KMSTokenUtils.class);
-
   private static boolean supportsKMS;
 
-  KMSTokenUtils() {
-    try {
-      // Check if required KMS classes are present.
-      Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
-      supportsKMS = true;
-    } catch (ClassNotFoundException ex) {
-      // KMS is not supported.
-      supportsKMS = false;
-    }
-  }
-
-
   static Credentials obtainToken(final SecureStore secureStore, Credentials credentials) {
-    if (!supportsKMS) {
-      return credentials;
-    }
-
     try {
       String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
       Class store = Class.forName("co.cask.cdap.security.store.KMSSecureStore");
@@ -68,7 +48,7 @@ class KMSTokenUtils {
       addToken.invoke(delegationTokenExtension, renewer, credentials);
     } catch (IOException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
       IllegalAccessException e) {
-      throw Throwables.propagate(new IOException("Failed to get secure token for KMS.", e));
+      throw Throwables.propagate(e);
     }
 
     return credentials;

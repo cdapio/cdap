@@ -68,7 +68,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private final co.cask.cdap.api.security.store.SecureStore secureStore;
   private final long updateInterval;
   private final boolean secureExplore;
-  private final boolean isKMSBacked;
+  private final boolean supportsKMS;
 
   @Inject
   TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
@@ -78,7 +78,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
-    isKMSBacked = AbstractSecureStore.isKMSBacked(cConf);
+    supportsKMS = AbstractSecureStore.isKMSBacked(cConf) && AbstractSecureStore.isKMSCapable();
     updateInterval = calculateUpdateInterval();
   }
 
