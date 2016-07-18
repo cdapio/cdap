@@ -18,58 +18,57 @@ package co.cask.cdap.etl.spark.function;
 
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transformation;
-import co.cask.cdap.etl.api.batch.BatchAggregator;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
+import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import scala.Tuple2;
 
 /**
- * Function that uses a BatchAggregator to perform the groupBy part of the aggregator.
+ * Function that uses a BatchJoiner to perform the joinOn part of the join.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
  */
-public class AggregatorGroupByFunction implements PairFlatMapFunction<Object, Object, Object> {
+public class JoinOnFunction implements PairFlatMapFunction<Object, Object, Object> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<Object, Tuple2<Object, Object>> groupByFunction;
+  private final String inputStageName;
+  private transient TrackedTransform<Object, Tuple2<Object, Object>> joinFunction;
   private transient DefaultEmitter<Tuple2<Object, Object>> emitter;
 
-  public AggregatorGroupByFunction(PluginFunctionContext pluginFunctionContext) {
+  public JoinOnFunction(PluginFunctionContext pluginFunctionContext, String inputStageName) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.inputStageName = inputStageName;
   }
 
   @Override
   public Iterable<Tuple2<Object, Object>> call(Object input) throws Exception {
-    if (groupByFunction == null) {
-      BatchAggregator<Object, Object, Object> aggregator = pluginFunctionContext.createPlugin();
-      aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
-      groupByFunction = new TrackedTransform<>(new GroupByTransform<>(aggregator),
+    if (joinFunction == null) {
+      BatchJoiner<Object, Object, Object> joiner = pluginFunctionContext.createPlugin();
+      BatchJoinerRuntimeContext context = pluginFunctionContext.createJoinerRuntimeContext();
+      joiner.initialize(context);
+      joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName),
                                                pluginFunctionContext.createStageMetrics(),
                                                TrackedTransform.RECORDS_IN,
                                                null);
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();
-    groupByFunction.transform(input, emitter);
+    joinFunction.transform(input, emitter);
     return emitter.getEntries();
   }
 
-  private static class GroupByTransform<GROUP_KEY, GROUP_VAL>
-    implements Transformation<GROUP_VAL, Tuple2<GROUP_KEY, GROUP_VAL>> {
-    private final BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
-    private final DefaultEmitter<GROUP_KEY> keyEmitter;
+  private static class JoinOnTransform<INPUT, JOIN_KEY> implements Transformation<INPUT, Tuple2<JOIN_KEY, INPUT>> {
+    private final BatchJoiner<JOIN_KEY, INPUT, ?> joiner;
+    private final String inputStageName;
 
-    public GroupByTransform(BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator) {
-      this.aggregator = aggregator;
-      this.keyEmitter = new DefaultEmitter<>();
+    public JoinOnTransform(BatchJoiner<JOIN_KEY, INPUT, ?> joiner, String inputStageName) {
+      this.joiner = joiner;
+      this.inputStageName = inputStageName;
     }
 
     @Override
-    public void transform(final GROUP_VAL inputValue, Emitter<Tuple2<GROUP_KEY, GROUP_VAL>> emitter) throws Exception {
-      keyEmitter.reset();
-      aggregator.groupBy(inputValue, keyEmitter);
-      for (GROUP_KEY key : keyEmitter.getEntries()) {
-        emitter.emit(new Tuple2<>(key, inputValue));
-      }
+    public void transform(final INPUT inputValue, Emitter<Tuple2<JOIN_KEY, INPUT>> emitter) throws Exception {
+      emitter.emit(new Tuple2<>(joiner.joinOn(inputStageName, inputValue), inputValue));
     }
   }
 }

@@ -18,11 +18,10 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.common.macro.LogicalStartTimeMacro;
-import com.google.common.base.Preconditions;
 
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -30,18 +29,30 @@ import javax.annotation.Nullable;
  * Macro evaluator used by batch application
  */
 public class DefaultMacroEvaluator implements MacroEvaluator {
-  private final WorkflowToken workflowToken;
-  private final Map<String, String> runtimeArguments;
+  private final Map<String, String> resolvedArguments;
   private final long logicalStartTime;
   private final LogicalStartTimeMacro logicalStartTimeMacro;
 
   private static final String LOGICAL_START_TIME_FUNCTION_NAME = "logicalStartTime";
   private static final String SECURE_FUNCTION_NAME = "secure";
 
-  public DefaultMacroEvaluator(WorkflowToken workflowToken, Map<String, String> runtimeArguments,
+  public DefaultMacroEvaluator(@Nullable WorkflowToken workflowToken, Map<String, String> runtimeArguments,
                                long logicalStartTime) {
-    this.workflowToken = workflowToken;
-    this.runtimeArguments = runtimeArguments;
+    Map<String, String> resolvedArguments = new HashMap<>();
+    resolvedArguments.putAll(runtimeArguments);
+    // not expected, but can happen if user runs just the program and not the workflow
+    if (workflowToken != null) {
+      for (String tokenKey : workflowToken.getAll(WorkflowToken.Scope.USER).keySet()) {
+        resolvedArguments.put(tokenKey, workflowToken.get(tokenKey, WorkflowToken.Scope.USER).toString());
+      }
+    }
+    this.resolvedArguments = resolvedArguments;
+    this.logicalStartTime = logicalStartTime;
+    this.logicalStartTimeMacro = new LogicalStartTimeMacro();
+  }
+
+  public DefaultMacroEvaluator(Map<String, String> arguments, long logicalStartTime) {
+    this.resolvedArguments = arguments;
     this.logicalStartTime = logicalStartTime;
     this.logicalStartTimeMacro = new LogicalStartTimeMacro();
   }
@@ -49,19 +60,11 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
   @Override
   @Nullable
   public String lookup(String property) {
-    // try workflow token
-    Preconditions.checkNotNull(workflowToken, "Workflow token is null, you may not be running a workflow.");
-    Value tokenValue = workflowToken.get(property);
-    if (tokenValue != null) {
-      return tokenValue.toString();
+    String val = resolvedArguments.get(property);
+    if (val == null) {
+      throw new InvalidMacroException(String.format("Argument '%s' is not defined.", property));
     }
-
-    // try runtime arguments
-    String runtimeArgumentMacro = runtimeArguments.get(property);
-    if (runtimeArgumentMacro == null) {
-      throw new InvalidMacroException(String.format("Macro '%s' not defined.", property));
-    }
-    return runtimeArgumentMacro;
+    return val;
   }
 
   @Override

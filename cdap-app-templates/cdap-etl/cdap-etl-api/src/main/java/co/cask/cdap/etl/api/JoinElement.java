@@ -16,11 +16,16 @@
 
 package co.cask.cdap.etl.api;
 
+import java.io.Serializable;
+
 /**
  * Join element to hold join record per stage
  * @param <INPUT_RECORD> type of input record from each stage
  */
-public final class JoinElement<INPUT_RECORD> {
+public final class JoinElement<INPUT_RECORD> implements Serializable {
+
+  private static final long serialVersionUID = 7274266812214859025L;
+
   private final String stageName;
   private final INPUT_RECORD inputRecord;
 

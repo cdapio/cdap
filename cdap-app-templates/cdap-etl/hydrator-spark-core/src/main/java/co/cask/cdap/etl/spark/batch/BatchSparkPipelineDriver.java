@@ -21,7 +21,9 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.StageMetrics;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
@@ -35,6 +37,12 @@ import co.cask.cdap.etl.spark.function.AggregatorAggregateFunction;
 import co.cask.cdap.etl.spark.function.AggregatorGroupByFunction;
 import co.cask.cdap.etl.spark.function.BatchSinkFunction;
 import co.cask.cdap.etl.spark.function.BatchSourceFunction;
+import co.cask.cdap.etl.spark.function.InitialJoinFunction;
+import co.cask.cdap.etl.spark.function.JoinFlattenFunction;
+import co.cask.cdap.etl.spark.function.JoinMergeFunction;
+import co.cask.cdap.etl.spark.function.JoinOnFunction;
+import co.cask.cdap.etl.spark.function.LeftJoinFlattenFunction;
+import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.function.TransformFunction;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -50,7 +58,11 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Batch Spark pipeline driver.
@@ -141,6 +153,73 @@ public class BatchSparkPipelineDriver extends SparkPipelineDriver<JavaRDD<Object
   }
 
   @Override
+  protected JavaRDD<Object> handleJoin(String stageName,
+                                       final BatchJoiner<Object, Object, Object> joiner,
+                                       Map<String, JavaRDD<Object>> inputData,
+                                       PluginFunctionContext pluginFunctionContext) throws Exception {
+
+    Map<String, JavaPairRDD<Object, Object>> preJoinRDDs = new HashMap<>();
+    for (Map.Entry<String, JavaRDD<Object>> inputRDDEntry : inputData.entrySet()) {
+      String inputStage = inputRDDEntry.getKey();
+      JavaRDD<Object> inputRDD = inputRDDEntry.getValue();
+      preJoinRDDs.put(inputStage,
+                      inputRDD.flatMapToPair(new JoinOnFunction(pluginFunctionContext, inputStage)));
+    }
+
+    Set<String> remainingInputs = new HashSet<>();
+    remainingInputs.addAll(inputData.keySet());
+
+    Integer numPartitions = stagePartitions.get(stageName);
+
+    JavaPairRDD<Object, List<JoinElement<Object>>> joinedInputs = null;
+    // inner join on required inputs
+    for (final String inputStageName : joiner.getJoinConfig().getRequiredInputs()) {
+      JavaPairRDD<Object, Object> preJoinRDD = preJoinRDDs.get(inputStageName);
+
+      if (joinedInputs == null) {
+        joinedInputs = preJoinRDD.mapValues(new InitialJoinFunction(inputStageName));
+      } else {
+        JoinFlattenFunction joinFlattenFunction = new JoinFlattenFunction(inputStageName);
+        joinedInputs = numPartitions == null ?
+          joinedInputs.join(preJoinRDD).mapValues(joinFlattenFunction) :
+          joinedInputs.join(preJoinRDD, numPartitions).mapValues(joinFlattenFunction);
+      }
+      remainingInputs.remove(inputStageName);
+    }
+
+    // outer join on non-required inputs
+    boolean isFullOuter = joinedInputs == null;
+    for (final String inputStageName : remainingInputs) {
+      JavaPairRDD<Object, Object> preJoinRDD = preJoinRDDs.get(inputStageName);
+
+      if (joinedInputs == null) {
+        joinedInputs = preJoinRDD.mapValues(new InitialJoinFunction(inputStageName));
+      } else {
+        if (isFullOuter) {
+          OuterJoinFlattenFunction outerJoinFlattenFunction = new OuterJoinFlattenFunction(inputStageName);
+
+          joinedInputs = numPartitions == null ?
+            joinedInputs.fullOuterJoin(preJoinRDD).mapValues(outerJoinFlattenFunction) :
+            joinedInputs.fullOuterJoin(preJoinRDD, numPartitions).mapValues(outerJoinFlattenFunction);
+        } else {
+          LeftJoinFlattenFunction joinFlattenFunction = new LeftJoinFlattenFunction(inputStageName);
+
+          joinedInputs = numPartitions == null ?
+            joinedInputs.leftOuterJoin(preJoinRDD).mapValues(joinFlattenFunction) :
+            joinedInputs.leftOuterJoin(preJoinRDD, numPartitions).mapValues(joinFlattenFunction);
+        }
+      }
+    }
+
+    // should never happen, but removes warnings
+    if (joinedInputs == null) {
+      throw new IllegalStateException("There are no inputs into join stage " + stageName);
+    }
+
+    return joinedInputs.flatMap(new JoinMergeFunction(pluginFunctionContext)).cache();
+  }
+
+  @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     this.jsc = new JavaSparkContext();
     this.sec = sec;
@@ -159,7 +238,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineDriver<JavaRDD<Object
     try (InputStream is = new FileInputStream(sec.getLocalizationContext().getLocalFile("ETLSpark.config"))) {
       sourceFactory = SparkBatchSourceFactory.deserialize(is);
       sinkFactory = SparkBatchSinkFactory.deserialize(is);
-      stagePartitions = GSON.fromJson(new DataInputStream(is).readUTF(), MAP_TYPE);
+      DataInputStream dataInputStream = new DataInputStream(is);
+      stagePartitions = GSON.fromJson(dataInputStream.readUTF(), MAP_TYPE);
     }
     datasetContext = context;
     runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec);

@@ -25,6 +25,7 @@ import scala.Tuple2;
 
 /**
  * Function that uses a BatchSource to transform a pair of objects into a single object.
+ * Non-serializable fields are lazily created since this is used in a Spark closure.
  */
 public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Object>, Object> {
   private final PluginFunctionContext pluginFunctionContext;
