@@ -49,11 +49,11 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * AppFabric Server.
@@ -147,6 +147,7 @@ public class AppFabricServer extends AbstractIdleService {
     // Run http service on random port
     httpService = new CommonNettyHttpServiceBuilder(configuration)
       .setHost(hostname.getCanonicalHostName())
+      .setPort(configuration.getInt(Constants.AppFabric.SERVER_PORT))
       .setHandlerHooks(builder.build())
       .addHttpHandlers(handlers)
       .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,

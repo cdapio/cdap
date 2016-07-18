@@ -70,6 +70,7 @@ public class MetadataService extends AbstractIdleService {
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.METADATA_SERVICE)))
       .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))
+      .setPort(cConf.getInt(Constants.Metadata.SERVICE_BIND_PORT))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_WORKER_THREADS))
       .setExecThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_EXEC_THREADS))
       .setConnectionBacklog(20000)
