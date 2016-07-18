@@ -244,6 +244,14 @@
   </property>
 
   <property>
+    <name>app.bind.port</name>
+    <value>0</value>
+    <description>
+      App Fabric service bind port
+    </description>
+  </property>
+
+  <property>
     <name>app.output.dir</name>
     <value>/programs</value>
     <description>
@@ -596,6 +604,14 @@
   </property>
 
   <property>
+    <name>dataset.service.bind.port</name>
+    <value>0</value>
+    <description>
+      Dataset service bind port
+    </description>
+  </property>
+
+  <property>
     <name>dataset.service.output.dir</name>
     <value>/datasets</value>
     <description>
@@ -707,6 +723,14 @@
     <description>
       Determines if writing to a table through the CDAP Explore Service (ad-
       hoc SQL queries) is enabled
+    </description>
+  </property>
+
+  <property>
+    <name>explore.service.bind.port</name>
+    <value>0</value>
+    <description>
+      Explore service bind port
     </description>
   </property>
 
@@ -1099,6 +1123,14 @@
     <value>0.0.0.0</value>
     <description>
       Metadata HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.service.bind.port</name>
+    <value>0</value>
+    <description>
+      Metadata HTTP service bind port
     </description>
   </property>
 
@@ -1868,6 +1900,14 @@
     <value>0.0.0.0</value>
     <description>
       Stream HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>stream.bind.port</name>
+    <value>0</value>
+    <description>
+      Stream HTTP service bind port
     </description>
   </property>
 

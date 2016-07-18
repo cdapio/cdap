@@ -37,9 +37,9 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.jboss.netty.buffer.HeapChannelBufferFactory;
 
-import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A Http service endpoint that host the stream handler.
