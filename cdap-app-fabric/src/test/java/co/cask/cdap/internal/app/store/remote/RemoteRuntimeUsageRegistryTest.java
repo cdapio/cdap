@@ -14,22 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store;
+package co.cask.cdap.internal.app.store.remote;
 
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
 import co.cask.cdap.proto.Id;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Set;
 
 /**
  * Tests implementation of {@link RemoteRuntimeUsageRegistry}, by using it to perform writes/updates, and then using a

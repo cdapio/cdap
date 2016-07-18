@@ -70,7 +70,7 @@ class RemoteOpsClient {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
+        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.REMOTE_SYSTEM_OPERATION));
       }
     });
 
@@ -87,7 +87,7 @@ class RemoteOpsClient {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new RuntimeException(
-        String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
+        String.format("Cannot discover service %s", Constants.Service.REMOTE_SYSTEM_OPERATION));
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
 
