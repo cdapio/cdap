@@ -87,13 +87,16 @@ public class SecureStoreModules extends RuntimeModule {
     public SecureStore get() {
       if (AbstractSecureStore.isKMSBacked(cConf)) {
         try {
-          // Check if required KMS classes are present.
-          Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
-          LOG.warn("Could not find classes required for supporting KMS provider.");
-          // No Exception was thrown, that means the classes are available, load our provider
-          return (SecureStore) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
+          if (AbstractSecureStore.isKMSCapable()) {
+            return (SecureStore) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
+          } else {
+            LOG.warn("Could not find classes required for supporting KMS provider.");
+            // No Exception was thrown, that means the classes are available, load our provider
+            return injector.getInstance(DummyKMSStore.class);
+          }
         } catch (ClassNotFoundException e) {
-          // Required KMS classes are not present.
+          // KMSSecureStore could not be loaded
+          LOG.warn("Could not find classes required for supporting KMS based secure store.");
           return injector.getInstance(DummyKMSStore.class);
         }
       } else {
@@ -119,13 +122,17 @@ public class SecureStoreModules extends RuntimeModule {
     public SecureStoreManager get() {
       if (AbstractSecureStore.isKMSBacked(cConf)) {
         try {
-          // Check if required KMS classes are present.
-          Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
-          LOG.warn("Could not find classes required for supporting KMS provider.");
-          // No Exception was thrown, that means the classes are available, load our provider
-          return (SecureStoreManager) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
+          if (AbstractSecureStore.isKMSCapable()) {
+            return (SecureStoreManager) injector.getInstance(
+              Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
+          } else {
+            LOG.warn("Could not find classes required for supporting KMS provider.");
+            // No Exception was thrown, that means the classes are available, load our provider
+            return injector.getInstance(DummyKMSStore.class);
+          }
         } catch (ClassNotFoundException e) {
-          // Required KMS classes are not present.
+          // KMSSecureStore could not be loaded
+          LOG.warn("Could not find classes required for supporting KMS based secure store.");
           return injector.getInstance(DummyKMSStore.class);
         }
       } else {
