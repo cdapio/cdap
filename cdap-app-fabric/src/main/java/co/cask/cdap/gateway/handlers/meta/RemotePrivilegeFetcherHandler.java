@@ -16,7 +16,7 @@
 
 package co.cask.cdap.gateway.handlers.meta;
 
-import co.cask.cdap.internal.app.store.remote.MethodArgument;
+import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;

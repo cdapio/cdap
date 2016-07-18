@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.store.remote;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;

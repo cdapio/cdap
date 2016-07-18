@@ -16,8 +16,8 @@
 
 package co.cask.cdap.gateway.handlers.meta;
 
+import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.internal.app.store.remote.MethodArgument;
 import co.cask.cdap.proto.Id;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
