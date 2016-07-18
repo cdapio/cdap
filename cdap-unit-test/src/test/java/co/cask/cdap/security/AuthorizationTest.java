@@ -87,7 +87,6 @@ public class AuthorizationTest extends TestBase {
     Constants.Security.Authorization.CACHE_ENABLED, false
   );
 
-  private static String olduser;
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
   private static final NamespaceId AUTH_NAMESPACE = new NamespaceId("authorization");
@@ -95,6 +94,7 @@ public class AuthorizationTest extends TestBase {
     new NamespaceMeta.Builder().setName(AUTH_NAMESPACE.getNamespace()).build();
 
   private static InstanceId instance;
+  private static String oldUser;
 
   /**
    * An {@link ExternalResource} that wraps a {@link TemporaryFolder} and {@link TestConfiguration} to execute them in
@@ -134,8 +134,8 @@ public class AuthorizationTest extends TestBase {
 
   @BeforeClass
   public static void setup() {
-    olduser = SecurityRequestContext.getUserId();
     instance = new InstanceId(getConfiguration().get(Constants.INSTANCE_NAME));
+    oldUser = SecurityRequestContext.getUserId();
     SecurityRequestContext.setUserId(ALICE.getName());
   }
 
@@ -557,7 +557,7 @@ public class AuthorizationTest extends TestBase {
   public static void cleanup() throws Exception {
     // we want to execute TestBase's @AfterClass after unsetting userid, because the old userid has been granted ADMIN
     // on default namespace in TestBase so it can clean the namespace.
-    SecurityRequestContext.setUserId(olduser);
+    SecurityRequestContext.setUserId(oldUser);
     finish();
   }
 

@@ -32,8 +32,10 @@ import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetTypeService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
@@ -63,6 +65,7 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -164,30 +167,27 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryServiceClient), cConf);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
-    AuthorizationEnforcementService authorizationEnforcer = injector.getInstance(AuthorizationEnforcementService.class);
+    AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    AuthorizationEnforcementService authEnforcementService =
+      injector.getInstance(AuthorizationEnforcementService.class);
+
+    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
+                                                            txExecutorFactory, mdsFramework, DEFAULT_MODULES);
+    DatasetInstanceManager instanceManager = new DatasetInstanceManager(txSystemClientService, txExecutorFactory,
+                                                                        mdsFramework);
+    AuthorizerInstantiator authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    DatasetTypeService typeService = new DatasetTypeService(typeManager, namespaceQueryAdmin, namespacedLocationFactory,
+                                                            authorizationEnforcer, authorizerInstantiator,
+                                                            authenticationContext, cConf);
+    DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService);
     DatasetInstanceService instanceService = new DatasetInstanceService(
-      new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
-                             txExecutorFactory, mdsFramework, DEFAULT_MODULES),
-      new DatasetInstanceManager(txSystemClientService, txExecutorFactory, mdsFramework),
-      new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService),
-      exploreFacade,
-      namespaceQueryAdmin,
-      authorizationEnforcer,
-      injector.getInstance(AuthorizerInstantiator.class),
-      authenticationContext);
+      typeManager, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
+      authorizerInstantiator, authenticationContext);
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
-    service = new DatasetService(cConf,
-                                 namespacedLocationFactory,
-                                 discoveryService,
-                                 discoveryServiceClient,
-                                 new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
-                                                        txExecutorFactory, mdsFramework, DEFAULT_MODULES),
-                                 metricsCollectionService,
-                                 new InMemoryDatasetOpExecutor(framework),
-                                 new HashSet<DatasetMetricsReporter>(),
-                                 instanceService, namespaceQueryAdmin,
-                                 authorizationEnforcer);
+    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
+                                 new InMemoryDatasetOpExecutor(framework), new HashSet<DatasetMetricsReporter>(),
+                                 typeService, instanceService, authEnforcementService);
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(

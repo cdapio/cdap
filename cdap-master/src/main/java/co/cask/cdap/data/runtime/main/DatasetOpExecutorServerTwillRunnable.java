@@ -123,7 +123,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
+      new AuthenticationContextModules().getProgramContainerModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

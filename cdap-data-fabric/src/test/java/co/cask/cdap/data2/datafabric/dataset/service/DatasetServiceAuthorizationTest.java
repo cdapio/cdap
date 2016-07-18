@@ -27,6 +27,8 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -45,12 +47,14 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -165,27 +169,120 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
   @Test
   public void testNotFound() throws Exception {
-    final Id.DatasetInstance doesnotexist = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "doesnotexist");
-    Assert.assertNull(dsFramework.getDatasetSpec(doesnotexist));
-    Assert.assertFalse(dsFramework.hasInstance(doesnotexist));
+    String namespace = NamespaceId.DEFAULT.getNamespace();
+    final Id.DatasetInstance nonExistingInstance = Id.DatasetInstance.from(namespace, "notfound");
+    final Id.DatasetModule nonExistingModule = Id.DatasetModule.from(namespace, "notfound");
+    final Id.DatasetType nonExistingType = Id.DatasetType.from(namespace, "notfound");
+    Assert.assertNull(dsFramework.getDatasetSpec(nonExistingInstance));
+    Assert.assertFalse(dsFramework.hasInstance(nonExistingInstance));
     assertNotFound(new DatasetOperationExecutor() {
       @Override
       public void execute() throws Exception {
-        dsFramework.updateInstance(doesnotexist, DatasetProperties.EMPTY);
+        dsFramework.updateInstance(nonExistingInstance, DatasetProperties.EMPTY);
       }
-    }, String.format("Expected %s to not exist", doesnotexist));
+    }, String.format("Expected %s to not exist", nonExistingInstance));
     assertNotFound(new DatasetOperationExecutor() {
       @Override
       public void execute() throws Exception {
-        dsFramework.deleteInstance(doesnotexist);
+        dsFramework.deleteInstance(nonExistingInstance);
       }
-    }, String.format("Expected %s to not exist", doesnotexist));
+    }, String.format("Expected %s to not exist", nonExistingInstance));
     assertNotFound(new DatasetOperationExecutor() {
       @Override
       public void execute() throws Exception {
-        dsFramework.truncateInstance(doesnotexist);
+        dsFramework.truncateInstance(nonExistingInstance);
       }
-    }, String.format("Expected %s to not exist", doesnotexist));
+    }, String.format("Expected %s to not exist", nonExistingInstance));
+    assertNotFound(new DatasetOperationExecutor() {
+      @Override
+      public void execute() throws Exception {
+        dsFramework.deleteModule(nonExistingModule);
+      }
+    }, String.format("Expected %s to not exist", nonExistingModule));
+    Assert.assertNull(String.format("Expected %s to not exist", nonExistingType),
+                      dsFramework.getTypeInfo(nonExistingType));
+  }
+
+  @Test
+  public void testDatasetTypes() throws Exception {
+    final DatasetModuleId module1 = NamespaceId.DEFAULT.datasetModule("module1");
+    final DatasetModuleId module2 = NamespaceId.DEFAULT.datasetModule("module2");
+    final DatasetTypeId type1 = NamespaceId.DEFAULT.datasetType("datasetType1");
+    DatasetTypeId type1x = NamespaceId.DEFAULT.datasetType("datasetType1x");
+    final DatasetTypeId type2 = NamespaceId.DEFAULT.datasetType("datasetType2");
+    SecurityRequestContext.setUserId(ALICE.getName());
+    final Location moduleJar = createModuleJar(TestModule1x.class);
+    assertAuthorizationFailure(new DatasetOperationExecutor() {
+      @Override
+      public void execute() throws Exception {
+        dsFramework.addModule(module1.toId(), new TestModule1x(), moduleJar);
+      }
+    }, String.format("Expected module add operation to fail for %s because she does not have %s on %s",
+                     ALICE, Action.WRITE, NamespaceId.DEFAULT));
+    // grant alice WRITE on the namespace
+    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(Action.WRITE));
+    dsFramework.addModule(module1.toId(), new TestModule1x(), moduleJar);
+    // all operations on module1 should succeed as alice
+    Assert.assertNotNull(dsFramework.getTypeInfo(type1.toId()));
+    Assert.assertNotNull(dsFramework.getTypeInfo(type1x.toId()));
+    // should be able to use the type from the module to add an instance as well
+    dsFramework.addInstance(type1x.getType(), NamespaceId.DEFAULT.dataset("succeed").toId(), DatasetProperties.EMPTY);
+    // but should fail as Bob, even after granting WRITE on the namespace
+    SecurityRequestContext.setUserId(BOB.getName());
+    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.WRITE));
+    assertAuthorizationFailure(new DatasetOperationExecutor() {
+      @Override
+      public void execute() throws Exception {
+        dsFramework.addInstance(type1.getType(), NamespaceId.DEFAULT.dataset("fail").toId(), DatasetProperties.EMPTY);
+      }
+    }, String.format(
+      "Creating an instance of a type from %s should fail as %s does not have any privileges on it.", module1, BOB));
+    // adding a module should now succeed as bob though, because bob has write privileges on the namespace
+    dsFramework.addModule(module2.toId(), new TestModule2(), createModuleJar(TestModule2.class));
+    // all operations on module2 should succeed as Bob
+    Assert.assertNotNull(dsFramework.getTypeInfo(type2.toId()));
+    // but should fail as Alice
+    SecurityRequestContext.setUserId(ALICE.getName());
+    assertAuthorizationFailure(new DatasetOperationExecutor() {
+      @Override
+      public void execute() throws Exception {
+        dsFramework.addInstance(type2.getType(), NamespaceId.DEFAULT.dataset("fail").toId(), DatasetProperties.EMPTY);
+      }
+    }, String.format(
+      "Creating an instance of a type from %s should fail as %s does not have any privileges on it.", module2, ALICE));
+    assertAuthorizationFailure(new DatasetOperationExecutor() {
+      @Override
+      public void execute() throws Exception {
+        dsFramework.deleteModule(module2.toId());
+      }
+    }, String.format("Deleting module %s should fail as %s does not have any privileges on it.", module2, ALICE));
+    SecurityRequestContext.setUserId(BOB.getName());
+    assertAuthorizationFailure(new DatasetOperationExecutor() {
+      @Override
+      public void execute() throws Exception {
+        dsFramework.deleteModule(module1.toId());
+      }
+    }, String.format("Deleting module %s should fail as %s does not have any privileges on it.", module1, BOB));
+    assertAuthorizationFailure(new DatasetOperationExecutor() {
+      @Override
+      public void execute() throws Exception {
+        dsFramework.deleteAllModules(NamespaceId.DEFAULT.toId());
+      }
+    }, String.format("Deleting all modules in %s should fail as %s does not have ADMIN privileges on it.",
+                     NamespaceId.DEFAULT, BOB));
+    // delete all instances so modules can be deleted
+    dsFramework.deleteAllInstances(NamespaceId.DEFAULT.toId());
+    SecurityRequestContext.setUserId(ALICE.getName());
+    dsFramework.deleteAllInstances(NamespaceId.DEFAULT.toId());
+    SecurityRequestContext.setUserId(BOB.getName());
+    // After granting admin on the default namespace, deleting all modules should succeed
+    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.ADMIN));
+    dsFramework.deleteAllModules(NamespaceId.DEFAULT.toId());
+  }
+
+  @After
+  public void cleanup() throws Exception {
+    authorizer.revoke(NamespaceId.DEFAULT);
   }
 
   private Set<DatasetId> summaryToDatasetIdSet(Collection<DatasetSpecificationSummary> datasetSpecs) {
@@ -237,6 +334,9 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       Assert.fail(failureMsg);
     } catch (InstanceNotFoundException expected) {
       // expected
+    } catch (DatasetManagementException e) {
+      // no other way to detect errors from DatasetServiceClient
+      Assert.assertTrue(e.getMessage().contains("Response code: 404, message: 'Not Found'"));
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetModuleId;
 
 /**
  * Thrown when a dataset module cannot be deleted.
@@ -28,6 +29,11 @@ public class DatasetModuleCannotBeDeletedException extends CannotBeDeletedExcept
   public DatasetModuleCannotBeDeletedException(Id.DatasetModule id) {
     super(id);
     this.id = id;
+  }
+
+  public DatasetModuleCannotBeDeletedException(DatasetModuleId datasetModuleId, String reason) {
+    super(datasetModuleId.toId(), reason);
+    this.id = datasetModuleId.toId();
   }
 
   public Id.DatasetModule getId() {

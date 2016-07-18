@@ -20,6 +20,7 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -170,7 +171,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
     // delete module2, should be removed from usedBy list everywhere and all its types should no longer be available
     Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType2").getResponseCode());
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getMissingType("datasetType2").getResponseCode());
     verifyAll(ONLY_MODULE1, ONLY_1_DEPENDENCIES);
 
     // cannot delete module2 again
@@ -183,7 +184,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     // drop the instance of type1, now delete of module1 should work
     instanceService.drop(Id.DatasetInstance.from(Id.Namespace.DEFAULT.getId(), "instance1"));
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType1").getResponseCode());
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getMissingType("datasetType1").getResponseCode());
     verifyAll(NO_MODULES, NO_DEPENDENCIES);
   }
 
@@ -312,6 +313,10 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   private ObjectResponse<DatasetTypeMeta> getType(String typeName) throws IOException {
     return getType(Id.DatasetType.from(Id.Namespace.DEFAULT, typeName));
+  }
+
+  private HttpResponse getMissingType(String typeName) throws IOException {
+    return makeTypeInfoRequest(NamespaceId.DEFAULT.datasetType(typeName).toId());
   }
 
   private ObjectResponse<DatasetTypeMeta> getType(Id.DatasetType datasetType) throws IOException {
