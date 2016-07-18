@@ -29,6 +29,7 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.batch.KVTransformations;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
@@ -38,16 +39,13 @@ import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
-import co.cask.cdap.etl.common.TrackedEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
-import co.cask.cdap.etl.common.TransformDetail;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.Mapper;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -64,14 +62,13 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   private final MapReduceTaskContext taskContext;
   private final String mapOutputKeyClassName;
   private final String mapOutputValClassName;
-  private final boolean isMapper;
 
   public MapReduceTransformExecutorFactory(MapReduceTaskContext taskContext,
                                            PipelinePluginInstantiator pluginInstantiator,
                                            Metrics metrics,
                                            Map<String, Map<String, String>> pluginRuntimeArgs,
                                            String sourceStageName) {
-    super(pluginInstantiator, metrics, sourceStageName,
+    super((JobContext) taskContext.getHadoopContext(), pluginInstantiator, metrics, sourceStageName,
           new DefaultMacroEvaluator(taskContext.getWorkflowToken(), taskContext.getRuntimeArguments(),
                                     taskContext.getLogicalStartTime()));
     this.taskContext = taskContext;
@@ -80,7 +77,6 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     Configuration hConf = hadoopContext.getConfiguration();
     this.mapOutputKeyClassName = hConf.get(ETLMapReduce.MAP_KEY_CLASS);
     this.mapOutputValClassName = hConf.get(ETLMapReduce.MAP_VAL_CLASS);
-    this.isMapper = hadoopContext instanceof Mapper.Context;
   }
 
   @Override
@@ -114,26 +110,39 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
       StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
-      if (isMapper) {
-        return getTrackedEmitKeyStep(new MapperAggregatorTransformation(batchAggregator, mapOutputKeyClassName,
-                                                                        mapOutputValClassName), stageMetrics);
+      if (isMapPhase) {
+        return getTrackedEmitKeyStep(
+          KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
+                                                new MapperAggregatorTransformation(batchAggregator,
+                                                                                   mapOutputKeyClassName,
+                                                                                   mapOutputValClassName)),
+          stageMetrics);
       } else {
-        return getTrackedAggregateStep(new ReducerAggregatorTransformation(batchAggregator, mapOutputKeyClassName,
-                                                                           mapOutputValClassName), stageMetrics);
+        return getTrackedAggregateStep(
+          KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
+                                                new ReducerAggregatorTransformation(batchAggregator,
+                                                                                    mapOutputKeyClassName,
+                                                                                    mapOutputValClassName)),
+          stageMetrics);
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
       BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       BatchJoinerRuntimeContext runtimeContext = createJoinerRuntimeContext(stageName);
       batchJoiner.initialize(runtimeContext);
       StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
-      if (isMapper) {
-        return getTrackedEmitKeyStep(new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName,
-                                                                    mapOutputValClassName), stageMetrics);
+      if (isMapPhase) {
+        return getTrackedEmitKeyStep(
+          KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
+                                                new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName,
+                                                                               mapOutputValClassName)), stageMetrics);
       } else {
-        return getTrackedMergeStep(new ReducerJoinerTransformation(batchJoiner, mapOutputKeyClassName,
-                                                                   mapOutputValClassName,
-                                                                   runtimeContext.getInputSchemas().size()),
-                                   stageMetrics);
+        return getTrackedMergeStep(
+          KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
+                                                new ReducerJoinerTransformation(batchJoiner, mapOutputKeyClassName,
+                                                                                mapOutputValClassName,
+                                                                                runtimeContext.getInputSchemas()
+                                                                                  .size()))
+          , stageMetrics);
       }
     }
     return super.getTransformation(pluginType, stageName);
@@ -144,13 +153,14 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
    * reducer. It uses {@link TaggedWritable} to tag join value with stage name so that we can use stage name
    * in reduce phase.
    *
-   * @param <JOIN_KEY> type of join key
+   * @param <JOIN_KEY>     type of join key
    * @param <INPUT_RECORD> type of input record
-   * @param <OUT> type of the output of joiner
-   * @param <OUT_KEY> type of the map output
+   * @param <OUT>          type of the output of joiner
+   * @param <OUT_KEY>      type of the map output
    */
-  private static class MapperJoinerTransformation<JOIN_KEY, INPUT_RECORD, OUT, OUT_KEY extends Writable,
-    OUT_VALUE extends Writable> implements Transformation<INPUT_RECORD, KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> {
+  private static class MapperJoinerTransformation<JOIN_KEY, INPUT_RECORD, OUT, OUT_KEY
+    extends Writable, OUT_VALUE extends Writable>
+    implements Transformation<KeyValue<String, INPUT_RECORD>, KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> {
     private final Joiner<JOIN_KEY, INPUT_RECORD, OUT> joiner;
     private final WritableConversion<JOIN_KEY, OUT_KEY> keyConversion;
     private final WritableConversion<INPUT_RECORD, OUT_VALUE> inputConversion;
@@ -166,19 +176,12 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     }
 
     @Override
-    public void transform(INPUT_RECORD input, Emitter<KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> emitter)
-      throws Exception {
-      String stageName;
-
-      // TODO as per CDAP-6352 use input to get stageName
-      if (emitter instanceof TransformDetail) {
-        stageName = ((TransformDetail) emitter).getPrevStage();
-      } else {
-        stageName = ((TransformDetail) ((TrackedEmitter) emitter).getEmitter()).getPrevStage();
-      }
-      JOIN_KEY key = joiner.joinOn(stageName, input);
+    public void transform(KeyValue<String, INPUT_RECORD> input,
+                          Emitter<KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> emitter) throws Exception {
+      String stageName = input.getKey();
+      JOIN_KEY key = joiner.joinOn(input.getKey(), input.getValue());
       TaggedWritable<OUT_VALUE> output = new TaggedWritable<>(stageName,
-                                                            inputConversion.toWritable(input));
+                                                              inputConversion.toWritable(input.getValue()));
       emitter.emit(new KeyValue<>(keyConversion.toWritable(key), output));
     }
   }
@@ -186,10 +189,10 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   /**
    * A Transformation that uses an join's emit method to emit joinResults.
    *
-   * @param <JOIN_KEY> type of join key
+   * @param <JOIN_KEY>     type of join key
    * @param <INPUT_RECORD> type of input record
-   * @param <OUT> type of the output of joiner
-   * @param <REDUCE_KEY> type of the reduce key=
+   * @param <OUT>          type of the output of joiner
+   * @param <REDUCE_KEY>   type of the reduce key=
    */
   private static class ReducerJoinerTransformation<JOIN_KEY, INPUT_RECORD, OUT,
     REDUCE_KEY extends WritableComparable, REDUCE_VALUE extends Writable>
@@ -217,12 +220,12 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       JOIN_KEY joinKey = keyConversion.fromWritable(input.getKey());
       Iterator<JoinElement<INPUT_RECORD>> inputIterator = Iterators.transform(input.getValue(), new
         Function<TaggedWritable<REDUCE_VALUE>, JoinElement<INPUT_RECORD>>() {
-        @Nullable
-        @Override
-        public JoinElement<INPUT_RECORD> apply(@Nullable TaggedWritable<REDUCE_VALUE> input) {
-          return new JoinElement<>(input.getStageName(), inputConversion.fromWritable(input.getRecord()));
-        }
-      });
+          @Nullable
+          @Override
+          public JoinElement<INPUT_RECORD> apply(@Nullable TaggedWritable<REDUCE_VALUE> input) {
+            return new JoinElement<>(input.getStageName(), inputConversion.fromWritable(input.getRecord()));
+          }
+        });
 
       Join join = new Join(joiner, joinKey, inputIterator, numOfInputs, emitter);
       join.joinRecords();
@@ -239,8 +242,8 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
    *
    * @param <GROUP_KEY> type of group key output by the aggregator
    * @param <GROUP_VAL> type of group value used by the aggregator
-   * @param <OUT_KEY> type of output key for mapreduce. Must implement WritableComparable
-   * @param <OUT_VAL> type of output value for mapreduce. Must implement Writable
+   * @param <OUT_KEY>   type of output key for mapreduce. Must implement WritableComparable
+   * @param <OUT_VAL>   type of output value for mapreduce. Must implement Writable
    */
   private static class MapperAggregatorTransformation<GROUP_KEY, GROUP_VAL, OUT_KEY extends Writable,
     OUT_VAL extends Writable> implements Transformation<GROUP_VAL, KeyValue<OUT_KEY, OUT_VAL>> {
@@ -278,8 +281,8 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
    * will need some function to change a StructuredRecordWritable to a StructuredRecord so that we can use this
    * in mapreduce.
    *
-   * @param <GROUP_KEY> type of group key output by the aggregator
-   * @param <GROUP_VAL> type of group value used by the aggregator
+   * @param <GROUP_KEY>  type of group key output by the aggregator
+   * @param <GROUP_VAL>  type of group value used by the aggregator
    * @param <REDUCE_KEY> type of reduce key for mapreduce. Must implement WritableComparable
    * @param <REDUCE_VAL> type of reduce value for mapreduce. Must implement Writable
    */

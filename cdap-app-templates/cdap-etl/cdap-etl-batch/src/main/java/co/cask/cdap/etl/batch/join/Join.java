@@ -58,9 +58,7 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
     JoinConfig joinConfig = joiner.getJoinConfig();
     Set<String> requiredInputs = Sets.newHashSet(joinConfig.getRequiredInputs());
 
-    // As we get intersection of records from all stages present in required inputs, if the number of
-    // stages we got after reduce are less than number of required inputs, then there is nothing to emit.
-    if (perStageJoinElements.size() < requiredInputs.size()) {
+    if (!perStageJoinElements.keySet().containsAll(requiredInputs)) {
       return;
     }
 
@@ -95,6 +93,10 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
     // check till the end of the list and emit only if records from all the required inputs are present in joinElements
     if (index == list.size() && joinRowInputs.containsAll(requiredInputs)) {
       emitter.emit(joiner.merge(joinKey, joinRow));
+      return;
+    }
+
+    if (index >= list.size()) {
       return;
     }
 

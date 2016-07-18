@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.common.Constants;
@@ -31,10 +32,10 @@ import java.util.Collection;
 
 /**
  * Writes to error datasets. This could use a decent amount of improvement.
- *
+ * <p>
  * The first issue is that this uses avro directly, which means the app requires a specific avro version,
  * and plugins will run into issues if they want to use a different avro (CDAP-3809).
- *
+ * <p>
  * The second issue is that it assumes everything is a StructuredRecord and casts blindly.
  *
  * @param <KEY_OUT> output key type
@@ -64,7 +65,18 @@ class ErrorOutputWriter<KEY_OUT, VAL_OUT> {
     recordBuilder.set(Constants.ErrorDataset.ERRMSG, invalidEntry.getErrorMsg());
 
     String errorMsg;
-    if (invalidEntry.getInvalidRecord() instanceof StructuredRecord) {
+
+    // As each record is emitted along with stageName for all the stages, the invalidEntry can be KeyValue pair
+    if (invalidEntry.getInvalidRecord() instanceof KeyValue) {
+      KeyValue<String, StructuredRecord> invalidRecord =
+        (KeyValue<String, StructuredRecord>) invalidEntry.getInvalidRecord();
+      StructuredRecord record = invalidRecord.getValue();
+      try {
+        errorMsg = StructuredRecordStringConverter.toJsonString(record);
+      } catch (IOException e) {
+        errorMsg = "Exception while converting StructuredRecord to String, " + e.getCause();
+      }
+    } else if (invalidEntry.getInvalidRecord() instanceof StructuredRecord) {
       StructuredRecord record = (StructuredRecord) invalidEntry.getInvalidRecord();
       try {
         errorMsg = StructuredRecordStringConverter.toJsonString(record);

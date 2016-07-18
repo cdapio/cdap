@@ -57,7 +57,7 @@ import java.util.Set;
  * do mostly the same thing, except the mapper needs to write to an aggregator or to sinks, whereas the reducer
  * needs to read from an aggregator and write to sinks.
  *
- * @param <KEY> the type of key to send into the transform executor
+ * @param <KEY>   the type of key to send into the transform executor
  * @param <VALUE> the type of value to send into the transform executor
  */
 public class TransformRunner<KEY, VALUE> {
