@@ -20,10 +20,8 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.SecureStoreUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -70,7 +68,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * class to two interfaces and we need the instance to be shared between them.
  */
 @Singleton
-public class FileSecureStore implements SecureStore, SecureStoreManager {
+public class FileSecureStore extends AbstractSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
   private static final String SCHEME_NAME = "jceks";
 

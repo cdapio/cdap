@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.common.security;
+package co.cask.cdap.security.store;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 
 /**
- * Utility class for the Secure store.
+ *
  */
-public class SecureStoreUtils {
+public abstract class AbstractSecureStore {
   /** Separator between the namespace name and the key name */
-  public static final String NAME_SEPARATOR = ":";
+  static final String NAME_SEPARATOR = ":";
 
-  public static final String KMS_BACKED = "kms";
+  private static final String KMS_BACKED = "kms";
 
-  public static String getKeyName(final String namespace, final String name) {
+  static String getKeyName(final String namespace, final String name) {
     return namespace + NAME_SEPARATOR + name;
   }
 
   public static boolean isKMSBacked(final CConfiguration cConf) {
-   return SecureStoreUtils.KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
+    return AbstractSecureStore.KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
   }
 }
