@@ -117,17 +117,13 @@ public class FileSecureStoreTest {
     Assert.assertEquals(metadata2.getName(), secureStore.get(NAMESPACE1, KEY2).getMetadata().getName());
   }
 
-  @Test
+  @Test(expected = IOException.class)
   public void testOverwrite() throws IOException, InterruptedException {
     secureStoreManager.put(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
     SecureStoreData oldData = secureStore.get(NAMESPACE1, KEY1);
-    long oldCreateTime = oldData.getMetadata().getLastModifiedTime();
     Assert.assertArrayEquals(VALUE1.getBytes(Charsets.UTF_8), oldData.get());
     String newVal = "New value";
     secureStoreManager.put(NAMESPACE1, KEY1, newVal.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
-    long newCreateTime = secureStore.get(NAMESPACE1, KEY1).getMetadata().getLastModifiedTime();
-    Assert.assertArrayEquals(newVal.getBytes(Charsets.UTF_8), secureStore.get(NAMESPACE1, KEY1).get());
-    Assert.assertNotEquals(oldCreateTime, newCreateTime);
   }
 
   @Test(expected = IOException.class)
