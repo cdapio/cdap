@@ -46,8 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This test emulates usage table by multiple concurrent clients.
  * @param <T> table type
  */
-public abstract class TableConcurrentTest<T extends Table>
-  extends TableTest<T> {
+public abstract class TableConcurrentTest<T extends Table> extends TableTest<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TableConcurrentTest.class);
 

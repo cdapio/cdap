@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.queue.coprocessor.hbase10;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
@@ -94,14 +95,13 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       }
 
       HTable10NameConverter nameConverter = new HTable10NameConverter();
-      namespaceId = nameConverter.from(tableDesc).getNamespace().getId();
+      namespaceId = nameConverter.from(tableDesc).getNamespace();
       appName = HBaseQueueAdmin.getApplicationName(hTableName);
       flowName = HBaseQueueAdmin.getFlowName(hTableName);
 
       Configuration conf = env.getConfiguration();
-      String hbaseNamespacePrefix = nameConverter.getNamespacePrefix(tableDesc);
-      TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
-      final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(tableDesc);
+      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+      final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       txStateCache = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf).get();
       txSnapshotSupplier = new Supplier<TransactionVisibilityState>() {
         @Override
@@ -109,7 +109,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           return txStateCache.getLatestState();
         }
       };
-      configTableName = nameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId);
+      String queueConfigTableId = HBaseQueueAdmin.getConfigTableName();
+      configTableName = nameConverter.toTableName(hbaseNamespacePrefix, TableId.from(namespaceId, queueConfigTableId));
       cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
       configCache = createConfigCache(env);
     }

@@ -77,7 +77,7 @@ public abstract class AbstractIncrementHandlerTest {
 
   @Test
   public void testIncrements() throws Exception {
-    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "incrementTest");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT.getId(), "incrementTest");
     createTable(tableId);
 
     try (HTable table = new HBaseTableUtilFactory(cConf).get().createHTable(conf, tableId)) {
@@ -126,7 +126,7 @@ public abstract class AbstractIncrementHandlerTest {
   public void testIncrementsCompaction() throws Exception {
     // In this test we verify that squashing delta-increments during flush or compaction works as designed.
 
-    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "incrementCompactTest");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT.getId(), "incrementCompactTest");
 
     HTable table = createTable(tableId);
     byte[] tableBytes = table.getTableName();
@@ -203,9 +203,9 @@ public abstract class AbstractIncrementHandlerTest {
   @Test
   public void testIncrementsCompactionUnlimBound() throws Exception {
 
-    try (RegionWrapper region = createRegion(TableId.from(Id.Namespace.DEFAULT, "testIncrementsCompactionsUnlimBound"),
-                                             ImmutableMap.<String, String>builder()
-                                               .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false").build())) {
+    try (RegionWrapper region = createRegion(
+      TableId.from(Id.Namespace.DEFAULT.getId(), "testIncrementsCompactionsUnlimBound"),
+      ImmutableMap.<String, String>builder().put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false").build())) {
       region.initialize();
 
       byte[] colA = Bytes.toBytes("a");
@@ -238,7 +238,7 @@ public abstract class AbstractIncrementHandlerTest {
   public void testNonTransactionalMixed() throws Exception {
     // test mix of increment, put and delete operations
 
-    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "testNonTransactionalMixed");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT.getId(), "testNonTransactionalMixed");
 
     byte[] row1 = Bytes.toBytes("r1");
     byte[] col = Bytes.toBytes("c");
@@ -326,7 +326,7 @@ public abstract class AbstractIncrementHandlerTest {
 
     byte[] row = Bytes.toBytes("r1");
     byte[] col = Bytes.toBytes("c");
-    try (RegionWrapper region = createRegion(TableId.from(Id.Namespace.DEFAULT, "testNonTransactionalTTL"),
+    try (RegionWrapper region = createRegion(TableId.from(Id.Namespace.DEFAULT.getId(), "testNonTransactionalTTL"),
                                              ImmutableMap.<String, String>builder()
                                                .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false")
                                                .put(TxConstants.PROPERTY_TTL, "50")

@@ -26,6 +26,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -52,21 +53,23 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
     TableId streamStateStoreTableId = StreamUtils.getStateStoreTableId(namespace);
+    TableId hbaseTableId = tableUtil.createHTableId(new NamespaceId(streamStateStoreTableId.getNamespace()),
+                                                    streamStateStoreTableId.getTableName());
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
+      if (!tableUtil.tableExists(admin, hbaseTableId)) {
 
-        HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(streamStateStoreTableId);
+        HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(hbaseTableId);
 
         HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
         htd.addFamily(hcd);
         hcd.setMaxVersions(1);
 
-        tableUtil.createTableIfNotExists(admin, streamStateStoreTableId, htd.build(), null,
+        tableUtil.createTableIfNotExists(admin, hbaseTableId, htd.build(), null,
                                          QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
       }
     }
 
-    HTable hTable = tableUtil.createHTable(hConf, streamStateStoreTableId);
+    HTable hTable = tableUtil.createHTable(hConf, hbaseTableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);
@@ -76,8 +79,9 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       TableId tableId = StreamUtils.getStateStoreTableId(namespace);
-      if (tableUtil.tableExists(admin, tableId)) {
-        tableUtil.dropTable(admin, tableId);
+      TableId hbaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
+      if (tableUtil.tableExists(admin, hbaseTableId)) {
+        tableUtil.dropTable(admin, hbaseTableId);
       }
     }
   }

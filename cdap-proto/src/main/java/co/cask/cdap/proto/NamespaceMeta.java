@@ -61,7 +61,6 @@ public final class NamespaceMeta {
     private String rootDirectory;
     private String hbaseNamespace;
     private String hiveDatabase;
-
     public Builder() {
      // No-Op
     }
@@ -102,7 +101,7 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setHbaseNamespace(final String hbaseNamespace) {
+    public Builder setHBaseDatabase(final String hbaseNamespace) {
       this.hbaseNamespace = hbaseNamespace;
       return this;
     }

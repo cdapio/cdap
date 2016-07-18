@@ -24,9 +24,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TxConstants;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -61,7 +61,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
                          HBaseTableUtil tableUtil,
                          CConfiguration conf,
                          LocationFactory locationFactory) throws IOException {
-    super(TableId.from(datasetContext.getNamespaceId(), spec.getName()), hConf, tableUtil);
+    super(tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName()),
+          hConf, tableUtil);
     this.spec = spec;
     this.conf = conf;
     this.locationFactory = locationFactory;

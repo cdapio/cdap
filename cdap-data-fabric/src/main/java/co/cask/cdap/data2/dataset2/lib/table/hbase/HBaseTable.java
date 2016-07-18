@@ -37,6 +37,7 @@ import co.cask.cdap.data2.util.hbase.GetBuilder;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.PutBuilder;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import co.cask.tephra.TxConstants;
@@ -89,8 +90,8 @@ public class HBaseTable extends BufferingTable {
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
           TableProperties.supportsReadlessIncrements(spec.getProperties()), spec.getProperties());
-    TableId tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
-    HTable hTable = tableUtil.createHTable(hConf, tableId);
+    TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
+    HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
