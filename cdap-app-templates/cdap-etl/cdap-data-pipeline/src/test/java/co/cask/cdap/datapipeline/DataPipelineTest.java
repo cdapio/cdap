@@ -104,6 +104,45 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
+  public void testPipelineWithAllActions() throws Exception {
+    String actionTable = "actionTable";
+    String action1RowKey = "action1.row";
+    String action1ColumnKey = "action1.column";
+    String action1Value = "action1.value";
+    String action2RowKey = "action2.row";
+    String action2ColumnKey = "action2.column";
+    String action2Value = "action2.value";
+    String action3RowKey = "action3.row";
+    String action3ColumnKey = "action3.column";
+    String action3Value = "action3.value";
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, action1RowKey, action1ColumnKey,
+                                                             action1Value)))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, action2RowKey, action2ColumnKey,
+                                                             action2Value)))
+      .addStage(new ETLStage("action3", MockAction.getPlugin(actionTable, action3RowKey, action3ColumnKey,
+                                                             action3Value)))
+      .addConnection("action1", "action2")
+      .addConnection("action1", "action3")
+      .setEngine(Engine.MAPREDUCE)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MyActionOnlyApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> actionTableDS = getDataset(actionTable);
+    Assert.assertEquals(action1Value, MockAction.readOutput(actionTableDS, action1RowKey, action1ColumnKey));
+    Assert.assertEquals(action2Value, MockAction.readOutput(actionTableDS, action2RowKey, action2ColumnKey));
+    Assert.assertEquals(action3Value, MockAction.readOutput(actionTableDS, action3RowKey, action3ColumnKey));
+  }
+
+  @Test
   public void testPipelineWithActionsMR() throws Exception {
     testPipelineWithActions(Engine.MAPREDUCE);
   }
