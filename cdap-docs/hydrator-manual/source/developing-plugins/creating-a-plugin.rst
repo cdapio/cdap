@@ -506,6 +506,8 @@ copies in each transform is emitted. The user metrics can be queried by using th
     }
   }
 
+.. _cask-hydrator-creating-a-plugin-script-transformations:
+
 .. highlight:: java
 
 Script Transformations
@@ -548,6 +550,10 @@ These methods allow access within the script to CDAP loggers, metrics, lookup ta
 **Logger**
 
 ``Logger`` is an `org.slf4j.Logger <http://www.slf4j.org/api/org/slf4j/Logger.html>`__.
+
+For example, a JavaScript transform step can access and write to the *debug* log with::
+
+  context.getLogger().debug('Received record with id ' + input.id);
 
 **StageMetrics**
 

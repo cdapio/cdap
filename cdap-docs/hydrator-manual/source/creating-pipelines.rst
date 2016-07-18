@@ -279,6 +279,7 @@ section on :ref:`developing pipelines: creating a real-time pipeline
 <hydrator-developing-pipelines-creating-realtime>`.
 
 
+
 Common Settings
 ===============
 These settings can be used in both batch and real-time pipelines.
