@@ -39,13 +39,18 @@ my-truth-meter {
       display: block;
       position: absolute;
     }
+    span {
+      display: block;
+      font-weight: 600;
+      position: absolute;
+      left: -5px;
+      text-align: center;
+    }
   }
-  span {
-    display: block;
-    font-weight: 600;
-    position: absolute;
-    left: -5px;
-    text-align: center;
+  span.fa-info-circle {
+    color: #999999;
+    font-size: 14px;
+    margin-left: 8px;
   }
 }
 
@@ -68,11 +73,11 @@ body.state-tracker-detail-result {
         height: 7px;
         width: 7px;
       }
-    }
-    span {
-      font-size: 12px;
-      bottom: -15px;
-      width: 25px;
+      span {
+        font-size: 12px;
+        bottom: -15px;
+        width: 25px;
+      }
     }
   }
 }
@@ -96,11 +101,11 @@ body.state-tracker-detail-entity {
         height: 4px;
         width: 4px;
       }
-    }
-    span {
-      font-size: 11px;
-      bottom: -12px;
-      width: 20px;
+      span {
+        font-size: 11px;
+        bottom: -12px;
+        width: 20px;
+      }
     }
   }
 }
