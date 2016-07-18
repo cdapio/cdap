@@ -22,7 +22,10 @@ class TrackerTagsController{
     this.$uibModal = $uibModal;
     this.currentPreferredPage = 1;
     this.currentUserPage = 1;
-
+    this.tags = {
+      preferredTags: [],
+      userTags: []
+    };
     this.fetchTags();
   }
 
@@ -35,17 +38,14 @@ class TrackerTagsController{
     this.myTrackerApi.getTags(params)
       .$promise
       .then((response) => {
-        this.tags = {
-          preferredTags: [],
-          userTags: []
+        const getTags = (tagsObj) => {
+           return Object.keys(tagsObj)
+            .map(tag => ({
+              name: tag,
+              count: tagsObj[tag]
+            }));
         };
-
-        angular.forEach(response.preferredTags, (count, tag) => {
-          this.tags.preferredTags.push({
-            name: tag,
-            count: count
-          });
-        });
+       this.tags.preferredTags = getTags(response.preferredTags);
         // Calculate number of empty rows needed so that table maintains a consistent height
         if ((this.tags.preferredTags.length % 10) !== 0) {
           let emptyRows = 10 - (this.tags.preferredTags.length % 10);
@@ -55,12 +55,7 @@ class TrackerTagsController{
           };
         }
 
-        angular.forEach((response.userTags), (count, tag) => {
-          this.tags.userTags.push({
-            name: tag,
-            count: count
-          });
-        });
+        this.tags.userTags = getTags(response.userTags);
         // Calculate number of empty rows needed so that table maintains a consistent height
         if ((this.tags.userTags.length % 10) !== 0) {
           let emptyRows = 10 - (this.tags.userTags.length % 10);
@@ -74,7 +69,7 @@ class TrackerTagsController{
       });
   }
 
-  promoteUserTags(tag) {
+  promoteUserTag(tag) {
     let params = {
       namespace: this.$state.params.namespace,
       scope: this.$scope
@@ -90,7 +85,7 @@ class TrackerTagsController{
       });
   }
 
-  demotePreferredTags(tag) {
+  demotePreferredTag(tag) {
     let params = {
       namespace: this.$state.params.namespace,
       scope: this.$scope
@@ -154,6 +149,9 @@ function AddPreferredTagsModalCtrl (myTrackerApi, $scope, $state) {
 
   function parseTags(tags) {
     let parsedTags = [];
+    if(!tags) {
+      return parsedTags;
+    }
     angular.forEach(tags.split('\n'), (line) => {
       parsedTags = parsedTags.concat(line.split(',').map((tag) => {
         return tag.trim();

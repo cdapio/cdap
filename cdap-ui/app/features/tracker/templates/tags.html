@@ -44,7 +44,7 @@
             </td>
             <td ng-if="tag.count > 0">
               <span class="action-link"
-                    ng-click="TagsController.demotePreferredTags(tag.name)">Demote</span>
+                    ng-click="TagsController.demotePreferredTag(tag.name)">Demote</span>
             </td>
             <td ng-if="tag.count === 0">
               <span class="fa fa-trash"
@@ -91,7 +91,7 @@
             </td>
             <td>
               <span class="action-link"
-                    ng-click="TagsController.promoteUserTags(tag.name)">Promote</span>
+                    ng-click="TagsController.promoteUserTag(tag.name)">Promote</span>
             </td>
           </tr>
           <tr ng-if="TagsController.currentUserPage === TagsController.tags.emptyUserTags.numPages"

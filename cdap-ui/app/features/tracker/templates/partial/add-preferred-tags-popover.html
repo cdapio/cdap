@@ -15,13 +15,13 @@
 -->
 <div class="modal-header clearfix">
   <h3 class="modal-title pull-left">
-    <span ng-if="AddTags.proceedToNextStep === false">Add Preferred Tags</span>
-    <span ng-if="AddTags.proceedToNextStep === true">Preview</span>
+    <span ng-if="!AddTags.proceedToNextStep">Add Preferred Tags</span>
+    <span ng-if="AddTags.proceedToNextStep">Preview</span>
   </h3>
   <span class="fa fa-times pull-right" ng-click="$dismiss('cancel')"></span>
 </div>
 <div class="modal-body">
-  <div ng-if="AddTags.proceedToNextStep === false"
+  <div ng-if="!AddTags.proceedToNextStep"
       class="flex-box">
     <div class="flex-item">
       <textarea class="form-control"
@@ -46,7 +46,7 @@
       </div>
     </div>
   </div>
-  <div ng-if="AddTags.proceedToNextStep === true"
+  <div ng-if="AddTags.proceedToNextStep"
       class="text-left">
     <div class="valid-tags">
       <p>{{ AddTags.tagList.validTags.length }} tags loaded.</p>
@@ -62,14 +62,14 @@
 </div>
 <div class="modal-footer text-right">
   <p class="pull-left text-danger"
-    ng-if="AddTags.proceedToNextStep === false && AddTags.tagList.invalidTags.length">Oops! Invalid format.</p>
+    ng-if="!AddTags.proceedToNextStep && AddTags.tagList.invalidTags.length">No special characters allowed in tags.</p>
   <button class="btn btn-default"
           ng-click="$dismiss('cancel')">Cancel</button>
-  <button ng-if="AddTags.proceedToNextStep === false"
+  <button ng-if="!AddTags.proceedToNextStep"
           class="btn btn-success"
           ng-click="AddTags.validatePreferredTags()"
           ng-disabled="!AddTags.tags.length">Next</button>
-  <button ng-if="AddTags.proceedToNextStep === true"
+  <button ng-if="AddTags.proceedToNextStep"
           class="btn btn-success"
           ng-click="AddTags.promoteUserTags(AddTags.tagList.validTags)">Add</button>
 </div>
