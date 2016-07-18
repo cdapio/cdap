@@ -20,10 +20,8 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.SecureStoreUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -69,7 +67,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * class to two interfaces and we need the instance to be shared between them.
  */
 @Singleton
-public class FileSecureStore implements SecureStore, SecureStoreManager {
+public class FileSecureStore extends AbstractSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
   private static final String SCHEME_NAME = "jceks";
@@ -107,10 +105,9 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   @Override
   public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
     throws IOException {
-    String keyName = SecureStoreUtils.getKeyName(namespace, name);
+    String keyName = getKeyName(namespace, name);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data);
-    Key key = null;
     writeLock.lock();
     try {
       if (keyStore.containsAlias(keyName)) {
@@ -134,7 +131,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public void delete(String namespace, String name) throws IOException {
-    String keyName = SecureStoreUtils.getKeyName(namespace, name);
+    String keyName = getKeyName(namespace, name);
     Key key = null;
     writeLock.lock();
     try {
@@ -172,7 +169,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     try {
       Enumeration<String> aliases = keyStore.aliases();
       List<SecureStoreMetadata> list = new ArrayList<>();
-      String prefix = namespace + SecureStoreUtils.NAME_SEPARATOR;
+      String prefix = namespace + NAME_SEPARATOR;
       while (aliases.hasMoreElements()) {
         String alias = aliases.nextElement();
         // Filter out elements not in this namespace.
@@ -195,7 +192,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public SecureStoreData get(String namespace, String name) throws IOException {
-    String keyName = SecureStoreUtils.getKeyName(namespace, name);
+    String keyName = getKeyName(namespace, name);
     readLock.lock();
     try {
       if (!keyStore.containsAlias(keyName)) {

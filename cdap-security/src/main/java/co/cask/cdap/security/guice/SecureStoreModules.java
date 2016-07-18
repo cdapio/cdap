@@ -20,7 +20,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.common.security.SecureStoreUtils;
+import co.cask.cdap.security.store.AbstractSecureStore;
 import co.cask.cdap.security.store.DummyKMSStore;
 import co.cask.cdap.security.store.FileSecureStore;
 import com.google.inject.AbstractModule;
@@ -85,7 +85,7 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStore get() {
-      if (SecureStoreUtils.isKMSBacked(cConf)) {
+      if (AbstractSecureStore.isKMSBacked(cConf)) {
         try {
           // Check if required KMS classes are present.
           Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
@@ -117,7 +117,7 @@ public class SecureStoreModules extends RuntimeModule {
      */
     @Override
     public SecureStoreManager get() {
-      if (SecureStoreUtils.isKMSBacked(cConf)) {
+      if (AbstractSecureStore.isKMSBacked(cConf)) {
         try {
           // Check if required KMS classes are present.
           Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");

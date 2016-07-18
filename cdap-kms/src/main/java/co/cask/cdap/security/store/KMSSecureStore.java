@@ -20,7 +20,6 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.security.SecureStoreUtils;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
@@ -41,7 +40,7 @@ import java.util.Map;
  * the provider is set to kms and Hadoop version is 2.6.0 or higher.
  */
 @SuppressWarnings("unused")
-class KMSSecureStore implements SecureStore, SecureStoreManager {
+class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
@@ -87,7 +86,7 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
     options.setDescription(description);
     options.setAttributes(properties);
     options.setBitLength(data.length * Byte.SIZE);
-    String keyName = SecureStoreUtils.getKeyName(namespace, name);
+    String keyName = getKeyName(namespace, name);
     try {
       provider.createKey(keyName, data, options);
     } catch (IOException e) {
@@ -103,7 +102,7 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
   @Override
   public void delete(String namespace, String name) throws IOException {
     try {
-      provider.deleteKey(SecureStoreUtils.getKeyName(namespace, name));
+      provider.deleteKey(getKeyName(namespace, name));
     } catch (IOException e) {
       throw new IOException("Failed to delete the key. " + name + " under namespace " + namespace, e);
     }
@@ -116,7 +115,7 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public List<SecureStoreMetadata> list(String namespace) throws IOException {
-    String prefix = namespace + SecureStoreUtils.NAME_SEPARATOR;
+    String prefix = namespace + NAME_SEPARATOR;
     List<String> keysInNamespace = new ArrayList<>();
     KeyProvider.Metadata[] metadatas;
     try {
@@ -148,7 +147,7 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public SecureStoreData get(String namespace, String name) throws IOException {
-    String keyName = SecureStoreUtils.getKeyName(namespace, name);
+    String keyName = getKeyName(namespace, name);
     KeyProvider.Metadata metadata = provider.getMetadata(keyName);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, metadata.getDescription(), metadata.getAttributes());
     KeyProvider.KeyVersion keyVersion = provider.getCurrentKey(keyName);

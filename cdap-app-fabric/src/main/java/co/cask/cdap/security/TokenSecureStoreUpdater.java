@@ -18,12 +18,12 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.SecureStoreUtils;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
+import co.cask.cdap.security.store.AbstractSecureStore;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -77,7 +77,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
-    isKMSBacked = SecureStoreUtils.KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
+    isKMSBacked = AbstractSecureStore.isKMSBacked(cConf);
     updateInterval = calculateUpdateInterval();
   }
 
