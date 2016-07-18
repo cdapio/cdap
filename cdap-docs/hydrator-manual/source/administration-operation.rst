@@ -8,45 +8,6 @@
 Administration and Operation
 ============================
 
-Metrics
-=======
-*[To Be Completed]*
-
-Logs
-====
-*[To Be Completed]*
-
-
-Scheduling
-==========
-*[To Be Completed]*
-
-
-Runtime Arguments and Macro Substitution
-========================================
-*[New in 3.5]*
-
-
-Configuring Post-Actions 
-=========================
-*[To Be Completed]*
-
-
-Running in MapReduce versus Spark
-=================================
-*[To Be Completed]*
-
-
-Configuring Resources
-=====================
-*[New in 3.5]*
- 
-
-Re-running a Pipeline
-=====================
-*[New in 3.5: TBD]*
-
-
 .. _cask-hydrator-operating-upgrading-pipeline:
 
 Upgrading a Pipeline

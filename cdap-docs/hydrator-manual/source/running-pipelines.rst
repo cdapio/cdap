@@ -9,22 +9,15 @@ Running Pipelines
 =================
 
 
-Running Pipelines
-=================
 To Be Completed
 
 - Using the Cask Hydrator UI
 - Using the Application Lifecycle RESTful API
 
-.. _cask-hydrator-runtime-arguments-macros:
-
-Runtime Arguments
------------------
-To Be Completed
 
 Re-running a Pipeline
----------------------
-To Be Completed
+=====================
+*[New in 3.5: To Be Completed]*
 
 
 Notifications
@@ -47,16 +40,7 @@ Error Record Handling
 To Be Completed
 
 
-Post-run Actions
-================
-To Be Completed
-
 
 Configuring Resources
 =====================
-To Be Completed
-
-
-Upgrading a Pipeline
-====================
-To Be Completed
+*To Be Completed*

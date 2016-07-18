@@ -9,8 +9,9 @@ Packaging Plugins
 =================
 
 .. NOTE: Because of the included files in this file, use these levels for headlines/titles:
-  .. one -----
-  .. two ..... 
+  .. 1 -----
+  .. 2 .....
+  .. 3 `````
   .. etc.
 
 To **package, present,** and **deploy** your plugin, see these instructions:
@@ -21,7 +22,6 @@ To **package, present,** and **deploy** your plugin, see these instructions:
 
 If you are installing a **third-party JAR** (such as a **JDBC driver**) to make it accessible to other
 plugins or applications, see :ref:`these instructions <cask-hydrator-third-party-plugins>`.
-
 
 ..   - UI
 ..   - REST

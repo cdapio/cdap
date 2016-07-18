@@ -18,7 +18,7 @@ their properties.  (In Hydrator Studio, the user interface prompts you for the r
 information.)
 
 
-.. _hydrator-pipeline-configuration-file-format:
+.. _hydrator-developing-pipelines-configuration-file-format:
 
 Pipeline Configuration File Format
 ==================================
@@ -176,6 +176,8 @@ The format of a ``plugin`` object:
      - Map of properties, contents of which are determined by the particular plugin used
 
 
+.. _hydrator-developing-pipelines-creating-batch:
+
 Creating a Batch Pipeline
 =========================
 With a Hydrator batch pipeline, it requires a ``schedule`` property with a cron entry
@@ -303,6 +305,7 @@ To create this pipeline, called *streamETLApp*, you can use either the HTTP REST
 
 where ``config.json`` is the file that contains the pipeline configuration shown above.
 
+.. _hydrator-developing-pipelines-creating-realtime:
 
 Creating a Real-Time Pipeline
 =============================
