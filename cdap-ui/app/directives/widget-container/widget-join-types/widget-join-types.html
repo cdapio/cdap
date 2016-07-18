@@ -15,25 +15,31 @@
 -->
 
 <div class="multi-checkboxes-container">
-  <select class="form-control"
-          ng-model="JoinTypes.joinType"
-          ng-change="JoinTypes.changeJoinType()"
-          ng-options="option as option for option in JoinTypes.optionsDropdown">
-  </select>
+  <div ng-if="JoinTypes.inputs.length > 0">
+    <select class="form-control"
+            ng-model="JoinTypes.joinType"
+            ng-change="JoinTypes.changeJoinType()"
+            ng-options="option as option for option in JoinTypes.optionsDropdown">
+    </select>
 
-  <div class="checkboxes-group"
-       ng-if="JoinTypes.joinType === 'Outer'">
-    <div class="subtitle">Required Inputs</div>
+    <div class="checkboxes-group"
+         ng-if="JoinTypes.joinType === 'Outer'">
+      <div class="subtitle">Required Inputs</div>
 
-    <div class="row checkboxes">
-      <div class="col-xs-6 clearfix" ng-repeat="input in JoinTypes.inputs">
-        <span class="input-name">{{ input.name }}</span>
+      <div class="row checkboxes">
+        <div class="col-xs-6 clearfix" ng-repeat="input in JoinTypes.inputs">
+          <span class="input-name">{{ input.name }}</span>
 
-        <input type="checkbox"
-               class="checkbox"
-               ng-model="input.selected"
-               ng-change="JoinTypes.formatOutput()">
+          <input type="checkbox"
+                 class="checkbox"
+                 ng-model="input.selected"
+                 ng-change="JoinTypes.formatOutput()">
+        </div>
       </div>
     </div>
+  </div>
+
+  <div ng-if="JoinTypes.inputs.length === 0">
+    <h4>No input stages</h4>
   </div>
 </div>

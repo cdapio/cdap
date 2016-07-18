@@ -16,6 +16,7 @@
 
 <div class="sql-conditions-container">
   <div class="rule clearfix"
+       ng-if="SqlConditions.stageList.length > 0"
        ng-repeat="rule in SqlConditions.rules track by $index"
        ng-mouseenter="rule.hover = true"
        ng-mouseleave="rule.hover = false">
@@ -70,5 +71,9 @@
         <i class="fa fa-plus"></i>
       </button>
     </div>
+  </div>
+
+  <div ng-if="SqlConditions.stageList.length === 0">
+    <h4>No input stages</h4>
   </div>
 </div>

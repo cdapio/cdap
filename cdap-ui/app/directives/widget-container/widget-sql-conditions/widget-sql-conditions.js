@@ -50,10 +50,11 @@ function SqlConditionsController() {
       outputArr.push(output);
     });
 
-    vm.model = outputArr.join(' AND ');
+    vm.model = outputArr.join(' & ');
   };
 
   vm.addRule = () => {
+    if (vm.stageList.length === 0) { return; }
     vm.rules.push({
       left: {
         stageName: vm.stageList[0],
@@ -91,12 +92,12 @@ function SqlConditionsController() {
       return;
     }
 
-    let modelSplit = vm.model.split(' AND ').map((rule) => {
+    let modelSplit = vm.model.split('&').map((rule) => {
       return rule.trim();
     });
 
     angular.forEach(modelSplit, (rule) => {
-      let ruleSplit = rule.split(' = ').map((field) => {
+      let ruleSplit = rule.split('=').map((field) => {
         return field.trim().split('.');
       });
 
