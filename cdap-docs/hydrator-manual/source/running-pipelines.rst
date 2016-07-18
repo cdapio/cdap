@@ -16,16 +16,19 @@ Pipeline can be started, stopped, and controlled using:
 - :ref:`CDAP CLI <cdap-cli>`
 - Command line tools, using the :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle-start>`
 
-.. _cask-hydrator-running-pipelines-within-hydrator
+.. _cask-hydrator-running-pipelines-within-hydrator:
 
 Running a Pipeline within Hydrator
 ==================================
-From within Hydrator, you can start and stop pipelines.
+From within Hydrator, you can start and stop pipelines. 
 
-For batch pipelines, you can start and stop their schedule. (To change their
-schedules requires creating a new pipelines with a new schedule.)
+For a batch pipeline, you can start or stop ("suspend") its schedule. It will then begin
+at the next scheduled time. (To change the schedule requires creating a new pipeline with
+a new schedule.)
 
-For real-time pipelines, 
+For a real-time pipeline, you simply start or stop the pipeline.
+
+You can view details of a pipeline, such as its configuration, settings, stages, schemas, etc.
 
 
 
@@ -63,6 +66,50 @@ application and program, and are described in the :ref:`Administration manual, m
 Script transform steps can create metrics, as described in the section in developing
 plugins on :ref:`script transformations
 <cask-hydrator-creating-a-plugin-script-transformations>`.
+
+For instance, if you have a real-time pipeline named "demoPipeline" with three stages
+(*DataGenerator*, *JavaScript*, and *Table*), then you can discover the available metrics
+using a `curl` command, such as (reformatted for display):
+
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/search?target=metric&tag=namespace:default&tag=app:demoPipeline"
+
+    ["system.app.log.debug","system.app.log.info","system.app.log.warn","system.dataset.
+    store.bytes","system.dataset.store.ops","system.dataset.store.reads","system.dataset.
+    store.writes","system.metrics.emitted.count","user.DataGenerator.records.out","user.
+    JavaScript.record.count","user.JavaScript.records.in","user.JavaScript.records.out","
+    user.Table.records.in","user.Table.records.out","user.metrics.emitted.count"]
+  
+In this case, the user metric *"user.JavaScript.record.count"* was incremented in the JavaScript stage using::
+
+  context.getMetrics().count('record.count', 1);
+  
+The value of the metric can be retrieved with:
+
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X POST "localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:etlRealtime6&metric=user.JavaScript.record.count&aggregate=true"
+
+    {"startTime":0,"endTime":1468884338,"series":[{"metricName":"user.JavaScript.record.
+    count","grouping":{},"data":[{"time":0,"value":170}]}],"resolution":"2147483647s"}
+
+Using the CDAP CLI, you can retrieve the value with:
+
+  .. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+ 
+    |cdap >| get metric value user.JavaScript.record.count 'app=demoPipeline'
+ 
+    Start time: 0
+    End time: 1468884640
+ 
+    Series: user.JavaScript.record.count
+    +===================+
+    | timestamp | value |
+    +===================+
+    | 0         | 170   |
+    +===================+
 
 
 Error Record Handling

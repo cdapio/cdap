@@ -69,7 +69,7 @@ Types of Plugins
 ----------------
 Batch pipelines, based on the ``cdap-data-pipeline`` application template, can include these plugins:
 
-- :ref:`Actions <ask-hydrator-action-plugins>`
+- :ref:`Actions <cask-hydrator-action-plugins>`
 
 - :ref:`Batch Source Plugins <cask-hydrator-plugins-batch-sources>`
 
@@ -216,7 +216,7 @@ Types of Plugins
 ----------------
 Real-time pipelines, based on the ``cdap-etl-realtime`` application template, can include these plugins:
 
-- :ref:`Actions <ask-hydrator-action-plugins>`
+- :ref:`Actions <cask-hydrator-action-plugins>`
 
 - :ref:`Real-time Sink Source Plugins <cask-hydrator-plugins-realtime-sources>`
 
