@@ -58,6 +58,9 @@ public final class NamespaceMeta {
     private String name;
     private String description;
     private String schedulerQueueName;
+    private String rootDirectory;
+    private String hbaseNamespace;
+    private String hiveDatabase;
 
     public Builder() {
      // No-Op
@@ -66,7 +69,12 @@ public final class NamespaceMeta {
     public Builder(NamespaceMeta meta) {
       this.name = meta.getName();
       this.description = meta.getDescription();
-      this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
+      if (meta.getConfig() != null) {
+        this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
+        this.rootDirectory = meta.getConfig().getRootDirectory();
+        this.hbaseNamespace = meta.getConfig().getHbaseNamespace();
+        this.hiveDatabase = meta.getConfig().getHiveDatabase();
+      }
     }
 
     public Builder setName(final Id.Namespace id) {
@@ -89,6 +97,21 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setRootDirectory(final String hdfsDirectory) {
+      this.rootDirectory = hdfsDirectory;
+      return this;
+    }
+
+    public Builder setHbaseNamespace(final String hbaseNamespace) {
+      this.hbaseNamespace = hbaseNamespace;
+      return this;
+    }
+
+    public Builder setHiveDatabase(final String hiveDatabase) {
+      this.hiveDatabase = hiveDatabase;
+      return this;
+    }
+
     public NamespaceMeta build() {
       if (name == null) {
         throw new IllegalArgumentException("Namespace id cannot be null.");
@@ -97,10 +120,14 @@ public final class NamespaceMeta {
         description = "";
       }
 
+      // scheduler queue name is kept non nullable unlike others like root directory, hbase namespace etc for backward
+      // compatibility
       if (schedulerQueueName == null) {
         schedulerQueueName = "";
       }
-      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName));
+
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
+                                                                      hbaseNamespace, hiveDatabase));
     }
   }
 

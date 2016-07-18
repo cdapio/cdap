@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -43,8 +44,9 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
   @Inject
   DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
                                            NamespacedLocationFactory namespacedLocationFactory,
-                                           ExploreFacade exploreFacade, HBaseTableUtil tableUtil) {
-    super(cConf, namespacedLocationFactory, exploreFacade);
+                                           ExploreFacade exploreFacade, HBaseTableUtil tableUtil,
+                                           NamespaceQueryAdmin namespaceQueryAdmin) {
+    super(cConf, namespacedLocationFactory, exploreFacade, namespaceQueryAdmin);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
   }

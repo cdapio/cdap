@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
@@ -28,7 +29,6 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
@@ -68,15 +68,15 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   private final DatasetTypeManager typeManager;
   private final CConfiguration cConf;
   private final NamespacedLocationFactory namespacedLocationFactory;
-  private final NamespaceStore namespaceStore;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   DatasetTypeHandler(DatasetTypeManager typeManager, CConfiguration conf,
-                     NamespacedLocationFactory namespacedLocationFactory, NamespaceStore namespaceStore) {
+                     NamespacedLocationFactory namespacedLocationFactory, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.typeManager = typeManager;
     this.cConf = conf;
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.namespaceStore = namespaceStore;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -305,7 +305,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
    */
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
-      if (namespaceStore.get(namespace) == null) {
+      if (namespaceQueryAdmin.get(namespace) == null) {
         throw new NamespaceNotFoundException(namespace);
       }
     }

@@ -21,8 +21,8 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
@@ -61,7 +61,7 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
-    NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, lf);
+    NamespacedLocationFactory namespacedLocationFactory = new NamespacedLocationFactoryTestClient(cConf, lf);
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(cConf, namespacedLocationFactory,
                                                                  new NoOpAuthorizer());
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.

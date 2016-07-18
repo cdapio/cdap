@@ -28,6 +28,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
@@ -94,6 +95,7 @@ public class DistributedProgramRunnableModule {
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
+      new NamespaceClientRuntimeModule().getDistributedModules(),
       new AuthorizationModule(),
       new AbstractModule() {
         @Override

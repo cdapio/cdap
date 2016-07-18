@@ -30,8 +30,10 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -42,8 +44,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.store.NamespaceStore;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -90,7 +90,7 @@ public class DatasetOpExecutorServiceTest {
   private DatasetFramework dsFramework;
   private EndpointStrategy endpointStrategy;
   private TransactionManager txManager;
-  private NamespaceStore nsStore;
+  private NamespaceAdmin namespaceAdmin;
 
   @Before
   public void setUp() throws Exception {
@@ -112,13 +112,13 @@ public class DatasetOpExecutorServiceTest {
       new ZKClientModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getInMemoryModules());
+      new NamespaceClientRuntimeModule().getInMemoryModules());
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -132,9 +132,9 @@ public class DatasetOpExecutorServiceTest {
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
 
-    nsStore = injector.getInstance(NamespaceStore.class);
-    nsStore.create(NamespaceMeta.DEFAULT);
-    nsStore.create(new NamespaceMeta.Builder().setName(bob.getNamespace()).build());
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(bob.getNamespace()).build());
   }
 
   @After
@@ -144,8 +144,8 @@ public class DatasetOpExecutorServiceTest {
     managerService.stopAndWait();
     managerService = null;
 
-    nsStore.delete(Id.Namespace.DEFAULT);
-    nsStore.delete(bob.getNamespace());
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(bob.getNamespace());
   }
 
   @Test

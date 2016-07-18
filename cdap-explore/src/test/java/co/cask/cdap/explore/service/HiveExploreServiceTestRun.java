@@ -28,6 +28,7 @@ import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -271,6 +272,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void testQueriesCount() throws Exception {
     Id.Namespace testNamespace1 = Id.Namespace.from("testQueriesCount");
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testNamespace1).build());
     exploreClient.addNamespace(testNamespace1).get();
 
     try {
@@ -303,6 +305,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Id.Namespace testNamespace1 = Id.Namespace.from("test1");
     Id.Namespace testNamespace2 = Id.Namespace.from("test2");
 
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testNamespace1).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testNamespace2).build());
     exploreClient.addNamespace(testNamespace1).get();
     exploreClient.addNamespace(testNamespace2).get();
 
