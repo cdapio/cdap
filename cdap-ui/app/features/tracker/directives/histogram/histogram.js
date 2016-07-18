@@ -32,19 +32,23 @@ angular.module(PKG.name + '.feature.tracker')
         tempDate = tempDate.setDate( tempDate.getDate() - _t );  // 20 days from now
         return tempDate;
       };
-      if (typeof start === 'string') {
+      if (typeof start === 'string' && start.indexOf('now') !== -1) {
         startTime = start.match(pattern);
         if (Array.isArray(startTime)) {
           startTime = startTime[0];
         }
         startTime = getTimeInEpoch(startTime);
+      } else {
+        startTime = parseInt(start, 10) * 1000;
       }
-      if (typeof end === 'string') {
+      if (typeof end === 'string' && start.indexOf('now') !== -1) {
         endTime = end.match(pattern);
         if (Array.isArray(endTime)) {
           endTime = endTime[0];
         }
         endTime = getTimeInEpoch(endTime);
+      } else {
+        endTime = parseInt(end, 10) * 1000;
       }
       return { 'startTime': startTime, 'endTime': endTime };
     }
@@ -102,10 +106,10 @@ angular.module(PKG.name + '.feature.tracker')
           .outerTickSize(0);
 
         let durationAsDays = moment.duration(xDomain.endTime - xDomain.startTime).asDays();
-        if (durationAsDays >= 180) { // 6 months
-          xAxis.ticks(d3.time.months, 1).tickFormat(d3.time.format('%m-%Y'));
-        } else if ( durationAsDays >= 30 && durationAsDays < 180) {
-          xAxis.ticks(d3.time.weeks, 1).tickFormat(d3.time.format('%b-%U'));
+        if (durationAsDays >= 179) { // 6 months
+          xAxis.ticks(d3.time.months, 1).tickFormat(d3.time.format('%b %Y'));
+        } else if ( durationAsDays >= 30 && durationAsDays < 179) {
+          xAxis.ticks(d3.time.weeks, 1).tickFormat(d3.time.format('%b-%e'));
         } else {
           xAxis.ticks(d3.time.days, 1).tickFormat(d3.time.format('%b-%e'));
         }
@@ -142,7 +146,6 @@ angular.module(PKG.name + '.feature.tracker')
           .enter().append('rect')
             .attr('class', 'bar')
             .attr('x', d => {
-              console.log('x: ', x(d.time) - ((width / durationAsDays) ));
               return x(d.time) - (((width + 130) / durationAsDays));
             })
             .attr('y', (d) => { return y(d.count); })
