@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 
 /**
- *
+ * Provides an abstract implementation for secure store along with some common functionality.
  */
 public abstract class AbstractSecureStore {
   /** Separator between the namespace name and the key name */
