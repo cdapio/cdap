@@ -32,6 +32,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.authorization.RemotePrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableSet;
