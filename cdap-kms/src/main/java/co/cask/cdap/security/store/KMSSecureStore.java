@@ -86,15 +86,10 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
     KeyProvider.Options options = new KeyProvider.Options(conf);
     options.setDescription(description);
     options.setAttributes(properties);
-    SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
-    SecureStoreData secureStoreData = new SecureStoreData(meta, data);
-    byte[] keyStoreBytes = (new KeyStoreEntry(secureStoreData, meta)).toByteArray();
-    options.setBitLength(keyStoreBytes.length * Byte.SIZE);
+    options.setBitLength(data.length * Byte.SIZE);
     String keyName = SecureStoreUtils.getKeyName(namespace, name);
     try {
-      provider.createKey(keyName,
-                         keyStoreBytes,
-                         options);
+      provider.createKey(keyName, data, options);
     } catch (IOException e) {
       throw new IOException("Failed to store the key. " + name + " under namespace " + namespace, e);
     }
@@ -107,14 +102,8 @@ class KMSSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public void delete(String namespace, String name) throws IOException {
-    String keyName = SecureStoreUtils.getKeyName(namespace, name);
     try {
-      provider.getCurrentKey(keyName);
-    } catch (IOException e) {
-      throw new IOException("Failed to delete the key. " + name + " under namespace " + namespace, e);
-    }
-    try {
-      provider.deleteKey(keyName);
+      provider.deleteKey(SecureStoreUtils.getKeyName(namespace, name));
     } catch (IOException e) {
       throw new IOException("Failed to delete the key. " + name + " under namespace " + namespace, e);
     }

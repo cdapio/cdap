@@ -20,6 +20,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.SecureStoreUtils;
@@ -113,27 +114,14 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     writeLock.lock();
     try {
       if (keyStore.containsAlias(keyName)) {
-        key = keyStore.getKey(keyName, password);
+        throw new IOException("The key " + name + " under namespace " + namespace + "already exists.");
       }
       keyStore.setKeyEntry(keyName, new KeyStoreEntry(secureStoreData, meta), password, null);
       // Attempt to persist the store.
       flush();
-    } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+    } catch (KeyStoreException e) {
       // We failed to store the key in the key store. Throw an IOException.
       throw new IOException("Failed to store the key. ", e);
-    } catch (IOException ioe) {
-      // The key was stored in the keystore successfully but we failed to flush it to the file system.
-      // Remove the key from the keystore and throw an IOException.
-      try {
-        if (key == null) {
-          deleteFromStore(keyName, password);
-        } else {
-          keyStore.setKeyEntry(keyName, key, password, null);
-        }
-      } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
-        ioe.addSuppressed(new IOException("Failed to recover the store after a failed flush."));
-      }
-      throw ioe;
     } finally {
       writeLock.unlock();
     }
