@@ -150,7 +150,7 @@ my-dag-plus {
           @border-offset: 17px;
           @border-top-bottom: @border-offset solid @brown;
 
-          width: 56px;
+          width: 55px;
           height: 20px;
           position: relative;
           top: 13px;
@@ -160,12 +160,11 @@ my-dag-plus {
           &:before,
           &:after {
             box-sizing: content-box;
-            width: 26px;
+            width: 25px;
             position: absolute;
             content: "";
             left: 0;
             border: @border;
-            // z-index: 0;
           }
 
           &:before {
@@ -187,10 +186,10 @@ my-dag-plus {
             @border-offset: 14px;
             @border-top-bottom: (@border-offset + 1px) solid @bg-color;
 
-            width: 50px;
-            height: 18px;
+            width: 49px;
+            height: 20px;
             position: relative;
-            top: 1px;
+            top: 0;
             left: 3px;
             border-radius: 0;
             background: @bg-color;
@@ -199,7 +198,7 @@ my-dag-plus {
             &:before,
             &:after {
               box-sizing: content-box;
-              width: 24px;
+              width: 23px;
               position: absolute;
               content: "";
               left: 0;

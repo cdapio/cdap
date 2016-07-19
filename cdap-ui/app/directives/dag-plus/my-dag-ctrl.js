@@ -58,7 +58,6 @@ angular.module(PKG.name + '.commons')
     vm.isDisabled = $scope.isDisabled;
     vm.disableNodeClick = $scope.disableNodeClick;
 
-    var popovers = [];
     var nodePopovers = {};
 
     vm.scale = 1.0;
@@ -281,7 +280,6 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.zoomIn = function () {
-      closeAllPopovers();
       vm.scale += 0.1;
 
       if (vm.scale >= SHOW_METRICS_THRESHOLD) {
@@ -292,7 +290,6 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.zoomOut = function () {
-      closeAllPopovers();
       if (vm.scale <= 0.2) { return; }
 
       if (vm.scale <= SHOW_METRICS_THRESHOLD) {
@@ -384,7 +381,6 @@ angular.module(PKG.name + '.commons')
     }
 
     function formatConnections() {
-      closeAllPopovers();
       var connections = [];
       angular.forEach(vm.instance.getConnections(), function (conn) {
         connections.push({
@@ -393,45 +389,6 @@ angular.module(PKG.name + '.commons')
         });
       });
       DAGPlusPlusNodesActionsFactory.setConnections(connections);
-    }
-
-    function addConnection (connectionObj) {
-      var connection = connectionObj.connection;
-
-      var label = angular.element(connection.getOverlay('label').getElement());
-      var scope = $rootScope.$new();
-
-      var popover = $popover(label, {
-        trigger: 'manual',
-        placement: 'auto',
-        target: label,
-        templateUrl: $scope.templatePopover,
-        container: 'main',
-        scope: scope
-      });
-
-      popovers.push(popover);
-
-      connection.bind('click', function (conn, event) {
-        event.stopPropagation();
-        scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
-        popover.show();
-      });
-
-      $scope.$on('$destroy', function () {
-        label = null;
-        scope.$destroy();
-      });
-
-      formatConnections();
-    }
-
-    function closeAllPopovers() {
-      if (popovers.length === 0) { return; }
-
-      angular.forEach(popovers, function (popover) {
-        popover.hide();
-      });
     }
 
     jsPlumb.ready(function() {
@@ -455,19 +412,16 @@ angular.module(PKG.name + '.commons')
           },
           start: function () {
             canvasDragged = true;
-            closeAllPopovers();
           }
         });
       }
-      vm.instance.bind('connection', addConnection);
+      vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
 
 
 
       // This should be removed once the node config is using FLUX
       $scope.$watch('nodes', function () {
-        closeAllPopovers();
-
         if (nodesTimeout) {
           $timeout.cancel(nodesTimeout);
         }
@@ -485,7 +439,6 @@ angular.module(PKG.name + '.commons')
                 }
 
                 dragged = true;
-                closeAllPopovers();
               },
               stop: function (dragEndEvent) {
                 var config = {
@@ -539,7 +492,6 @@ angular.module(PKG.name + '.commons')
         canvasDragged = false;
         return;
       }
-      closeAllPopovers();
       selected = [];
       vm.instance.clearDragSelection();
       DAGPlusPlusNodesActionsFactory.resetSelectedNode();
@@ -588,7 +540,6 @@ angular.module(PKG.name + '.commons')
 
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
-      closeAllPopovers();
       DAGPlusPlusNodesActionsFactory.removeNode(node.name);
       vm.instance.remove(node.name);
     };
@@ -743,7 +694,6 @@ angular.module(PKG.name + '.commons')
     };
 
     $scope.$on('$destroy', function () {
-      closeAllPopovers();
       labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();

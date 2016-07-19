@@ -29,8 +29,6 @@ commonModule.directive('myDagPlus', function() {
       nodeClick: '&',
       nodeDelete: '&',
       context: '=',
-      templatePopover: '@',
-      connectionPopoverData: '&',
       showMetrics: '=',
       metricsData: '=',
       nodePopoverTemplate: '@',

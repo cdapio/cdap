@@ -26,17 +26,9 @@ angular.module(PKG.name + '.commons')
       radius: 5,
       lineWidth: 2
     };
-    function createSchemaOnEdge() {
-      return angular.element('<div><div class="label-container text-center"><i class="icon-schemaedge"></i></div></div>');
-    }
     var connectorOverlays = {
       connectorOverlays: [
         [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
-        [ 'Custom', {
-          create: createSchemaOnEdge,
-          location: 0.5,
-          id: 'label'
-        }]
       ]
     };
     var disabledConnectorOverlays = {
