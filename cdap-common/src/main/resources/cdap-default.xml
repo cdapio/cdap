@@ -445,7 +445,7 @@
     <name>data.tx.num.cores</name>
     <value>${master.service.num.cores}</value>
     <description>
-      Maximum number of transaction service cores
+      Number of cores for the transaction service
     </description>
   </property>
 
