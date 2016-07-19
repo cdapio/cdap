@@ -182,7 +182,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   const pollForNewLogs = () => {
     pollPromise = dataSrc.poll({
-      _cdapPath: '/namespaces/' + this.namespaceId + '/apps/' + this.appId + '/flows/' + this.programType + '/runs/' + this.runId + '/logs?format=json&start=' + this.startTimeSec,
+      _cdapPath: '/namespaces/' + this.namespaceId + '/apps/' + this.appId + '/' + this.programType + '/' + this.programId + '/runs/' + this.runId + '/logs?format=json&start=' + this.startTimeSec,
       method: 'GET'
     },
     function(res) {
@@ -300,7 +300,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     return;
   };
 
-  this.scrollFn = _.debounce(function(){
+  this.scrollFn = function(){
     this.loadingMoreLogs = true;
     this.cacheSize -= this.cacheDecrement;
     if(this.cacheSize <= 0){
@@ -308,7 +308,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
     // computePinPosition();
     this.viewLimit += this.cacheDecrement;
-  }, 500);
+  };
 
   this.filterByStartDate = (entry) => {
     if(this.logStartTime > entry.log.timestamp) {
