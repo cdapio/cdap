@@ -33,6 +33,7 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
   private final String application;
   private final ProgramType type;
   private final String program;
+  private transient Integer hashCode;
 
   public ProgramId(String namespace, String application, ProgramType type, String program) {
     super(EntityType.PROGRAM);
@@ -102,7 +103,11 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, application, type, program);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, type, program);
+    }
+    return hashCode;
   }
 
   @Override

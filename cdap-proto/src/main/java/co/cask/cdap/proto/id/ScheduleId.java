@@ -30,6 +30,7 @@ public class ScheduleId extends EntityId implements NamespacedId, ParentedId<App
   private final String namespace;
   private final String application;
   private final String schedule;
+  private transient Integer hashCode;
 
   public ScheduleId(String namespace, String application, String schedule) {
     super(EntityType.SCHEDULE);
@@ -63,7 +64,11 @@ public class ScheduleId extends EntityId implements NamespacedId, ParentedId<App
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, application, schedule);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, schedule);
+    }
+    return hashCode;
   }
 
   @Override

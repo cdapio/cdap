@@ -30,6 +30,7 @@ public class ArtifactId extends EntityId implements NamespacedId, ParentedId<Nam
   private final String namespace;
   private final String artifact;
   private final String version;
+  private transient Integer hashCode;
 
   public ArtifactId(String namespace, String artifact, String version) {
     super(EntityType.ARTIFACT);
@@ -68,7 +69,11 @@ public class ArtifactId extends EntityId implements NamespacedId, ParentedId<Nam
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, artifact, version);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, artifact, version);
+    }
+    return hashCode;
   }
 
   @Override
