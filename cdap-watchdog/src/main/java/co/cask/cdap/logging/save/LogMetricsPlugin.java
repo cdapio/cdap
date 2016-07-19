@@ -36,6 +36,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -90,23 +91,26 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
                                              TimeUnit.MILLISECONDS);
   }
 
-  @Override
-  public void doProcess(KafkaLogEvent event) {
-    LoggingContext context = event.getLoggingContext();
-    Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
-    MetricsContext collector = metricsCollectionService.getContext(tags);
+  public void doProcess(Iterator<KafkaLogEvent> events) {
 
-    String metricName = getMetricName(tags.get(Constants.Metrics.Tag.NAMESPACE),
-                                      event.getLogEvent().getLevel().toString().toLowerCase());
+    while (events.hasNext()) {
+      KafkaLogEvent event = events.next();
+      LoggingContext context = event.getLoggingContext();
+      Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
+      MetricsContext collector = metricsCollectionService.getContext(tags);
 
-    // Don't increment metrics for logs from MetricsProcessor to avoid possibility of infinite loop
-    if  (!(tags.containsKey(Constants.Metrics.Tag.COMPONENT) &&
-           tags.get(Constants.Metrics.Tag.COMPONENT).equals(Constants.Service.METRICS_PROCESSOR))) {
-      collector.increment(metricName, 1);
+      String metricName = getMetricName(tags.get(Constants.Metrics.Tag.NAMESPACE),
+                                        event.getLogEvent().getLevel().toString().toLowerCase());
+
+      // Don't increment metrics for logs from MetricsProcessor to avoid possibility of infinite loop
+      if (!(tags.containsKey(Constants.Metrics.Tag.COMPONENT) &&
+        tags.get(Constants.Metrics.Tag.COMPONENT).equals(Constants.Service.METRICS_PROCESSOR))) {
+        collector.increment(metricName, 1);
+      }
+
+      partitionCheckpoints.put(event.getPartition(),
+                               new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
     }
-
-    partitionCheckpoints.put(event.getPartition(),
-                             new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
   }
 
   private String getMetricName(String namespace, String logLevel) {
