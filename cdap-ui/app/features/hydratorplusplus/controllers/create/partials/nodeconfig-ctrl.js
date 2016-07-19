@@ -163,10 +163,22 @@ class HydratorPlusPlusNodeConfigCtrl {
           (res) => {
             this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory
               .generateNodeConfig(this.state.node._backendProperties, res);
+            const generateJumpConfig = (jumpConfig, properties) => {
+              let streams = [], datasets = [];
+              let jumpConfigStreams = jumpConfig.streams || [],
+                  jumpConfigDatasets = jumpConfig.datasets || [];
+              streams = jumpConfigStreams.map(stream => ({ streamId: properties[stream.name] , entityType: 'streams' }));
+              datasets = jumpConfigDatasets.map(dataset => ({ datasetId: properties[dataset.name], entityType: 'datasets' }));
+              return {streams, datasets};
+            };
             if (res.errorDataset || this.state.node.errorDatasetName) {
               this.state.showErrorDataset = true;
               this.state.errorDatasetTooltip = res.errorDataset && res.errorDataset.errorDatasetTooltip || false;
               this.state.node.errorDatasetName = this.state.node.errorDatasetName || '';
+            }
+            if (this.$scope.isDisabled && this.state.groupsConfig.jumpConfig && Object.keys(this.state.groupsConfig.jumpConfig).length) {
+              let {streams, datasets} = generateJumpConfig(this.state.groupsConfig.jumpConfig, this.state.node.plugin.properties);
+              this.state.groupsConfig.jumpConfig.datasets = streams.concat(datasets);
             }
             angular.forEach(this.state.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field) => {
