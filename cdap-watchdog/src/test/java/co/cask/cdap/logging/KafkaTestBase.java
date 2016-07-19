@@ -23,18 +23,22 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.logging.save.KafkaLogProcessor;
-import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
-import co.cask.cdap.logging.save.LogMetricsPlugin;
+import co.cask.cdap.logging.save.KafkaLogProcessorFactory;
+import co.cask.cdap.logging.save.KafkaLogWriterPluginFactory;
+import co.cask.cdap.logging.save.LogMetricsPluginFactory;
 import co.cask.cdap.logging.save.LogSaverFactory;
+import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import org.junit.ClassRule;
 
 /**
@@ -61,14 +65,21 @@ public abstract class KafkaTestBase {
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LoggingModules().getDistributedModules(),
-      new AbstractModule() {
+      Modules.override(new LoggingModules().getDistributedModules())
+        .with(new Module() {
+          @Override
+          public void configure(Binder binder) {
+            // Use LogSaverTableUtilOverride so that log meta table can be changed.
+            binder.bind(LogSaverTableUtil.class).to(LogSaverTableUtilOverride.class);
+          }
+        }),
+        new AbstractModule() {
         @Override
         protected void configure() {
-          Multibinder<KafkaLogProcessor> logProcessorBinder = Multibinder.newSetBinder
-            (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
-          logProcessorBinder.addBinding().to(KafkaLogWriterPlugin.class);
-          logProcessorBinder.addBinding().to(LogMetricsPlugin.class);
+          Multibinder<KafkaLogProcessorFactory> logProcessorBinder = Multibinder.newSetBinder
+            (binder(), KafkaLogProcessorFactory.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES));
+          logProcessorBinder.addBinding().to(KafkaLogWriterPluginFactory.class);
+          logProcessorBinder.addBinding().to(LogMetricsPluginFactory.class);
 
           install(new FactoryModuleBuilder().build(LogSaverFactory.class));
         }

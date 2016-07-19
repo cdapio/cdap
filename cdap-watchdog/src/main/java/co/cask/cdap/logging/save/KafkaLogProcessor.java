@@ -18,8 +18,6 @@ package co.cask.cdap.logging.save;
 
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 
-import java.util.Set;
-
 /**
  * Process {@link KafkaLogEvent} with KafkaLogProcessor. init and stop are lifecycle methods that can be called
  * multiple times when kafka leader partitions change.
@@ -28,9 +26,9 @@ public interface KafkaLogProcessor {
 
   /**
    * Called when the leader partitions change.
-   * @param partitions new leader partitions.
+   * @param partition new leader partition.
    */
-  void init(Set<Integer> partitions);
+  void init(int partition) throws Exception;
 
   /**
    * Process method will be called for each event received from Kafka from the topics published for log saver.
@@ -46,12 +44,12 @@ public interface KafkaLogProcessor {
 
 
   /**
-   * Get the checkpoint offset for a given partition. This will be used to figure out the lowest offset to read
+   * Get the checkpoint offset for a given partition processed by this plugin.
+   * This will be used to figure out the lowest offset to read
    * from for any given partition across multiple plugins. If the plugin doesn't care about check pointing offset
    * the implementations can just return -1;
    *
-   * @param partition partition number in kafka
    * @return checkpoint offset
    */
- Checkpoint getCheckpoint(int partition);
+  Checkpoint getCheckpoint();
 }
