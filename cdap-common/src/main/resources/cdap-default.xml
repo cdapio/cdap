@@ -429,7 +429,7 @@
     <name>data.tx.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
-      Maximum number of transaction client instances
+      Maximum number of transaction service instances
     </description>
   </property>
 
@@ -437,7 +437,7 @@
     <name>data.tx.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Memory in megabytes of the transaction clients
+      Memory in megabytes of the transaction service
     </description>
   </property>
 
@@ -445,7 +445,7 @@
     <name>data.tx.num.cores</name>
     <value>${master.service.num.cores}</value>
     <description>
-      Maximum number of transaction client cores
+      Maximum number of transaction service cores
     </description>
   </property>
 
@@ -453,7 +453,7 @@
     <name>data.tx.num.instances</name>
     <value>1</value>
     <description>
-      Requested number of transaction client instances
+      Requested number of transaction service instances
     </description>
   </property>
 
@@ -1084,33 +1084,6 @@
     </description>
   </property>
 
-  <!-- Remote System Operation Service Configuration -->
-
-  <property>
-    <name>remote.system.op.exec.threads</name>
-    <value>${http.service.exec.threads}</value>
-    <description>
-      Number of Netty service executor threads for Remote System Operation HTTP service
-    </description>
-  </property>
-
-  <property>
-    <name>remote.system.op.service.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      Remote System Operation HTTP service bind address
-    </description>
-  </property>
-
-  <property>
-    <name>remote.system.op.worker.threads</name>
-    <value>${http.service.worker.threads}</value>
-    <description>
-      Number of Netty service IO worker threads for Remote System Operation HTTP service
-    </description>
-  </property>
-
-
   <!-- Metadata Configuration -->
 
   <property>
@@ -1425,6 +1398,33 @@
     <value>16</value>
     <description>
       Number of splits in the queue table
+    </description>
+  </property>
+
+
+  <!-- Remote System Operation Configuration -->
+
+  <property>
+    <name>remote.system.op.exec.threads</name>
+    <value>${http.service.exec.threads}</value>
+    <description>
+      Number of Netty service executor threads for the remote system operation HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>remote.system.op.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Remote system operation HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>remote.system.op.worker.threads</name>
+    <value>${http.service.worker.threads}</value>
+    <description>
+      Number of Netty service IO worker threads for the remote system operation HTTP service
     </description>
   </property>
 
