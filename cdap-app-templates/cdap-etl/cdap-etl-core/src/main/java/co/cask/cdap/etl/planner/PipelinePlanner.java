@@ -120,6 +120,15 @@ public class PipelinePlanner {
       connectionsWithoutAction.add(connection);
     }
 
+    if (connectionsWithoutAction.isEmpty()) {
+      // Pipeline only contains Actions
+      Set<Connection> phaseConnections = new HashSet<>();
+      Map<String, PipelinePhase> phases = new HashMap<>();
+      populateActionPhases(specs, actionNodes, phases, phaseConnections, outgoingActionConnections,
+                           incomingActionConnections, new HashMap<String, Dag>());
+      return new PipelinePlan(phases, phaseConnections);
+    }
+
     // insert connector stages into the logical pipeline
     ConnectorDag cdag = ConnectorDag.builder()
       .addConnections(connectionsWithoutAction)
