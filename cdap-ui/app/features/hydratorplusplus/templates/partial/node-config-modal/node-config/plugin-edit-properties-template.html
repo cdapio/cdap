@@ -41,7 +41,7 @@
               <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
             </label>
 
-            <span ng-if="field['plugin-function']">
+            <span ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top') && !isDisabled">
               <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
               </plugin-functions>
             </span>
@@ -58,6 +58,7 @@
                      data-myconfig="field"
                      data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
                      widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
+                     input-schema="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema"
                      widget-container>
                 </div>
               </fieldset>
@@ -79,6 +80,12 @@
                      widget-container>
                 </div>
               </div>
+
+              <span class="plugin-function-bottom"
+                ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom' && !isDisabled">
+                <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
+                </plugin-functions>
+              </span>
             </div>
           </div>
 

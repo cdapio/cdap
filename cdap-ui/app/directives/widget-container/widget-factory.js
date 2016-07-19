@@ -169,6 +169,27 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'dataset-type': 'dataset'
         }
+      },
+      'sql-select-fields': {
+        element: '<my-sql-selector></my-sql-selector>',
+        attributes: {
+          'ng-model': 'model',
+          'input-schema': 'inputSchema'
+        }
+      },
+      'join-types': {
+        element: '<my-join-types></my-join-types>',
+        attributes: {
+          'ng-model': 'model',
+          'input-schema': 'inputSchema'
+        }
+      },
+      'sql-conditions': {
+        element: '<my-sql-conditions></my-sql-conditions>',
+        attributes: {
+          'ng-model': 'model',
+          'input-schema': 'inputSchema'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
