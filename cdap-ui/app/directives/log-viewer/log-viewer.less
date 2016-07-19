@@ -27,14 +27,93 @@
 @stack-trace-font-color: #cccccc;
 @message-expanded-color: #dedede;
 @searchbar-placeholder-color: #787878;
-@searchbar-input-color: blue;
+@searchbar-input-color: #9cbcfc;
 @timeline-buffer-color: #a6a6a6;
 @error-color: #f65454;
 @warning-color: #f6b354;
 
+body {
+  .source-tooltip.tooltip {
+    .tooltip-inner {
+      background-color: black;
+      border: 1px solid black;
+      color: white;
+      padding: 7px;
+      word-wrap: break-word;
+      text-align: left;
+      border-radius: 3px;
+      font-size: 11px;
+      max-width: 100%;
+      &.top {
+        margin-top: -2px;
+        .tooltip-arrow {
+          bottom: 0;
+          left: 50%;
+          margin-left: -5px;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+        }
+      }
+    }
+  }
+}
+
 my-log-viewer {
+  .empty-buffer {
+    display: none;
+  }
+
+  .log-viewer-container.full-screen {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50px;
+    z-index: 1000;
+
+    .empty-buffer {
+      display: block;
+      position: absolute;
+      top: 100px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      overflow: none;
+      background-color: white;
+      z-index: -50;
+    }
+
+    .logs-table {
+      height: ~"-moz-calc(100vh - 166px)";
+      height: ~"-webkit-calc(100vh - 166px)";
+      height: ~"calc(100vh - 166px)";
+    }
+
+  }
+
+  .highlighted-text {
+    background: #9cd0fc;
+    border-radius: 5px;
+    color: #000000;
+  }
 
   .log-viewer-container {
+
+    .source-tooltip {
+      overflow: visible;
+    }
+
+    .stat-count-number {
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+
+    .stat-count {
+      padding-top: 2px;
+    }
+
+    .log-stats-container {
+      padding-top: 4px;
+    }
 
     .jumbotron {
       font-size: 30px;
@@ -63,6 +142,7 @@ my-log-viewer {
       fill: none;
       stroke: #000000;
       stroke-opacity: 0.3;
+      height: 30px;
       stroke-width: 10px;
       stroke-linecap: round;
     }
@@ -146,6 +226,7 @@ my-log-viewer {
           height: 25px;
           width: 140px;
           padding-right: 20px;
+          border: none;
           border-radius: 5px;
           outline: none;
           color: @searchbar-input-color;
@@ -183,11 +264,6 @@ my-log-viewer {
       }
     }
 
-    table.scroll tbody,
-    table.scroll thead {
-      color: #000000;
-    }
-
     table.scroll th {
       border-bottom: none;
     }
@@ -197,14 +273,23 @@ my-log-viewer {
     }
 
     .logs-table {
-      height: ~"-moz-calc(100vh - 510px)";
-      height: ~"-webkit-calc(100vh - 510px)";
-      height: ~"calc(100vh - 510px)";
       overflow: auto;
+      height: ~"-moz-calc(100vh - 450px)";
+      height: ~"-webkit-calc(100vh - 450px)";
+      height: ~"calc(100vh - 450px)";
+
+      tbody td {
+        color: #666666;
+        font-size: 11px;
+      }
+
       th {
         line-height: 25px;
         border-color: @border-color;
+        color: #333333;
       }
+
+      font-weight: 300;
 
       .expand-all-btn {
         width: 75px;
@@ -244,7 +329,7 @@ my-log-viewer {
         }
         margin-top: 0;
         background-color: @table-background-color;
-        overflow: hidden;
+        overflow: visible;
         font-size: 12px;
         border: 1px solid @border-color;
 
@@ -298,20 +383,28 @@ my-log-viewer {
       }
 
       .time {
-        width: 15%;
-        min-width: 15%;
+        width: 4%;
+        min-width: 130px;
         padding-left: 15px;
       }
       .time.log-header {
-        padding-left: 20px;
+        padding-left: 15px;
       }
       .time div {
         padding-left: 10px;
       }
 
+      .level ul {
+        padding: 0;
+        margin: 0;
+      }
+
       .level,
       .level-header {
         padding-right: 10px;
+        padding-left: 15px;
+        width: 5%;
+        min-width: 90px;
       }
 
       .source,
@@ -328,26 +421,38 @@ my-log-viewer {
 
       .message-header {
         width: 100%;
+
+        .fa {
+          position: relative;
+          bottom: 1px;
+        }
+
+        .fa-arrow-left,
+        .fa-arrow-right {
+          color: #525252;
+        }
       }
 
       .message {
         width: 100%;
         max-width: 50%;
         clear: both;
+        padding-left: 15px;
 
         .message-main {
           cursor: pointer;
           height: 20px;
+          width: 100%;
           max-width: 0;
         }
 
         .message-text {
-          padding-right: 40px;
+          padding-left: 15px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-          max-width: 0;
-          width: 100%;
+          width: 80%;
+          max-width: 500px;
         }
 
         .fa {

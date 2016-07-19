@@ -28,6 +28,7 @@ function link (scope, element) {
       timelineStack,
       startTime,
       endTime,
+      pinOffset,
       firstRun = true;
 
   //Components
@@ -42,7 +43,8 @@ function link (scope, element) {
       timescaleSvg,
       scrollPinSvg,
       xAxis,
-      sliderBar;
+      sliderBar,
+      scrollNeedle;
 
   //Initialize charting
   scope.initialize = () => {
@@ -61,8 +63,11 @@ function link (scope, element) {
     height = 50;
     paddingLeft = 15;
     paddingRight = 15;
-    maxRange = width - paddingLeft - paddingRight;
-    sliderLimit = maxRange + 24;
+    // maxRange = width - paddingLeft - paddingRight;
+    maxRange = width - paddingRight + 8;
+    sliderLimit = maxRange;
+    pinOffset = 13;
+    // sliderLimit = maxRange + 24;
     pinX = 0;
     sliderX = 0;
     timelineStack = {};
@@ -70,6 +75,7 @@ function link (scope, element) {
     pinHandle = undefined;
     sliderBrush = undefined;
     scrollPinBrush = undefined;
+    scrollNeedle = undefined;
     xScale = undefined;
     slide = undefined;
     slider = undefined;
@@ -121,10 +127,35 @@ function link (scope, element) {
         .x(xScale)
         .on('brush', function(){
           if(d3.event.sourceEvent) {
-            let index = d3.mouse(this)[0];
-            updateSlider(index);
+            let val = d3.mouse(this)[0];
+            if(val < 0){
+              val = 0;
+            }
+            if(val > maxRange){
+              val = maxRange;
+            }
+            sliderHandle.attr('x', val);
+            sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
+            pinHandle.attr('x', val-pinOffset+1);
+            scrollNeedle.attr('x1', val + 8)
+                        .attr('x2', val + 8);
           }
-        });
+        })
+        .on('brushend', function() {
+          if(d3.event.sourceEvent){
+            let val = d3.mouse(this)[0];
+            if(val < 0){
+              val = 0;
+            }
+            if(val > maxRange){
+              val = maxRange;
+            }
+            updateSlider(val);
+            pinHandle.attr('x', val-pinOffset+1);
+            scrollNeedle.attr('x1', val + 8)
+                        .attr('x2', val + 8);
+          }
+       });
 
     //Creates the top slider and trailing dark background
     sliderBar = timescaleSvg.append('g')
@@ -162,22 +193,7 @@ function link (scope, element) {
 
     //Append the Top slider
     scrollPinBrush = d3.svg.brush()
-        .x(xScale)
-        .on('brush', function(){
-          let xPos = d3.mouse(this)[0];
-
-          if(xPos < 0){
-            xPos = 0;
-          }
-
-          if(xPos > width - 8){
-            xPos = width - 8;
-          }
-
-          if(xPos > sliderX){
-            updatePin(xPos-11);
-          }
-        });
+        .x(xScale);
 
     scrollPinSvg = d3.select('.top-bar').append('svg')
         .attr('width', width)
@@ -205,13 +221,23 @@ function link (scope, element) {
       .attr('width', 40)
       .attr('height', 60)
       .attr('xlink:href', '/assets/img/scrollPin.svg')
-      .attr('x', xValue - 13)
+      .attr('x', xValue - pinOffset)
       .attr('y', 0);
+
+    scrollNeedle = slide.append('line')
+      .attr('x1', xValue + pinOffset - 6)
+      .attr('x2', xValue + pinOffset - 6)
+      .attr('y1', -10)
+      .attr('y2', 40)
+      .attr('stroke-width', 1)
+      .attr('stroke', 'grey');
   }
 
-  var updatePin = function (val) {
-    pinX = val - 13;
-    pinHandle.attr('x', pinX);
+  scope.updatePinScale = function (val) {
+    if(pinHandle !== undefined){
+      pinHandle.attr('x', xScale(Math.floor(val/1000)));
+      scrollNeedle.attr('x', xScale(Math.floor(val/1000)));
+    }
   };
 
   function updateSlider(val) {
@@ -221,12 +247,7 @@ function link (scope, element) {
     if(val > sliderLimit){
       val = sliderLimit;
     }
-
     sliderX = val;
-
-    if(sliderX >= pinX){
-      updatePin(sliderX);
-    }
 
     sliderHandle.attr('x', val);
     sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
@@ -235,16 +256,13 @@ function link (scope, element) {
 
   scope.updateSlider = updateSlider;
 
-  function generateEventCircles(){
+  var generateEventCircles = function (){
     let circleClass;
 
     if(timelineData.qid.series.length > 0){
       for(let i = 0; i < timelineData.qid.series.length; i++){
 
         switch(timelineData.qid.series[i].metricName){
-          case 'system.app.log.info':
-            circleClass = 'red-circle';
-            break;
           case 'system.app.log.error':
             circleClass = 'red-circle';
             break;
@@ -277,7 +295,8 @@ function link (scope, element) {
         }
       }
     }
-  }
+  };
+  scope.generateEventCircles = generateEventCircles;
 }
 
 angular.module(PKG.name + '.commons')

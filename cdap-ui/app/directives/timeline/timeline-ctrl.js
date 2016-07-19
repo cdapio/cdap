@@ -17,6 +17,7 @@
 function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource) {
 
   var dataSrc = new MyCDAPDataSource($scope);
+  this.pinScrollPosition = 0;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -39,7 +40,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     }
   };
 
-  function pollForMetadata() {
+  const pollForMetadata = () => {
     pollPromise = dataSrc.poll({
       _cdapPath: '/metrics/query',
       method: 'POST',
@@ -49,7 +50,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
         apiSettings.metric
       )
     },
-    function (res) {
+    (res) => {
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
@@ -57,10 +58,17 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       }
-    }, function(err) {
+    }, (err) => {
       console.log('ERROR: ', err);
     });
-  }
+  };
+
+  LogViewerStore.subscribe(() => {
+    this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+    if($scope.updatePinScale !== undefined){
+      $scope.updatePinScale(this.pinScrollPosition);
+    }
+  });
 
   myLogsApi.getLogsMetadata({
     'namespace' : this.namespaceId,

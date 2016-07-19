@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="log-viewer-container">
+<div class="log-viewer-container" ng-class="{'full-screen': LogViewer.fullScreen}">
 
   <!-- LOGS HEADERBAR -->
   <div class="logs-headerbar">
@@ -41,17 +41,16 @@
         <button class="log-action-btn">View Raw</button>
         <button class="log-action-btn">Download All</button>
         <div class="search">
-          <input type="text" class="log-searchbar" placeholder="Search" ng-model="searchText">
+          <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText">
           <span class="fa fa-search"></span>
         </div>
-        <i class="fa fa-expand" aria-hidden="true" ng-click=""></i>
+        <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewer.fullScreen = !LogViewer.fullScreen"></i>
       </div>
     </div>
   </div>
 
   <!-- LOGS TIMELINE -->
   <my-timeline
-    ng-if="!LogViewer.loading"
     namespace-id="{{LogViewer.namespaceId}}"
     app-id="{{LogViewer.appId}}"
     program-type="{{LogViewer.programType}}"
@@ -63,8 +62,8 @@
   <div ng-if="LogViewer.data.length === 0" class="well well-lg">
     No logs to be displayed.
   </div>
-  <div ng-if="LogViewer.loading" class="jumbotron well well-lg">
-    Loading Logs...
+  <div ng-if="LogViewer.loading" class="text-center well well-lg">
+    Loading..
   </div>
   <!-- LOGS TABLE -->
   <div ng-if="LogViewer.data.length > 0 && !LogViewer.loading" class="logs-table">
@@ -77,7 +76,16 @@
 
         <th class='level level-header'
             ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-            Level
+          <span uib-dropdown class="dropdown">
+            <span uib-dropdown-toggle>
+              Level <span class="fa fa-caret-down"></span>
+            </span>
+            <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
+              <li ng-repeat="option in LogViewer.logEvents">
+                <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span>{{option}}</span>
+              </li>
+            </ul>
+          </span>
         </th>
 
         <th class="source source-header log-header"
@@ -94,24 +102,27 @@
                 ng-click="LogViewer.collapseColumns()"></span>
           <span>Message</span>
           <div class="expand-all-btn text-center"
-               ng-click="LogViewer.toggleLogExpansion()">Expand All</div>
+               ng-click="LogViewer.toggleLogExpansion()">
+            <span ng-if="!LogViewer.toggleExpandAll">Expand All</span>
+            <span ng-if="LogViewer.toggleExpandAll">Collapse All</span>
+          </div>
         </th>
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
              infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.data.length"
              infinite-scroll-container="'.logs-table'"
              >
-        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:LogViewer.eventFilter | filter:searchText | limitTo: LogViewer.viewLimit track by $index">
+        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:searchText | filter:LogViewer.eventFilter | limitTo: LogViewer.viewLimit track by $index">
           <!-- TIME -->
           <td class="time"
               ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
-              {{ ::entry.log.displayTime }}
+              {{ entry.log.displayTime }}
           </td>
 
           <!-- LEVEL -->
           <td class="level"
               ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-              {{ ::entry.log.logLevel }}
+              {{ entry.log.logLevel }}
           </td>
 
           <!-- SOURCE -->
@@ -122,8 +133,9 @@
               tooltip-append-to-body="true"
               tooltip-placement="top"
               tooltip-popup-delay="500"
+              tooltip-class="source-tooltip"
               >
-              {{ ::entry.log.threadName }}
+              {{ entry.log.threadName }}
           </td>
 
           <!-- MESSAGE -->
@@ -140,7 +152,7 @@
                       ng-class="{'fa-minus': entry.isStackTraceExpanded}">
                 </span>
               </div>
-              <span class="message-text">{{ ::entry.log.message}}</span>
+              <span class="message-text"><span ng-bind-html="LogViewer.highlight(entry.log.message)"></span></span>
             </div>
 
             <div class="stack-trace"
@@ -151,11 +163,13 @@
 
           </td>
         </tr>
+
         <tr class="well well-sm">
-          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading more logs...</td>
-          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No more logs to show.</td>
+          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading logs...</td>
+          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No new logs to show</td>
         </tr>
       </tbody>
     </table>
+    <div class="empty-buffer"></div>
   </div>
 </div>
