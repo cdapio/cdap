@@ -315,20 +315,30 @@ body.theme-cdap {
         flex-wrap: wrap;
         flex: 1;
         flex-basis: 60vw;
+        width: ~"calc(100vw - 288px)";
+        width: ~"-moz-calc(100vw - 288px)";
+        width: ~"-webkit-calc(100vw - 288px)";
         border-right: 0;
         .hydrator-detail-metadata {
           display: flex;
           overflow: hidden;
           padding: 2px 10px;
 
-          // Had to do this because for pipelines with large description
-          // we can always show description in tooltip but the start & duration
-          // of the last/current run cannot be shown. Hence on smaller screens
-          // screens < 1200px we need to reduce the size of decription and give
-          // more room for start & duration.
-          @media(max-width: @screen-lg-min) {
-            flex: 0.3;
-          }
+          /*
+            - Two buttons for schedule & start now
+            - App status container
+            - Right side pipeline specific section (6 buttons)
+            - 20px of padding for metadata section
+            48 * 2 + 275 + 288 (48 * 6) + 20 = 679;
+            FIXME: This is not scalable.
+            Flexbox has a growth and shrink factor but that is not based on the content,
+            but based on the browser size. We need to dynamically have more space for description
+            and still be able to have run specific section stick to metadata section.
+          */
+
+          max-width: ~"calc(100vw - 679px)";
+          max-width: ~"-moz-calc(100vw - 679px)";
+          max-width: ~"-webkit-calc(100vw - 679px)";
           div.pipeline-type {
             text-decoration: none;
             padding: 0 10px 0 0;
@@ -414,7 +424,6 @@ body.theme-cdap {
         }
         .app-status-container {
           display: flex;
-          flex: 1;
           position: relative;
         }
       }
@@ -431,6 +440,8 @@ body.theme-cdap {
       .pipeline-specific-section {
         justify-content: flex-end;
         border-left: 0;
+        display: flex;
+        width: 288px;
         span.metric-value {
           color: #636363;
           font-size: 13px;
@@ -441,9 +452,6 @@ body.theme-cdap {
           color: rgba(0, 0, 0, 0.4);
           font-weight: 600;
         }
-      }
-      .pipeline-specific-section {
-        display: flex;
       }
       .pipeline-settings {
         width: 100%;
