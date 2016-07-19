@@ -36,6 +36,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -91,23 +92,25 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public void doProcess(KafkaLogEvent event) {
+  public void doProcess(Iterator<KafkaLogEvent> events) {
 
-    LoggingContext context = event.getLoggingContext();
-    Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
-    MetricsContext collector = metricsCollectionService.getContext(tags);
+    while (events.hasNext()) {
+      KafkaLogEvent event = events.next();
+      LoggingContext context = event.getLoggingContext();
+      Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
+      MetricsContext collector = metricsCollectionService.getContext(tags);
 
-    String metricName = getMetricName(tags.get(Constants.Metrics.Tag.NAMESPACE),
-                                      event.getLogEvent().getLevel().toString().toLowerCase());
+      String metricName = getMetricName(tags.get(Constants.Metrics.Tag.NAMESPACE),
+                                        event.getLogEvent().getLevel().toString().toLowerCase());
 
-    if  (!(tags.containsKey(Constants.Metrics.Tag.COMPONENT) &&
-           tags.get(Constants.Metrics.Tag.COMPONENT).equals(Constants.Service.METRICS_PROCESSOR))) {
-      collector.increment(metricName, 1);
+      if  (!(tags.containsKey(Constants.Metrics.Tag.COMPONENT) &&
+             tags.get(Constants.Metrics.Tag.COMPONENT).equals(Constants.Service.METRICS_PROCESSOR))) {
+        collector.increment(metricName, 1);
+      }
+
+      partitionCheckpoints.put(event.getPartition(),
+                               new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
     }
-
-    partitionCheckpoints.put(event.getPartition(),
-                             new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
-
   }
 
   private String getMetricName(String namespace, String logLevel) {

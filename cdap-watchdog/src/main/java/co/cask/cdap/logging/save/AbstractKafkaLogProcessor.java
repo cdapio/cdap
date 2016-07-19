@@ -17,7 +17,10 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 
+import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
@@ -30,9 +33,21 @@ public abstract class AbstractKafkaLogProcessor implements KafkaLogProcessor {
     this.checkpoint = checkpoint;
   }
 
-  public void process(KafkaLogEvent event) {
-    if (!alreadyProcessed(event)) {
-      doProcess(event);
+  public void process(Iterator<KafkaLogEvent> events) {
+    PeekingIterator<KafkaLogEvent> peekingIterator = Iterators.peekingIterator(events);
+    // Find out if events have already been processed based on checkpoint
+    while (peekingIterator.hasNext()) {
+      KafkaLogEvent event = peekingIterator.peek();
+      if (alreadyProcessed(event)) {
+        peekingIterator.next();
+      } else {
+        break;
+      }
+    }
+
+    // There are events that are not processed
+    if (peekingIterator.hasNext()) {
+      doProcess(peekingIterator);
     }
   }
 
@@ -41,7 +56,7 @@ public abstract class AbstractKafkaLogProcessor implements KafkaLogProcessor {
    *
    * @param event KafkaLogEvent
    */
-  protected abstract void doProcess(KafkaLogEvent event);
+  protected abstract void doProcess(Iterator<KafkaLogEvent> event);
 
   public boolean alreadyProcessed(KafkaLogEvent event) {
     // If no checkpoint is found, then the event needs to be processed.

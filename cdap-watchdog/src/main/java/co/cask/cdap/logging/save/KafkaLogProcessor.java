@@ -18,6 +18,8 @@ package co.cask.cdap.logging.save;
 
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 
+import java.util.Iterator;
+
 /**
  * Process {@link KafkaLogEvent} with KafkaLogProcessor. init and stop are lifecycle methods that can be called
  * multiple times when kafka leader partitions change.
@@ -33,9 +35,9 @@ public interface KafkaLogProcessor {
   /**
    * Process method will be called for each event received from Kafka from the topics published for log saver.
    *
-   * @param event instance of {@link KafkaLogEvent}
+   * @param events list of {@link KafkaLogEvent}
    */
-  void process(KafkaLogEvent event);
+  void process(Iterator<KafkaLogEvent> events);
 
   /**
    * Called to stop processing for the current set of kafka partitions. Stop can be called before init.
