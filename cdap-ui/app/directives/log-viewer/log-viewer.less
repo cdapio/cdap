@@ -107,10 +107,6 @@ my-log-viewer {
       padding-right: 5px;
     }
 
-    .stat-count {
-      padding-top: 2px;
-    }
-
     .log-stats-container {
       padding-top: 4px;
     }
@@ -180,8 +176,13 @@ my-log-viewer {
           display: inline-block;
           font-weight: normal;
         }
+        .log-stats-total {
+          margin-bottom: 4px;
+          margin-left: 9px;
+        }
         .log-stats {
           font-size: @headerbar-font-size;
+          margin-right: 15px;
         }
         .stat-name {
           color: @headerbar-stat-name-color;
@@ -189,8 +190,9 @@ my-log-viewer {
           margin-right: 4px;
         }
         .stat-count {
-          min-width: 30px;
-          border-radius: 8px;
+          min-width: 25px;
+          font-weight: 900;
+          border-radius: 10px;
           color: @headerbar-stat-color;
           font-size: @headerbar-font-size;
         }
@@ -204,26 +206,35 @@ my-log-viewer {
         margin: 0;
 
         .log-action-btn {
-          height: 25px;
-          width: 100px;
-          border: solid 1px white;
+          height: 28px;
+          border: solid 1px #acacac;
           color: white;
           background-color: transparent;
           border-radius: 4px;
           margin-right: 3px;
           outline: grey;
         }
+
+        .download-all {
+          margin-left: 3px;
+          width: 100px;
+        }
+        .view-raw {
+          width: 80px;
+        }
         .search {
           display: inline-block;
           position: relative;
+          margin-left: 6px;
         }
         .search .fa-search {
           position: absolute;
           top: 6px;
           right: 8px;
+          color: #6f6868;
         }
         .log-searchbar {
-          height: 25px;
+          height: 28px;
           width: 140px;
           padding-right: 20px;
           border: none;
@@ -238,6 +249,8 @@ my-log-viewer {
         .fa-expand {
           color: white;
           padding-left: 10px;
+          margin-right: 10px;
+          margin-left: 4px;
           cursor: pointer;
           line-height: 25px;
         }

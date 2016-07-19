@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl) {
   'ngInject';
 
   this.data = {};
@@ -202,6 +202,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       pollPromise = null;
     }
 
+    // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
+    const url = myCdapUrl.constructUrl({
+      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?format=json&start=${this.startTimeSec}`
+    });
+
+    this.rawUrl = url;
+
    myLogsApi.getLogsStart({
       'namespace' : this.namespaceId,
       'appId' : this.appId,
@@ -211,6 +218,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       'start' : this.startTimeSec
     }).$promise.then(
       (res) => {
+
         this.loading = false;
         this.viewLimit = 100;
         this.cacheDecrement = 100;
