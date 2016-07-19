@@ -20,14 +20,16 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.security.store.AbstractSecureStore;
 import co.cask.cdap.security.store.DummyKMSStore;
 import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,67 +66,39 @@ public class SecureStoreModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(SecureStore.class).toProvider(SecureStoreProvider.class);
-        bind(SecureStoreManager.class).toProvider(SecureStoreManagerProvider.class);
+        bind(SecureStore.class).toProvider(new TypeLiteral<StoreProvider<SecureStore>>() { });
+        bind(SecureStoreManager.class).toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
       }
     };
   }
 
-  private static Object getStore(final CConfiguration cConf, Injector injector) {
-    if (AbstractSecureStore.isKMSBacked(cConf)) {
+  @Singleton
+  private static final class StoreProvider<T> implements Provider<T> {
+    private final CConfiguration cConf;
+    private final Injector injector;
+
+    @Inject
+    private StoreProvider(final CConfiguration cConf, Injector injector) {
+      this.cConf = cConf;
+      this.injector = injector;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public T get() {
+      Object store;
+      if (!SecureStoreUtils.isKMSBacked(cConf)) {
+        return (T) injector.getInstance(FileSecureStore.class);
+      }
       try {
-        if (AbstractSecureStore.isKMSCapable()) {
-          return injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
-        } else {
-          LOG.warn("Could not find classes required for supporting KMS provider.");
-          // No Exception was thrown, that means the classes are available, load our provider
-          return injector.getInstance(DummyKMSStore.class);
+        if (SecureStoreUtils.isKMSCapable()) {
+          return (T) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
         }
       } catch (ClassNotFoundException e) {
         // KMSSecureStore could not be loaded
         LOG.warn("Could not find classes required for supporting KMS based secure store.");
-        return injector.getInstance(DummyKMSStore.class);
       }
-    } else {
-      return injector.getInstance(FileSecureStore.class);
-    }
-  }
-
-  private static class SecureStoreProvider implements Provider<SecureStore> {
-    private final CConfiguration cConf;
-    private final Injector injector;
-
-    @Inject
-    private SecureStoreProvider(final CConfiguration cConf, Injector injector) {
-      this.cConf = cConf;
-      this.injector = injector;
-    }
-
-    /**
-     * Provides an instance of {@link SecureStore}. Must never return {@code null}.
-     */
-    @Override
-    public SecureStore get() {
-      return (SecureStore) getStore(cConf, injector);
-    }
-  }
-
-  private static class SecureStoreManagerProvider implements Provider<SecureStoreManager> {
-    private final CConfiguration cConf;
-    private final Injector injector;
-
-    @Inject
-    private SecureStoreManagerProvider(final CConfiguration cConf, Injector injector) {
-      this.cConf = cConf;
-      this.injector = injector;
-    }
-
-    /**
-     * Provides an instance of {@link SecureStoreManager}. Must never return {@code null}.
-     */
-    @Override
-    public SecureStoreManager get() {
-      return (SecureStoreManager) getStore(cConf, injector);
+      return (T) injector.getInstance(DummyKMSStore.class);
     }
   }
 }

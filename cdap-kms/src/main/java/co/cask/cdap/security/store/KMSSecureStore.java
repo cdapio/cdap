@@ -45,7 +45,7 @@ class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureS
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
    */
-  private KeyProvider provider;
+  private final KeyProvider provider;
   private final Configuration conf;
 
   /**
@@ -66,7 +66,7 @@ class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureS
     } catch (IOException e) {
       throw new IOException("Secure store could not be loaded. KMS KeyProvider failed to initialize", e);
     }
-    LOG.info("Secure Store initialized successfully.");
+    LOG.debug("Secure Store initialized successfully.");
   }
 
   /**
@@ -80,8 +80,8 @@ class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureS
    * @throws IOException If it failed to store the key in the store.
    */
   @Override
-  public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
-    throws IOException {
+  public void put(String namespace, String name, byte[] data, String description,
+                  Map<String, String> properties) throws IOException {
     KeyProvider.Options options = new KeyProvider.Options(conf);
     options.setDescription(description);
     options.setAttributes(properties);
@@ -124,7 +124,7 @@ class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureS
           keysInNamespace.add(key);
         }
       }
-      metadatas = provider.getKeysMetadata(keysInNamespace.toArray(new String[0]));
+      metadatas = provider.getKeysMetadata(keysInNamespace.toArray(new String[keysInNamespace.size()]));
     } catch (IOException e) {
       throw new IOException("Failed to get the list of elements from the secure store.", e);
     }
@@ -152,9 +152,5 @@ class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureS
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, metadata.getDescription(), metadata.getAttributes());
     KeyProvider.KeyVersion keyVersion = provider.getCurrentKey(keyName);
     return new SecureStoreData(meta, keyVersion.getMaterial());
-  }
-
-  KeyProvider getProvider() {
-    return provider;
   }
 }

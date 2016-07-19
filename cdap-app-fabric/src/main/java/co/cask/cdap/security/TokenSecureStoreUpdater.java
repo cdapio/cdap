@@ -23,7 +23,7 @@ import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
-import co.cask.cdap.security.store.AbstractSecureStore;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -77,7 +77,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
-    supportsKMS = AbstractSecureStore.isKMSBacked(cConf) && AbstractSecureStore.isKMSCapable();
+    supportsKMS = SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable();
     updateInterval = calculateUpdateInterval();
   }
 
@@ -99,7 +99,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
       }
 
       if (supportsKMS) {
-        KMSTokenUtils.obtainToken(secureStore, refreshedCredentials);
+        SecureStoreTokenUtils.obtainToken(secureStore, refreshedCredentials);
       }
 
       addDelegationTokens(hConf, locationFactory, refreshedCredentials);
