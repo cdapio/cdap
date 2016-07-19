@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
@@ -35,18 +36,18 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of NamespaceClient that uses {@link DiscoveryServiceClient} to dictate the resolution of namespace
- * resources.
+ * Implementation of {@link NamespaceQueryAdmin} that pings the internal endpoints in a {@link HttpHandler} in remote
+ * system service.
  */
-public class DiscoveryNamespaceClient extends AbstractNamespaceClient {
+public class RemoteNamespaceQueryClient extends AbstractNamespaceQueryClient {
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public DiscoveryNamespaceClient(final DiscoveryServiceClient discoveryClient) {
+  RemoteNamespaceQueryClient(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
+        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.REMOTE_SYSTEM_OPERATION));
       }
     });
   }
@@ -59,8 +60,7 @@ public class DiscoveryNamespaceClient extends AbstractNamespaceClient {
   @Override
   protected URL resolve(String resource) throws IOException {
     InetSocketAddress addr = getNamespaceServiceAddress();
-    String url = String.format("http://%s:%d%s/%s", addr.getHostName(), addr.getPort(),
-                               Constants.Gateway.API_VERSION_3, resource);
+    String url = String.format("http://%s:%d/v1/execute/%s", addr.getHostName(), addr.getPort(), resource);
     return new URL(url);
   }
 
@@ -69,6 +69,6 @@ public class DiscoveryNamespaceClient extends AbstractNamespaceClient {
     if (discoverable != null) {
       return discoverable.getSocketAddress();
     }
-    throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP);
+    throw new ServiceUnavailableException(Constants.Service.REMOTE_SYSTEM_OPERATION);
   }
 }
