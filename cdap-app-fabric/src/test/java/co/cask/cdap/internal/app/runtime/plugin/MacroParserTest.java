@@ -47,6 +47,11 @@ public class MacroParserTest {
   }
 
   @Test
+  public void testContainsDoublyEscapedMacro() throws InvalidMacroException {
+    assertContainsMacroParsing("\\\\file\\\\path\\\\name\\\\${filePathMacro}", true);
+  }
+
+  @Test
   public void testContainsConsecutiveMacros() throws InvalidMacroException {
     assertContainsMacroParsing("${simpleHostname}/${simplePath}:${simplePort}", true);
   }
@@ -145,8 +150,8 @@ public class MacroParserTest {
       .put("escapedMacroLiteral", "SHOULD NOT EVALUATE")
       .put("funTimes", "ahead")
       .build();
-    assertSubstitution("\\\\test\\${${macro}}\\${${{\\}}}\\escaped\\${one}${fun${\\${escapedMacroLiteral\\}}}\\no-op",
-                       "\\\\test${42}${brackets}\\escaped${one}ahead\\no-op", properties,
+    assertSubstitution("\\\\test\\${${macro}}\\${${{\\}}}-escaped\\${one}${fun${\\${escapedMacroLiteral\\}}}\\\\no-op",
+                       "\\test${42}${brackets}-escaped${one}ahead\\no-op", properties,
                        new HashMap<String, String>());
   }
 
@@ -177,16 +182,6 @@ public class MacroParserTest {
       .build();
     assertSubstitution("\\${${macro}}\\${${{\\}}}\\${one}${fun${\\${escapedMacroLiteral\\}}}",
                        "${42}${brackets}${one}ahead", properties, new HashMap<String, String>());
-  }
-
-  // TODO: Implement doubly-escaping
-  @Ignore
-  public void testEscapingOfEscaping() throws InvalidMacroException {
-    Map<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("filePathMacro", "executable.exe")
-      .build();
-    assertSubstitution("\\file\\path\\name\\\\${filePathMacro}", "\\file\\path\\name\\executable.exe", properties,
-                       new HashMap<String, String>());
   }
 
   /**
@@ -275,6 +270,76 @@ public class MacroParserTest {
                        new HashMap<String, String>(), macroFunctionSubstiutions);
   }
 
+  // Double escaping tests
+
+  @Test
+  public void testSimpleDoubleEscaping() throws InvalidMacroException {
+    Map<String, String> properties = ImmutableMap.<String, String>builder()
+      .put("filePathMacro", "executable.exe")
+      .build();
+    assertSubstitution("\\\\file\\\\path\\\\name\\\\${filePathMacro}", "\\file\\path\\name\\executable.exe", properties,
+                       new HashMap<String, String>());
+  }
+
+  /**
+   * Tests for arguments that end with '\' before the closing ')'.
+   */
+  @Test
+  public void testSimpleMacroFunctionDoubleEscaping() throws InvalidMacroException {
+    Map<String, String> macroFunctionSubstitutions = ImmutableMap.<String, String>builder()
+      .put("test\\", "password")
+      .build();
+    assertSubstitution("${test(test\\\\)}", "password", new HashMap<String, String>(), macroFunctionSubstitutions);
+  }
+
+  /**
+   * Tests for detection of trailing ')' in macro string.
+   */
+  @Test(expected = InvalidMacroException.class)
+  public void testInvalidFunctionSyntaxEscaping() throws InvalidMacroException {
+    Map<String, String> macroFunctionSubstitutions = ImmutableMap.<String, String>builder()
+      .put("test\\)", "password")
+      .build();
+    assertSubstitution("${test(test\\\\))}", "password", new HashMap<String, String>(), macroFunctionSubstitutions);
+  }
+
+
+  /**
+   * Tests for escaping of both backslash and parenthesis
+   */
+  @Test
+  public void testSimpleMacroFunctionEscapeAndDoubleEscape() throws InvalidMacroException {
+    Map<String, String> macroFunctionSubstitutions = ImmutableMap.<String, String>builder()
+      .put("test\\)", "password")
+      .build();
+    assertSubstitution("${test(test\\\\\\))}", "password", new HashMap<String, String>(), macroFunctionSubstitutions);
+  }
+
+  /**
+   * Tests for properties that end with '\' before the closing '}'.
+   */
+  @Test
+  public void testSimplePropertyDoubleEscaping() throws InvalidMacroException {
+    Map<String, String> properties = ImmutableMap.<String, String>builder()
+      .put("test\\}", "password")
+      .build();
+    assertSubstitution("${test\\\\\\}}", "password", properties, new HashMap<String, String>());
+  }
+
+  /**
+   * Tests for escaping of both backslash and closing '}'.
+   */
+  @Test
+  public void testSimplePropertyEscapeAndDoublEscape() throws InvalidMacroException {
+    Map<String, String> properties = ImmutableMap.<String, String>builder()
+      .put("test\\}", "password")
+      .build();
+    assertSubstitution("${test\\\\\\}}", "password", properties, new HashMap<String, String>());
+  }
+
+
+  // Other macro tree tests
+
   /**
    * Tests a simple property tree expansion.
    * Expands the following macro tree of depth 2:
@@ -339,8 +404,8 @@ public class MacroParserTest {
    *           ${host-local}          ${filename-html}                  8                  0
    *                 |                      |
    *  ${l}${o}${c}${a}${l}${hostSuffix}  index.html
-   *                 |
-   *              localhost
+   *    |   |   |   |   |       |
+   *    l   o   c   a   l      host
    *
    */
   @Test
@@ -413,12 +478,12 @@ public class MacroParserTest {
       .put("secondPortDigit", "0")
       .build();
     assertSubstitution("${simpleHostnameTree}${simpleHostnameTree}${simpleHostnameTree}" +
-                          "${advancedHostnameTree}${advancedHostnameTree}${advancedHostnameTree}" +
-                          "${expansiveHostnameTree}${expansiveHostnameTree}${expansiveHostnameTree}" +
-                          "${simpleHostnameTree}${advancedHostnameTree}${expansiveHostnameTree}",
-                        "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80" +
-                        "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80" +
-                        "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80",
+                       "${advancedHostnameTree}${advancedHostnameTree}${advancedHostnameTree}" +
+                       "${expansiveHostnameTree}${expansiveHostnameTree}${expansiveHostnameTree}" +
+                       "${simpleHostnameTree}${advancedHostnameTree}${expansiveHostnameTree}",
+                       "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80" +
+                       "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80" +
+                       "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80",
                        properties, new HashMap<String, String>());
   }
 
@@ -432,7 +497,7 @@ public class MacroParserTest {
   }
 
   private static void assertSubstitution(String macro, String expected, Map<String, String> propertySubstitutions,
-                                  Map<String, String> macroFunctionSubstitutions) {
+                                         Map<String, String> macroFunctionSubstitutions) {
     MacroParser macroParser = new MacroParser(new TestMacroEvaluator(propertySubstitutions,
                                                                      macroFunctionSubstitutions));
     Assert.assertEquals(expected, macroParser.parse(macro));

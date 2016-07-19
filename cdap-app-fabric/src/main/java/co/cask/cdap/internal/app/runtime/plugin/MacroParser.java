@@ -28,7 +28,6 @@ import javax.annotation.Nullable;
  * Provides a parser to validate the syntax of and evaluate macros.
  */
 public class MacroParser {
-  private static final String[] ESCAPED_TOKENS = {"\\${", "\\}", "\\(", "\\)"};
   private static final Pattern ARGUMENT_DELIMITER = Pattern.compile(",");
   private static final int MAX_SUBSTITUTION_DEPTH = 10;
 
@@ -90,14 +89,14 @@ public class MacroParser {
   @Nullable
   private MacroMetadata findRightmostMacro(String str)
     throws InvalidMacroException {
-    // find opening "${" skipping escaped syntax "\${" TODO: and allowing doubly-escaping "\\${"
+    // find opening "${" skipping escaped syntax "\${" and allowing doubly-escaping "\\${"
     int startIndex = getStartIndex(str);
     if (startIndex < 0) {
       return null;
     }
 
-    // found "${", now look for enclosing "}" and allow escaping "\}" TODO: and doubly-escaping "\\}"
-    int endIndex = getEndIndex(str, startIndex);
+    // found "${", now look for enclosing "}" and allow escaping "\}" and doubly-escaping "\\}"
+    int endIndex = getFirstUnescapedTokenIndex('}', str, startIndex);
     if (endIndex < 0) {
       throw new InvalidMacroException(String.format("Could not find enclosing '}' for macro '%s'.",
                                                     str.substring(startIndex)));
@@ -106,8 +105,8 @@ public class MacroParser {
     // macroStr = 'macroFunction(macroArguments)' or just 'property' for ${property}
     String macroStr = str.substring(startIndex + 2, endIndex).trim();
 
-    // look for "(", which indicates there are arguments and allow escaping "\(" TODO: and doubly-escaping "\\("
-    int argsStartIndex = getArgsStartIndex(str, macroStr);
+    // look for "(", which indicates there are arguments and allow escaping "\(" and doubly-escaping "\\("
+    int argsStartIndex = getFirstUnescapedTokenIndex('(', macroStr, 0);
 
     // determine whether to use a macro function or a property lookup
     if (argsStartIndex >= 0) {
@@ -119,10 +118,13 @@ public class MacroParser {
   }
 
   private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr, int argsStartIndex) {
-    // check for closing ")" and allow escaping "\)" TODO: and doubly-escaping "\\)"
-    int closingParenIndex = getClosingParenIndex(macroStr);
+    // check for closing ")" and allow escaping "\)" and doubly-escaping "\\)"
+    int closingParenIndex = getFirstUnescapedTokenIndex(')', macroStr, 0);
     if (closingParenIndex < 0 || !macroStr.endsWith(")")) {
       throw new InvalidMacroException(String.format("Could not find enclosing ')' for macro arguments in '%s'.",
+                                                    macroStr));
+    } else if (closingParenIndex != macroStr.length() - 1) {
+      throw new InvalidMacroException(String.format("Macro arguments in '%s' have extra invalid trailing ')'.",
                                                     macroStr));
     }
 
@@ -136,59 +138,57 @@ public class MacroParser {
 
   private int getStartIndex(String str) {
     int startIndex = str.lastIndexOf("${");
-    while (escaped(startIndex, str)) {
-      // TODO: Break if doubly-escaped syntax
+    while (isEscaped(startIndex, str)) {
       startIndex = str.substring(0, startIndex - 1).lastIndexOf("${");
     }
     return startIndex;
   }
 
-  private int getEndIndex(String str, int startIndex) {
-    int endIndex = str.indexOf('}', startIndex);
-    while (escaped(endIndex, str)) {
-      // TODO: Break if doubly-escaped syntax
-      endIndex = str.indexOf('}', endIndex + 1);
+  private int getFirstUnescapedTokenIndex(char token, String str, int startIndex) {
+    int index = str.indexOf(token, startIndex);
+    while (isEscaped(index, str)) {
+      index = str.indexOf(token, index + 1);
     }
-    return endIndex;
-  }
-
-  private int getArgsStartIndex(String str, String macroStr) {
-    int argsStartIndex = macroStr.indexOf('(');
-    while (escaped(argsStartIndex, str)) {
-      // TODO: Break if doubly-escaped syntax
-      argsStartIndex = macroStr.indexOf('(', argsStartIndex);
-    }
-    return argsStartIndex;
-  }
-
-  private int getClosingParenIndex(String macroStr) {
-    int closingParenIndex = macroStr.lastIndexOf(')');
-    while (escaped(closingParenIndex, macroStr)) {
-      // TODO: Break if doubly-escaped syntax
-      closingParenIndex = macroStr.substring(0, closingParenIndex).lastIndexOf(')');
-    }
-    return closingParenIndex;
-  }
-
-  private boolean escaped(int index, String str) {
-    return (index > 0 && str.charAt(index - 1) == '\\');
-  }
-
-  private boolean doublyEscaped(int index, String str) {
-    return (index > 1 && str.charAt(index - 2) == '\\');
+    return index;
   }
 
   /**
-   * Removes all escaped syntax for all macro syntax symbols: ${, }, (, )
-   * TODO: Handle doubly-escaped syntax (e.g. \\${macro} should still be evaluated)
+   * Returns whether or not the character at a given index in a string is escaped. Escaped
+   * characters have an odd number of preceding backslashes.
+   * @param index the index of the character to check for escaping
+   * @param str the string in which the character is located at 'index'
+   * @return if the character at the provided index is escaped
+   */
+  private boolean isEscaped(int index, String str) {
+    int numPrecedingParens = 0;
+    for (int i = index - 1; i >= 0; i--) {
+      if (str.charAt(i) == '\\') {
+        numPrecedingParens++;
+      } else {
+        break;
+      }
+    }
+    // escaped tokens have an odd number of preceding backslashes
+    return ((numPrecedingParens % 2) == 1);
+  }
+
+  /**
+   * Strips all preceding backslash '\' characters.
    * @param str the string to replace escaped syntax in
    * @return the string with no escaped syntax
    */
   private String replaceEscapedSyntax(String str) {
-    for (String token : ESCAPED_TOKENS) {
-      str = str.replace(token, token.substring(1));
+    StringBuilder syntaxRebuilder = new StringBuilder();
+    boolean includeNextConsecutiveBackslash = false;
+    for (int i = 0; i < str.length(); i++) {
+      if (str.charAt(i) != '\\' || includeNextConsecutiveBackslash) {
+        syntaxRebuilder.append(str.charAt(i));
+        includeNextConsecutiveBackslash = false;
+      } else {
+        includeNextConsecutiveBackslash = true;
+      }
     }
-    return str;
+    return syntaxRebuilder.toString();
   }
 
   private static final class MacroMetadata {
