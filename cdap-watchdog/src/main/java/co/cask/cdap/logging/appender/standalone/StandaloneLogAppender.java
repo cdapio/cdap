@@ -21,6 +21,7 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
+import com.google.common.collect.Iterators;
 
 import java.util.Set;
 
@@ -42,7 +43,7 @@ public class StandaloneLogAppender extends LogAppender {
   protected void append(LogMessage logMessage) {
     appender.append(logMessage);
     for (KafkaLogProcessor plugin : plugins) {
-      plugin.process(getKafkaLogEvent(logMessage));
+      plugin.process(Iterators.singletonIterator(getKafkaLogEvent(logMessage)));
     }
   }
 
