@@ -460,12 +460,21 @@ my-log-viewer {
         }
 
         .message-text {
-          padding-left: 15px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
           width: 80%;
           max-width: 500px;
+
+          .no-stack-trace {
+            padding-left: 17px;
+          }
+
+          .expand-stack-trace {
+            position: relative;
+            top: 1px;
+            left: 3px;
+          }
         }
 
         .fa {

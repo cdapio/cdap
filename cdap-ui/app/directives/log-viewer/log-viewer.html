@@ -139,7 +139,7 @@
           </td>
 
           <!-- MESSAGE -->
-          <td class="message"
+          <td class="message"  ng-class="{'contains-stack-trace' : entry.log.stackTrace.length > 0}"
               ng-if="LogViewer.configOptions.message"
               ng-class="{'stack-trace-expanded': entry.isStackTraceExpanded,
                 'stack-trace-available': entry.log.stackTrace.length > 0 }">
@@ -152,7 +152,9 @@
                       ng-class="{'fa-minus': entry.isStackTraceExpanded}">
                 </span>
               </div>
-              <span class="message-text"><span ng-bind-html="LogViewer.highlight(entry.log.message)"></span></span>
+              <span class="message-text">
+                <span ng-if="entry.log.stackTrace.length > 0 && !entry.isStackTraceExpanded" class="fa expand-stack-trace" ng-class="{'fa-plus' : !entry.isStackTraceExpanded}"></span>
+              <span class="message-text-body" ng-class="{'no-stack-trace' : entry.log.stackTrace.length === 0}" ng-bind-html="LogViewer.highlight(entry.log.message)"></span></span>
             </div>
 
             <div class="stack-trace"
