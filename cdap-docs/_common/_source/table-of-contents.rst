@@ -29,4 +29,5 @@ CDAP Extensions
 .. toctree::
 
     Cask Hydrator </hydrator-manual/index>
-    
+    Cask Tracker </tracker-manual/index>
+ 
