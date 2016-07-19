@@ -61,7 +61,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -371,7 +371,7 @@ public class MasterServiceMain extends DaemonMain {
   private void createSystemHBaseNamespace() {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.createNamespaceIfNotExists(admin, Id.Namespace.SYSTEM);
+      tableUtil.createNamespaceIfNotExists(admin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

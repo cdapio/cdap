@@ -136,6 +136,15 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       //expected
     }
 
+    // Updating the HBase namespace for a namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+                                      new NamespaceMeta.Builder(nsMeta).setHBaseDatabase("custns").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
     // removing the root directory mapping for a namespace should fail
     try {
       namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),

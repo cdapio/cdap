@@ -282,6 +282,11 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       if (!config.getRootDirectory().equals(existingMeta.getConfig().getRootDirectory())) {
         throw new BadRequestException(String.format("%s cannot be updated.", NamespaceConfig.ROOT_DIRECTORY));
       }
+
+      if (config.getHbaseNamespace() != null
+        && (!config.getHbaseNamespace().equals(existingMeta.getConfig().getHbaseNamespace()))) {
+        throw new BadRequestException(String.format("%s cannot be updated.", NamespaceConfig.HBASE_NAMESPACE));
+      }
     }
 
     nsStore.update(builder.build());

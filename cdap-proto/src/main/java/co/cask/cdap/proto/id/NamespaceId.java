@@ -29,6 +29,7 @@ public class NamespaceId extends EntityId {
 
   public static final NamespaceId DEFAULT = new NamespaceId("default");
   public static final NamespaceId SYSTEM = new NamespaceId("system");
+  public static final NamespaceId CDAP = new NamespaceId("cdap");
 
   private final String namespace;
   private transient Integer hashCode;

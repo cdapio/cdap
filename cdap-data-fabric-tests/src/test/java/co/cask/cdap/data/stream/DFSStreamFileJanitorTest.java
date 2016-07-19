@@ -25,6 +25,7 @@ import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -38,6 +39,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -92,6 +94,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
           bind(LocationFactory.class).toInstance(lf);
           bind(NamespacedLocationFactory.class).toInstance(nlf);
           bind(NamespaceAdmin.class).toInstance(namespaceAdmin);
+          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
         }
       },
       new TransactionMetricsModule(),

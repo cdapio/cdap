@@ -19,6 +19,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -30,6 +31,7 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
@@ -88,6 +90,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
         protected void configure() {
           bind(LocationFactory.class).toInstance(lf);
           bind(NamespacedLocationFactory.class).toInstance(nlf);
+          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
         }
       },
       new ExploreClientModule(),

@@ -82,7 +82,7 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
   }
 
   private String fromTableId(TableId tableId) {
-    return PrefixedNamespaces.namespace(cConf, tableId.getNamespace().getId(), tableId.getTableName());
+    return PrefixedNamespaces.namespace(cConf, tableId.getNamespace(), tableId.getTableName());
   }
 
   private Object getDBLock(String name) {

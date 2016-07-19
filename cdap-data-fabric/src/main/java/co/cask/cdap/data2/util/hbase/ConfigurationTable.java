@@ -19,7 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -43,7 +43,7 @@ import java.util.Map;
  */
 public class ConfigurationTable {
   /**
-   * Defines the types of configurations to save in the table.  Each type is used as a row key.
+   * Defines the types of configurations to save in the table. Each type is used as a row key.
    */
   public enum Type {
     DEFAULT
@@ -69,12 +69,12 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while writing the configuration
    */
   public void write(Type type, CConfiguration cConf) throws IOException {
-    TableId tableId = TableId.from(Id.Namespace.SYSTEM, TABLE_NAME);
     // must create the table if it doesn't exist
     HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
     try {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+      TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, TABLE_NAME);
       HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
       tableUtil.createTableIfNotExists(admin, tableId, htd.build());

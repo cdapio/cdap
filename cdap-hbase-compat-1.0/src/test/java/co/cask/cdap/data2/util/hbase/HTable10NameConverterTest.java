@@ -18,8 +18,6 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,13 +26,7 @@ public class HTable10NameConverterTest {
   public void testGetSysConfigTablePrefix() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-
-    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
     HTableNameConverter hBaseNameConversionUtil = new HTableNameConverterFactory().get();
-
-    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(TableId.from("user", "some_table"));
-    Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(htd.build()));
-    htd = tableUtil.buildHTableDescriptor(TableId.from(Id.Namespace.DEFAULT, "table_in_default_ns"));
-    Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(htd.build()));
+    Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(tablePrefix));
   }
 }
