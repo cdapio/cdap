@@ -16,34 +16,17 @@
 
 package co.cask.cdap.security.store;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 
 /**
  * Provides an abstract implementation for secure store along with some common functionality.
  */
-public abstract class AbstractSecureStore {
+abstract class AbstractSecureStore implements SecureStore, SecureStoreManager {
   /** Separator between the namespace name and the key name */
   static final String NAME_SEPARATOR = ":";
 
-  private static final String KMS_BACKED = "kms";
-
   static String getKeyName(final String namespace, final String name) {
     return namespace + NAME_SEPARATOR + name;
-  }
-
-  public static boolean isKMSBacked(final CConfiguration cConf) {
-    return AbstractSecureStore.KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
-  }
-
-  public static boolean isKMSCapable() {
-    try {
-      // Check if required KMS classes are present.
-      Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
-      return true;
-    } catch (ClassNotFoundException ex) {
-      // KMS is not supported.
-      return false;
-    }
   }
 }

@@ -52,7 +52,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
    */
-  private KeyProvider provider;
+  private final KeyProvider provider;
   private final Configuration conf;
 
   /**
