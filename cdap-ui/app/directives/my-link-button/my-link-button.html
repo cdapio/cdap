@@ -20,11 +20,11 @@
   </button>
   <ul class="pull-right" uib-dropdown-menu>
     <li ng-repeat="dataset in MyLinkButtonCtrl.entities">
-      <a ng-if="dataset.entityType === 'dataset'"
-          ui-sref="dataset.detail.overview.status({datasetId: dataset.datasetId})">
+      <a ng-if="dataset.entityType === 'datasets'"
+          ui-sref="datasets.detail.overview.status({datasetId: dataset.datasetId})">
           View {{dataset.datasetId}} in CDAP
       </a>
-      <a ng-if="dataset.entityType === 'dataset'"
+      <a ng-if="dataset.entityType === 'datasets'"
           ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: dataset.datasetId})">
       View {{dataset.datasetId}} in Tracker
       </a>
