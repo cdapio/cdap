@@ -133,7 +133,7 @@ div.sphinxsidebar h3 a {
 
 div.sphinxsidebar h3.cdap-extensions {
     background-color: #eee;
-    margin-left: 10px;
+    margin-left: 0;
     padding-bottom: 0;
 }
 

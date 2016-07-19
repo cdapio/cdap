@@ -143,6 +143,7 @@ intersphinx_mapping_cdap_manuals = {
 
 intersphinx_mapping_cdap_extensions = {
   'hydrator':     ('../../hydrator-manual/',   os.path.abspath(_intersphinx_mapping % 'hydrator-manual')),
+  'tracker':      ('../../tracker-manual/',   os.path.abspath(_intersphinx_mapping % 'tracker-manual')),
 }
 
 # Merge dictionaries
@@ -398,6 +399,7 @@ cdap_manuals_list = [
 
 cdap_extension_manuals_list = [
     ['hydrator-manual',   'hydrator',     'Cask Hydrator',                   '',],
+    ['tracker-manual',    'tracker',      'Cask Tracker',                    '',],
 ]
 
 manuals_list = cdap_manuals_list + cdap_extension_manuals_list

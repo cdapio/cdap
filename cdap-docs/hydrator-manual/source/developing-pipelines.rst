@@ -305,7 +305,7 @@ To create this pipeline, called *streamETLApp*, you can use either the HTTP REST
 
 where ``config.json`` is the file that contains the pipeline configuration shown above.
 
-.. _hydrator-developing-pipelines-creating-realtime:
+.. _hydrator-developing-pipelines-creating-real-time:
 
 Creating a Real-Time Pipeline
 =============================
