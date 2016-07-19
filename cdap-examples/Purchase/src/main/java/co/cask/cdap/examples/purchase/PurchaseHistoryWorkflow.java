@@ -51,7 +51,7 @@ public class PurchaseHistoryWorkflow extends AbstractWorkflow {
 
     @Override
     public void run() {
-      for (int i = 0; i < 500; i++) {
+      for (int i = 0; i < 8000; i++) {
         LOG.info("Workflow action {} log {}", name, i);
       }
     }
