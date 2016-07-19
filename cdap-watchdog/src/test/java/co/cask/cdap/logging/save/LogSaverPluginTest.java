@@ -37,6 +37,7 @@ import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
+import co.cask.cdap.logging.LogSaverTableUtilOverride;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
@@ -58,7 +59,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -78,6 +78,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +87,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -103,23 +106,32 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
  * TODO (CDAP-3128) This class needs to be refactor with LogSaverTest.
  */
 @Category(SlowTests.class)
+@RunWith(Parameterized.class)
 public class LogSaverPluginTest extends KafkaTestBase {
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return Arrays.asList(new Object[20][0]);
+  }
+
+  public LogSaverPluginTest() {
+  }
+
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
 
   private static Injector injector;
   private static TransactionManager txManager;
-  private static String logBaseDir;
   private static LogSaver logSaver;
   private static String namespaceDir;
   private static KafkaLogAppender appender;
   private static Gson gson;
   private static MetricStore metricStore;
   private static MetricsCollectionService metricsCollectionService;
+  private static CountingLogAppender countingLogAppender;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void initialize() throws IOException {
-    CConfiguration cConf = KAFKA_TESTER.getCConf();
-    logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    cConf = KAFKA_TESTER.getCConf();
     namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
 
     injector = KAFKA_TESTER.getInjector();
@@ -166,34 +178,51 @@ public class LogSaverPluginTest extends KafkaTestBase {
       publishLogs();
 
       LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+      String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
       Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
       waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
 
-      testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
+      testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"), logBaseDir);
 
       LogCallback logCallback = new LogCallback();
-      FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
-      distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
+      FileLogReader fileLogReader = injector.getInstance(FileLogReader.class);
+      fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
                                   0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
       Assert.assertEquals(60, logCallback.getEvents().size());
 
+      stopLogSaver();
+
+      // Checkpoint should read 60 for both processor
+      verifyCheckpoint();
+
+      // Now reset the logsaver to start reading from reset offset
+      // Change the log meta table so that checkpoints are new, and old log files are not read during read later
+      LogSaverTableUtilOverride.setLogMetaTableName("log.meta1");
+
       // Reset checkpoint for log saver plugin
-      resetLogSaverPluginCheckpoint();
+      resetLogSaverPluginCheckpoint(10);
 
-      // reset the logsaver to start reading from reset offset
-      Set<Integer> partitions = Sets.newHashSet(0, 1);
-      logSaver.unscheduleTasks();
-      logSaver.scheduleTasks(partitions);
+      // Change base dir so that new files get written and read from a different location (makes it easy for asserting)
+      String logBaseDir1 = logBaseDir + "1";
+      cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir1);
+      Location ns1LogBaseDir1 = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir1);
 
-      waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+      // Start log saver again
+      startLogSaver();
+      // Reset the log base dir back to original value
+      cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
+
+      waitTillLogSaverDone(ns1LogBaseDir1, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
       stopLogSaver();
 
       LogCallback callbackAfterReset = new LogCallback();
 
       //Verify that more records are processed by LogWriter plugin
-      distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                                  0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
-      Assert.assertEquals(60, logCallback.getEvents().size());
+      fileLogReader = injector.getInstance(FileLogReader.class);
+      fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
+                           0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
+      // Since we started from offset 10, we should have only saved 50 messages this time
+      Assert.assertEquals(50, callbackAfterReset.getEvents().size());
       // Checkpoint should read 60 for both processor
       verifyCheckpoint();
       verifyMetricsPlugin();
@@ -225,34 +254,35 @@ public class LogSaverPluginTest extends KafkaTestBase {
           new MetricDataQuery(0, timeInSecs, Integer.MAX_VALUE, "system.app.log.warn", AggregationFunction.SUM,
                               sliceByTags, ImmutableList.<String>of()));
         return metricTimeSeries.isEmpty() ? 0L : metricTimeSeries.iterator().next().getTimeValues().get(0).getValue();
-
       }
     }, 120, TimeUnit.SECONDS);
   }
 
-  private void resetLogSaverPluginCheckpoint() throws Exception {
-    TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
-    Set<KafkaLogProcessor> processors =
-      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
+  private void resetLogSaverPluginCheckpoint(long offset) throws Exception {
+    TypeLiteral<Set<KafkaLogProcessorFactory>> type = new TypeLiteral<Set<KafkaLogProcessorFactory>>() { };
+    Set<KafkaLogProcessorFactory> processorFactories =
+      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)));
 
-    for (KafkaLogProcessor processor : processors) {
+    for (KafkaLogProcessorFactory processorFactory : processorFactories) {
+      KafkaLogProcessor processor = processorFactory.create();
       if (processor instanceof  KafkaLogWriterPlugin) {
         KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
-        manager.saveCheckpoint(ImmutableMap.of(0, new Checkpoint(10, -1)));
-        Set<Integer> partitions = Sets.newHashSet(0, 1);
-        plugin.init(partitions);
+        manager.saveCheckpoint(ImmutableMap.of(0, new Checkpoint(offset, -1)));
       }
     }
   }
 
   public void verifyCheckpoint() throws Exception {
-    TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
-    Set<KafkaLogProcessor> processors =
-      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
-    for (KafkaLogProcessor processor : processors) {
+    TypeLiteral<Set<KafkaLogProcessorFactory>> type = new TypeLiteral<Set<KafkaLogProcessorFactory>>() { };
+    Set<KafkaLogProcessorFactory> processorFactories =
+      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)));
+
+    for (KafkaLogProcessorFactory processorFactory : processorFactories) {
+      KafkaLogProcessor processor = processorFactory.create();
       CheckpointManager checkpointManager = getCheckPointManager(processor);
-      Assert.assertEquals(60, checkpointManager.getCheckpoint(0).getNextOffset());
+      Assert.assertEquals("Checkpoint mismatch for " + processor.getClass().getName(),
+                          60, checkpointManager.getCheckpoint(0).getNextOffset());
     }
   }
 
@@ -267,7 +297,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
     throw new IllegalArgumentException("Invalid processor");
   }
 
-  private void testLogRead(LoggingContext loggingContext) throws Exception {
+  private void testLogRead(LoggingContext loggingContext, String logBaseDir) throws Exception {
     LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment(logBaseDir));
     FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
 
@@ -480,7 +510,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
         List<LogEvent> events = logCallback.getEvents();
         if (events.size() > 0) {
           LogEvent event = events.get(events.size() - 1);
-          System.out.println(event.getLoggingEvent().getFormattedMessage());
           if (event.getLoggingEvent().getFormattedMessage().equals(logLine)) {
             break;
           }

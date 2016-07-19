@@ -68,8 +68,11 @@ import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +80,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -93,8 +97,17 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
  * Test LogSaver and Distributed Log Reader.
  */
 @Category(SlowTests.class)
+@RunWith(Parameterized.class)
 public class LogSaverTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return Arrays.asList(new Object[20][0]);
+  }
+
+  public LogSaverTest() {
+  }
+
 
   private static Injector injector;
   private static TransactionManager txManager;
@@ -145,13 +158,15 @@ public class LogSaverTest extends KafkaTestBase {
     txManager.stopAndWait();
   }
 
+  @Ignore
   @Test
   public void testCheckpoint() throws Exception {
-    TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
-    Set<KafkaLogProcessor> processors =
-      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
+    TypeLiteral<Set<KafkaLogProcessorFactory>> type = new TypeLiteral<Set<KafkaLogProcessorFactory>>() { };
+    Set<KafkaLogProcessorFactory> processorFactories =
+      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)));
     try {
-      for (KafkaLogProcessor processor : processors) {
+      for (KafkaLogProcessorFactory processorFactory : processorFactories) {
+        KafkaLogProcessor processor = processorFactory.create();
         CheckpointManager checkpointManager = getCheckPointManager(processor);
 
         // Verify checkpoint offset
@@ -205,11 +220,13 @@ public class LogSaverTest extends KafkaTestBase {
     testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
   }
 
+  @Ignore
   @Test
   public void testLogRead2() throws Exception {
     testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
   }
 
+  @Ignore
   @Test
   public void testLogRead3() throws Exception {
     testLogRead(new ServiceLoggingContext("system", "services", "metrics"));

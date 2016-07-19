@@ -24,7 +24,9 @@ import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.appender.standalone.StandaloneLogAppender;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
-import co.cask.cdap.logging.save.LogMetricsPlugin;
+import co.cask.cdap.logging.save.KafkaLogProcessorFactory;
+import co.cask.cdap.logging.save.KafkaLogWriterPluginFactory;
+import co.cask.cdap.logging.save.LogMetricsPluginFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -34,6 +36,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -47,9 +50,9 @@ public class LoggingModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogAppender.class).toProvider(LogAppenderProvider.class).in(Scopes.SINGLETON);
-        Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
-          (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
-        handlerBinder.addBinding().to(LogMetricsPlugin.class);
+        Multibinder<KafkaLogProcessorFactory> handlerBinder = Multibinder.newSetBinder
+          (binder(), KafkaLogProcessorFactory.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES));
+        handlerBinder.addBinding().to(LogMetricsPluginFactory.class);
       }
     };
   }
@@ -60,9 +63,9 @@ public class LoggingModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogAppender.class).toProvider(LogAppenderProvider.class).in(Scopes.SINGLETON);
-        Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
-          (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
-        handlerBinder.addBinding().to(LogMetricsPlugin.class);
+        Multibinder<KafkaLogProcessorFactory> handlerBinder = Multibinder.newSetBinder
+          (binder(), KafkaLogProcessorFactory.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES));
+        handlerBinder.addBinding().to(LogMetricsPluginFactory.class);
       }
     };
   }
@@ -73,6 +76,10 @@ public class LoggingModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogAppender.class).to(KafkaLogAppender.class);
+        Multibinder<KafkaLogProcessorFactory> handlerBinder = Multibinder.newSetBinder
+          (binder(), KafkaLogProcessorFactory.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES));
+        handlerBinder.addBinding().to(KafkaLogWriterPluginFactory.class);
+        handlerBinder.addBinding().to(LogMetricsPluginFactory.class);
       }
     };
   }
@@ -87,9 +94,13 @@ public class LoggingModules extends RuntimeModule {
 
     @Inject
     public LogAppenderProvider(FileLogAppender fileLogAppender,
-                               @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<KafkaLogProcessor> messageProcessors) {
+                               @Named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)
+                               Set<KafkaLogProcessorFactory> messageProcessorFactories) throws Exception {
       this.fileLogAppender = fileLogAppender;
-      this.messageProcessors = messageProcessors;
+      this.messageProcessors = new HashSet<>();
+      for (KafkaLogProcessorFactory messageProcessorFactory : messageProcessorFactories) {
+        messageProcessors.add(messageProcessorFactory.create());
+      }
     }
 
     @Override
