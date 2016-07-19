@@ -25,7 +25,6 @@ import co.cask.cdap.api.macro.MacroEvaluator;
  * track of whether or not a macro was found when the parser
  */
 public class TrackingMacroEvaluator implements MacroEvaluator {
-
   private boolean foundMacro;
 
   public TrackingMacroEvaluator() {

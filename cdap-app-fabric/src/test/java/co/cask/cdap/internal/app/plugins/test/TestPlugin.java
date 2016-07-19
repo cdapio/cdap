@@ -20,12 +20,13 @@ import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.plugin.PluginConfig;
+import com.google.common.base.Joiner;
 
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
- * Plugin class for testing instantiation with field injection.
+ * Plugin class for testing instantiation with field injection and macro substitution of primitive types and strings.
  */
 @Plugin
 @Name("TestPlugin")
@@ -35,8 +36,9 @@ public class TestPlugin implements Callable<String> {
 
   @Override
   public String call() throws Exception {
-    if (config.timeout % 2 == 0) {
-      return config.name;
+    if (config.nullableLongFlag != null && config.nullableLongFlag % 2 == 0) {
+        return config.host + "," + Joiner.on(',').join(config.aBoolean, config.aByte, config.aDouble, config.aFloat,
+                                   config.anInt, config.aLong, config.aShort);
     }
     return null;
   }
@@ -44,9 +46,31 @@ public class TestPlugin implements Callable<String> {
   public static final class Config extends PluginConfig {
 
     @Macro
-    private String name;
+    private String host;
 
     @Nullable
-    private Long timeout;
+    private Long nullableLongFlag;
+
+    @Macro
+    private boolean aBoolean;
+
+    @Macro
+    private byte aByte;
+
+    @Macro
+    private double aDouble;
+
+    @Macro
+    private float aFloat;
+
+    @Macro
+    @Nullable
+    private int anInt;
+
+    @Macro
+    private long aLong;
+
+    @Macro
+    private short aShort;
   }
 }

@@ -297,11 +297,18 @@ public class ArtifactRepositoryTest {
         for (PluginClass pluginClass : entry.getValue()) {
           Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
-                                           .add("timeout", "10")
-                                           .add("name", "${macro}")
+                                           .add("nullableLongFlag", "10")
+                                           .add("host", "${expansiveHostname}")
+                                           .add("aBoolean", "${aBoolean}")
+                                           .add("aByte", "${aByte}")
+                                           .add("aDouble", "${aDouble}")
+                                           .add("anInt", "${anInt}")
+                                           .add("aFloat", "${aFloat}")
+                                           .add("aLong", "${aLong}")
+                                           .add("aShort", "${aShort}")
                                            .build());
           Callable<String> plugin = instantiator.newInstance(pluginInfo);
-          Assert.assertEquals("${macro}", plugin.call());
+          Assert.assertEquals("null,false,0,0.0,0.0,0,0,0", plugin.call());
         }
       }
     }
@@ -315,7 +322,33 @@ public class ArtifactRepositoryTest {
 
     // set up test macro evaluator's substitutions
     Map<String, String> propertySubstitutions = ImmutableMap.<String, String>builder()
-      .put("macro", "expandedProperty")
+      .put("expansiveHostname", "${hostname}/${path}:${port}")
+      .put("hostname", "${one}")
+      .put("path", "${two}")
+      .put("port", "${three}")
+      .put("one", "${host${hostScopeMacro}}")
+      .put("hostScopeMacro", "-local")
+      .put("host-local", "${l}${o}${c}${a}${l}${hostSuffix}")
+      .put("l", "l")
+      .put("o", "o")
+      .put("c", "c")
+      .put("a", "a")
+      .put("hostSuffix", "host")
+      .put("two", "${filename${fileTypeMacro}}")
+      .put("three", "${firstPortDigit}${secondPortDigit}")
+      .put("filename", "index")
+      .put("fileTypeMacro", "-html")
+      .put("filename-html", "index.html")
+      .put("filename-php", "index.php")
+      .put("firstPortDigit", "8")
+      .put("secondPortDigit", "0")
+      .put("aBoolean", "true")
+      .put("aByte", "101")
+      .put("aDouble", "64.0")
+      .put("aFloat", "52.0")
+      .put("anInt", "42")
+      .put("aLong", "32")
+      .put("aShort", "81")
       .build();
 
     // Instantiate the plugins and execute them
@@ -324,14 +357,21 @@ public class ArtifactRepositoryTest {
         for (PluginClass pluginClass : entry.getValue()) {
           Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
-                                           .add("timeout", "10")
-                                           .add("name", "${macro}")
+                                           .add("nullableLongFlag", "10")
+                                           .add("host", "${expansiveHostname}")
+                                           .add("aBoolean", "${aBoolean}")
+                                           .add("aByte", "${aByte}")
+                                           .add("aDouble", "${aDouble}")
+                                           .add("anInt", "${anInt}")
+                                           .add("aFloat", "${aFloat}")
+                                           .add("aLong", "${aLong}")
+                                           .add("aShort", "${aShort}")
                                            .build());
 
           TestMacroEvaluator testMacroEvaluator = new TestMacroEvaluator(propertySubstitutions,
                                                                          new HashMap<String, String>());
           Callable<String> plugin = instantiator.newInstance(pluginInfo, testMacroEvaluator);
-          Assert.assertEquals("expandedProperty", plugin.call());
+          Assert.assertEquals("localhost/index.html:80,true,101,64.0,52.0,42,32,81", plugin.call());
         }
       }
     }
