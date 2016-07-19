@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.tracker')
               metricContainer.append('div')
               .attr('class', 'well')
               .append('p')
-              .text('Not enough ' + scope.type + ' found');
+              .text('No ' + scope.type + ' are accessing this dataset');
             }
           }, (err) => {
             if (err.statusCode === 503) {
