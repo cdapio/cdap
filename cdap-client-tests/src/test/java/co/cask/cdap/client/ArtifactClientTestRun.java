@@ -16,8 +16,6 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
@@ -35,8 +33,10 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
+import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -283,7 +283,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test get myapp-plugins-2.0.0
     Map<String, PluginPropertyField> props = ImmutableMap.of(
-      "x", new PluginPropertyField("x", "", "int", true));
+      "x", new PluginPropertyField("x", "", "int", true, false));
     ArtifactClasses pluginClasses = ArtifactClasses.builder()
       .addPlugin(new PluginClass("callable", "plugin1", "p1 description", Plugin1.class.getName(), "conf", props))
       .addPlugins(additionalPlugins)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import com.google.inject.Provider;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Implementation of {@link co.cask.cdap.api.dataset.DatasetAdmin} for
@@ -39,8 +40,8 @@ public class PartitionedFileSetAdmin extends CompositeDatasetAdmin {
 
   public PartitionedFileSetAdmin(DatasetContext context, DatasetSpecification spec,
                                  Provider<ExploreFacade> exploreProvider,
-                                 DatasetAdmin... wrappedAdmins) {
-    super(wrappedAdmins);
+                                 Map<String, DatasetAdmin> embeddedAdmins) {
+    super(embeddedAdmins);
     this.context = context;
     this.spec = spec;
     this.exploreFacadeProvider = exploreProvider;

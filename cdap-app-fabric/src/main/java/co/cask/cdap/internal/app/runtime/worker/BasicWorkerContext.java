@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,16 +19,12 @@ package co.cask.cdap.internal.app.runtime.worker;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -41,7 +37,7 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -56,39 +52,32 @@ import javax.annotation.Nullable;
 /**
  * Default implementation of {@link WorkerContext}
  */
-public class BasicWorkerContext extends AbstractContext implements WorkerContext {
+final class BasicWorkerContext extends AbstractContext implements WorkerContext {
   private static final Logger LOG = LoggerFactory.getLogger(BasicWorkerContext.class);
 
   private final WorkerSpecification specification;
-  private final Metrics userMetrics;
   private final int instanceId;
   private final LoggingContext loggingContext;
   private volatile int instanceCount;
   private final StreamWriter streamWriter;
-  private final Map<String, Plugin> plugins;
 
-  public BasicWorkerContext(WorkerSpecification spec, Program program, RunId runId, int instanceId,
-                            int instanceCount, Arguments runtimeArgs,
-                            MetricsCollectionService metricsCollectionService,
-                            DatasetFramework datasetFramework,
-                            TransactionSystemClient transactionSystemClient,
-                            DiscoveryServiceClient discoveryServiceClient,
-                            StreamWriterFactory streamWriterFactory,
-                            @Nullable PluginInstantiator pluginInstantiator) {
-    super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService),
-          datasetFramework, transactionSystemClient, discoveryServiceClient, true, pluginInstantiator);
+  BasicWorkerContext(WorkerSpecification spec, Program program, ProgramOptions programOptions,
+                     int instanceId, int instanceCount,
+                     MetricsCollectionService metricsCollectionService,
+                     DatasetFramework datasetFramework,
+                     TransactionSystemClient transactionSystemClient,
+                     DiscoveryServiceClient discoveryServiceClient,
+                     StreamWriterFactory streamWriterFactory,
+                     @Nullable PluginInstantiator pluginInstantiator) {
+    super(program, programOptions, spec.getDatasets(),
+          datasetFramework, transactionSystemClient, discoveryServiceClient, true,
+          metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
+          pluginInstantiator);
     this.specification = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.loggingContext = createLoggingContext(program.getId(), runId);
-    if (metricsCollectionService != null) {
-      this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
-    } else {
-      this.userMetrics = null;
-    }
-    this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId(), runId.getId()), getOwners());
-    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
+    this.loggingContext = createLoggingContext(program.getId(), getRunId());
+    this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId(), getRunId().getId()), getOwners());
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
@@ -96,25 +85,8 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                                     runId.getId(), String.valueOf(getInstanceId()));
   }
 
-  @Override
-  public Metrics getMetrics() {
-    return userMetrics;
-  }
-
   public LoggingContext getLoggingContext() {
     return loggingContext;
-  }
-
-  @Nullable
-  private static MetricsContext getMetricCollector(Program program, String runId, int instanceId,
-                                                     @Nullable MetricsCollectionService service) {
-    if (service == null) {
-      return null;
-    }
-    Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-    tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-
-    return service.getContext(tags);
   }
 
   @Override
@@ -148,11 +120,6 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
 
   public void setInstanceCount(int instanceCount) {
     this.instanceCount = instanceCount;
-  }
-
-  @Override
-  public Map<String, Plugin> getPlugins() {
-    return plugins;
   }
 
   private void abortTransaction(Exception e, String message, TransactionContext context) {

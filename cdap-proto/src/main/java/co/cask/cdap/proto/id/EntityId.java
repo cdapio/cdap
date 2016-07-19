@@ -63,23 +63,24 @@ public abstract class EntityId implements IdCompatible {
   private static final String IDSTRING_PART_SEPARATOR = ".";
   private static final Pattern IDSTRING_PART_SEPARATOR_PATTERN = Pattern.compile("\\.");
 
-  // Only allow alphanumeric and _ character for namespace
-  private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   // Allow hyphens for other ids.
   private static final Pattern idPattern = Pattern.compile("[a-zA-Z0-9_-]+");
   // Allow '.' and '$' for dataset ids since they can be fully qualified class names
   private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
+  // KMS only supports lower case keys.
+  private static final Pattern storeKeyNamePattern = Pattern.compile("[a-z0-9_-]+");
 
-  protected static boolean isValidNamespaceId(String name) {
-    return namespacePattern.matcher(name).matches();
-  }
-
-  protected static boolean isValidId(String name) {
+  public static boolean isValidId(String name) {
     return idPattern.matcher(name).matches();
   }
 
-  protected static boolean isValidDatasetId(String datasetId) {
+  public static boolean isValidDatasetId(String datasetId) {
     return datasetIdPattern.matcher(datasetId).matches();
+  }
+
+  // TODO: Move to a separate class.
+  public static boolean isValidStoreKey(String name) {
+    return storeKeyNamePattern.matcher(name).matches();
   }
 
   private final EntityType entity;
@@ -114,9 +115,6 @@ public abstract class EntityId implements IdCompatible {
 
     String typeString = typeAndId[0];
     EntityType type = EntityType.valueOf(typeString.toUpperCase());
-    if (type == null) {
-      throw new IllegalArgumentException("Invalid element type: " + typeString);
-    }
     if (idClass != null && !type.getIdClass().equals(idClass)) {
         throw new IllegalArgumentException(String.format("Expected EntityId of class '%s' but got '%s'",
                                                          idClass.getName(), type.getIdClass().getName()));

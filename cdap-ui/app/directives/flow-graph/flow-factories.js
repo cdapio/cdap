@@ -15,9 +15,6 @@
  */
 
 angular.module(PKG.name+'.commons')
-  .factory('d3', function ($window) {
-    return $window.d3;
-  })
 
   .factory('dagreD3', function ($window) {
     return $window.dagreD3;

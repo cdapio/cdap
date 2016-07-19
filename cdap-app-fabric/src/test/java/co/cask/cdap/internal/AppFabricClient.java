@@ -23,10 +23,11 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
@@ -94,21 +95,24 @@ public class AppFabricClient {
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
   private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
-  private final NamespaceAdmin namespaceAdmin;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final SecureStoreHandler secureStoreHandler;
 
   @Inject
   public AppFabricClient(LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
-                         NamespaceAdmin namespaceAdmin,
-                         WorkflowHttpHandler workflowHttpHandler) {
+                         NamespaceQueryAdmin namespaceQueryAdmin,
+                         WorkflowHttpHandler workflowHttpHandler,
+                         SecureStoreHandler secureStoreHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
-    this.namespaceAdmin = namespaceAdmin;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.workflowHttpHandler = workflowHttpHandler;
+    this.secureStoreHandler = secureStoreHandler;
   }
 
   private String getNamespacePath(String namespaceId) {
@@ -120,7 +124,7 @@ public class AppFabricClient {
     HttpRequest request;
 
     // delete all namespaces
-    for (NamespaceMeta namespaceMeta : namespaceAdmin.list()) {
+    for (NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
 
       responder = new MockResponder();

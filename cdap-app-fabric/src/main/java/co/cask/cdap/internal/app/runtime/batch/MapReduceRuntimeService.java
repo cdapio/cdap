@@ -40,7 +40,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -64,6 +63,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -101,6 +101,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +111,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
@@ -147,7 +150,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final LocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
-  private final UsageRegistry usageRegistry;
 
   private Job job;
   private Transaction transaction;
@@ -162,8 +164,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           MapReduce mapReduce, MapReduceSpecification specification,
                           BasicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
-                          UsageRegistry usageRegistry) {
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient) {
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -174,7 +175,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.streamAdmin = streamAdmin;
     this.txClient = txClient;
     this.context = context;
-    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -193,7 +193,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Configuration mapredConf = job.getConfiguration();
 
       classLoader = new MapReduceClassLoader(injector, cConf, mapredConf, context.getProgram().getClassLoader(),
-                                             context.getPlugins(),
+                                             context.getApplicationSpecification().getPlugins(),
                                              context.getPluginInstantiator());
       cleanupTask = createCleanupTask(cleanupTask, classLoader);
 
@@ -257,11 +257,26 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           classpath.add(logbackLocation.getName());
         }
 
-        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
-        classpath.add("job.jar/lib/*");
+        // Get all the jars in jobJar and sort them lexically before adding to the classpath
+        // This allows CDAP classes to be picked up first before the Twill classes
+        List<String> jarFiles = new ArrayList<>();
+        try (JarFile jobJarFile = new JarFile(jobJar)) {
+          Enumeration<JarEntry> entries = jobJarFile.entries();
+          while (entries.hasMoreElements()) {
+            JarEntry entry = entries.nextElement();
+            if (entry.getName().startsWith("lib/") && entry.getName().endsWith(".jar")) {
+              jarFiles.add("job.jar/" + entry.getName());
+            }
+          }
+        }
+        Collections.sort(jarFiles);
+        classpath.addAll(jarFiles);
         classpath.add("job.jar/classes");
-        Location launcherJar = createLauncherJar(
-          Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath)), tempLocation);
+        String applicationClasspath
+          = Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath));
+
+        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
+        Location launcherJar = createLauncherJar(applicationClasspath, tempLocation);
         job.addCacheFile(launcherJar.toURI());
 
         // The only thing in the container classpath is the launcher.jar
@@ -683,7 +698,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     Id.Stream streamId = streamProvider.getStreamId();
     try {
-      usageRegistry.register(context.getProgram().getId(), streamId);
+      streamAdmin.register(ImmutableList.of(context.getProgram().getId()), streamId);
       streamAdmin.addAccess(new Id.Run(context.getProgram().getId(), context.getRunId().getId()),
                             streamId, AccessType.READ);
     } catch (Exception e) {

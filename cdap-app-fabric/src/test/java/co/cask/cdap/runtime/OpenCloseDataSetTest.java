@@ -19,14 +19,11 @@ package co.cask.cdap.runtime;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.TrackingTable;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
@@ -37,8 +34,7 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
@@ -95,10 +91,12 @@ public class OpenCloseDataSetTest {
   };
 
   @BeforeClass
-  public static void setup() throws IOException {
+  public static void setup() throws Exception {
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
     namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE);
+    NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(DefaultId.NAMESPACE).build());
     Locations.mkdirsIfNotExists(namespaceHomeLocation);
   }
 
@@ -109,7 +107,6 @@ public class OpenCloseDataSetTest {
     TrackingTable.resetTracker();
     ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class,
                                                                                    TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     List<ProgramController> controllers = Lists.newArrayList();
 
     // start the programs
@@ -117,13 +114,9 @@ public class OpenCloseDataSetTest {
       if (programDescriptor.getProgramId().getType().equals(ProgramType.MAPREDUCE)) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
-      BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                     RunIds.generate().getId()));
-      Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
-                                                          runner, TEMP_FOLDER_SUPPLIER);
-      controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
-                                                                   new BasicArguments())));
+      controllers.add(AppFabricTestHelper.submit(app, programDescriptor.getSpecification().getClassName(),
+                                                 new BasicArguments(), TEMP_FOLDER_SUPPLIER)
+      );
     }
 
     // write some data to queue
@@ -203,12 +196,8 @@ public class OpenCloseDataSetTest {
     ProgramController controller = null;
     for (ProgramDescriptor programDescriptor : app.getPrograms()) {
       if (programDescriptor.getProgramId().getType().equals(ProgramType.MAPREDUCE)) {
-        ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
-        BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                       RunIds.generate().getId()));
-        Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
-                                                            runner, TEMP_FOLDER_SUPPLIER);
-        controller = runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments()));
+        controller = AppFabricTestHelper.submit(app, programDescriptor.getSpecification().getClassName(),
+                                                new BasicArguments(), TEMP_FOLDER_SUPPLIER);
       }
     }
     Assert.assertNotNull(controller);

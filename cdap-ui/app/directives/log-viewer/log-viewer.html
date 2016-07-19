@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,38 +14,162 @@
   the License.
 -->
 
-<div class="row">
-  <div class="col-xs-2">
+<div class="log-viewer-container" ng-class="{'full-screen': LogViewer.fullScreen}">
 
-    <ul class="nav nav-pills nav-stacked">
-      <li role="presentation"
-          ng-repeat="f in filters"
-          ng-class="{ active:activeFilter.key===f.key, disabled: !f.entries.length}">
-        <a href="#" ng-click="f.entries.length && setFilter(f.key)">
-          <span class="badge pull-right" ng-show="f.entries.length">{{f.entries.length}}</span>
-          <span>{{f.label}}</span>
-        </a>
-      </li>
-    </ul>
+  <!-- LOGS HEADERBAR -->
+  <div class="logs-headerbar">
+    <div class="log-stats-container">
+      <div class="log-stats-total log-stats text-center">
+          <span class="stat-name">Total Messages</span>
+          <div class="stat-count total-num">
+            <span class="stat-count-number">{{LogViewer.totalCount}}</span></div>
+      </div>
+      <div class="log-stats-errors log-stats text-center">
+        <span class="stat-name log-stats-errors-text">Error</span>
+          <div class="stat-count errors-num"><span class="stat-count-number">{{LogViewer.errorCount}}</span></div>
+      </div>
+      <div class="log-stats-warnings log-stats text-center">
+        <span class="stat-name log-stats-warnings-text">Warning</span>
+        <div class="stat-count warnings-num">
+          <span class="stat-count-number">{{LogViewer.warningCount}}</span>
+        </div>
+      </div>
+    </div>
 
+    <div class="log-actions">
+      <div class="log-action-container">
+        <button class="log-action-btn">View Raw</button>
+        <button class="log-action-btn">Download All</button>
+        <div class="search">
+          <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText">
+          <span class="fa fa-search"></span>
+        </div>
+        <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewer.fullScreen = !LogViewer.fullScreen"></i>
+      </div>
+    </div>
   </div>
-  <div class="col-xs-10">
-    <div class="text-center" ng-if="loadingPrev">
-      <span class="fa fa-refresh fa-spin"></span> Loading Logs
-    </div>
-    <div class="terminal" infinite-scroll-next="loadNextLogs()" infinite-scroll-prev="loadPrevLogs()" infinite-scroll>
-      <ul class="list-unstyled" ng-if="activeFilter.entries.length">
-        <li ng-repeat="entry in activeFilter.entries" id="{{entry.offset}}">
-          <pre>{{ ::entry.log }}</pre>
-        </li>
-      </ul>
-      <div ng-if="!activeFilter.entries.length && !(loadingNext || loadingPrev)">
-        No logs to display
-      </div>
-      <div class="text-center" ng-if="loadingNext">
-        <span class="fa fa-refresh fa-spin"></span> Loading Logs
-      </div>
-    </div>
 
+  <!-- LOGS TIMELINE -->
+  <my-timeline
+    namespace-id="{{LogViewer.namespaceId}}"
+    app-id="{{LogViewer.appId}}"
+    program-type="{{LogViewer.programType}}"
+    program-id="{{LogViewer.programId}}"
+    run-id="{{LogViewer.runId}}">
+  </my-timeline>
+
+  <!-- NO DATA MESSAGE -->
+  <div ng-if="LogViewer.data.length === 0" class="well well-lg">
+    No logs to be displayed.
+  </div>
+  <div ng-if="LogViewer.loading" class="text-center well well-lg">
+    Loading..
+  </div>
+  <!-- LOGS TABLE -->
+  <div ng-if="LogViewer.data.length > 0 && !LogViewer.loading" class="logs-table">
+    <table class="table table-bordered scroll scroll-table">
+      <thead>
+        <th class="time time-header log-header"
+            ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
+          Time
+        </th>
+
+        <th class='level level-header'
+            ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
+          <span uib-dropdown class="dropdown">
+            <span uib-dropdown-toggle>
+              Level <span class="fa fa-caret-down"></span>
+            </span>
+            <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
+              <li ng-repeat="option in LogViewer.logEvents">
+                <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span>{{option}}</span>
+              </li>
+            </ul>
+          </span>
+        </th>
+
+        <th class="source source-header log-header"
+            ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
+          Source
+        </th>
+
+        <th class="message-header"
+            ng-if="LogViewer.configOptions.message && !LogViewer.hiddenColumns.message"
+            ng-class="{'expanded': LogViewer.isMessageExpanded }">
+          <span class="fa"
+                ng-class="{ 'fa-arrow-left': !LogViewer.isMessageExpanded,
+                  'fa-arrow-right': LogViewer.isMessageExpanded}"
+                ng-click="LogViewer.collapseColumns()"></span>
+          <span>Message</span>
+          <div class="expand-all-btn text-center"
+               ng-click="LogViewer.toggleLogExpansion()">
+            <span ng-if="!LogViewer.toggleExpandAll">Expand All</span>
+            <span ng-if="LogViewer.toggleExpandAll">Collapse All</span>
+          </div>
+        </th>
+      </thead>
+      <tbody infinite-scroll="LogViewer.scrollFn()"
+             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.data.length"
+             infinite-scroll-container="'.logs-table'"
+             >
+        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:searchText | filter:LogViewer.eventFilter | limitTo: LogViewer.viewLimit track by $index">
+          <!-- TIME -->
+          <td class="time"
+              ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
+              {{ entry.log.displayTime }}
+          </td>
+
+          <!-- LEVEL -->
+          <td class="level"
+              ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
+              {{ entry.log.logLevel }}
+          </td>
+
+          <!-- SOURCE -->
+          <td class="source"
+              ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
+              tooltip="testing"
+              uib-tooltip="{{ ::entry.log.threadName}}:{{::entry.log.lineNumber}}"
+              tooltip-append-to-body="true"
+              tooltip-placement="top"
+              tooltip-popup-delay="500"
+              tooltip-class="source-tooltip"
+              >
+              {{ entry.log.threadName }}
+          </td>
+
+          <!-- MESSAGE -->
+          <td class="message"
+              ng-if="LogViewer.configOptions.message"
+              ng-class="{'stack-trace-expanded': entry.isStackTraceExpanded,
+                'stack-trace-available': entry.log.stackTrace.length > 0 }">
+            <div class="message-main"
+                 ng-click="entry.log.stackTrace.length > 0 && (entry.isStackTraceExpanded = !entry.isStackTraceExpanded)">
+              <div class="icon-column"
+                   ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)"
+                   ng-class="Logviewer.message-class">
+                <span class="fa"
+                      ng-class="{'fa-minus': entry.isStackTraceExpanded}">
+                </span>
+              </div>
+              <span class="message-text"><span ng-bind-html="LogViewer.highlight(entry.log.message)"></span></span>
+            </div>
+
+            <div class="stack-trace"
+                 ng-class="{'expanded': LogViewer.isMessageExpanded}"
+                 ng-if="entry.isStackTraceExpanded">
+              <pre>{{ ::entry.log.stackTrace }}</pre>
+            </div>
+
+          </td>
+        </tr>
+
+        <tr class="well well-sm">
+          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading logs...</td>
+          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No new logs to show</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-buffer"></div>
   </div>
 </div>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,8 +28,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -122,10 +124,17 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
 
   public void writeModule(Id.Namespace namespaceId, DatasetModuleMeta moduleMeta) {
     Id.DatasetModule datasetModuleId = Id.DatasetModule.from(namespaceId, moduleMeta.getName());
+    DatasetModuleMeta existing = getModule(datasetModuleId);
     write(getModuleKey(namespaceId.getId(), moduleMeta.getName()), moduleMeta);
-
     for (String type : moduleMeta.getTypes()) {
       writeTypeToModuleMapping(Id.DatasetType.from(namespaceId, type), datasetModuleId);
+    }
+    if (existing != null) {
+      Set<String> removed = new HashSet<>(existing.getTypes());
+      removed.removeAll(moduleMeta.getTypes());
+      for (String type : removed) {
+        deleteAll(getTypeKey(datasetModuleId.getNamespaceId(), type));
+      }
     }
   }
 

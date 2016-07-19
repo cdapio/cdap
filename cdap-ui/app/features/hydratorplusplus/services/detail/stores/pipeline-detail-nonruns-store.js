@@ -41,7 +41,11 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
 
     this.registerOnChangeListener = function(callback) {
-      this.changeListeners.push(callback);
+      let index = this.changeListeners.push(callback);
+      // un-subscribe for listners.
+      return () => {
+        this.changeListeners.splice(index-1, 1);
+      };
     };
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {
@@ -102,6 +106,21 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       match = (match.length? match[0]: null);
       return match;
     };
+    this.getArtifact = function() {
+      return this.state.cloneConfig.artifact;
+    };
+    this.getSchedule = function() {
+      return this.state.cloneConfig.config.schedule;
+    };
+    this.getEngine = function() {
+      return this.state.cloneConfig.config.engine;
+    };
+    this.getPostActions = function() {
+      return this.state.cloneConfig.config.postActions;
+    };
+    this.getInstance = function() {
+      return this.state.cloneConfig.config.instances;
+    };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
       var appConfig = {};
@@ -118,51 +137,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       if(appConfig.configJson) {
         app.config = appConfig.configJson;
         uiConfig = this.HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(app);
-        let setDefaultOutputSchemaForNodes = (node) => {
-          var pluginName = node.plugin.name;
-          var pluginToSchemaMap = {
-            'Stream': [
-              {
-                readonly: true,
-                name: 'ts',
-                type: 'long'
-              },
-              {
-                readonly: true,
-                name: 'headers',
-                type: {
-                  type: 'map',
-                  keys: 'string',
-                  values: 'string'
-                }
-              }
-            ]
-          };
-          if (pluginToSchemaMap[pluginName]){
-            if (!node.plugin.properties.schema) {
-              node.plugin.properties.schema = {
-                fields: [{ name: 'body', type: 'string'}]
-              };
-              node.plugin.properties.schema = JSON.stringify({
-                type: 'record',
-                name: 'etlSchemaBody',
-                fields: angular.isObject(node.outputSchema)?
-                  pluginToSchemaMap[pluginName].concat(node.outputSchema.fields || []):
-                  pluginToSchemaMap[pluginName]
-              });
-            } else {
-              try {
-                let schema = JSON.parse(node.plugin.properties.schema);
-                node.plugin.properties.schema = JSON.stringify({
-                  type: 'record',
-                  name: 'etlSchemaBody',
-                  fields: pluginToSchemaMap[pluginName].concat(schema.fields)
-                });
-              } catch(e) {}
-            }
-          }
-        };
-        uiConfig.nodes.forEach(setDefaultOutputSchemaForNodes);
+
         appConfig.DAGConfig = {
           nodes: uiConfig.nodes,
           connections: uiConfig.connections

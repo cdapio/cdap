@@ -32,18 +32,25 @@ import java.util.Set;
  */
 public class BatchPipelineSpec extends PipelineSpec {
   private final List<ActionSpec> endingActions;
+  private final Resources driverResources;
 
   private BatchPipelineSpec(Set<StageSpec> stages,
                             Set<Connection> connections,
                             Resources resources,
+                            Resources driverResources,
                             boolean stageLoggingEnabled,
                             List<ActionSpec> endingActions) {
     super(stages, connections, resources, stageLoggingEnabled);
     this.endingActions = ImmutableList.copyOf(endingActions);
+    this.driverResources = driverResources;
   }
 
   public List<ActionSpec> getEndingActions() {
     return endingActions;
+  }
+
+  public Resources getDriverResources() {
+    return driverResources;
   }
 
   @Override
@@ -60,12 +67,12 @@ public class BatchPipelineSpec extends PipelineSpec {
 
     BatchPipelineSpec that = (BatchPipelineSpec) o;
 
-    return Objects.equals(endingActions, that.endingActions);
+    return Objects.equals(endingActions, that.endingActions) && Objects.equals(driverResources, that.driverResources);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), endingActions);
+    return Objects.hash(super.hashCode(), endingActions, driverResources);
   }
 
   public static Builder builder() {
@@ -77,6 +84,7 @@ public class BatchPipelineSpec extends PipelineSpec {
    */
   public static class Builder extends PipelineSpec.Builder<Builder> {
     private List<ActionSpec> endingActions;
+    private Resources driverResources;
 
     public Builder() {
       this.endingActions = new ArrayList<>();
@@ -87,8 +95,15 @@ public class BatchPipelineSpec extends PipelineSpec {
       return this;
     }
 
+    public Builder setDriverResources(Resources resources) {
+      this.driverResources = resources;
+      return this;
+    }
+
     public BatchPipelineSpec build() {
-      return new BatchPipelineSpec(stages, connections, resources, stageLoggingEnabled, endingActions);
+      return new BatchPipelineSpec(stages, connections, resources,
+                                   driverResources == null ? resources : driverResources,
+                                   stageLoggingEnabled, endingActions);
     }
   }
 }

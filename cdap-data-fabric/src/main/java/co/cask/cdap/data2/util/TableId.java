@@ -16,23 +16,23 @@
 
 package co.cask.cdap.data2.util;
 
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 /**
- * Identifier for an HBase tables that contains a namespace and a table name
+ * Identifier for an HBase and LevelDB tables that contains a namespace and a table name
  */
 public class TableId {
-  private final Id.Namespace namespace;
+  private final String namespace;
   private final String tableName;
 
-  private TableId(Id.Namespace namespace, String tableName) {
+  private TableId(String namespace, String tableName) {
     this.namespace = namespace;
     this.tableName = tableName;
   }
 
-  public Id.Namespace getNamespace() {
+  public String getNamespace() {
     return namespace;
   }
 
@@ -41,13 +41,9 @@ public class TableId {
   }
 
   public static TableId from(String namespace, String tableName) {
-    return from(Id.Namespace.from(namespace), tableName);
-  }
-
-  public static TableId from(Id.Namespace namespaceId, String tableName) {
-    Preconditions.checkArgument(tableName != null, "Table name should not be null.");
-    // Id.Namespace already checks for non-null namespace
-    return new TableId(namespaceId, tableName);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace), "Namespace should not be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName), "Table name should not be null or empty");
+    return new TableId(namespace, tableName);
   }
 
   @Override
@@ -60,8 +56,7 @@ public class TableId {
     }
 
     TableId that = (TableId) o;
-    return Objects.equal(namespace, that.getNamespace()) &&
-      Objects.equal(tableName, that.getTableName());
+    return Objects.equal(namespace, that.getNamespace()) && Objects.equal(tableName, that.getTableName());
   }
 
   @Override

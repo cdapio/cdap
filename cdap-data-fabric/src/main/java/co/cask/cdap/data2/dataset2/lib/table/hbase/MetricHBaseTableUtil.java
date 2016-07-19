@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import org.apache.hadoop.hbase.HTableDescriptor;
 
@@ -48,7 +47,7 @@ public class MetricHBaseTableUtil {
     // 2a) If table has no increment handler coprocessor, it is 2.6 or older
     // 2b) If table has increment handler coprocessor, it is 2.7
     
-    ProjectInfo.Version version = AbstractHBaseDataSetAdmin.getVersion(tableDescriptor);
+    ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
     // note: major version is 0 if table doesn't have the cdap version property
     if (version.getMajor() > 0) {
       if (version.getMajor() < 2) {

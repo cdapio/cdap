@@ -14,19 +14,76 @@
  * the License.
  */
 
-class HydratorPlusPlusConsoleTabCtrl {
-  constructor(HydratorPlusPlusConsoleStore) {
+class HydratorPlusPlusConsoleTabService {
+  constructor(HydratorPlusPlusConsoleStore, myAlertOnValium) {
     this.HydratorPlusPlusConsoleStore = HydratorPlusPlusConsoleStore;
-
+    this.myAlertOnValium = myAlertOnValium;
     this.setMessages();
-    this.HydratorPlusPlusConsoleStore.registerOnChangeListener( this.setMessages.bind(this) );
   }
-
+  listen() {
+    this.unsub = this.HydratorPlusPlusConsoleStore.registerOnChangeListener( this.setMessages.bind(this) );
+  }
+  unsubscribe() {
+    this.unsub();
+  }
   setMessages() {
-    this.messages = this.HydratorPlusPlusConsoleStore.getMessages();
+    let messages = this.HydratorPlusPlusConsoleStore.getMessages();
+    if (Array.isArray(messages) && !messages.length) {
+      return;
+    }
+    let missingNodesList = [];
+    let errorMessage = [];
+    let successMessage = [];
+    messages.forEach( message => {
+      switch(message.type) {
+        case 'NO-SINK-FOUND':
+          missingNodesList.push('sinks(s)');
+          break;
+        case 'NO-SOURCE-FOUND':
+          missingNodesList.push('source(s)');
+          break;
+        case 'STRAY-NODES':
+          errorMessage.push(message.payload.nodes.map( node => node.plugin.label).join(', ') + ' - nodes missing connections');
+          break;
+        case 'success':
+          successMessage.push(message.content);
+          break;
+        case 'error':
+          errorMessage.push(message.content);
+          break;
+      }
+    });
+    if (missingNodesList.length) {
+      errorMessage.push(`Missing ${missingNodesList.join(', ')} in the pipeline.`);
+    }
+    if (successMessage.length) {
+      this.myAlertOnValium.show({
+        type: 'success',
+        content: successMessage.join(', ')
+      });
+    } else if (errorMessage.length) {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        templateUrl: '/assets/features/hydratorplusplus/templates/partial/error-template.html',
+        templateScope: {
+          content: errorMessage,
+          currentIndex: 0,
+          moveToNextIndex : function() {
+            if(errorMessage.length > this.currentIndex) {
+              this.currentIndex += 1;
+            }
+          },
+          moveToPrevIndex : function() {
+            if (this.currentIndex > 0) {
+              this.currentIndex -= 1;
+            }
+          }
+        }
+      });
+    }
   }
 }
 
-HydratorPlusPlusConsoleTabCtrl.$inject = ['HydratorPlusPlusConsoleStore'];
+HydratorPlusPlusConsoleTabService.$inject = ['HydratorPlusPlusConsoleStore', 'myAlertOnValium'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusConsoleTabCtrl', HydratorPlusPlusConsoleTabCtrl);
+  .service('HydratorPlusPlusConsoleTabService', HydratorPlusPlusConsoleTabService);

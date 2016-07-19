@@ -36,8 +36,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -70,6 +69,7 @@ import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
@@ -81,7 +81,6 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionNotInProgressException;
-import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
@@ -97,12 +96,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.net.URI;
@@ -126,7 +123,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   private final ZKClientService zkClientService;
   private final HBaseQueueClientFactory queueClientFactory;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final NamespaceAdmin namespaceAdmin;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Store store;
 
   @Inject
@@ -134,14 +131,14 @@ public class HBaseQueueDebugger extends AbstractIdleService {
                             HBaseQueueClientFactory queueClientFactory,
                             ZKClientService zkClientService,
                             TransactionExecutorFactory txExecutorFactory,
-                            NamespaceAdmin namespaceAdmin,
+                            NamespaceQueryAdmin namespaceQueryAdmin,
                             Store store) {
     this.tableUtil = tableUtil;
     this.queueAdmin = queueAdmin;
     this.queueClientFactory = queueClientFactory;
     this.zkClientService = zkClientService;
     this.txExecutorFactory = txExecutorFactory;
-    this.namespaceAdmin = namespaceAdmin;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
   }
 
@@ -158,7 +155,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   public void scanAllQueues() throws Exception {
     QueueStatistics totalStats = new QueueStatistics();
 
-    List<NamespaceMeta> namespaceMetas = namespaceAdmin.list();
+    List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       Id.Namespace namespaceId = Id.Namespace.from(namespaceMeta.getName());
 
@@ -478,6 +475,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
+      new MetricsStoreModule(),
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
@@ -487,30 +485,13 @@ public class HBaseQueueDebugger extends AbstractIdleService {
           bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
           bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
           bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
-        }
+          bind(Store.class).annotatedWith(Names.named("defaultStore")).to(DefaultStore.class).in(Singleton.class);
 
-        @Provides
-        @Singleton
-        @Named("defaultStore")
-        @SuppressWarnings("unused")
-        public Store getStore(CConfiguration conf,
-                              LocationFactory locationFactory,
-                              NamespacedLocationFactory namespacedLocationFactory,
-                              final TransactionExecutorFactory txExecutorFactory,
-                              DatasetFramework framework,
-                              TransactionSystemClient txClient) {
-          return new DefaultStore(conf, locationFactory, namespacedLocationFactory,
-                                  txExecutorFactory, framework, txClient);
-        }
-
-        // This is needed because the LocalApplicationManager
-        // expects a dsframework injection named datasetMDS
-        @Provides
-        @Singleton
-        @Named("datasetMDS")
-        @SuppressWarnings("unused")
-        public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
-          return dsFramework;
+          // This is needed because the LocalApplicationManager
+          // expects a dsframework injection named datasetMDS
+          bind(DatasetFramework.class)
+            .annotatedWith(Names.named("datasetMDS"))
+            .to(DatasetFramework.class).in(Singleton.class);
         }
       });
 

@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -570,11 +571,22 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-      return getDataset(name, null);
+      return getDataset(getNamespace(), name);
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+      return getDataset(namespace, name, null);
     }
 
     @Override
     public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+      throws DatasetInstantiationException {
+      return getDataset(getNamespace(), arguments);
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
       throws DatasetInstantiationException {
       throw new DatasetInstantiationException(
         String.format("Dataset '%s' cannot be instantiated. Operation not supported", name));
@@ -644,6 +656,11 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+      return null;
+    }
+
+    @Override
+    public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
       return null;
     }
 

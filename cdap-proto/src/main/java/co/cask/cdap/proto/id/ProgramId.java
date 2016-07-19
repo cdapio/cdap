@@ -18,6 +18,7 @@ package co.cask.cdap.proto.id;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
+import org.apache.twill.api.RunId;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,6 +33,7 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
   private final String application;
   private final ProgramType type;
   private final String program;
+  private transient Integer hashCode;
 
   public ProgramId(String namespace, String application, ProgramType type, String program) {
     super(EntityType.PROGRAM);
@@ -73,8 +75,18 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
     return new FlowletId(namespace, application, program, flowlet);
   }
 
+  /**
+   * Creates a {@link ProgramRunId} of this program id with the given run id.
+   */
   public ProgramRunId run(String run) {
     return new ProgramRunId(namespace, application, type, program, run);
+  }
+
+  /**
+   * Creates a {@link ProgramRunId} of this program id with the given {@link RunId}.
+   */
+  public ProgramRunId run(RunId runId) {
+    return run(runId.getId());
   }
 
   @Override
@@ -91,7 +103,11 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, application, type, program);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, type, program);
+    }
+    return hashCode;
   }
 
   @Override

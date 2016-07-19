@@ -16,10 +16,10 @@
 
 package co.cask.cdap.data2.metadata.system;
 
-import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import com.google.common.collect.ImmutableMap;
 

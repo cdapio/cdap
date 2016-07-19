@@ -16,6 +16,7 @@
 package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -32,11 +33,15 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRangeCodec;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -51,6 +56,8 @@ import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -78,6 +85,11 @@ import javax.annotation.Nullable;
 public abstract class AbstractProgramRuntimeService extends AbstractIdleService implements ProgramRuntimeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
+  .create();
+
   private static final EnumSet<ProgramController.State> COMPLETED_STATES = EnumSet.of(ProgramController.State.COMPLETED,
                                                                                       ProgramController.State.KILLED,
                                                                                       ProgramController.State.ERROR);
@@ -102,16 +114,23 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
     ProgramRunner runner = programRunnerFactory.create(programId.getType());
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + programId.getType());
+
     RunId runId = RunIds.generate();
-    ProgramOptions optionsWithRunId = updateProgramOptions(options, runId);
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {
-      ProgramOptions optionsWithPlugins = createPluginSnapshot(optionsWithRunId, programId, tempDir,
+      // Get the artifact details and save it into the program options.
+      ArtifactId artifactId = programDescriptor.getArtifactId();
+      ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+      ProgramOptions runtimeProgramOptions = updateProgramOptions(options, runId, artifactId, artifactDetail.getMeta());
+
+      // Take a snapshot of all the plugin artifacts used by the program
+      ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
                                                                programDescriptor.getApplicationSpecification());
-      // The Jar Location will be null for some unit-test. It won't be for production.
-      Location jarLocation = getArtifactLocation(programDescriptor);
-      Program executableProgram = createProgram(cConf, runner, programDescriptor, jarLocation, tempDir);
+
+      // Create and run the program
+      Program executableProgram = createProgram(cConf, runner, programDescriptor,
+                                                artifactDetail.getDescriptor().getLocation(), tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId);
       monitorProgram(runtimeInfo, cleanUpTask);
@@ -123,8 +142,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
   }
 
-  protected Location getArtifactLocation(ProgramDescriptor descriptor) throws IOException, ArtifactNotFoundException {
-    return artifactRepository.getArtifact(descriptor.getArtifactId().toId()).getDescriptor().getLocation();
+  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+    return artifactRepository.getArtifact(artifactId.toId());
   }
 
   /**
@@ -241,13 +260,18 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    *
    * @param options The {@link ProgramOptions} in which the RunId to be included
    * @param runId   The RunId to be included
+   * @param artifactId The {@link ArtifactId} of the artifact that contains the program to be executed
+   * @param artifactMeta The {@link ArtifactMeta} of the artifact that contains the program to be executed
    * @return the copy of the program options with RunId included in them
    */
-  private ProgramOptions updateProgramOptions(ProgramOptions options, RunId runId) {
+  private ProgramOptions updateProgramOptions(ProgramOptions options, RunId runId,
+                                              ArtifactId artifactId, ArtifactMeta artifactMeta) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.putAll(options.getArguments().asMap());
     builder.putAll(getExtraProgramOptions());
     builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    builder.put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(artifactId));
+    builder.put(ProgramOptionConstants.ARTIFACT_META, GSON.toJson(artifactMeta));
 
     return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()), options.getUserArguments(),
                                     options.isDebug());

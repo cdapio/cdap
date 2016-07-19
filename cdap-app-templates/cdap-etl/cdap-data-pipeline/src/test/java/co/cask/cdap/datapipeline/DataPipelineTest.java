@@ -28,12 +28,15 @@ import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
+import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
+import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.Engine;
@@ -99,6 +102,83 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
+  public void testPipelineWithActionsMR() throws Exception {
+    testPipelineWithActions(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testPipelineWithActionsSpark() throws Exception {
+    testPipelineWithActions(Engine.SPARK);
+  }
+
+  private void testPipelineWithActions(Engine engine) throws Exception {
+    String actionTable = "actionTable-" + engine;
+    String action1RowKey = "action1.row";
+    String action1ColumnKey = "action1.column";
+    String action1Value = "action1.value";
+    String action2RowKey = "action2.row";
+    String action2ColumnKey = "action2.column";
+    String action2Value = "action2.value";
+    String action3RowKey = "action3.row";
+    String action3ColumnKey = "action3.column";
+    String action3Value = "action3.value";
+
+    String sourceName = "actionSource-" + engine;
+    String sinkName = "actionSink-" + engine;
+    String sourceTableName = "actionSourceTable-" + engine;
+    String sinkTableName = "actionSinkTable-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, action1RowKey, action1ColumnKey,
+                                                             action1Value)))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, action2RowKey, action2ColumnKey,
+                                                             action2Value)))
+      .addStage(new ETLStage("action3", MockAction.getPlugin(actionTable, action3RowKey, action3ColumnKey,
+                                                             action3Value)))
+      .addStage(new ETLStage(sourceName, MockSource.getPlugin(sourceTableName)))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(sinkTableName)))
+      .addConnection(sourceName, sinkName)
+      .addConnection("action1", "action2")
+      .addConnection("action2", sourceName)
+      .addConnection(sinkName, "action3")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MyApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    // write records to source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceTableName);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset(sinkTableName);
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    DataSetManager<Table> actionTableDS = getDataset(actionTable);
+    Assert.assertEquals(action1Value, MockAction.readOutput(actionTableDS, action1RowKey, action1ColumnKey));
+    Assert.assertEquals(action2Value, MockAction.readOutput(actionTableDS, action2RowKey, action2ColumnKey));
+    Assert.assertEquals(action3Value, MockAction.readOutput(actionTableDS, action3RowKey, action3ColumnKey));
+
+    validateMetric(2, appId, sourceName + ".records.out");
+    validateMetric(2, appId, sinkName + ".records.in");
+  }
+
+  @Test
   public void testSinglePhase() throws Exception {
     /*
      * source --> sink
@@ -139,18 +219,31 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testSimpleMultiSource() throws Exception {
+  public void testMapRedSimpleMultipleSource() throws Exception {
+    testSimpleMultiSource(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testSparkSimpleMultipleSource() throws Exception {
+    testSimpleMultiSource(Engine.SPARK);
+  }
+
+  private void testSimpleMultiSource(Engine engine) throws Exception {
     /*
      * source1 --|
      *           |--> sink
      * source2 --|
      */
+    String source1Name = String.format("simpleMSInput1-%s", engine);
+    String source2Name = String.format("simpleMSInput2-%s", engine);
+    String sinkName = String.format("simpleMSOutput-%s", engine);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin("simpleMSInput1")))
-      .addStage(new ETLStage("source2", MockSource.getPlugin("simpleMSInput2")))
-      .addStage(new ETLStage("sink", MockSink.getPlugin("simpleMSOutput")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
       .addConnection("source1", "sink")
       .addConnection("source2", "sink")
+      .setEngine(engine)
       .build();
 
 
@@ -158,6 +251,8 @@ public class DataPipelineTest extends HydratorTestBase {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SimpleMultiSourceApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    // there should be only two programs - one workflow and one mapreduce/spark
+    Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
     Schema schema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
@@ -166,9 +261,9 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "simpleMSInput1");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "simpleMSInput2");
+    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -176,7 +271,7 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // check sink
-    DataSetManager<Table> sinkManager = getDataset("simpleMSOutput");
+    DataSetManager<Table> sinkManager = getDataset(sinkName);
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
@@ -187,7 +282,16 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testMultiSource() throws Exception {
+  public void testMapRedMultiSource() throws Exception {
+    testMultiSource(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testSparkMultiSource() throws Exception {
+    testMultiSource(Engine.SPARK);
+  }
+
+  private void testMultiSource(Engine engine) throws Exception {
     /*
      * source1 --|                 |--> sink1
      *           |--> transform1 --|
@@ -197,26 +301,34 @@ public class DataPipelineTest extends HydratorTestBase {
      *                                     |
      * source3 ----------------------------|
      */
+    String source1Name = String.format("msInput1-%s", engine);
+    String source2Name = String.format("msInput2-%s", engine);
+    String source3Name = String.format("msInput3-%s", engine);
+    String sink1Name = String.format("msOutput1-%s", engine);
+    String sink2Name = String.format("msOutput2-%s", engine);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin("msInput1")))
-      .addStage(new ETLStage("source2", MockSource.getPlugin("msInput2")))
-      .addStage(new ETLStage("source3", MockSource.getPlugin("msInput3")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(source3Name)))
       .addStage(new ETLStage("transform1", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("transform2", IdentityTransform.getPlugin()))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin("msOutput1")))
-      .addStage(new ETLStage("sink2", MockSink.getPlugin("msOutput2")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
       .addConnection("source1", "transform1")
       .addConnection("source2", "transform1")
       .addConnection("transform1", "sink1")
       .addConnection("transform1", "transform2")
       .addConnection("transform2", "sink2")
       .addConnection("source3", "transform2")
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MultiSourceApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    // there should be only two programs - one workflow and one mapreduce/spark
+    Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
     Schema schema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
@@ -227,11 +339,11 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "msInput1");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "msInput2");
+    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
-    inputManager = getDataset(Id.Namespace.DEFAULT, "msInput3");
+    inputManager = getDataset(Id.Namespace.DEFAULT, source3Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -239,13 +351,13 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // sink1 should get records from source1 and source2
-    DataSetManager<Table> sinkManager = getDataset("msOutput1");
+    DataSetManager<Table> sinkManager = getDataset(sink1Name);
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
     // sink2 should get all records
-    sinkManager = getDataset("msOutput2");
+    sinkManager = getDataset(sink2Name);
     expected = ImmutableSet.of(recordSamuel, recordBob, recordJane);
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
@@ -342,23 +454,27 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   private void testParallelAggregators(Engine engine) throws Exception {
-    String sourceName = "pAggInput-" + engine.name();
+    String source1Name = "pAggInput1-" + engine.name();
+    String source2Name = "pAggInput2-" + engine.name();
     String sink1Name = "pAggOutput1-" + engine.name();
     String sink2Name = "pAggOutput2-" + engine.name();
     /*
-                 |--> agg1 --> sink1
-        source --|
-                 |--> agg2 --> sink2
+       source1 --|--> agg1 --> sink1
+                 |
+       source2 --|--> agg2 --> sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .setEngine(engine)
-      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
       .addStage(new ETLStage("agg1", FieldCountAggregator.getPlugin("user", "string")))
       .addStage(new ETLStage("agg2", FieldCountAggregator.getPlugin("item", "long")))
-      .addConnection("source", "agg1")
-      .addConnection("source", "agg2")
+      .addConnection("source1", "agg1")
+      .addConnection("source1", "agg2")
+      .addConnection("source2", "agg1")
+      .addConnection("source2", "agg2")
       .addConnection("agg1", "sink1")
       .addConnection("agg2", "sink2")
       .build();
@@ -366,22 +482,23 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ParallelAggApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
-
     Schema inputSchema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("item", Schema.of(Schema.Type.LONG))
     );
 
-    // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceName);
+    // write few records to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 1L).build(),
-      StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build(),
+      StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build()));
+
+    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
+    MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 3L).build(),
       StructuredRecord.builder(inputSchema).set("user", "john").set("item", 4L).build(),
-      StructuredRecord.builder(inputSchema).set("user", "john").set("item", 3L).build()
-    ));
+      StructuredRecord.builder(inputSchema).set("user", "john").set("item", 3L).build()));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
@@ -417,7 +534,8 @@ public class DataPipelineTest extends HydratorTestBase {
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    validateMetric(5, appId, "source.records.out");
+    validateMetric(2, appId, "source1.records.out");
+    validateMetric(3, appId, "source2.records.out");
     validateMetric(5, appId, "agg1.records.in");
     // 2 users, but FieldCountAggregator always emits an 'all' group
     validateMetric(3, appId, "agg1.aggregator.groups");
@@ -476,10 +594,13 @@ public class DataPipelineTest extends HydratorTestBase {
 
   private void testSinglePhaseWithSparkSink() throws Exception {
     /*
-     * source --> sparksink
+     * source1 ---|
+     *            |--> sparksink
+     * source2 ---|
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin("messages")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin("messages1")))
+      .addStage(new ETLStage("source2", MockSource.getPlugin("messages2")))
       .addStage(new ETLStage("customsink",
                              new ETLPlugin(NaiveBayesTrainer.PLUGIN_NAME, SparkSink.PLUGIN_TYPE,
                                            ImmutableMap.of("fileSetName", "modelFileSet",
@@ -487,7 +608,8 @@ public class DataPipelineTest extends HydratorTestBase {
                                                            "fieldToClassify", SpamMessage.TEXT_FIELD,
                                                            "predictionField", SpamMessage.SPAM_PREDICTION_FIELD),
                                            null)))
-      .addConnection("source", "customsink")
+      .addConnection("source1", "customsink")
+      .addConnection("source2", "customsink")
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -502,14 +624,20 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("earn money for free", 1.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("this is definitely not spam", 1.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("you won the lottery", 1.0).toStructuredRecord());
+
+    // write records to source1
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "messages1");
+    MockSource.writeInput(inputManager, messagesToWrite);
+
+    messagesToWrite.clear();
     messagesToWrite.add(new SpamMessage("how was your day", 0.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("what are you up to", 0.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("this is a genuine message", 0.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("this is an even more genuine message", 0.0).toStructuredRecord());
     messagesToWrite.add(new SpamMessage("could you send me the report", 0.0).toStructuredRecord());
 
-    // write records to source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "messages");
+    // write records to source2
+    inputManager = getDataset(Id.Namespace.DEFAULT, "messages2");
     MockSource.writeInput(inputManager, messagesToWrite);
 
     // ingest in some messages to be classified
@@ -520,7 +648,7 @@ public class DataPipelineTest extends HydratorTestBase {
     textsToClassify.send("genuine report");
 
     // manually trigger the pipeline
-    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
@@ -533,7 +661,8 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("what are you doing today")), 0.01d);
     Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("genuine report")), 0.01d);
 
-    validateMetric(10, appId, "source.records.out");
+    validateMetric(5, appId, "source1.records.out");
+    validateMetric(5, appId, "source2.records.out");
     validateMetric(10, appId, "customsink.records.in");
   }
 
@@ -547,7 +676,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("source", MockSource.getPlugin(NaiveBayesTrainer.TEXTS_TO_CLASSIFY)))
       .addStage(new ETLStage("sparkcompute",
                              new ETLPlugin(NaiveBayesClassifier.PLUGIN_NAME, SparkCompute.PLUGIN_TYPE,
-                                           ImmutableMap.of("fileSetName", "modelFileSet"  ,
+                                           ImmutableMap.of("fileSetName", "modelFileSet",
                                                            "path", "output",
                                                            "fieldToClassify", SpamMessage.TEXT_FIELD,
                                                            "fieldToSet", SpamMessage.SPAM_PREDICTION_FIELD),
@@ -599,6 +728,418 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(4, appId, "source.records.out");
     validateMetric(4, appId, "sparkcompute.records.in");
     validateMetric(4, appId, "sink.records.in");
+  }
+
+  @Test
+  public void testInnerJoinMR() throws Exception {
+    testInnerJoin(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testInnerJoinSpark() throws Exception {
+    testInnerJoin(Engine.SPARK);
+  }
+
+  public void testInnerJoin(Engine engine) throws Exception {
+    Schema inputSchema1 = Schema.recordOf(
+      "customerRecord",
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema2 = Schema.recordOf(
+      "itemRecord",
+      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_price", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("cust_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema3 = Schema.recordOf(
+      "transactionRecord",
+      Schema.Field.of("t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("c_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("c_name", Schema.of(Schema.Type.STRING))
+    );
+
+    String input1Name = "source1InnerJoinInput-" + engine;
+    String input2Name = "source2InnerJoinInput-" + engine;
+    String input3Name = "source3InnerJoinInput-" + engine;
+    String outputName = "innerJoinOutput-" + engine;
+    String joinerName = "innerJoiner-" + engine;
+    String sinkName = "innerJoinSink-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name)))
+      .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
+      .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
+      .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
+      .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
+                                                                  "t1.customer_name=t2.cust_name=t3.c_name",
+                                                                "t1,t2,t3", "")))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
+      .addConnection("source1", "t1")
+      .addConnection("source2", "t2")
+      .addConnection("source3", "t3")
+      .addConnection("t1", joinerName)
+      .addConnection("t2", joinerName)
+      .addConnection("t3", joinerName)
+      .addConnection(joinerName, sinkName)
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JoinerApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema outSchema = Schema.recordOf(
+      "join.output",
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_price", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("cust_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("c_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("c_name", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1).set("customer_id", "1")
+      .set("customer_name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema1).set("customer_id", "2")
+      .set("customer_name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema1).set("customer_id", "3")
+      .set("customer_name", "jane").build();
+
+    StructuredRecord recordCar = StructuredRecord.builder(inputSchema2).set("item_id", "11").set("item_price", 10000L)
+      .set("cust_id", "1").set("cust_name", "samuel").build();
+    StructuredRecord recordBike = StructuredRecord.builder(inputSchema2).set("item_id", "22").set("item_price", 100L)
+      .set("cust_id", "3").set("cust_name", "jane").build();
+
+    StructuredRecord recordTrasCar = StructuredRecord.builder(inputSchema3).set("t_id", "1").set("c_id", "1")
+      .set("c_name", "samuel").build();
+    StructuredRecord recordTrasBike = StructuredRecord.builder(inputSchema3).set("t_id", "2").set("c_id", "3")
+      .set("c_name", "jane").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, input1Name);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+    inputManager = getDataset(Id.Namespace.DEFAULT, input2Name);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
+    inputManager = getDataset(Id.Namespace.DEFAULT, input3Name);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+
+    StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema)
+      .set("customer_id", "1").set("customer_name", "samuel")
+      .set("item_id", "11").set("item_price", 10000L).set("cust_id", "1").set("cust_name", "samuel")
+      .set("t_id", "1").set("c_id", "1").set("c_name", "samuel").build();
+
+    StructuredRecord joinRecordJane = StructuredRecord.builder(outSchema)
+      .set("customer_id", "3").set("customer_name", "jane")
+      .set("item_id", "22").set("item_price", 100L).set("cust_id", "3").set("cust_name", "jane")
+      .set("t_id", "2").set("c_id", "3").set("c_name", "jane").build();
+
+    DataSetManager<Table> sinkManager = getDataset(outputName);
+    Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    validateMetric(2, appId, joinerName + ".records.out");
+    validateMetric(2, appId, sinkName + ".records.in");
+  }
+
+  @Test
+  public void testOuterJoinMR() throws Exception {
+    testOuterJoin(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testOuterJoinSpark() throws Exception {
+    testOuterJoin(Engine.SPARK);
+  }
+
+  public void testOuterJoin(Engine engine) throws Exception {
+    Schema inputSchema1 = Schema.recordOf(
+      "customerRecord",
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema2 = Schema.recordOf(
+      "itemRecord",
+      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_price", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("cust_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema3 = Schema.recordOf(
+      "transactionRecord",
+      Schema.Field.of("t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("c_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("c_name", Schema.of(Schema.Type.STRING))
+    );
+
+    String input1Name = "source1OuterJoinInput-" + engine;
+    String input2Name = "source2OuterJoinInput-" + engine;
+    String input3Name = "source3OuterJoinInput-" + engine;
+    String outputName = "outerJoinOutput-" + engine;
+    String joinerName = "outerJoiner-" + engine;
+    String sinkName = "outerJoinSink-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name)))
+      .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
+      .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
+      .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
+      .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
+                                                                  "t1.customer_name=t2.cust_name=t3.c_name", "t1", "")))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
+      .addConnection("source1", "t1")
+      .addConnection("source2", "t2")
+      .addConnection("source3", "t3")
+      .addConnection("t1", joinerName)
+      .addConnection("t2", joinerName)
+      .addConnection("t3", joinerName)
+      .addConnection(joinerName, sinkName)
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JoinerApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema outSchema = Schema.recordOf(
+      "join.output",
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("item_price", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+      Schema.Field.of("cust_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("cust_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("t_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("c_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("c_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1).set("customer_id", "1")
+      .set("customer_name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema1).set("customer_id", "2")
+      .set("customer_name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema1).set("customer_id", "3")
+      .set("customer_name", "jane").build();
+    StructuredRecord recordMartha = StructuredRecord.builder(inputSchema1).set("customer_id", "4")
+      .set("customer_name", "martha").build();
+
+    StructuredRecord recordCar = StructuredRecord.builder(inputSchema2).set("item_id", "11").set("item_price", 10000L)
+      .set("cust_id", "1").set("cust_name", "samuel").build();
+    StructuredRecord recordBike = StructuredRecord.builder(inputSchema2).set("item_id", "22").set("item_price", 100L)
+      .set("cust_id", "3").set("cust_name", "jane").build();
+
+    StructuredRecord recordTrasCar = StructuredRecord.builder(inputSchema3).set("t_id", "1").set("c_id", "1")
+      .set("c_name", "samuel").build();
+    StructuredRecord recordTrasPlane = StructuredRecord.builder(inputSchema3).set("t_id", "2").set("c_id", "2")
+      .set("c_name", "bob").build();
+    StructuredRecord recordTrasBike = StructuredRecord.builder(inputSchema3).set("t_id", "3").set("c_id", "3")
+      .set("c_name", "jane").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, input1Name);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane, recordMartha));
+    inputManager = getDataset(Id.Namespace.DEFAULT, input2Name);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
+    inputManager = getDataset(Id.Namespace.DEFAULT, input3Name);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasPlane, recordTrasBike));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+
+    StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema)
+      .set("customer_id", "1").set("customer_name", "samuel")
+      .set("item_id", "11").set("item_price", 10000L).set("cust_id", "1").set("cust_name", "samuel")
+      .set("t_id", "1").set("c_id", "1").set("c_name", "samuel").build();
+
+    StructuredRecord joinRecordBob = StructuredRecord.builder(outSchema)
+      .set("customer_id", "2").set("customer_name", "bob").set("t_id", "2")
+      .set("c_id", "2").set("c_name", "bob").build();
+
+    StructuredRecord joinRecordJane = StructuredRecord.builder(outSchema)
+      .set("customer_id", "3").set("customer_name", "jane")
+      .set("item_id", "22").set("item_price", 100L).set("cust_id", "3").set("cust_name", "jane")
+      .set("t_id", "3").set("c_id", "3").set("c_name", "jane").build();
+
+    StructuredRecord joinRecordMartha = StructuredRecord.builder(outSchema)
+      .set("customer_id", "4").set("customer_name", "martha").build();
+
+    DataSetManager<Table> sinkManager = getDataset(outputName);
+    Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane, joinRecordBob, joinRecordMartha);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    validateMetric(4, appId, joinerName + ".records.out");
+    validateMetric(4, appId, sinkName + ".records.in");
+  }
+
+  @Test
+  public void testMultiPhaseJoinerMR() throws Exception {
+    testMultipleJoiner(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testMultipleJoinerSpark() throws Exception {
+    testMultipleJoiner(Engine.SPARK);
+  }
+
+  private void testMultipleJoiner(Engine engine) throws Exception {
+    /*
+     * source1 ----> t1 ------
+     *                        | --> innerjoin ----> t4 ------
+     * source2 ----> t2 ------                                 |
+     *                                                         | ---> outerjoin --> sink1
+     *                                                         |
+     * source3 -------------------- t3 ------------------------
+     */
+
+    Schema inputSchema1 = Schema.recordOf(
+      "customerRecord",
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema2 = Schema.recordOf(
+      "itemRecord",
+      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_price", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("cust_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema3 = Schema.recordOf(
+      "transactionRecord",
+      Schema.Field.of("t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("c_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("i_id", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema outSchema1 = Schema.recordOf(
+      "join.output",
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_price", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("cust_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema outSchema2 = Schema.recordOf(
+      "join.output",
+      Schema.Field.of("t_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("c_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("i_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("customer_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("customer_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("item_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("item_price", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+      Schema.Field.of("cust_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("cust_name", Schema.nullableOf(Schema.of(Schema.Type.STRING)))
+    );
+
+    String source1MulitJoinInput = "multiJoinSource1-" + engine;
+    String source2MultiJoinInput = "multiJoinSource2-" + engine;
+    String source3MultiJoinInput = "multiJoinSource3-" + engine;
+    String outputName = "multiJoinOutput-" + engine;
+    String sinkName = "multiJoinOutputSink-" + engine;
+    String outerJoinName = "multiJoinOuter-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1MulitJoinInput)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2MultiJoinInput)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(source3MultiJoinInput)))
+      .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
+      .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
+      .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
+      .addStage(new ETLStage("t4", FieldsPrefixTransform.getPlugin("", outSchema1.toString())))
+      .addStage(new ETLStage("innerjoin", MockJoiner.getPlugin("t1.customer_id=t2.cust_id",
+                                                               "t1,t2", "")))
+      .addStage(new ETLStage(outerJoinName, MockJoiner.getPlugin("t4.item_id=t3.i_id",
+                                                               "", "")))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
+      .addConnection("source1", "t1")
+      .addConnection("source2", "t2")
+      .addConnection("source3", "t3")
+      .addConnection("t1", "innerjoin")
+      .addConnection("t2", "innerjoin")
+      .addConnection("innerjoin", "t4")
+      .addConnection("t3", outerJoinName)
+      .addConnection("t4", outerJoinName)
+      .addConnection(outerJoinName, sinkName)
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JoinerApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1).set("customer_id", "1")
+      .set("customer_name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema1).set("customer_id", "2")
+      .set("customer_name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema1).set("customer_id", "3")
+      .set("customer_name", "jane").build();
+
+    StructuredRecord recordCar = StructuredRecord.builder(inputSchema2).set("item_id", "11").set("item_price", 10000L)
+      .set("cust_id", "1").set("cust_name", "samuel").build();
+    StructuredRecord recordBike = StructuredRecord.builder(inputSchema2).set("item_id", "22").set("item_price", 100L)
+      .set("cust_id", "3").set("cust_name", "jane").build();
+
+    StructuredRecord recordTrasCar = StructuredRecord.builder(inputSchema3).set("t_id", "1").set("c_id", "1")
+      .set("i_id", "11").build();
+    StructuredRecord recordTrasBike = StructuredRecord.builder(inputSchema3).set("t_id", "2").set("c_id", "3")
+      .set("i_id", "22").build();
+    StructuredRecord recordTrasPlane = StructuredRecord.builder(inputSchema3).set("t_id", "3").set("c_id", "4")
+      .set("i_id", "33").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1MulitJoinInput);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+    inputManager = getDataset(Id.Namespace.DEFAULT, source2MultiJoinInput);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
+    inputManager = getDataset(Id.Namespace.DEFAULT, source3MultiJoinInput);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike, recordTrasPlane));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+
+    StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema2)
+      .set("customer_id", "1").set("customer_name", "samuel")
+      .set("item_id", "11").set("item_price", 10000L).set("cust_id", "1").set("cust_name", "samuel")
+      .set("t_id", "1").set("c_id", "1").set("i_id", "11").build();
+
+    StructuredRecord joinRecordJane = StructuredRecord.builder(outSchema2)
+      .set("customer_id", "3").set("customer_name", "jane")
+      .set("item_id", "22").set("item_price", 100L).set("cust_id", "3").set("cust_name", "jane")
+      .set("t_id", "2").set("c_id", "3").set("i_id", "22").build();
+
+    StructuredRecord joinRecordPlane = StructuredRecord.builder(outSchema2)
+      .set("t_id", "3").set("c_id", "4").set("i_id", "33").build();
+
+    DataSetManager<Table> sinkManager = getDataset(outputName);
+    Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane, joinRecordPlane);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    validateMetric(3, appId, outerJoinName + ".records.out");
+    validateMetric(3, appId, sinkName + ".records.in");
   }
 
   private void validateMetric(long expected, Id.Application appId,

@@ -28,6 +28,9 @@ angular.module(PKG.name + '.commons')
         var fnConfig = $scope.fnConfig;
         var methodName = fnConfig['plugin-method'] || 'getSchema';
         var methodType = fnConfig.method || 'GET';
+        vm.label = fnConfig['label'] || 'Get Schema';
+        vm.btnClass = fnConfig['button-class'] || 'btn-default';
+
         var getPluginMethodApi = function(methodType) {
           switch(methodType) {
             case 'POST':
@@ -43,6 +46,7 @@ angular.module(PKG.name + '.commons')
         var pluginMethodApi = getPluginMethodApi(methodType);
         vm.node = $scope.node;
         var getRequiredFields = function() {
+          if (!fnConfig['required-fields']) { return []; }
           return fnConfig['required-fields'].map( function(field) { return $scope.node.plugin.properties[field]; } );
         };
         vm.requiredProperties = getRequiredFields();
@@ -54,8 +58,7 @@ angular.module(PKG.name + '.commons')
         vm.openModal = function () {
           var modal = $uibModal.open({
             templateUrl: 'plugin-functions/functions/output-schema/output-schema-modal.html',
-            size: 'lg',
-            windowTopClass: 'hydrator-modal output-schema-modal',
+            windowClass: 'hydrator-modal node-config-modal',
             keyboard: true,
             controller: function ($scope, nodeInfo, $state, HydratorPlusPlusHydratorService) {
               var mvm = this;
@@ -65,7 +68,25 @@ angular.module(PKG.name + '.commons')
               mvm.fetchSchema = function () {
                 var config = mvm.node.plugin.properties;
                 // This is lame where we stringify the input schema from the formatOutputSchema function but again parse it here to send it as an object to the backend.
-                config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(nodeInfo.inputSchema));
+                if (!fnConfig['multiple-inputs'] || fnConfig['multiple-inputs'] === 'false') {
+                  var firstNode = nodeInfo.inputSchema[0];
+                  var fields;
+                  try {
+                    fields = JSON.parse(firstNode.schema).fields || [];
+                    config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(fields));
+                  } catch(e) {
+                    config.inputSchema = '';
+                  }
+                } else {
+                  var obj = {};
+
+                  angular.forEach(nodeInfo.inputSchema, (input) => {
+                    obj[input.name] = JSON.parse(input.schema);
+                  });
+
+                  config.inputSchemas = obj;
+                }
+
                 mvm.showLoading = true;
 
                 var params = {
@@ -83,7 +104,8 @@ angular.module(PKG.name + '.commons')
                   .$promise
                   .then(function (res) {
                     mvm.error = null;
-                    mvm.resolvedSchema = res.fields;
+
+                    mvm.resolvedSchema = angular.copy(res.fields);
                     mvm.schema = res.fields.filter(function (field) {
                       if (angular.isArray(field.type)) {
                         field.type = field.type[0];
@@ -105,8 +127,7 @@ angular.module(PKG.name + '.commons')
 
               mvm.apply = function () {
                 $scope.$close({
-                  schema: mvm.resolvedSchema,
-                  query: mvm.query
+                  schema: mvm.resolvedSchema
                 });
               };
 
@@ -121,7 +142,6 @@ angular.module(PKG.name + '.commons')
 
           modal.result.then(function (obj) {
             EventPipe.emit('schema.import', JSON.stringify(obj.schema));
-            $scope.node.plugin.properties.importQuery = obj.query;
           });
         };
 

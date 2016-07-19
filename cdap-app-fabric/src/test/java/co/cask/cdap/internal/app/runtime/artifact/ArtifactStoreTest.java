@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
@@ -31,6 +29,8 @@ import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClass;
+import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -531,27 +531,27 @@ public class ArtifactStoreTest {
     PluginClass pluginA1 = new PluginClass(
       "A", "p1", "desc", "c.p1", "cfg",
       ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true),
-        "retry", new PluginPropertyField("retries", "description", "int", false)
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
       )
     );
     PluginClass pluginA2 = new PluginClass(
       "A", "p2", "desc", "c.p2", "conf",
       ImmutableMap.of(
-        "stream", new PluginPropertyField("stream", "description", "string", true)
+        "stream", new PluginPropertyField("stream", "description", "string", true, false)
       )
     );
     PluginClass pluginB1 = new PluginClass(
       "B", "p1", "desc", "c.p1", "cfg",
       ImmutableMap.of(
-        "createIfNotExist", new PluginPropertyField("createIfNotExist", "desc", "boolean", false)
+        "createIfNotExist", new PluginPropertyField("createIfNotExist", "desc", "boolean", false, false)
       )
     );
     PluginClass pluginB2 = new PluginClass(
       "B", "p2", "desc", "c.p2", "stuff",
       ImmutableMap.of(
-        "numer", new PluginPropertyField("numerator", "description", "double", true),
-        "denom", new PluginPropertyField("denominator", "description", "double", true)
+        "numer", new PluginPropertyField("numerator", "description", "double", true, false),
+        "denom", new PluginPropertyField("denominator", "description", "double", true, false)
       )
     );
 

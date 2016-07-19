@@ -36,6 +36,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -79,7 +80,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
     byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
 
-    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
+    TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
+    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(hBaseTableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
     hcd.setMaxVersions(1);
@@ -87,10 +89,10 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     htd.addFamily(hcd);
     htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
 
-    tableUtil.createTableIfNotExists(getAdmin(), tableId, htd.build(), splitKeys,
+    tableUtil.createTableIfNotExists(getAdmin(), hBaseTableId, htd.build(), splitKeys,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
 
-    HTable hTable = tableUtil.createHTable(hConf, tableId);
+    HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
 
@@ -102,8 +104,9 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   @Override
   protected void dropTable(TableId tableId) throws IOException {
     HBaseAdmin admin = getAdmin();
-    if (tableUtil.tableExists(admin, tableId)) {
-      tableUtil.dropTable(admin, tableId);
+    TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
+    if (tableUtil.tableExists(admin, hBaseTableId)) {
+      tableUtil.dropTable(admin, hBaseTableId);
     }
   }
 

@@ -15,6 +15,9 @@
  */
 
 angular.module(`${PKG.name}.commons`)
+  .factory('d3', function ($window) {
+    return $window.d3;
+  })
   .factory('c3', function ($window) {
     return $window.c3;
   })
@@ -29,4 +32,10 @@ angular.module(`${PKG.name}.commons`)
   })
   .factory('esprima', function ($window) {
     return $window.esprima;
+  })
+  .factory('avsc', function ($window) {
+    return $window.avsc;
+  })
+  .factory('moment', function($window) {
+    return $window.moment;
   });

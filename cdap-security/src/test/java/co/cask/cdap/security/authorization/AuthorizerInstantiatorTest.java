@@ -16,41 +16,22 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.test.AppJarHelper;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.proto.security.Role;
-import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
-import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
-import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -60,32 +41,7 @@ import javax.annotation.Nullable;
 /**
  * Tests for {@link AuthorizerInstantiator}.
  */
-public class AuthorizerInstantiatorTest {
-
-  @ClassRule
-  public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
-  private static final CConfiguration cConf = CConfiguration.create();
-  private static final AuthorizationContextFactory factory = new AuthorizationContextFactory() {
-    @Override
-    public AuthorizationContext create(Properties extensionProperties) {
-      Transactional txnl = new Transactional() {
-        @Override
-        public void execute(TxRunnable runnable) throws TransactionFailureException {
-          //no-op
-        }
-      };
-      return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(), txnl);
-    }
-  };
-  private static LocationFactory locationFactory;
-
-  @BeforeClass
-  public static void setup() throws IOException {
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
-    cConf.setBoolean(Constants.Security.ENABLED, true);
-    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
-  }
+public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
 
   @Test
   public void testAuthenticationDisabled() throws IOException {
@@ -104,7 +60,7 @@ public class AuthorizerInstantiatorTest {
   }
 
   private void assertDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature) throws IOException {
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = instantiator.get();
       Assert.assertTrue(
         String.format("When %s is disabled, a %s must be returned, but got %s.",
@@ -117,8 +73,8 @@ public class AuthorizerInstantiatorTest {
 
   @Test(expected = InvalidAuthorizerException.class)
   public void testNonExistingAuthorizerJarPath() throws Throwable {
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, "/path/to/external-test-authorizer.jar");
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, "/path/to/external-test-authorizer.jar");
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
       Assert.fail("Instantiation of Authorizer should have failed because extension jar does not exist.");
     } catch (Throwable e) {
@@ -128,8 +84,8 @@ public class AuthorizerInstantiatorTest {
 
   @Test(expected = InvalidAuthorizerException.class)
   public void testAuthorizerJarPathIsDirectory() throws Throwable {
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFolder().getPath());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFolder().getPath());
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
       Assert.fail("Instantiation of Authorizer should have failed because extension jar is a directory");
     } catch (Throwable e) {
@@ -139,8 +95,8 @@ public class AuthorizerInstantiatorTest {
 
   @Test(expected = InvalidAuthorizerException.class)
   public void testAuthorizerJarPathIsNotJar() throws Throwable {
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFile("abc.txt").getPath());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFile("abc.txt").getPath());
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
       Assert.fail("Instantiation of Authorizer should have failed because extension jar is not a jar file");
     } catch (Throwable e) {
@@ -151,8 +107,8 @@ public class AuthorizerInstantiatorTest {
   @Test(expected = InvalidAuthorizerException.class)
   public void testMissingManifest() throws Throwable {
     Location externalAuthJar = createInvalidExternalAuthJar(null);
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
       Assert.fail("Instantiation of Authorizer should have failed because extension jar does not have a manifest");
     } catch (Throwable e) {
@@ -165,8 +121,8 @@ public class AuthorizerInstantiatorTest {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     Location externalAuthJar = createInvalidExternalAuthJar(manifest);
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
       Assert.fail("Instantiation of Authorizer should have failed because extension jar's manifest does not define" +
                     " Authorizer class.");
@@ -182,8 +138,8 @@ public class AuthorizerInstantiatorTest {
     mainAttributes.put(Attributes.Name.MAIN_CLASS, DoesNotImplementAuthorizer.class.getName());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, DoesNotImplementAuthorizer.class,
                                                                 manifest);
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
       Assert.fail("Instantiation of Authorizer should have failed because the Authorizer class defined in the" +
                     " extension jar's manifest does not implement " + Authorizer.class.getName());
@@ -199,8 +155,8 @@ public class AuthorizerInstantiatorTest {
     mainAttributes.put(Attributes.Name.MAIN_CLASS, ExceptionInInitialize.class.getName());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ExceptionInInitialize.class,
                                                                 manifest);
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
       Assert.fail("Instantiation of Authorizer should have failed because the Authorizer class defined in " +
                     "the extension jar's manifest does not implement " + Authorizer.class.getName());
@@ -215,7 +171,7 @@ public class AuthorizerInstantiatorTest {
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, ValidExternalAuthorizer.class.getName());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ValidExternalAuthorizer.class,
                                                                 manifest);
-    CConfiguration cConfCopy = CConfiguration.copy(cConf);
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "config.path",
                   "/path/config.ini");
@@ -223,7 +179,7 @@ public class AuthorizerInstantiatorTest {
                   "http://foo.bar.co:5555");
     cConfCopy.set("foo." + Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "dont.include",
                   "not.prefix.should.not.be.included");
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConfCopy, factory)) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       // should be able to load the ExternalAuthorizer class via the AuthorizerInstantiatorService
       Authorizer externalAuthorizer1 = instantiator.get();
       Assert.assertNotNull(externalAuthorizer1);
@@ -274,72 +230,14 @@ public class AuthorizerInstantiatorTest {
     return externalAuthJar;
   }
 
-  public static class NoOpAbstractAuthorizer extends AbstractAuthorizer {
-
-    @Override
-    public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-      // no-op
-    }
-
-    @Override
-    public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-      // no-op
-    }
-
-    @Override
-    public void revoke(EntityId entity) {
-      // no-op
-    }
-
-    @Override
-    public Set<Privilege> listPrivileges(Principal principal) {
-      return ImmutableSet.of();
-    }
-
-    @Override
-    public void createRole(Role role) throws RoleAlreadyExistsException {
-      // no-op
-    }
-
-    @Override
-    public void dropRole(Role role) throws RoleNotFoundException {
-      // no-op
-    }
-
-    @Override
-    public void addRoleToPrincipal(Role role, Principal principal) {
-      // no-op
-    }
-
-    @Override
-    public void removeRoleFromPrincipal(Role role, Principal principal) {
-      // no-op
-    }
-
-    @Override
-    public Set<Role> listRoles(Principal principal) {
-      return ImmutableSet.of();
-    }
-
-    @Override
-    public Set<Role> listAllRoles() {
-      return ImmutableSet.of();
-    }
-
-    @Override
-    public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
-      // no-op
-    }
-  }
-
-  public static final class ExceptionInInitialize extends NoOpAbstractAuthorizer {
+  public static final class ExceptionInInitialize extends NoOpAuthorizer {
     @Override
     public void initialize(AuthorizationContext context) throws Exception {
       throw new IllegalStateException("Testing exception during initialize");
     }
   }
 
-  public static final class ValidExternalAuthorizer extends NoOpAbstractAuthorizer {
+  public static final class ValidExternalAuthorizer extends NoOpAuthorizer {
     private Properties properties;
     @Override
     public void initialize(AuthorizationContext context) throws Exception {

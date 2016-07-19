@@ -22,7 +22,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -59,8 +61,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.store.NamespaceStore;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
@@ -98,6 +99,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.ws.rs.HttpMethod;
 
 /**
@@ -137,9 +139,10 @@ public class BaseHiveExploreServiceTest {
   protected static StreamService streamService;
   protected static ExploreClient exploreClient;
   protected static ExploreTableManager exploreTableManager;
+  protected static NamespaceAdmin namespaceAdmin;
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
-  private static NamespaceStore namespaceStore;
+  private static NamespacedLocationFactory namespacedLocationFactory;
 
   protected static Injector injector;
 
@@ -190,17 +193,17 @@ public class BaseHiveExploreServiceTest {
 
     streamAdmin = injector.getInstance(StreamAdmin.class);
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
-    namespaceStore = injector.getInstance(NamespaceStore.class);
+
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
     // create namespaces
-    namespaceStore.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
-    namespaceStore.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
-    namespaceStore.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
-    datasetFramework.createNamespace(Id.Namespace.DEFAULT);
-    datasetFramework.createNamespace(NAMESPACE_ID);
-    datasetFramework.createNamespace(OTHER_NAMESPACE_ID);
+    createNamespace(NamespaceId.DEFAULT);
+    createNamespace(NAMESPACE_ID.toEntityId());
+    createNamespace(OTHER_NAMESPACE_ID.toEntityId());
+
   }
 
   @AfterClass
@@ -210,12 +213,9 @@ public class BaseHiveExploreServiceTest {
     }
 
     // Delete namespaces
-    namespaceStore.delete(Id.Namespace.DEFAULT);
-    namespaceStore.delete(NAMESPACE_ID);
-    namespaceStore.delete(OTHER_NAMESPACE_ID);
-    datasetFramework.deleteNamespace(Id.Namespace.DEFAULT);
-    datasetFramework.deleteNamespace(NAMESPACE_ID);
-    datasetFramework.deleteNamespace(OTHER_NAMESPACE_ID);
+    deleteNamespace(NamespaceId.DEFAULT);
+    deleteNamespace(NAMESPACE_ID.toEntityId());
+    deleteNamespace(OTHER_NAMESPACE_ID.toEntityId());
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
     notificationService.stopAndWait();
@@ -224,6 +224,28 @@ public class BaseHiveExploreServiceTest {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     transactionManager.stopAndWait();
+  }
+
+  /**
+   * Create a namespace because app fabric is not started in explore tests.
+   */
+  protected static void createNamespace(NamespaceId namespaceId) throws Exception {
+    namespacedLocationFactory.get(namespaceId.toId()).mkdirs();
+    if (!NamespaceId.DEFAULT.equals(namespaceId)) {
+      exploreService.createNamespace(namespaceId.toId());
+    }
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId.toId()).build());
+  }
+
+  /**
+   * Delete a namespace because app fabric is not started in explore tests.
+   */
+  protected static void deleteNamespace(NamespaceId namespaceId) throws Exception {
+    namespacedLocationFactory.get(namespaceId.toId()).delete(true);
+    namespaceAdmin.delete(namespaceId.toId());
+    if (!NamespaceId.DEFAULT.equals(namespaceId)) {
+      exploreService.deleteNamespace(namespaceId.toId());
+    }
   }
 
   protected static String getDatasetHiveName(Id.DatasetInstance datasetID) {
@@ -259,15 +281,20 @@ public class BaseHiveExploreServiceTest {
   }
 
   protected static void assertStatementResult(ListenableFuture<ExploreExecutionResult> future,
-                                              boolean expectedHasResult, List<ColumnDesc> expectedColumnDescs,
-                                              List<QueryResult> expectedResults)
+                                              boolean expectedHasResult,
+                                              @Nullable List<ColumnDesc> expectedColumnDescs,
+                                              @Nullable List<QueryResult> expectedResults)
     throws Exception {
     ExploreExecutionResult results = future.get();
 
     Assert.assertEquals(expectedHasResult, results.hasNext());
 
-    Assert.assertEquals(expectedColumnDescs, results.getResultSchema());
-    Assert.assertEquals(expectedResults, trimColumnValues(results));
+    if (expectedColumnDescs != null) {
+      Assert.assertEquals(expectedColumnDescs, results.getResultSchema());
+    }
+    if (expectedResults != null) {
+      Assert.assertEquals(expectedResults, trimColumnValues(results));
+    }
 
     results.close();
   }
@@ -348,6 +375,7 @@ public class BaseHiveExploreServiceTest {
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf,
                                                     TemporaryFolder tmpFolder) throws IOException {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
+    configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     configuration.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
     configuration.set(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, tmpFolder.newFolder("tx").getAbsolutePath());
     configuration.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
@@ -356,7 +384,7 @@ public class BaseHiveExploreServiceTest {
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -367,7 +395,6 @@ public class BaseHiveExploreServiceTest {
       new StreamAdminModules().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
-      new NamespaceStoreModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -413,7 +440,7 @@ public class BaseHiveExploreServiceTest {
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
-      new LocationRuntimeModule().getStandaloneModules(),
+      new LocationUnitTestModule().getModule(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),
@@ -424,8 +451,10 @@ public class BaseHiveExploreServiceTest {
       new ViewAdminModules().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
+      // Bind NamespaceClient to in memory module since the standalone module is delegating which will need a binding
+      // for namespace admin to default namespace admin which needs a lot more stuff than what is needed for explore
+      // unit tests. Since this explore standalone module needs persistent of files this should not affect the tests.
       new NamespaceClientRuntimeModule().getInMemoryModules(),
-      new NamespaceStoreModule().getStandaloneModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

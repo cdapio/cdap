@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -32,12 +32,12 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistries;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.TypeConflictException;
-import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -46,13 +46,15 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -64,6 +66,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -89,9 +94,8 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final DynamicDatasetCache datasetCache;
 
   private final Map<String, DatasetModule> defaultModules;
-  private final boolean allowDatasetUncheckedUpgrade;
-
   private final Map<String, DatasetModule> extensionModules;
+  private final Path systemTempPath;
 
   @Inject
   public DatasetTypeManager(CConfiguration cConf,
@@ -104,7 +108,6 @@ public class DatasetTypeManager extends AbstractIdleService {
     this.locationFactory = locationFactory;
     this.txClientService = txClientService;
     this.defaultModules = new LinkedHashMap<>(defaultModules);
-    this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
     this.extensionModules = getExtensionModules(cConf);
     this.txExecutorFactory = txExecutorFactory;
     this.datasetFramework = datasetFramework;
@@ -116,6 +119,8 @@ public class DatasetTypeManager extends AbstractIdleService {
                                                       DatasetMetaTableUtil.META_TABLE_NAME, emptyArgs,
                                                       DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
                                                     ));
+    this.systemTempPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                    cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
   }
 
   @Override
@@ -163,8 +168,11 @@ public class DatasetTypeManager extends AbstractIdleService {
    * @param datasetModuleId the {@link Id.DatasetModule} to add
    * @param className module class
    * @param jarLocation location of the module jar
+   * @param force if true, an update will be allowed even if there are conflicts with other modules, or if
+   *                     removal of a type would break other modules' dependencies.
    */
-  public void addModule(final Id.DatasetModule datasetModuleId, final String className, final Location jarLocation)
+  public void addModule(final Id.DatasetModule datasetModuleId, final String className, final Location jarLocation,
+                        final boolean force)
     throws DatasetModuleConflictException {
 
     LOG.debug("adding module: {}, className: {}, jarLocation: {}",
@@ -172,42 +180,75 @@ public class DatasetTypeManager extends AbstractIdleService {
 
     try {
       final DatasetTypeMDS datasetTypeMDS = datasetCache.getDataset(DatasetMetaTableUtil.META_TABLE_NAME);
+      final DatasetInstanceMDS datasetInstanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
       txExecutorFactory.createExecutor(datasetCache).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
+          // 1. get existing module with all its types
           DatasetModuleMeta existing = datasetTypeMDS.getModule(datasetModuleId);
-          if (existing != null && !allowDatasetUncheckedUpgrade) {
-            String msg = String.format("cannot add module %s, module with the same name already exists: %s",
-                                       datasetModuleId, existing);
-            throw new DatasetModuleConflictException(msg);
-          }
-
-          DatasetModule module;
-          File unpackedLocation = Files.createTempDir();
           DependencyTrackingRegistry reg;
+
+          // 2. unpack jar and create class loader
+          File unpackedLocation = Files.createTempDirectory(Files.createDirectories(systemTempPath),
+                                                            datasetModuleId.getId()).toFile();
+          ProgramClassLoader cl = null;
           try {
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
-            ClassLoader cl = getClass().getClassLoader();
             if (jarLocation != null) {
               BundleJarUtil.unJar(jarLocation, unpackedLocation);
-              cl = ProgramClassLoader.create(cConf, unpackedLocation, getClass().getClassLoader());
+              cl = new ProgramClassLoader(cConf, unpackedLocation,
+                                          FilterClassLoader.create(getClass().getClassLoader()));
             }
+            reg = new DependencyTrackingRegistry(datasetModuleId, datasetTypeMDS, cl, force);
 
-            Class clazz = ClassLoaders.loadClass(className, cl, this);
-            module = DatasetModules.getDatasetModule(clazz);
-            reg = new DependencyTrackingRegistry(datasetModuleId.getNamespace(), datasetTypeMDS);
-            module.register(reg);
+            // 3. register the new module while tracking dependencies.
+            //    this will fail if a type exists in a different module
+            DatasetDefinitionRegistries.register(className, cl, reg);
+
+          } catch (TypeConflictException e) {
+            throw e; // type conflict from the registry, we want to throw that as is
           } catch (Exception e) {
             LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
                       className, datasetModuleId, jarLocation);
             throw Throwables.propagate(e);
           } finally {
+            if (cl != null) {
+              // Close the ProgramClassLoader
+              Closeables.closeQuietly(cl);
+            }
             try {
               DirUtils.deleteDirectoryContents(unpackedLocation);
             } catch (IOException e) {
               LOG.warn("Failed to delete directory {}", unpackedLocation, e);
             }
           }
+
+          // 4. determine whether any type were removed from the module, and whether any other modules depend on them
+          if (existing != null) {
+            Set<String> removedTypes = new HashSet<>(existing.getTypes());
+            removedTypes.removeAll(reg.getTypes());
+            // TODO (CDAP-6294): track dependencies at the type level
+            if (!force && !removedTypes.isEmpty() && !existing.getUsedByModules().isEmpty()) {
+                throw new DatasetModuleConflictException(String.format(
+                  "Cannot update module '%s' to remove types %s: Modules %s may depend on it. Delete them first",
+                  datasetModuleId, removedTypes, existing.getUsedByModules()));
+            }
+            Collection<DatasetSpecification> instances =
+              datasetInstanceMDS.getByTypes(datasetModuleId.getNamespace(), removedTypes);
+            if (!instances.isEmpty()) {
+              throw new DatasetModuleConflictException(String.format(
+                "Attempt to remove dataset types %s from module '%s' that have existing instances: %s. " +
+                  "Delete them first.", removedTypes, datasetModuleId, Iterables.toString(
+                  Iterables.transform(instances, new Function<DatasetSpecification, String>() {
+                    @Nullable
+                    @Override
+                    public String apply(@Nullable DatasetSpecification input) {
+                      return input.getName() + ":" + input.getType();
+                    }
+                  }))));
+            }
+          }
+
           // NOTE: we use set to avoid duplicated dependencies
           // NOTE: we use LinkedHashSet to preserve order in which dependencies must be loaded
           Set<String> moduleDependencies = new LinkedHashSet<String>();
@@ -228,8 +269,12 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           URI jarURI = jarLocation == null ? null : jarLocation.toURI();
-          DatasetModuleMeta moduleMeta = new DatasetModuleMeta(datasetModuleId.getId(), className, jarURI,
-                                                               reg.getTypes(), Lists.newArrayList(moduleDependencies));
+          DatasetModuleMeta moduleMeta = existing == null
+            ? new DatasetModuleMeta(datasetModuleId.getId(), className, jarURI, reg.getTypes(),
+                                    Lists.newArrayList(moduleDependencies))
+            : new DatasetModuleMeta(datasetModuleId.getId(), className, jarURI, reg.getTypes(),
+                                    Lists.newArrayList(moduleDependencies),
+                                    Lists.newArrayList(existing.getUsedByModules()));
           datasetTypeMDS.writeModule(datasetModuleId.getNamespace(), moduleMeta);
         }
       });
@@ -239,7 +284,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         if (cause instanceof DatasetModuleConflictException) {
           throw (DatasetModuleConflictException) cause;
         } else if (cause instanceof TypeConflictException) {
-          throw new DatasetModuleConflictException(cause);
+          throw new DatasetModuleConflictException(cause.getMessage(), cause);
         }
       }
       throw Throwables.propagate(e);
@@ -447,7 +492,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         // NOTE: we assume default modules are always in classpath, hence passing null for jar location
         // NOTE: we add default modules in the system namespace
         Id.DatasetModule defaultModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
-        addModule(defaultModule, module.getValue().getClass().getName(), null);
+        addModule(defaultModule, module.getValue().getClass().getName(), null, false);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
         LOG.debug("Not adding {} module: it already exists", module.getKey());
@@ -465,7 +510,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         // NOTE: we assume extension modules are always in classpath, hence passing null for jar location
         // NOTE: we add extension modules in the system namespace
         Id.DatasetModule theModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
-        addModule(theModule, module.getValue().getClass().getName(), null);
+        addModule(theModule, module.getValue().getClass().getName(), null, false);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add the modules only the very first time service is started
         LOG.debug("Not adding {} extension module: it already exists", module.getKey());
@@ -493,38 +538,52 @@ public class DatasetTypeManager extends AbstractIdleService {
   }
 
   private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
+
     private final DatasetTypeMDS datasetTypeMDS;
+    private final boolean tolerateConflicts;
     private final InMemoryDatasetDefinitionRegistry registry;
-    private final Id.Namespace namespaceId;
-
+    private final Id.DatasetModule moduleBeingAdded;
     private final List<String> types = Lists.newArrayList();
-    private final LinkedHashSet<Id.DatasetType> usedTypes = new LinkedHashSet<Id.DatasetType>();
+    private final Set<Id.DatasetType> usedTypes = new LinkedHashSet<>();
+    private final ClassLoader classLoader;
 
-    private DependencyTrackingRegistry(Id.Namespace namespaceId, DatasetTypeMDS datasetTypeMDS) {
-      this.namespaceId = namespaceId;
+    private DependencyTrackingRegistry(Id.DatasetModule moduleBeingAdded, DatasetTypeMDS datasetTypeMDS,
+                                       @Nullable ClassLoader classLoader, boolean tolerateConflicts) {
+      this.moduleBeingAdded = moduleBeingAdded;
       this.datasetTypeMDS = datasetTypeMDS;
+      this.tolerateConflicts = tolerateConflicts;
       this.registry = new InMemoryDatasetDefinitionRegistry();
+      this.classLoader = classLoader;
     }
 
-    public List<String> getTypes() {
+    List<String> getTypes() {
       return types;
     }
 
-    public Set<Id.DatasetType> getUsedTypes() {
+    Set<Id.DatasetType> getUsedTypes() {
       return usedTypes;
     }
 
     public Id.Namespace getNamespaceId() {
-      return namespaceId;
+      return moduleBeingAdded.getNamespace();
     }
 
     @Override
     public void add(DatasetDefinition def) {
       String typeName = def.getName();
-      Id.DatasetType typeId = Id.DatasetType.from(namespaceId, typeName);
-      if (datasetTypeMDS.getType(typeId) != null && !allowDatasetUncheckedUpgrade) {
-        String msg = "Cannot add dataset type: it already exists: " + typeName;
-        throw new TypeConflictException(msg);
+      Id.DatasetType typeId = Id.DatasetType.from(getNamespaceId(), typeName);
+      DatasetTypeMeta existingType = datasetTypeMDS.getType(typeId);
+      if (existingType != null) {
+        DatasetModuleMeta existingModule = existingType.getModules().get(existingType.getModules().size() - 1);
+        // we allow redefining an existing type if
+        // - it was previously defined by the same module (i.e., this is an upgrade of that module)
+        // - it is a forced update and the existing type is not a system type
+        if (!moduleBeingAdded.getId().equals(existingModule.getName())
+          && (!tolerateConflicts || NamespaceId.SYSTEM.getNamespace().equals(existingModule.getName()))) {
+          throw new TypeConflictException(String.format(
+            "Attempt to add dataset module '%s' containing dataset type '%s' that already exists in module '%s'",
+            moduleBeingAdded.getId(), typeName, existingModule.getName()));
+        }
       }
       types.add(typeName);
       registry.add(def);
@@ -532,9 +591,8 @@ public class DatasetTypeManager extends AbstractIdleService {
 
     @Override
     public <T extends DatasetDefinition> T get(String datasetTypeName) {
-      T def;
       // Find the typeMeta for the type from the right namespace
-      Id.DatasetType datasetTypeId = Id.DatasetType.from(namespaceId, datasetTypeName);
+      Id.DatasetType datasetTypeId = Id.DatasetType.from(moduleBeingAdded.getNamespaceId(), datasetTypeName);
       DatasetTypeMeta typeMeta = datasetTypeMDS.getType(datasetTypeId);
       if (typeMeta == null) {
         // not found in the user namespace. Try finding in the system namespace
@@ -545,15 +603,22 @@ public class DatasetTypeManager extends AbstractIdleService {
           throw new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName);
         }
       }
-      if (registry.hasType(datasetTypeName)) {
-        def = registry.get(datasetTypeName);
-      } else {
-        try {
-          def = new DatasetDefinitionLoader(cConf, locationFactory).load(typeMeta, registry);
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
+
+      if (!registry.hasType(datasetTypeName)) {
+        for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
+          try {
+            DatasetDefinitionRegistries.register(moduleMeta.getClassName(), classLoader, registry);
+          } catch (TypeConflictException e) {
+            // A type may have multiple transitive dependencies on the same module. In that case, it would be
+            // better to avoid duplicate registering of the same module. However, we don't know what modules
+            // are registered because modules only register their types and but not the module id. So here we
+            // just assume that this may happen if the module was already loaded.
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
         }
       }
+      T def = registry.get(datasetTypeName);
       // Here, datasetTypeId has the right namespace (either user or system) where the type was found.
       usedTypes.add(datasetTypeId);
       return def;
@@ -561,7 +626,8 @@ public class DatasetTypeManager extends AbstractIdleService {
 
     @Override
     public boolean hasType(String datasetTypeName) {
-      return datasetTypeMDS.getType(Id.DatasetType.from(namespaceId, datasetTypeName)) != null;
+      return registry.hasType(datasetTypeName) ||
+        datasetTypeMDS.getType(Id.DatasetType.from(moduleBeingAdded.getNamespaceId(), datasetTypeName)) != null;
     }
   }
 }

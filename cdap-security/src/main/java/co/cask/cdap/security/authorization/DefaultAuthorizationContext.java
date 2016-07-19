@@ -95,9 +95,20 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
+  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+    return delegateDatasetContext.getDataset(namespace, name);
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     return delegateDatasetContext.getDataset(name, arguments);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
+    return delegateDatasetContext.getDataset(namespace, name, arguments);
   }
 
   @Override

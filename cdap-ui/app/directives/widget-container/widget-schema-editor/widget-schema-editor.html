@@ -41,7 +41,21 @@
             </th>
             <th></th>
           </thead>
-          <tbody infinite-scroll="loadNextSetOfRows()" infinite-scroll-disabled="properties.length <= limitedToView">
+          <!--
+            This is bad. If we change the container's css class then infinite scroll is not going to work.
+            The reason we are doing this today is because we need to have one scroll bar for all the three
+            sections of the node config modal (input-schema, config & output-schema) and that is technically
+            the container for the inifinite scroll here.
+
+            So container = bottompanel-body & element = table/tbody. As we scroll in the container
+            the ng-inifinite scroll is going to check whether the difference between element bottom & container
+            bottom is less than the scroll distance, if yes then its going to add additional elements.
+
+            The damage is restricted to the css classes we add to the modal and the uibModal service (windowClass)
+          -->
+          <tbody infinite-scroll="loadNextSetOfRows()"
+                 infinite-scroll-container="'.modal.cdap-modal.node-config-modal .bottompanel-body'"
+                 infinite-scroll-disabled="properties.length <= limitedToView">
             <tr ng-repeat="property in properties | limitTo: limitedToView track by $index" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
               <td class="name" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
                 <input

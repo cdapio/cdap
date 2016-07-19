@@ -25,6 +25,8 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
+import co.cask.cdap.etl.api.batch.BatchAggregator;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
@@ -33,16 +35,20 @@ import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
 import co.cask.cdap.etl.batch.WorkflowBackedActionContext;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
+import co.cask.cdap.etl.batch.customaction.PipelineAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
-import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
+import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.Engine;
+import co.cask.cdap.etl.spark.batch.ETLSpark;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -65,11 +71,13 @@ public class SmartWorkflow extends AbstractWorkflow {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
   private final BatchPipelineSpec spec;
-  private final PipelinePlan plan;
   private final ApplicationConfigurer applicationConfigurer;
+  private final Set<String> supportedPluginTypes;
   // connector stage -> local dataset name
   private final Map<String, String> connectorDatasets;
   private final Engine engine;
+  private boolean useSpark;
+  private PipelinePlan plan;
   private ControlDag dag;
   private int phaseNum;
   private Map<String, PostAction> postActions;
@@ -79,11 +87,11 @@ public class SmartWorkflow extends AbstractWorkflow {
   private Metrics workflowMetrics;
 
   public SmartWorkflow(BatchPipelineSpec spec,
-                       PipelinePlan plan,
+                       Set<String> supportedPluginTypes,
                        ApplicationConfigurer applicationConfigurer,
                        Engine engine) {
     this.spec = spec;
-    this.plan = plan;
+    this.supportedPluginTypes = supportedPluginTypes;
     this.applicationConfigurer = applicationConfigurer;
     this.phaseNum = 1;
     this.connectorDatasets = new HashMap<>();
@@ -99,6 +107,29 @@ public class SmartWorkflow extends AbstractWorkflow {
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     setProperties(properties);
+
+    useSpark = engine == Engine.SPARK;
+    if (!useSpark) {
+      for (StageSpec stageSpec : spec.getStages()) {
+        String pluginType = stageSpec.getPlugin().getType();
+        if (SparkCompute.PLUGIN_TYPE.equals(pluginType) || SparkSink.PLUGIN_TYPE.equals(pluginType)) {
+          useSpark = true;
+          break;
+        }
+      }
+    }
+
+    PipelinePlanner planner;
+    if (useSpark) {
+      // if the pipeline uses spark, we don't need to break the pipeline up into phases, we can just have
+      // a single phase.
+      planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.<String>of(), ImmutableSet.<String>of());
+    } else {
+      planner = new PipelinePlanner(supportedPluginTypes,
+                                    ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
+                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE));
+    }
+    plan = planner.plan(spec);
 
     // single phase, just add the program directly
     if (plan.getPhases().size() == 1) {
@@ -213,7 +244,6 @@ public class SmartWorkflow extends AbstractWorkflow {
     // can't use phase name as a program name because it might contain invalid characters
     String programName = "phase-" + phaseNum;
     phaseNum++;
-    // TODO: add support for other program types based on the plugin types in the phase
 
     // if this phase uses connectors, add the local dataset for that connector if we haven't already
     for (StageInfo connectorInfo : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
@@ -233,30 +263,24 @@ public class SmartWorkflow extends AbstractWorkflow {
       phaseConnectorDatasets.put(connectorStage.getName(), connectorDatasets.get(connectorStage.getName()));
     }
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
+                                                       spec.getDriverResources(),
                                                        spec.isStageLoggingEnabled(), phaseConnectorDatasets);
 
+    // Custom action is the only phase in the pipeline which has no associated dag
+    boolean hasCustomAction = batchPhaseSpec.getPhase().getSources().isEmpty()
+      && batchPhaseSpec.getPhase().getSinks().isEmpty();
+    if (hasCustomAction) {
+      // Add custom action to the Workflow
+      programAdder.addAction(new PipelineAction(batchPhaseSpec));
+      return;
+    }
 
-    boolean hasSparkCompute = !batchPhaseSpec.getPhase().getStagesOfType(SparkCompute.PLUGIN_TYPE).isEmpty();
-    boolean hasSparkSink = !batchPhaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE).isEmpty();
-
-    if (hasSparkCompute || hasSparkSink) {
-      // always use ETLSpark if this phase has a spark plugin
+    if (useSpark) {
       applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
       programAdder.addSpark(programName);
     } else {
-      switch (engine) {
-        case MAPREDUCE:
-          applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec));
-          programAdder.addMapReduce(programName);
-          break;
-        case SPARK:
-          applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
-          programAdder.addSpark(programName);
-          break;
-        default:
-          // should never happen
-          throw new IllegalStateException("Unsupported engine " + engine);
-      }
+      applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec));
+      programAdder.addMapReduce(programName);
     }
   }
 

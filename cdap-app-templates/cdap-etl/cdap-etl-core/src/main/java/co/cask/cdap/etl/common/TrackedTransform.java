@@ -50,7 +50,6 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
     this.metricOutName = metricOutName;
   }
 
-
   @Override
   public void transform(IN input, Emitter<OUT> emitter) throws Exception {
     if (metricInName != null) {

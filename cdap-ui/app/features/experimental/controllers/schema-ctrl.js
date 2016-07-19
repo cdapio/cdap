@@ -20,7 +20,7 @@ angular.module(`${PKG.name}.feature.experimental`)
     var vm = this;
     vm.props = {};
 
-    vm.outputSchema = '{}';
+    vm.outputSchema = '';
 
 
     vm.import = function () {

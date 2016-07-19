@@ -24,7 +24,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -35,7 +35,6 @@ import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -46,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -87,10 +87,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
-  private final Store store;
+  private final RuntimeStore runtimeStore;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final UsageRegistry usageRegistry;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -99,8 +98,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, Store store,
-                                UsageRegistry usageRegistry) {
+                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -111,8 +109,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.store = store;
-    this.usageRegistry = usageRegistry;
+    this.runtimeStore = runtimeStore;
   }
 
   @Inject (optional = true)
@@ -137,8 +134,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
-
-    final RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
+    RunId runId = ProgramRunners.getRunId(options);
 
     WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
     DatasetFramework programDatasetFramework = workflowInfo == null ?
@@ -168,7 +164,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       }
 
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
+        new BasicMapReduceContext(program, options, spec,
                                   workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator);
@@ -184,7 +180,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       final Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                           context, program.getJarLocation(),
                                                                           locationFactory, streamAdmin,
-                                                                          txSystemClient, usageRegistry);
+                                                                          txSystemClient);
       mapReduceRuntimeService.addListener(
         createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);
@@ -227,8 +223,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(),
-                       arguments.asMap());
+        runtimeStore.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(),
+                              arguments.asMap());
       }
 
       @Override
@@ -240,15 +236,16 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           runStatus = ProgramController.State.KILLED.getRunStatus();
         }
 
-        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      runStatus);
+        runtimeStore.setStop(program.getId(), runId.getId(),
+                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), runStatus);
       }
 
       @Override
       public void failed(Service.State from, @Nullable Throwable failure) {
         closeAllQuietly(closeables);
-        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus(), failure);
+        runtimeStore.setStop(program.getId(), runId.getId(),
+                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
       }
     };
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,17 +20,16 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -38,10 +37,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
@@ -52,6 +49,7 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -66,7 +64,6 @@ public final class FlowProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
 
   private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
-  private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
   private final StreamAdmin streamAdmin;
   private final QueueAdmin queueAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
@@ -95,12 +92,11 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     try {
       // Launch flowlet program runners
-      RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-      programOptions.put(runId, options);
+      RunId runId = ProgramRunners.getRunId(options);
       Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
                                                                             streamAdmin, queueAdmin, txExecutorFactory);
-      final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId, flowSpec);
-      return new FlowProgramController(flowlets, runId, program, flowSpec, consumerQueues);
+      final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);
+      return new FlowProgramController(flowlets, program, options, flowSpec, consumerQueues);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -113,7 +109,7 @@ public final class FlowProgramRunner implements ProgramRunner {
    * @return A {@link Table} with row as flowlet id, column as instance id, cell as the {@link ProgramController}
    *         for the flowlet.
    */
-  private Table<String, Integer, ProgramController> createFlowlets(Program program, RunId runId,
+  private Table<String, Integer, ProgramController> createFlowlets(Program program, ProgramOptions options,
                                                                    FlowSpecification flowSpec) {
     Table<String, Integer, ProgramController> flowlets = HashBasedTable.create();
 
@@ -122,7 +118,8 @@ public final class FlowProgramRunner implements ProgramRunner {
         int instanceCount = entry.getValue().getInstances();
         for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
           flowlets.put(entry.getKey(), instanceId,
-                       startFlowlet(program, createFlowletOptions(entry.getKey(), instanceId, instanceCount, runId)));
+                       startFlowlet(program,
+                                    createFlowletOptions(entry.getKey(), instanceId, instanceCount, options)));
         }
       }
     } catch (Throwable t) {
@@ -147,36 +144,32 @@ public final class FlowProgramRunner implements ProgramRunner {
     return flowletProgramRunnerProvider.get().run(program, options);
   }
 
-  private ProgramOptions createFlowletOptions(String name, int instanceId, int instances, RunId runId) {
+  private ProgramOptions createFlowletOptions(String name, int instanceId, int instances,
+                                              ProgramOptions options) {
 
-    // Get the right user arguments.
-    Arguments userArguments = new BasicArguments();
-    if (programOptions.containsKey(runId)) {
-      userArguments = programOptions.get(runId).getUserArguments();
-    }
+    Map<String, String> systemArgs = new HashMap<>();
+    systemArgs.putAll(options.getArguments().asMap());
+    systemArgs.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId));
+    systemArgs.put(ProgramOptionConstants.INSTANCES, Integer.toString(instances));
 
-    return new SimpleProgramOptions(name, new BasicArguments(
-      ImmutableMap.of(
-        ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
-        ProgramOptionConstants.INSTANCES, Integer.toString(instances),
-        ProgramOptionConstants.RUN_ID, runId.getId()
-      )), userArguments
-    );
+    return new SimpleProgramOptions(name, new BasicArguments(systemArgs), options.getUserArguments());
   }
 
   private final class FlowProgramController extends AbstractProgramController {
 
     private final Table<String, Integer, ProgramController> flowlets;
     private final Program program;
+    private final ProgramOptions options;
     private final FlowSpecification flowSpec;
     private final Lock lock = new ReentrantLock();
     private final Multimap<String, QueueName> consumerQueues;
 
-    FlowProgramController(Table<String, Integer, ProgramController> flowlets, RunId runId,
-                          Program program, FlowSpecification flowSpec, Multimap<String, QueueName> consumerQueues) {
-      super(program.getId(), runId);
+    FlowProgramController(Table<String, Integer, ProgramController> flowlets, Program program, ProgramOptions options,
+                          FlowSpecification flowSpec, Multimap<String, QueueName> consumerQueues) {
+      super(program.getId(), ProgramRunners.getRunId(options));
       this.flowlets = flowlets;
       this.program = program;
+      this.options = options;
       this.flowSpec = flowSpec;
       this.consumerQueues = consumerQueues;
       started();
@@ -322,7 +315,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
         flowlets.put(flowletName, instanceId,
                      startFlowlet(program,
-                                  createFlowletOptions(flowletName, instanceId, newInstanceCount, getRunId())));
+                                  createFlowletOptions(flowletName, instanceId, newInstanceCount, options)));
       }
     }
 

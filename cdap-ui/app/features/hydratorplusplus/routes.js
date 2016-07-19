@@ -172,10 +172,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             'toppanel@hydratorplusplus.create': {
               templateUrl: '/assets/features/hydratorplusplus/templates/create/toppanel.html',
               controller: 'HydratorPlusPlusTopPanelCtrl as HydratorPlusPlusTopPanelCtrl'
-            },
-            'bottompanel@hydratorplusplus.create': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/create/bottompanel.html',
-              controller: 'HydratorPlusPlusBottomPanelCtrl as HydratorPlusPlusBottomPanelCtrl'
             }
           },
           onExit: function($uibModalStack) {

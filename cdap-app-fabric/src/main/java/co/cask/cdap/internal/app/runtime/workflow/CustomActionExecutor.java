@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
@@ -26,11 +29,13 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -39,11 +44,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Execute the custom action in the Workflow.
  */
-public class CustomActionExecutor {
+class CustomActionExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(CustomActionExecutor.class);
   private final ProgramRunId workflowRunId;
   private final BasicWorkflowContext workflowContext;
   private final WorkflowAction action;
+  private final CustomAction customAction;
+  private final BasicCustomActionContext customActionContext;
 
   /**
    * Creates instance which will be used to initialize, run, and destroy the custom action.
@@ -52,15 +59,37 @@ public class CustomActionExecutor {
    * @param instantiator to instantiates the custom action class
    * @param classLoader used to load the custom action class
    * @throws Exception when failed to instantiate the custom action
+   * @deprecated Deprecated as of 3.5.0
    */
-  public CustomActionExecutor(ProgramRunId workflowRunId, BasicWorkflowContext workflowContext,
-                              InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
+  @Deprecated
+  CustomActionExecutor(ProgramRunId workflowRunId, BasicWorkflowContext workflowContext,
+                       InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
     this.workflowRunId = workflowRunId;
     this.workflowContext = workflowContext;
     this.action = createAction(workflowContext, instantiator, classLoader);
+    this.customAction = null;
+    this.customActionContext = null;
+  }
+
+  /**
+   * Creates instance which will be used to initialize, run, and destroy the custom action.
+   * @param workflowRunId the Workflow run which started the execution of this custom action.
+   * @param customActionContext an instance of context
+   * @param instantiator to instantiates the custom action class
+   * @param classLoader used to load the custom action class
+   * @throws Exception when failed to instantiate the custom action
+   */
+  CustomActionExecutor(ProgramRunId workflowRunId, BasicCustomActionContext customActionContext,
+                       InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
+    this.workflowRunId = workflowRunId;
+    this.customActionContext = customActionContext;
+    this.customAction = createCustomAction(customActionContext, instantiator, classLoader);
+    this.action = null;
+    this.workflowContext = null;
   }
 
   @SuppressWarnings("unchecked")
+  @Deprecated
   private WorkflowAction createAction(BasicWorkflowContext context, InstantiatorFactory instantiator,
                                       ClassLoader classLoader) throws Exception {
     Class<?> clz = Class.forName(context.getSpecification().getClassName(), true, classLoader);
@@ -75,8 +104,26 @@ public class CustomActionExecutor {
     return action;
   }
 
+  @SuppressWarnings("unchecked")
+  private CustomAction createCustomAction(BasicCustomActionContext context, InstantiatorFactory instantiator,
+                                          ClassLoader classLoader) throws Exception {
+    Class<?> clz = Class.forName(context.getSpecification().getClassName(), true, classLoader);
+    Preconditions.checkArgument(CustomAction.class.isAssignableFrom(clz), "%s is not a CustomAction.", clz);
+    CustomAction action = instantiator.get(TypeToken.of((Class<? extends CustomAction>) clz)).create();
+    Reflections.visit(action, action.getClass(),
+                      new PropertyFieldSetter(context.getSpecification().getProperties()),
+                      new DataSetFieldSetter(context),
+                      new MetricsFieldSetter(context.getMetrics()));
+    return action;
+  }
+
   void execute() throws Exception {
-    ClassLoader oldClassLoader = setContextCombinedClassLoader(action);
+    if (action == null) {
+      // Execute the new CustomAction
+      executeCustomAction();
+      return;
+    }
+    ClassLoader oldClassLoader = setContextCombinedClassLoader(action.getClass().getClassLoader());
     try {
       initializeInTransaction();
       runInTransaction();
@@ -87,6 +134,56 @@ public class CustomActionExecutor {
     }
   }
 
+  private void executeCustomAction() throws Exception {
+    ClassLoader oldClassLoader = setContextCombinedClassLoader(customAction.getClass().getClassLoader());
+    try {
+      customActionContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+      initialize();
+      customActionContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
+      customAction.run();
+      customActionContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
+    } catch (Throwable t) {
+      customActionContext.setState(new ProgramState(ProgramStatus.FAILED, Throwables.getRootCause(t).getMessage()));
+      Throwables.propagateIfPossible(t, Exception.class);
+      throw Throwables.propagate(t);
+    } finally {
+      destroy();
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
+  }
+
+  private void initialize() throws Exception {
+    TransactionContext txContext = customActionContext.getDatasetCache().newTransactionContext();
+    txContext.start();
+    try {
+      customAction.initialize(customActionContext);
+      txContext.finish();
+    } catch (TransactionFailureException e) {
+      txContext.abort(e);
+    } catch (Throwable t) {
+      txContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", t));
+    }
+  }
+
+  private void destroy() throws Exception {
+    TransactionContext txContext = customActionContext.getDatasetCache().newTransactionContext();
+    try {
+      txContext.start();
+      try {
+        customAction.destroy();
+        txContext.finish();
+      } catch (TransactionFailureException e) {
+        txContext.abort(e);
+      } catch (Throwable t) {
+        txContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", t));
+      }
+    } catch (Throwable t) {
+      LOG.error("Failed to execute the destroy method on action {} for Workflow run {}",
+                customActionContext.getSpecification().getName(), workflowRunId, t);
+    }
+  }
+
+  @Deprecated
   private void initializeInTransaction() throws Exception {
     TransactionContext txContext = workflowContext.getDatasetCache().newTransactionContext();
     txContext.start();
@@ -100,6 +197,7 @@ public class CustomActionExecutor {
     }
   }
 
+  @Deprecated
   private void runInTransaction() throws Exception {
     TransactionContext txContext = workflowContext.getDatasetCache().newTransactionContext();
     txContext.start();
@@ -113,6 +211,7 @@ public class CustomActionExecutor {
     }
   }
 
+  @Deprecated
   private void destroyInTransaction() {
     TransactionContext txContext = workflowContext.getDatasetCache().newTransactionContext();
     try {
@@ -131,8 +230,8 @@ public class CustomActionExecutor {
     }
   }
 
-  private ClassLoader setContextCombinedClassLoader(WorkflowAction action) {
+  private ClassLoader setContextCombinedClassLoader(ClassLoader classLoader) {
     return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, ImmutableList.of(action.getClass().getClassLoader(), getClass().getClassLoader())));
+      new CombineClassLoader(null, ImmutableList.of(classLoader, getClass().getClassLoader())));
   }
 }

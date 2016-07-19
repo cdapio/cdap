@@ -16,55 +16,21 @@
 
 package co.cask.cdap.master.startup;
 
+import co.cask.cdap.common.MasterUtils;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.startup.Check;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 
 /**
  * Base for master startup checks.
  */
-abstract class AbstractMasterCheck extends Check {
+public abstract class AbstractMasterCheck extends Check {
   protected final CConfiguration cConf;
   protected final Set<ServiceResourceKeys> systemServicesResourceKeys;
 
   protected AbstractMasterCheck(CConfiguration cConf) {
     this.cConf = cConf;
-    ImmutableSet.Builder<ServiceResourceKeys> builder = ImmutableSet.<ServiceResourceKeys>builder()
-      .add(new ServiceResourceKeys(Constants.Service.TRANSACTION,
-                                   Constants.Transaction.Container.MEMORY_MB,
-                                   Constants.Transaction.Container.NUM_CORES,
-                                   Constants.Transaction.Container.NUM_INSTANCES,
-                                   Constants.Transaction.Container.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(Constants.Service.STREAMS,
-                                   Constants.Stream.CONTAINER_MEMORY_MB,
-                                   Constants.Stream.CONTAINER_VIRTUAL_CORES,
-                                   Constants.Stream.CONTAINER_INSTANCES,
-                                   Constants.Stream.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(Constants.Service.METRICS,
-                                   Constants.Metrics.MEMORY_MB,
-                                   Constants.Metrics.NUM_CORES,
-                                   Constants.Metrics.NUM_INSTANCES,
-                                   Constants.Metrics.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(Constants.Service.METRICS_PROCESSOR,
-                                   Constants.MetricsProcessor.MEMORY_MB,
-                                   Constants.MetricsProcessor.NUM_CORES,
-                                   Constants.MetricsProcessor.NUM_INSTANCES,
-                                   Constants.MetricsProcessor.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(Constants.Service.LOGSAVER,
-                                   Constants.LogSaver.MEMORY_MB,
-                                   Constants.LogSaver.NUM_CORES,
-                                   Constants.LogSaver.NUM_INSTANCES,
-                                   Constants.LogSaver.MAX_INSTANCES));
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      builder.add(new ServiceResourceKeys(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                          Constants.Explore.CONTAINER_MEMORY_MB,
-                                          Constants.Explore.CONTAINER_VIRTUAL_CORES,
-                                          Constants.Explore.CONTAINER_INSTANCES,
-                                          Constants.Explore.MAX_INSTANCES));
-    }
-    this.systemServicesResourceKeys = builder.build();
+    this.systemServicesResourceKeys = MasterUtils.createSystemServicesResourceKeysSet(cConf);
   }
 }

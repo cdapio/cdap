@@ -17,6 +17,7 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.customaction.CustomAction;
 
 /**
  * Defines an interface for the fork in the {@link Workflow}.
@@ -44,8 +45,17 @@ public interface WorkflowForkConfigurer<T> {
    * Adds custom action a a next sequential step to the current branch of the {@link WorkflowForkNode}
    * @param action {@link WorkflowAction} to be added to the fork
    * @return the configurer for the current fork
+   * @deprecated Deprecated as of 3.5.0. Please use {@link WorkflowForkConfigurer#addAction(CustomAction)} instead.
    */
+  @Deprecated
   WorkflowForkConfigurer<T> addAction(WorkflowAction action);
+
+  /**
+   * Adds custom action a a next sequential step to the current branch of the {@link WorkflowForkNode}
+   * @param action {@link CustomAction} to be added to the fork
+   * @return the configurer for the current fork
+   */
+  WorkflowForkConfigurer<T> addAction(CustomAction action);
 
   /**
    * Adds a nested fork to the current fork

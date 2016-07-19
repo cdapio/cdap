@@ -16,12 +16,18 @@
 
 package co.cask.cdap.internal.app.workflow;
 
+import co.cask.cdap.api.customaction.CustomAction;
+import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.internal.app.customaction.DefaultCustomActionConfigurer;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 
 /**
@@ -51,9 +57,20 @@ final class WorkflowNodeCreator {
     return new WorkflowActionNode(programName, new ScheduleProgramInfo(programType, programName));
   }
 
+  @Deprecated
   static WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
     WorkflowActionSpecification spec = DefaultWorkflowActionConfigurer.configureAction(action);
+    return new WorkflowActionNode(spec.getName(), spec);
+  }
+
+  static WorkflowNode createWorkflowCustomActionNode(CustomAction action, Id.Namespace deployNamespace,
+                                                     Id.Artifact artifactId, ArtifactRepository artifactRepository,
+                                                     PluginInstantiator pluginInstantiator) {
+    Preconditions.checkArgument(action != null, "CustomAction is null.");
+    CustomActionSpecification spec = DefaultCustomActionConfigurer.configureAction(action, deployNamespace, artifactId,
+                                                                                   artifactRepository,
+                                                                                   pluginInstantiator);
     return new WorkflowActionNode(spec.getName(), spec);
   }
 }

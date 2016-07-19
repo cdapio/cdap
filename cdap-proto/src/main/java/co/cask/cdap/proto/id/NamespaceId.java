@@ -26,10 +26,13 @@ import java.util.Objects;
  * Uniquely identifies a namespace.
  */
 public class NamespaceId extends EntityId {
-  private final String namespace;
 
   public static final NamespaceId DEFAULT = new NamespaceId("default");
   public static final NamespaceId SYSTEM = new NamespaceId("system");
+  public static final NamespaceId CDAP = new NamespaceId("cdap");
+
+  private final String namespace;
+  private transient Integer hashCode;
 
   public NamespaceId(String namespace) {
     super(EntityType.NAMESPACE);
@@ -80,7 +83,11 @@ public class NamespaceId extends EntityId {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace);
+    }
+    return hashCode;
   }
 
   @SuppressWarnings("unused")

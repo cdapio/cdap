@@ -17,8 +17,8 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.twill.filesystem.FileContextLocationFactory;
@@ -44,7 +44,7 @@ public class DFSConcurrentStreamWriterTest extends ConcurrentStreamWriterTestBas
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     LocationFactory locationFactory = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    namespacedLocationFactory = new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory);
+    namespacedLocationFactory = new NamespacedLocationFactoryTestClient(CConfiguration.create(), locationFactory);
 
   }
 

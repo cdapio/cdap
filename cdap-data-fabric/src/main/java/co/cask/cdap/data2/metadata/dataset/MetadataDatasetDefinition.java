@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,10 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 
 import java.io.IOException;
 import java.util.Map;
@@ -33,7 +31,9 @@ import java.util.Map;
 /**
  * Define the Dataset for metadata.
  */
-public class MetadataDatasetDefinition extends AbstractDatasetDefinition<MetadataDataset, DatasetAdmin> {
+public class MetadataDatasetDefinition
+  extends AbstractDatasetDefinition<MetadataDataset, DatasetAdmin>
+  implements Reconfigurable {
 
   private static final String METADATA_INDEX_TABLE_NAME = "metadata_index";
 
@@ -48,47 +48,49 @@ public class MetadataDatasetDefinition extends AbstractDatasetDefinition<Metadat
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    Map<String, String> dsProperties = properties.getProperties();
-    /**
-     * The {@link DefaultMetadataStore#setupDatasets(DatasetFramework)} used to setup {@link MetadataDataset} during
-     * upgrade passes the columns to index with old column indexed in 3.2 in {@link DatasetProperties} and the new ones
-     * so if this is set then use the set value else use the index column from 3.3 defined in
-     * MetadataDataset.INDEX_COLUMN.
-     */
-    //TODO (UPG-3.3): Remove this after 3.3
-    String colToIndex;
-    if (dsProperties.containsKey(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY)) {
-      colToIndex = dsProperties.get(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY);
-    } else {
-      colToIndex = MetadataDataset.INDEX_COLUMN;
-    }
-    // Define the columns for indexing on the partitionsTable
-    DatasetProperties indexedTableProperties = DatasetProperties.builder()
-      .addAll(dsProperties)
-      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, colToIndex)
-      .build();
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(dsProperties)
-      .datasets(indexedTableDef.configure(METADATA_INDEX_TABLE_NAME, indexedTableProperties))
+      .properties(properties.getProperties())
+      .datasets(indexedTableDef.configure(METADATA_INDEX_TABLE_NAME,
+                                          addIndexColumn(properties, MetadataDataset.INDEX_COLUMN)))
+      .build();
+  }
+
+  @Override
+  public DatasetSpecification reconfigure(String instanceName,
+                                          DatasetProperties newProperties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    // extract the column to index from the indexed table spec
+    DatasetSpecification indexSpec = currentSpec.getSpecification(METADATA_INDEX_TABLE_NAME);
+    String indexColumn = indexSpec.getProperty(IndexedTable.INDEX_COLUMNS_CONF_KEY);
+    return DatasetSpecification.builder(instanceName, getName())
+      .properties(newProperties.getProperties())
+      .datasets(AbstractDatasetDefinition.reconfigure(indexedTableDef, METADATA_INDEX_TABLE_NAME,
+                                                      addIndexColumn(newProperties, indexColumn),
+                                                      indexSpec))
+      .build();
+  }
+
+  private DatasetProperties addIndexColumn(DatasetProperties properties, String indexColumn) {
+    return DatasetProperties
+      .builder()
+      .addAll(properties.getProperties())
+      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, indexColumn)
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new CompositeDatasetAdmin(indexedTableDef.getAdmin(datasetContext,
-                                                              spec.getSpecification(METADATA_INDEX_TABLE_NAME),
-                                                              classLoader));
+    return indexedTableDef.getAdmin(datasetContext,
+                                    spec.getSpecification(METADATA_INDEX_TABLE_NAME),
+                                    classLoader);
   }
 
   @Override
   public MetadataDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                     Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-
-    IndexedTable indexedTable  = indexedTableDef.getDataset(datasetContext,
-                                                            spec.getSpecification(METADATA_INDEX_TABLE_NAME),
-                                                            arguments, classLoader);
-
-    return new MetadataDataset(indexedTable);
+    return new MetadataDataset(indexedTableDef.getDataset(datasetContext,
+                                                          spec.getSpecification(METADATA_INDEX_TABLE_NAME),
+                                                          arguments, classLoader));
   }
 }

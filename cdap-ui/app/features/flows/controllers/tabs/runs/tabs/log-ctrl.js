@@ -21,7 +21,7 @@ class FlowsRunDetailLogController {
     }
 
     this.params = {
-      namespace: $state.params.namespace,
+      namespaceId: $state.params.namespace,
       appId: $state.params.appId,
       programType: 'flows',
       programId: $state.params.programId,

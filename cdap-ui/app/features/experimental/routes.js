@@ -68,6 +68,26 @@ angular.module(PKG.name+'.feature.experimental')
             label: 'Schema Widget',
             parent: 'experimental.home'
           }
+        })
+        .state('experimental.logs', {
+          url: '/logs',
+          templateUrl: '/assets/features/experimental/templates/logs.html',
+          controller: 'LogsController',
+          controllerAs: 'LogsController',
+          ncyBreadcrumb: {
+            label: 'Log',
+            parent: 'experimental.home'
+          }
+        })
+        .state('experimental.complexSchema', {
+          url: '/complex-schema',
+          templateUrl: '/assets/features/experimental/templates/complex-schema.html',
+          controller: 'ComplexSchemaController',
+          controllerAs: 'vm',
+          ncyBreadcrumb: {
+            label: 'Complex Schema',
+            parent: 'experimental.home'
+          }
         });
 
   });

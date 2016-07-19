@@ -34,7 +34,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.AbstractFlow;
@@ -59,12 +58,12 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowNodeThrowable;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -181,8 +180,8 @@ public class DefaultStoreTest {
     ProgramId sparkProgram = appId.spark(sparkName);
 
     long currentTime = System.currentTimeMillis();
-    RunId workflowRunId = RunIds.generate(currentTime);
-    ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId.getId());
+    String workflowRunId = RunIds.generate(currentTime).getId();
+    ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId);
 
     // start Workflow
     store.setStart(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime);
@@ -190,7 +189,7 @@ public class DefaultStoreTest {
     // start MapReduce as a part of Workflow
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, mapReduceName,
                                                      ProgramOptionConstants.WORKFLOW_NAME, workflowName,
-                                                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+                                                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId mapReduceRunId = RunIds.generate(currentTime + 10);
     store.setStart(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 10, null,
@@ -202,7 +201,7 @@ public class DefaultStoreTest {
     // start Spark program as a part of Workflow
     systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, sparkName,
                                  ProgramOptionConstants.WORKFLOW_NAME, workflowName,
-                                 ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+                                 ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId sparkRunId = RunIds.generate(currentTime + 60);
     store.setStart(sparkProgram.toId(), sparkRunId.getId(), currentTime + 60, null,
@@ -211,7 +210,8 @@ public class DefaultStoreTest {
     // stop the Spark program with failure
     NullPointerException npe = new NullPointerException("dataset not found");
     IllegalArgumentException iae = new IllegalArgumentException("illegal argument", npe);
-    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED, iae);
+    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED,
+                  new BasicThrowable(iae));
 
     // stop Workflow
     store.setStop(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
@@ -233,7 +233,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(sparkName, nodeStateDetail.getNodeId());
     Assert.assertEquals(NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
     Assert.assertEquals(sparkRunId.getId(), nodeStateDetail.getRunId());
-    WorkflowNodeThrowable failureCause = nodeStateDetail.getFailureCause();
+    BasicThrowable failureCause = nodeStateDetail.getFailureCause();
     Assert.assertNotNull(failureCause);
     Assert.assertTrue("illegal argument".equals(failureCause.getMessage()));
     Assert.assertTrue("java.lang.IllegalArgumentException".equals(failureCause.getClassName()));
@@ -455,7 +455,7 @@ public class DefaultStoreTest {
       createDataset("dataset2", KeyValueTable.class);
 
       createDataset("dataset3", IndexedTable.class,
-                    DatasetProperties.builder().add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "foo").build());
+                    DatasetProperties.builder().add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "foo").build());
       addFlow(new FlowImpl("flow2"));
       addFlow(new FlowImpl("flow3"));
       addMapReduce(new FooMapReduceJob("mrJob2"));

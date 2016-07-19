@@ -50,6 +50,7 @@ import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -436,7 +437,33 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
+    verifyMapperJobOutput(DatasetWithMRApp.class);
+  }
 
+  @Category(SlowTests.class)
+  @Test
+  public void testMapperDatasetFromOtherSpaceAccess() throws Exception {
+    NamespaceId datasetSpace = new NamespaceId(DatasetFromOtherSpaceWithMPApp.DATASETSPACE);
+    createNamespace(datasetSpace.toId());
+    addDatasetInstance(datasetSpace.toId(), "keyValueTable", "table1").create();
+    addDatasetInstance("keyValueTable", "table2").create();
+    DataSetManager<KeyValueTable> tableManager = getDataset(datasetSpace.toId(), "table1");
+    KeyValueTable inputTable = tableManager.get();
+    inputTable.write("hello", "world");
+    tableManager.flush();
+
+    ApplicationManager appManager = deployApplication(DatasetFromOtherSpaceWithMPApp.class);
+    Map<String, String> argsForMR = ImmutableMap.of(DatasetFromOtherSpaceWithMPApp.INPUT_KEY, "table1",
+                                                    DatasetFromOtherSpaceWithMPApp.OUTPUT_KEY, "table2");
+    MapReduceManager mrManager = appManager.getMapReduceManager(DatasetFromOtherSpaceWithMPApp.MAPREDUCE_PROGRAM)
+      .start(argsForMR);
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    appManager.stopAll();
+
+    verifyMapperJobOutput(DatasetFromOtherSpaceWithMPApp.class);
+  }
+
+  private void verifyMapperJobOutput(Class<?> appClass) throws Exception {
     DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
@@ -452,7 +479,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
           writeCountName, AggregationFunction.SUM
         ),
         ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
-                        Constants.Metrics.Tag.APP, DatasetWithMRApp.class.getSimpleName(),
+                        Constants.Metrics.Tag.APP, appClass.getSimpleName(),
                         Constants.Metrics.Tag.MAPREDUCE, DatasetWithMRApp.MAPREDUCE_PROGRAM),
         ImmutableList.<String>of()
       )
@@ -521,6 +548,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
     Assert.assertEquals("service", Bytes.toString(outputTable.read("hi")));
+    Assert.assertEquals("another.world", Bytes.toString(outputTable.read("another.hello")));
 
     DataSetManager<FileSet> outFileSetManager = getDataset(DatasetWithCustomActionApp.CUSTOM_FILESET);
     FileSet fs = outFileSetManager.get();

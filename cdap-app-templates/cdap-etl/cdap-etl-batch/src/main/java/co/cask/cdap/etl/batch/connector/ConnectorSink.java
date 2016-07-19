@@ -46,15 +46,13 @@ import java.util.Map;
  *
  * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
  */
-public class ConnectorSink extends BatchSink<StructuredRecord, NullWritable, Text> {
+public class ConnectorSink extends BatchSink<KeyValue<String, StructuredRecord>, NullWritable, Text> {
   private final String datasetName;
   private final String phaseName;
-  private final boolean writeSchema;
 
-  public ConnectorSink(String datasetName, String phaseName, boolean writeSchema) {
+  public ConnectorSink(String datasetName, String phaseName) {
     this.datasetName = datasetName;
     this.phaseName = phaseName;
-    this.writeSchema = writeSchema;
   }
 
   @Override
@@ -66,18 +64,20 @@ public class ConnectorSink extends BatchSink<StructuredRecord, NullWritable, Tex
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<KeyValue<NullWritable, Text>> emitter) throws Exception {
-    if (writeSchema) {
-      input = modifyRecord(input);
-    }
-    emitter.emit(new KeyValue<>(NullWritable.get(), new Text(StructuredRecordStringConverter.toJsonString(input))));
+  public void transform(KeyValue<String, StructuredRecord> input, Emitter<KeyValue<NullWritable, Text>> emitter)
+    throws Exception {
+    StructuredRecord modifiedRecord = modifyRecord(input);
+    emitter.emit(new KeyValue<>(NullWritable.get(), new Text(StructuredRecordStringConverter.
+      toJsonString(modifiedRecord))));
   }
 
-  private StructuredRecord modifyRecord(StructuredRecord input) throws IOException {
-    Schema inputSchema = input.getSchema();
+  private StructuredRecord modifyRecord(KeyValue<String, StructuredRecord> input) throws IOException {
+    String stageName = input.getKey();
+    Schema inputSchema = input.getValue().getSchema();
     return StructuredRecord.builder(ConnectorSource.RECORD_WITH_SCHEMA)
+      .set("stageName", stageName)
       .set("schema", inputSchema.toString())
-      .set("record", StructuredRecordStringConverter.toJsonString(input))
+      .set("record", StructuredRecordStringConverter.toJsonString(input.getValue()))
       .build();
   }
 }

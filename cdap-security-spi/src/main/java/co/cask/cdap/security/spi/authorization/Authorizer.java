@@ -20,7 +20,6 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
 
 import java.util.Properties;
@@ -52,7 +51,7 @@ import java.util.jar.Attributes;
  * </ul>
  */
 @Beta
-public interface Authorizer {
+public interface Authorizer extends PrivilegesFetcher, AuthorizationEnforcer {
   /**
    * Initialize the {@link Authorizer}. Authorization extensions can use this method to access an
    * {@link AuthorizationContext} that allows them to interact with CDAP for operations such as creating and accessing
@@ -61,18 +60,6 @@ public interface Authorizer {
    * @param context the {@link AuthorizationContext} that can be used to interact with CDAP
    */
   void initialize(AuthorizationContext context) throws Exception;
-
-  /**
-   * Enforces authorization for the specified {@link Principal} for the specified {@link Action} on the specified
-   * {@link EntityId}.
-   *
-   * @param entity the {@link EntityId} on which authorization is to be enforced
-   * @param principal the {@link Principal} that performs the actions
-   * @param action the {@link Action} being performed
-   * @throws UnauthorizedException if the principal is not authorized to perform action on the entity
-   * @throws Exception if any other errors occurred while performing the authorization enforcement check
-   */
-  void enforce(EntityId entity, Principal principal, Action action) throws Exception;
 
   /**
    * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on an {@link EntityId}.
@@ -100,14 +87,6 @@ public interface Authorizer {
    * @param entity the {@link EntityId} on which all {@link Action actions} are to be revoked
    */
   void revoke(EntityId entity) throws Exception;
-
-  /**
-   * Returns all the {@link Privilege} for the specified {@link Principal}.
-   *
-   * @param principal the {@link Principal} for which to return privileges
-   * @return a {@link Set} of {@link Privilege} for the specified principal
-   */
-  Set<Privilege> listPrivileges(Principal principal) throws Exception;
 
   /********************************* Role Management: APIs for Role Based Access Control ******************************/
   /**

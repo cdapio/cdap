@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -129,6 +129,19 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     datasetModules.put(datasetClass.getName(), className);
   }
 
+  /**
+   * This adds the dataset class as a dataset type that needs to be deployed implicitly, as the results of a
+   * {@link #createDataset(String, Class)} or {@link #createDataset(String, Class, DatasetProperties)} call.
+   * The class name is recorded with a ".implicit." prefix, which can never collide with an actual class name.
+   *
+   * @param datasetClass the dataset class to add
+   */
+  private void addImplicitDatasetType(Class<? extends Dataset> datasetClass) {
+    String className = datasetClass.getName();
+    // TODO: this is a bit of a hack because the map is from String to String.
+    datasetModules.put(".implicit." + className, className);
+  }
+
   @Override
   public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
     checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
@@ -154,7 +167,7 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   public void createDataset(String datasetInstanceName, Class<? extends Dataset> datasetClass,
                             DatasetProperties properties) {
     createDataset(datasetInstanceName, datasetClass.getName(), properties);
-    addDatasetType(datasetClass);
+    addImplicitDatasetType(datasetClass);
   }
 
   @Override

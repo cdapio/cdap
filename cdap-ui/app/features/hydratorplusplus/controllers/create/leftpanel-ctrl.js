@@ -94,7 +94,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         }
       });
       if (!extensions.length) {
-        this.pluginsMap = [];
+        return;
       }
       this.pluginsMap = this.HydratorPlusPlusOrderingFactory.orderPluginTypes(this.pluginsMap);
     });
@@ -326,7 +326,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     let templateType = this.HydratorPlusPlusConfigStore.getArtifact().name;
     this.$uibModal
       .open({
-        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/plugin-delete-confirmation.html',
+        templateUrl: '/assets/features/hydratorplusplus/templates/partial/plugin-delete-confirmation.html',
         size: 'lg',
         backdrop: 'static',
         keyboard: false,

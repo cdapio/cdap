@@ -28,6 +28,7 @@ import co.cask.cdap.proto.TableNameInfo;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -46,6 +47,20 @@ public interface Explore {
    * @throws SQLException if there are errors in the SQL statement.
    */
   QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException, SQLException;
+
+  /**
+   * Execute a Hive SQL statement asynchronously. The returned {@link QueryHandle} can be used to get the
+   * status/result of the operation.
+   *
+   * @param namespace namespace to run the query in.
+   * @param statement SQL statement.
+   * @param additionalSessionConf additional configuration for the Hive session.
+   * @return {@link QueryHandle} representing the operation.
+   * @throws ExploreException on any error executing statement.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  QueryHandle execute(Id.Namespace namespace, String statement,
+                      @Nullable Map<String, String> additionalSessionConf) throws ExploreException, SQLException;
 
   /**
    * Fetch the status of a running Hive operation.
@@ -293,11 +308,4 @@ public interface Explore {
    * @throws SQLException if there are errors in the SQL statement.
    */
   QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
-
-  /**
-   * Upgrades Explore if needed. This method must be implemented in an idempotent way.
-   *
-   * @throws Exception if there was an exception during the upgrade
-   */
-  void upgrade() throws Exception;
 }

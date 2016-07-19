@@ -79,6 +79,11 @@ public class ExploreTableManager {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
+  // additional session configuration to make Hive fail without sleep/retry if it can't acquire locks
+  private static final Map<String, String> IMMEDIATE_TIMEOUT_CONF =
+    ImmutableMap.of("hive.lock.numretries", "0",
+                    "hive.lock.sleep.between.retries", "1");
+
   private final ExploreService exploreService;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final ExploreTableNaming tableNaming;
@@ -395,7 +400,7 @@ public class ExploreTableManager {
 
     LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetID, dropPartitionStatement);
 
-    return exploreService.execute(datasetID.getNamespace(), dropPartitionStatement);
+    return exploreService.execute(datasetID.getNamespace(), dropPartitionStatement, IMMEDIATE_TIMEOUT_CONF);
   }
 
   private String generateFileSetCreateStatement(Id.DatasetInstance datasetID, Dataset dataset,

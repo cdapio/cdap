@@ -28,14 +28,10 @@ import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProgramManager;
 import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.WorkerManager;
-import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -121,32 +117,18 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     Assert.assertNull(getDataset("counters_x").get());
   }
 
-  private interface ProgramStarter<T extends ProgramManager> {
-    ProgramManager<T> start();
-  }
-
   @Test
   public void testAdminWorker() throws Exception {
-    testAdminProgram(new ProgramStarter<WorkerManager>() {
-      @Override
-      public ProgramManager<WorkerManager> start() {
-        return appManager.getWorkerManager(AdminApp.WORKER_NAME).start();
-      }
-    });
+    testAdminProgram(appManager.getWorkerManager(AdminApp.WORKER_NAME));
   }
 
   @Test
   public void testAdminWorkflow() throws Exception {
-    testAdminProgram(new ProgramStarter<WorkflowManager>() {
-      @Override
-      public ProgramManager<WorkflowManager> start() {
-        return appManager.getWorkflowManager(AdminApp.WORKFLOW_NAME).start();
-      }
-    });
+    testAdminProgram(appManager.getWorkflowManager(AdminApp.WORKFLOW_NAME));
   }
 
-  private <T extends ProgramManager>
-  void testAdminProgram(ProgramStarter<T> starter) throws Exception {
+  private <T extends ProgramManager<T>>
+  void testAdminProgram(ProgramManager<T> manager) throws Exception {
 
     // create fileset b; it will be updated by the worker
     addDatasetInstance(FileSet.class.getName(), "b", FileSetProperties
@@ -167,7 +149,9 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     addDatasetInstance("table", "d");
 
     // start the worker and wait for it to finish
-    ProgramManager<T> manager = starter.start();
+    File newBasePath = new File(TMP_FOLDER.newFolder(), "extra");
+    Assert.assertFalse(newBasePath.exists());
+    manager = manager.start(ImmutableMap.of("new.base.path", newBasePath.getPath()));
     manager.waitForFinish(30, TimeUnit.SECONDS);
 
     // validate that worker created dataset a
@@ -179,7 +163,9 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     bManager = getDataset("b");
     Assert.assertEquals(bFormat, bManager.get().getInputFormatClassName());
     String newBPath = bManager.get().getBaseLocation().toURI().getPath();
-    Assert.assertEquals(bPath + "extra/", newBPath);
+    Assert.assertTrue(newBPath.endsWith("/extra/"));
+    // make sure the directory was created by fileset update (by moving the existing base path)
+    Assert.assertTrue(newBasePath.exists());
     bManager.flush();
 
     // validate that dataset c is empty
@@ -190,7 +176,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     Assert.assertNull(getDataset("d").get());
 
     // run the worker again to drop all datasets
-    manager.start(ImmutableMap.of("dropAll", "true"));
+    manager = manager.start(ImmutableMap.of("dropAll", "true"));
     manager.waitForFinish(30, TimeUnit.SECONDS);
 
     Assert.assertNull(getDataset("a").get());
@@ -306,36 +292,21 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testAdminSpark() throws Exception {
-    testAdminBatchProgram(new ProgramStarter<SparkManager>() {
-      @Override
-      public ProgramManager<SparkManager> start() {
-        return appManager.getSparkManager(AdminApp.SPARK_NAME).start();
-      }
-    });
+    testAdminBatchProgram(appManager.getSparkManager(AdminApp.SPARK_NAME));
   }
 
   @Test
   public void testAdminScalaSpark() throws Exception {
-    testAdminBatchProgram(new ProgramStarter<SparkManager>() {
-      @Override
-      public ProgramManager<SparkManager> start() {
-        return appManager.getSparkManager(AdminApp.SPARK_SCALA_NAME).start();
-      }
-    });
+    testAdminBatchProgram(appManager.getSparkManager(AdminApp.SPARK_SCALA_NAME));
   }
 
   @Test
   public void testAdminMapReduce() throws Exception {
-    testAdminBatchProgram(new ProgramStarter<MapReduceManager>() {
-      @Override
-      public ProgramManager<MapReduceManager> start() {
-        return appManager.getMapReduceManager(AdminApp.MAPREDUCE_NAME).start();
-      }
-    });
+    testAdminBatchProgram(appManager.getMapReduceManager(AdminApp.MAPREDUCE_NAME));
   }
 
-  private <T extends ProgramManager>
-  void testAdminBatchProgram(ProgramStarter<T> starter) throws Exception {
+  private <T extends ProgramManager<T>>
+  void testAdminBatchProgram(ProgramManager<T> manager) throws Exception {
 
     addDatasetInstance("keyValueTable", "lines");
     addDatasetInstance("keyValueTable", "counts");
@@ -352,7 +323,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     countsManager.get().write("me", Bytes.toBytes(3));
     countsManager.flush();
 
-    ProgramManager<T> manager = starter.start();
+    manager = manager.start();
     manager.waitForFinish(60, TimeUnit.SECONDS);
 
     // validate that there are no counts for "you" and "me", and the the other counts are accurate

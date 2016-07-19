@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,212 +14,324 @@
  * the License.
  */
 
-angular.module(PKG.name + '.commons')
-  .directive('myLogViewer', function ($filter, $timeout, $state, $location) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce) {
+  'ngInject';
 
-    var capitalize = $filter('caskCapitalizeFilter'),
-        filterFilter = $filter('filter');
+  this.data = {};
+  this.errorCount = 0;
+  this.warningCount = 0;
+  this.totalCount = 0;
+  this.loading = true;
+  this.loadingMoreLogs = false;
+  this.fullScreen = false;
 
-    return {
-      restrict: 'E',
-      scope: {
-        params: '='
-      },
-      templateUrl: 'log-viewer/log-viewer.html',
+  var dataSrc = new MyCDAPDataSource($scope);
+  var pollPromise;
 
-      controller: function ($scope, myLogsApi, MyCDAPDataSource) {
-        var dataSrc = new MyCDAPDataSource($scope);
-        $scope.model = [];
+  this.configOptions = {
+    time: true,
+    level: true,
+    source: true,
+    message: true
+  };
 
-        var loadTimeout = null;
+  this.hiddenColumns = {
+    time: false,
+    level: false,
+    source: false,
+    message: false
+  };
 
-        $scope.filters = 'all,info,warn,error,debug,other'.split(',')
-          .map(function (key) {
-            var p;
-            switch(key) {
-              case 'all':
-                p = function() { return true; };
-                break;
-              case 'other':
-                p = function(line) { return !(/- (INFO|WARN|ERROR|DEBUG)/).test(line.log); };
-                break;
-              default:
-                p = function(line) { return (new RegExp('- '+key.toUpperCase())).test(line.log); };
-            }
-            return {
-              key: key,
-              label: capitalize(key),
-              entries: [],
-              predicate: p
-            };
-          });
+  //viewLimit and cacheDecrement should match
+  this.viewLimit = 100;
+  this.cacheDecrement = 100;
+  this.cacheSize = 0;
 
-        $scope.$watch('model', function (newVal) {
-          angular.forEach($scope.filters, function (one) {
-            one.entries = filterFilter(newVal, one.predicate);
-          });
-        });
+  //Collapsing LogViewer Table Columns
+  var theColumns = [];
+  var cols = this.configOptions;
+  var collapseCount = 0;
 
-        var params = {};
-        var pollPromise = null;
-        var infiniteScrollDOMElement,
-            offsetDOMElement,
-            container,
-            logItem;
+  if(cols['source']){
+    theColumns.push('source');
+  }
+  if(cols['level']){
+    theColumns.push('level');
+  }
+  if(cols['time']){
+    theColumns.push('time');
+  }
 
-        function pollForLogs(params) {
-          var path = '/namespaces/' + params.namespace +
-            '/apps/' + params.appId +
-            '/' + params.programType + '/' + params.programId +
-            '/runs/' + params.runId +
-            '/logs/prev?max=50&escape=false';
+  angular.forEach($scope.displayOptions, (value, key) => {
+    this.configOptions[key] = value;
+  });
 
-          pollPromise = dataSrc.poll({
-            _cdapPath: path,
-            interval: 3000
-          }, function (res) {
-            $scope.model = res;
+  this.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
 
-            if (res.length >= 50) {
-              dataSrc.stopPoll(pollPromise.__pollId__);
-              pollPromise = null;
-            }
-          });
-        }
+  let included = {
+    'ERROR' : false,
+    'WARN' : false,
+    'INFO' : false,
+    'DEBUG' : false,
+    'TRACE' : false
+  };
 
+  let numEvents = 0;
+  this.toggleExpandAll = false;
 
-        function initialize() {
-          params = {};
-          angular.copy($scope.params, params);
-          params.max = 50;
-          params.escape = false;
-          params.scope = $scope;
+  LogViewerStore.subscribe(() => {
+    this.logStartTime = LogViewerStore.getState().startTime;
+    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+    this.loadingMoreLogs = true;
+    requestWithStartTime();
+  });
 
-          $scope.model = [];
-
-          if (!params.runId) { return; }
-
-          if (pollPromise) {
-            dataSrc.stopPoll(pollPromise.__pollId__);
-            pollPromise = null;
-          }
-
-          $scope.loadingNext = true;
-          myLogsApi.prevLogs(params)
-            .$promise
-            .then(function (res) {
-              $scope.model = res;
-
-              if (res.length < 50) {
-                pollForLogs(params);
-              }
-
-              $scope.loadingNext = false;
-            });
-        }
-
-        initialize();
-
-        $scope.$watch('params.runId', initialize);
-
-        $scope.loadNextLogs = function () {
-          if ($scope.loadingNext || $scope.loadingPrev) {
-            return;
-          }
-
-          if (pollPromise) {
-            dataSrc.stopPoll(pollPromise.__pollId__);
-            pollPromise = null;
-          }
-
-          $scope.loadingNext = true;
-          if ($scope.model.length) {
-            params.fromOffset = $scope.model[$scope.model.length-1].offset;
-          }
-
-          myLogsApi.nextLogs(params)
-            .$promise
-            .then(function (res) {
-              $scope.model = _.uniq($scope.model.concat(res));
-              $scope.loadingNext = false;
-            });
-        };
-
-        $scope.loadPrevLogs = function () {
-          if ($scope.loadingPrev || $scope.loadingNext) {
-            return;
-          }
-
-          $scope.loadingPrev = true;
-
-          if ($scope.model.length) {
-            params.fromOffset = $scope.model[0].offset;
-          }
-
-          myLogsApi.prevLogs(params)
-            .$promise
-            .then(function (res) {
-              $scope.model = _.uniq(res.concat($scope.model));
-              $scope.loadingPrev = false;
-
-              if (loadTimeout) {
-                $timeout.cancel(loadTimeout);
-              }
-
-              loadTimeout = $timeout(function() {
-                infiniteScrollDOMElement =  document.querySelector('[infinite-scroll]');
-                offsetDOMElement = document.getElementById(params.fromOffset);
-                container = angular.element(infiniteScrollDOMElement)[0];
-                logItem = angular.element(offsetDOMElement)[0];
-                container.scrollTop = logItem.offsetTop;
-              });
-            });
-        };
-
-        $scope.$on('$destroy', function () {
-          infiniteScrollDOMElement = offsetDOMElement = container = logItem = null;
-          if (loadTimeout) {
-            $timeout.cancel(loadTimeout);
-          }
-        });
-
-      },
-
-      link: function (scope, element) {
-
-        var termEl = angular.element(element[0].querySelector('.terminal')),
-            QPARAM = 'filter';
-
-        var filterTimeout = null;
-
-        scope.setFilter = function (k) {
-          var f = filterFilter(scope.filters, {key:k});
-          scope.activeFilter = f.length ? f[0] : scope.filters[0];
-
-          if (filterTimeout) {
-            $timeout.cancel(filterTimeout);
-          }
-
-          filterTimeout = $timeout(function(){
-            termEl.prop('scrollTop', termEl.prop('scrollHeight'));
-
-            if(false === $state.current.reloadOnSearch) {
-              var params = {};
-              params[QPARAM] = scope.activeFilter.key;
-              $location.search(params);
-            }
-          });
-
-        };
-
-        scope.setFilter($state.params[QPARAM]);
-
-        scope.$on('$destroy', function () {
-          termEl = null;
-          if (filterTimeout) {
-            $timeout.cancel(filterTimeout);
-          }
-        });
+  this.collapseColumns = () => {
+    if(this.isMessageExpanded){
+      this.isMessageExpanded = !this.isMessageExpanded;
+    }
+    if(collapseCount < theColumns.length){
+      this.hiddenColumns[theColumns[collapseCount++]] = true;
+      if(collapseCount === theColumns.length){
+        this.isMessageExpanded = true;
       }
+    } else {
+      collapseCount = 0;
+      for(var key in this.hiddenColumns){
+        if(this.hiddenColumns.hasOwnProperty(key)){
+          this.hiddenColumns[key] = false;
+        }
+      }
+    }
+  };
+
+  this.updateScrollPositionInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION,
+      payload: {
+        scrollPosition: val
+      }
+    });
+  };
+
+  const requestWithOffset = () => {
+
+    if(pollPromise){
+      dataSrc.stopPoll(pollPromise.__pollId__);
+      pollPromise = null;
+    }
+
+    myLogsApi.nextLogsJsonOffset({
+      'namespace' : this.namespaceId,
+      'appId' : this.appId,
+      'programType' : this.programType,
+      'programId' : this.programId,
+      'runId' : this.runId,
+      'fromOffset' : this.fromOffset
+    }).$promise.then(
+      (res) => {
+
+        this.fromOffset = res[res.length-1].offset;
+        this.totalCount += res.length;
+
+        if(res.length === 0){
+          this.loadingMoreLogs = false;
+          getStatus();
+          return;
+        }
+
+        angular.forEach(res, (element, index) => {
+          if(res[index].log.logLevel === 'WARN'){
+            this.warningCount++;
+          } else if(res[index].log.logLevel === 'ERROR'){
+            this.errorCount++;
+          }
+
+          //Format dates properly for rendering and computing
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + formattedDate.getSeconds());
+        });
+
+        this.data = this.data.concat(res);
+        this.cacheSize = res.length - this.cacheDecrement;
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+      });
+  };
+
+  const getStatus = () => {
+      myLogsApi.getLogsMetadata({
+        'namespace' : this.namespaceId,
+        'appId' : this.appId,
+        'programType' : this.programType,
+        'programId' : this.programId,
+        'runId' : this.runId
+      }).$promise.then(
+        (statusRes) => {
+          if(statusRes.status === 'RUNNING'){
+            pollForNewLogs();
+          }
+        },
+        (statusErr) => {
+          console.log('ERROR: ', statusErr);
+        }
+      );
+  };
+
+  const pollForNewLogs = () => {
+    pollPromise = dataSrc.poll({
+      _cdapPath: '/namespaces/' + this.namespaceId + '/apps/' + this.appId + '/' + this.programType + '/' + this.programId + '/runs/' + this.runId + '/logs?format=json&start=' + this.startTimeSec,
+      method: 'GET'
+    },
+    function(res) {
+      if(res.length > 0){
+        this.data = res;
+        dataSrc.stopPoll(pollPromise.__pollId__);
+        pollPromise = null;
+      }
+    }, function(err){
+      console.log('ERROR: ', err);
+    });
+  };
+
+  const requestWithStartTime = () => {
+    if(pollPromise){
+      dataSrc.stopPoll(pollPromise.__pollId__);
+      pollPromise = null;
+    }
+
+   myLogsApi.getLogsStart({
+      'namespace' : this.namespaceId,
+      'appId' : this.appId,
+      'programType' : this.programType,
+      'programId' : this.programId,
+      'runId' : this.runId,
+      'start' : this.startTimeSec
+    }).$promise.then(
+      (res) => {
+        this.loading = false;
+        this.viewLimit = 100;
+        this.cacheDecrement = 100;
+        this.cacheSize = 0;
+
+        //If there are no logs yet to be retrieved let viewer know
+        this.loadingMoreLogs = res.length < this.viewLimit ? false : true;
+
+        //There are no more logs to be returned
+        if(res.length === 0){
+          getStatus();
+          return;
+        }
+
+        this.fromOffset = res[res.length-1].offset;
+        this.totalCount = res.length;
+        this.warningCount = 0;
+        this.errorCount = 0;
+
+        angular.forEach(res, (element, index) => {
+          if(res[index].log.logLevel === 'WARN'){
+            this.warningCount++;
+          } else if(res[index].log.logLevel === 'ERROR'){
+            this.errorCount++;
+          }
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = formatDate(formattedDate);
+        });
+        this.data = res;
+        this.cacheSize = res.length - this.cacheDecrement;
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+      });
+  };
+
+  function formatDate(date) {
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+    let year = date.getFullYear();
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    let seconds = date.getSeconds();
+
+    if(minutes < 10){
+      minutes = '0' + minutes.toString();
+    }
+    if(hours < 10){
+      hours = '0' + hours.toString();
+    }
+    if(seconds < 10){
+      seconds = '0' + seconds.toString();
+    }
+    return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+  }
+
+  this.highlight = (text) => {
+    if(!this.searchText || (this.searchText && !this.searchText.length)){
+      return $sce.trustAsHtml(text);
+    }
+    return $sce.trustAsHtml(text.replace(new RegExp(this.searchText, 'gi'), '<span class="highlighted-text">$&</span>'));
+  };
+
+  this.toggleLogExpansion = function() {
+    this.toggleExpandAll = !this.toggleExpandAll;
+    angular.forEach(this.data, (entry) => {
+      if(entry.log.stackTrace.length > 0){
+        entry.isStackTraceExpanded = this.toggleExpandAll;
+      }
+    });
+  };
+
+  this.includeEvent = function(eventType){
+    if(included[eventType]){
+      numEvents--;
+    } else{
+      numEvents++;
+    }
+    included[eventType] = !included[eventType];
+  };
+
+  this.eventFilter = function(entry){
+    if(numEvents === 0 || included[entry.log.logLevel]){
+      return entry;
+    }
+    return;
+  };
+
+  this.scrollFn = function(){
+    this.loadingMoreLogs = true;
+    this.cacheSize -= this.cacheDecrement;
+    if(this.cacheSize <= 0){
+      requestWithOffset();
+    }
+    // computePinPosition();
+    this.viewLimit += this.cacheDecrement;
+  };
+
+  this.filterByStartDate = (entry) => {
+    if(this.logStartTime > entry.log.timestamp) {
+      return;
+    }
+    return entry;
+  };
+}
+
+angular.module(PKG.name + '.commons')
+  .directive('myLogViewer', function () {
+    return {
+      templateUrl: 'log-viewer/log-viewer.html',
+      controller: LogViewerController,
+      scope: {
+        displayOptions: '=?',
+        namespaceId: '@',
+        appId: '@',
+        programType: '@',
+        programId: '@',
+        runId: '@'
+      },
+      bindToController: true,
+      controllerAs: 'LogViewer'
     };
   });

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -31,9 +29,9 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- *
+ * Defines the HBase implementation of Table.
  */
-public class HBaseTableDefinition extends AbstractDatasetDefinition<Table, HBaseTableAdmin> {
+public class HBaseTableDefinition extends AbstractTableDefinition<Table, HBaseTableAdmin> {
 
   @Inject
   private Configuration hConf;
@@ -41,19 +39,9 @@ public class HBaseTableDefinition extends AbstractDatasetDefinition<Table, HBase
   private HBaseTableUtil hBaseTableUtil;
   @Inject
   private LocationFactory locationFactory;
-  // todo: datasets should not depend on cdap configuration!
-  @Inject
-  private CConfiguration cConf;
 
   public HBaseTableDefinition(String name) {
     super(name);
-  }
-
-  @Override
-  public DatasetSpecification configure(String name, DatasetProperties properties) {
-    return DatasetSpecification.builder(name, getName())
-      .properties(properties.getProperties())
-      .build();
   }
 
   @Override

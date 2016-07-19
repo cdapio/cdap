@@ -39,6 +39,7 @@
     <module>cdap-etl-proto</module>
     <module>cdap-etl-realtime</module>
     <module>cdap-etl-tools</module>
+    <module>hydrator-spark-core</module>
     <module>hydrator-test</module>
   </modules>
 

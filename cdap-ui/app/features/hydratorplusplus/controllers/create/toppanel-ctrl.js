@@ -15,16 +15,29 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory) {
-
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService) {
+    this.consoleStore = HydratorPlusPlusConsoleStore;
+    this.myPipelineExportModalService = myPipelineExportModalService;
+    this.consoleStore.registerOnChangeListener(() => {
+      let messages = this.consoleStore.getMessages() || [];
+      let filteredMessages = messages.filter( message => message.type === 'MISSING-NAME');
+      this.state.inValidName = (filteredMessages.length ? true : false);
+    });
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
+    this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.$uibModal = $uibModal;
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
+    this.myHelpers = myHelpers;
 
     this.canvasOperations = [
+      {
+        name: 'Settings',
+        icon: 'fa-sliders',
+        fn: this.showSettings.bind(this)
+      },
       {
         name: 'Export',
         icon: 'icon-export',
@@ -59,6 +72,7 @@ class HydratorPlusPlusTopPanelCtrl{
         name: this.HydratorPlusPlusConfigStore.getName(),
         description: this.HydratorPlusPlusConfigStore.getDescription()
       },
+      viewSettings: this.myHelpers.objectQuery(this.state, 'viewSettings') || false,
       artifact: this.HydratorPlusPlusConfigStore.getArtifact()
     };
   }
@@ -66,11 +80,13 @@ class HydratorPlusPlusTopPanelCtrl{
   openMetadata() {
     this.metadataExpanded = true;
   }
-  resetMetadata() {
+  resetMetadata(event) {
     this.setState();
     this.metadataExpanded = false;
+    event.preventDefault();
+    event.stopPropagation();
   }
-  saveMetadata() {
+  saveMetadata(event) {
     this.HydratorPlusPlusConfigActions.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
     if (this.state.metadata.description) {
       this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
@@ -80,11 +96,13 @@ class HydratorPlusPlusTopPanelCtrl{
       this.tooltipDescription = '';
     }
     this.metadataExpanded = false;
+    event.preventDefault();
+    event.stopPropagation();
   }
   onEnterOnMetadata(event) {
     // Save when user hits ENTER key.
     if (event.keyCode === 13) {
-      this.saveMetadata();
+      this.saveMetadata(event);
       this.metadataExpanded = false;
     } else if (event.keyCode === 27) {
       // Reset if the user hits ESC key.
@@ -95,41 +113,8 @@ class HydratorPlusPlusTopPanelCtrl{
   onExport() {
     this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
     let config = angular.copy(this.HydratorPlusPlusConfigStore.getDisplayConfig());
-    if (!config) {
-      return;
-    }
-    this.$uibModal.open({
-      templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/viewconfig.html',
-      size: 'lg',
-      keyboard: true,
-      windowTopClass: 'hydrator-modal',
-      controller: ['$scope', 'config', '$timeout', 'exportConfig', function($scope, config, $timeout, exportConfig) {
-        var exportTimeout = null;
-
-        $scope.config = JSON.stringify(config);
-        $scope.export = function () {
-          var blob = new Blob([JSON.stringify(exportConfig, null, 4)], { type: 'application/json'});
-          $scope.url = URL.createObjectURL(blob);
-          $scope.exportFileName = (exportConfig.name? exportConfig.name: 'noname') + '-' + exportConfig.artifact.name;
-          $scope.$on('$destroy', function () {
-            URL.revokeObjectURL($scope.url);
-          });
-
-          $timeout.cancel(exportTimeout);
-          exportTimeout = $timeout(function() {
-            document.getElementById('pipeline-export-config-link').click();
-          });
-        };
-
-        $scope.$on('$destroy', () => {
-          $timeout.cancel(exportTimeout);
-        });
-      }],
-      resolve: {
-        config: () => config,
-        exportConfig: () => this.HydratorPlusPlusConfigStore.getConfigForExport()
-      }
-    });
+    let exportConfig = this.HydratorPlusPlusConfigStore.getConfigForExport();
+    this.myPipelineExportModalService.show(config, exportConfig);
   }
   onSaveDraft() {
     this.HydratorPlusPlusConfigActions.saveAsDraft();
@@ -138,18 +123,21 @@ class HydratorPlusPlusTopPanelCtrl{
     this.HydratorPlusPlusConsoleActions.resetMessages();
     let isStateValid = this.HydratorPlusPlusConfigStore.validateState(true);
     if (isStateValid) {
-      this.HydratorPlusPlusConsoleActions.addMessage({
+      this.HydratorPlusPlusConsoleActions.addMessage([{
         type: 'success',
         content: 'Validation success! Pipeline ' + this.HydratorPlusPlusConfigStore.getName() + ' is valid.'
-      });
+      }]);
     }
   }
   onPublish() {
     this.HydratorPlusPlusConfigActions.publishPipeline();
   }
+  showSettings() {
+    this.state.viewSettings = !this.state.viewSettings;
+  }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

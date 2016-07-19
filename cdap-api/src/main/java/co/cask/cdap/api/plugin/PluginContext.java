@@ -17,6 +17,8 @@
 package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.macro.InvalidMacroException;
+import co.cask.cdap.api.macro.MacroEvaluator;
 
 /**
  * Provides access to plugin context when a program is executing.
@@ -51,6 +53,17 @@ public interface PluginContext {
    * {@link PluginConfigurer#usePlugin(String, String, String, PluginProperties)} was called during the
    * program configuration time.
    *
+   * All plugin properties that are macro-enabled and were configured with macro syntax present will be substituted
+   * with Java's default values based on the property's type at configuration time. The default values are:
+   *  - boolean: false
+   *  - byte: 0
+   *  - double: 0.0d
+   *  - float: 0.0f
+   *  - int: 0
+   *  - long: 0L
+   *  - short: 0
+   *  - String: null
+   *
    * @param pluginId the unique identifier provide when declaring plugin usage in the program.
    * @param <T> the class type of the plugin
    * @return A new instance of the plugin being specified by the arguments
@@ -60,4 +73,25 @@ public interface PluginContext {
    * @throws UnsupportedOperationException if the program does not support plugin
    */
   <T> T newPluginInstance(String pluginId) throws InstantiationException;
+
+  /**
+   * Creates a new instance of a plugin. The instance returned will have the {@link PluginConfig} setup with
+   * {@link PluginProperties} provided at the time when the
+   * {@link PluginConfigurer#usePlugin(String, String, String, PluginProperties)} was called during the
+   * program configuration time. If a plugin field has a macro,
+   * the parameter evaluator is used to evaluate the macro and the evaluated value is used for the plugin field.
+   *
+   * @param pluginId the unique identifier provide when declaring plugin usage in the program.
+   * @param evaluator the macro evaluator that's used to evaluate macro for plugin field
+   *                  if macro is supported on those fields.
+   * @param <T> the class type of the plugin
+   * @return A new instance of the plugin being specified by the arguments
+   *
+   * @throws InstantiationException if failed create a new instance
+   * @throws IllegalArgumentException if pluginId is not found
+   * @throws UnsupportedOperationException if the program does not support plugin
+   * @throws InvalidMacroException if there is exception during macro evaluation
+   */
+  <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException,
+    InvalidMacroException;
 }

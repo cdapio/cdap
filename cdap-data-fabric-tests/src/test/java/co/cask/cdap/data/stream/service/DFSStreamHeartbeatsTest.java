@@ -21,13 +21,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -122,7 +121,7 @@ public class DFSStreamHeartbeatsTest {
         new DataFabricModules().getInMemoryModules(),
         new ConfigModule(cConf, new Configuration()),
         new DiscoveryRuntimeModule().getInMemoryModules(),
-        new LocationRuntimeModule().getInMemoryModules(),
+        new LocationUnitTestModule().getModule(),
         new ExploreClientModule(),
         new DataSetServiceModules().getInMemoryModules(),
         new DataSetsModules().getStandaloneModules(),
@@ -138,8 +137,7 @@ public class DFSStreamHeartbeatsTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(AbstractNamespaceClient.class).to(InMemoryNamespaceClient.class);
-
+          install(new NamespaceClientRuntimeModule().getInMemoryModules());
           bind(StreamConsumerStateStoreFactory.class).to(LevelDBStreamConsumerStateStoreFactory.class)
             .in(Singleton.class);
           bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);

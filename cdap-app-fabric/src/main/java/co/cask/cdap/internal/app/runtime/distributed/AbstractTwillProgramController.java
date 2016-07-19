@@ -73,8 +73,15 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
           // Service was killed
           stop();
         } else {
-          // Service completed by itself. Simply signal the state change of this controller.
-          complete();
+          try {
+            // This never blocks since the twill controller is already terminated. It will throw exception if
+            // the twill program failed.
+            twillController.awaitTerminated();
+            // Service completed by itself. Simply signal the state change of this controller.
+            complete();
+          } catch (Exception e) {
+            error(e);
+          }
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);

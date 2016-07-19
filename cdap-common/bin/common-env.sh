@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-
 #
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +14,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Set environment variables here.
+# This file contains defaults for environment variables used in CDAP. Set overrides in CDAP_CONF_DIR/cdap-env.sh instead.
 
 # The java implementation to use.  Java 1.7 required.
 # export JAVA_HOME=/usr/java/jdk1.7.0/
@@ -48,23 +47,15 @@ export IDENT_STRING=${USER}
 export PID_DIR=/var/cdap/run
 
 # The directory serving as the user directory for master
-export LOCAL_DIR=/var/tmp/cdap
+export LOCAL_DIR=${LOCAL_DIR:-/var/tmp/cdap}
 
-# Specifies the JAVA_HEAPMAX
-export JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx128m}
+# The directory serving as the java.io.tmpdir directory for master
+export TEMP_DIR=${TEMP_DIR:-/tmp}
 
-# The options below can be set in the sourced component-specific conf/[component]-env.sh scripts
+# The options below are be set in the sourced component-specific conf/[component]-env.sh scripts
 
 # Main class to be invoked.
 #MAIN_CLASS=
 
 # Arguments for main class.
 #MAIN_CLASS_ARGS=""
-
-# Adds Hadoop and HBase libs to the classpath on startup.
-# If the "hbase" command is on the PATH, this will be done automatically.
-# Or uncomment the line below to point to the HBase installation directly.
-# HBASE_HOME=
-
-# Extra CLASSPATH
-# EXTRA_CLASSPATH=""

@@ -21,6 +21,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.Spark;
@@ -154,9 +155,20 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
+  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+    return sparkRuntimeContext.getDatasetCache().getDataset(namespace, name);
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(String name,
                                           Map<String, String> arguments) throws DatasetInstantiationException {
     return sparkRuntimeContext.getDatasetCache().getDataset(name, arguments);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name, String namespace,
+                                          Map<String, String> arguments) throws DatasetInstantiationException {
+    return sparkRuntimeContext.getDatasetCache().getDataset(namespace, name, arguments);
   }
 
   @Override
@@ -225,5 +237,10 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return sparkRuntimeContext.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
+    return sparkRuntimeContext.newPluginInstance(pluginId, evaluator);
   }
 }

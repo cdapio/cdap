@@ -28,6 +28,7 @@ import java.util.Objects;
 public class SystemServiceId extends EntityId {
 
   private final String service;
+  private transient Integer hashCode;
 
   public SystemServiceId(String service) {
     super(EntityType.SYSTEM_SERVICE);
@@ -49,7 +50,11 @@ public class SystemServiceId extends EntityId {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), service);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), service);
+    }
+    return hashCode;
   }
 
   @Override

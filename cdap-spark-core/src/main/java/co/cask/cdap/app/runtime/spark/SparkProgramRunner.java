@@ -28,12 +28,12 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
-import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -48,6 +48,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -91,12 +92,13 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
-  private final Store store;
+  private final RuntimeStore runtimeStore;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, TransactionSystemClient txClient,
                      DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
-                     DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store) {
+                     DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
+                     RuntimeStore runtimeStore) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -105,14 +107,14 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
-    this.store = store;
+    this.runtimeStore = runtimeStore;
   }
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
     // Get the RunId first. It is used for the creation of the ClassLoader closing thread.
     Arguments arguments = options.getArguments();
-    RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
+    RunId runId = ProgramRunners.getRunId(options);
 
     Deque<Closeable> closeables = new LinkedList<>();
 
@@ -148,8 +150,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         closeables.addFirst(pluginInstantiator);
       }
 
-      SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, runId,
-                                                                   options.getUserArguments().asMap(),
+      SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options,
                                                                    txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
@@ -179,7 +180,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                             runtimeContext, submitter, host);
 
       sparkRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(), closeables, store),
+        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(),
+                                     closeables, runtimeStore),
         Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
 
@@ -197,8 +199,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   }
 
   @Override
-  public ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir) {
-    return SparkRuntimeUtils.createProgramClassLoader(cConf, dir, getClass().getClassLoader());
+  public ClassLoader createProgramClassLoaderParent() {
+    return new FilterClassLoader(getClass().getClassLoader(), SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
   }
 
   /**
@@ -244,7 +246,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
    */
   private Service.Listener createRuntimeServiceListener(final Id.Program programId, final RunId runId,
                                                         final Arguments arguments, final Arguments userArgs,
-                                                        final Iterable<Closeable> closeables, final Store store) {
+                                                        final Iterable<Closeable> closeables,
+                                                        final RuntimeStore runtimeStore) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
@@ -257,7 +260,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(), arguments.asMap());
+        runtimeStore.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId,
+                              userArgs.asMap(), arguments.asMap());
       }
 
       @Override
@@ -268,15 +272,15 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           // Service was killed
           runStatus = ProgramController.State.KILLED.getRunStatus();
         }
-        store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      runStatus);
+        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                             runStatus);
       }
 
       @Override
       public void failed(Service.State from, @Nullable Throwable failure) {
         closeAll(closeables);
-        store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus(), failure);
+        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
       }
     };
   }

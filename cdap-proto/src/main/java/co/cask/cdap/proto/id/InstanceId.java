@@ -28,6 +28,7 @@ import java.util.Objects;
  */
 public class InstanceId extends EntityId {
   private final String instance;
+  private transient Integer hashCode;
 
   public InstanceId(String instance) {
     super(EntityType.INSTANCE);
@@ -66,6 +67,10 @@ public class InstanceId extends EntityId {
 
   @Override
   public int hashCode() {
-    return Objects.hash(instance);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), instance);
+    }
+    return hashCode;
   }
 }

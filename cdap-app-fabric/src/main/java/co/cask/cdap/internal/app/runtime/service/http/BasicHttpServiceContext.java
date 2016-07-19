@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,24 +16,20 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.collect.Maps;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
@@ -45,45 +41,52 @@ import javax.annotation.Nullable;
 public class BasicHttpServiceContext extends AbstractContext implements TransactionalHttpServiceContext {
 
   private final HttpServiceHandlerSpecification spec;
-  private final Metrics userMetrics;
   private final int instanceId;
   private final AtomicInteger instanceCount;
-  private final Map<String, Plugin> plugins;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
-   * @param spec spec to create a context for.
    * @param program program of the context.
-   * @param runId runId of the component.
+   * @param programOptions program options for the program execution context
+   * @param spec spec of the service handler of this context. If {@code null} is provided, this context
+   *             is not associated with any service handler (e.g. for the http server itself).
    * @param instanceId instanceId of the component.
    * @param instanceCount total number of instances of the component.
-   * @param runtimeArgs runtime arguments for the component.
    * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
    * @param dsFramework dsFramework to use for getting datasets.
    * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
    * @param txClient txClient to do transaction operations.
    * @param pluginInstantiator {@link PluginInstantiator}
    */
-  public BasicHttpServiceContext(HttpServiceHandlerSpecification spec,
-                                 Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
-                                 Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
+  public BasicHttpServiceContext(Program program, ProgramOptions programOptions,
+                                 @Nullable HttpServiceHandlerSpecification spec,
+                                 int instanceId, AtomicInteger instanceCount,
+                                 MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
                                  TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator) {
-    super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+    super(program, programOptions, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
+          dsFramework, txClient, discoveryServiceClient, false,
+          metricsCollectionService, createMetricsTags(spec, instanceId), pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.userMetrics =
-      new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
-                                                spec.getName(), runId.getId(), instanceId));
-    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
+  }
+
+  private static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec,
+                                                       int instanceId) {
+    Map<String, String> tags = new HashMap<>();
+    tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
+    if (spec != null) {
+      tags.put(Constants.Metrics.Tag.HANDLER, spec.getName());
+    }
+    return tags;
   }
 
   /**
-   * @return the {@link HttpServiceHandlerSpecification} for this context
+   * @return the {@link HttpServiceHandlerSpecification} for this context or {@code null} if there is no service
+   *         handler associated with this context.
    */
+  @Nullable
   @Override
   public HttpServiceHandlerSpecification getSpecification() {
     return spec;
@@ -100,11 +103,6 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   }
 
   @Override
-  public Metrics getMetrics() {
-    return userMetrics;
-  }
-
-  @Override
   public TransactionContext newTransactionContext() {
     return getDatasetCache().newTransactionContext();
   }
@@ -112,23 +110,5 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public void dismissTransactionContext() {
     getDatasetCache().dismissTransactionContext();
-  }
-
-  @Override
-  public Map<String, Plugin> getPlugins() {
-    return plugins;
-  }
-
-  @Nullable
-  private static MetricsContext getMetricCollector(MetricsCollectionService service,
-                                                     Program program, String handlerName,
-                                                     String runId, int instanceId) {
-    if (service == null) {
-      return null;
-    }
-    Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-    tags.put(Constants.Metrics.Tag.HANDLER, handlerName);
-    tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-    return service.getContext(tags);
   }
 }

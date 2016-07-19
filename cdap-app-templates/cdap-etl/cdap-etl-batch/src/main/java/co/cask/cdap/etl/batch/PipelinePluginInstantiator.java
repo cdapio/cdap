@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.batch.connector.ConnectorSink;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
@@ -52,15 +53,15 @@ public class PipelinePluginInstantiator {
     }
   }
 
-  public <T> T newPluginInstance(String stageName) throws InstantiationException {
+  public <T> T newPluginInstance(String stageName, MacroEvaluator macroEvaluator) throws InstantiationException {
     if (connectorSources.contains(stageName)) {
       String datasetName = phaseSpec.getConnectorDatasets().get(stageName);
       return (T) new ConnectorSource(datasetName, null);
     } else if (connectorSinks.contains(stageName)) {
       String datasetName = phaseSpec.getConnectorDatasets().get(stageName);
-      return (T) new ConnectorSink(datasetName, phaseSpec.getPhaseName(), true);
+      return (T) new ConnectorSink(datasetName, phaseSpec.getPhaseName());
     }
 
-    return pluginContext.newPluginInstance(stageName);
+    return pluginContext.newPluginInstance(stageName, macroEvaluator);
   }
 }

@@ -26,6 +26,7 @@ import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.error.Err;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -92,13 +93,13 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
       String flowletName = defn.getFlowletSpec().getName();
 
       // Check if the Flowlet Name is an ID.
-      if (!isId(defn.getFlowletSpec().getName())) {
+      if (!EntityId.isValidId(defn.getFlowletSpec().getName())) {
         return VerifyResult.failure(Err.NOT_AN_ID, flowName + ":" + flowletName);
       }
 
       // We check if all the dataset names used are ids
       for (String dataSet : defn.getDatasets()) {
-        if (!isId(dataSet)) {
+        if (!EntityId.isValidDatasetId(dataSet)) {
           return VerifyResult.failure(Err.NOT_AN_ID, flowName + ":" + flowletName + ":" + dataSet);
         }
       }
@@ -111,12 +112,20 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
     // NOTE: We should unify the logic here and the queue spec generation, as they are doing the same thing.
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecTable
-            = new SimpleQueueSpecificationGenerator(appId).create(input);
-
+      = new SimpleQueueSpecificationGenerator(appId).create(input);
     // For all connections, there should be an entry in the table.
     for (FlowletConnection connection : input.getConnections()) {
-      QueueSpecificationGenerator.Node node = new QueueSpecificationGenerator.Node(connection.getSourceType(),
-                                                                                   connection.getSourceName());
+      QueueSpecificationGenerator.Node node;
+      if (connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
+        node = new QueueSpecificationGenerator.Node(connection.getSourceType(), connection.getSourceName());
+
+      } else {
+        String sourceNamespace = connection.getSourceNamespace() == null ? appId.getNamespaceId() :
+          connection.getSourceNamespace();
+        node = new QueueSpecificationGenerator.Node(connection.getSourceType(),
+                                                    sourceNamespace,
+                                                    connection.getSourceName());
+      }
       if (!queueSpecTable.contains(node, connection.getTargetName())) {
         return VerifyResult.failure(Err.Flow.NO_INPUT_FOR_OUTPUT,
                                     flowName, connection.getTargetName(),

@@ -23,6 +23,9 @@ class TrackerEnableController{
     this.myAlertOnValium = myAlertOnValium;
     this.$q = $q;
     this.UI_CONFIG = UI_CONFIG;
+
+    this.trackerServiceRunning = false;
+    this.auditFlowRunning = false;
   }
 
   enableTracker() {
@@ -54,7 +57,7 @@ class TrackerEnableController{
         })[0].value;
 
         let numPartitions = res.filter( (c) => {
-          return c.name === 'kafka.num.partitions';
+          return c.name === 'kafka.server.num.partitions';
         })[0].value;
 
         let topic = res.filter( (c) => {
@@ -91,10 +94,10 @@ class TrackerEnableController{
   }
 
   startPrograms() {
-    let auditServiceParams = {
+    let trackerServiceParams = {
       namespace: this.$state.params.namespace,
       programType: 'services',
-      programId: this.UI_CONFIG.tracker.programId,
+      programId: this.UI_CONFIG.tracker.serviceId,
       scope: this.$scope
     };
 
@@ -105,26 +108,53 @@ class TrackerEnableController{
       scope: this.$scope
     };
 
-    this.$q.all([
-      this.myTrackerApi.startTrackerProgram(auditServiceParams, {}).$promise,
-      this.myTrackerApi.startTrackerProgram(auditFlowParams, {}).$promise
-    ]).then( () => {
-      this.$state.go('tracker.home');
-      this.enableTrackerLoading = false;
-    }, (err) => {
-      // it errors out if one of the programs already started
-      // If we get any other error besides 409, we need to surface that information
-      // because there is a legitimate error with starting the programs.
-      if (err.statusCode !== 409) {
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: err.data
-        });
-      } else {
-        this.$state.go('tracker.home');
-      }
-      this.enableTrackerLoading = false;
+    this.myTrackerApi.startTrackerProgram(trackerServiceParams, {})
+      .$promise
+      .then( () => {
+        this.trackerServiceRunning = true;
+        this.onSuccessStartingPrograms();
+      }, (err) => {
+        if (err.statusCode === 409) {
+          this.trackerServiceRunning = true;
+          this.onSuccessStartingPrograms();
+          return;
+        }
+
+        this.onErrorStartingPrograms(err);
+      });
+
+    this.myTrackerApi.startTrackerProgram(auditFlowParams, {})
+      .$promise
+      .then( () => {
+        this.auditFlowRunning = true;
+        this.onSuccessStartingPrograms();
+      }, (err) => {
+        if (err.statusCode === 409) {
+          this.auditFlowRunning = true;
+          this.onSuccessStartingPrograms();
+          return;
+        }
+
+        this.onErrorStartingPrograms(err);
+      });
+
+  }
+
+  onSuccessStartingPrograms() {
+    if (!(this.auditFlowRunning && this.trackerServiceRunning)) {
+      return;
+    }
+
+    this.$state.go('tracker.home');
+    this.enableTrackerLoading = false;
+  }
+
+  onErrorStartingPrograms(err) {
+    this.myAlertOnValium.show({
+      type: 'danger',
+      content: err.data
     });
+    this.enableTrackerLoading = false;
   }
 }
 

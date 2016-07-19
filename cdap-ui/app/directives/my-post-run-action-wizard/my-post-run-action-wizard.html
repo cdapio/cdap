@@ -1,0 +1,65 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<div class="wizard-nav" ng-if="MyPostRunActionWizardCtrl.mode !== 'view'">
+  <div class="capsule"
+       ng-class="{'current': MyPostRunActionWizardCtrl.currentStage === 1, 'complete': MyPostRunActionWizardCtrl.currentStage > 1}">
+    <span class="badge">
+      <span ng-if="MyPostRunActionWizardCtrl.currentStage === 1">1</span>
+      <span class="fa fa-check" ng-if="MyPostRunActionWizardCtrl.currentStage > 1"></span>
+    </span>
+    <span class="nav-title">Select Actions</span>
+  </div>
+  <div class="line" ng-class="{'complete': MyPostRunActionWizardCtrl.currentStage > 1}"></div>
+  <div class="capsule"
+       ng-class="{'current': MyPostRunActionWizardCtrl.currentStage === 2, 'complete': MyPostRunActionWizardCtrl.currentStage > 2}">
+    <span class="badge" >
+      <span ng-if="MyPostRunActionWizardCtrl.currentStage <= 2">2</span>
+      <span class="fa fa-check" ng-if="MyPostRunActionWizardCtrl.currentStage > 2"></span>
+    </span>
+    <span class="nav-title">Configure</span>
+  </div>
+  <div class="line" ng-class="{'complete': MyPostRunActionWizardCtrl.currentStage > 2}"></div>
+  <div class="capsule"
+       ng-class="{'current': MyPostRunActionWizardCtrl.currentStage === 3}">
+    <span class="badge">
+      <span ng-if="MyPostRunActionWizardCtrl.currentStage <= 3">3</span>
+    </span>
+    <span class="nav-title">Confirm</span>
+  </div>
+</div>
+<wizard-select-action-step
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 1 && MyPostRunActionWizardCtrl.mode === 'create'"
+  store="MyPostRunActionWizardCtrl.store"
+  on-action-select="MyPostRunActionWizardCtrl.onActionSelect">
+</wizard-select-action-step>
+<wizard-configure-confirm-step
+  class="clearfix"
+  mode="{{MyPostRunActionWizardCtrl.mode}}"
+  action="MyPostRunActionWizardCtrl.selectedAction"
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 2"
+  on-action-configure="MyPostRunActionWizardCtrl.onActionConfigure"
+  on-goto-previous-step="MyPostRunActionWizardCtrl.goToPreviousStep"
+  >
+</wizard-configure-confirm-step>
+<wizard-configure-confirm-step
+  mode="{{MyPostRunActionWizardCtrl.mode}}"
+  is-disabled="true"
+  class="clearfix"
+  action="MyPostRunActionWizardCtrl.configuredAction"
+  ng-if="MyPostRunActionWizardCtrl.currentStage === 3"
+  on-action-configure="MyPostRunActionWizardCtrl.onActionConfirm"
+  on-goto-previous-step="MyPostRunActionWizardCtrl.goToPreviousStep">
+</wizard-configure-confirm-step>

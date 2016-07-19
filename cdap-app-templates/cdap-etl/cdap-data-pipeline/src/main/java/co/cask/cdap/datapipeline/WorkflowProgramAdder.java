@@ -16,6 +16,7 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 
@@ -28,4 +29,6 @@ public interface WorkflowProgramAdder {
   void addMapReduce(String name);
 
   void addSpark(String name);
+
+  void addAction(CustomAction action);
 }

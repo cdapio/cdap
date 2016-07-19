@@ -17,13 +17,16 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Set;
 
 /**
  * Specification for a {@link WorkflowAction}.
+ * @deprecated Deprecated as of 3.5.0. Please use {@link CustomActionSpecification} instead.
  */
+@Deprecated
 public interface WorkflowActionSpecification extends PropertyProvider {
 
   /**

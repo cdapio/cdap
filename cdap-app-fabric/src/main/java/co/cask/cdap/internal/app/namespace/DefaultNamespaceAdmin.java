@@ -21,11 +21,11 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -34,6 +34,7 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
@@ -59,18 +60,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
  * Admin for managing namespaces.
  */
-public final class DefaultNamespaceAdmin implements NamespaceAdmin {
+public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin implements NamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
 
   private final Store store;
-  private final NamespaceStore nsStore;
   private final PreferencesStore preferencesStore;
   private final DashboardStore dashboardStore;
   private final DatasetFramework dsFramework;
@@ -83,6 +83,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final ArtifactRepository artifactRepository;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final InstanceId instanceId;
+  private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
 
   @Inject
@@ -93,11 +94,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                         ApplicationLifecycleService applicationLifecycleService,
                         ArtifactRepository artifactRepository,
                         AuthorizerInstantiator authorizerInstantiator,
-                        CConfiguration cConf) {
+                        CConfiguration cConf, StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) {
+    super(nsStore);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = store;
-    this.nsStore = nsStore;
     this.preferencesStore = preferencesStore;
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
@@ -108,48 +109,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.artifactRepository = artifactRepository;
     this.authorizerInstantiator = authorizerInstantiator;
     this.instanceId = createInstanceId(cConf);
-  }
-
-  /**
-   * Lists all namespaces
-   *
-   * @return a list of {@link NamespaceMeta} for all namespaces
-   */
-  @Override
-  public List<NamespaceMeta> list() throws Exception {
-    return nsStore.list();
-  }
-
-  /**
-   * Gets details of a namespace
-   *
-   * @param namespaceId the {@link Id.Namespace} of the requested namespace
-   * @return the {@link NamespaceMeta} of the requested namespace
-   * @throws NamespaceNotFoundException if the requested namespace is not found
-   */
-  @Override
-  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
-    NamespaceMeta ns = nsStore.get(namespaceId);
-    if (ns == null) {
-      throw new NamespaceNotFoundException(namespaceId);
-    }
-    return ns;
-  }
-
-  /**
-   * Checks if the specified namespace exists
-   *
-   * @param namespaceId the {@link Id.Namespace} to check for existence
-   * @return true, if the specifed namespace exists, false otherwise
-   */
-  @Override
-  public boolean exists(Id.Namespace namespaceId) throws Exception {
-    try {
-      get(namespaceId);
-    } catch (NotFoundException e) {
-      return false;
-    }
-    return true;
+    this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
   }
 
   /**
@@ -175,13 +135,18 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     }
 
+    // store the meta first in the namespace store because namespacedlocationfactory need to look up location
+    // mapping from namespace config
+    nsStore.create(metadata);
+
     try {
-      dsFramework.createNamespace(namespace.toId());
-    } catch (DatasetManagementException e) {
+      storageProviderNamespaceAdmin.create(metadata);
+    } catch (IOException | ExploreException | SQLException e) {
+      // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
+      nsStore.delete(metadata.getNamespaceId().toId());
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
 
-    nsStore.create(metadata);
     // Skip authorization grants for the system user
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
       authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
@@ -242,10 +207,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
       if (!Id.Namespace.DEFAULT.equals(namespaceId)) {
-        // Finally delete namespace from MDS
-        nsStore.delete(namespaceId);
-        // Delete namespace in storage providers
-        dsFramework.deleteNamespace(namespaceId);
+        try {
+          // Delete namespace in storage providers
+          storageProviderNamespaceAdmin.delete(namespaceId.toEntityId());
+        } finally {
+          // Finally delete namespace from MDS
+          nsStore.delete(namespaceId);
+        }
       }
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
@@ -296,8 +264,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
     authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
                                                 Action.ADMIN);
-    NamespaceMeta metadata = nsStore.get(namespaceId);
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(metadata);
+    NamespaceMeta existingMeta = nsStore.get(namespaceId);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
 
     if (namespaceMeta.getDescription() != null) {
       builder.setDescription(namespaceMeta.getDescription());
@@ -306,6 +274,19 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     NamespaceConfig config = namespaceMeta.getConfig();
     if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
       builder.setSchedulerQueueName(config.getSchedulerQueueName());
+    }
+
+    // we already checked namespace existence so the meta cannot be null here
+    if (config != null && config.getRootDirectory() != null) {
+      // if a root directory was given for update and it's not same as existing one throw exception
+      if (!config.getRootDirectory().equals(existingMeta.getConfig().getRootDirectory())) {
+        throw new BadRequestException(String.format("%s cannot be updated.", NamespaceConfig.ROOT_DIRECTORY));
+      }
+
+      if (config.getHbaseNamespace() != null
+        && (!config.getHbaseNamespace().equals(existingMeta.getConfig().getHbaseNamespace()))) {
+        throw new BadRequestException(String.format("%s cannot be updated.", NamespaceConfig.HBASE_NAMESPACE));
+      }
     }
 
     nsStore.update(builder.build());

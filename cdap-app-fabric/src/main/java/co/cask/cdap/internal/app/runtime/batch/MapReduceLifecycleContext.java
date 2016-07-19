@@ -29,6 +29,7 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
@@ -113,9 +114,20 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+    return delegate.getDataset(namespace, name);
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(String name,
                                           Map<String, String> arguments) throws DatasetInstantiationException {
     return delegate.getDataset(name, arguments);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String namespace, String name,
+                                          Map<String, String> arguments) throws DatasetInstantiationException {
+    return delegate.getDataset(namespace, name, arguments);
   }
 
   @Override
@@ -141,6 +153,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return delegate.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
+    return delegate.newPluginInstance(pluginId, evaluator);
   }
 
   @Override

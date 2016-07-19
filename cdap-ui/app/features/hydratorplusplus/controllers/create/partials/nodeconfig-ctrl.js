@@ -16,7 +16,6 @@
 
 class HydratorPlusPlusNodeConfigCtrl {
   constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled) {
-
     this.$scope = $scope;
     this.$timeout = $timeout;
     this.$state = $state;
@@ -28,11 +27,10 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
     this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
-    this.inputSchemaRowLimit = 15;
-    this.loadNextInputSchemaRows = _.debounce(this.doLoadNextSetOfInputSchemaRows.bind(this));
     this.$uibModal = $uibModal;
     this.ConfigStore = HydratorPlusPlusConfigStore;
     this.$scope.isDisabled = rDisabled;
+
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -53,8 +51,10 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     // Timeouts
     this.setStateTimeout = null;
+    this.importSchemaTimeout = null;
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.setStateTimeout);
+      this.$timeout.cancel(this.importSchemaTimeout);
     });
 
   }
@@ -96,6 +96,8 @@ class HydratorPlusPlusNodeConfigCtrl {
       config: {},
       groupsConfig: {},
 
+      windowMode: 'regular',
+
       isValidPlugin: config.isValidPlugin || false,
       node: angular.copy(config.node) || {},
 
@@ -113,10 +115,40 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.HydratorPlusPlusConfigActions.propagateSchemaDownStream(this.state.node.name);
   }
   loadNewPlugin() {
+    const noJsonErrorHandler = (err) => {
+      var propertiesFromBackend = Object.keys(this.state.node._backendProperties);
+      // Didn't receive a configuration from the backend. Fallback to all textboxes.
+      switch(err) {
+        case 'NO_JSON_FOUND':
+          this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.info['NO-CONFIG'];
+          break;
+        case 'CONFIG_SYNTAX_JSON_ERROR':
+          this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.error['SYNTAX-CONFIG-JSON'];
+          break;
+        case 'CONFIG_SEMANTICS_JSON_ERROR':
+          this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.error['SEMANTIC-CONFIG-JSON'];
+          break;
+      }
+      this.state.noconfig = true;
+      this.state.configfetched = true;
+      propertiesFromBackend.forEach( (property) => {
+        this.state.node.plugin.properties[property] = this.state.node.plugin.properties[property] || '';
+      });
+      this.state.watchers.push(
+        this.$scope.$watch(
+          'HydratorPlusPlusNodeConfigCtrl.state.node',
+          () => {
+            this.validateNodeLabel(this);
+            this.HydratorPlusPlusConfigActions.editPlugin(this.state.node.name, this.state.node);
+          },
+          true
+        )
+      );
+    };
+
     this.state.noproperty = Object.keys(
       this.state.node._backendProperties || {}
     ).length;
-    this.inputSchemaRowLimit = 15;
     if (this.state.noproperty) {
       var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name');
       var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version');
@@ -129,7 +161,8 @@ class HydratorPlusPlusNodeConfigCtrl {
       )
         .then(
           (res) => {
-            this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(this.state.node._backendProperties, res);
+            this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory
+              .generateNodeConfig(this.state.node._backendProperties, res);
             if (res.errorDataset || this.state.node.errorDatasetName) {
               this.state.showErrorDataset = true;
               this.state.errorDatasetTooltip = res.errorDataset && res.errorDataset.errorDatasetTooltip || false;
@@ -153,7 +186,11 @@ class HydratorPlusPlusNodeConfigCtrl {
                   type: configOutputSchema.implicitSchema[key]
                 });
               });
-              this.state.node.outputSchema = JSON.stringify({ fields: formattedSchema });
+              this.state.node.outputSchema = JSON.stringify({
+                name: 'etlSchemaBody',
+                type: 'record',
+                fields: formattedSchema
+              });
               this.HydratorPlusPlusConfigActions.editPlugin(this.state.node.name, this.state.node);
             } else {
               // If not an implcit schema check if a schema property exists in the node config.
@@ -190,43 +227,14 @@ class HydratorPlusPlusNodeConfigCtrl {
               );
             }
             if (!this.state.node.outputSchema) {
-              this.state.node.outputSchema = JSON.stringify({fields: this.state.node.inputSchema});
+              this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || '';
             }
             // Mark the configfetched to show that configurations have been received.
             this.state.configfetched = true;
             this.state.config = res;
             this.state.noconfig = false;
           },
-          (err) => {
-            var propertiesFromBackend = Object.keys(this.state.node._backendProperties);
-            // Didn't receive a configuration from the backend. Fallback to all textboxes.
-            switch(err) {
-              case 'NO_JSON_FOUND':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.info['NO-CONFIG'];
-                break;
-              case 'CONFIG_SYNTAX_JSON_ERROR':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.error['SYNTAX-CONFIG-JSON'];
-                break;
-              case 'CONFIG_SEMANTICS_JSON_ERROR':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.error['SEMANTIC-CONFIG-JSON'];
-                break;
-            }
-            this.state.noconfig = true;
-            this.state.configfetched = true;
-            propertiesFromBackend.forEach( (property) => {
-              this.state.node.plugin.properties[property] = this.state.node.plugin.properties[property] || '';
-            });
-            this.state.watchers.push(
-              this.$scope.$watch(
-                'HydratorPlusPlusNodeConfigCtrl.state.node',
-                () => {
-                  this.validateNodeLabel(this);
-                  this.HydratorPlusPlusConfigActions.editPlugin(this.state.node.name, this.state.node);
-                },
-                true
-              )
-            );
-          }
+          noJsonErrorHandler
         );
     } else {
       this.state.configfetched = true;
@@ -236,7 +244,10 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.EventPipe.emit('schema.clear');
   }
   importSchema() {
-    document.getElementById('schema-import-link').click();
+    this.$timeout.cancel(this.importSchemaTimeout);
+    this.importSchemaTimeout = this.$timeout(() => {
+      document.getElementById('schema-import-link').click();
+    });
   }
   importFiles(files) {
     let reader = new FileReader();
@@ -251,6 +262,9 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.EventPipe.emit('schema.export');
   }
 
+  toggleMaximizedView(isExpanded) {
+    this.state.windowMode = (isExpanded) ? 'expand' : 'regular';
+  }
   validateSchema() {
     this.state.errors = [];
     var schema;
@@ -286,9 +300,6 @@ class HydratorPlusPlusNodeConfigCtrl {
     if (fields.length !== unique.length) {
       error.push('There are two or more fields with the same name.');
     }
-  }
-  doLoadNextSetOfInputSchemaRows() {
-    this.inputSchemaRowLimit += 10;
   }
 }
 HydratorPlusPlusNodeConfigCtrl.$inject = ['$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory', '$uibModal', 'HydratorPlusPlusConfigStore', 'rPlugin', 'rDisabled'];

@@ -39,6 +39,7 @@ import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
+import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.authorization.NoOpAdmin;
 import co.cask.cdap.security.authorization.NoOpDatasetContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;

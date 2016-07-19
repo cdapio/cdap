@@ -1,0 +1,95 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<!--
+  if input schemas?
+    if mutiple input schemas enabled?
+      for each input schema
+        if input schema?
+          show table
+        else
+          show 'no input schema'
+    else
+      if input schemas[0]?
+        show single table
+      else
+        show 'no input schemas'
+  else
+    show 'no input schemas'
+-->
+
+<!-- Section that shows input schema(s) -->
+<div ng-if="::(MyInputSchemaCtrl.inputSchemas.length > 0)">
+
+  <!-- Section that shows multiple inputs -->
+  <div ng-if="::(MyInputSchemaCtrl.multipleInputs)">
+    <div ng-repeat="inputschema in ::MyInputSchemaCtrl.inputSchemas">
+      <div ng-click="MyInputSchemaCtrl.currentIndex = $index" style="cursor:pointer" class="title">
+        <i class="fa" ng-class="{'fa-arrow-right': MyInputSchemaCtrl.currentIndex !== $index, 'fa-arrow-down': MyInputSchemaCtrl.currentIndex === $index}"></i>
+        <span>{{::inputschema.name}}</span>
+      </div>
+      <div class="content"
+          ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index, '': MyInputSchemaCtrl.currentIndex === $index}">
+
+        <my-complex-schema
+          ng-model="inputschema.schema"
+          is-disabled="true">
+        </my-complex-schema>
+
+        <div ng-if="::(inputschema.schema.fields.length === 0)">
+          <p>There is no input schema</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End of section that shows multiple inputs -->
+
+  <!-- Section that shows single input schema-->
+
+  <div ng-if="::(!MyInputSchemaCtrl.multipleInputs)">
+    <!-- Section that shows single input schema table-->
+
+    <my-complex-schema
+      ng-model="MyInputSchemaCtrl.inputSchemas[0].schema"
+      is-disabled="true">
+    </my-complex-schema>
+
+    <!-- End of section that shows single input schema table-->
+
+    <!-- Section that shows no input schema -->
+
+    <div ng-if="::(MyInputSchemaCtrl.inputSchemas[0].schema.fields.length === 0)">
+      <p>There is no input schema</p>
+    </div>
+
+    <!-- End of section that shows no input schema-->
+
+  </div>
+
+  <!-- End of section that shows single input schema-->
+
+</div>
+
+<!-- End of section that shows input schema(s) -->
+
+<!-- Section that shows no input schema -->
+
+<div ng-if="::(MyInputSchemaCtrl.inputSchemas.length === 0)">
+  <p>There is no input schema</p>
+</div>
+
+<!-- End of section that shows no input schema -->

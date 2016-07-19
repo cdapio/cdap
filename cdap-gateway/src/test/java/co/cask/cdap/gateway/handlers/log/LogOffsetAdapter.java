@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package co.cask.cdap.gateway.handlers.log;
 
-import co.cask.cdap.logging.gateway.handlers.FormattedLogEvent;
+import co.cask.cdap.logging.gateway.handlers.FormattedTextLogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
@@ -30,11 +30,11 @@ import java.io.IOException;
 public final class LogOffsetAdapter extends TypeAdapter<LogOffset> {
   @Override
   public void write(JsonWriter out, LogOffset value) throws IOException {
-    out.value(FormattedLogEvent.formatLogOffset(value));
+    out.value(FormattedTextLogEvent.formatLogOffset(value));
   }
 
   @Override
   public LogOffset read(JsonReader in) throws IOException {
-    return FormattedLogEvent.parseLogOffset(in.nextString());
+    return FormattedTextLogEvent.parseLogOffset(in.nextString());
   }
 }

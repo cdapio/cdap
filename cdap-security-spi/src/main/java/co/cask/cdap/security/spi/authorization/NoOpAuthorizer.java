@@ -22,6 +22,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -30,8 +31,13 @@ import java.util.Set;
 public class NoOpAuthorizer extends AbstractAuthorizer {
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
+  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     // no-op
+  }
+
+  @Override
+  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+    return unfiltered;
   }
 
   @Override
@@ -71,16 +77,16 @@ public class NoOpAuthorizer extends AbstractAuthorizer {
 
   @Override
   public Set<Role> listRoles(Principal principal) {
-    return null;
+    return Collections.emptySet();
   }
 
   @Override
   public Set<Role> listAllRoles() {
-    return null;
+    return Collections.emptySet();
   }
 
   @Override
   public Set<Privilege> listPrivileges(Principal principal) {
-    return null;
+    return Collections.emptySet();
   }
 }

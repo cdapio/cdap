@@ -43,13 +43,9 @@ body.theme-cdap {
     my-dag-plus {
       width: 100%;
       // Dag-Height 60% on smaller screen
-      height: 60vh;
-      &:not(.canvas-scroll) {
-        // Subtract navbar, top panel, collapsed bottom panel and footer from total viewport height
-        height: ~"-moz-calc(100vh - 187px)";
-        height: ~"-webkit-calc(100vh - 187px)";
-        height: ~"calc(100vh - 187px)";
-      }
+      height: ~"-moz-calc(100vh - 142px)";
+      height: ~"-webkit-calc(100vh - 142px)";
+      height: ~"calc(100vh - 142px)";
 
       @media (min-height: 800px) {
         height: 40vh;
@@ -134,7 +130,9 @@ body.theme-cdap {
     .detail-canvas-container {
       position: relative;
     }
-
+    my-dag-plus {
+      height: 61.5vh;
+    }
     my-program-history {
       ul.pagination {
         margin-right: 15px;
@@ -145,6 +143,12 @@ body.theme-cdap {
   &.state-hydratorplusplus-create {
     background-image: url('../img/grid.png');
     height: 100%;
+
+    my-dag-plus {
+      height: ~"-moz-calc(100vh - 142px)";
+      height: ~"-webkit-calc(100vh - 142px)";
+      height: ~"calc(100vh - 142px)";
+    }
   }
 
   &.state-hydratorplusplus-create,
@@ -290,6 +294,12 @@ body.theme-cdap {
     .zoom-control {
       top: 115px;
     }
+
+    .alert {
+      .message-content {
+        white-space: normal;
+      }
+    }
   }
 
   &.state-hydratorplusplus-list {
@@ -308,6 +318,12 @@ body.theme-cdap {
           color: @gray-dark;
           padding-right: 15px;
           padding-left: 15px;
+          &.pipeline-name {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
         }
         th {
           font-weight: 500;

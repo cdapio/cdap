@@ -18,8 +18,9 @@ package co.cask.cdap.data2.transaction.stream.hbase;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
@@ -37,10 +38,12 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -99,7 +102,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
       new DataSetsModules().getInMemoryModules(),
@@ -114,6 +117,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
             bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
           }
         })
     );
@@ -130,9 +134,11 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     txManager.startAndWait();
 
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
-    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), TEST_NAMESPACE);
-    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), OTHER_NAMESPACE);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
+                                         tableUtil.getHBaseNamespace(TEST_NAMESPACE.toEntityId()));
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
+                                         tableUtil.getHBaseNamespace(OTHER_NAMESPACE.toEntityId()));
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
 
@@ -145,8 +151,8 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   }
 
   private static void deleteNamespace(Id.Namespace namespace) throws IOException {
-    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), namespace);
-    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), namespace);
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace.toEntityId()));
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace.toEntityId()));
   }
 
   @Override

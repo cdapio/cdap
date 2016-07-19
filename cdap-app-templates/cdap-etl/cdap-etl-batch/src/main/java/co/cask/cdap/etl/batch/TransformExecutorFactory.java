@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.StageLifecycle;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -27,9 +29,14 @@ import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.planner.StageInfo;
+import com.google.common.collect.Sets;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.Mapper;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Helps create {@link TransformExecutor TransformExecutors}.
@@ -37,18 +44,32 @@ import java.util.Map;
  * @param <T> the type of input for the created transform executors
  */
 public abstract class TransformExecutorFactory<T> {
+  protected final Map<String, Map<String, Schema>> perStageInputSchemas;
+  private final String sourceStageName;
+  private final MacroEvaluator macroEvaluator;
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
+  protected Schema outputSchema;
+  protected boolean isMapPhase;
 
-  public TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, Metrics metrics) {
+  public TransformExecutorFactory(JobContext hadoopContext, PipelinePluginInstantiator pluginInstantiator,
+                                  Metrics metrics, @Nullable String sourceStageName, MacroEvaluator macroEvaluator) {
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
+    this.perStageInputSchemas = new HashMap<>();
+    this.outputSchema = null;
+    this.sourceStageName = sourceStageName;
+    this.macroEvaluator = macroEvaluator;
+    this.isMapPhase = hadoopContext instanceof Mapper.Context;
   }
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
 
   protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
-    return new TrackedTransform(getInitializedTransformation(stageName), new DefaultStageMetrics(metrics, stageName));
+    return new TrackedTransform(KVTransformations.getKVTransformation(stageName, pluginType,
+                                                                     isMapPhase,
+                                                                     getInitializedTransformation(stageName)),
+                                new DefaultStageMetrics(metrics, stageName));
   }
 
   /**
@@ -58,20 +79,25 @@ public abstract class TransformExecutorFactory<T> {
    * @param pipeline the pipeline to create a transform executor for
    * @return executor for the pipeline
    * @throws InstantiationException if there was an error instantiating a plugin
-   * @throws Exception if there was an error initializing a plugin
+   * @throws Exception              if there was an error initializing a plugin
    */
   public TransformExecutor<T> create(PipelinePhase pipeline) throws Exception {
     Map<String, TransformDetail> transformations = new HashMap<>();
     for (String pluginType : pipeline.getPluginTypes()) {
       for (StageInfo stageInfo : pipeline.getStagesOfType(pluginType)) {
         String stageName = stageInfo.getName();
+        outputSchema = stageInfo.getOutputSchema();
+        perStageInputSchemas.put(stageName, stageInfo.getInputSchemas());
+        // Wrap each transformation so that each stage is emitting stageName along with the record
         transformations.put(stageName,
                             new TransformDetail(getTransformation(pluginType, stageName),
                                                 pipeline.getStageOutputs(stageName)));
       }
     }
 
-    return new TransformExecutor<>(transformations, pipeline.getSources());
+    // sourceStageName will be null in reducers, so need to handle that case
+    Set<String> startingPoints = (sourceStageName == null) ? pipeline.getSources() : Sets.newHashSet(sourceStageName);
+    return new TransformExecutor<>(transformations, startingPoints);
   }
 
   /**
@@ -80,18 +106,18 @@ public abstract class TransformExecutorFactory<T> {
    * @param stageName the stage name.
    * @return the initialized Transformation
    * @throws InstantiationException if the plugin for the stage could not be instantiated
-   * @throws Exception if there was a problem initializing the plugin
+   * @throws Exception              if there was a problem initializing the plugin
    */
   protected <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
   getInitializedTransformation(String stageName) throws Exception {
     BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
-    T plugin = pluginInstantiator.newPluginInstance(stageName);
+    T plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
     plugin.initialize(runtimeContext);
     return plugin;
   }
 
-  protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedGroupStep(Transformation<IN, OUT> transform,
-                                                                              StageMetrics stageMetrics) {
+  protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedEmitKeyStep(Transformation<IN, OUT> transform,
+                                                                             StageMetrics stageMetrics) {
     return new TrackedTransform<>(transform, stageMetrics, TrackedTransform.RECORDS_IN, null);
   }
 
@@ -101,4 +127,8 @@ public abstract class TransformExecutorFactory<T> {
     return new TrackedTransform<>(transform, stageMetrics, "aggregator.groups", TrackedTransform.RECORDS_OUT);
   }
 
+  protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedMergeStep(Transformation<IN, OUT> transform,
+                                                                           StageMetrics stageMetrics) {
+    return new TrackedTransform<>(transform, stageMetrics, null, TrackedTransform.RECORDS_OUT);
+  }
 }

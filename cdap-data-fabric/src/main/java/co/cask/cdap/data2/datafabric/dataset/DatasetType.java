@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,8 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 
 import java.io.IOException;
 import java.util.Map;
@@ -46,6 +48,18 @@ public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
     spec = spec.setOriginalProperties(properties);
     if (properties.getDescription() != null) {
       spec = spec.setDescription(properties.getDescription());
+    }
+    return spec;
+  }
+
+  public DatasetSpecification reconfigure(String instanceName,
+                                          DatasetProperties newProperties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    DatasetSpecification spec = AbstractDatasetDefinition
+      .reconfigure(delegate, instanceName, newProperties, currentSpec)
+      .setOriginalProperties(newProperties);
+    if (newProperties.getDescription() != null) {
+      spec = spec.setDescription(newProperties.getDescription());
     }
     return spec;
   }

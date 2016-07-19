@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -44,7 +45,6 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.RunIds;
 import org.apache.twill.internal.ServiceListenerAdapter;
 
 /**
@@ -82,9 +82,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     int instanceCount = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
-    String runIdOption = options.getArguments().getOption(ProgramOptionConstants.RUN_ID);
-    Preconditions.checkNotNull(runIdOption, "Missing runId");
-    RunId runId = RunIds.fromString(runIdOption);
+    RunId runId = ProgramRunners.getRunId(options);
 
     ProgramType programType = program.getType();
     Preconditions.checkNotNull(programType, "Missing processor type.");
@@ -111,10 +109,10 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
     try {
-      BasicWorkerContext context = new BasicWorkerContext(
-        newWorkerSpec, program, runId, instanceId, instanceCount,
-        options.getUserArguments(), metricsCollectionService, datasetFramework,
-        txClient, discoveryServiceClient, streamWriterFactory, pluginInstantiator);
+      BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, options, instanceId, instanceCount,
+                                                          metricsCollectionService, datasetFramework, txClient,
+                                                          discoveryServiceClient, streamWriterFactory,
+                                                          pluginInstantiator);
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.

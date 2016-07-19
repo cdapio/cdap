@@ -50,11 +50,6 @@ public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, Data
   Runnable getProgramRunner(String name);
 
   /**
-   * @return A map of the argument's key and value.
-   */
-  Map<String, String> getRuntimeArguments();
-
-  /**
    * @return a {@link WorkflowToken}
    */
   WorkflowToken getToken();

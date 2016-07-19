@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,8 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -28,6 +30,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -44,7 +47,9 @@ import javax.annotation.Nullable;
 /**
  * Simple implementation of hbase non-tx {@link NoTxKeyValueTable}.
  */
-public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
+public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin>
+  implements Reconfigurable {
+
   private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   @Inject
@@ -61,6 +66,15 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
+      .properties(properties.getProperties())
+      .build();
+  }
+
+  @Override
+  public DatasetSpecification reconfigure(String name,
+                                          DatasetProperties properties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    return DatasetSpecification.builder(name, getName())
       .properties(properties.getProperties())
       .build();
   }
@@ -86,7 +100,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
                              Configuration hConf) throws IOException {
       this.admin = new HBaseAdmin(hConf);
       this.tableUtil = tableUtil;
-      this.tableId = TableId.from(datasetContext.getNamespaceId(), tableName);
+      this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
     }
 
     @Override
@@ -135,7 +149,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     public KVTableImpl(DatasetContext datasetContext, String tableName, CConfiguration cConf, Configuration hConf,
                        HBaseTableUtil tableUtil) throws IOException {
       this.tableUtil = tableUtil;
-      TableId tableId = TableId.from(datasetContext.getNamespaceId(), tableName);
+      TableId tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
       this.table = this.tableUtil.createHTable(hConf, tableId);
     }
 

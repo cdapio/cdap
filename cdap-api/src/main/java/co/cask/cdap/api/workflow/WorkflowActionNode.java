@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 
 import javax.annotation.Nullable;
@@ -25,18 +26,30 @@ import javax.annotation.Nullable;
  */
 public class WorkflowActionNode extends WorkflowNode {
   private final ScheduleProgramInfo program;
+  @Deprecated
   private final WorkflowActionSpecification actionSpecification;
+  private final CustomActionSpecification customActionSpecification;
 
   public WorkflowActionNode(String nodeId, ScheduleProgramInfo program) {
     super(nodeId, WorkflowNodeType.ACTION);
     this.program = program;
     this.actionSpecification = null;
+    this.customActionSpecification = null;
   }
 
+  @Deprecated
   public WorkflowActionNode(String nodeId, WorkflowActionSpecification actionSpecification) {
     super(nodeId, WorkflowNodeType.ACTION);
     this.program = new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, actionSpecification.getName());
     this.actionSpecification = actionSpecification;
+    this.customActionSpecification = null;
+  }
+
+  public WorkflowActionNode(String nodeId, CustomActionSpecification customActionSpecification) {
+    super(nodeId, WorkflowNodeType.ACTION);
+    this.program = new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, customActionSpecification.getName());
+    this.customActionSpecification = customActionSpecification;
+    this.actionSpecification = null;
   }
 
   /**
@@ -51,17 +64,28 @@ public class WorkflowActionNode extends WorkflowNode {
    *
    * @return the {@link WorkflowActionSpecification} for the custom action represented by this {@link WorkflowNode}
    */
+  @Deprecated
   @Nullable
   public WorkflowActionSpecification getActionSpecification() {
     return actionSpecification;
+  }
+
+  /**
+   * @return the {@link CustomActionSpecification} if this {@link WorkflowNode} represents the custom action,
+   * otherwise null is returned
+   */
+  @Nullable
+  public CustomActionSpecification getCustomActionSpecification() {
+    return customActionSpecification;
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("WorkflowActionNode{");
     sb.append("nodeId=").append(nodeId);
-    sb.append(", program=").append(program);
+    sb.append("program=").append(program);
     sb.append(", actionSpecification=").append(actionSpecification);
+    sb.append(", customActionSpecification=").append(customActionSpecification);
     sb.append('}');
     return sb.toString();
   }

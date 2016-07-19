@@ -148,8 +148,27 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
                                             queueName.getThirdComponent()));
   }
 
+  public TableId getDataTableId(Id.Flow flowId) {
+    // tableName = system.queue.<app>.<flow>
+    return TableId.from(flowId.getNamespaceId(), getDataTableName(flowId));
+  }
+
+  /**
+   * This determines the actual TableId from the table name prefix and the name of the queue.
+   * @param queueName The name of the queue.
+   * @return the full name of the table that holds this queue.
+   */
+  public TableId getDataTableId(QueueName queueName) {
+    if (!queueName.isQueue()) {
+      throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
+    }
+    return getDataTableId(Id.Flow.from(queueName.getFirstComponent(),
+                                       queueName.getSecondComponent(),
+                                       queueName.getThirdComponent()));
+  }
+
   protected String getTableNameForFlow(Id.Flow flowId) {
     TableId tableId = getDataTableId(flowId);
-    return String.format("%s.%s", tableId.getNamespace().getId(), tableId.getTableName());
+    return String.format("%s.%s", tableId.getNamespace(), tableId.getTableName());
   }
 }

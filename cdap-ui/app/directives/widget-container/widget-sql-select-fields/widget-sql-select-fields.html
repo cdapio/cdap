@@ -1,0 +1,99 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="sql-select-fields-container">
+
+  <div class="button-container">
+    <button class="btn btn-sm btn-default"
+            ng-click="SqlSelector.toggleAll(SqlSelector.expandedButton)">
+      <span ng-if="SqlSelector.expandedButton">Expand All</span>
+      <span ng-if="!SqlSelector.expandedButton">Collapse All</span>
+    </button>
+    <button class="btn btn-sm btn-reset"
+            ng-click="SqlSelector.resetAll()">
+      Reset All
+    </button>
+  </div>
+
+  <div class="text-danger error-message"
+       ng-if="SqlSelector.errors.exist">
+    {{ SqlSelector.errors.message }}
+  </div>
+
+  <div ng-repeat="stage in SqlSelector.parsedInputSchemas"
+       class="stage-container">
+    <h4 ng-click="stage.expanded = !stage.expanded"
+        ng-class="{'expanded': stage.expanded }">
+      <span class="fa" ng-class="{ 'fa-caret-right': !stage.expanded, 'fa-caret-down': stage.expanded}"></span>
+      <span>{{ stage.name }}</span>
+      <span class="badge badge-danger"
+            ng-if="SqlSelector.errors.stageCount[stage.name] > 0">
+        {{ SqlSelector.errors.stageCount[stage.name] }}
+      </span>
+    </h4>
+
+    <div class="table-container"
+         ng-if="stage.expanded">
+      <table class="table">
+        <thead>
+          <th>Name</th>
+          <th class="checkbox-column">
+            <div class="btn-group" uib-dropdown dropdown-append-to-body>
+              <button class="btn btn-default" uib-dropdown-toggle>
+                Select <span class="fa fa-chevron-down"></span>
+              </button>
+              <ul class="dropdown-menu sql-select-dropwdown"
+                  uib-dropdown-menu
+                  role="menu">
+                <li role="menuitem">
+                  <a ng-click="SqlSelector.toggleAllFields(stage, true)">All</a>
+                </li>
+                <li role="menuitem">
+                  <a ng-click="SqlSelector.toggleAllFields(stage, false)">None</a>
+                </li>
+              </ul>
+            </div>
+
+          </th>
+          <th>Alias</th>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="field in stage.schema"
+              ng-class="{'error': SqlSelector.aliases[field.alias] > 1}">
+            <td>{{ field.name }}</td>
+            <td class="checkbox-column">
+              <input type="checkbox"
+                     ng-model="field.selected"
+                     ng-change="SqlSelector.formatOutput()">
+            </td>
+            <td>
+              <input type="text"
+                     class="form-control"
+                     ng-model="field.alias"
+                     ng-blur="SqlSelector.formatOutput()"
+                     ng-disabled="!field.selected">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div ng-if="SqlSelector.parsedInputSchemas.length === 0">
+    <h4>No input stages</h4>
+  </div>
+</div>

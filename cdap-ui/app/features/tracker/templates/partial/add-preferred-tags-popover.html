@@ -1,0 +1,75 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">
+    <span ng-if="!AddTags.proceedToNextStep">Add Preferred Tags</span>
+    <span ng-if="AddTags.proceedToNextStep">Preview</span>
+  </h3>
+  <span class="fa fa-times pull-right" ng-click="$dismiss('cancel')"></span>
+</div>
+<div class="modal-body">
+  <div ng-if="!AddTags.proceedToNextStep"
+      class="flex-box">
+    <div class="flex-item">
+      <textarea class="form-control"
+                ng-class="{ empty: !AddTags.tags.length }"
+                ng-model="AddTags.tags"
+                placeholder="Enter preferred tags here separated by comma or newline."></textarea>
+    </div>
+    <div class="flex-item">
+      <div>
+        <span>or</span>
+      </div>
+    </div>
+    <div class="flex-item">
+      <div>
+        <span class="fa fa-cloud-upload"
+              aria-hidden="true"></span>
+        <div>Drag &amp; Drop or<br />
+          <a class="file-import-link" ng-click="AddTags.importTags()">Browse</a> CSV, TXT
+        </div>
+        <my-file-select class="sr-only" id="file-select" data-button-icon="fa-upload" on-file-select="AddTags.importFiles($files)" data-button-label="Import">
+        </my-file-select>
+      </div>
+    </div>
+  </div>
+  <div ng-if="AddTags.proceedToNextStep"
+      class="text-left">
+    <div class="valid-tags">
+      <p>{{ AddTags.tagList.validTags.length }} tags loaded.</p>
+      <span ng-repeat="(key, value) in AddTags.tagList.validTags track by $index"
+            class="tag preferred">{{ value }}</a>
+    </div>
+    <div ng-if="AddTags.tagList.invalidTags.length"
+        class="invalid-tags">
+      <p class="text-danger">{{ AddTags.tagList.invalidTags.length }} tags failed to load.</p>
+      <span ng-repeat="(key, value) in AddTags.tagList.invalidTags track by $index">{{ value }}</span>
+    </div>
+  </div>
+</div>
+<div class="modal-footer text-right">
+  <p class="pull-left text-danger"
+    ng-if="!AddTags.proceedToNextStep && AddTags.tagList.invalidTags.length">No special characters allowed in tags.</p>
+  <button class="btn btn-default"
+          ng-click="$dismiss('cancel')">Cancel</button>
+  <button ng-if="!AddTags.proceedToNextStep"
+          class="btn btn-success"
+          ng-click="AddTags.validatePreferredTags()"
+          ng-disabled="!AddTags.tags.length">Next</button>
+  <button ng-if="AddTags.proceedToNextStep"
+          class="btn btn-success"
+          ng-click="AddTags.promoteUserTags(AddTags.tagList.validTags)">Add</button>
+</div>

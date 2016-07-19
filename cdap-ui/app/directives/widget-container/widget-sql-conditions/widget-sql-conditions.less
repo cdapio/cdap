@@ -1,0 +1,80 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../../styles/variables.less";
+
+@button-color: #555555;
+
+my-sql-conditions {
+  .sql-conditions-container {
+    .select-fields-group,
+    .action-buttons {
+      height: 75px;
+    }
+
+    .rule { margin-bottom: 10px; }
+
+    .select-fields-group {
+      float: left;
+      background-color: #eeeeee;
+      padding: 0 15px;
+      width: ~"-moz-calc(100% - 75px)";
+      width: ~"-webkit-calc(100% - 75px)";
+      width: ~"calc(100% - 75px)";
+      position: relative;
+
+      .delete-field-button {
+        color: white;
+        background-color: @brand-danger;
+        padding: 0 5px 1px 5px;
+        border-radius: 50%;
+        position: absolute;
+        right: -5px;
+        top: -5px;
+        cursor: pointer;
+      }
+
+      .select-field {
+        width: 45%;
+        display: inline-block;
+        margin-top: 5px;
+      }
+
+      .field-equality {
+        display: inline-block;
+        color: white;
+        background-color: @button-color;
+        padding: 0 5px;
+        margin-left: 5px;
+      }
+
+    }
+
+    .action-buttons {
+      width: 75px;
+      line-height: 75px;
+      float: right;
+      padding-left: 5px;
+
+      .btn.btn-field-actions {
+        vertical-align: bottom;
+        border-radius: 0;
+        color: white;
+        background-color: @button-color;
+      }
+    }
+  }
+}

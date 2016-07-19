@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,8 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -54,15 +55,20 @@ final class DatasetInstanceCreator {
       String instanceName = instanceEntry.getKey();
       DatasetId instanceId = namespaceId.dataset(instanceName);
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
-      try {
-        if (!datasetFramework.hasInstance(instanceId.toId()) || allowDatasetUncheckedUpgrade) {
-          LOG.info("Adding instance: {}", instanceName);
-          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(), instanceSpec.getProperties());
+      DatasetSpecification existingSpec = datasetFramework.getDatasetSpec(instanceId.toId());
+      if (existingSpec == null) {
+        LOG.info("Adding dataset instance: {}", instanceName);
+        datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(), instanceSpec.getProperties());
+      } else {
+        if (!existingSpec.getType().equals(instanceSpec.getTypeName())) {
+          throw new IncompatibleUpdateException(
+            String.format("Existing dataset '%s' of type '%s' may not be updated to type '%s'",
+                          instanceName, existingSpec.getType(), instanceSpec.getTypeName()));
         }
-      } catch (InstanceConflictException e) {
-        // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app
-        // TODO: verify that the created instance is from this app
-        LOG.warn("Couldn't create dataset instance '" + instanceName + "' of type '" + instanceSpec.getTypeName(), e);
+        if (allowDatasetUncheckedUpgrade) {
+          LOG.info("Updating dataset instance: {}", instanceName);
+          datasetFramework.updateInstance(instanceId.toId(), instanceSpec.getProperties());
+        }
       }
     }
   }

@@ -22,11 +22,13 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.Delegators;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
@@ -155,7 +157,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   private LoggingContext createMapReduceLoggingContext() {
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(parameters.getHConf());
     ProgramId programId = contextConfig.getProgramId();
-    RunId runId = contextConfig.getRunId();
+    RunId runId = ProgramRunners.getRunId(contextConfig.getProgramOptions());
     WorkflowProgramInfo workflowProgramInfo = contextConfig.getWorkflowProgramInfo();
     if (workflowProgramInfo == null) {
       return new MapReduceLoggingContext(programId.getNamespace(), programId.getApplication(),
@@ -294,8 +296,8 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
         LOG.info("Create ProgramClassLoader from {}, expand to {}", programLocation, unpackDir);
 
         BundleJarUtil.unJar(programLocation, unpackDir);
-        return ProgramClassLoader.create(contextConfig.getCConf(), unpackDir,
-                                         contextConfig.getHConf().getClassLoader());
+        return new ProgramClassLoader(contextConfig.getCConf(), unpackDir,
+                                      FilterClassLoader.create(contextConfig.getHConf().getClassLoader()));
       } catch (IOException e) {
         LOG.error("Failed to create ProgramClassLoader", e);
         throw Throwables.propagate(e);

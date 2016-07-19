@@ -17,6 +17,7 @@
 package co.cask.cdap.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -47,21 +48,9 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * {@link Store} operates on a {@link Program}. It's responsible
- * for managing the non-runtime lifecycle of a {@link Program}
+ * Responsible for managing {@link Program} and {@link Application} metadata.
  */
-public interface Store {
-
-  /**
-   * Compare and set operation that allow to compare and set expected and update status.
-   * Implementation of this method should guarantee that the operation is atomic or in transaction.
-   *
-   * @param id              Info about program
-   * @param pid             The run id
-   * @param expectedStatus  The expected value
-   * @param updateStatus    The new value
-   */
-  void compareAndSetStatus(Id.Program id, String pid, ProgramRunStatus expectedStatus, ProgramRunStatus updateStatus);
+public interface Store extends RuntimeStore {
 
   /**
    * Loads a given program.
@@ -74,23 +63,10 @@ public interface Store {
                                                            ProgramNotFoundException;
 
   /**
-   * Logs start of program run.
-   *
-   * @param id         Info about program
-   * @param pid        run id
-   * @param startTime  start timestamp in seconds; if run id is time-based pass the time from the run id
-   * @param twillRunId twill run id
-   * @param runtimeArgs the runtime arguments for this program run
-   * @param systemArgs the system arguments for this program run
-   */
-  void setStart(Id.Program id, String pid, long startTime, @Nullable String twillRunId,
-                Map<String, String> runtimeArgs, Map<String, String> systemArgs);
-
-  /**
    * Logs start of program run. This is a convenience method for testing, actual run starts should be recorded using
    * {@link #setStart(Id.Program, String, long, String, Map, Map)}.
    *
-   * @param id        Info about program
+   * @param id        id of the program
    * @param pid       run id
    * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
    */
@@ -98,45 +74,10 @@ public interface Store {
   void setStart(Id.Program id, String pid, long startTime);
 
   /**
-   * Logs end of program run.
-   *
-   * @param id      id of program
-   * @param pid     run id
-   * @param endTime end timestamp in seconds
-   * @param runStatus   {@link ProgramRunStatus} of program run
-   */
-  void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
-
-  /**
-   * Logs end of program run.
-   *
-   * @param id      id of program
-   * @param pid     run id
-   * @param endTime end timestamp in seconds
-   * @param runStatus   {@link ProgramRunStatus} of program run
-   * @param failureCause failure cause if the program failed to execute
-   */
-  void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus, @Nullable Throwable failureCause);
-
-  /**
-   * Logs suspend of a program run.
-   * @param id      id of the program
-   * @param pid     run id
-   */
-  void setSuspend(Id.Program id, String pid);
-
-  /**
-   * Logs resume of a program run.
-   * @param id      id of the program
-   * @param pid     run id
-   */
-  void setResume(Id.Program id, String pid);
-
-  /**
    * Fetches run records for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
-   * @param id        program id.
+   * @param id        id of the program
    * @param status    status of the program running/completed/failed or all
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
@@ -149,7 +90,7 @@ public interface Store {
    * Fetches run records for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
-   * @param id        program id.
+   * @param id        id of the program
    * @param status    status of the program running/completed/failed or all
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
@@ -171,7 +112,7 @@ public interface Store {
   /**
    * Fetches the run record for particular run of a program.
    *
-   * @param id        program id
+   * @param id        id of the program
    * @param runid     run id of the program
    * @return          run record for the specified program and runid, null if not found
    */
@@ -197,7 +138,6 @@ public interface Store {
    *
    * @param id the namespace id
    */
-
   Collection<StreamSpecification> getAllStreams(Id.Namespace id);
 
   /**
@@ -258,14 +198,14 @@ public interface Store {
   /**
    * Sets the number of instances of a service.
    *
-   * @param id program id
+   * @param id id of the program
    * @param instances number of instances
    */
   void setServiceInstances(Id.Program id, int instances);
 
   /**
    * Returns the number of instances of a service.
-   * @param id program id
+   * @param id id of the program
    * @return number of instances
    */
   int getServiceInstances(Id.Program id);
@@ -273,7 +213,7 @@ public interface Store {
   /**
    * Sets the number of instances of a {@link Worker}
    *
-   * @param id program id
+   * @param id id of the program
    * @param instances number of instances
    */
   void setWorkerInstances(Id.Program id, int instances);
@@ -281,7 +221,7 @@ public interface Store {
   /**
    * Gets the number of instances of a {@link Worker}
    *
-   * @param id program id
+   * @param id id of the program
    * @return number of instances
    */
   int getWorkerInstances(Id.Program id);
@@ -339,18 +279,10 @@ public interface Store {
 
   /**
    * Check if a program exists.
-   * @param id id of program.
+   * @param id id of the program
    * @return true if the program exists, false otherwise.
    */
   boolean programExists(Id.Program id);
-
-  /**
-   * Updates the {@link WorkflowToken} for a specified run of a workflow.
-   *
-   * @param workflowRunId workflow run for which the {@link WorkflowToken} is to be updated
-   * @param token the {@link WorkflowToken} to update
-   */
-  void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token);
 
   /**
    * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
@@ -360,14 +292,6 @@ public interface Store {
    * @return the {@link WorkflowToken} for the specified workflow run
    */
   WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
-
-  /**
-   * Add node state for the given {@link Workflow} run. This method is used to update the
-   * state of the custom actions started by Workflow.
-   * @param workflowRunId the Workflow run
-   * @param nodeStateDetail the node state to be added for the Workflow run
-   */
-  void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail);
 
   /**
    * Get the node states for a given {@link Workflow} run.

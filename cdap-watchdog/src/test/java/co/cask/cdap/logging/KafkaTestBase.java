@@ -16,19 +16,25 @@
 
 package co.cask.cdap.logging;
 
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.save.KafkaLogProcessor;
+import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
+import co.cask.cdap.logging.save.LogMetricsPlugin;
 import co.cask.cdap.logging.save.LogSaverFactory;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.PrivateModule;
+import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import org.junit.ClassRule;
 
 /**
@@ -49,18 +55,22 @@ public abstract class KafkaTestBase {
       .put(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10")
       .build(),
     ImmutableList.of(
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getDistributedModules(),
-      new PrivateModule() {
+      new AbstractModule() {
         @Override
         protected void configure() {
+          Multibinder<KafkaLogProcessor> logProcessorBinder = Multibinder.newSetBinder
+            (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
+          logProcessorBinder.addBinding().to(KafkaLogWriterPlugin.class);
+          logProcessorBinder.addBinding().to(LogMetricsPlugin.class);
+
           install(new FactoryModuleBuilder().build(LogSaverFactory.class));
-          expose(LogSaverFactory.class);
         }
       }
     ),

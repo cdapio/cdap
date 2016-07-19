@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
@@ -51,15 +52,26 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-
     // add the partition key to the properties.
     properties = PartitionedFileSetProperties
       .builder()
       .setPartitioning(TimePartitionedFileSetDataset.PARTITIONING)
       .addAll(properties.getProperties())
       .build();
-
     return super.configure(instanceName, properties);
+  }
+
+  @Override
+  public DatasetSpecification reconfigure(String instanceName,
+                                          DatasetProperties properties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    // add the partition key to the properties.
+    properties = PartitionedFileSetProperties
+      .builder()
+      .setPartitioning(TimePartitionedFileSetDataset.PARTITIONING)
+      .addAll(properties.getProperties())
+      .build();
+    return super.reconfigure(instanceName, properties, currentSpec);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.file;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -30,21 +31,29 @@ import java.io.IOException;
 /**
  * Administration for file sets.
  */
-public class FileSetAdmin implements DatasetAdmin {
+public class FileSetAdmin implements DatasetAdmin, Updatable {
 
   private final String name;
   private final boolean isExternal;
   private final Location baseLocation;
+  private final CConfiguration cConf;
+  private final DatasetContext datasetContext;
+  private final LocationFactory absoluteLocationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
-  public FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
-                      LocationFactory absoluteLocationFactory,
-                      NamespacedLocationFactory namespacedLocationFactory,
-                      DatasetSpecification spec) throws IOException {
+  FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
+               LocationFactory absoluteLocationFactory,
+               NamespacedLocationFactory namespacedLocationFactory,
+               DatasetSpecification spec) throws IOException {
 
     this.name = spec.getName();
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
     this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
                                                              absoluteLocationFactory, namespacedLocationFactory);
+    this.datasetContext = datasetContext;
+    this.cConf = cConf;
+    this.absoluteLocationFactory = absoluteLocationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
   }
 
   @Override
@@ -83,5 +92,20 @@ public class FileSetAdmin implements DatasetAdmin {
   @Override
   public void close() throws IOException {
     // nothing to do
+  }
+
+  @Override
+  public void update(DatasetSpecification oldSpec) throws IOException {
+    // we don't allow changing the location for an internal file set
+    // the only way the baseLocation can change is that it is externalized to an outside location
+    // in this case, we have already validated the location is outside (via determineBaseLocation)
+    // all we need to do is therefore to move it to the new base location if that location has changed
+    if (isExternal && !FileSetProperties.isDataExternal(oldSpec.getProperties())) {
+      Location oldBaseLocation = FileSetDataset.determineBaseLocation(
+        datasetContext, cConf, oldSpec, absoluteLocationFactory, namespacedLocationFactory);
+      if (!baseLocation.equals(oldBaseLocation)) {
+        oldBaseLocation.renameTo(baseLocation);
+      }
+    }
   }
 }

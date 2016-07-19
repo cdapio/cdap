@@ -16,13 +16,16 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,6 +34,8 @@ import org.junit.Test;
  */
 public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   private static final NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+  private static final NamespacedLocationFactory namespacedLocationFactory =
+    getInjector().getInstance(NamespacedLocationFactory.class);
 
   @Test
   public void testNamespaces() throws Exception {
@@ -107,6 +112,47 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // Verify NotFoundException's contents as well, instead of just checking namespaceService.exists = false
     verifyNotFound(namespaceId);
+  }
+
+  @Test
+  public void testConfigUpdateFailures() throws Exception {
+    String namespace = "custompaceNamespace";
+    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    // check that root directory for a namespace cannot be updated
+    // create the custom directory since the namespace is being created with custom root directory it needs to exist
+    Location customlocation = namespacedLocationFactory.get(namespaceId);
+    Assert.assertTrue(customlocation.mkdirs());
+    NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
+      .setRootDirectory(customlocation.toString()).build();
+    namespaceAdmin.create(nsMeta);
+    Assert.assertTrue(namespaceAdmin.exists(namespaceId));
+
+    // Updating the root directory for a namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+                                      new NamespaceMeta.Builder(nsMeta).setRootDirectory("/newloc").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      //expected
+    }
+
+    // Updating the HBase namespace for a namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+                                      new NamespaceMeta.Builder(nsMeta).setHBaseDatabase("custns").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
+    // removing the root directory mapping for a namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+                                      new NamespaceMeta.Builder(nsMeta).setRootDirectory("").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      //expected
+    }
   }
 
   private static void verifyNotFound(Id.Namespace namespaceId) throws Exception {

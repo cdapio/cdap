@@ -27,7 +27,7 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -42,7 +42,6 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.store.NamespaceStore;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -68,8 +67,7 @@ public class DatasetInstanceService {
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
-  private final boolean allowDatasetUncheckedUpgrade;
-  private final NamespaceStore nsStore;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   private AuditPublisher auditPublisher;
 
@@ -79,13 +77,12 @@ public class DatasetInstanceService {
   @Inject
   public DatasetInstanceService(DatasetTypeManager typeManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
-                                NamespaceStore nsStore) {
+                                NamespaceQueryAdmin namespaceQueryAdmin) {
     this.opExecutorClient = opExecutorClient;
     this.typeManager = typeManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
-    this.nsStore = nsStore;
-    this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.metaCache = CacheBuilder.newBuilder().build(
       new CacheLoader<Id.DatasetInstance, DatasetMeta>() {
         @Override
@@ -189,7 +186,7 @@ public class DatasetInstanceService {
 
     Id.DatasetInstance newInstance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     DatasetSpecification existing = instanceManager.get(newInstance);
-    if (existing != null && !allowDatasetUncheckedUpgrade) {
+    if (existing != null) {
       throw new DatasetAlreadyExistsException(newInstance);
     }
 
@@ -202,33 +199,18 @@ public class DatasetInstanceService {
     LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
              namespaceId, name, props.getTypeName(), props.getProperties());
 
-    // Disable explore if the table already existed
-    if (existing != null) {
-      disableExplore(newInstance);
-    }
-
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec = opExecutorClient.create(newInstance, typeMeta,
                                                         DatasetProperties.builder()
                                                           .addAll(props.getProperties())
                                                           .setDescription(props.getDescription())
-                                                          .build(),
-                                                        false);
+                                                          .build());
     instanceManager.add(namespace, spec);
     metaCache.invalidate(newInstance);
     publishAudit(newInstance, AuditType.CREATE);
 
     // Enable explore
     enableExplore(newInstance, props);
-  }
-
-  private void createIfNotExists(Id.Namespace namespace, String name,
-                                 DatasetInstanceConfiguration props) throws Exception {
-    try {
-      create(namespace.getId(), name, props);
-    } catch (DatasetAlreadyExistsException e) {
-      // ignore
-    }
   }
 
   /**
@@ -251,8 +233,6 @@ public class DatasetInstanceService {
 
     LOG.info("Update dataset {}, properties: {}", instance.getId(), ConversionHelpers.toJson(properties));
 
-    disableExplore(instance);
-
     DatasetTypeMeta typeMeta = getTypeInfo(instance.getNamespace(), existing.getType());
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
@@ -260,23 +240,18 @@ public class DatasetInstanceService {
         ConversionHelpers.toDatasetTypeId(instance.getNamespace(), existing.getType()));
     }
 
+    disableExplore(instance);
+
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
-    DatasetSpecification spec = opExecutorClient.create(instance, typeMeta,
-                                                        DatasetProperties.builder()
-                                                          .addAll(properties)
-                                                          .build(),
-                                                        true);
+    DatasetSpecification spec = opExecutorClient.update(instance, typeMeta, DatasetProperties.of(properties), existing);
     instanceManager.add(instance.getNamespace(), spec);
     metaCache.invalidate(instance);
 
     DatasetInstanceConfiguration creationProperties =
       new DatasetInstanceConfiguration(existing.getType(), properties, null);
-    enableExplore(instance, creationProperties);
 
-    //caling admin upgrade, after updating specification
-    // Note: audit information for upgrade is published in executeAdmin() method. Since executeAdmin() method can
-    // be called directly too.
-    executeAdmin(instance, "upgrade");
+    enableExplore(instance, creationProperties);
+    publishAudit(instance, AuditType.UPDATE);
   }
 
   /**
@@ -413,7 +388,7 @@ public class DatasetInstanceService {
    */
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
-      if (nsStore.get(namespace) == null) {
+      if (namespaceQueryAdmin.get(namespace) == null) {
         throw new NamespaceNotFoundException(namespace);
       }
     }

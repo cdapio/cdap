@@ -19,10 +19,18 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       searchPath = '/namespaces/:namespace/metadata/search?target=stream&target=dataset&target=view',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
-      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.programId + '/methods/auditlog/:entityType/:entityId',
+      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/auditlog/:entityType/:entityId',
       navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId,
       trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId,
-      propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties';
+      propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties',
+      // FIXME: This service name needs to come from UI_CONFIG. Need to figure out how to do this.
+      topEntitiesPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditmetrics/top-entities/:entity',
+      auditHistogramPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditmetrics/audit-histogram',
+      timeSincePath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditmetrics/time-since',
+      exploreQueryPath = '/namespaces/:namespace/data/explore/queries',
+      baseQueryPath = '/data/explore/queries/:handle',
+      truthMeterPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/tracker-meter',
+      tagsPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/tags';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -38,6 +46,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     getAuditLogs: myHelpers.getConfig('GET', 'REQUEST', auditPath, false, { suppressErrors: true }),
     getStreamProperties: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/streams/:entityId'),
     getDatasetSystemProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?scope=SYSTEM'),
+    getSystemTags: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/tags?scope=SYSTEM', true),
     getDatasetDetail: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/data/datasets/:entityId'),
     deployNavigator: myHelpers.getConfig('PUT', 'REQUEST', navigatorPath, false, { contentType: 'application/json' }),
     getCDAPConfig: myHelpers.getConfig('GET', 'REQUEST', '/config/cdap', true),
@@ -48,11 +57,26 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     deployTrackerApp: myHelpers.getConfig('PUT', 'REQUEST', trackerApp),
     startTrackerProgram: myHelpers.getConfig('POST', 'REQUEST', trackerApp + '/:programType/:programId/start', false, { suppressErrors: true }),
     trackerProgramStatus: myHelpers.getConfig('GET', 'REQUEST', trackerApp + '/:programType/:programId/status', false, { suppressErrors: true }),
+    getTopEntities: myHelpers.getConfig('GET', 'REQUEST', topEntitiesPath, true, { suppressErrors: true }),
+    getAuditHistogram: myHelpers.getConfig('GET', 'REQUEST', auditHistogramPath, false, { suppressErrors: true }),
+    getTimeSince: myHelpers.getConfig('GET', 'REQUEST', timeSincePath, false, { suppressErrors: true }),
+    getTruthMeter: myHelpers.getConfig('POST', 'REQUEST', truthMeterPath, false, { suppressErrors: true }),
 
+    // USER AND PREFERRED TAGS
+    getTags: myHelpers.getConfig('GET', 'REQUEST', tagsPath, false, { suppressErrors: true }),
+    demotePreferredTags: myHelpers.getConfig('POST', 'REQUEST', tagsPath + '/demote', false, { suppressErrors: true }),
+    promoteUserTags: myHelpers.getConfig('POST', 'REQUEST', tagsPath + '/promote', false, { suppressErrors: true }),
+    validatePreferredTags: myHelpers.getConfig('POST', 'REQUEST', tagsPath + '/validate', false, { suppressErrors: true }),
+    deletePreferredTags: myHelpers.getConfig('DELETE', 'REQUEST', tagsPath + '/preferred', false, { suppressErrors: true }),
 
     // METADATA PROPERTIES CONTROL
     deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true }),
-    addEntityProperty: myHelpers.getConfig('POST', 'REQUEST', propertyPath, false, { suppressErrors: true })
+    addEntityProperty: myHelpers.getConfig('POST', 'REQUEST', propertyPath, false, { suppressErrors: true }),
+
+    // EXPLORE QUERY
+    postQuery: myHelpers.getConfig('POST', 'REQUEST', exploreQueryPath),
+    getQueryResults: myHelpers.getConfig('POST', 'REQUEST', baseQueryPath + '/next', true),
+    getQuerySchema: myHelpers.getConfig('GET', 'REQUEST', baseQueryPath + '/schema', true),
   });
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -109,11 +110,25 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
 
   @Override
   public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props, boolean existing) throws Exception {
+                                     DatasetProperties props) throws Exception {
 
-    InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props, existing);
+    InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props);
     HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "create"))
       .withBody(GSON.toJson(creationParams))
+      .build();
+    HttpResponse response = HttpRequests.execute(request);
+    verifyResponse(response);
+
+    return ObjectResponse.fromJsonBody(response, DatasetSpecification.class).getResponseObject();
+  }
+
+  @Override
+  public DatasetSpecification update(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+                                     DatasetProperties props, DatasetSpecification existing) throws Exception {
+
+    InternalDatasetCreationParams updateParams = new InternalDatasetUpdateParams(typeMeta, existing, props);
+    HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "update"))
+      .withBody(GSON.toJson(updateParams))
       .build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
@@ -142,7 +157,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
   }
 
   private DatasetAdminOpResponse executeAdminOp(Id.DatasetInstance datasetInstanceId, String opName)
-    throws IOException, HandlerException {
+    throws IOException, HandlerException, ConflictException {
 
     HttpResponse httpResponse = HttpRequests.execute(HttpRequest.post(resolve(datasetInstanceId, opName)).build());
     verifyResponse(httpResponse);
@@ -167,7 +182,10 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
                          path));
   }
 
-  private void verifyResponse(HttpResponse httpResponse) {
+  private void verifyResponse(HttpResponse httpResponse) throws ConflictException {
+    if (httpResponse.getResponseCode() == 409) {
+      throw new ConflictException(httpResponse.getResponseBodyAsString(Charsets.UTF_8));
+    }
     if (httpResponse.getResponseCode() != 200) {
       throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
                                  httpResponse.getResponseBodyAsString(Charsets.UTF_8));

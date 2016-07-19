@@ -25,15 +25,11 @@ import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -53,7 +49,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.File;
@@ -77,8 +72,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private final MapReduceSpecification spec;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final Metrics userMetrics;
-  private final Map<String, Plugin> plugins;
   private final Transaction transaction;
   private final TaskLocalizationContext taskLocalizationContext;
 
@@ -91,27 +84,22 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   // TODO: (CDAP-3983) The datasets should be managed by the dataset context. That requires TEPHRA-99.
   private final Set<TransactionAware> txAwares = Sets.newIdentityHashSet();
 
-  public BasicMapReduceTaskContext(Program program,
-                                   @Nullable MapReduceMetrics.TaskType type,
-                                   RunId runId, String taskId,
-                                   Arguments runtimeArguments,
-                                   MapReduceSpecification spec,
-                                   @Nullable WorkflowProgramInfo workflowProgramInfo,
-                                   DiscoveryServiceClient discoveryServiceClient,
-                                   MetricsCollectionService metricsCollectionService,
-                                   TransactionSystemClient txClient,
-                                   Transaction transaction,
-                                   DatasetFramework dsFramework,
-                                   @Nullable PluginInstantiator pluginInstantiator,
-                                   Map<String, File> localizedResources) {
-    super(program, runId, runtimeArguments, ImmutableSet.<String>of(),
-          createMetricsContext(program, runId.getId(), metricsCollectionService, taskId, type, workflowProgramInfo),
-          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+  BasicMapReduceTaskContext(Program program, ProgramOptions programOptions,
+                            @Nullable MapReduceMetrics.TaskType type, String taskId,
+                            MapReduceSpecification spec,
+                            @Nullable WorkflowProgramInfo workflowProgramInfo,
+                            DiscoveryServiceClient discoveryServiceClient,
+                            MetricsCollectionService metricsCollectionService,
+                            TransactionSystemClient txClient,
+                            Transaction transaction,
+                            DatasetFramework dsFramework,
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            Map<String, File> localizedResources) {
+    super(program, programOptions, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient, false,
+          metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
-    this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
     this.spec = spec;
-    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
     this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
 
     initializeTransactionAwares();
@@ -120,11 +108,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public String toString() {
     return String.format("job=%s,=%s", spec.getName(), super.toString());
-  }
-
-  @Override
-  public Map<String, Plugin> getPlugins() {
-    return plugins;
   }
 
   @Override
@@ -193,29 +176,19 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return inputName;
   }
 
-  private static MetricsContext createMetricsContext(Program program, String runId, MetricsCollectionService service,
-                                                     String taskId, @Nullable MapReduceMetrics.TaskType type,
-                                                     @Nullable WorkflowProgramInfo workflowProgramInfo) {
+  private static Map<String, String> createMetricsTags(String taskId, @Nullable MapReduceMetrics.TaskType type,
+                                                       @Nullable WorkflowProgramInfo workflowProgramInfo) {
     Map<String, String> tags = Maps.newHashMap();
-    tags.putAll(getMetricsContext(program, runId));
     if (type != null) {
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
       tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
     }
 
     if (workflowProgramInfo != null) {
-      // If running inside Workflow, add the WorkflowMetricsContext as well
-      tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
-      tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, workflowProgramInfo.getRunId().getId());
-      tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
+      workflowProgramInfo.updateMetricsTags(tags);
     }
 
-    return service.getContext(tags);
-  }
-
-  @Override
-  public Metrics getMetrics() {
-    return userMetrics;
+    return tags;
   }
 
   //---- following are methods to manage transaction lifecycle for the datasets. This needs to
@@ -236,11 +209,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * the dataset is a new transaction-aware, it starts the transaction and remembers the dataset.
    */
   @Override
-  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
-    throws DatasetInstantiationException {
-    return getDataset(name, arguments, AccessType.UNKNOWN);
-  }
-
   protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
     throws DatasetInstantiationException {
     T dataset = super.getDataset(name, arguments, accessType);
@@ -285,8 +253,14 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   /**
    * Returns a {@link BatchReadable} that reads data from the given dataset.
    */
-  <K, V> BatchReadable<K, V> getBatchReadable(String datasetName, Map<String, String> datasetArgs) {
-    Dataset dataset = getDataset(datasetName, datasetArgs, AccessType.READ);
+  <K, V> BatchReadable<K, V> getBatchReadable(@Nullable String datasetNamespace, String datasetName,
+                                              Map<String, String> datasetArgs) {
+    Dataset dataset;
+    if (datasetNamespace == null) {
+      dataset = getDataset(datasetName, datasetArgs, AccessType.READ);
+    } else {
+      dataset = getDataset(datasetNamespace, datasetName, datasetArgs, AccessType.READ);
+    }
     // Must be BatchReadable.
     Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset '%s' is not a BatchReadable.", datasetName);
 

@@ -83,7 +83,7 @@ body.theme-cdap.state-hydratorplusplus {
         cursor: not-allowed;
       }
       &.maximized {
-        top: 120px;
+        top: 93px;
       }
     }
 
@@ -93,11 +93,7 @@ body.theme-cdap.state-hydratorplusplus {
       }
     }
   }
-  &.state-hydratorplusplus-create {
-    div.console.maximized {
-      top: 50px;
-    }
-  }
+
   div.console {
     @media (min-height: 800px) {
       min-height: ~"-moz-calc(60vh - 113px)";
@@ -306,7 +302,7 @@ body.theme-cdap.state-hydratorplusplus {
       td {
         border: 1px solid @table-border-color;
         border-collapse: collapse;
-        height: 30px;
+        height: 36px;
         padding: 0 5px;
         vertical-align: middle;
         div.select-wrapper:after {
@@ -451,142 +447,6 @@ body.theme-cdap.state-hydratorplusplus {
         }
       }
     }
-    .node-config .bottompanel-body {
-      @media (min-width: @screen-lg-min) {
-        padding: 0;
-        .no-plugin-properties-message {
-          margin: 10px;
-        }
-        > p,
-        .validator-plugin > div {
-          padding: 20px 10px;
-        }
-        div.config-table {
-          display: table;
-          width: 100%;
-          > div {
-            display: table-cell;
-            padding: 20px 10px;
-            vertical-align: top;
-          }
-        }
-        div.source-table {
-          > div {
-            &:first-child {
-              border-right: 1px solid @table-border-color;
-              width: 66.66666667%;
-            }
-            &:last-child {
-              width: 33.33333333%;
-            }
-          }
-        }
-        div.transform-table {
-          > div {
-            &:first-child,
-            &:last-child {
-              width: 25%;
-            }
-            &:nth-child(2) {
-              width: 50%;
-              border-right: 1px solid @table-border-color;
-              border-left: 1px solid @table-border-color;
-            }
-          }
-        }
-        div.sink-table {
-          > div {
-            &:first-child {
-              border-right: 1px solid @table-border-color;
-              width: 33.33333333%;
-            }
-            &:last-child {
-              width: 66.66666667%;
-            }
-          }
-        }
-      }
-    }
-
-    .pipeline-schedule {
-      .bottompanel-header {
-        border-bottom-color: #c7c7c6;
-        padding-bottom: 0;
-      }
-
-      h3 {
-        margin-top: 0;
-        font-weight: 500;
-      }
-
-      .schedule-type {
-        margin-bottom: 20px;
-      }
-
-      .nav.nav-tabs.slanted-tabs {
-        border-bottom: 0;
-        margin-bottom: 0;
-        margin-top: 15px;
-
-        @tabs-grey: #c7c7c6;
-        @tabs-light-grey: lighten(@tabs-grey, 15%);
-
-        > li {
-          height: 22px;
-          background-color: @tabs-light-grey;
-          line-height: 11px;
-          padding: 5px 10px;
-          border-top: 1px solid @tabs-grey;
-          border-bottom: 0;
-          border-collapse: collapse;
-          margin-right: 15px;
-          cursor: pointer;
-          &:before,
-          &:after {
-            background-color: @tabs-light-grey;
-            border-top: 1px solid transparent;
-            border-bottom: 1px solid @tabs-grey;
-            border-collapse: collapse;
-            content: '';
-            height: 22px;
-            width: 10px;
-            position: absolute;
-            top: 0;
-          }
-          &:before {
-            border-left: 1px solid @tabs-grey;
-            left: -3px;
-            .skew(-15deg,0);
-          }
-
-          &:after {
-            border-right: 1px solid @tabs-grey;
-            right: -3px;
-            .skew(15deg, 0);
-          }
-
-          &.active {
-            background-color: white;
-            border-bottom: 0;
-            height: 23px;
-            &:before,
-            &:after {
-              background-color: transparent;
-              border-bottom: 1px solid white;
-            }
-            &:before {
-              border-left: 1px solid @tabs-grey;
-              left: -3px;
-            }
-            &:after {
-              border-right: 1px solid @tabs-grey;
-              right: -3px;
-            }
-          }
-        }
-      }
-    }
-
     .post-actions-detail,
     .post-actions-tab {
       .table {

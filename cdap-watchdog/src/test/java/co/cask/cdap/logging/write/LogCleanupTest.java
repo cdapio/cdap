@@ -19,7 +19,7 @@ package co.cask.cdap.logging.write;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -78,7 +78,7 @@ public class LogCleanupTest {
     namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),

@@ -47,7 +47,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import javax.annotation.Nullable;
 
 /**
  * Implements some of the methods in a generic way (not necessarily in most efficient way).
@@ -68,9 +67,9 @@ public abstract class AbstractTable implements Table, TransactionAware {
   // converts records into puts if the table has a schema
   private final RecordPutTransformer recordPutTransformer;
 
-  protected AbstractTable(@Nullable Schema tableSchema, @Nullable String rowFieldName) {
-    this.tableSchema = tableSchema;
-    this.rowFieldName = rowFieldName;
+  protected AbstractTable(Map<String, String> props) {
+    this.tableSchema = TableProperties.getSchema(props);
+    this.rowFieldName = TableProperties.getRowFieldName(props);
     this.recordPutTransformer = (tableSchema == null || rowFieldName == null) ?
       null : new RecordPutTransformer(rowFieldName, tableSchema);
   }

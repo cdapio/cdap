@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -94,9 +95,9 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
 
   private void report(Map<TableId, LevelDBTableService.TableStats> datasetStat) throws DatasetManagementException {
     for (Map.Entry<TableId, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
-      String namespace = statEntry.getKey().getNamespace().getId();
+      String namespace = statEntry.getKey().getNamespace();
       // emit metrics for only user datasets, tables in system namespace are ignored
-      if (Id.Namespace.SYSTEM.getId().equals(namespace)) {
+      if (NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
         continue;
       }
       String tableName = statEntry.getKey().getTableName();

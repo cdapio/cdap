@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,17 +15,16 @@
 # the License.
 #
 
-# Set environment variables here.
-
 # Main class to be invoked.
-MAIN_CLASS=co.cask.cdap.data.runtime.main.MasterServiceMain
+declare -r MAIN_CLASS=co.cask.cdap.data.runtime.main.MasterServiceMain
 
 # Arguments for main class.
-MAIN_CLASS_ARGS="start"
+declare -r MAIN_CLASS_ARGS="start"
 
 # Add Hadoop HDFS classpath
 # Assuming update-alternatives convention
 EXTRA_CLASSPATH="/etc/hbase/conf/"
 
-JAVA_HEAPMAX=${MASTER_JAVA_HEAPMAX:--Xmx1024m}
-
+# Java Heap settings
+declare -r JAVA_HEAP_VAR=MASTER_JAVA_HEAPMAX
+MASTER_JAVA_HEAPMAX=${MASTER_JAVA_HEAPMAX:--Xmx1024m}

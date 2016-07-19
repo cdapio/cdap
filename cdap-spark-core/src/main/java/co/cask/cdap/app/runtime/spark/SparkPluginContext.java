@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark;
 
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 
@@ -60,6 +61,11 @@ public final class SparkPluginContext implements PluginContext, Externalizable {
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return delegate.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
+    return delegate.newPluginInstance(pluginId, evaluator);
   }
 
   @Override

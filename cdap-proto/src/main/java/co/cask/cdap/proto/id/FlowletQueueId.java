@@ -32,6 +32,7 @@ public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId
   private final String flow;
   private final String flowlet;
   private final String queue;
+  private transient Integer hashCode;
 
   public FlowletQueueId(String namespace, String application, String flow, String flowlet, String queue) {
     super(EntityType.FLOWLET_QUEUE);
@@ -92,7 +93,11 @@ public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, application, flow, flowlet, queue);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, flow, flowlet, queue);
+    }
+    return hashCode;
   }
 
   @Override

@@ -39,20 +39,30 @@ import javax.annotation.Nullable;
 public class DatasetInputFormatProvider implements InputFormatProvider {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInputFormatProvider.class);
 
+  private final String datasetNamespace;
   private final String datasetName;
   private final Map<String, String> datasetArgs;
   private final Dataset dataset;
   private final List<Split> splits;
   private final Class<? extends AbstractBatchReadableInputFormat> batchReadableInputFormat;
 
-  public DatasetInputFormatProvider(String datasetName, Map<String, String> datasetArgs,
-                                    Dataset dataset, @Nullable List<Split> splits,
+  public DatasetInputFormatProvider(@Nullable String datasetNamespace, String datasetName,
+                                    Map<String, String> datasetArgs, Dataset dataset, @Nullable List<Split> splits,
                                     Class<? extends AbstractBatchReadableInputFormat> batchReadableInputFormat) {
+
+    this.datasetNamespace = datasetNamespace;
     this.datasetName = datasetName;
     this.datasetArgs = ImmutableMap.copyOf(datasetArgs);
     this.dataset = dataset;
     this.splits = splits == null ? null : ImmutableList.copyOf(splits);
     this.batchReadableInputFormat = batchReadableInputFormat;
+  }
+
+  public DatasetInputFormatProvider(String datasetName, Map<String, String> datasetArgs,
+                                    Dataset dataset, @Nullable List<Split> splits,
+                                    Class<? extends AbstractBatchReadableInputFormat> batchReadableInputFormat) {
+
+    this(null, datasetName, datasetArgs, dataset, splits, batchReadableInputFormat);
   }
 
   @Override
@@ -82,7 +92,7 @@ public class DatasetInputFormatProvider implements InputFormatProvider {
     hConf.clear();
 
     try {
-      AbstractBatchReadableInputFormat.setDatasetSplits(hConf, datasetName, datasetArgs, splits);
+      AbstractBatchReadableInputFormat.setDatasetSplits(hConf, datasetNamespace, datasetName, datasetArgs, splits);
       return ConfigurationUtil.toMap(hConf);
     } catch (IOException e) {
       throw new IllegalArgumentException(e);

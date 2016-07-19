@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DefaultValue;
@@ -60,8 +61,11 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
     try {
       Map<String, String> args = decodeArguments(request);
       String query = args.get("query");
+      Map<String, String> additionalSessionConf = new HashMap<>(args);
+      additionalSessionConf.remove("query");
       LOG.trace("Received query: {}", query);
-      responder.sendJson(HttpResponseStatus.OK, exploreService.execute(Id.Namespace.from(namespaceId), query));
+      responder.sendJson(HttpResponseStatus.OK,
+                         exploreService.execute(Id.Namespace.from(namespaceId), query, additionalSessionConf));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

@@ -36,6 +36,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -58,6 +59,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -90,7 +92,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -143,6 +144,7 @@ public abstract class AppFabricTestBase {
   private static MetricsQueryService metricsService;
   private static MetricsCollectionService metricsCollectionService;
   private static DatasetOpExecutor dsOpService;
+  private static RemoteSystemOperationsService remoteSysOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamService streamService;
@@ -172,6 +174,8 @@ public abstract class AppFabricTestBase {
     txManager.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
+    remoteSysOpService = injector.getInstance(RemoteSystemOperationsService.class);
+    remoteSysOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -206,6 +210,7 @@ public abstract class AppFabricTestBase {
     metricsCollectionService.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();
+    remoteSysOpService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
     serviceStore.stopAndWait();
@@ -332,8 +337,8 @@ public abstract class AppFabricTestBase {
 
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
 
-    try (InputStream artifactInputStream = appJar.getInputStream()) {
-      return addArtifact(artifactId, artifactInputStream, null);
+    try {
+      return addArtifact(artifactId, Locations.newInputSupplier(appJar), null);
     } finally {
       appJar.delete();
     }
@@ -344,16 +349,15 @@ public abstract class AppFabricTestBase {
                                            Set<ArtifactRange> parents) throws Exception {
 
     Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, cls);
-
-    try (InputStream artifactInputStream = appJar.getInputStream()) {
-      return addArtifact(artifactId, artifactInputStream, parents);
+    try {
+      return addArtifact(artifactId, Locations.newInputSupplier(appJar), parents);
     } finally {
       appJar.delete();
     }
   }
 
   // add an artifact and return the response code
-  protected HttpResponse addArtifact(Id.Artifact artifactId, InputStream artifactContents,
+  protected HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
                                      Set<ArtifactRange> parents) throws Exception {
     String path = getVersionedAPIPath("artifacts/" + artifactId.getName(), artifactId.getNamespace().getId());
     HttpEntityEnclosingRequestBase request = getPost(path);
@@ -363,10 +367,7 @@ public abstract class AppFabricTestBase {
       request.setHeader("Artifact-Extends", Joiner.on('/').join(parents));
     }
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ByteStreams.copy(artifactContents, bos);
-    bos.close();
-    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    request.setEntity(new ByteArrayEntity(ByteStreams.toByteArray(artifactContents)));
     return execute(request);
   }
 

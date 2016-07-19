@@ -16,13 +16,17 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
 
 /**
  * Configurer for configuring {@link WorkflowAction}
+ *
+ * @deprecated Deprecated as of 3.5.0. Please use {@link CustomActionConfigurer} instead.
  */
+@Deprecated
 public interface WorkflowActionConfigurer {
 
   /**

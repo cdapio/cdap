@@ -17,20 +17,18 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Filter;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
+import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.data2.util.TableId;
@@ -39,6 +37,7 @@ import co.cask.cdap.data2.util.hbase.GetBuilder;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.PutBuilder;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import co.cask.tephra.TxConstants;
@@ -90,20 +89,16 @@ public class HBaseTable extends BufferingTable {
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
-          ConflictDetection.valueOf(spec.getProperty(PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name())),
-          HBaseTableAdmin.supportsReadlessIncrements(spec),
-          spec.getProperty(Table.PROPERTY_SCHEMA) == null ?
-            null : Schema.parseJson(spec.getProperty(Table.PROPERTY_SCHEMA)),
-          spec.getProperty(Table.PROPERTY_SCHEMA_ROW_FIELD));
-    TableId tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
-    HTable hTable = tableUtil.createHTable(hConf, tableId);
+          TableProperties.supportsReadlessIncrements(spec.getProperties()), spec.getProperties());
+    TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
+    HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.hTableName = Bytes.toStringBinary(hTable.getTableName());
-    this.columnFamily = HBaseTableAdmin.getColumnFamily(spec);
+    this.columnFamily = TableProperties.getColumnFamily(spec.getProperties());
     this.txCodec = new TransactionCodec();
     // Overriding the hbase tx change prefix so it resembles the hbase table name more closely, since the HBase
     // table name is not the same as the dataset name anymore

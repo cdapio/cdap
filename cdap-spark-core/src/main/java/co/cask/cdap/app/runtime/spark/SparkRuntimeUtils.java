@@ -91,6 +91,9 @@ public final class SparkRuntimeUtils {
         }
         return true;
       }
+      if (resource.startsWith("com/google/common/base/Optional")) {
+        return true;
+      }
       return defaultFilter.acceptResource(resource);
     }
 
@@ -149,15 +152,6 @@ public final class SparkRuntimeUtils {
       }
     }
   };
-
-  /**
-   * Creates a {@link ProgramClassLoader} that have Spark classes visible.
-   */
-  public static ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir,
-                                                            ClassLoader unfilteredClassLoader) {
-    ClassLoader parent = new FilterClassLoader(unfilteredClassLoader, SPARK_PROGRAM_CLASS_LOADER_FILTER);
-    return new ProgramClassLoader(cConf, dir, parent);
-  }
 
   /**
    * Creates a zip file which contains a serialized {@link Properties} with a given zip entry name, together with

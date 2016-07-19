@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,8 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectStoreDataset;
 
@@ -31,35 +29,18 @@ import java.util.Map;
  *
  */
 public class IntegerStoreDefinition
-  extends AbstractDatasetDefinition<ObjectStoreDataset<Integer>, DatasetAdmin> {
-
-  private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
+  extends CompositeDatasetDefinition<ObjectStoreDataset<Integer>> {
 
   public IntegerStoreDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueTableDefinition) {
-    super(name);
-    this.tableDef = keyValueTableDefinition;
-  }
-
-  @Override
-  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties))
-      .build();
-  }
-
-  @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(datasetContext, spec.getSpecification("table"), classLoader);
+    super(name, "table", keyValueTableDefinition);
   }
 
   @Override
   public ObjectStoreDataset<Integer> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                                 Map<String, String> arguments,
                                                 ClassLoader classLoader) throws IOException {
-    DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, arguments, classLoader);
+
+    KeyValueTable table = getDataset(datasetContext, "table", spec, arguments, classLoader);
 
     try {
       return new IntegerStore(spec.getName(), table);

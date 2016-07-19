@@ -25,6 +25,7 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -37,6 +38,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * An abstract {@link InputFormat} implementation that reads from {@link BatchReadable}.
@@ -49,6 +51,7 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
   private static final Type DATASET_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   // Keys for storing values in Hadoop Configuration
+  private static final String DATASET_NAMESPACE = "input.datasetinputformat.dataset.namespace";
   private static final String DATASET_NAME = "input.datasetinputformat.dataset.name";
   private static final String DATASET_ARGS = "input.datasetinputformat.dataset.args";
   private static final String SPLITS = "input.datasetinputformat.splits";
@@ -57,14 +60,18 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
    * Sets dataset and splits information into the given {@link Configuration}.
    *
    * @param hConf            configuration to modify
+   * @param datasetNamespace namespace of the dataset
    * @param datasetName      name of the dataset
    * @param datasetArguments arguments for the dataset
    * @param splits           list of splits on the dataset
    * @throws IOException
    */
-  public static void setDatasetSplits(Configuration hConf,
+  public static void setDatasetSplits(Configuration hConf, @Nullable String datasetNamespace,
                                       String datasetName, Map<String, String> datasetArguments,
                                       List<Split> splits) throws IOException {
+    if (datasetNamespace != null) {
+      hConf.set(DATASET_NAMESPACE, datasetNamespace);
+    }
     hConf.set(DATASET_NAME, datasetName);
     hConf.set(DATASET_ARGS, GSON.toJson(datasetArguments, DATASET_ARGS_TYPE));
 
@@ -103,11 +110,12 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
     Configuration conf = context.getConfiguration();
 
+    String datasetNamespace = conf.get(DATASET_NAMESPACE);
     String datasetName = conf.get(DATASET_NAME);
     Map<String, String> datasetArgs = GSON.fromJson(conf.get(DATASET_ARGS), DATASET_ARGS_TYPE);
 
     @SuppressWarnings("unchecked")
-    BatchReadable<KEY, VALUE> batchReadable = createBatchReadable(context, datasetName, datasetArgs);
+    BatchReadable<KEY, VALUE> batchReadable = createBatchReadable(context, datasetNamespace, datasetName, datasetArgs);
     SplitReader<KEY, VALUE> splitReader = batchReadable.createSplitReader(inputSplit.getSplit());
     return new SplitReaderRecordReader<>(splitReader);
   }
@@ -122,6 +130,20 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
    */
   protected abstract BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context,
                                                                    String datasetName, Map<String, String> datasetArgs);
+
+  /**
+   * Subclass needs to implementation this method to return a {@link BatchReadable} for reading records from
+   * the given dataset from another namespace.
+   *
+   * @param context the hadoop task context
+   * @param datasetNamespace namesoace of the dataset
+   * @param datasetName name of the dataset to read from
+   * @param datasetArgs arguments of the dataset to read from
+   */
+  protected abstract BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context,
+                                                                   @Nullable String datasetNamespace,
+                                                                   String datasetName, Map<String, String> datasetArgs);
+
 
   /**
    * Implementation of {@link RecordReader} by delegating to the underlying {@link SplitReader}.

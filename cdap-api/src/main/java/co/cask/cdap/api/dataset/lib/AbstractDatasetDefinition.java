@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,10 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Reconfigurable;
 
 /**
  * Basic abstract implementation of {@link DatasetDefinition}.
@@ -43,5 +47,24 @@ public abstract class AbstractDatasetDefinition<D extends Dataset, A extends Dat
   @Override
   public String getName() {
     return name;
+  }
+
+  /**
+   * Reconfigure a dataset instance. Delegates to {@link Reconfigurable#reconfigure} if the dataset definition
+   * implements that interface, and delegates to {@link #configure} otherwise.
+   * @param def the dataset definition that will perform the (re)configure
+   * @param name name of the dataset instance to reconfigure
+   * @param newProps the updated dataset properties
+   * @param currentSpec the current dataset specification
+   * @return a new dataset specification representing the updated properties
+   * @throws IncompatibleUpdateException if the updated properties are incompatible with the existing properties
+   */
+  public static DatasetSpecification reconfigure(DatasetDefinition def, String name,
+                                                 DatasetProperties newProps, DatasetSpecification currentSpec)
+    throws IncompatibleUpdateException {
+
+    return def instanceof Reconfigurable
+      ? ((Reconfigurable) def).reconfigure(name, newProps, currentSpec)
+      : def.configure(name, newProps);
   }
 }

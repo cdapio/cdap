@@ -30,6 +30,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistries;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
@@ -175,6 +176,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public DatasetTypeMeta getTypeInfo(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getTypeName());
+  }
+
+  @Override
   public void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
     clientCache.getUnchecked(datasetInstanceId.getNamespace()).truncateInstance(datasetInstanceId.getId());
   }
@@ -263,16 +269,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
     // no-op. The RemoteDatasetFramework doesn't need to do anything. The lineage should be recorded before this point.
-  }
-
-  @Override
-  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    clientCache.getUnchecked(namespaceId).createNamespace();
-  }
-
-  @Override
-  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    clientCache.getUnchecked(namespaceId).deleteNamespace();
   }
 
   private Location createDeploymentJar(Class<?> clz) throws IOException {
@@ -386,34 +382,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
         throw Throwables.propagate(e);
       }
 
-      Class<?> moduleClass;
-
-      // try program class loader then cdap class loader
       try {
-        ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(classLoader);
-        try {
-          moduleClass = classLoader.loadClass(moduleMeta.getClassName());
-        } finally {
-          ClassLoaders.setContextClassLoader(currentClassLoader);
-        }
-      } catch (ClassNotFoundException e) {
-        // Load it with the CDAP system class loader
-        ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
-        try {
-          moduleClass = getClass().getClassLoader().loadClass(moduleMeta.getClassName());
-        } catch (ClassNotFoundException e2) {
-          e.addSuppressed(e2);
-          LOG.error("Was not able to load dataset module class {} while trying to load type {}",
-                    moduleMeta.getClassName(), datasetTypeMeta, e);
-          throw Throwables.propagate(e);
-        } finally {
-          ClassLoaders.setContextClassLoader(currentClassLoader);
-        }
-      }
-
-      try {
-        DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
-        module.register(registry);
+        DatasetDefinitionRegistries.register(moduleMeta.getClassName(), classLoader, registry);
       } catch (Exception e) {
         LOG.error("Was not able to load dataset module class {} while trying to load type {}",
                   moduleMeta.getClassName(), datasetTypeMeta, e);

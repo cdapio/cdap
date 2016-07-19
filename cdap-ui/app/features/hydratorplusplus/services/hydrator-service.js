@@ -148,7 +148,7 @@ class HydratorPlusPlusHydratorService {
         } else {
           let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
           let pluginProperties = (match.length? match[0].properties: {});
-          if (res.length && this.myHelpers.objectQuery(node, 'description', 'length')) {
+          if (res.length && !this.myHelpers.objectQuery(node, 'description', 'length')) {
             node.description = res[0].description;
           }
           node._backendProperties = pluginProperties;
@@ -166,10 +166,10 @@ class HydratorPlusPlusHydratorService {
     let jsonSchema;
 
     if (isStreamSource) {
-      if (node.plugin.properties.format === 'clf') {
-        jsonSchema = this.IMPLICIT_SCHEMA.clf;
-      } else if (node.plugin.properties.format === 'syslog') {
-        jsonSchema = this.IMPLICIT_SCHEMA.syslog;
+      let availableImplicitSchema = Object.keys(this.IMPLICIT_SCHEMA);
+
+      if (availableImplicitSchema.indexOf(node.plugin.properties.format) !== -1) {
+        jsonSchema = this.IMPLICIT_SCHEMA[node.plugin.properties.format];
       } else {
         jsonSchema = node.outputSchema;
       }
@@ -254,8 +254,7 @@ class HydratorPlusPlusHydratorService {
 
         properties.push({
           name: p.name,
-          type: p.nullable ? [property, 'null'] : property,
-          readonly: p.readonly
+          type: p.nullable ? [property, 'null'] : property
         });
       }
     });

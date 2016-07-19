@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,10 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -30,11 +33,12 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Dataset definition for File datasets.
  */
-public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmin> {
+public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmin>, Reconfigurable {
 
   @Inject
   private RootLocationFactory absoluteLocationFactory;
@@ -68,6 +72,29 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
       .builder(instanceName, getName())
       .properties(newProperties)
       .build();
+  }
+
+  @Override
+  public DatasetSpecification reconfigure(String instanceName,
+                                          DatasetProperties newProperties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    boolean wasExternal = FileSetProperties.isDataExternal(currentSpec.getProperties());
+    boolean isExternal = FileSetProperties.isDataExternal(newProperties.getProperties());
+    String oldPath = FileSetProperties.getBasePath(currentSpec.getProperties());
+    String newPath = FileSetProperties.getBasePath(newProperties.getProperties());
+
+    // validate that we are not "internalizing" an external location
+    if (wasExternal && !isExternal) {
+      throw new IncompatibleUpdateException(
+        String.format("Cannot convert external file set '%s' to non-external.", instanceName));
+    }
+
+    // allow change of path only if the dataset is external
+    if (!Objects.equals(oldPath, newPath) && !isExternal) {
+      throw new IncompatibleUpdateException(
+        String.format("Cannot change the base path of non-external file set '%s'.", instanceName));
+    }
+    return configure(instanceName, newProperties);
   }
 
   @Override

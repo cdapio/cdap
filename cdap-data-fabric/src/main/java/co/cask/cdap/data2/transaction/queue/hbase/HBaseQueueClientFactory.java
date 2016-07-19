@@ -231,8 +231,8 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
     return queueAdmin;
   }
 
-  public HTable createHTable(TableId tableId) throws IOException {
-    HTable consumerTable = hBaseTableUtil.createHTable(hConf, tableId);
+  public HTable createHTable(TableId hTableId) throws IOException {
+    HTable consumerTable = hBaseTableUtil.createHTable(hConf, hTableId);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     consumerTable.setAutoFlush(false);

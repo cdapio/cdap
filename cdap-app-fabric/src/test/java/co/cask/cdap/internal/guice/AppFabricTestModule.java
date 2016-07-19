@@ -27,8 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -38,8 +37,10 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -48,6 +49,8 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -98,8 +101,9 @@ public final class AppFabricTestModule extends AbstractModule {
       }
     });
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
-    install(new LocationRuntimeModule().getInMemoryModules());
+    install(new LocationUnitTestModule().getModule());
     install(new LoggingModules().getInMemoryModules());
+    install(new LogReaderRuntimeModules().getInMemoryModules());
     install(new MetricsHandlerModule());
     install(new MetricsClientRuntimeModule().getInMemoryModules());
     install(new ExploreClientModule());
@@ -109,10 +113,13 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ViewAdminModules().getInMemoryModules());
     install(new StreamAdminModules().getInMemoryModules());
     install(new StreamServiceRuntimeModule().getInMemoryModules());
-    install(new NamespaceClientRuntimeModule().getStandaloneModules());
     install(new NamespaceStoreModule().getStandaloneModules());
     install(new MetadataServiceModule());
+    install(new RemoteSystemOperationsServiceModule());
     install(new AuthorizationModule());
+    // we want to use RemotePrivilegesFetcher in this module, since app fabric service is started
+    install(new AuthorizationEnforcementModule().getStandaloneModules());
+    install(new SecureStoreModules().getInMemoryModules());
   }
 
   private Scheduler createNoopScheduler() {

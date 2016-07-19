@@ -113,7 +113,6 @@ class TrackerResultsController {
       }
     ];
 
-
     this.fetchResults();
   }
 
@@ -131,13 +130,13 @@ class TrackerResultsController {
       .then( (res) => {
         this.fullResults = res.map(this.parseResult.bind(this));
         this.searchResults = angular.copy(this.fullResults);
+        this.fetchTruthMeter();
         this.loading = false;
       }, (err) => {
         console.log('error', err);
         this.loading = false;
       });
   }
-
   parseResult (entity) {
     let obj = {};
     if (entity.entityId.type === 'datasetinstance') {
@@ -150,6 +149,9 @@ class TrackerResultsController {
         createDate: entity.metadata.SYSTEM.properties['creation-time'],
         datasetType: entity.metadata.SYSTEM.properties.type
       });
+      if(entity.metadata.SYSTEM.tags.indexOf('explore') !== -1) {
+        obj.datasetExplorable = true;
+      }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;
     } else if (entity.entityId.type === 'stream') {
@@ -176,7 +178,6 @@ class TrackerResultsController {
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[2].count++;
     }
-
     return obj;
   }
 
@@ -297,6 +298,35 @@ class TrackerResultsController {
     upperLimit = upperLimit > this.searchResults.length ? this.searchResults.length : upperLimit;
 
     return this.searchResults.length === 0 ? '0' : lowerLimit + '-' + upperLimit;
+  }
+
+  fetchTruthMeter() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    let streamsList = [];
+    let datasetsList = [];
+
+    angular.forEach(this.fullResults, (entity) => {
+      if (entity.type === 'Stream') {
+        streamsList.push(entity.name);
+      } else if (entity.type === 'Dataset') {
+        datasetsList.push(entity.name);
+      }
+    });
+
+    this.myTrackerApi.getTruthMeter(params, {
+      streams: streamsList,
+      datasets: datasetsList
+    })
+      .$promise
+      .then((response) => {
+        this.truthMeterMap = response;
+      }, (err) => {
+        console.log('error', err);
+      });
   }
 }
 

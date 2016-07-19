@@ -45,9 +45,13 @@ angular.module(PKG.name + '.commons')
 
     var validatorsList;
     var classNameList = [];
-
     // We just need to set the input schema as the output schema
-    $scope.outputSchema = HydratorPlusPlusHydratorService.formatOutputSchema($scope.inputSchema);
+    try {
+      $scope.inputSchema = JSON.parse($scope.inputSchema[0].schema);
+    } catch(e) {
+      $scope.inputSchema = {fields: []};
+    }
+    $scope.outputSchema = HydratorPlusPlusHydratorService.formatOutputSchema($scope.inputSchema.fields);
 
     myHydratorValidatorsApi.get()
       .$promise

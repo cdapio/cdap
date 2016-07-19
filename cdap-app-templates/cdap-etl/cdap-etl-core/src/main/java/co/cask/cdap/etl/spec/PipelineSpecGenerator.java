@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.proto.Connection;
@@ -93,8 +94,10 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     List<StageConnections> traversalOrder = validateConfig(config);
 
     Map<String, DefaultPipelineConfigurer> pluginConfigurers = new HashMap<>(traversalOrder.size());
+    Map<String, String> pluginTypes = new HashMap<>(traversalOrder.size());
     for (StageConnections stageConnections : traversalOrder) {
       String stageName = stageConnections.getStage().getName();
+      pluginTypes.put(stageName, stageConnections.getStage().getPlugin().getType());
       pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(configurer, stageName));
     }
 
@@ -109,9 +112,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
       // for each output, set their input schema to our output schema
       for (String outputStageName : stageConnections.getOutputs()) {
-        pluginConfigurers.get(outputStageName).getStageConfigurer().setInputSchema(outputSchema);
+        pluginConfigurers.get(outputStageName).getStageConfigurer().addInputSchema(stageName, outputSchema);
       }
-
       specBuilder.addStage(stageSpec);
     }
 
@@ -137,12 +139,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     }
 
     PluginSpec pluginSpec = configurePlugin(stageName, stagePlugin, pluginConfigurer);
-    Schema inputSchema = pluginConfigurer.getStageConfigurer().getInputSchema();
     Schema outputSchema = pluginConfigurer.getStageConfigurer().getOutputSchema();
-
+    Map<String, Schema> inputSchemas = pluginConfigurer.getStageConfigurer().getInputSchemas();
     return StageSpec.builder(stageName, pluginSpec)
       .setErrorDatasetName(stage.getErrorDatasetName())
-      .setInputSchema(inputSchema)
+      .addInputSchemas(inputSchemas)
       .setOutputSchema(outputSchema)
       .addInputs(stageConnections.getInputs())
       .addOutputs(stageConnections.getOutputs())
@@ -168,7 +169,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                                                        pluginSelector);
     if (plugin == null) {
       throw new IllegalArgumentException(
-        String.format("No plugin of type %s and name %s could be found stage for %s.",
+        String.format("No plugin of type %s and name %s could be found for stage %s.",
                       etlPlugin.getType(), etlPlugin.getName(), pluginId));
     }
 
@@ -209,6 +210,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       throw new IllegalArgumentException("A pipeline must contain at least one stage.");
     }
 
+    Set<String> actionStages = new HashSet<>();
     // check stage name uniqueness
     Set<String> stageNames = new HashSet<>();
     for (ETLStage stage : config.getStages()) {
@@ -216,6 +218,10 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         throw new IllegalArgumentException(
           String.format("Invalid pipeline. Multiple stages are named %s. Please ensure all stage names are unique",
                         stage.getName()));
+      }
+      // if stage is Action stage, add it to the Action stage set
+      if (Action.PLUGIN_TYPE.equals(stage.getPlugin().getType())) {
+        actionStages.add(stage.getName());
       }
     }
 
@@ -243,23 +249,23 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       Set<String> stageOutputs = dag.getNodeOutputs(stageName);
 
       if (isSource(stage.getPlugin().getType())) {
-        if (!stageInputs.isEmpty()) {
+        if (!stageInputs.isEmpty() && !actionStages.containsAll(stageInputs)) {
           throw new IllegalArgumentException(
             String.format("Source %s has incoming connections from %s. Sources cannot have any incoming connections.",
                           stageName, Joiner.on(',').join(stageInputs)));
         }
       } else if (isSink(stage.getPlugin().getType())) {
-        if (!stageOutputs.isEmpty()) {
+        if (!stageOutputs.isEmpty() && !actionStages.containsAll(stageOutputs)) {
           throw new IllegalArgumentException(
             String.format("Sink %s has outgoing connections to %s. Sinks cannot have any outgoing connections.",
                           stageName, Joiner.on(',').join(stageOutputs)));
         }
       } else {
-        if (stageInputs.isEmpty()) {
+        if (stageInputs.isEmpty() && !(stage.getPlugin().getType().equals(Action.PLUGIN_TYPE))) {
           throw new IllegalArgumentException(
             String.format("Stage %s is unreachable, it has no incoming connections.", stageName));
         }
-        if (stageOutputs.isEmpty()) {
+        if (stageOutputs.isEmpty() && !(stage.getPlugin().getType().equals(Action.PLUGIN_TYPE))) {
           throw new IllegalArgumentException(
             String.format("Stage %s is a dead end, it has no outgoing connections.", stageName));
         }

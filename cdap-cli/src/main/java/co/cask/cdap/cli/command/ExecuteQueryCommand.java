@@ -29,7 +29,6 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -109,10 +108,6 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
       Throwable t = Throwables.getRootCause(e);
       if (t instanceof HandleNotFoundException) {
         throw Throwables.propagate(t);
-      } else if (t instanceof UnexpectedQueryStatusException) {
-        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
-        throw new SQLException(String.format("Query '%s' execution did not finish successfully. " +
-                                             "Got final state - %s", query, sE.getStatus().toString()));
       }
       throw new SQLException(Throwables.getRootCause(e));
     } catch (CancellationException e) {

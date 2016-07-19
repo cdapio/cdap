@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +15,6 @@
 # the License.
 #
 
-
-# Set environment variables here.
 
 # Main cmd is the non-java command to run.
 MAIN_CMD=node
@@ -35,7 +32,8 @@ if test -x ${CDAP_HOME}/ui/bin/node ; then
   fi
 fi
 
+declare -r MAIN_CMD=${MAIN_CMD}
 export NODE_ENV=production
 
 # Arguments for MAIN_CMD
-MAIN_CMD_ARGS="${CDAP_HOME}/ui/server.js"
+declare -r MAIN_CMD_ARGS="${CDAP_HOME}/ui/server.js"

@@ -17,16 +17,21 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -79,6 +84,8 @@ import javax.annotation.Nullable;
  */
 public abstract class HBaseTableUtil {
 
+  public static final String CDAP_VERSION = "cdap.version";
+
   /**
    * Represents the compression types supported for HBase tables.
    */
@@ -106,6 +113,7 @@ public abstract class HBaseTableUtil {
 
 
   protected String tablePrefix;
+  protected NamespaceQueryAdmin namespaceQueryAdmin;
 
   public void setCConf(CConfiguration cConf) {
     if (cConf != null) {
@@ -113,9 +121,85 @@ public abstract class HBaseTableUtil {
     }
   }
 
+  public void setNamespaceQueryAdmin(NamespaceQueryAdmin namespaceQueryAdmin) {
+    if (namespaceQueryAdmin != null) {
+      this.namespaceQueryAdmin = namespaceQueryAdmin;
+    }
+  }
+
+  /**
+   * Returns a map of HBase to CDAP namespace. This is required when we want to report metrics for HBase tables where
+   * it is run a separate service and reads the table metrics and reports it. There we need to translate the hbase
+   * namespace to cdap namespace for metrics to make sense from CDAP perspective. This is also used during upgrade
+   * step where we want to construct the correct {@link DatasetAdmin} for each dataset.
+   *
+   * @return map of hbase namespace to cdap namespace
+   * @throws IOException if there was an error getting the {@link NamespaceMeta} of all the namespaces
+   */
+  public Map<String, String> getHBaseToCDAPNamespaceMap() throws IOException {
+    Map<String, String> reverseMap = new HashMap<>();
+    if (namespaceQueryAdmin == null) {
+      throw new IOException("NamespaceQueryAdmin is not set and a reverseLookupMap was requested.");
+    }
+
+    try {
+      List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
+      for (NamespaceMeta namespaceMeta : namespaceMetas) {
+        String hbaseNamespace = getHBaseNamespace(namespaceMeta);
+        reverseMap.put(hbaseNamespace, namespaceMeta.getName());
+      }
+    } catch (Exception ex) {
+      throw new IOException("NamespaceQueryAdmin lookup to list all NamespaceMetas failed", ex);
+    }
+
+    return ImmutableMap.copyOf(reverseMap);
+  }
+
+  public String getHBaseNamespace(NamespaceId namespace) throws IOException {
+    // Convert CDAP Namespace to HBase namespace
+    if (NamespaceId.SYSTEM.equals(namespace) || NamespaceId.CDAP.equals(namespace) ||
+      NamespaceId.DEFAULT.equals(namespace)) {
+      return toCDAPManagedHBaseNamespace(namespace);
+    }
+
+    if (namespaceQueryAdmin == null) {
+      throw new IOException(String.format("NamespaceQueryAdmin is not set and a non-reserved namespace " +
+                                            "lookup is requested. Namespace %s", namespace));
+    }
+
+    try {
+      return getHBaseNamespace(namespaceQueryAdmin.get(namespace.toId()));
+    } catch (Exception ex) {
+      throw new IOException(String.format("NamespaceQueryAdmin lookup to get NamespaceMeta failed. " +
+                                            "Can't find mapping for %s", namespace), ex);
+    }
+  }
+
+  public String getHBaseNamespace(NamespaceMeta namespaceMeta) {
+    if (!Strings.isNullOrEmpty(namespaceMeta.getConfig().getHbaseNamespace())) {
+      return namespaceMeta.getConfig().getHbaseNamespace();
+    }
+    return toCDAPManagedHBaseNamespace(namespaceMeta.getNamespaceId());
+  }
+
+  public TableId createHTableId(NamespaceId namespace, String tableName) throws IOException {
+    return TableId.from(getHBaseNamespace(namespace), tableName);
+  }
+
+  private String toCDAPManagedHBaseNamespace(NamespaceId namespace) {
+    // Handle backward compatibility to not add the prefix for default namespace
+    // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
+    return Id.Namespace.DEFAULT.getId().equals(namespace.getNamespace()) ?
+      namespace.getNamespace() : tablePrefix + "_" + namespace.getNamespace();
+  }
+
   protected boolean isCDAPTable(HTableDescriptor hTableDescriptor) {
-    String hTableName = hTableDescriptor.getNameAsString();
-    return hTableName.startsWith(tablePrefix + ".") || hTableName.startsWith(tablePrefix + "_");
+    // TODO: Once all system tables are upgraded to have CDAP_VERSION in their descriptor, we can then solely rely on
+    // that key being present in the descriptor to identify a CDAP Table
+    String tableName = hTableDescriptor.getNameAsString();
+    String value = hTableDescriptor.getValue(CDAP_VERSION);
+    return tableName.startsWith(tablePrefix + ".") || tableName.startsWith(tablePrefix + "_") ||
+      !Strings.isNullOrEmpty(value);
   }
 
   /**
@@ -151,15 +235,15 @@ public abstract class HBaseTableUtil {
    * @param timeout Maximum time to wait for table creation.
    * @param timeoutUnit The TimeUnit for timeout.
    */
-  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId,
-                                     HTableDescriptor tableDescriptor,
+  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId, HTableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys,
                                      long timeout, TimeUnit timeoutUnit) throws IOException {
     if (tableExists(admin, tableId)) {
       return;
     }
     setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
-
+    tableDescriptor = setVersion(tableDescriptor);
+    tableDescriptor = setTablePrefix(tableDescriptor);
     try {
       LOG.debug("Attempting to create table '{}' if it does not exist", tableId);
       // HBaseAdmin.createTable can handle null splitKeys.
@@ -204,8 +288,28 @@ public abstract class HBaseTableUtil {
     }
   }
 
+  public HTableDescriptor setVersion(HTableDescriptor tableDescriptor) {
+    HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
+    setVersion(builder);
+    return builder.build();
+  }
+
+  public HTableDescriptor setTablePrefix(HTableDescriptor tableDescriptor) {
+    HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
+    builder.setValue(Constants.Dataset.TABLE_PREFIX, tablePrefix);
+    return builder.build();
+  }
+
   // For simplicity we allow max 255 splits per bucket for now
   private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
+
+  public static void setVersion(HTableDescriptorBuilder tableDescriptorBuilder) {
+    tableDescriptorBuilder.setValue(CDAP_VERSION, ProjectInfo.getVersion().toString());
+  }
+
+  public static ProjectInfo.Version getVersion(HTableDescriptor tableDescriptor) {
+    return new ProjectInfo.Version(tableDescriptor.getValue(CDAP_VERSION));
+  }
 
   public static byte[][] getSplitKeys(int splits, int buckets, AbstractRowKeyDistributor keyDistributor) {
     // "1" can be used for queue tables that we know are not "hot", so we do not pre-split in this case
@@ -426,10 +530,10 @@ public abstract class HBaseTableUtil {
    * Checks if an HBase namespace already exists
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param namespace the {@link Id.Namespace} to check for existence
+   * @param namespace the namespace to check for existence
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract boolean hasNamespace(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
+  public abstract boolean hasNamespace(HBaseAdmin admin, String namespace) throws IOException;
 
   /**
    * Creates an HBase namespace, if it does not already exist
@@ -437,19 +541,19 @@ public abstract class HBaseTableUtil {
    * properties to HBase
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param namespace the {@link Id.Namespace} to create
+   * @param namespace the namespace to create
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract void createNamespaceIfNotExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
+  public abstract void createNamespaceIfNotExists(HBaseAdmin admin, String namespace) throws IOException;
 
   /**
    * Creates an HBase namespace, if it exists
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param namespace the {@link Id.Namespace} to delete
+   * @param namespace the namespace to delete
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract void  deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
+  public abstract void  deleteNamespaceIfExists(HBaseAdmin admin, String namespace) throws IOException;
 
   /**
    * Disable an HBase table
@@ -514,8 +618,8 @@ public abstract class HBaseTableUtil {
    * @param predicate The {@link Predicate} to decide whether to drop a table or not
    * @throws IOException
    */
-  public void deleteAllInNamespace(HBaseAdmin admin,
-                                   Id.Namespace namespaceId, Predicate<TableId> predicate) throws IOException {
+  public void deleteAllInNamespace(HBaseAdmin admin, String namespaceId,
+                                   Predicate<TableId> predicate) throws IOException {
     for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
       if (predicate.apply(tableId)) {
         dropTable(admin, tableId);
@@ -530,7 +634,7 @@ public abstract class HBaseTableUtil {
    * @param namespaceId namespace for which the tables are being deleted
    * @throws IOException
    */
-  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
+  public void deleteAllInNamespace(HBaseAdmin admin, String namespaceId) throws IOException {
     deleteAllInNamespace(admin, namespaceId, Predicates.<TableId>alwaysTrue());
   }
 
@@ -540,7 +644,7 @@ public abstract class HBaseTableUtil {
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param namespaceId namespace for which the tables are being requested
    */
-  public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException;
+  public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException;
 
   /**
    * Lists all tables

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
 
+import java.io.IOException;
+
 /**
  *
  */
@@ -25,9 +27,13 @@ public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @Override
   protected DatasetFramework getFramework() throws DatasetManagementException {
-    InMemoryDatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES, cConf);
+    InMemoryDatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES);
     framework.setAuditPublisher(inMemoryAuditPublisher);
-    framework.createNamespace(NAMESPACE_ID);
+    try {
+      namespacedLocationFactory.get(NAMESPACE_ID).mkdirs();
+    } catch (IOException e) {
+      throw new DatasetManagementException(e.getMessage());
+    }
     return framework;
   }
 }

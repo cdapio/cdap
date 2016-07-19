@@ -21,7 +21,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -37,6 +38,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -74,6 +76,7 @@ public class InMemoryExploreServiceTest {
   private static ExploreService exploreService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
+  private static NamespaceAdmin namespaceAdmin;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -86,7 +89,7 @@ public class InMemoryExploreServiceTest {
         new ConfigModule(configuration, hConf),
         new IOModule(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
-        new LocationRuntimeModule().getInMemoryModules(),
+        new LocationUnitTestModule().getModule(),
         new DataFabricModules().getInMemoryModules(),
         new DataSetsModules().getStandaloneModules(),
         new DataSetServiceModules().getInMemoryModules(),
@@ -114,6 +117,8 @@ public class InMemoryExploreServiceTest {
 
     exploreService = injector.getInstance(ExploreService.class);
     exploreService.startAndWait();
+
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
   }
 
   @AfterClass
@@ -127,6 +132,8 @@ public class InMemoryExploreServiceTest {
   @Test
   public void testHiveIntegration() throws Exception {
     String otherNamespace = "otherNamespace";
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(otherNamespace).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
     waitForCompletionStatus(exploreService.createNamespace(Id.Namespace.from(otherNamespace)));
 
     runCleanup(ImmutableList.of(Id.Namespace.DEFAULT.getId(), otherNamespace));

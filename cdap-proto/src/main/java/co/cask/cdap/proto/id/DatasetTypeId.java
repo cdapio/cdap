@@ -29,6 +29,7 @@ import java.util.Objects;
 public class DatasetTypeId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String type;
+  private transient Integer hashCode;
 
   public DatasetTypeId(String namespace, String type) {
     super(EntityType.DATASET_TYPE);
@@ -61,7 +62,11 @@ public class DatasetTypeId extends EntityId implements NamespacedId, ParentedId<
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), namespace, type);
+    Integer hashCode = this.hashCode;
+    if (hashCode == null) {
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, type);
+    }
+    return hashCode;
   }
 
   @SuppressWarnings("unused")

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Filter;
 import co.cask.cdap.api.dataset.table.Scan;
@@ -74,10 +74,9 @@ public class InMemoryTable extends BufferingTable {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name), level);
   }
 
-  public InMemoryTable(DatasetContext datasetContext, String name, ConflictDetection level,
-                       CConfiguration cConf, Schema schema, String schemaRowField) {
-    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name),
-          level, false, schema, schemaRowField);
+  public InMemoryTable(DatasetContext datasetContext, DatasetSpecification spec, CConfiguration cConf) {
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
+          false, spec.getProperties());
   }
 
   @Override

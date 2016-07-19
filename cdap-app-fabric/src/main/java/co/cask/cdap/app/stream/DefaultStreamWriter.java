@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -46,7 +46,6 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +57,7 @@ public class DefaultStreamWriter implements StreamWriter {
 
   private final EndpointStrategy endpointStrategy;
   private final ConcurrentMap<Id.Stream, Boolean> isStreamRegistered;
-  private final UsageRegistry usageRegistry;
+  private final RuntimeUsageRegistry runtimeUsageRegistry;
 
   /**
    * The namespace that this {@link StreamWriter} belongs to.
@@ -67,14 +66,14 @@ public class DefaultStreamWriter implements StreamWriter {
   /**
    * The owners of this {@link StreamWriter}.
    */
-  private final List<Id> owners;
+  private final Iterable<? extends Id> owners;
   private final Id.Run run;
   private final LineageWriter lineageWriter;
 
   @Inject
   public DefaultStreamWriter(@Assisted("run") Id.Run run,
-                             @Assisted("owners") List<Id> owners,
-                             UsageRegistry usageRegistry,
+                             @Assisted("owners") Iterable<? extends Id> owners,
+                             RuntimeUsageRegistry runtimeUsageRegistry,
                              LineageWriter lineageWriter,
                              DiscoveryServiceClient discoveryServiceClient) {
     this.run = run;
@@ -83,7 +82,7 @@ public class DefaultStreamWriter implements StreamWriter {
     this.lineageWriter = lineageWriter;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
     this.isStreamRegistered = Maps.newConcurrentMap();
-    this.usageRegistry = usageRegistry;
+    this.runtimeUsageRegistry = runtimeUsageRegistry;
   }
 
   private URL getStreamURL(String stream) throws IOException {
@@ -178,9 +177,9 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private void registerStream(Id.Stream stream) {
-    // prone being entered multiple times, but OK since usageRegistry.register is not an expensive operation
+    // prone to being entered multiple times, but OK since usageRegistry.register is not an expensive operation
     if (!isStreamRegistered.containsKey(stream)) {
-      usageRegistry.registerAll(owners, stream);
+      runtimeUsageRegistry.registerAll(owners, stream);
       isStreamRegistered.put(stream, true);
     }
 

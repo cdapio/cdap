@@ -18,6 +18,7 @@ package co.cask.cdap.batch.stream;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -63,10 +64,36 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
     submitAndVerifyStreamBatchJob(NoMapperApp.class, "nomapper", "NoMapperMapReduce", 120);
   }
 
+
+  /**
+   * Tests MapReduce that consumes from stream without mapper.
+   */
+  @Test
+  public void testNoMapperOtherStreamInput() throws Exception {
+    submitAndVerifyStreamOtherNamespaceBatchJob(NoMapperStreamSpaceApp.class, NoMapperStreamSpaceApp.INPUTSTREAMSPACE,
+                                                "nomapper", "NoMapperMapReduce", 120);
+  }
+
   private void submitAndVerifyStreamBatchJob(Class<? extends AbstractApplication> appClass,
                                              String streamWriter, String mapReduceName, int timeout) throws Exception {
     ApplicationManager applicationManager = deployApplication(appClass);
     StreamManager streamManager = getStreamManager(streamWriter);
+    verifyStreamBatchJob(streamManager, applicationManager, mapReduceName, timeout);
+  }
+
+  private void submitAndVerifyStreamOtherNamespaceBatchJob(Class<? extends AbstractApplication> appClass,
+                                                           String namespace, String streamWriter, String mapReduceName,
+                                                           int timeout) throws Exception {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    createNamespace(namespaceId.toId());
+    deployApplication(namespaceId.toId(), appClass);
+    ApplicationManager applicationManager = deployApplication(appClass);
+    StreamManager streamManager = getStreamManager(namespaceId.toId(), streamWriter);
+    verifyStreamBatchJob(streamManager, applicationManager, mapReduceName, timeout);
+  }
+
+  private void verifyStreamBatchJob(StreamManager streamManager, ApplicationManager applicationManager,
+                                    String mapReduceName, int timeout) throws Exception {
     for (int i = 0; i < 50; i++) {
       streamManager.send(String.valueOf(i));
     }

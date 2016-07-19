@@ -20,6 +20,7 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * Base class for writing configuration class for template plugin.
@@ -29,12 +30,24 @@ public abstract class PluginConfig extends Config implements Serializable {
 
   private static final long serialVersionUID = 125560021489909246L;
 
+  // below fields are set using reflection
   private PluginProperties properties;
+  private Set<String> macroFields;
 
   /**
    * Returns the {@link PluginProperties}.
    */
   public final PluginProperties getProperties() {
     return properties;
+  }
+
+  /**
+   * Returns true if property value contains a macro; false otherwise. At runtime, properties that are macro-enabled
+   * and contained macro syntax will still return "true" to indicate that a macro was present at configuration time.
+   * @param fieldName name of the field
+   * @return whether the field contains a macro or not
+   */
+  public boolean containsMacro(String fieldName) {
+    return macroFields.contains(fieldName);
   }
 }

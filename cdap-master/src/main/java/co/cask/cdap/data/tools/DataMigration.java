@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,8 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -85,7 +86,9 @@ public class DataMigration {
 
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new LocationRuntimeModule().getDistributedModules(),
+      //  having a namespaced location factory which does not look up  namespace meta here is fine since this data
+      // migration tool does not perform namespace specific operations
+      new LocationUnitTestModule().getModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -93,6 +96,7 @@ public class DataMigration {
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
+          bind(NamespaceQueryAdmin.class).to(NoOpNamespaceQueryAdmin.class);
         }
       });
   }
@@ -207,7 +211,7 @@ public class DataMigration {
     throws DatasetManagementException, IOException {
     DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
-      new InMemoryDatasetFramework(registryFactory, injector.getInstance(CConfiguration.class));
+      new InMemoryDatasetFramework(registryFactory);
     // TODO: this doesn't sound right. find out why its needed.
     datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "table"), new HBaseTableModule());
     datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "metricsTable"),

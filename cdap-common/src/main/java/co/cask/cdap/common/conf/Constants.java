@@ -76,6 +76,7 @@ public final class Constants {
     public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String DATASET_MANAGER = "dataset.service";
     public static final String DATASET_EXECUTOR = "dataset.executor";
+    public static final String REMOTE_SYSTEM_OPERATION = "remote.system.operation";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
@@ -702,6 +703,23 @@ public final class Constants {
       /** Prefix for extension properties */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
+      public static final String CACHE_ENABLED = "security.authorization.cache.enabled";
+      public static final String CACHE_TTL_SECS = "security.authorization.cache.ttl.secs";
+      public static final String CACHE_REFRESH_INTERVAL_SECS = "security.authorization.cache.refresh.interval.secs";
+    }
+
+    /**
+     * Secure Store
+     */
+    public static final class Store {
+      /** Location of the secure store file. */
+      public static final String FILE_PATH = "security.store.file.path";
+      /** Name of the secure store file. */
+      public static final String FILE_NAME = "security.store.file.name";
+      /** Password to access the secure store. */
+      public static final String FILE_PASSWORD = "security.store.file.password";
+      /** Backend provider for the secure store. e.g. file */
+      public static final String PROVIDER = "security.store.provider";
     }
 
     /**
@@ -946,6 +964,17 @@ public final class Constants {
     public static final String UPDATES_PUBLISH_ENABLED = "metadata.updates.publish.enabled";
     public static final String UPDATES_KAFKA_BROKER_LIST = "metadata.updates.kafka.broker.list";
     public static final String MAX_CHARS_ALLOWED = "metadata.max.allowed.chars";
+  }
+
+  /**
+   * Constants for Remote System Operation Service.
+   */
+  public static final class RemoteSystemOpService {
+    public static final String EXEC_THREADS = "remote.system.op.exec.threads";
+    public static final String WORKER_THREADS = "remote.system.op.worker.threads";
+    public static final String SERVICE_DESCRIPTION = "Service to perform system operations through HTTP requests.";
+    public static final String SERVICE_BIND_ADDRESS = "remote.system.op.service.bind.address";
+    public static final String HANDLERS_NAME = "remote.system.op.handlers";
   }
 
   /**

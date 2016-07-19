@@ -72,6 +72,10 @@ done
 # Load user-modifiable configuration
 test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh
 
+# Set JAVA_HEAPMAX from variable defined in JAVA_HEAP_VAR, unless defined already
+JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
+export JAVA_HEAPMAX
+
 logecho() {
   echo ${*} | tee -a ${loglog}
 }
@@ -97,17 +101,24 @@ _start_java() {
   cdap_set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
   # Setup Java
   cdap_set_java || exit 1
+  local __defines="-Dcdap.service=${APP} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
   if [ "${PKGNAME}" == "master" ]; then
     # Determine SPARK_HOME
     cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
     # Master requires setting hive classpath
     cdap_set_hive_classpath || exit 1
+    local __explore="-Dexplore.conf.files=${EXPLORE_CONF_FILES} -Dexplore.classpath=${EXPLORE_CLASSPATH}"
+    __defines+=" ${__explore}"
     # Add proper HBase compatibility to CLASSPATH
     cdap_set_hbase || exit 1
     # Master requires this local directory
     cdap_check_or_create_master_local_dir || die "Could not create Master local directory"
+    # Check for JAVA_LIBRARY_PATH
+    if [ -n "${JAVA_LIBRARY_PATH}" ]; then
+      __defines+=" -Djava.library.path=${JAVA_LIBRARY_PATH}"
+    fi
     logecho "Running startup checks -- this may take a few minutes"
-    "${JAVA}" "${JAVA_HEAPMAX}" -Dexplore.conf.files=${EXPLORE_CONF_FILES} -Dexplore.classpath=${EXPLORE_CLASSPATH} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${loglog} 2>&1
+    "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${loglog} 2>&1
     if [ $? -ne 0 ]; then
       die "Master startup checks failed. Please check ${loglog} to address issues."
     fi
@@ -117,10 +128,9 @@ _start_java() {
   "${JAVA}" -version 2>>${loglog}
   ulimit -a >>${loglog}
   echo "CLASSPATH=${CLASSPATH}" >>${loglog}
-  # Start our JVM
-  local __defines="-Dcdap.service=${APP} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR}"
-  __defines+=" -Dexplore.conf.files=${EXPLORE_CONF_FILES} -Dexplore.classpath=${EXPLORE_CLASSPATH}"
   __defines+=" ${OPTS}"
+  echo "Running: ${JAVA} ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@}" >>${loglog}
+  # Start our JVM
   nohup nice -n ${NICENESS} "${JAVA}" ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@} </dev/null >>${loglog} 2>&1 &
   echo $! >${pid}
   # Now, wait for JVM spinup
@@ -225,7 +235,7 @@ run() {
   else
     echo "Running class ${MAIN_CLASS}"
   fi
-  "${JAVA}" "${JAVA_HEAPMAX}" -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} ${OPTS} -cp ${CLASSPATH} ${MAIN_CLASS} ${@}
+  "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${MAIN_CLASS} ${@}
 }
 
 case ${1} in

@@ -26,6 +26,57 @@ angular.module(PKG.name + '.feature.tracker')
         controllerAs: 'EnableController',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
+        },
+        resolve: {
+          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG, myAlertOnValium, $cookies) {
+            let defer = $q.defer();
+            let params = {
+              namespace: $stateParams.namespace || $cookies.get('CDAP_Namespace') || 'default'
+            };
+
+            myTrackerApi.getTrackerApp(params)
+              .$promise
+              .then( () => {
+                let trackerServiceParams = {
+                  namespace: $stateParams.namespace,
+                  programType: 'services',
+                  programId: UI_CONFIG.tracker.serviceId
+                };
+
+                let auditFlowParams = {
+                  namespace: $stateParams.namespace,
+                  programType: 'flows',
+                  programId: UI_CONFIG.tracker.flowProgramId
+                };
+
+                $q.all([
+                  myTrackerApi.trackerProgramStatus(trackerServiceParams).$promise,
+                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise,
+                ]).then( (res) => {
+                  let isRunning = true;
+                  angular.forEach(res, (program) => {
+                    if (program.status === 'STOPPED') {
+                      isRunning = false;
+                    }
+                  });
+
+                  if (isRunning) {
+                    $state.go('tracker.home', $stateParams);
+                  } else {
+                    defer.resolve(true);
+                  }
+                }, (err) => {
+                  myAlertOnValium.show({
+                    type: 'danger',
+                    content: err.data
+                  });
+                });
+              }, () => {
+                defer.resolve(true);
+              });
+
+            return defer.promise;
+          }
         }
       })
       .state('tracker', {
@@ -43,21 +94,21 @@ angular.module(PKG.name + '.feature.tracker')
             myTrackerApi.getTrackerApp(params)
               .$promise
               .then( () => {
-                let auditServiceParams = {
+                let trackerServiceParams = {
                   namespace: $stateParams.namespace,
                   programType: 'services',
-                  programId: UI_CONFIG.tracker.programId,
+                  programId: UI_CONFIG.tracker.serviceId
                 };
 
                 let auditFlowParams = {
                   namespace: $stateParams.namespace,
                   programType: 'flows',
-                  programId: UI_CONFIG.tracker.flowProgramId,
+                  programId: UI_CONFIG.tracker.flowProgramId
                 };
 
                 $q.all([
-                  myTrackerApi.trackerProgramStatus(auditServiceParams).$promise,
-                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise
+                  myTrackerApi.trackerProgramStatus(trackerServiceParams).$promise,
+                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise,
                 ]).then( (res) => {
                   let isRunning = true;
                   angular.forEach(res, (program) => {
@@ -105,6 +156,17 @@ angular.module(PKG.name + '.feature.tracker')
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'integrations'
+        }
+      })
+
+      .state('tracker.tags', {
+        url: '/tags',
+        templateUrl: '/assets/features/tracker/templates/tags.html',
+        controller: 'TrackerTagsController',
+        controllerAs: 'TagsController',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'tags'
         }
       })
 
@@ -161,6 +223,24 @@ angular.module(PKG.name + '.feature.tracker')
                 });
 
               return defer.promise;
+            },
+            rSystemTags: function ($q, myTrackerApi, $stateParams) {
+              if ($stateParams.entityType !== 'datasets') {
+                return null;
+              }
+
+              let defer = $q.defer();
+
+              let params = {
+                namespace: $stateParams.namespace,
+                entityType: $stateParams.entityType,
+                entityId: $stateParams.entityId
+              };
+              myTrackerApi.getSystemTags(params)
+                .$promise
+                .then( defer.resolve, defer.reject);
+
+              return defer.promise;
             }
           }
         })
@@ -189,6 +269,26 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/audit.html',
             controller: 'TrackerAuditController',
             controllerAs: 'AuditController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
+          })
+          .state('tracker.detail.entity.usage', {
+            url: '/usage?start&end',
+            templateUrl: '/assets/features/tracker/templates/usage.html',
+            controller: 'TrackerUsageController',
+            controllerAs: 'UsageController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
+          })
+          .state('tracker.detail.entity.preview', {
+            url: '/preview',
+            templateUrl: '/assets/features/tracker/templates/preview.html',
+            controller: 'TrackerPreviewController',
+            controllerAs: 'PreviewController',
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'

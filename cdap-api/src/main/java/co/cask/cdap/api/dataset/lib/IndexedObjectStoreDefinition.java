@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,8 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 
@@ -32,53 +30,21 @@ import java.util.Map;
  */
 @Beta
 public class IndexedObjectStoreDefinition
-  extends AbstractDatasetDefinition<IndexedObjectStore, DatasetAdmin> {
-
-  private final DatasetDefinition<? extends Table, ?> tableDef;
-  private final DatasetDefinition<? extends ObjectStore, ?> objectStoreDef;
+  extends CompositeDatasetDefinition<IndexedObjectStore> {
 
   public IndexedObjectStoreDefinition(String name,
                                       DatasetDefinition<? extends Table, ?> tableDef,
                                       DatasetDefinition<? extends ObjectStore, ?> objectStoreDef) {
-    super(name);
-    if (tableDef == null) {
-      throw new IllegalArgumentException("Table definition is required");
-    }
-    if (objectStoreDef == null) {
-      throw new IllegalArgumentException("ObjectStore definition is required");
-    }
-    this.tableDef = tableDef;
-    this.objectStoreDef = objectStoreDef;
-  }
-
-  @Override
-  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(tableDef.configure("index", properties),
-                objectStoreDef.configure("data", properties))
-      .build();
-  }
-
-  @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
-    return new CompositeDatasetAdmin(
-      tableDef.getAdmin(datasetContext, spec.getSpecification("index"), classLoader),
-      objectStoreDef.getAdmin(datasetContext, spec.getSpecification("data"), classLoader)
-    );
+    super(name, "index", tableDef, "data", objectStoreDef);
   }
 
   @Override
   public IndexedObjectStore<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    DatasetSpecification tableSpec = spec.getSpecification("index");
-    DatasetSpecification objectStoreSpec = spec.getSpecification("data");
 
-    Table index = tableDef.getDataset(datasetContext, tableSpec, arguments, classLoader);
-    ObjectStore<?> objectStore = objectStoreDef.getDataset(datasetContext, objectStoreSpec, arguments, classLoader);
+    Table index = getDataset(datasetContext, "index", spec, arguments, classLoader);
+    ObjectStore<?> objectStore = getDataset(datasetContext, "data", spec, arguments, classLoader);
 
     return new IndexedObjectStore<>(spec.getName(), objectStore, index);
   }
-
 }

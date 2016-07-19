@@ -59,6 +59,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
   private static final Gson GSON = new Gson();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractExploreClient.class);
 
   private final ListeningScheduledExecutorService executor;
 
@@ -278,12 +279,6 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     });
   }
 
-  @Override
-  public void upgrade() throws Exception {
-    // TODO: implement once explore service can be started from the upgrade tool
-    throw new UnsupportedOperationException("Remote explore upgrade is not supported.");
-  }
-
   private ListenableFuture<ExploreExecutionResult> getResultsFuture(final HandleProducer handleProducer) {
     // NOTE: here we have two levels of Future because we want to return the future that actually
     // finishes the execution of the operation - it is not enough that the future handle
@@ -303,10 +298,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
    */
   private ListenableFuture<ExploreExecutionResult> getFutureResultsFromHandle(
     final ListenableFuture<QueryHandle> futureHandle) {
+
     final StatementExecutionFuture resultFuture = new StatementExecutionFuture(this, futureHandle);
     Futures.addCallback(futureHandle, new FutureCallback<QueryHandle>() {
       @Override
       public void onSuccess(final QueryHandle handle) {
+        boolean mustCloseHandle;
         try {
           QueryStatus status = getStatus(handle);
           if (!status.getStatus().isDone()) {
@@ -316,17 +313,23 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
                 onSuccess(handle);
               }
             }, 300, TimeUnit.MILLISECONDS);
-          } else {
-            if (!status.hasResults()) {
-              close(handle);
-            }
-            if (!resultFuture.set(new ClientExploreExecutionResult(AbstractExploreClient.this,
-                                                                   handle, status))) {
-              close(handle);
-            }
+            return;
           }
+          if (QueryStatus.OpStatus.ERROR.equals(status.getStatus())) {
+            throw new SQLException(status.getErrorMessage(), status.getSqlState());
+          }
+          ExploreExecutionResult result = new ClientExploreExecutionResult(AbstractExploreClient.this, handle, status);
+          mustCloseHandle = !resultFuture.set(result) || !status.hasResults();
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          mustCloseHandle = true;
+          resultFuture.setException(e);
+        }
+        if (mustCloseHandle) {
+          try {
+            close(handle);
+          } catch (Throwable t) {
+            LOG.warn("Failed to close handle {}", handle, t);
+          }
         }
       }
 
@@ -361,7 +364,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     private final QueryHandle handle;
     private final QueryStatus status;
 
-    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, QueryStatus status) {
+    ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, QueryStatus status) {
       this.exploreClient = exploreClient;
       this.handle = handle;
       this.status = status;

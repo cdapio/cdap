@@ -41,9 +41,10 @@
     "angular-marked": "1.0.1",
     "js-beautify": "1.6.2",
     "angular-file-saver": "1.0.3",
-    "ngInfiniteScroll": "1.2.2",
     "d3-tip": "0.6.7",
-    "esprima": "2.0.0"
+    "esprima": "2.0.0",
+    "ngInfiniteScroll": "1.2.1",
+    "d3-timeline": "0.0.5"
   },
   "resolutions": {
     "angular": "1.4.3",

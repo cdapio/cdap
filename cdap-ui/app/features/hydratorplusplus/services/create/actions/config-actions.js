@@ -44,14 +44,8 @@ class HydratorPlusPlusConfigActions {
   saveAsDraft(config) {
     this.dispatcher.dispatch('onSaveAsDraft', config);
   }
-  setArtifact(artifact) {
-    this.dispatcher.dispatch('onArtifactSave', artifact);
-  }
   setEngine(engine) {
     this.dispatcher.dispatch('onEngineChange', engine);
-  }
-  addPlugin (plugin, type) {
-    this.dispatcher.dispatch('onPluginAdd', plugin, type);
   }
   editPlugin(pluginId, pluginProperties) {
     this.dispatcher.dispatch('onPluginEdit', pluginId, pluginProperties);
@@ -94,10 +88,10 @@ class HydratorPlusPlusConfigActions {
             }
           },
           (err) => {
-            this.HydratorPlusPlusConsoleActions.addMessage({
+            this.HydratorPlusPlusConsoleActions.addMessage([{
               type: 'error',
               content: err
-            });
+            }]);
             return this.$q.reject(false);
           }
         )
@@ -123,10 +117,10 @@ class HydratorPlusPlusConfigActions {
         removeFromUserDrafts.bind(this, pipelineName),
         (err) => {
           this.EventPipe.emit('hideLoadingIcon.immediate');
-          this.HydratorPlusPlusConsoleActions.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage([{
             type: 'error',
             content: angular.isObject(err) ? err.data : err
-          });
+          }]);
         }
       );
     };
@@ -142,10 +136,10 @@ class HydratorPlusPlusConfigActions {
         var appNames = apps.map( (app) => { return app.name; } );
 
         if (appNames.indexOf(config.name) !== -1) {
-          this.HydratorPlusPlusConsoleActions.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage([{
             type: 'error',
             content: this.GLOBALS.en.hydrator.studio.error['NAME-ALREADY-EXISTS']
-          });
+          }]);
           this.EventPipe.emit('hideLoadingIcon.immediate');
         } else {
           publish(config.name);

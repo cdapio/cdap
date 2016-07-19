@@ -28,6 +28,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -106,24 +107,26 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
     }
   }
 
-  private void report(Map<TableId, HBaseTableUtil.TableStats> tableStats) {
+  private void report(Map<TableId, HBaseTableUtil.TableStats> tableStats) throws IOException {
+    Map<String, String> reverseNamespaceMap = hBaseTableUtil.getHBaseToCDAPNamespaceMap();
     for (Map.Entry<TableId, HBaseTableUtil.TableStats> statEntry : tableStats.entrySet()) {
-      String namespace = statEntry.getKey().getNamespace().getId();
+      String hbaseNamespace = statEntry.getKey().getNamespace();
+      String cdapNamespace = reverseNamespaceMap.get(hbaseNamespace);
       // emit metrics for only user datasets, namespaces in system and
       // tableNames that doesn't start with user are ignored
-      if (Id.Namespace.SYSTEM.getId().equals(namespace)) {
+      if (NamespaceId.SYSTEM.getNamespace().equals(cdapNamespace)) {
         continue;
       }
       String tableName = statEntry.getKey().getTableName();
       try {
-        Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(statEntry.getKey().getNamespace());
+        Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(Id.Namespace.from(cdapNamespace));
         for (DatasetSpecificationSummary spec : instances) {
-          dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace, spec.getName()));
-          DatasetSpecification specification = dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace,
+          dsFramework.getDatasetSpec(Id.DatasetInstance.from(cdapNamespace, spec.getName()));
+          DatasetSpecification specification = dsFramework.getDatasetSpec(Id.DatasetInstance.from(cdapNamespace,
                                                                                                   spec.getName()));
           if (specification.isParent(tableName)) {
             MetricsContext collector =
-              metricsService.getContext(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+              metricsService.getContext(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, cdapNamespace,
                                                         Constants.Metrics.Tag.DATASET, spec.getName()));
             collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
             break;

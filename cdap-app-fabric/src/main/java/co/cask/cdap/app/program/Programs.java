@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,21 +49,15 @@ public final class Programs {
   public static Program create(CConfiguration cConf, @Nullable ProgramRunner programRunner,
                                ProgramDescriptor programDescriptor,
                                Location programJarLocation, File unpackedDir) throws IOException {
-    final ProgramClassLoader programClassLoader;
+    ClassLoader programParentClassLoader;
     if (programRunner instanceof ProgramClassLoaderProvider) {
-      programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackedDir);
+      programParentClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent();
     } else {
-      programClassLoader = new ProgramClassLoader(cConf, unpackedDir,
-                                                  FilterClassLoader.create(Programs.class.getClassLoader()));
+      programParentClassLoader = FilterClassLoader.create(Programs.class.getClassLoader());
     }
 
-    if (programClassLoader == null) {
-      // Shouldn't happen. This is to catch invalid ProgramFilterClassLoaderProvider implementation
-      // since it's provided by the ProgramRunner, which can be external to CDAP
-      throw new IOException("Program classloader cannot be null");
-    }
-
-    return new DefaultProgram(programDescriptor, programJarLocation, programClassLoader);
+    return new DefaultProgram(programDescriptor, programJarLocation,
+                              new ProgramClassLoader(cConf, unpackedDir, programParentClassLoader));
   }
 
   private Programs() {

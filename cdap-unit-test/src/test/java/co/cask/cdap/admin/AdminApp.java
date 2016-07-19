@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.AbstractFlow;
@@ -207,7 +208,7 @@ public class AdminApp extends AbstractApplication {
         return DatasetProperties.EMPTY;
       }
       Map<String, String> props = GSON.fromJson(body, new TypeToken<Map<String, String>>() { }.getType());
-      return DatasetProperties.builder().addAll(props).build();
+      return DatasetProperties.of(props);
     }
   }
 
@@ -246,9 +247,9 @@ public class AdminApp extends AbstractApplication {
         DatasetProperties bProps = admin.getDatasetProperties("b");
         String base = bProps.getProperties().get("base.path");
         Assert.assertNotNull(base);
-        String newBase = base + "/extra";
-        DatasetProperties newBProps = DatasetProperties.builder()
-          .addAll(bProps.getProperties()).add("base.path", newBase).build();
+        String newBase = args.get("new.base.path");
+        DatasetProperties newBProps = ((FileSetProperties.Builder) FileSetProperties.builder()
+          .addAll(bProps.getProperties())).setDataExternal(true).setBasePath(newBase).build();
         admin.updateDataset("b", newBProps);
 
         admin.truncateDataset("c");
@@ -420,3 +421,4 @@ public class AdminApp extends AbstractApplication {
     }
   }
 }
+

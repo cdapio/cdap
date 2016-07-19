@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,14 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.EndpointPluginContext;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -40,7 +40,11 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClass;
+import co.cask.cdap.proto.artifact.ArtifactClasses;
+import co.cask.cdap.proto.artifact.DatasetClass;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
@@ -66,19 +70,27 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipException;
 import javax.annotation.Nullable;
-import javax.ws.rs.Path;
 
 /**
  * Inspects a jar file to determine metadata about the artifact.
@@ -110,29 +122,75 @@ final class ArtifactInspector {
    */
   ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
                                   ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
+    Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
+    Files.createDirectories(tmpDir);
+    Location artifactLocation = Locations.toLocation(artifactFile);
 
-    ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
-                                                          Locations.toLocation(artifactFile));
-    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    File stageDir = DirUtils.createTempDir(tmpDir);
-    try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader, stageDir)) {
-      pluginInstantiator.addArtifact(Locations.toLocation(artifactFile), artifactId.toArtifactId());
-      inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
+    Path stageDir = Files.createTempDirectory(tmpDir, artifactFile.getName());
+    try {
+      File unpackedDir = BundleJarUtil.unJar(artifactLocation,
+                                             Files.createTempDirectory(stageDir, "unpacked-").toFile());
+
+      ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
+                                                            artifactLocation, unpackedDir);
+
+      try (PluginInstantiator pluginInstantiator =
+             new PluginInstantiator(cConf, parentClassLoader,
+                                    Files.createTempDirectory(stageDir, "plugins-").toFile())) {
+        pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
+        inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
+      }
+      return builder.build();
     } finally {
       try {
-        DirUtils.deleteDirectoryContents(stageDir);
+        DirUtils.deleteDirectoryContents(stageDir.toFile());
       } catch (IOException e) {
         LOG.warn("Exception raised while deleting directory {}", stageDir, e);
       }
     }
-    return builder.build();
+  }
+
+  /**
+   * Extracts all dataset classes defined under the given artifact directory. It will scan every .class files under
+   * the artifact directory as well as .class files inside .jar files in the artifact directory.
+   * This method uses bytecode inspection, hence the actual class is not loaded. This is because loading every single
+   * class is a very slow and memory consumption process.
+   *
+   * @param unpackedArtifactDir directory that the artifact jar was expanded to
+   * @param artifactClassLoader an artifact {@link ClassLoader} defined based on the unpacked directory
+   * @param builder for adding dataset classes information
+   * @return the given {@link ArtifactClasses.Builder}.
+   * @throws IOException if failed to extract dataset classes information due to failure in reading the .class files.
+   */
+  private ArtifactClasses.Builder extractDatasets(File unpackedArtifactDir,
+                                                  final ClassLoader artifactClassLoader,
+                                                  ArtifactClasses.Builder builder) throws IOException {
+    final Set<String> classes = scanClasses(unpackedArtifactDir.toPath(), new HashSet<String>());
+    Function<String, URL> resourceProvider = new Function<String, URL>() {
+      @Nullable
+      @Override
+      public URL apply(String className) {
+        String resourceName = className.replace('.', '/') + ".class";
+        URL resource = artifactClassLoader.getResource(resourceName);
+        return resource != null ? resource : getClass().getClassLoader().getResource(resourceName);
+      }
+    };
+
+    Map<String, Boolean> cache = new HashMap<>();
+    for (String className : classes) {
+      if (isSubTypeOf(className, Dataset.class.getName(), resourceProvider, cache)) {
+        builder.addDataset(new DatasetClass(className));
+      }
+    }
+
+    return builder;
   }
 
   private ArtifactClasses.Builder inspectApplications(Id.Artifact artifactId,
                                                       ArtifactClasses.Builder builder,
-                                                      Location artifactLocation) throws IOException,
-    InvalidArtifactException {
+                                                      Location artifactLocation,
+                                                      File unpackedDir) throws IOException, InvalidArtifactException {
 
     // right now we force users to include the application main class as an attribute in their manifest,
     // which forces them to have a single application class.
@@ -154,44 +212,94 @@ final class ArtifactInspector {
         "Couldn't unzip artifact %s, please check it is a valid jar file.", artifactId), e);
     }
 
-    if (mainClassName != null) {
-      try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
-        Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
-        if (!(appMain instanceof Application)) {
-          // we don't want to error here, just don't record an application class.
-          // possible for 3rd party plugin artifacts to have the main class set
-          return builder;
-        }
+    if (mainClassName == null) {
+      return builder;
+    }
 
-        Application app = (Application) appMain;
+    try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir)) {
+      extractDatasets(unpackedDir, artifactClassLoader, builder);
 
-        java.lang.reflect.Type configType;
-        // if the user parameterized their application, like 'xyz extends Application<T>',
-        // we can deserialize the config into that object. Otherwise it'll just be a Config
-        try {
-          configType = Artifacts.getConfigType(app.getClass());
-        } catch (Exception e) {
-          throw new InvalidArtifactException(String.format(
-            "Could not resolve config type for Application class %s in artifact %s. " +
-              "The type must extend Config and cannot be parameterized.", mainClassName, artifactId));
-        }
-
-        Schema configSchema = configType == Config.class ? null : schemaGenerator.generate(configType);
-        builder.addApp(new ApplicationClass(mainClassName, "", configSchema));
-      } catch (ClassNotFoundException e) {
-        throw new InvalidArtifactException(String.format(
-          "Could not find Application main class %s in artifact %s.", mainClassName, artifactId));
-      } catch (UnsupportedTypeException e) {
-        throw new InvalidArtifactException(String.format(
-          "Config for Application %s in artifact %s has an unsupported schema. " +
-            "The type must extend Config and cannot be parameterized.", mainClassName, artifactId));
-      } catch (InstantiationException | IllegalAccessException e) {
-        throw new InvalidArtifactException(String.format(
-          "Could not instantiate Application class %s in artifact %s.", mainClassName, artifactId), e);
+      Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
+      if (!(appMain instanceof Application)) {
+        // we don't want to error here, just don't record an application class.
+        // possible for 3rd party plugin artifacts to have the main class set
+        return builder;
       }
+
+      Application app = (Application) appMain;
+
+      java.lang.reflect.Type configType;
+      // if the user parameterized their application, like 'xyz extends Application<T>',
+      // we can deserialize the config into that object. Otherwise it'll just be a Config
+      try {
+        configType = Artifacts.getConfigType(app.getClass());
+      } catch (Exception e) {
+        throw new InvalidArtifactException(String.format(
+          "Could not resolve config type for Application class %s in artifact %s. " +
+            "The type must extend Config and cannot be parameterized.", mainClassName, artifactId));
+      }
+
+      Schema configSchema = configType == Config.class ? null : schemaGenerator.generate(configType);
+      builder.addApp(new ApplicationClass(mainClassName, "", configSchema));
+    } catch (ClassNotFoundException e) {
+      throw new InvalidArtifactException(String.format(
+        "Could not find Application main class %s in artifact %s.", mainClassName, artifactId));
+    } catch (UnsupportedTypeException e) {
+      throw new InvalidArtifactException(String.format(
+        "Config for Application %s in artifact %s has an unsupported schema. " +
+          "The type must extend Config and cannot be parameterized.", mainClassName, artifactId));
+    } catch (InstantiationException | IllegalAccessException e) {
+      throw new InvalidArtifactException(String.format(
+        "Could not instantiate Application class %s in artifact %s.", mainClassName, artifactId), e);
     }
 
     return builder;
+  }
+
+  /**
+   * Scans the given artifact directory for all classes. It scans classes inside .jar file as well.
+   */
+  private Set<String> scanClasses(final Path unpackedDir, final Set<String> result) throws IOException {
+    Files.walkFileTree(unpackedDir, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Path relativePath = unpackedDir.relativize(file);
+        String pathString = relativePath.toString();
+        if (pathString.endsWith(".jar")) {
+          // Only index top level jars and jars inside the "lib/" directory.
+          int nameCount = relativePath.getNameCount();
+          if (nameCount == 1 || nameCount == 2 && relativePath.getName(0).equals(Paths.get("lib"))) {
+            scanJarClasses(file, result);
+          }
+        } else if (pathString.endsWith(".class")) {
+          String className = Joiner.on('.').join(relativePath);
+          className = className.substring(0, className.length() - ".class".length());
+          result.add(className);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
+    return result;
+  }
+
+  /**
+   * Scans the given jar file and for classes.
+   */
+  private Set<String> scanJarClasses(final Path jarFilePath, Set<String> result) throws IOException {
+    try (JarInputStream jarInput = new JarInputStream(Files.newInputStream(jarFilePath))) {
+      JarEntry jarEntry;
+      while ((jarEntry = jarInput.getNextJarEntry()) != null) {
+        // Only index the .class files inside the jar
+        String entryName = jarEntry.getName();
+        if (entryName.endsWith(".class")) {
+          String className = entryName.replace('/', '.');
+          className = className.substring(0, className.length() - ".class".length());
+          result.add(className);
+        }
+      }
+    }
+    return result;
   }
 
   /**
@@ -336,7 +444,7 @@ final class ArtifactInspector {
     Set<String> endpoints = new HashSet<>();
     Method[] methods = cls.getMethods();
     for (Method method : methods) {
-      Path pathAnnotation = method.getAnnotation(Path.class);
+      javax.ws.rs.Path pathAnnotation = method.getAnnotation(javax.ws.rs.Path.class);
       // method should have path annotation else continue
       if (pathAnnotation != null) {
         if (!endpoints.add(pathAnnotation.value())) {
@@ -445,8 +553,10 @@ final class ArtifactInspector {
     String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
     String description = descAnnotation == null ? "" : descAnnotation.value();
 
+    Macro macroAnnotation = field.getAnnotation(Macro.class);
+    boolean macroSupported = macroAnnotation != null;
     if (rawType.isPrimitive()) {
-      return new PluginPropertyField(name, description, rawType.getName(), true);
+      return new PluginPropertyField(name, description, rawType.getName(), true, macroSupported);
     }
 
     rawType = Primitives.unwrap(rawType);
@@ -462,7 +572,7 @@ final class ArtifactInspector {
       }
     }
 
-    return new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(), required);
+    return new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(), required, macroSupported);
   }
 
   /**
@@ -497,5 +607,70 @@ final class ArtifactInspector {
       LOG.warn("Failed to open class file for {}", className, e);
       return false;
     }
+  }
+
+  /**
+   * Checks if the given class extends or implements a super type.
+   *
+   * @param className name of the class to check
+   * @param superTypeName name of the super type
+   * @param resourceProvider a {@link Function} to provide {@link URL} of a class from the class name
+   * @param cache a cache for memorizing previous decision for classes of the same super type
+   * @return true if the given class name is a sub-class of the given super type
+   * @throws IOException if failed to read class information
+   */
+  private boolean isSubTypeOf(String className, final String superTypeName,
+                              final Function<String, URL> resourceProvider,
+                              final Map<String, Boolean> cache) throws IOException {
+    // Base case
+    if (superTypeName.equals(className)) {
+      cache.put(className, true);
+      return true;
+    }
+
+    // Check the cache first
+    Boolean cachedResult = cache.get(className);
+    if (cachedResult != null) {
+      return cachedResult;
+    }
+
+    // Try to get the URL resource of the given class
+    URL url = resourceProvider.apply(className);
+    if (url == null) {
+      // Ignore it if cannot find the class file for the given class.
+      // Normally this shouldn't happen, however it is to guard against mis-packaged artifact jar that included
+      // invalid/incomplete jars. Anyway, if this happen, the class won't be loadable in runtime.
+      return false;
+    }
+
+    // Inspect the bytecode and check the super class/interfaces recursively
+    boolean result = false;
+    try (InputStream input = url.openStream()) {
+      ClassReader cr = new ClassReader(input);
+      String superName = cr.getSuperName();
+      if (superName != null) {
+        result = isSubTypeOf(Type.getObjectType(superName).getClassName(), superTypeName, resourceProvider, cache);
+      }
+
+      if (!result) {
+        String[] interfaces = cr.getInterfaces();
+        if (interfaces != null) {
+          for (String intf : interfaces) {
+            if (isSubTypeOf(Type.getObjectType(intf).getClassName(), superTypeName, resourceProvider, cache)) {
+              result = true;
+              break;
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      if (e.getCause() != null) {
+        Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
+      }
+      throw e;
+    }
+
+    cache.put(className, result);
+    return result;
   }
 }

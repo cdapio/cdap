@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,8 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
@@ -39,7 +41,8 @@ import java.util.Map;
  * DatasetDefinition for {@link ObjectStoreDataset}.
  */
 public class ObjectStoreDefinition
-  extends AbstractDatasetDefinition<ObjectStore, DatasetAdmin> {
+  extends AbstractDatasetDefinition<ObjectStore, DatasetAdmin>
+  implements Reconfigurable {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -55,17 +58,34 @@ public class ObjectStoreDefinition
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    return DatasetSpecification.builder(instanceName, getName())
+      .properties(properties.getProperties())
+      .datasets(tableDef.configure("objects", checkAndRemoveSchema(properties)))
+      .build();
+  }
+
+  @Override
+  public DatasetSpecification reconfigure(String instanceName,
+                                          DatasetProperties newProperties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    // TODO (CDAP-6268): validate schema compatibility
+    return DatasetSpecification.builder(instanceName, getName())
+      .properties(newProperties.getProperties())
+      .datasets(AbstractDatasetDefinition.reconfigure(tableDef, "objects", checkAndRemoveSchema(newProperties),
+                                                      currentSpec.getSpecification("objects")))
+      .build();
+  }
+
+  /**
+   * strip schema from the properties sent to the underlying table, since ObjectStore allows schema that tables do not
+   */
+  private DatasetProperties checkAndRemoveSchema(DatasetProperties properties) {
     Preconditions.checkArgument(properties.getProperties().containsKey("type"));
     Preconditions.checkArgument(properties.getProperties().containsKey("schema"));
-    // strip schema from the properties sent to the underlying table, since ObjectStore allows schemas
-    // that tables do not
     Map<String, String> tableProperties = Maps.newHashMap(properties.getProperties());
     tableProperties.remove("type");
     tableProperties.remove("schema");
-    return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(tableDef.configure("objects", DatasetProperties.builder().addAll(tableProperties).build()))
-      .build();
+    return DatasetProperties.of(tableProperties);
   }
 
   @Override
@@ -84,5 +104,4 @@ public class ObjectStoreDefinition
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
     return new ObjectStoreDataset(spec.getName(), table, typeRep, schema, classLoader);
   }
-
 }

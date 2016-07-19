@@ -21,7 +21,6 @@ import co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionP
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase10cdh.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase10cdh.HBaseQueueRegionObserver;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -71,11 +70,11 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public boolean hasNamespace(HBaseAdmin admin, Id.Namespace namespace) throws IOException {
+  public boolean hasNamespace(HBaseAdmin admin, String namespace) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     try {
-      admin.getNamespaceDescriptor(nameConverter.toHBaseNamespace(tablePrefix, namespace));
+      admin.getNamespaceDescriptor(nameConverter.encodeHBaseEntity(namespace));
       return true;
     } catch (NamespaceNotFoundException e) {
       return false;
@@ -83,22 +82,22 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public void createNamespaceIfNotExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException {
+  public void createNamespaceIfNotExists(HBaseAdmin admin, String namespace) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     if (!hasNamespace(admin, namespace)) {
       NamespaceDescriptor namespaceDescriptor =
-        NamespaceDescriptor.create(nameConverter.toHBaseNamespace(tablePrefix, namespace)).build();
+        NamespaceDescriptor.create(nameConverter.encodeHBaseEntity(namespace)).build();
       admin.createNamespace(namespaceDescriptor);
     }
   }
 
   @Override
-  public void deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException {
+  public void deleteNamespaceIfExists(HBaseAdmin admin, String namespace) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     if (hasNamespace(admin, namespace)) {
-      admin.deleteNamespace(nameConverter.toHBaseNamespace(tablePrefix, namespace));
+      admin.deleteNamespace(nameConverter.encodeHBaseEntity(namespace));
     }
   }
 
@@ -145,10 +144,10 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
+  public List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException {
     List<TableId> tableIds = Lists.newArrayList();
     HTableDescriptor[] hTableDescriptors =
-      admin.listTableDescriptorsByNamespace(nameConverter.toHBaseNamespace(tablePrefix, namespaceId));
+      admin.listTableDescriptorsByNamespace(nameConverter.encodeHBaseEntity(namespaceId));
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
       if (isCDAPTable(hTableDescriptor)) {
         tableIds.add(nameConverter.from(hTableDescriptor));

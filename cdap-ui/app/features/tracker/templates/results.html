@@ -113,7 +113,7 @@
         <span ng-if="ResultsController.searchResults.length <= 1">result</span>
       </div>
 
-      <div class="pull-right">
+      <div class="pull-left">
         <h3>Sort by</h3>
 
         <div class="btn-group" uib-dropdown>
@@ -162,15 +162,16 @@
         </div>
 
         <div class="col-xs-4">
-          <h5><span class="text-dark">Search term found in:</span></h5>
-          <span ng-repeat="found in entity.queryFound">{{ found }}<span ng-if="!$last">, </span></span>
+          <my-truth-meter score="ResultsController.truthMeterMap[entity.entityTypeState][entity.name]"
+                          width="190"></my-truth-meter>
         </div>
 
         <div class="col-xs-2 text-right">
           <my-jump-button
             entity-type="entity.entityTypeState"
             entity-id="entity.name"
-            dataset-type="entity.datasetType">
+            dataset-type="entity.datasetType"
+            dataset-explorable="entity.datasetExplorable">
           </my-jump-button>
         </div>
       </div>

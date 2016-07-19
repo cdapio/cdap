@@ -24,12 +24,18 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.app.customds.CustomDatasetApp;
+import co.cask.cdap.app.customds.DefaultTopLevelExtendsDataset;
+import co.cask.cdap.app.customds.TopLevelDataset;
+import co.cask.cdap.app.customds.TopLevelDirectDataset;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -44,10 +50,12 @@ import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import co.cask.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.DatasetClass;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -61,6 +69,7 @@ import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -72,6 +81,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -96,8 +106,9 @@ public class ArtifactRepositoryTest {
   private static File systemArtifactsDir1;
   private static File systemArtifactsDir2;
   private static ArtifactRepository artifactRepository;
-  private static ClassLoader appClassLoader;
+  private static ProgramClassLoader appClassLoader;
   private static MetadataStore metadataStore;
+  private static File appArtifactFile;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -112,15 +123,27 @@ public class ArtifactRepositoryTest {
     Injector injector =  AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     metadataStore = injector.getInstance(MetadataStore.class);
+
+    appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
+                                   createManifest(ManifestFields.EXPORT_PACKAGE,
+                                                  PluginTestRunnable.class.getPackage().getName()));
   }
 
   @Before
   public void setupData() throws Exception {
     artifactRepository.clear(NamespaceId.DEFAULT);
-    File appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
-      createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
     appClassLoader = createAppClassLoader(appArtifactFile);
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    File unpackedDir = appClassLoader.getDir();
+    try {
+      appClassLoader.close();
+    } finally {
+      DirUtils.deleteDirectoryContents(unpackedDir);
+    }
   }
 
   @Test
@@ -264,36 +287,91 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testPlugin() throws Exception {
-    File pluginDir = DirUtils.createTempDir(tmpDir);
-    // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
-    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+    File pluginDir = getFile();
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPlugins();
+    copyArtifacts(pluginDir, plugins);
 
-    // add the artifact
-    Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
-      new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
-    artifactRepository.addArtifact(artifactId, jarFile, parents);
-
-    // check the parent can see the plugins
-    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
-      artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);
-    Assert.assertEquals(1, plugins.size());
-    Assert.assertEquals(2, plugins.get(plugins.firstKey()).size());
-
-    ArtifactDescriptor descriptor = plugins.firstKey();
-    Files.copy(Locations.newInputSupplier(descriptor.getLocation()),
-      new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
     // Instantiate the plugins and execute them
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
           Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
-                                           .add("timeout", "10").build());
+                                           .add("nullableLongFlag", "10")
+                                           .add("host", "${expansiveHostname}")
+                                           .add("aBoolean", "${aBoolean}")
+                                           .add("aByte", "${aByte}")
+                                           .add("aDouble", "${aDouble}")
+                                           .add("anInt", "${anInt}")
+                                           .add("aFloat", "${aFloat}")
+                                           .add("aLong", "${aLong}")
+                                           .add("aShort", "${aShort}")
+                                           .build());
           Callable<String> plugin = instantiator.newInstance(pluginInfo);
-          Assert.assertEquals(TEST_EMPTY_CLASS, plugin.call());
+          Assert.assertEquals("null,false,0,0.0,0.0,0,0,0", plugin.call());
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testMacroPlugin() throws Exception {
+    File pluginDir = getFile();
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPlugins();
+    copyArtifacts(pluginDir, plugins);
+
+    // set up test macro evaluator's substitutions
+    Map<String, String> propertySubstitutions = ImmutableMap.<String, String>builder()
+      .put("expansiveHostname", "${hostname}/${path}:${port}")
+      .put("hostname", "${one}")
+      .put("path", "${two}")
+      .put("port", "${three}")
+      .put("one", "${host${hostScopeMacro}}")
+      .put("hostScopeMacro", "-local")
+      .put("host-local", "${l}${o}${c}${a}${l}${hostSuffix}")
+      .put("l", "l")
+      .put("o", "o")
+      .put("c", "c")
+      .put("a", "a")
+      .put("hostSuffix", "host")
+      .put("two", "${filename${fileTypeMacro}}")
+      .put("three", "${firstPortDigit}${secondPortDigit}")
+      .put("filename", "index")
+      .put("fileTypeMacro", "-html")
+      .put("filename-html", "index.html")
+      .put("filename-php", "index.php")
+      .put("firstPortDigit", "8")
+      .put("secondPortDigit", "0")
+      .put("aBoolean", "true")
+      .put("aByte", "101")
+      .put("aDouble", "64.0")
+      .put("aFloat", "52.0")
+      .put("anInt", "42")
+      .put("aLong", "32")
+      .put("aShort", "81")
+      .build();
+
+    // Instantiate the plugins and execute them
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+      for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
+        for (PluginClass pluginClass : entry.getValue()) {
+          Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
+                                         PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
+                                           .add("nullableLongFlag", "10")
+                                           .add("host", "${expansiveHostname}")
+                                           .add("aBoolean", "${aBoolean}")
+                                           .add("aByte", "${aByte}")
+                                           .add("aDouble", "${aDouble}")
+                                           .add("anInt", "${anInt}")
+                                           .add("aFloat", "${aFloat}")
+                                           .add("aLong", "${aLong}")
+                                           .add("aShort", "${aShort}")
+                                           .build());
+
+          TestMacroEvaluator testMacroEvaluator = new TestMacroEvaluator(propertySubstitutions,
+                                                                         new HashMap<String, String>());
+          Callable<String> plugin = instantiator.newInstance(pluginInfo, testMacroEvaluator);
+          Assert.assertEquals("localhost/index.html:80,true,101,64.0,52.0,42,32,81", plugin.call());
         }
       }
     }
@@ -489,10 +567,64 @@ public class ArtifactRepositoryTest {
     }
   }
 
-  private static ClassLoader createAppClassLoader(File jarFile) throws IOException {
+  @Test
+  public void testArtifactDataset() throws IOException, ArtifactNotFoundException {
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+
+    // The artifact being created in the setupData method is using dependency tracing
+    // hence it will pick all classes under the cdap-app-fabric/src/test/main
+
+    Set<DatasetClass> expectedDatasets = ImmutableSet.of(
+      new DatasetClass(CustomDatasetApp.InnerStaticInheritDataset.class.getName()),
+      new DatasetClass(CustomDatasetApp.InnerDataset.class.getName()),
+      new DatasetClass(TopLevelDataset.class.getName()),
+      new DatasetClass(TopLevelDirectDataset.class.getName()),
+      new DatasetClass(DefaultTopLevelExtendsDataset.class.getName())
+    );
+
+    Set<DatasetClass> artifactDatasets = artifactDetail.getMeta().getClasses().getDatasets();
+    for (DatasetClass datasetClass : expectedDatasets) {
+      Assert.assertTrue(artifactDatasets.contains(datasetClass));
+    }
+  }
+
+  private static File getFile() throws Exception {
+    File pluginDir = DirUtils.createTempDir(tmpDir);
+    // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
+    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
+    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+
+    // add the artifact
+    Set<ArtifactRange> parents = ImmutableSet.of(
+      new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
+                        new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
+    artifactRepository.addArtifact(artifactId, jarFile, parents);
+    return pluginDir;
+  }
+
+  private static SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins() throws IOException,
+    ArtifactNotFoundException {
+    // check the parent can see the plugins
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
+      artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);
+    Assert.assertEquals(1, plugins.size());
+    Assert.assertEquals(2, plugins.get(plugins.firstKey()).size());
+    return plugins;
+  }
+
+  private static void copyArtifacts(File pluginDir, SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins)
+    throws IOException {
+    ArtifactDescriptor descriptor = plugins.firstKey();
+    Files.copy(Locations.newInputSupplier(descriptor.getLocation()),
+               new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
+  }
+
+  private static ProgramClassLoader createAppClassLoader(File jarFile) throws IOException {
     final File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
     BundleJarUtil.unJar(Files.newInputStreamSupplier(jarFile), unpackDir);
-    return ProgramClassLoader.create(cConf, unpackDir, ArtifactRepositoryTest.class.getClassLoader());
+    return new ProgramClassLoader(cConf, unpackDir,
+                                  FilterClassLoader.create(ArtifactRepositoryTest.class.getClassLoader()));
   }
 
   private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {

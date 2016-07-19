@@ -21,8 +21,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -32,6 +33,7 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -88,9 +90,15 @@ public class TransactionServiceTest {
       Injector injector = Guice.createInjector(
         new ConfigModule(cConf),
         new ZKClientModule(),
-        new LocationRuntimeModule().getInMemoryModules(),
+        new LocationUnitTestModule().getModule(),
         new DiscoveryRuntimeModule().getDistributedModules(),
         new TransactionMetricsModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+          }
+        },
         new DataFabricModules().getDistributedModules(),
         Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
           @Override
@@ -198,10 +206,16 @@ public class TransactionServiceTest {
 
     final Injector injector =
       Guice.createInjector(new ConfigModule(cConf, hConf),
-                           new LocationRuntimeModule().getInMemoryModules(),  // Use local location factory
+                           new LocationUnitTestModule().getModule(),
                            new ZKClientModule(),
                            new DiscoveryRuntimeModule().getDistributedModules(),
                            new TransactionMetricsModule(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+                             }
+                           },
                            new DataFabricModules().getDistributedModules(),
                            new SystemDatasetRuntimeModule().getInMemoryModules(),
                            new DataSetsModules().getInMemoryModules());

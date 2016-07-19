@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -58,7 +59,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
   @Inject
   DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                   NamespacedLocationFactory namespacedLocationFactory,
-                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework) {
+                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
+                  NamespaceQueryAdmin namespaceQueryAdmin) {
 
     super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
@@ -119,7 +121,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
       }
 
       @Override
-      protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
+      protected boolean needsUpdate(HTableDescriptor tableDescriptor) {
         return false;
       }
 
@@ -156,6 +158,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
   // Note: This check can be safely used for user table since we create meta.
   // CDAP-2963 should be fixed so that we can make use of this check generically for all cdap tables
   private boolean isTableCreatedByCDAP(HTableDescriptor desc) {
-    return (desc.getValue("cdap.version") != null);
+    return (desc.getValue(HBaseTableUtil.CDAP_VERSION) != null);
   }
 }

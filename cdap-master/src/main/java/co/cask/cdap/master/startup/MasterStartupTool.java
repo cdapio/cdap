@@ -20,23 +20,29 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.FileContextProvider;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.RootLocationFactoryProvider;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.startup.CheckRunner;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.data.runtime.main.ClientVersions;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,14 +149,21 @@ public class MasterStartupTool {
     return checkRunnerBuilder.build();
   }
 
-  private static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
       new KafkaClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules()
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(FileContext.class).toProvider(FileContextProvider.class).in(Scopes.SINGLETON);
+          bind(LocationFactory.class).toProvider(RootLocationFactoryProvider.class).in(Scopes.SINGLETON);
+        }
+      }
     );
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,9 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
@@ -36,15 +36,14 @@ import java.util.Map;
  * HBase based implementation for {@link MetricsTable}.
  */
 // todo: re-use HBase table based dataset instead of having separate classes hierarchies, see CDAP-1193
-public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<MetricsTable, DatasetAdmin> {
+public class HBaseMetricsTableDefinition extends AbstractTableDefinition<MetricsTable, DatasetAdmin> {
+
   @Inject
   private Configuration hConf;
   @Inject
   private HBaseTableUtil hBaseTableUtil;
   @Inject
   private LocationFactory locationFactory;
-  @Inject
-  private CConfiguration cConf;
 
   public HBaseMetricsTableDefinition(String name) {
     super(name);
@@ -67,7 +66,6 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
       .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .build();
   }
-
 
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,

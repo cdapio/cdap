@@ -16,21 +16,16 @@
 
 package co.cask.cdap.common.lang;
 
-import co.cask.cdap.common.conf.CConfiguration;
-
-import java.io.File;
-
 /**
- * A provider for {@link ProgramClassLoader} used for program classloading.
+ * A provider for for program classloading creation.
  */
 public interface ProgramClassLoaderProvider {
 
   /**
-   * Creates a {@link ProgramClassLoader}.
+   * Creates a {@link ClassLoader} that will be used as the parent {@link ClassLoader} of
+   * {@link ProgramClassLoader}.
    *
-   * @param cConf configuration for the classloader creation
-   * @param dir directory where the program artifact jar is unpacked to
-   * @return an instance of {@link ProgramClassLoader}
+   * @return an instance of {@link ClassLoader}
    */
-  ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir);
+  ClassLoader createProgramClassLoaderParent();
 }

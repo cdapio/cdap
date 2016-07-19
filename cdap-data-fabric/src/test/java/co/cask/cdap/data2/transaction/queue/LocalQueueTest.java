@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -71,7 +71,7 @@ public class LocalQueueTest extends QueueTest {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getStandaloneModules(),
+      new LocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
@@ -91,7 +91,7 @@ public class LocalQueueTest extends QueueTest {
   public void testInjection() throws IOException {
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getStandaloneModules(),
+      new LocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricModules().getStandaloneModules(),

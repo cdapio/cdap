@@ -35,13 +35,13 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
     vm.showSidebar = !vm.showSidebar;
   };
   vm.securityEnabled = MY_CONFIG.securityEnabled;
+  vm.environment = MY_CONFIG.isEnterprise ? 'Distributed' : 'Standalone';
 
   $scope.$on('$stateChangeSuccess', function(event, toState) {
     vm.highlightTab = toState.data && toState.data.highlightTab;
     vm.activeProduct = findActiveProduct();
     vm.showSidebar = false;
   });
-
 
   // NAMESPACE
   vm.namespaces = [];

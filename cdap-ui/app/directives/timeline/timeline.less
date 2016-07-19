@@ -1,0 +1,117 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@blue-theme-color: #2397e8;
+@red-circle-color: #fa5143;
+@yellow-circle-color: #f8b154;
+@search-circle-color: #5eb3fa;
+
+my-timeline {
+  .timeline-container {
+    color: white;
+
+    .tick line {
+      opacity: 0.3;
+      stroke-width: 1px;
+      shape-rendering: crispEdges;
+    }
+
+    .fill-bar {
+      stroke: #171717;
+      stroke-opacity: 0.75;
+      stroke-width: 100%;
+    }
+
+    .scroll-pin {
+      cursor: pointer;
+      fill: #fefefe;
+    }
+
+    .left-handle {
+      fill: #068af9;
+      cursor: pointer;
+    }
+
+    .resize path {
+      fill: black;
+      fill-opacity: 0.2;
+      stroke: @blue-theme-color;
+      stroke-width: 1.5px;
+    }
+
+    color: white;
+
+    .top-bar {
+      height: 15px;
+      width: 100%;
+      background-color: #a6a6a6;
+    }
+    .timescale {
+      background-color: #393939;
+      width: 100%;
+      height: 50px;
+
+      .timeline-log-chart {
+        color: grey;
+
+        .xaxis-bottom text {
+          font: 9px sans-serif;
+        }
+
+        .xaxis path {
+          fill: none;
+          stroke: none;
+        }
+
+        .xaxis line {
+          fill: none;
+          stroke: red;
+        }
+
+        .xaxis text {
+          font: 10px sans-serif;
+        }
+
+        .log-circle {
+          width: 5px;
+          height: 5px;
+          border-radius: 5px;
+          background-color: red;
+        }
+
+        .yellow-circle {
+          fill: @yellow-circle-color;
+          stroke: @yellow-circle-color;
+        }
+
+        .red-circle {
+          fill: @red-circle-color;
+          stroke: @red-circle-color;
+        }
+
+        .other-circle {
+          fill: none;
+          stroke: none;
+        }
+
+        .search-circle {
+          fill: @search-circle-color;
+          stroke: @search-circle-color;
+        }
+      }
+    }
+  }
+}

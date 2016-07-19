@@ -23,9 +23,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.DistributedStorageProviderNamespaceAdmin;
-import co.cask.cdap.data2.datafabric.dataset.service.LocalStorageProviderNamespaceAdmin;
-import co.cask.cdap.data2.datafabric.dataset.service.StorageProviderNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -88,9 +85,6 @@ public class DataSetServiceModules extends RuntimeModule {
 
         bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
-
-        bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-        expose(StorageProviderNamespaceAdmin.class);
       }
     };
 
@@ -127,9 +121,6 @@ public class DataSetServiceModules extends RuntimeModule {
 
         bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
-
-        bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-        expose(StorageProviderNamespaceAdmin.class);
       }
     };
 
@@ -168,9 +159,6 @@ public class DataSetServiceModules extends RuntimeModule {
 
         bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
-
-        bind(StorageProviderNamespaceAdmin.class).to(DistributedStorageProviderNamespaceAdmin.class);
-        expose(StorageProviderNamespaceAdmin.class);
       }
     };
   }
@@ -197,7 +185,7 @@ public class DataSetServiceModules extends RuntimeModule {
         .build();
       // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
       //       as long as the data is durably persisted
-      return new StaticDatasetFramework(registryFactory, modulesMap, configuration);
+      return new StaticDatasetFramework(registryFactory, modulesMap);
     }
   }
 }

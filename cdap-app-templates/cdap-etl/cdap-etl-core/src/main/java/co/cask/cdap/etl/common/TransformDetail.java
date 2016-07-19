@@ -37,6 +37,7 @@ public class TransformDetail implements Emitter<Object> {
     this.defaultEmitter = new DefaultEmitter<>();
   }
 
+
   @Override
   public void emit(Object value) {
     this.defaultEmitter.emit(value);

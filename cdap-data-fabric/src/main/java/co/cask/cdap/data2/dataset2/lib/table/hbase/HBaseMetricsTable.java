@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,11 +24,13 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.DeleteBuilder;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.PutBuilder;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
@@ -60,13 +62,13 @@ public class HBaseMetricsTable implements MetricsTable {
   public HBaseMetricsTable(DatasetContext datasetContext, DatasetSpecification spec,
                            Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     this.tableUtil = tableUtil;
-    this.tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
+    this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.hTable = hTable;
-    this.columnFamily = HBaseTableAdmin.getColumnFamily(spec);
+    this.columnFamily = TableProperties.getColumnFamily(spec.getProperties());
   }
 
   @Override

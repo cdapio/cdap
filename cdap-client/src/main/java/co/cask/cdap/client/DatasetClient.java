@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
@@ -158,7 +159,7 @@ public class DatasetClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void update(Id.DatasetInstance instance, Map<String, String> properties)
-    throws NotFoundException, IOException, UnauthenticatedException {
+    throws NotFoundException, IOException, UnauthenticatedException, ConflictException {
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s/properties", instance.getId()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
@@ -167,6 +168,8 @@ public class DatasetClient {
                                                HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(instance);
+    } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
+      throw new ConflictException(response.getResponseBodyAsString());
     }
   }
 
@@ -180,7 +183,7 @@ public class DatasetClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void updateExisting(Id.DatasetInstance instance, Map<String, String> properties)
-    throws NotFoundException, IOException, UnauthenticatedException {
+    throws NotFoundException, IOException, UnauthenticatedException, ConflictException {
 
     DatasetMeta meta = get(instance);
     Map<String, String> existingProperties = meta.getSpec().getProperties();

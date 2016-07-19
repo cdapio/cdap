@@ -150,6 +150,7 @@ gulp.task('js:lib', function() {
       './bower_components/sockjs-client/dist/sockjs.js',
 
       './bower_components/d3/d3.min.js',
+      './bower_components/d3-timeline/src/d3-timeline.js',
 
       './bower_components/epoch/epoch.min.js',
       './bower_components/lodash/lodash.js',
@@ -180,7 +181,9 @@ gulp.task('js:lib', function() {
       './bower_components/ngInfiniteScroll/build/ng-infinite-scroll.min.js',
 
       './bower_components/d3-tip/index.js',
-      './bower_components/esprima/esprima.js'
+      './bower_components/esprima/esprima.js',
+
+      './app/lib/avsc-bundle.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({
@@ -228,7 +231,15 @@ function getEs6Directives(isNegate) {
     'plugin-templates',
     'my-global-navbar',
     'datetime-picker',
-    'datetime-range'
+    'datetime-range',
+    'log-viewer',
+    'complex-schema',
+    'my-pipeline-settings',
+    'my-post-run-action-wizard',
+    'my-post-run-actions',
+    'widget-container/widget-complex-schema-editor',
+    'timeline',
+    'my-pipeline-summary'
   ];
 
   return es6directives.map(function (directive) {
@@ -249,6 +260,7 @@ gulp.task('watch:js:app', function() {
   var source = [
     './app/main.js',
     '!./app/lib/c3.js',
+    '!./app/lib/avsc-bundle.js',
     './app/features/*/module.js',
     './app/**/*.js',
     '!./app/**/*-test.js',
@@ -303,6 +315,7 @@ gulp.task('js:app', function() {
   return gulp.src([
     './app/main.js',
     '!./app/lib/c3.js',
+    '!./app/lib/avsc-bundle.js',
     './app/features/*/module.js',
     './app/**/*.js',
     '!./app/**/*-test.js',
@@ -344,7 +357,8 @@ gulp.task('tpl', function() {
   return merge(
 
     gulp.src([
-      './app/directives/**/*.html'
+      './app/directives/**/*.html',
+      './app/services/**/*.html'
     ])
       .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(plug.angularTemplatecache({
@@ -516,6 +530,6 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch(jsAppBabelSource, ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
-  gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);
+  gulp.watch(['./app/directives/**/*.html', './app/services/**/*.html', './app/features/home/home.html'], ['tpl']);
   gulp.watch('./app/features/**/*.html', ['html:partials']);
 });

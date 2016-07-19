@@ -33,38 +33,32 @@ body.theme-cdap {
 
       div.pipeline-type {
         color: #397cf1;
-        float: left;
         text-decoration: none;
         span {
           display: inline-block;
-          line-height: 35px;
           font-size: 1.8em;
 
           @media (min-width: @screen-sm-min) {
-            font-size: 23px;
+            font-size: 20px;
           }
         }
       }
 
-      div.action-buttons {
-        width: 100%;
-      }
       div.btn {
-        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 0);
+        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 5px 15px);
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
-        height: @height-of-toppanel;
-        padding: 0;
         .transition(all 0.2s ease);
         span {
-          line-height: @height-of-toppanel;
+          line-height: 29px;
         }
         &:hover,
         &:focus {
           background-color: #ebebeb;
           border-right: 1px solid #ebebeb;
           border-left: 1px solid @table-border-color;
+          border-bottom: 1px solid @table-border-color;
         }
         &:active {
           background-color: #828da0;
@@ -80,12 +74,6 @@ body.theme-cdap {
         @media (max-width: @screen-xs-max) {
           display: none;
         }
-      }
-      .nopadding {
-        padding: 0;
-      }
-      .nomargin {
-        margin: 0;
       }
     }
     .toppanel-tooltip {
@@ -118,26 +106,61 @@ body.theme-cdap {
         padding-left: 10px;
       }
     }
+
+    .pipeline-settings {
+      background: lightgray;
+      position: fixed;
+      top: 93px;
+      right: 0;
+      z-index: 1039;
+      > div {
+        padding: 20px;
+        width: 100%;
+      }
+    }
+    .pipeline-settings-backdrop {
+      position: fixed;
+      height: 100vh;
+      width: 100vw;
+      background: black;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      z-index: 1030;
+    }
   }
   &.state-hydratorplusplus-create {
-    div.side-panel.top {
-      height: @height-of-toppanel;
+    div.pipeline-type {
+      span {
+        line-height: 35px;
+
+        @media (min-width: @screen-sm-min) {
+          font-size: 20px;
+        }
+      }
+    }
+    .pipeline-settings {
+      // Right now we don't have the height of the top panel to be the same
+      // in both studio and published view.
+      top: 91px;
+    }
+    div.side-panel.top,
+    .pipeline-settings {
       max-width: ~"-moz-calc(100% - 130px)";
       max-width: ~"-webkit-calc(100% - 130px)";
       max-width: ~"calc(100% - 130px)";
       left: 130px;
       .transition(all 0.2s ease);
-
-      div.btn {
-        width: 25%;
-      }
+      display: flex;
+    }
+    .side-panel.top {
       div.hydrator-metadata {
-        @media (min-width: @screen-lg-min) {
-          max-width: 650px;
-        }
-
+        flex-grow: 1;
+        flex-basis: 50%;
+        flex-wrap: wrap;
+        display: flex;
         background-color: transparent;
-        position: relative;
+        min-width: 0;
         z-index: 1021;
         .box-shadow(none);
         .transition(all 0.2s ease);
@@ -147,44 +170,29 @@ body.theme-cdap {
           cursor: pointer;
         }
         div.pipeline-type {
-          padding-left: 10px;
+          display: inline-block;
+          padding-left: 7px;
         }
-        div.pipeline-name {
+        div.metadata {
           margin-left: 10px;
-          min-width: 135px;
-          max-width: 85%;
-          position: relative;
-          &:after {
-            position: absolute;
-            font-family: FontAwesome;
-            top: 5px;
-            right: -30px;
-            content: "\f040";
-            .opacity(0);
-            .transition(opacity 0.2s ease);
-          }
-          &:hover,
-          &:focus {
-            &:after {
-              .opacity(1);
-            }
-          }
+          width: ~"calc(100% - 50px)";
+          width: ~"-moz-calc(100% - 50px)";
+          width: ~"-webkit-calc(100% - 50px)";
           > div {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+
             &:before {
               content: none;
               color: gray;
             }
-            &:first-child,
-            &:last-child {
-              max-width: 100%;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-              overflow: hidden;
-            }
+
             &:first-child {
               font-size: 14px;
               margin-top: 5px;
               line-height: 17px;
+
               &.placeholder {
                 &:before {
                   content: "Name your pipeline";
@@ -197,6 +205,14 @@ body.theme-cdap {
                 &:before {
                   content: "Enter a description for your pipeline";
                 }
+              }
+            }
+          }
+          .pipeline-name {
+            &.error {
+              &:before {
+                color: @brand-danger;
+                font-weight: bold;
               }
             }
           }
@@ -246,24 +262,24 @@ body.theme-cdap {
           background-color: white;
           height: 185px;
           cursor: auto;
+          padding: 10px;
+          width: 100%;
+          position: absolute;
           @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
           .box-shadow(@box-shadow);
           div.pipeline-type {
             span {
-              line-height: @height-of-toppanel;
+              line-height: 1;
             }
           }
           div.pipeline-name {
-            width: 85%;
-            padding-top: 10px;
+            padding: 10px;
 
             &:after {
               content: none;
             }
           }
           div.btn-group {
-            margin: 10px 0;
-            padding-right: 10px;
             .btn {
               display: inline-block;
               width: auto;
@@ -292,169 +308,159 @@ body.theme-cdap {
   &.state-hydratorplusplus-detail {
     div.side-panel.top {
       left: 0;
-      max-width: 100vw;
-      height: 70px;
-
-      div.tbl {
-        display: table;
-        height: @height-of-toppanel;
-        width: 100%;
-      }
-      div.tbl-cell {
-        display: table-cell;
-        border-left: 1px solid @table-border-color;
-        padding: 0 10px;
-        vertical-align: middle;
-        text-align: left;
-        &:first-child,
-        &:last-child {
-          border-left: 0;
-        }
-        &:last-child {
-          padding-right: 0;
-        }
-      }
-      div.batch div.tbl-cell {
-        &:first-child {
-          width: 24%;
-        }
-        &:nth-child(2) {
-          width: 6%;
-        }
-        &:nth-child(3) {
-          width: 20%;
-        }
-        &:nth-child(4) {
-          width: 15%;
-        }
-        &:nth-child(5) {
-          width: 14%;
-        }
-        &:last-child {
-          width: 21%;
-        }
-      }
-      div.realtime div.tbl-cell {
-        &:first-child {
-          width: 24%;
-        }
-        &:nth-child(2) {
-          width: 6%;
-        }
-        &:nth-child(3) {
-          width: 27%;
-        }
-        &:nth-child(4) {
-          width: 22%;
-        }
-        &:last-child {
-          width: 21%;
-        }
-      }
-      .hydrator-detail-metadata {
-        div.pipeline-type {
-          text-decoration: none;
-          padding: 0 10px 0 5px;
-        }
-        div.pipeline-name {
-          text-align: left;
-          padding-top: 4px;
-        }
-        h1,
-        p {
-          white-space: nowrap;
+      display: flex;
+      justify-content: space-between;
+      .run-specific-section {
+        display: flex;
+        flex-wrap: wrap;
+        flex: 1;
+        flex-basis: 60vw;
+        width: ~"calc(100vw - 288px)";
+        width: ~"-moz-calc(100vw - 288px)";
+        width: ~"-webkit-calc(100vw - 288px)";
+        border-right: 0;
+        .hydrator-detail-metadata {
+          display: flex;
           overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 100%;
-        }
-        h1 {
-          font-size: 16px;
-          font-weight: 500;
-          margin-top: 0;
-          margin-bottom: 0;
-          line-height: 20px;
-        }
-        p {
-          color: #666666;
-          font-size: 12px;
-          font-weight: 400;
-          margin: 0;
-        }
-      }
-      div.app-status {
-        .metric-value {
-          font-size: 20px;
-          line-height: 20px;
-          padding-bottom: 2px;
-        }
-        &.status-green span {
-          color: @brand-success;
-        }
-        &.status-red span {
-          color: @brand-danger;
-        }
-        span {
-          line-height: inherit;
-        }
-      }
-      div.last-run {
-        div.metric {
-          &:first-child {
-            padding-right: 5px;
-            width: 62%;
+          padding: 2px 10px;
+
+          /*
+            - Two buttons for schedule & start now
+            - App status container
+            - Right side pipeline specific section (6 buttons)
+            - 20px of padding for metadata section
+            48 * 2 + 275 + 288 (48 * 6) + 20 = 679;
+            FIXME: This is not scalable.
+            Flexbox has a growth and shrink factor but that is not based on the content,
+            but based on the browser size. We need to dynamically have more space for description
+            and still be able to have run specific section stick to metadata section.
+          */
+
+          max-width: ~"calc(100vw - 679px)";
+          max-width: ~"-moz-calc(100vw - 679px)";
+          max-width: ~"-webkit-calc(100vw - 679px)";
+          div.pipeline-type {
+            text-decoration: none;
+            padding: 0 10px 0 0;
+            span {
+              line-height: 1.3;
+            }
           }
-          &:last-child {
-            width: 38%;
+          div.pipeline-name {
+            text-align: left;
+            overflow: hidden;
           }
-        }
-      }
-      div.all-runs {
-        div.metric {
-          &:first-child {
-            padding-right: 5px;
-            width: 60%;
+          h1,
+          p {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
           }
-          &:last-child {
-            width: 40%;
+          h1 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 0;
+            line-height: 20px;
+            display: inline-block;
+            line-height: 1.4;
+          }
+          p {
+            color: #666666;
+            font-size: 12px;
+            font-weight: 400;
+            margin: 0;
+            margin-top: -8px; // FIXME: This is a bad hack. Need to come with a better way to do it.
           }
         }
-      }
-      strong {
-        display: block;
-        font-size: 12px;
-        margin-bottom: 2px;
-      }
-      span {
-        display: block;
-      }
-      span.metric-value {
-        color: #636363;
-        font-size: 13px;
-        font-weight: 500;
-        line-height: 1;
-        small {
-          font-size: 10px;
-          font-weight: 400;
+        .next-run,
+        .last-run,
+        .all-runs {
+          flex-grow: 0.1;
+          display: flex;
+          align-items: center;
+          padding: 0 6px;
+          .last-run-container,
+          .all-runs-container,
+          .next-runs-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+          }
+          .last-run-container {
+            .metric {
+              h5 {
+                margin: 0;
+              }
+              &:first-child {
+                margin-right: 10px;
+              }
+            }
+          }
         }
-      }
-      span.metric-label {
-        font-size: 10px;
-        color: rgba(0, 0, 0, 0.4);
-        font-weight: 600;
-      }
-      div.action-buttons {
-        &.batch > div {
-          width: 20%;
+        .last-run {
+          margin-right: 1px solid #dddddd;
         }
-        &.realtime > div {
-          width: 25%;
-        }
-        div.btn {
-          width: 100%;
-          height: 70px;
+        .app-status {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 5px;
+          border-right: 0;
+          border-left: 1px solid #dddddd;
+          &.status-green span {
+            color: @brand-success;
+          }
+          &.status-red span {
+            color: @brand-danger;
+          }
           span {
-            line-height: 70px;
+            line-height: inherit;
           }
+          .metric-value {
+            margin-right: 5px;
+          }
+        }
+        .app-status-container {
+          display: flex;
+          position: relative;
+        }
+      }
+      .btn {
+        flex-grow: 0;
+        padding: inherit;
+        padding: 7px 15px 0 15px;
+        display: block;
+        align-items: center;
+        span {
+          line-height: 48px;
+        }
+      }
+      .pipeline-specific-section {
+        justify-content: flex-end;
+        border-left: 0;
+        display: flex;
+        width: 288px;
+        span.metric-value {
+          color: #636363;
+          font-size: 13px;
+          font-weight: 500;
+          margin-right: 5px;
+        }
+        span.metric-label {
+          color: rgba(0, 0, 0, 0.4);
+          font-weight: 600;
+        }
+      }
+      .pipeline-settings {
+        width: 100%;
+        &.pipeline-run-section {
+          position: absolute;
+          left: 0;
+          top: 43px;
+          background: #ebebeb;
+          max-height: 400px;
         }
       }
     }
@@ -465,7 +471,6 @@ body.theme-cdap {
       left: 0;
       z-index: 1028;
       height: 60px;
-      max-width: 100vw;
       .box-shadow(0 7px 7px fade(black, 10%), 0 10px 59px fade(black, 25%););
       h1 {
         border-right: 1px solid @table-border-color;

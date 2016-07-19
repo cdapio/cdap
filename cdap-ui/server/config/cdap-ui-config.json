@@ -6,7 +6,7 @@
       "scope": "SYSTEM"
     },
     "appId": "_Tracker",
-    "programId": "AuditLog",
+    "serviceId": "TrackerService",
     "flowProgramId": "AuditLogFlow"
   },
   "navigator": {

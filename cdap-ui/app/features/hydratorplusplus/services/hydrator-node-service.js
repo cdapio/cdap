@@ -30,47 +30,49 @@ class HydratorPlusPlusNodeService {
     return promise.then((node) => this.configurePluginInfo(node, appType, sourceConn));
   }
   configurePluginInfo(node, appType, sourceConn) {
-      var input;
-      var sourceSchema = null;
+    const getSchema = (node) => {
+      var schema = node.outputSchema;
       var isStreamSource = false;
-
-      var source;
-      if (sourceConn && sourceConn.length) {
-        source = sourceConn[0];
-        sourceSchema = source.outputSchema;
-
-        if (source.plugin.name === 'Stream') {
-          isStreamSource = true;
-        }
-
-        if (Object.keys(this.IMPLICIT_SCHEMA).indexOf(source.plugin.properties.format) !== -1) {
-          sourceSchema = this.IMPLICIT_SCHEMA[source.plugin.properties.format];
-        }
-
-      } else {
-        sourceSchema = '';
+      var inputSchema;
+      if (node.plugin.name === 'Stream') {
+        isStreamSource = true;
       }
-
+      if (Object.keys(this.IMPLICIT_SCHEMA).indexOf(node.plugin.properties.format) !== -1) {
+        schema = this.IMPLICIT_SCHEMA[node.plugin.properties.format];
+      }
       try {
-        input = JSON.parse(sourceSchema);
-      } catch (e) {
-        input = null;
+        inputSchema = JSON.parse(schema);
+      } catch(e) {
+        inputSchema = null;
       }
+      if (typeof inputSchema === 'object' && isStreamSource) {
+        let streamSchemaPrefix = [
+          {
+            name: 'ts',
+            type: 'long'
+          },
+          {
+            name: 'headers',
+            type: {
+              type: 'map',
+              keys: 'string',
+              values: 'string'
+            }
+          }
+        ];
 
-      node.inputSchema = input ? input.fields : null;
-      angular.forEach(node.inputSchema, function (field) {
-        if (angular.isArray(field.type)) {
-          field.type = field.type[0];
-          field.nullable = true;
-        } else {
-          field.nullable = false;
-        }
-        if (isStreamSource) {
-          delete field.readonly;
-        }
-      });
-      return node;
-    }
+        inputSchema.fields = streamSchemaPrefix.concat(inputSchema.fields);
+      }
+      return JSON.stringify(inputSchema);
+    };
+
+    node.inputSchema = sourceConn.map( source => ({
+      name: source.plugin.label,
+      schema: getSchema(source)
+    }));
+
+    return node;
+  }
 }
 HydratorPlusPlusNodeService.$inject = ['$q', 'HydratorPlusPlusHydratorService', 'IMPLICIT_SCHEMA'];
 

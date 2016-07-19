@@ -36,6 +36,8 @@ import co.cask.cdap.data2.increment.hbase98.IncrementHandler;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.Transaction;
@@ -89,18 +91,24 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   @BeforeClass
   public static void beforeClass() throws Exception {
     cConf = CConfiguration.create();
-    hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
+    hBaseTableUtil = new HBaseTableUtilFactory(cConf, new SimpleNamespaceQueryAdmin()).get();
     // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE1);
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE2);
+    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
+                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE1.toEntityId()));
+    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
+                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE2.toEntityId()));
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), NAMESPACE1);
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), NAMESPACE2);
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE1);
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE2);
+    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(),
+                                        hBaseTableUtil.getHBaseNamespace(NAMESPACE1.toEntityId()));
+    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(),
+                                        hBaseTableUtil.getHBaseNamespace(NAMESPACE2.toEntityId()));
+    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(),
+                                           hBaseTableUtil.getHBaseNamespace(NAMESPACE1.toEntityId()));
+    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(),
+                                           hBaseTableUtil.getHBaseNamespace(NAMESPACE2.toEntityId()));
   }
 
   @Override
@@ -205,8 +213,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     getTableAdmin(CONTEXT1, presplittedTable, props).create();
 
     try (HBaseAdmin hBaseAdmin = TEST_HBASE.getHBaseAdmin()) {
-      List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, TableId.from(NAMESPACE1.getId(),
-                                                                                          presplittedTable));
+      TableId hTableId = hBaseTableUtil.createHTableId(NAMESPACE1.toEntityId(), presplittedTable);
+      List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, hTableId);
       // note: first region starts at very first row key, so we have one extra to the splits count
       Assert.assertEquals(4, regions.size());
       Assert.assertArrayEquals(Bytes.toBytes("a"), regions.get(1).getStartKey());
@@ -220,8 +228,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     // setup a table with increments disabled and with it enabled
     String disableTableName = "incr-disable";
     String enabledTableName = "incr-enable";
-    TableId disabledTableId = TableId.from(NAMESPACE1.getId(), disableTableName);
-    TableId enabledTableId = TableId.from(NAMESPACE1.getId(), enabledTableName);
+    TableId disabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1.toEntityId(), disableTableName);
+    TableId enabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1.toEntityId(), enabledTableName);
     HBaseTableAdmin disabledAdmin = getTableAdmin(CONTEXT1, disableTableName, DatasetProperties.EMPTY);
     disabledAdmin.create();
     HBaseAdmin admin = TEST_HBASE.getHBaseAdmin();
@@ -316,8 +324,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     });
 
     // Verify the column family name
-    HTableDescriptor htd = hBaseTableUtil.getHTableDescriptor(TEST_HBASE.getHBaseAdmin(),
-                                                              TableId.from(CONTEXT1.getNamespaceId(), tableName));
+    TableId hTableId = hBaseTableUtil.createHTableId(new NamespaceId(CONTEXT1.getNamespaceId()), tableName);
+    HTableDescriptor htd = hBaseTableUtil.getHTableDescriptor(TEST_HBASE.getHBaseAdmin(), hTableId);
     HColumnDescriptor hcd = htd.getFamily(Bytes.toBytes("t"));
     Assert.assertNotNull(hcd);
     Assert.assertEquals("t", hcd.getNameAsString());

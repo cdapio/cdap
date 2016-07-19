@@ -1,0 +1,39 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="widget-schema-container">
+  <div class="error text-danger">
+    {{ SchemaEditor.error }}
+  </div>
+  <div ng-if="!SchemaEditor.clearDOM">
+    <my-complex-schema
+      ng-model="SchemaEditor.schemaObj"
+      record-name="'etlSchemaBody'"
+      is-disabled="SchemaEditor.isDisabled || SchemaEditor.implicitSchemaPresent"
+      parent-format-output="SchemaEditor.formatOutput()"
+      schema-prefix="SchemaEditor.schemaPrefix">
+    </my-complex-schema>
+  </div>
+
+  <div class="text-center"
+       ng-if="SchemaEditor.clearDOM">
+    <h3>
+      <span class="fa fa-spin fa-refresh"></span>
+    </h3>
+  </div>
+
+  <a class="sr-only" id="schema-export-link" href="{{SchemaEditor.url}}" download="{{SchemaEditor.exportFileName}}.json">Export</a>
+</div>

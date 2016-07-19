@@ -14,17 +14,35 @@
   the License.
 -->
 <div class="modal-header clearfix">
-  <h3 class="modal-title">
+
+  <h4 class="modal-title pull-left">
     <span>
       {{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}} Properties
       <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>
     </span>
     <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">({{HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage}})</small>
-    <span class="fa fa-times pull-right" ng-click="$close()"></span>
     <p>
       <small>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</small>
     </p>
-  </h3>
+  </h4>
+  <div class="btn-group pull-right">
+    <a class="btn"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.windowMode === 'regular'"
+        ng-click="HydratorPlusPlusNodeConfigCtrl.toggleMaximizedView(true)">
+      <span class="fa fa-expand"></span>
+      <span class="sr-only"> Expand </span>
+    </a>
+    <a class="btn"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.windowMode === 'expand'"
+        ng-click="HydratorPlusPlusNodeConfigCtrl.toggleMaximizedView(false)">
+      <span class="fa fa-compress"></span>
+      <span class="sr-only"> Compress </span>
+    </a>
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+  </div>
 </div>
 <div class="modal-body config-modal">
   <div class="console-type">

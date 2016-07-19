@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,8 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 
@@ -32,36 +30,16 @@ import java.util.Map;
  */
 @Beta
 public class KeyValueTableDefinition
-  extends AbstractDatasetDefinition<KeyValueTable, DatasetAdmin> {
-
-  private final DatasetDefinition<? extends Table, ?> tableDef;
+  extends CompositeDatasetDefinition<KeyValueTable> {
 
   public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name);
-    if (tableDef == null) {
-      throw new IllegalArgumentException("Table definition is required");
-    }
-    this.tableDef = tableDef;
-  }
-
-  @Override
-  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(tableDef.configure("kv", properties))
-      .build();
-  }
-
-  @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(datasetContext, spec.getSpecification("kv"), classLoader);
+    super(name, "kv", tableDef);
   }
 
   @Override
   public KeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                   Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(datasetContext, spec.getSpecification("kv"), arguments, classLoader);
+    Table table = getDataset(datasetContext, "kv", spec, arguments, classLoader);
     return new KeyValueTable(spec.getName(), table);
   }
 }

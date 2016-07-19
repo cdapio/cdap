@@ -1,0 +1,112 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+my-truth-meter {
+  div.truth-meter {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-color: transparent transparent #dddddd transparent;
+    border-top-width: 0;
+    border-right-width: 0;
+    position: relative;
+  }
+  div.truth-score {
+    background-color: #ffffff;
+    position: absolute;
+    &:before {
+      background-color: #35c853;
+      content: '';
+      display: block;
+      position: absolute;
+    }
+    &:after {
+      background-color: #35c853;
+      content: '';
+      display: block;
+      position: absolute;
+    }
+    span {
+      display: block;
+      font-weight: 600;
+      position: absolute;
+      left: -5px;
+      text-align: center;
+    }
+  }
+  span.fa-info-circle {
+    color: #999999;
+    font-size: 14px;
+    margin-left: 8px;
+  }
+}
+
+body.state-tracker-detail-result {
+  my-truth-meter {
+    div.truth-meter { border-bottom-width: 30px; }
+    div.truth-score {
+      height: 57px;
+      width: 15px;
+      top: -20px;
+      &:before {
+        height: 45px;
+        top: 3px;
+        left: 6px;
+        width: 3px;
+      }
+      &:after {
+        bottom: 3px;
+        left: 4px;
+        height: 7px;
+        width: 7px;
+      }
+      span {
+        font-size: 12px;
+        bottom: -15px;
+        width: 25px;
+      }
+    }
+  }
+}
+
+body.state-tracker-detail-entity {
+  my-truth-meter {
+    div.truth-meter { border-bottom-width: 15px; }
+    div.truth-score {
+      height: 25px;
+      width: 10px;
+      top: -5px;
+      &:before {
+        height: 15px;
+        top: 2px;
+        left: 4px;
+        width: 2px;
+      }
+      &:after {
+        bottom: 4px;
+        left: 3px;
+        height: 4px;
+        width: 4px;
+      }
+      span {
+        font-size: 11px;
+        bottom: -12px;
+        width: 20px;
+      }
+    }
+  }
+}
+

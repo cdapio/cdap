@@ -22,14 +22,18 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -39,11 +43,18 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRangeCodec;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -60,10 +71,19 @@ import javax.annotation.Nullable;
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements DatasetContext, RuntimeContext, PluginContext {
 
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
+
+  private final ArtifactId artifactId;
+  private final ArtifactMeta artifactMeta;
   private final Program program;
+  private final ProgramOptions programOptions;
   private final RunId runId;
-  private final List<Id> owners;
+  private final Iterable<? extends Id> owners;
   private final Map<String, String> runtimeArguments;
+  private final Metrics userMetrics;
   private final MetricsContext programMetrics;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
@@ -75,30 +95,35 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Constructs a context without plugin support.
    */
-  protected AbstractContext(Program program, RunId runId, Arguments arguments,
-                            Set<String> datasets, MetricsContext metricsContext,
-                            DatasetFramework dsFramework, TransactionSystemClient txClient,
-                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded) {
-    this(program, runId, arguments, datasets, metricsContext,
-         dsFramework, txClient, discoveryServiceClient, multiThreaded, null);
+  protected AbstractContext(Program program, ProgramOptions programOptions,
+                            Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
+                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
+                            @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags) {
+    this(program, programOptions, datasets, dsFramework, txClient,
+         discoveryServiceClient, multiThreaded, metricsService, metricsTags, null);
   }
 
   /**
    * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
    */
-  protected AbstractContext(Program program, RunId runId, Arguments arguments,
-                            Set<String> datasets, MetricsContext metricsContext,
-                            DatasetFramework dsFramework, TransactionSystemClient txClient,
+  protected AbstractContext(Program program, ProgramOptions programOptions,
+                            Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
+                            @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program.getId().toEntityId());
+
+    this.artifactId = createArtifactId(programOptions);
+    this.artifactMeta = createArtifactMeta(programOptions);
     this.program = program;
-    this.runId = runId;
+    this.programOptions = programOptions;
+    this.runId = ProgramRunners.getRunId(programOptions);
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
-    this.programMetrics = metricsContext;
+    this.programMetrics = createProgramMetrics(program, runId, metricsService, metricsTags);
+    this.userMetrics = new ProgramUserMetrics(programMetrics);
 
-    Map<String, String> runtimeArgs = new HashMap<>(arguments.asMap());
+    Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
     this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
 
@@ -119,17 +144,64 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId());
   }
 
-  private List<Id> createOwners(Id.Program programId) {
-    ImmutableList.Builder<Id> result = ImmutableList.builder();
-    result.add(programId);
-    return result.build();
+  /**
+   * Extracts {@link ArtifactId} from the system arguments.
+   */
+  private ArtifactId createArtifactId(ProgramOptions programOptions) {
+    String id = programOptions.getArguments().getOption(ProgramOptionConstants.ARTIFACT_ID);
+    Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.ARTIFACT_ID + " in program options");
+    return GSON.fromJson(id, ArtifactId.class);
   }
 
-  public List<Id> getOwners() {
+  /**
+   * Extracts {@link ArtifactMeta} from the system arguments.
+   */
+  private ArtifactMeta createArtifactMeta(ProgramOptions programOptions) {
+    String meta = programOptions.getArguments().getOption(ProgramOptionConstants.ARTIFACT_META);
+    Preconditions.checkArgument(meta != null,
+                                "Missing " + ProgramOptionConstants.ARTIFACT_META + " in program options");
+    return GSON.fromJson(meta, ArtifactMeta.class);
+  }
+
+  private Iterable<? extends Id> createOwners(Id.Program programId) {
+    return Collections.unmodifiableList(Collections.singletonList(programId));
+  }
+
+  /**
+   * Creates a {@link MetricsContext} for metrics emission of the program represented by this context.
+   *
+   * @param program the {@link Program} context that the metrics should be emitted as
+   * @param runId the {@link RunId} of the current execution
+   * @param metricsService the underlying service for metrics publishing; or {@code null} to suppress metrics publishing
+   * @param metricsTags a set of extra tags to be used for creating the {@link MetricsContext}
+   * @return a {@link MetricsContext} for emitting metrics for the current program context.
+   */
+  private MetricsContext createProgramMetrics(Program program, RunId runId,
+                                              @Nullable MetricsCollectionService metricsService,
+                                              Map<String, String> metricsTags) {
+
+    Map<String, String> tags = Maps.newHashMap(metricsTags);
+    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(ProgramTypeMetricTag.getTagName(program.getType()), program.getName());
+    tags.put(Constants.Metrics.Tag.RUN_ID, runId.getId());
+
+    return metricsService == null ? new NoopMetricsContext(tags) : metricsService.getContext(tags);
+  }
+
+  /**
+   * Returns a list of ID who owns this program context.
+   */
+  public Iterable<? extends Id> getOwners() {
     return owners;
   }
 
-  public abstract Metrics getMetrics();
+  /**
+   * Returns a {@link Metrics} to be used inside user program.
+   */
+  public Metrics getMetrics() {
+    return userMetrics;
+  }
 
   @Override
   public ApplicationSpecification getApplicationSpecification() {
@@ -169,9 +241,25 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
+  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+    return getDataset(namespace, name, RuntimeArguments.NO_ARGUMENTS);
+  }
+
+  @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     return getDataset(name, arguments, AccessType.UNKNOWN);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
+    return getDataset(namespace, name, arguments, AccessType.UNKNOWN);
+  }
+
+  protected <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
+                                             AccessType accessType) throws DatasetInstantiationException {
+    return datasetCache.getDataset(namespace, name, arguments, accessType);
   }
 
   protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
@@ -227,21 +315,31 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     datasetCache.close();
   }
 
+  /**
+   * Returns the {@link ArtifactId} which contains the program that this context represents.
+   */
+  public ArtifactId getArtifactId() {
+    return artifactId;
+  }
+
+  /**
+   * Returns the {@link ArtifactMeta} which contains the program that this context represents.
+   */
+  public ArtifactMeta getArtifactMeta() {
+    return artifactMeta;
+  }
+
+  /**
+   * Returns the {@link ProgramOptions} for the program execution that this context represents.
+   */
+  public ProgramOptions getProgramOptions() {
+    return programOptions;
+  }
+
   @Override
   public DiscoveryServiceClient getDiscoveryServiceClient() {
     return discoveryServiceClient;
   }
-
-  public static Map<String, String> getMetricsContext(Program program, String runId) {
-    Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
-    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
-    tags.put(ProgramTypeMetricTag.getTagName(program.getType()), program.getName());
-    tags.put(Constants.Metrics.Tag.RUN_ID, runId);
-    return tags;
-  }
-
-  public abstract Map<String, Plugin> getPlugins();
 
   @Override
   public PluginProperties getPluginProperties(String pluginId) {
@@ -256,6 +354,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return pluginContext.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
+    return pluginContext.newPluginInstance(pluginId, evaluator);
   }
 
   @Override

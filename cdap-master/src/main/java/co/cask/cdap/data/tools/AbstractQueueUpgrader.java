@@ -17,10 +17,9 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -50,16 +49,16 @@ public abstract class AbstractQueueUpgrader extends AbstractUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractQueueUpgrader.class);
   protected final HBaseTableUtil tableUtil;
   protected final Configuration conf;
-  protected final NamespaceAdmin namespaceAdmin;
+  protected final NamespaceQueryAdmin namespaceQueryAdmin;
 
   protected AbstractQueueUpgrader(LocationFactory locationFactory,
                                   NamespacedLocationFactory namespacedLocationFactory,
                                   HBaseTableUtil tableUtil, Configuration conf,
-                                  NamespaceAdmin namespaceAdmin) {
+                                  NamespaceQueryAdmin namespaceQueryAdmin) {
     super(locationFactory, namespacedLocationFactory);
     this.tableUtil = tableUtil;
     this.conf = conf;
-    this.namespaceAdmin = namespaceAdmin;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -85,7 +84,7 @@ public abstract class AbstractQueueUpgrader extends AbstractUpgrader {
         continue;
       }
       HTable hTable = tableUtil.createHTable(conf, tableId);
-      ProjectInfo.Version tableVersion = AbstractHBaseDataSetAdmin.getVersion(hTable.getTableDescriptor());
+      ProjectInfo.Version tableVersion = HBaseTableUtil.getVersion(hTable.getTableDescriptor());
       // Only upgrade if Upgrader's version is greater than table's version.
       if (ProjectInfo.getVersion().compareTo(tableVersion) <= 0) {
         LOG.info("Table {} has already been upgraded. Its version is: {}", tableId, tableVersion);
