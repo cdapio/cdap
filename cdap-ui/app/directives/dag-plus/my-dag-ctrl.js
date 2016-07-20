@@ -264,9 +264,6 @@ angular.module(PKG.name + '.commons')
             nodeInfo.popover.show();
           });
         });
-
-
-
     };
 
     vm.nodeMouseLeave = function (node) {
