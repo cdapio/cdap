@@ -15,8 +15,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# Version 1.1.0
-
 # Builds an rst table to document the cdap-default.xml file
 # Any property names listed in cdap-default-exclusions.txt are excluded.
 # Any properties marked "final" are placed in second table after the first.
@@ -53,12 +51,10 @@ from datetime import datetime
 from optparse import OptionParser
 
 SOURCE_PATH = os.path.dirname(os.path.abspath(__file__))
-RELATIVE_PATH = '../../..'
-
+RELATIVE_PATH = '../..'
 CDAP_DEFAULT_XML = 'cdap-common/src/main/resources/cdap-default.xml'
-
-CDAP_DEFAULT_DEPRECATED_XML = 'cdap-default-deprecated.xml'
 CDAP_DEFAULT_EXCLUSIONS = 'cdap-default-exclusions.txt'
+
 OTHER_CDAP_XML_FILES = 'cdap-xml-files.txt'
 
 FIRST_TWO_SECTIONS = ['General Configuration', 'Global Configuration']

@@ -29,19 +29,6 @@ see the :ref:`admin-security` section.
 
 .. include:: ../../target/_includes/cdap-default-table.rst
 
-..
-.. Deprecated Properties
-..
-
-.. include:: ../../target/_includes/cdap-default-deprecated-table.rst
-      :end-before: .. list-table::
-
-These properties are deprecated as of CDAP |release| and should not be used. They
-will be removed in a future release. Replacement properties are listed as noted.
-
-.. include:: ../../target/_includes/cdap-default-deprecated-table.rst
-      :start-after: ---------------------
-
 .. _cdap-site-xml-note-final:
 
 Notes
