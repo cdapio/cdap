@@ -63,6 +63,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
   private final String logBaseDir;
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
+  // Table structure - <event time bucket, log context, event arrival time bucket, log event>
   private final RowSortedTable<Long, String, Map.Entry<Long, List<KafkaLogEvent>>> messageTable;
   private final long eventBucketIntervalMs;
   private final int logCleanupIntervalMins;
@@ -164,10 +165,10 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
         Threads.createDaemonThreadFactory("log-saver-log-processor-" + partition)));
     }
 
-    LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
-                                        eventBucketIntervalMs, maxNumberOfBucketsInTable);
-    scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
     countDownLatch = new CountDownLatch(1);
+    LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
+                                        eventBucketIntervalMs, maxNumberOfBucketsInTable, countDownLatch);
+    scheduledExecutor.execute(logWriter);
   }
 
   @Override
@@ -184,13 +185,21 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
       while (true) {
         // Get the oldest bucket in the table
         long oldestBucketKey;
+        int numBuckets;
         synchronized (messageTable) {
           SortedSet<Long> rowKeySet = messageTable.rowKeySet();
-          oldestBucketKey = rowKeySet.isEmpty() ? System.currentTimeMillis() : rowKeySet.first();
+          numBuckets = rowKeySet.size();
+          oldestBucketKey = numBuckets == 0 ? System.currentTimeMillis() : rowKeySet.first();
+          long latestBucketKey = numBuckets == 0 ? oldestBucketKey : rowKeySet.last();
 
-          // If the current event falls in the bucket number which is in window [oldestBucketKey, oldestBucketKey+8]
+          // If the number of buckets in memory are less than maxBuckets or
+          // if the current event falls in the bucket number which is in
+          // the window [oldestBucketKey, oldestBucketKey+maxBuckets]
           // then we can add the event to message table
-          if (firstKey <= (oldestBucketKey + maxNumberOfBucketsInTable)) {
+          // We try to limit in-memory buckets to prevent OOM.
+          // Note that we can still have more than maxBuckets in memory if buckets are not consecutive, or
+          // we get an event older than oldest bucket
+          if (numBuckets < maxNumberOfBucketsInTable || firstKey <= latestBucketKey) {
             while (peekingIterator.hasNext()) {
               KafkaLogEvent event = peekingIterator.next();
               LoggingContext loggingContext = event.getLoggingContext();
@@ -217,8 +226,8 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
         // Cannot insert event into message table
         // since there are still maxNumberOfBucketsInTable buckets that need to be processed
         // sleep for the time duration till event falls in the window
-        LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
-                  firstKey, oldestBucketKey, maxNumberOfBucketsInTable, SLEEP_TIME_MS);
+        LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}, buckets={}. Sleeping for {} ms.",
+                  firstKey, oldestBucketKey, maxNumberOfBucketsInTable, numBuckets, SLEEP_TIME_MS);
 
         if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
           // if count down occurred return

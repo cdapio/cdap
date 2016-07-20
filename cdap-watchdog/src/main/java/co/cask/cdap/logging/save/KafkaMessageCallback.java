@@ -46,21 +46,23 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
   private final LoggingEventSerializer serializer;
   private final CountDownLatch stopLatch;
   private final MetricsContext metricsContext;
+  private final String delayMetric;
 
-  public KafkaMessageCallback(CountDownLatch stopLatch,
+  public KafkaMessageCallback(int partition, CountDownLatch stopLatch,
                               Set<KafkaLogProcessor> kafkaLogProcessors,
                               MetricsContext metricsContext) throws Exception {
     this.kafkaLogProcessors = kafkaLogProcessors;
     this.serializer = new LoggingEventSerializer();
     this.stopLatch = stopLatch;
     this.metricsContext = metricsContext;
+    this.delayMetric = Constants.Metrics.Name.Log.PROCESS_DELAY + "." + partition;
   }
 
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
 
     try {
-      if (stopLatch.await(50, TimeUnit.MICROSECONDS)) {
+      if (stopLatch.await(1, TimeUnit.NANOSECONDS)) {
         // if count down occurred return
         LOG.info("Returning since callback is cancelled.");
         return;
@@ -106,7 +108,7 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
       }
 
       // todo: use hostogram when available (CDAP-3120)
-      metricsContext.gauge(Constants.Metrics.Name.Log.PROCESS_DELAY, System.currentTimeMillis() - oldestProcessed);
+      metricsContext.gauge(delayMetric, System.currentTimeMillis() - oldestProcessed);
       metricsContext.increment(Constants.Metrics.Name.Log.PROCESS_MESSAGES_COUNT, count);
     }
 
