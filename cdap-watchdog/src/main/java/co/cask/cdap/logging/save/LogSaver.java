@@ -172,7 +172,7 @@ public final class LogSaver extends AbstractIdleService {
       kafkaCancelCallbackLatchMap.put(part, new CountDownLatch(1));
 
       kafkaCancelMap.put(part, preparer.consume(
-        new KafkaMessageCallback(kafkaCancelCallbackLatchMap.get(part), kafkaLogProcessors, metricsContext)));
+        new KafkaMessageCallback(part, kafkaCancelCallbackLatchMap.get(part), kafkaLogProcessors, metricsContext)));
     }
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
