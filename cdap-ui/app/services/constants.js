@@ -62,8 +62,8 @@ angular.module(PKG.name + '.services')
     },
 
     artifactConvert: {
-      'cdap-etl-batch': 'ETL Batch',
-      'cdap-etl-realtime': 'ETL Realtime',
+      'cdap-etl-batch': 'Batch (Deprecated)',
+      'cdap-etl-realtime': 'Realtime',
       'cdap-data-pipeline': 'Data Pipeline'
     },
 
