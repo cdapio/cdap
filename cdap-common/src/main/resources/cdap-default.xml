@@ -588,6 +588,14 @@
   </property>
 
   <property>
+    <name>dataset.executor.bind.port</name>
+    <value>0</value>
+    <description>
+      Dataset executor bind port
+    </description>
+  </property>
+
+  <property>
     <name>dataset.extensions.dir</name>
     <value>/opt/cdap/ext/lib</value>
     <description>
