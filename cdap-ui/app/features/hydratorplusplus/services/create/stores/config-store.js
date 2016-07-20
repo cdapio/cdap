@@ -363,15 +363,8 @@ class HydratorPlusPlusConfigStore {
         node.outputSchema = node.plugin.properties[node.outputSchemaProperty];
       }
       if (nodeConfig.outputSchema.implicitSchema) {
-        let keys = Object.keys(nodeConfig.outputSchema.implicitSchema);
-        let formattedSchema = [];
-        angular.forEach(keys, (key) => {
-          formattedSchema.push({
-            name: key,
-            type: nodeConfig.outputSchema.implicitSchema[key]
-          });
-        });
-        node.outputSchema = JSON.stringify({ fields: formattedSchema });
+        let outputSchema = this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(nodeConfig.outputSchema.implicitSchema);
+        node.outputSchema = outputSchema;
       }
       if (!node.outputSchema && nodeConfig.outputSchema.schemaProperties['default-schema']) {
         node.outputSchema = nodeConfig.outputSchema.schemaProperties['default-schema'];

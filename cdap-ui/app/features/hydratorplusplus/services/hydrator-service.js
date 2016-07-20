@@ -274,7 +274,46 @@ class HydratorPlusPlusHydratorService {
       return null;
     }
   }
-
+  formatOutputSchemaToAvro(schema) {
+    let typeMap = 'map<string, string>';
+    let mapObj = {
+      type: 'map',
+      keys: 'string',
+      values: 'string'
+    };
+    let fields = [];
+    let outputSchema;
+    if (typeof schema === 'string') {
+      try {
+        outputSchema = JSON.parse(schema);
+      } catch(e) {
+        console.log('ERROR: Parsing schema JSON ', e);
+        return schema;
+      }
+    } else {
+      outputSchema = angular.copy(schema);
+    }
+    if (outputSchema.name && outputSchema.type && outputSchema.fields) {
+      return JSON.stringify(outputSchema);
+    }
+    fields = Object.keys(outputSchema).map(field => {
+      if (outputSchema[field] === typeMap) {
+        return {
+          name: field,
+          type: mapObj
+        };
+      }
+      return {
+        name: field,
+        type: outputSchema[field]
+      };
+    });
+    return JSON.stringify({
+      name: outputSchema.name || 'etlSchemaBody',
+      type: outputSchema.type || 'record',
+      fields: outputSchema.fields || fields
+    });
+  }
 }
 HydratorPlusPlusHydratorService.$inject = ['GLOBALS', 'DAGPlusPlusFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'DAGPlusPlusNodesStore', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)

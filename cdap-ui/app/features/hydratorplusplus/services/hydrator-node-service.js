@@ -15,9 +15,10 @@
  */
 
 class HydratorPlusPlusNodeService {
-  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA) {
+  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers) {
     this.$q = $q;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
+    this.myHelpers = myHelpers;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
   }
   getPluginInfo(node, appType, sourceConn) {
@@ -40,12 +41,16 @@ class HydratorPlusPlusNodeService {
       if (Object.keys(this.IMPLICIT_SCHEMA).indexOf(node.plugin.properties.format) !== -1) {
         schema = this.IMPLICIT_SCHEMA[node.plugin.properties.format];
       }
-      try {
-        inputSchema = JSON.parse(schema);
-      } catch(e) {
-        inputSchema = null;
+      if (typeof schema === 'string'){
+        try {
+          inputSchema = JSON.parse(schema);
+        } catch(e) {
+          inputSchema = null;
+        }
+      } else {
+        inputSchema = schema;
       }
-      if (typeof inputSchema === 'object' && isStreamSource) {
+      if (isStreamSource) {
         let streamSchemaPrefix = [
           {
             name: 'ts',
@@ -61,20 +66,22 @@ class HydratorPlusPlusNodeService {
           }
         ];
 
-        inputSchema.fields = streamSchemaPrefix.concat(inputSchema.fields);
+        inputSchema = this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro({
+          fields: streamSchemaPrefix.concat(this.myHelpers.objectQuery(inputSchema, 'fields') || [])
+        });
       }
-      return JSON.stringify(inputSchema);
+      return inputSchema;
     };
 
     node.inputSchema = sourceConn.map( source => ({
       name: source.plugin.label,
-      schema: getSchema(source)
+      schema: this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(getSchema(source))
     }));
 
     return node;
   }
 }
-HydratorPlusPlusNodeService.$inject = ['$q', 'HydratorPlusPlusHydratorService', 'IMPLICIT_SCHEMA'];
+HydratorPlusPlusNodeService.$inject = ['$q', 'HydratorPlusPlusHydratorService', 'IMPLICIT_SCHEMA', 'myHelpers'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .service('HydratorPlusPlusNodeService', HydratorPlusPlusNodeService);
