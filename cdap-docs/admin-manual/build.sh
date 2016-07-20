@@ -19,13 +19,10 @@
 source ../_common/common-build.sh
 
 DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
-DEFAULT_XML_MD5_HASH="2c0ba74ce4eb10d84e6160eacb808ce5"
+DEFAULT_XML_MD5_HASH="c3223f49bd5cbc2201509da9565dd50d"
 
-DEFAULT_TOOL="../tools/cdap-default/doc-cdap-default.py"
-DEFAULT_DEPRECATED_XML="../tools/cdap-default/cdap-default-deprecated.xml"
+DEFAULT_TOOL="../tools/doc-cdap-default.py"
 DEFAULT_RST="cdap-default-table.rst"
-DEFAULT_DEPRECATED_RST="cdap-default-deprecated-table.rst"
-
 CHECK_INCLUDES=${TRUE}
 
 function rewrite_references_sed() {
@@ -43,11 +40,8 @@ function download_includes() {
   echo_red_bold "Check guarded files for changes."
   test_an_include "${DEFAULT_XML_MD5_HASH}" "${DEFAULT_XML}"
 
-  # TODO: Fix to handle the case of no deprecated properties
   echo "Building rst file from cdap-default.xml..." 
   python "${DEFAULT_TOOL}" --generate --target "${target_includes_dir}/${DEFAULT_RST}"
-  echo "Building rst file from cdap-default-deprecated.xml..." 
-  python "${DEFAULT_TOOL}" --generate -s ${DEFAULT_DEPRECATED_XML} -t "${target_includes_dir}/${DEFAULT_DEPRECATED_RST}"
   
   echo "Copying files, changing references..."
   local source_rst="${target_includes_dir}/../../source/_includes/installation"
