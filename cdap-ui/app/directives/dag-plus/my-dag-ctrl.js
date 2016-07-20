@@ -26,6 +26,8 @@ angular.module(PKG.name + '.commons')
     var sinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).sink);
     var transformSourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).transformSource);
     var transformSinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).transformSink);
+    var actionSourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).actionSource);
+    var actionSinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).actionSink);
 
     var SHOW_METRICS_THRESHOLD = 0.8;
     var METRICS_THRESHOLD = 999999999999;
@@ -360,6 +362,10 @@ angular.module(PKG.name + '.commons')
             break;
           case 'sink':
             vm.instance.addEndpoint(node.name, sinkSettings, {uuid: node.name});
+            break;
+          case 'action':
+            vm.instance.addEndpoint(node.name, actionSourceSettings, {uuid: 'Left' + node.name});
+            vm.instance.addEndpoint(node.name, actionSinkSettings, {uuid: 'Right' + node.name});
             break;
           default:
             // Need to id each end point so that it can be used later to make connections.

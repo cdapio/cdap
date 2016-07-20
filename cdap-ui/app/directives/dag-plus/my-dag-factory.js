@@ -82,6 +82,12 @@ angular.module(PKG.name + '.commons')
       settings.transformSource.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
       settings.transformSink.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
 
+      settings.actionSource = angular.copy(settings.source);
+      settings.actionSink = angular.copy(settings.sink);
+
+      settings.actionSource.anchor = [ 0.5, 1, 1, 0, 26, -43, 'actionAnchor'];
+      settings.actionSink.anchor = [ 0.5, 1, -1, 0, -26, -43, 'actionAnchor'];
+
       return settings;
     }
 
