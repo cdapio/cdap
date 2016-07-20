@@ -113,7 +113,9 @@ public class AuthorizationTest extends TestBase {
       return new String[] {
         Constants.Security.ENABLED, "true",
         Constants.Security.Authorization.ENABLED, "true",
-        Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath()
+        Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
+        // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
+        Constants.Security.KERBEROS_ENABLED, "false"
       };
     }
   }

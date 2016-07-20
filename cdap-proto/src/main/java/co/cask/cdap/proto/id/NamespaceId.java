@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
@@ -25,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a namespace.
  */
-public class NamespaceId extends EntityId {
+public class NamespaceId extends EntityId implements NamespacedId {
 
   public static final NamespaceId DEFAULT = new NamespaceId("default");
   public static final NamespaceId SYSTEM = new NamespaceId("system");

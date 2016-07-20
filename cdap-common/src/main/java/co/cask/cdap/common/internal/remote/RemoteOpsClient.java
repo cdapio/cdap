@@ -125,9 +125,7 @@ public class RemoteOpsClient {
                                                createErrorMessage(resolvedUrl, requestMethod, headers, body),
                                                response));
     } catch (IOException e) {
-      // throw diff type of Exception?
-      throw new RuntimeException(createErrorMessage(resolvedUrl, requestMethod, headers, body),
-                                 e);
+      throw new RuntimeException(createErrorMessage(resolvedUrl, requestMethod, headers, body), e);
     }
   }
 

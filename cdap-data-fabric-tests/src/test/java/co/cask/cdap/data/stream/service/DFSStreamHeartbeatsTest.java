@@ -38,6 +38,8 @@ import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -147,6 +149,8 @@ public class DFSStreamHeartbeatsTest {
 
           bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class).in(Scopes.SINGLETON);
           bind(HeartbeatPublisher.class).to(MockHeartbeatPublisher.class).in(Scopes.SINGLETON);
+
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
         }
       }));
 

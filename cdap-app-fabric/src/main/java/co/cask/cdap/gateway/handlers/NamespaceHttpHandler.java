@@ -81,8 +81,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @PUT
   @Path("/namespaces/{namespace-id}")
-  public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId)
-    throws Exception {
+  public void create(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId) throws Exception {
     Id.Namespace namespace;
     try {
       namespace = Id.Namespace.from(namespaceId);

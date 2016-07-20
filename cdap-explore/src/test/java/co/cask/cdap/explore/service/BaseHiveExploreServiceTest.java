@@ -41,6 +41,8 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -399,6 +401,7 @@ public class BaseHiveExploreServiceTest {
         @Override
         protected void configure() {
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
 
           Multibinder<HttpHandler> handlerBinder =
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
@@ -459,6 +462,7 @@ public class BaseHiveExploreServiceTest {
         @Override
         protected void configure() {
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
 
           Multibinder<HttpHandler> handlerBinder =
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));

@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
@@ -37,8 +38,10 @@ import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -58,15 +61,18 @@ public class DatasetAdminService {
   private final LocationFactory locationFactory;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final MetadataStore metadataStore;
+  private final Impersonator impersonator;
 
   @Inject
   public DatasetAdminService(RemoteDatasetFramework dsFramework, CConfiguration cConf, LocationFactory locationFactory,
-                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory, MetadataStore metadataStore) {
+                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory, MetadataStore metadataStore,
+                             Impersonator impersonator) {
     this.dsFramework = dsFramework;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.metadataStore = metadataStore;
+    this.impersonator = impersonator;
   }
 
   public boolean exists(Id.DatasetInstance datasetInstanceId) throws Exception {
@@ -107,7 +113,8 @@ public class DatasetAdminService {
           : type.reconfigure(datasetInstanceId.getId(), props, existing);
 
       DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespaceId());
-      DatasetAdmin admin = type.getAdmin(context, spec);
+      DatasetAdmin admin =
+        createImpersonatingAdmin(type.getAdmin(context, spec), datasetInstanceId.getNamespace().toEntityId());
       if (existing != null) {
         if (admin instanceof Updatable) {
           ((Updatable) admin).update(existing);
@@ -181,6 +188,7 @@ public class DatasetAdminService {
       }
 
       DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
+      admin = createImpersonatingAdmin(admin, datasetInstanceId.getNamespace().toEntityId());
       admin.drop();
     }
 
@@ -206,8 +214,18 @@ public class DatasetAdminService {
       if (admin == null) {
         throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
       }
-      return admin;
+      return createImpersonatingAdmin(admin, datasetInstanceId.getNamespace().toEntityId());
     }
+  }
+
+  // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
+  private DatasetAdmin createImpersonatingAdmin(DatasetAdmin datasetAdmin, NamespaceId namespaceId) throws IOException {
+    // if Kerberos isn't enabled (or if its in the system namespace), no wrapping is necessary
+    if (!SecurityUtil.isKerberosEnabled(cConf) || NamespaceId.SYSTEM.equals(namespaceId)) {
+      return datasetAdmin;
+    }
+
+    return new ImpersonatingDatasetAdmin(datasetAdmin, impersonator, namespaceId);
   }
 
   //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces

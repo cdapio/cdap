@@ -137,7 +137,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       return runtimeInfo;
     } catch (Exception e) {
       cleanUpTask.run();
-      LOG.error("Exception while trying to createPluginSnapshot", e);
+      LOG.error("Exception while trying to run program", e);
       throw Throwables.propagate(e);
     }
   }

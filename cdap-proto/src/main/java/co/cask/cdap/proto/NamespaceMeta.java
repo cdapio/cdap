@@ -50,7 +50,6 @@ public final class NamespaceMeta {
     return config;
   }
 
-
   /**
    * Builder used to build {@link NamespaceMeta}
    */
@@ -61,37 +60,43 @@ public final class NamespaceMeta {
     private String rootDirectory;
     private String hbaseNamespace;
     private String hiveDatabase;
+    private String principal;
+    private String keytabURI;
+
     public Builder() {
-     // No-Op
+      // No-Op
     }
 
     public Builder(NamespaceMeta meta) {
       this.name = meta.getName();
       this.description = meta.getDescription();
-      if (meta.getConfig() != null) {
-        this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
-        this.rootDirectory = meta.getConfig().getRootDirectory();
-        this.hbaseNamespace = meta.getConfig().getHbaseNamespace();
-        this.hiveDatabase = meta.getConfig().getHiveDatabase();
+      NamespaceConfig config = meta.getConfig();
+      if (config != null) {
+        this.schedulerQueueName = config.getSchedulerQueueName();
+        this.rootDirectory = config.getRootDirectory();
+        this.hbaseNamespace = config.getHbaseNamespace();
+        this.hiveDatabase = config.getHiveDatabase();
+        this.principal = config.getPrincipal();
+        this.keytabURI = config.getKeytabURI();
       }
     }
 
-    public Builder setName(final Id.Namespace id) {
+    public Builder setName(Id.Namespace id) {
       this.name = id.getId();
       return this;
     }
 
-    public Builder setName(final String name) {
+    public Builder setName(String name) {
       this.name = name;
       return this;
     }
 
-    public Builder setDescription(final String description) {
+    public Builder setDescription(String description) {
       this.description = description;
       return this;
     }
 
-    public Builder setSchedulerQueueName(final String schedulerQueueName) {
+    public Builder setSchedulerQueueName(String schedulerQueueName) {
       this.schedulerQueueName = schedulerQueueName;
       return this;
     }
@@ -111,6 +116,16 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setPrincipal(String principal) {
+      this.principal = principal;
+      return this;
+    }
+
+    public Builder setKeytabURI(String keytabURI) {
+      this.keytabURI = keytabURI;
+      return this;
+    }
+
     public NamespaceMeta build() {
       if (name == null) {
         throw new IllegalArgumentException("Namespace id cannot be null.");
@@ -126,7 +141,8 @@ public final class NamespaceMeta {
       }
 
       return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
-                                                                      hbaseNamespace, hiveDatabase));
+                                                                      hbaseNamespace, hiveDatabase,
+                                                                      principal, keytabURI));
     }
   }
 

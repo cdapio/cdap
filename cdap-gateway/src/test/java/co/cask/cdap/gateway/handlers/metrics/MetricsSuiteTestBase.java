@@ -32,6 +32,8 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -151,6 +153,7 @@ public abstract class MetricsSuiteTestBase {
       protected void configure() {
         bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
         bind(Store.class).to(DefaultStore.class);
+        bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
       }
     }));
 

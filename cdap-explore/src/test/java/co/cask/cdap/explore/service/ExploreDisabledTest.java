@@ -36,6 +36,8 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -76,7 +78,6 @@ public class ExploreDisabledTest {
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
-  private static NamespacedLocationFactory namespacedLocationFactory;
   private static NamespaceAdmin namespaceAdmin;
 
   @BeforeClass
@@ -97,14 +98,13 @@ public class ExploreDisabledTest {
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
     namespacedLocationFactory.get(namespaceId).mkdirs();
     exploreClient.addNamespace(namespaceId);
-
   }
 
   @AfterClass
@@ -227,6 +227,7 @@ public class ExploreDisabledTest {
           @Override
           protected void configure() {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           }
         }
     );

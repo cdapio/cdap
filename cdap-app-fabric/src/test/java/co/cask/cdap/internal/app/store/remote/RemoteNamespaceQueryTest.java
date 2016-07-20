@@ -105,7 +105,8 @@ public class RemoteNamespaceQueryTest {
     String hiveDb = "myHive";
     String schedulerQueue = "schQ";
     String description = "Namespace with custom HBase mapping";
-    NamespaceConfig namespaceConfig = new NamespaceConfig(schedulerQueue, rootDirectory, hbaseNamespace, hiveDb);
+    NamespaceConfig namespaceConfig = new NamespaceConfig(schedulerQueue, rootDirectory, hbaseNamespace, hiveDb,
+                                                          null, null);
     namespaceStore.create(new NamespaceMeta.Builder()
                             .setName(cdapNamespace)
                             .setDescription(description)

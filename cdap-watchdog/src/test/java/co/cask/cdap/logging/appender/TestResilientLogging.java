@@ -36,6 +36,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
@@ -47,6 +49,7 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.ReadRange;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Iterables;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -106,7 +109,13 @@ public class TestResilientLogging {
       new TransactionMetricsModule(),
       new ExploreClientModule(),
       new LoggingModules().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules());
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+        }
+      });
 
     TransactionManager txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();

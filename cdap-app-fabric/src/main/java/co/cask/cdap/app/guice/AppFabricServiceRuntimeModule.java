@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.deploy.Manager;
@@ -37,6 +38,8 @@ import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.MetadataServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.RemoteSystemOperationServiceManager;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
@@ -46,6 +49,7 @@ import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConfigHandler;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
+import co.cask.cdap.gateway.handlers.ImpersonationHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
@@ -92,6 +96,7 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.security.DefaultUGIProvider;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
@@ -145,6 +150,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(Scheduler.class).to(SchedulerService.class);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+                               bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
 
                                addInMemoryBindings(binder());
 
@@ -180,6 +186,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(Scheduler.class).to(SchedulerService.class);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+                               bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
 
                                addInMemoryBindings(binder());
 
@@ -224,7 +231,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getDistributedModules() {
 
-    return Modules.combine(new AppFabricServiceModule(),
+    return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
                            new ConfigStoreModule().getDistributedModule(),
                            new SecureStoreModules().getDistributedModules(),
                            new EntityVerifierModule(),
@@ -236,6 +243,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
+                               bind(UGIProvider.class).to(DefaultUGIProvider.class);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);

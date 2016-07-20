@@ -32,6 +32,8 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.security.ImpersonationUserResolver;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
@@ -62,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
 /**
@@ -84,6 +87,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
   private final AuthorizerInstantiator authorizerInstantiator;
   private final InstanceId instanceId;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
+  private final Impersonator impersonator;
   private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
 
   @Inject
@@ -94,7 +98,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                         ApplicationLifecycleService applicationLifecycleService,
                         ArtifactRepository artifactRepository,
                         AuthorizerInstantiator authorizerInstantiator,
-                        CConfiguration cConf, StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) {
+                        CConfiguration cConf, StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
+                        Impersonator impersonator) {
     super(nsStore);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
@@ -110,6 +115,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     this.authorizerInstantiator = authorizerInstantiator;
     this.instanceId = createInstanceId(cConf);
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
+    this.impersonator = impersonator;
   }
 
   /**
@@ -119,7 +125,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
   @Override
-  public synchronized void create(NamespaceMeta metadata) throws Exception {
+  public synchronized void create(final NamespaceMeta metadata) throws Exception {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
     NamespaceId namespace = new NamespaceId(metadata.getName());
@@ -140,7 +146,13 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     nsStore.create(metadata);
 
     try {
-      storageProviderNamespaceAdmin.create(metadata);
+      impersonator.doAs(namespace, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          storageProviderNamespaceAdmin.create(metadata);
+          return null;
+        }
+      });
     } catch (IOException | ExploreException | SQLException e) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       nsStore.delete(metadata.getNamespaceId().toId());
@@ -208,8 +220,14 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
       if (!Id.Namespace.DEFAULT.equals(namespaceId)) {
         try {
-          // Delete namespace in storage providers
-          storageProviderNamespaceAdmin.delete(namespaceId.toEntityId());
+          impersonator.doAs(namespace, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              // Delete namespace in storage providers
+              storageProviderNamespaceAdmin.delete(namespaceId.toEntityId());
+              return null;
+            }
+          });
         } finally {
           // Finally delete namespace from MDS
           nsStore.delete(namespaceId);
@@ -263,7 +281,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       throw new NamespaceNotFoundException(namespaceId);
     }
     authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+                                         Action.ADMIN);
+
     NamespaceMeta existingMeta = nsStore.get(namespaceId);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
 

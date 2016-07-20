@@ -20,8 +20,10 @@ import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data2.security.ImpersonationInfo;
+import co.cask.cdap.data2.security.ImpersonationUserResolver;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Maps;
@@ -37,11 +39,17 @@ public class PropertiesResolver {
 
   private final PreferencesStore prefStore;
   private final SchedulerQueueResolver queueResolver;
+  private final ImpersonationUserResolver impersonationUserResolver;
+  private final boolean kerberosEnabled;
 
   @Inject
-  PropertiesResolver(PreferencesStore prefStore, NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
+  PropertiesResolver(PreferencesStore prefStore, CConfiguration cConf,
+                     SchedulerQueueResolver schedulerQueueResolver,
+                     ImpersonationUserResolver impersonationUserResolver) {
     this.prefStore = prefStore;
-    this.queueResolver = new SchedulerQueueResolver(cConf, namespaceQueryAdmin);
+    this.queueResolver = schedulerQueueResolver;
+    this.impersonationUserResolver = impersonationUserResolver;
+    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
   }
 
   public Map<String, String> getUserProperties(Id.Program id) {
@@ -54,6 +62,12 @@ public class PropertiesResolver {
   public Map<String, String> getSystemProperties(Id.Program id) throws IOException, NamespaceNotFoundException {
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
+    if (kerberosEnabled) {
+      ImpersonationInfo impersonationInfo =
+        impersonationUserResolver.getImpersonationInfo(id.getNamespace().toEntityId());
+      systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
+      systemArgs.put(ProgramOptionConstants.KEYTAB_URI, impersonationInfo.getKeytabURI());
+    }
     return systemArgs;
   }
 }
