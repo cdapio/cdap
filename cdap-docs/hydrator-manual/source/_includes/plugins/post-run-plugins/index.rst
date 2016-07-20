@@ -8,7 +8,7 @@
 Post-run Plugins
 ================
 
-Hydrator Version |cdap-hydrator-version|
+Hydrator Version |cask-hydrator-version|
 
 .. toctree::
     :maxdepth: 1

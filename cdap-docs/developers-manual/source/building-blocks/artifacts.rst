@@ -71,7 +71,7 @@ Normally, an artifact is added to a specific namespace. Users in one namespace c
 artifacts in another namespace. These are referred to as :ref:`user artifacts <plugins-deployment-user>`.
 
 Sometimes there is a need to provide an artifact that can be used across namespaces. One
-example of this are the :ref:`ETL artifacts <cdap-apps-etl-plugins>` shipped with 
+example of this are the :ref:`Hydrator artifacts <cask-hydrator-plugins>` shipped with 
 CDAP. In such scenarios, a :ref:`system artifact <plugins-deployment-system>` can be used. 
 
 System artifacts cannot be added through the RESTful API, but must be added by placing the

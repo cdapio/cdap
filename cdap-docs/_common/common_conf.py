@@ -26,15 +26,20 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+###############################################################
 # Component versions used in replacements:
 
-cask_tracker_version = '0.1.0-SNAPSHOT'
-
-cdap_apps_version = '0.7.0-SNAPSHOT'
+cdap_apps_version = '0.7.0'
 cdap_apps_compatibile_version = 'release/cdap-3.4-compatible'
 
 node_js_min_version = 'beginning with v0.10.36'
 node_js_max_version = 'v4.4.0'
+
+# These obtained from the OS environment
+# cask_hydrator_version
+# cask_tracker_version
+
+###############################################################
 
 import sys
 import os
@@ -133,7 +138,7 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 intersphinx_mapping_cdap_manuals = {
   'introduction': ('../../introduction/',      os.path.abspath(_intersphinx_mapping % 'introduction')),
   'developers':   ('../../developers-manual/', os.path.abspath(_intersphinx_mapping % 'developers-manual')),
-  'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
+#   'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
   'admin':        ('../../admin-manual/',      os.path.abspath(_intersphinx_mapping % 'admin-manual')),
   'integrations': ('../../integrations/',      os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',    os.path.abspath(_intersphinx_mapping % 'examples-manual')),
@@ -235,7 +240,7 @@ rst_epilog = """
 .. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
 """
 
-if node_js_min_version:
+if node_js_min_version and node_js_max_version:
     rst_epilog += """
 .. |node-js-min-version| replace:: %(node_js_min_version)s
 
@@ -299,14 +304,18 @@ if copyright:
 .. |copyright| replace:: %(copyright)s
 """ % {'copyright': copyright}
 
-if cdap_apps_version:
+# cdap_apps_version is for https://github.com/caskdata/cdap-apps repo
+if cdap_apps_version and cdap_apps_compatibile_version:
     rst_epilog += """
 .. |cdap-apps-version| replace:: %(cdap-apps-version)s
 .. |literal-cdap-apps-version| replace:: ``%(cdap-apps-version)s``
 .. |cdap-apps-compatibile-version| replace:: %(cdap-apps-compatibile-version)s
 
 """ % {'cdap-apps-version': cdap_apps_version, 'cdap-apps-compatibile-version': cdap_apps_compatibile_version}
+else:
+    print 'Unable to find cdap_apps_version and cdap_apps_compatibile_version'    
 
+cask_tracker_version = os.environ.get('CASK_TRACKER_VERSION')
 if cask_tracker_version:
     rst_epilog += """
 .. |cask-tracker-version| replace:: %(cask-tracker-version)s
@@ -315,13 +324,19 @@ if cask_tracker_version:
 .. |literal-cask-tracker-version-jar| replace:: ``tracker-%(cask-tracker-version)s.jar``
 
 """ % {'cask-tracker-version': cask_tracker_version}
+else:
+    print 'Unable to find CASK_TRACKER_VERSION'    
 
-rst_epilog += """
+cask_hydrator_version = os.environ.get('CASK_HYDRATOR_VERSION')
+if cask_hydrator_version:
+    rst_epilog += """
 .. |cask-hydrator-version| replace:: %(cask-hydrator-version)s
 
 .. |literal-cask-hydrator-version| replace:: ``%(cask-hydrator-version)s``
 
-""" % {'cask-hydrator-version': os.environ.get('CASK_HYDRATOR_VERSION')}
+""" % {'cask-hydrator-version': cask_hydrator_version}
+else:
+    print 'Unable to find CASK_HYDRATOR_VERSION'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -389,7 +404,7 @@ html_theme = 'cdap'
 cdap_manuals_list = [
     ['introduction',      'introduction', 'Introduction to CDAP',            '',],
     ['developers-manual', 'developers',  u'Developers’ Manual',              '',],
-    ['cdap-apps',         'cdapapps',     'CDAP Applications',               '',],
+#     ['cdap-apps',         'cdapapps',     'CDAP Applications',               '',],
     ['admin-manual',      'admin',        'Administration Manual',           '',],
     ['integrations',      'integrations', 'Integrations',                    '',],
     ['examples-manual',   'examples',     'Examples, Guides, and Tutorials', '',],

@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-developing-plugins-basics:
+.. _cask-hydrator-developing-plugin-basics:
 
 =============
 Plugin Basics

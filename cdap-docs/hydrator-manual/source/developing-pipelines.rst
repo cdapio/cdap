@@ -232,7 +232,7 @@ when the run completes, a post-action send an email indicating that the run has 
               "type": "batchsource",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "system"
               },
               "properties": {
@@ -250,7 +250,7 @@ when the run completes, a post-action send an email indicating that the run has 
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "system"
               },              
               "properties": {
@@ -334,7 +334,7 @@ stream after performing a projection transformation, you can use a configuration
               "type": "realtimesource",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "system"
               },
               "properties": {
@@ -353,7 +353,7 @@ stream after performing a projection transformation, you can use a configuration
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "system"
               },
               "properties": {
@@ -369,7 +369,7 @@ stream after performing a projection transformation, you can use a configuration
               "type": "realtimesink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "system"
               },              
               "properties": {
@@ -446,7 +446,7 @@ in the step ``spendingUsersScript``:
               "type": "batchsource",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -464,7 +464,7 @@ in the step ``spendingUsersScript``:
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -481,7 +481,7 @@ in the step ``spendingUsersScript``:
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -498,7 +498,7 @@ in the step ``spendingUsersScript``:
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cdap-hydrator-version|",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -802,5 +802,5 @@ creating the source:
 Prebuilt JARs
 -------------
 In a case where you'd like to use prebuilt third-party JARs (such as a
-JDBC driver) as a plugin, please refer to the section on :ref:`Using Third-Party Jars
-<cdap-apps-third-party-jars>`. 
+JDBC driver) as a plugin, please refer to the section on :ref:`Deploying Third-Party Jars
+<cask-hydrator-third-party-plugins>`. 

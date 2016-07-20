@@ -149,7 +149,7 @@ your own custom validation function.
 
 Types of Plugins
 ----------------
-These are the basic plugin types in |cdap-hydrator-version|:
+These are the basic plugin types in |cask-hydrator-version|:
 
 - Action
 - Aggregator

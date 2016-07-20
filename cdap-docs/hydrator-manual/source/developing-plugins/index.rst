@@ -13,7 +13,7 @@ Developing Plugins
 .. toctree::
     :maxdepth: 4
 
-    Plugin Basics <basics>
+    Plugin Basics <plugin-basics>
     Creating a Plugin <creating-a-plugin>
     Testing Plugins <testing-plugins>
     Packaging Plugins <packaging-plugins>

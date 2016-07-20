@@ -185,7 +185,7 @@ function download_includes() {
     if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
       local hydrator_branch="develop"
     else
-      local hydrator_branch="${GIT_BRANCH_CDAP_HYDRATOR}"
+      local hydrator_branch="${GIT_BRANCH_CASK_HYDRATOR}"
     fi
     HYDRATOR_SOURCE="${base_source}/${hydrator_branch}"
   fi

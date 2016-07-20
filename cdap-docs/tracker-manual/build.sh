@@ -16,6 +16,7 @@
   
 # Build script for docs
 
+source ../vars
 source ../_common/common-build.sh
 
 run_command ${1}

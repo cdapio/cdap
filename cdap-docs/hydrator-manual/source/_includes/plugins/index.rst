@@ -20,7 +20,7 @@ Plugin Reference
     Post-run Plugins <post-run-plugins/index>
 
 
-These plugins (from Hydrator Version |cdap-hydrator-version|) are shipped with CDAP, both in the
+These plugins (from Hydrator Version |cask-hydrator-version|) are shipped with CDAP, both in the
 SDK and Distributed CDAP:
 
 - :doc:`Action Plugins <actions/index>`

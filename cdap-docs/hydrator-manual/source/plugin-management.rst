@@ -54,7 +54,7 @@ Deploying Third-Party JARs
 JDBC driver) as a plugin, you will need to create a JSON file to describe the JAR.
 
 For information on the format of the JSON, please refer to the sections on
-:ref:`Third Party Plugins <plugins-third-party>` and :ref:`Plugin Deployment <plugins-deployment>`.
+:ref:`Third-Party Plugins <plugins-third-party>` and :ref:`Plugin Deployment <plugins-deployment>`.
 
 A sample JDBC Driver Plugin configuration:
 

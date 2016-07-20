@@ -53,8 +53,8 @@ function download_includes() {
   local includes_dir=${1}
   set_version
 
-  local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
-  local ingest_branch="release/${CDAP_INGEST_RELEASE_VERSION}"
+  local clients_branch="release/${GIT_BRANCH_CDAP_CLIENTS}"
+  local ingest_branch="release/${GIT_BRANCH_CDAP_INGEST}"
 
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     clients_branch="develop"

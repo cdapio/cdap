@@ -68,21 +68,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Advanced Topics:** Best practices for CDAP development, class loading in CDAP, adding a custom logback
 
 
-.. |cdap-apps| replace:: **CDAP Applications:**
-.. _cdap-apps: cdap-apps/index.html
-
-- |cdap-apps|_
-
-  - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases 
-  - **Introduction to CDAP Applications:** Applications that are reusable through configuration and
-    extensible through plugins 
-  - **Cask Hydrator and ETL Pipelines:** Makes performing ETL possible without writing code 
-  - **Creating Custom ETL Plugins:** For developers of custom ETL plugins
-  - **Cask Tracker:** A CDAP extension that captures metadata for datasets, streams, and stream views
-  - **Data Quality:** An extensible *CDAP Application* to assess the quality of data
-    using its out-of-the-box functionality and libraries
-  
-  
 .. |admin-manual| replace:: **Administration Manual:**
 .. _admin-manual: admin-manual/index.html
 
@@ -164,3 +149,21 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. _search: search.html
 
 - |search|_ Search this documentation using *Quick Search*
+
+
+.. |cdap-extensions| replace:: **CDAP Extensions:**
+
+- |cdap-extensions|
+
+  .. |cask-hydrator| replace:: **Cask Hydrator:**
+  .. _cask-hydrator: hydrator-manual/index.html
+
+  - |cask-hydrator|_ Creating data pipelines without writing code, including details on
+    developing and packaging custom plugins
+
+
+  .. |cask-tracker| replace:: **Cask Tracker:**
+  .. _cask-tracker: tracker-manual/index.html
+
+  - |cask-tracker|_ A CDAP extension that captures metadata for datasets, streams, and stream views  
+

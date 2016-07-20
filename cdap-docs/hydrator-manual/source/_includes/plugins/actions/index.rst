@@ -8,7 +8,7 @@
 Action Plugins
 ==============
 
-Hydrator Version |cdap-hydrator-version|
+Hydrator Version |cask-hydrator-version|
 
 .. Disabled as there are no action plugins currently
 .. 
