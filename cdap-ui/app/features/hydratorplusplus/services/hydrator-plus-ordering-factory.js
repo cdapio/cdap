@@ -19,7 +19,7 @@ function HydratorPlusPlusOrderingFactory() {
     let artifactMap = {
       'cdap-etl-batch': 'ETL Batch',
       'cdap-etl-realtime': 'ETL Realtime',
-      'cdap-data-pipeline': 'Data Pipeline (Beta)'
+      'cdap-data-pipeline': 'Data Pipeline'
     };
 
     return artifactMap[artifactName];
