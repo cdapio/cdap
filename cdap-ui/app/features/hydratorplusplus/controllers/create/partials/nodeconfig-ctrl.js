@@ -167,8 +167,8 @@ class HydratorPlusPlusNodeConfigCtrl {
               let streams = [], datasets = [];
               let jumpConfigStreams = jumpConfig.streams || [],
                   jumpConfigDatasets = jumpConfig.datasets || [];
-              streams = jumpConfigStreams.map(stream => ({ streamId: properties[stream.name] , entityType: 'streams' }));
-              datasets = jumpConfigDatasets.map(dataset => ({ datasetId: properties[dataset.name], entityType: 'datasets' }));
+              streams = jumpConfigStreams.map(stream => ({ streamId: properties[stream['ref-property-name']] , entityType: 'streams' }));
+              datasets = jumpConfigDatasets.map(dataset => ({ datasetId: properties[dataset['ref-property-name']], entityType: 'datasets' }));
               return {streams, datasets};
             };
             if (res.errorDataset || this.state.node.errorDatasetName) {
