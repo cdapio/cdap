@@ -46,7 +46,7 @@ public final class LogCleanup implements Runnable {
     this.namespacesDir = namespacesDir;
     this.retentionDurationMs = retentionDurationMs;
 
-    LOG.info("Log retention duration = {} ms", retentionDurationMs);
+    LOG.debug("Log retention duration = {} ms", retentionDurationMs);
   }
 
   @Override
