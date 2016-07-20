@@ -640,15 +640,6 @@
   </property>
 
   <property>
-    <name>explore.executor.container.instances</name>
-    <value>1</value>
-    <description>
-      Number of explore executor instances (deprecated: instance count is
-      always set to 1)
-    </description>
-  </property>
-
-  <property>
     <name>explore.executor.container.memory.mb</name>
     <value>1024</value>
     <description>
@@ -661,15 +652,6 @@
     <value>1</value>
     <description>
       Number of virtual cores for each explore executor instance
-    </description>
-  </property>
-
-  <property>
-    <name>explore.executor.max.instances</name>
-    <value>1</value>
-    <description>
-      Maximum number of explore executor instances (deprecated: instance
-      count is always set to 1)
     </description>
   </property>
 
@@ -749,60 +731,6 @@
   <!-- Kafka Server Configuration -->
 
   <property>
-    <name>kafka.bind.address</name>
-    <value>${kafka.server.host.name}</value>
-    <description>
-      CDAP Kafka service bind port (deprecated: replaced with
-      ${kafka.server.host.name})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.bind.port</name>
-    <value>${kafka.server.port}</value>
-    <description>
-      CDAP Kafka service bind port (deprecated: replaced with
-      ${kafka.server.port})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.default.replication.factor</name>
-    <value>${kafka.server.default.replication.factor}</value>
-    <description>
-      CDAP Kafka service replication factor (deprecated: replaced with
-      ${kafka.server.default.replication.factor})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.log.dir</name>
-    <value>${kafka.server.log.dirs}</value>
-    <description>
-      CDAP Kafka service log storage directory (deprecated: replaced with
-      ${kafka.server.log.dirs})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.log.retention.hours</name>
-    <value>${kafka.server.log.retention.hours}</value>
-    <description>
-      The number of hours to keep a log file before deleting it (deprecated:
-      replaced with ${kafka.server.log.retention.hours})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.num.partitions</name>
-    <value>${kafka.server.num.partitions}</value>
-    <description>
-      Default number of partitions for a topic (deprecated: replaced with
-      ${kafka.server.num.partitions})
-    </description>
-  </property>
-
-  <property>
     <name>kafka.seed.brokers</name>
     <value>127.0.0.1:9092</value>
     <description>
@@ -879,16 +807,6 @@
     <description>
       The maximum time (in milliseconds) that the client will wait to
       establish a connection to Zookeeper
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.zookeeper.connection.timeout.ms</name>
-    <value>${kafka.server.zookeeper.connection.timeout.ms}</value>
-    <description>
-      The maximum time (in milliseconds) that the client will wait to
-      establish a connection to Zookeeper (deprecated: replaced with
-      ${kafka.server.zookeeper.connection.timeout.ms})
     </description>
   </property>
 
@@ -1115,35 +1033,6 @@
     <value>${http.service.worker.threads}</value>
     <description>
       Number of Netty service IO worker threads for metadata HTTP service
-    </description>
-  </property>
-
-  <property>
-    <name>metadata.updates.kafka.broker.list</name>
-    <value>127.0.0.1:${kafka.bind.port}</value>
-    <description>
-      Apache Kafka broker list to which metadata update notifications are
-      published (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>metadata.updates.kafka.topic</name>
-    <value>cdap-metadata-updates</value>
-    <description>
-      Apache Kafka topic name to which metadata update notifications are
-      published (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>metadata.updates.publish.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if metadata updates will be published to Apache Kafka.
-      External systems can subscribe to the Kafka topic determined by
-      ${metadata.updates.kafka.topic} to receive notifications of metadata
-      updates (deprecated).
     </description>
   </property>
 
@@ -1524,31 +1413,6 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-    </description>
-  </property>
-
-  <property>
-    <name>router.ssl.webapp.bind.port</name>
-    <value>20443</value>
-    <description>
-      CDAP Router service bind port for webapp for HTTPS (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.bind.port</name>
-    <value>20000</value>
-    <description>
-      CDAP Router service bind port for webapp (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if the webapp listening service should be started
-      (deprecated)
     </description>
   </property>
 
