@@ -22,7 +22,6 @@ import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
@@ -86,14 +85,11 @@ public final class LoggingContextHelper {
     String namespaceId = tags.get(NamespaceLoggingContext.TAG_NAMESPACE_ID);
     String applicationId = tags.get(ApplicationLoggingContext.TAG_APPLICATION_ID);
 
-    String systemId = tags.get(SystemLoggingContext.TAG_SYSTEM_ID);
     String componentId = tags.get(ComponentLoggingContext.TAG_COMPONENT_ID);
 
-    // No namespace id or application id present.
-    if (namespaceId == null || applicationId == null) {
-      if (systemId == null || componentId == null) {
-        throw new IllegalArgumentException("No namespace/application or system/component id present");
-      }
+    // No namespace id or either from application id or component id is not present
+    if (namespaceId == null || (applicationId == null && componentId == null)) {
+      throw new IllegalArgumentException("No namespace/application or system/component id present");
     }
 
     if (tags.containsKey(FlowletLoggingContext.TAG_FLOW_ID)) {
@@ -125,7 +121,7 @@ public final class LoggingContextHelper {
                                            tags.get(ApplicationLoggingContext.TAG_RUN_ID),
                                            tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     } else if (tags.containsKey(ServiceLoggingContext.TAG_SERVICE_ID)) {
-      return new ServiceLoggingContext(systemId, componentId,
+      return new ServiceLoggingContext(namespaceId, componentId,
                                        tags.get(ServiceLoggingContext.TAG_SERVICE_ID));
     } else if (tags.containsKey(WorkerLoggingContext.TAG_WORKER_ID)) {
       return new WorkerLoggingContext(namespaceId, applicationId, tags.get(WorkerLoggingContext.TAG_WORKER_ID),
@@ -186,12 +182,12 @@ public final class LoggingContextHelper {
 
   public static Filter createFilter(LoggingContext loggingContext) {
     if (loggingContext instanceof ServiceLoggingContext) {
-      String systemId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SYSTEM_ID).getValue();
+      String systemId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_NAMESPACE_ID).getValue();
       String componentId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_COMPONENT_ID).getValue();
       String tagName = ServiceLoggingContext.TAG_SERVICE_ID;
       String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue();
       return new AndFilter(
-        ImmutableList.of(new MdcExpression(ServiceLoggingContext.TAG_SYSTEM_ID, systemId),
+        ImmutableList.of(new MdcExpression(ServiceLoggingContext.TAG_NAMESPACE_ID, systemId),
                          new MdcExpression(ServiceLoggingContext.TAG_COMPONENT_ID, componentId),
                          new MdcExpression(tagName, entityId)));
     } else {
