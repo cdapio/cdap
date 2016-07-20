@@ -31,11 +31,6 @@ angular.module(PKG.name + '.commons')
         [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
       ]
     };
-    var disabledConnectorOverlays = {
-      connectorOverlays: [
-        [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ]
-      ]
-    };
 
     var commonSettings = {
       endpoint:'Dot',
@@ -48,48 +43,51 @@ angular.module(PKG.name + '.commons')
       },
       anchors: [ 'Static']
     };
-    var sourceSettings = angular.extend({
+    var originSettings = angular.extend({
       isSource: true,
       connectorStyle: connectorStyle,
-      anchor: [ 0.5, 1, 1, 0, 26, -43, 'sourceAnchor']
+      connectorOverlays: [
+        [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
+      ],
+      anchor: [ 0.5, 1, 1, 0, 26, -43 ]
     }, commonSettings);
-    var sinkSettings = angular.extend({
+    var targetSettings = angular.extend({
       isTarget: true,
-      anchor: [ 0.5, 1, -1, 0, -26, -43, 'sinkAnchor'],
+      connectorOverlays: [
+        [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
+      ],
+      anchor: [ 0.5, 1, -1, 0, -27, -43 ],
       connectorStyle: connectorStyle
     }, commonSettings);
 
-    function getSettings(isDisabled) {
-      var settings = {};
-      if (isDisabled) {
-        settings = {
-          default: defaultSettings,
-          commonSettings: angular.extend(commonSettings, disabledConnectorOverlays),
-          source: angular.extend(sourceSettings, disabledConnectorOverlays),
-          sink: angular.extend(sinkSettings, disabledConnectorOverlays)
-        };
-      } else {
-        settings = {
-          default: defaultSettings,
-          commonSettings: angular.extend(commonSettings, connectorOverlays),
-          source: angular.extend(sourceSettings, connectorOverlays),
-          sink: angular.extend(sinkSettings, connectorOverlays)
-        };
-      }
+    function getSettings() {
+      var settings = {
+        default: defaultSettings,
+        commonSettings: angular.extend(commonSettings, connectorOverlays),
+        sourceOrigin: angular.copy(originSettings),
+        sourceTarget: angular.copy(targetSettings),
+        transformOrigin: angular.copy(originSettings),
+        transformTarget: angular.copy(targetSettings),
+        sinkOrigin: angular.copy(originSettings),
+        sinkTarget: angular.copy(targetSettings),
+        actionOrigin: angular.copy(originSettings),
+        actionTarget: angular.copy(targetSettings),
+      };
 
-      settings.transformSource = angular.copy(settings.source);
-      settings.transformSink = angular.copy(settings.sink);
-      settings.transformSource.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
-      settings.transformSink.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
+      settings.sourceOrigin.anchor.push('sourceAnchor');
+      settings.sourceTarget.anchor.push('sourceAnchor');
 
-      settings.actionSource = angular.copy(settings.source);
-      settings.actionSink = angular.copy(settings.sink);
+      settings.transformOrigin.anchor.push('transformAnchor');
+      settings.transformTarget.anchor.push('transformAnchor');
 
-      settings.actionSource.anchor = [ 0.5, 1, 1, 0, 26, -43, 'actionAnchor'];
-      settings.actionSink.anchor = [ 0.5, 1, -1, 0, -26, -43, 'actionAnchor'];
+      settings.sinkOrigin.anchor.push('sinkAnchor');
+      settings.sinkTarget.anchor.push('sinkAnchor');
 
-      settings.actionSource.connectorStyle['stroke-dasharray'] = [2,2];
-      settings.actionSink.connectorStyle['stroke-dasharray'] = [2,2];
+      settings.actionOrigin.anchor.push('actionAnchor');
+      settings.actionTarget.anchor.push('actionAnchor');
+
+      settings.actionOrigin.connectorStyle['stroke-dasharray'] = [2,2];
+      settings.sinkOrigin.connectorStyle['stroke-dasharray'] = [2,2];
 
       return settings;
     }

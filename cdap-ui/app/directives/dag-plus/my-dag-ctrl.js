@@ -22,12 +22,16 @@ angular.module(PKG.name + '.commons')
     var numberFilter = $filter('number');
 
     var endpoints = [];
-    var sourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).source);
-    var sinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).sink);
-    var transformSourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).transformSource);
-    var transformSinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).transformSink);
-    var actionSourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).actionSource);
-    var actionSinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).actionSink);
+
+    var sourceOrigin = angular.copy(DAGPlusPlusFactory.getSettings().sourceOrigin),
+        sourceTarget = angular.copy(DAGPlusPlusFactory.getSettings().sourceTarget),
+        transformOrigin = angular.copy(DAGPlusPlusFactory.getSettings().transformOrigin),
+        transformTarget = angular.copy(DAGPlusPlusFactory.getSettings().transformTarget),
+        sinkOrigin = angular.copy(DAGPlusPlusFactory.getSettings().sinkOrigin),
+        sinkTarget = angular.copy(DAGPlusPlusFactory.getSettings().sinkTarget),
+        actionOrigin = angular.copy(DAGPlusPlusFactory.getSettings().actionOrigin),
+        actionTarget = angular.copy(DAGPlusPlusFactory.getSettings().actionTarget);
+
 
     var SHOW_METRICS_THRESHOLD = 0.8;
     var METRICS_THRESHOLD = 999999999999;
@@ -50,8 +54,8 @@ angular.module(PKG.name + '.commons')
     ];
 
     if ($scope.showMetrics) {
-      sourceSettings.overlays = metricsLabel;
-      transformSourceSettings.overlays = metricsLabel;
+      sourceOrigin.overlays = metricsLabel;
+      transformOrigin.overlays = metricsLabel;
     }
 
     var dragged = false;
@@ -129,15 +133,10 @@ angular.module(PKG.name + '.commons')
           if (!sourceNode.length || !targetNode.length) {
             return;
           }
-          let batch = GLOBALS.etlBatch, realtime = GLOBALS.etlRealtime, datapipeline = GLOBALS.etlDataPipeline;
-          let pluginTypes = GLOBALS.pluginTypes;
-          let notATransformTypeNode = [
-            pluginTypes[batch].source, pluginTypes[batch].sink,
-            pluginTypes[realtime].source,  pluginTypes[realtime].sink,
-            pluginTypes[datapipeline].sparksink
-          ];
-          var sourceId = notATransformTypeNode.indexOf(sourceNode[0].type) === -1 ? 'Left' + conn.from : conn.from;
-          var targetId = notATransformTypeNode.indexOf(targetNode[0].type) === -1 ? 'Right' + conn.to : conn.to;
+
+          var sourceId = 'Origin' + conn.from;
+          var targetId = 'Target' + conn.to;
+
           var connObj = {
             uuids: [sourceId, targetId]
           };
@@ -358,19 +357,21 @@ angular.module(PKG.name + '.commons')
 
         switch(type) {
           case 'source':
-            vm.instance.addEndpoint(node.name, sourceSettings, {uuid: node.name});
+            vm.instance.addEndpoint(node.name, sourceOrigin, {uuid: 'Origin' + node.name});
+            vm.instance.addEndpoint(node.name, sourceTarget, {uuid: 'Target' + node.name});
             break;
           case 'sink':
-            vm.instance.addEndpoint(node.name, sinkSettings, {uuid: node.name});
+            vm.instance.addEndpoint(node.name, sinkOrigin, {uuid: 'Origin' + node.name});
+            vm.instance.addEndpoint(node.name, sinkTarget, {uuid: 'Target' + node.name});
             break;
           case 'action':
-            vm.instance.addEndpoint(node.name, actionSourceSettings, {uuid: 'Left' + node.name});
-            vm.instance.addEndpoint(node.name, actionSinkSettings, {uuid: 'Right' + node.name});
+            vm.instance.addEndpoint(node.name, actionOrigin, {uuid: 'Origin' + node.name});
+            vm.instance.addEndpoint(node.name, actionTarget, {uuid: 'Target' + node.name});
             break;
           default:
             // Need to id each end point so that it can be used later to make connections.
-            vm.instance.addEndpoint(node.name, transformSourceSettings, {uuid: 'Left' + node.name});
-            vm.instance.addEndpoint(node.name, transformSinkSettings, {uuid: 'Right' + node.name});
+            vm.instance.addEndpoint(node.name, transformOrigin, {uuid: 'Origin' + node.name});
+            vm.instance.addEndpoint(node.name, transformTarget, {uuid: 'Target' + node.name});
             break;
         }
       });
