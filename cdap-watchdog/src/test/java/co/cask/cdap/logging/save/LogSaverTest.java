@@ -131,11 +131,12 @@ public class LogSaverTest extends KafkaTestBase {
 
   @Test
   public void testCheckpoint() throws Exception {
-    TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
-    Set<KafkaLogProcessor> processors =
-      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
+    TypeLiteral<Set<KafkaLogProcessorFactory>> type = new TypeLiteral<Set<KafkaLogProcessorFactory>>() { };
+    Set<KafkaLogProcessorFactory> processorFactories =
+      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)));
 
-    for (KafkaLogProcessor processor : processors) {
+    for (KafkaLogProcessorFactory processorFactory : processorFactories) {
+      KafkaLogProcessor processor = processorFactory.create();
       CheckpointManager checkpointManager = getCheckPointManager(processor);
 
       // Verify checkpoint offset

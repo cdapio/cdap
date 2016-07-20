@@ -23,6 +23,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaConsumer;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -69,9 +71,8 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
       return;
     }
 
-    int count = 0;
-
     long oldestProcessed = Long.MAX_VALUE;
+    List<KafkaLogEvent> events = Lists.newArrayList();
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
       try {
@@ -82,16 +83,7 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
         KafkaLogEvent logEvent = new KafkaLogEvent(genericRecord, event, loggingContext,
                                                    message.getTopicPartition().getPartition(),
                                                    message.getNextOffset());
-
-        for (KafkaLogProcessor processor : kafkaLogProcessors) {
-          try {
-            processor.process(logEvent);
-          } catch (Throwable th) {
-            LOG.error("Error processing kafka log event in processor {}",
-                      processor.getClass().getSimpleName());
-          }
-        }
-
+        events.add(logEvent);
         if (event.getTimeStamp() < oldestProcessed) {
           oldestProcessed = event.getTimeStamp();
         }
@@ -100,11 +92,19 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
                   message.getTopicPartition().getTopic(),
                   message.getTopicPartition().getPartition());
       }
-
-      count++;
     }
 
-    if (count > 0) {
+    int count = events.size();
+    if (!events.isEmpty()) {
+      for (KafkaLogProcessor processor : kafkaLogProcessors) {
+        try {
+          processor.process(events.iterator());
+        } catch (Throwable th) {
+          LOG.error("Error processing kafka log event in processor {}",
+                    processor.getClass().getSimpleName());
+        }
+      }
+
       // todo: use hostogram when available (CDAP-3120)
       metricsContext.gauge(Constants.Metrics.Name.Log.PROCESS_DELAY, System.currentTimeMillis() - oldestProcessed);
       metricsContext.increment(Constants.Metrics.Name.Log.PROCESS_MESSAGES_COUNT, count);

@@ -18,24 +18,26 @@ package co.cask.cdap.logging.save;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -51,58 +53,62 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
 
   private final CheckpointManager checkpointManager;
   private final MetricsCollectionService metricsCollectionService;
+  private final CConfiguration cConfig;
 
   private final Map<Integer, Checkpoint> partitionCheckpoints = Maps.newConcurrentMap();
   private ListeningScheduledExecutorService scheduledExecutor;
   private CheckPointWriter checkPointWriter;
+  private int partition;
 
-  @Inject
   public LogMetricsPlugin (MetricsCollectionService metricsCollectionService,
-                           CheckpointManagerFactory checkpointManagerFactory) {
+                           CheckpointManagerFactory checkpointManagerFactory, CConfiguration cConfig) {
     this.metricsCollectionService = metricsCollectionService;
+    this.cConfig = cConfig;
     this.checkpointManager = checkpointManagerFactory.create(KafkaTopic.getTopic(), ROW_KEY_PREFIX);
   }
 
   @Override
-  public void init(Set<Integer> partitions) {
-    super.init(partitions, checkpointManager);
+  public void init(int partition) throws Exception {
+    long checkpointIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
+                                                LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
+    Preconditions.checkArgument(checkpointIntervalMs > 0,
+                                "Checkpoint interval is invalid: %s", checkpointIntervalMs);
+
+    Checkpoint checkpoint = checkpointManager.getCheckpoint(partition);
+    super.init(checkpoint);
+    this.partition = partition;
 
     scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("log-saver-metrics-plugin")));
 
     partitionCheckpoints.clear();
-    try {
-      Map<Integer, Checkpoint> partitionMap = checkpointManager.getCheckpoint(partitions);
-      for (Map.Entry<Integer, Checkpoint> partition : partitionMap.entrySet()) {
-        partitionCheckpoints.put(partition.getKey(), partition.getValue());
-      }
-    } catch (Exception e) {
-      LOG.error("Caught exception while reading checkpoint", e);
-      throw Throwables.propagate(e);
-    }
+    partitionCheckpoints.put(partition, checkpoint);
 
     checkPointWriter = new CheckPointWriter(checkpointManager, partitionCheckpoints);
-    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 500, TimeUnit.MILLISECONDS);
+    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, checkpointIntervalMs, checkpointIntervalMs,
+                                             TimeUnit.MILLISECONDS);
   }
 
   @Override
-  public void doProcess(KafkaLogEvent event) {
+  public void doProcess(Iterator<KafkaLogEvent> events) {
 
-    LoggingContext context = event.getLoggingContext();
-    Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
-    MetricsContext collector = metricsCollectionService.getContext(tags);
+    while (events.hasNext()) {
+      KafkaLogEvent event = events.next();
+      LoggingContext context = event.getLoggingContext();
+      Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
+      MetricsContext collector = metricsCollectionService.getContext(tags);
 
-    String metricName = getMetricName(tags.get(Constants.Metrics.Tag.NAMESPACE),
-                                      event.getLogEvent().getLevel().toString().toLowerCase());
+      String metricName = getMetricName(tags.get(Constants.Metrics.Tag.NAMESPACE),
+                                        event.getLogEvent().getLevel().toString().toLowerCase());
 
-    if  (!(tags.containsKey(Constants.Metrics.Tag.COMPONENT) &&
-           tags.get(Constants.Metrics.Tag.COMPONENT).equals(Constants.Service.METRICS_PROCESSOR))) {
-      collector.increment(metricName, 1);
+      if  (!(tags.containsKey(Constants.Metrics.Tag.COMPONENT) &&
+             tags.get(Constants.Metrics.Tag.COMPONENT).equals(Constants.Service.METRICS_PROCESSOR))) {
+        collector.increment(metricName, 1);
+      }
+
+      partitionCheckpoints.put(event.getPartition(),
+                               new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
     }
-
-    partitionCheckpoints.put(event.getPartition(),
-                             new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
-
   }
 
   private String getMetricName(String namespace, String logLevel) {
@@ -127,7 +133,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public Checkpoint getCheckpoint(int partition) {
+  public Checkpoint getCheckpoint() {
     try {
       return checkpointManager.getCheckpoint(partition);
     } catch (Exception e) {

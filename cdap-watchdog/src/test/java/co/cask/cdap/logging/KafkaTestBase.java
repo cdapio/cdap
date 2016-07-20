@@ -23,12 +23,16 @@ import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.save.LogSaverFactory;
+import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Binder;
+import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.util.Modules;
 import org.junit.ClassRule;
 
 /**
@@ -55,7 +59,14 @@ public abstract class KafkaTestBase {
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getDistributedModules(),
+      Modules.override(new LoggingModules().getDistributedModules())
+        .with(new Module() {
+          @Override
+          public void configure(Binder binder) {
+            // Use LogSaverTableUtilOverride so that log meta table can be changed.
+            binder.bind(LogSaverTableUtil.class).to(LogSaverTableUtilOverride.class);
+          }
+        }),
       new PrivateModule() {
         @Override
         protected void configure() {
