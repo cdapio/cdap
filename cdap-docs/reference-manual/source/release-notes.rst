@@ -23,6 +23,28 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.3.6 <http://docs.cask.co/cdap/3.3.6/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- `CDAP-6465 <https://issues.cask.co/browse/CDAP-6465>`__ - Fixed a problem with the log
+  saver process not processing log events after encountering an exception during the writing
+  of log files.
+
+- `CDAP-6486 <https://issues.cask.co/browse/CDAP-6486>`__ - Fixed a problem with the CDAP
+  Master leaking memory (due to a `Twill Zookeeper issue
+  <https://issues.apache.org/jira/browse/TWILL-177>`__) whenever a program is launched.
+
+- `CDAP-6493 <https://issues.cask.co/browse/CDAP-6493>`__ - Fixed a performance issue with
+  the log handler by setting a maximum limit for the reading of log events from Kafka
+  before requiring reading the events from disk storage.
+
+- `CDAP-6545 <https://issues.cask.co/browse/CDAP-6545>`__ - Fixed a problem with the log
+  saver slowing down when Kafka partitions become highly skewed.
+
+
 `Release 3.3.5 <http://docs.cask.co/cdap/3.3.5/index.html>`__
 =============================================================
 
@@ -36,8 +58,8 @@ Bug Fix
 `Release 3.3.4 <http://docs.cask.co/cdap/3.3.4/index.html>`__
 =============================================================
 
-Bug Fix
--------
+Bug Fixes
+---------
 
 - `CDAP-5793 <https://issues.cask.co/browse/CDAP-5793>`__ - Explore jobs properly use the
   latest/updated delegation tokens.
