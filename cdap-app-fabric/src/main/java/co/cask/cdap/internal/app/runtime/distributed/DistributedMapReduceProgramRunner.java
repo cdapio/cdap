@@ -21,6 +21,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
@@ -32,6 +33,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +50,10 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   private static final Logger LOG = LoggerFactory.getLogger(DistributedMapReduceProgramRunner.class);
 
   @Inject
-  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                           TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater);
+  DistributedMapReduceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
+                                    TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                    Impersonator impersonator) {
+    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater, impersonator);
   }
 
   @Override

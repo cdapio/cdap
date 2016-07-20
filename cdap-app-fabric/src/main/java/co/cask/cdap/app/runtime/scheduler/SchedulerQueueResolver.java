@@ -24,6 +24,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -39,6 +40,7 @@ public class SchedulerQueueResolver {
   /**
    * Construct SchedulerQueueResolver with CConfiguration and Store.
    */
+  @Inject
   public SchedulerQueueResolver(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
     this.namespaceQueryAdmin = namespaceQueryAdmin;

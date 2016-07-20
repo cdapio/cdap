@@ -33,18 +33,24 @@ import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.security.ImpersonationInfo;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -121,7 +127,20 @@ public class DatasetServiceManager extends AbstractIdleService {
       new DataSetsModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getDistributedModules()
+      new NamespaceStoreModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          UGIProvider currentUGIProvider = new UGIProvider() {
+            @Override
+            public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
+              return UserGroupInformation.getCurrentUser();
+            }
+          };
+          // CDAP-6577 Perform impersonation when doing upgrade from CDAP 3.5.0
+          bind(UGIProvider.class).toInstance(currentUGIProvider);
+        }
+      }
     );
   }
 }

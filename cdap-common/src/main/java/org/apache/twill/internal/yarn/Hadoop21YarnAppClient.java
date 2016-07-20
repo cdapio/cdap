@@ -38,7 +38,9 @@ import org.apache.twill.internal.appmaster.ApplicationSubmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -50,19 +52,32 @@ import javax.annotation.Nullable;
  * </p>
  */
 // TODO: This is a copy from Twill, and can be removed when TWILL-119 is fixed. CDAP-4923 tracks Twill-0.8.0 upgrade.
+// TODO: TWILL-175 will also need to be fixed. A fix has been included in this copied class (createYarnClient method)
+// After copying, we have removed the addRMToken() method. That functionality is in YarnTokenUtils.
+// Additionally, we have updated it to not have a single YarnClient, but instead a collection of YarnClients, one per
+// UGI. We need to do this because YarnClient is not designed to be reusable across UGIs. Even if the calling UGI
+// changes, the Yarn user still is the original UGI that constructed the YARN client.
 public final class Hadoop21YarnAppClient extends AbstractIdleService implements YarnAppClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(Hadoop21YarnAppClient.class);
-  private final YarnClient yarnClient;
+  private final Configuration configuration;
 
   public Hadoop21YarnAppClient(Configuration configuration) {
-    this.yarnClient = YarnClient.createYarnClient();
+    this.configuration = configuration;
+  }
+
+  // Creates and starts a yarn client
+  private YarnClient createYarnClient() {
+    YarnClient yarnClient = YarnClient.createYarnClient();
     yarnClient.init(configuration);
+    yarnClient.start();
+    return yarnClient;
   }
 
   @Override
   public ProcessLauncher<ApplicationMasterInfo> createLauncher(TwillSpecification twillSpec,
                                                                @Nullable String schedulerQueue) throws Exception {
+    final YarnClient yarnClient = createYarnClient();
     // Request for new application
     YarnClientApplication application = yarnClient.createApplication();
     final GetNewApplicationResponse response = application.getNewApplicationResponse();
@@ -126,22 +141,27 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
 
   @Override
   public ProcessController<YarnApplicationReport> createProcessController(ApplicationId appId) {
-    return new ProcessControllerImpl(yarnClient, appId);
+    return new ProcessControllerImpl(createYarnClient(), appId);
   }
 
   @Override
   public List<NodeReport> getNodeReports() throws Exception {
-    return this.yarnClient.getNodeReports();
+    YarnClient yarnClient = createYarnClient();
+    try {
+      return yarnClient.getNodeReports();
+    } finally {
+      yarnClient.stop();
+    }
   }
 
   @Override
   protected void startUp() throws Exception {
-    yarnClient.start();
+    // no-op. We will create and start YarnClients, on demand
   }
 
   @Override
   protected void shutDown() throws Exception {
-    yarnClient.stop();
+    // no-op. code that calls createYarnClient() is responsible for stopping each individual yarn client
   }
 
   private static final class ProcessControllerImpl implements ProcessController<YarnApplicationReport> {
@@ -167,6 +187,7 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
     public void cancel() {
       try {
         yarnClient.killApplication(appId);
+        yarnClient.stop();
       } catch (Exception e) {
         LOG.error("Failed to kill application {}", appId, e);
         throw Throwables.propagate(e);

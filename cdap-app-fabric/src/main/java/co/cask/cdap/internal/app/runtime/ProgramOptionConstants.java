@@ -81,4 +81,12 @@ public final class ProgramOptionConstants {
    * Option to a json encoded {@link ArtifactMeta} of the artifact containing the program.
    */
   public static final String ARTIFACT_META = "artifactMeta";
+
+  /**
+   * Options for impersonation
+   */
+  public static final String PRINCIPAL = "principal";
+
+  public static final String KEYTAB_URI = "keytabURI";
+
 }

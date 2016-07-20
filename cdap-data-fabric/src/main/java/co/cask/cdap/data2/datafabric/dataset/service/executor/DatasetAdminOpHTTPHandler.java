@@ -43,6 +43,7 @@ import javax.ws.rs.PathParam;
 
 /**
  * Provides REST endpoints for {@link DatasetAdmin} operations.
+ * The corresponding client is {@link RemoteDatasetOpExecutor}.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {

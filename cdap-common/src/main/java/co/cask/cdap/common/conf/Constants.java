@@ -771,9 +771,9 @@ public final class Constants {
       public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
     }
 
-    /** Path to the Kerberos keytab file used by CDAP */
+    /** Path to the Kerberos keytab file used by CDAP master */
     public static final String CFG_CDAP_MASTER_KRB_KEYTAB_PATH = "cdap.master.kerberos.keytab";
-    /** Kerberos principal used by CDAP */
+    /** Kerberos principal used by CDAP master */
     public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
   }
 

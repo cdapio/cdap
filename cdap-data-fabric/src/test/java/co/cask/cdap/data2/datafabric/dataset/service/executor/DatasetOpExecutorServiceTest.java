@@ -41,6 +41,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -55,6 +57,7 @@ import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -118,7 +121,13 @@ public class DatasetOpExecutorServiceTest {
       new DataSetServiceModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       new ExploreClientModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules());
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+        }
+      });
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();

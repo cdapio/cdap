@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractDistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -40,6 +41,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +60,9 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
 
   @Inject
   DistributedSparkProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreUpdater);
+                                TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                Impersonator impersonator) {
+    super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreUpdater, impersonator);
   }
 
   @Override

@@ -88,7 +88,9 @@ public class AuthorizationCLITest extends CLITestBase {
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
         // Bypass authorization enforcement for grant/revoke operations in this test. Authorization enforcement for
         // grant/revoke is tested in AuthorizationHandlerTest
-        Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers", "*"
+        Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers", "*",
+        // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
+        Constants.Security.KERBEROS_ENABLED, "false"
       };
     }
   }

@@ -31,6 +31,8 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -104,6 +106,7 @@ public class InMemoryExploreServiceTest {
           @Override
           protected void configure() {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           }
         });
     transactionManager = injector.getInstance(TransactionManager.class);

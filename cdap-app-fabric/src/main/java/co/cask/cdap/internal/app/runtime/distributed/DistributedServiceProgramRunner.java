@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
@@ -34,6 +35,7 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +51,9 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
 
   @Inject
   DistributedServiceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                  TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater);
+                                  TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                  Impersonator impersonator) {
+    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater, impersonator);
   }
 
   @Override

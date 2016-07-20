@@ -27,7 +27,6 @@ import javax.ws.rs.HEAD;
  */
 public class NamespaceConfig {
 
-
   public static final String SCHEDULER_QUEUE_NAME = "scheduler.queue.name";
   public static final String ROOT_DIRECTORY = "root.directory";
   public static final String HBASE_NAMESPACE = "hbase.namespace";
@@ -45,14 +44,20 @@ public class NamespaceConfig {
   @SerializedName(HIVE_DATABASE)
   private final String hiveDatabase;
 
+  private final String principal;
+  private final String keytabURI;
+
   // scheduler queue name is kept non nullable unlike others like root directory, hbase namespace etc for backward
   // compatibility
   public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
-                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase) {
+                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
+                         @Nullable String principal, @Nullable String keytabURI) {
     this.schedulerQueueName = schedulerQueueName;
     this.rootDirectory = rootDirectory;
     this.hbaseNamespace = hbaseNamespace;
     this.hiveDatabase = hiveDatabase;
+    this.principal = principal;
+    this.keytabURI = keytabURI;
   }
 
   public String getSchedulerQueueName() {
@@ -73,6 +78,16 @@ public class NamespaceConfig {
     return hiveDatabase;
   }
 
+  @Nullable
+  public String getPrincipal() {
+    return principal;
+  }
+
+  @Nullable
+  public String getKeytabURI() {
+    return keytabURI;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -83,13 +98,16 @@ public class NamespaceConfig {
     }
     NamespaceConfig other = (NamespaceConfig) o;
     return Objects.equals(schedulerQueueName, other.schedulerQueueName) &&
-      Objects.equals(rootDirectory, other.rootDirectory) && Objects.equals(hbaseNamespace, other.hbaseNamespace) &&
-      Objects.equals(hiveDatabase, other.hiveDatabase);
+      Objects.equals(rootDirectory, other.rootDirectory) &&
+      Objects.equals(hbaseNamespace, other.hbaseNamespace) &&
+      Objects.equals(hiveDatabase, other.hiveDatabase) &&
+      Objects.equals(principal, other.principal) &&
+      Objects.equals(keytabURI, other.keytabURI);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase);
+    return Objects.hash(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, keytabURI);
   }
 
   @Override
@@ -99,6 +117,8 @@ public class NamespaceConfig {
       ", rootDirectory='" + rootDirectory + '\'' +
       ", hbaseNamespace='" + hbaseNamespace + '\'' +
       ", hiveDatabase='" + hiveDatabase + '\'' +
+      ", principal='" + principal + '\'' +
+      ", keytabURI='" + keytabURI + '\'' +
       '}';
   }
 }

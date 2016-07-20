@@ -29,6 +29,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.TempFolder;
 import co.cask.cdap.internal.app.scheduler.LogPrintingJob;
@@ -37,6 +39,7 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Sets;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -93,7 +96,13 @@ public class DatasetBasedTimeScheduleStoreTest {
                                     new DataSetsModules().getStandaloneModules(),
                                     new DataSetServiceModules().getInMemoryModules(),
                                     new ExploreClientModule(),
-                                    new NamespaceClientRuntimeModule().getInMemoryModules());
+                                    new NamespaceClientRuntimeModule().getInMemoryModules(),
+                                    new AbstractModule() {
+                                      @Override
+                                      protected void configure() {
+                                        bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                                      }
+                                    });
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpsService = injector.getInstance(DatasetOpExecutor.class);
@@ -111,7 +120,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     txService.stopAndWait();
   }
 
-  public static void schedulerSetup(boolean enablePersistence) throws SchedulerException {
+  private static void schedulerSetup(boolean enablePersistence) throws SchedulerException {
     JobStore js;
     if (enablePersistence) {
       CConfiguration conf = injector.getInstance(CConfiguration.class);
