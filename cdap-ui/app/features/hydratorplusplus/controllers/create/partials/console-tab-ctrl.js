@@ -45,6 +45,9 @@ class HydratorPlusPlusConsoleTabService {
         case 'STRAY-NODES':
           errorMessage.push(message.payload.nodes.map( node => node.plugin.label).join(', ') + ' - nodes missing connections');
           break;
+        case 'INVALID-CONNECTIONS':
+          errorMessage.push(message.payload.connections.join(', ') + ' - invalid connection');
+          break;
         case 'success':
           successMessage.push(message.content);
           break;
