@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class AvroFileReader {
   private static final Logger LOG = LoggerFactory.getLogger(AvroFileReader.class);
-  private static final long DEFAULT_SKIP_LEN = 50 * 1024;
+  private static final long DEFAULT_SKIP_LEN = 10 * 1024 * 1024;
 
   private final Schema schema;
 
@@ -70,6 +70,7 @@ public class AvroFileReader {
             long curPos = dataFileReader.tell();
             prevPrevSyncPos = prevSyncPos;
             prevSyncPos = dataFileReader.previousSync();
+            LOG.trace("Syncing to pos {}", curPos);
             dataFileReader.sync(curPos);
             if (dataFileReader.hasNext()) {
               loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
@@ -78,6 +79,7 @@ public class AvroFileReader {
 
           // We're now likely past the record with fromTimeMs, rewind to the previous sync point
           dataFileReader.sync(prevPrevSyncPos);
+          LOG.trace("Final sync pos {}", prevPrevSyncPos);
 
           // Start reading events from file
           int count = 0;
