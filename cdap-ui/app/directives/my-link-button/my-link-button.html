@@ -22,19 +22,23 @@
     <li ng-repeat="dataset in MyLinkButtonCtrl.entities">
       <a ng-if="dataset.entityType === 'datasets'"
           ui-sref="datasets.detail.overview.status({datasetId: dataset.datasetId})">
-          View {{dataset.datasetId}} in CDAP
+          <span class="fa icon-fist"></span>
+          <span>{{dataset.datasetId}}</span>
       </a>
       <a ng-if="dataset.entityType === 'datasets'"
           ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: dataset.datasetId})">
-      View {{dataset.datasetId}} in Tracker
+          <span class="fa icon-tracker"></span>
+          <span>{{dataset.datasetId}}</span>
       </a>
       <a ng-if="dataset.entityType === 'streams'"
           ui-sref="streams.detail.overview.status({streamId: dataset.streamId})">
-          View {{dataset.streamId}} in CDAP
+          <span class="fa icon-fist"></span>
+          <span>{{dataset.streamId}}</span>
       </a>
       <a ng-if="dataset.entityType === 'streams'"
           ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: dataset.streamId})">
-      View {{dataset.streamId}} in Tracker
+          <span class="fa icon-tracker"></span>
+          <span>{{dataset.streamId}}</span>
       </a>
     </li>
   </ul>
