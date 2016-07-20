@@ -85,7 +85,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(this.logBaseDir, "Log base dir cannot be null");
-    LOG.info(String.format("Log base dir is %s", this.logBaseDir));
+    LOG.debug(String.format("Log base dir is %s", this.logBaseDir));
 
     long retentionDurationDays = cConf.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
                                                  LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
