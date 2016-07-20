@@ -206,9 +206,9 @@ ub_status() {
 
 # Executes a specific class' main method with the classpath and environment setup
 run() {
-  MAIN_CLASS=${1}
+  RUN_CLASS=${1}
   shift
-  if [ -z "${MAIN_CLASS}" ]; then
+  if [ -z "${RUN_CLASS}" ]; then
     echo "Error: No classname given!"
     die "Usage: ${0} run <fully qualified classname> [arguments]"
   fi
@@ -231,11 +231,11 @@ run() {
   fi
 
   if [ ${#@} -ne 0 ]; then
-    echo "Running class ${MAIN_CLASS} with arguments: ${@}"
+    echo "Running class ${RUN_CLASS} with arguments: ${@}"
   else
-    echo "Running class ${MAIN_CLASS}"
+    echo "Running class ${RUN_CLASS}"
   fi
-  "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${MAIN_CLASS} ${@}
+  "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${RUN_CLASS} ${@}
 }
 
 case ${1} in
