@@ -112,57 +112,35 @@
              infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.data.length"
              infinite-scroll-container="'.logs-table'"
              >
-        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:searchText | filter:LogViewer.eventFilter | limitTo: LogViewer.viewLimit track by $index">
-          <!-- TIME -->
-          <td class="time"
-              ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
-              {{ entry.log.displayTime }}
+
+        <tr ng-class="{'selected-row' : entry.selected, 'has-stack-trace' : entry.log.stackTrace.length > 0}" ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:searchText | filter:LogViewer.eventFilter | limitTo: LogViewer.viewLimit track by $index" ng-click="LogViewer.showStackTrace($index)">
+
+          <td class="time time-stack-trace" ng-if="!entry.stackTrace && entry.log.stackTrace.length > 0">
+            <span class="indicator-arrow" ng-if="entry.log.stackTrace.length > 0">
+              <i ng-if="($index+1 < LogViewer.data.length) && (LogViewer.data[$index +1].stackTrace )" class="fa fa-chevron-down"></i>
+              <i ng-if="($index+1 >= LogViewer.data.length) || !LogViewer.data[$index +1].stackTrace" class="fa fa-chevron-right"></i>
+            </span>
+            <span class="display-time">{{ entry.log.displayTime}}</span>
           </td>
 
-          <!-- LEVEL -->
-          <td class="level"
-              ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-              {{ entry.log.logLevel }}
+          <td class="time" ng-if="!entry.stackTrace && entry.log.stackTrace.length === 0">
+            <span class="display-time">{{ entry.log.displayTime}}</span>
           </td>
 
-          <!-- SOURCE -->
-          <td class="source"
-              ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
-              tooltip="testing"
+          <td class="level" ng-if="!entry.stackTrace">{{ entry.log.logLevel}}</td>
+          <td class="source" ng-if="!entry.stackTrace"
               uib-tooltip="{{ ::entry.log.threadName}}:{{::entry.log.lineNumber}}"
               tooltip-append-to-body="true"
               tooltip-placement="top"
               tooltip-popup-delay="500"
-              tooltip-class="source-tooltip"
-              >
-              {{ entry.log.threadName }}
+              tooltip-class="source-tooltip">
+              {{ entry.log.threadName}}
           </td>
-
-          <!-- MESSAGE -->
-          <td class="message"  ng-class="{'contains-stack-trace' : entry.log.stackTrace.length > 0}"
-              ng-if="LogViewer.configOptions.message"
-              ng-class="{'stack-trace-expanded': entry.isStackTraceExpanded,
-                'stack-trace-available': entry.log.stackTrace.length > 0 }">
-            <div class="message-main"
-                 ng-click="entry.log.stackTrace.length > 0 && (entry.isStackTraceExpanded = !entry.isStackTraceExpanded)">
-              <div class="icon-column"
-                   ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)"
-                   ng-class="Logviewer.message-class">
-                <span class="fa"
-                      ng-class="{'fa-minus': entry.isStackTraceExpanded}">
-                </span>
-              </div>
-              <span class="message-text">
-                <span ng-if="entry.log.stackTrace.length > 0 && !entry.isStackTraceExpanded" class="fa expand-stack-trace" ng-class="{'fa-plus' : !entry.isStackTraceExpanded}"></span>
-              <span class="message-text-body" ng-class="{'no-stack-trace' : entry.log.stackTrace.length === 0}" ng-bind-html="LogViewer.highlight(entry.log.message)"></span></span>
-            </div>
-
-            <div class="stack-trace"
-                 ng-class="{'expanded': LogViewer.isMessageExpanded}"
-                 ng-if="entry.isStackTraceExpanded">
-              <pre>{{ ::entry.log.stackTrace }}</pre>
-            </div>
-
+          <td class="log-message" ng-if="!entry.stackTrace"></span>{{ entry.log.message}}</td>
+          <td class="stack-trace" ng-if="entry.stackTrace" colspan="4">
+            <pre>
+              {{entry.log.stackTrace}}
+            </pre>
           </td>
         </tr>
 

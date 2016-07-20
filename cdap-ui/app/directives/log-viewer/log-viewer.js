@@ -86,6 +86,28 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     requestWithStartTime();
   });
 
+  this.showStackTrace = (index) => {
+    //If the stack trace is showing, remove it
+    if( (index+1 < this.data.length) && this.data[index+1].stackTrace){
+      this.data.splice(index+1, 1);
+      this.data[index].selected = false;
+      return;
+    }
+    //If the currently clicked row is a stack trace itself, remove it and deselect the above
+    else if(this.data[index].stackTrace && (index - 1) > 0){
+      this.data[index-1].selected = false;
+      this.data.splice(index, 1);
+      return;
+    }
+
+    if(this.data[index].log.stackTrace){
+      this.data[index].selected = true;
+      var stackTraceObj = JSON.parse(JSON.stringify(this.data[index]));
+      stackTraceObj.stackTrace = true;
+      this.data.splice(index+1, 0, stackTraceObj);
+    }
+  };
+
   this.collapseColumns = () => {
     if(this.isMessageExpanded){
       this.isMessageExpanded = !this.isMessageExpanded;
@@ -151,6 +173,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
           res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + formattedDate.getSeconds());
+          res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
         this.data = this.data.concat(res);
@@ -186,8 +209,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       method: 'GET'
     },
     function(res) {
-      if(res.length > 0){
         this.data = res;
+      if(res.length > 0) {
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       }
@@ -247,6 +270,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
           res[index].log.displayTime = formatDate(formattedDate);
+          res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
         this.data = res;
         this.cacheSize = res.length - this.cacheDecrement;

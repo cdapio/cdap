@@ -296,6 +296,59 @@ my-log-viewer {
         font-size: 11px;
       }
 
+      .selected-row {
+        background-color: #e4e4e4;
+      }
+
+      .has-stack-trace {
+        cursor: pointer;
+      }
+
+      .indicator-arrow {
+        position: relative;
+        left: 0;
+        height: 100%;
+        width: 10px;
+      }
+
+      tr i {
+        font-size: 4px;
+      }
+      tr td {
+        line-height: 18px;
+
+        .fa-chevron-right {
+          color: #393939;
+          position: relative;
+          font-size: 8px;
+          bottom: 1px;
+          margin-left: 4px;
+          margin-right: 2px;
+        }
+        .fa-chevron-down {
+          color: #393939;
+          position: relative;
+          font-size: 8px;
+          bottom: 1px;
+          margin-left: 4px;
+          margin-right: 0;
+        }
+      }
+
+      .stack-trace {
+        height: 100%;
+        width: 100%;
+        background-color: @stack-trace-background-color;
+        pre {
+          font-size: 12px;
+          font-family: inherit;
+          background-color: @stack-trace-background-color;
+          color: @stack-trace-font-color;
+          white-space: pre-wrap;
+          border: none;
+        }
+      }
+
       th {
         line-height: 25px;
         border-color: @border-color;
@@ -334,6 +387,9 @@ my-log-viewer {
         overflow: hidden;
         font-size: 12px;
         border-color: @border-color;
+      }
+      td.time-stack-trace {
+        padding-left: 0;
       }
       .table {
         &.table-bordered {
@@ -379,7 +435,7 @@ my-log-viewer {
 
       tbody {
         .message {
-          padding: 0;
+          padding-left: 10px;
         }
       }
 
