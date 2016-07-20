@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 
 /**
- *
+ * Utility class for secure store.
  */
 public class SecureStoreUtils {
   private static final String KMS_BACKED = "kms";

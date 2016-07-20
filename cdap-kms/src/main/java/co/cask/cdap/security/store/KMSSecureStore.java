@@ -20,11 +20,14 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
+import co.cask.cdap.common.security.DelegationTokensUpdater;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
+import org.apache.hadoop.crypto.key.KeyProviderDelegationTokenExtension;
 import org.apache.hadoop.crypto.key.KeyProviderFactory;
 import org.apache.hadoop.crypto.key.kms.KMSClientProvider;
+import org.apache.hadoop.security.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +43,10 @@ import java.util.Map;
  * the provider is set to kms and Hadoop version is 2.6.0 or higher.
  */
 @SuppressWarnings("unused")
-class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureStoreManager {
+class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
+  /** Separator between the namespace name and the key name */
+  private static final String NAME_SEPARATOR = ":";
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
    */
@@ -129,7 +134,7 @@ class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureS
       throw new IOException("Failed to get the list of elements from the secure store.", e);
     }
 
-    List<SecureStoreMetadata> secureStoreMetadatas = new ArrayList<>();
+    List<SecureStoreMetadata> secureStoreMetadatas = new ArrayList<>(metadatas.length);
     for (int i = 0; i < metadatas.length; i++) {
       KeyProvider.Metadata metadata = metadatas[i];
       SecureStoreMetadata meta = SecureStoreMetadata.of(keysInNamespace.get(i).substring(prefix.length()),
@@ -152,5 +157,21 @@ class KMSSecureStore extends AbstractSecureStore implements SecureStore, SecureS
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, metadata.getDescription(), metadata.getAttributes());
     KeyProvider.KeyVersion keyVersion = provider.getCurrentKey(keyName);
     return new SecureStoreData(meta, keyVersion.getMaterial());
+  }
+
+  @Override
+  public Credentials addDelegationTokens(String renewer, Credentials credentials) {
+    KeyProviderDelegationTokenExtension tokenExtension =
+      KeyProviderDelegationTokenExtension.createKeyProviderDelegationTokenExtension(provider);
+    try {
+      tokenExtension.addDelegationTokens(renewer, credentials);
+    } catch (IOException e) {
+      LOG.debug("KMS delegation token not updated.");
+    }
+    return credentials;
+  }
+
+  private static String getKeyName(final String namespace, final String name) {
+    return namespace + NAME_SEPARATOR + name;
   }
 }

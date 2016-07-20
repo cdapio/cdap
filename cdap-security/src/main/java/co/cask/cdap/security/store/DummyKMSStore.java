@@ -29,10 +29,9 @@ import java.util.Map;
  * A dummy class that is loaded when the user has set the provider to "kms" but the cluster does not
  * have the required libraries. All operations on this class throw an UnsupportedOperationException.
  */
-public class DummyKMSStore extends AbstractSecureStore implements SecureStore, SecureStoreManager {
+public class DummyKMSStore implements SecureStore, SecureStoreManager {
 
   private static final String UNSUPPORTED_ERROR_MSG = "Installed version of Hadoop does not support KMS.";
-
 
   @Override
   public List<SecureStoreMetadata> list(String namespace) throws IOException {

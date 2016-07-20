@@ -86,7 +86,6 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     @SuppressWarnings("unchecked")
     public T get() {
-      Object store;
       if (!SecureStoreUtils.isKMSBacked(cConf)) {
         return (T) injector.getInstance(FileSecureStore.class);
       }

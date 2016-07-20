@@ -18,6 +18,7 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.DelegationTokensUpdater;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
@@ -98,8 +99,9 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
-      if (supportsKMS) {
-        SecureStoreTokenUtils.obtainToken(secureStore, refreshedCredentials);
+      if (secureStore instanceof DelegationTokensUpdater) {
+        String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
+        ((DelegationTokensUpdater) secureStore).addDelegationTokens(renewer, refreshedCredentials);
       }
 
       addDelegationTokens(hConf, locationFactory, refreshedCredentials);
