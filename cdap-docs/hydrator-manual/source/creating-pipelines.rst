@@ -534,7 +534,7 @@ There are two ways you can export a pipeline configuration file:
    If you use the "Export" button, it will prompt for a file location before saving a
    complete file with all the information required to recreate the pipeline in Hydrator
    Studio, including details such as icon location. Otherwise, the two exports are
-   similar. The UI information is added in the "__ui__" object in the JSON configuration
+   similar. The UI information is added in the ``"__ui__"`` object in the JSON configuration
    file.
 
 #. From within a Hydrator pipeline configuration page, there is an *Export* button:
@@ -547,9 +547,9 @@ There are two ways you can export a pipeline configuration file:
  
       **Cask Hydrator:** Configuration page, pipeline detail, showing *Export* button on right
       
-      Similar to exporting from with Hydrator Studio, exporting using the button will
-      produce a configuration with UI information, and copying the configuration visible
-      in the lower portion of the page will produce a configuration that does not include
-      the "__ui__" object in the JSON.
+   Similar to exporting from with Hydrator Studio, exporting using the button will
+   produce a configuration with UI information, and copying the configuration visible
+   in the lower portion of the page will produce a configuration that does not include
+   the ``"__ui__"`` object in the JSON.
 
 Files created by exporting can be edited in a text editor and then imported to create new pipelines.
