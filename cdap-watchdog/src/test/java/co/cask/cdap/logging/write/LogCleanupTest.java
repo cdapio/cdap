@@ -49,6 +49,7 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
@@ -135,14 +136,16 @@ public class LogCleanupTest {
 
     int counter = 0;
     for (Location location : toDelete) {
-      fileMetaDataManager.writeMetaData(dummyContext, deletionBoundary - counter - 10000,
-                                        createFile(location));
+      long modTime = deletionBoundary - counter - 10000;
+      fileMetaDataManager.writeMetaData(dummyContext, modTime,
+                                        createFile(location, modTime));
       counter++;
     }
 
     for (Location location : notDelete) {
-      fileMetaDataManager.writeMetaData(dummyContext, deletionBoundary + counter + 10000,
-                                        createFile(location));
+      long modTime = deletionBoundary + counter + 10000;
+      fileMetaDataManager.writeMetaData(dummyContext, modTime,
+                                        createFile(location, modTime));
       counter++;
     }
 
@@ -180,19 +183,19 @@ public class LogCleanupTest {
     Set<Location> nonEmptyDirs = Sets.newHashSet();
     for (int i = 0; i < 1; ++i) {
       String name = String.valueOf(i);
-      files.add(createFile(namespacedLogsDir1.append(name)));
+      files.add(createFile(namespacedLogsDir1.append(name), System.currentTimeMillis()));
 
       Location dir1 = createDir(namespacedLogsDir1.append("abc"));
       files.add(dir1);
       nonEmptyDirs.add(dir1);
-      files.add(createFile(namespacedLogsDir1.append("abc").append(name)));
-      files.add(createFile(namespacedLogsDir1.append("abc").append("def").append(name)));
+      files.add(createFile(namespacedLogsDir1.append("abc").append(name), System.currentTimeMillis()));
+      files.add(createFile(namespacedLogsDir1.append("abc").append("def").append(name), System.currentTimeMillis()));
 
       Location dir2 = createDir(namespacedLogsDir2.append("def"));
       files.add(dir2);
       nonEmptyDirs.add(dir2);
-      files.add(createFile(namespacedLogsDir2.append("def").append(name)));
-      files.add(createFile(namespacedLogsDir2.append("def").append("hij").append(name)));
+      files.add(createFile(namespacedLogsDir2.append("def").append(name), System.currentTimeMillis()));
+      files.add(createFile(namespacedLogsDir2.append("def").append("hij").append(name), System.currentTimeMillis()));
     }
 
     // Create empty dirs
@@ -265,13 +268,15 @@ public class LogCleanupTest {
     Assert.assertTrue(tmpPath.exists());
   }
 
-  private Location createFile(Location path) throws Exception {
+  private Location createFile(Location path, long modTime) throws Exception {
     Location parent = Locations.getParent(path);
     Assert.assertNotNull(parent);
     parent.mkdirs();
 
     path.createNew();
     Assert.assertTrue(path.exists());
+    File file = new File(path.toURI());
+    Assert.assertTrue(file.setLastModified(modTime));
     return path;
   }
 
