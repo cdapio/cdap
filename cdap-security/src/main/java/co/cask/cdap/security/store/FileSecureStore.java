@@ -68,9 +68,11 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * class to two interfaces and we need the instance to be shared between them.
  */
 @Singleton
-public class FileSecureStore extends AbstractSecureStore implements SecureStore, SecureStoreManager {
+public class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
   private static final String SCHEME_NAME = "jceks";
+  /** Separator between the namespace name and the key name */
+  private static final String NAME_SEPARATOR = ":";
 
   private final char[] password;
   private final Path path;
