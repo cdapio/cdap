@@ -557,13 +557,13 @@ class HydratorPlusPlusConfigStore {
         });
       }
     });
-    // errorFactory.isRequiredFieldsFilled(nodes, (err, node, unFilledRequiredFields) => {
-    //   if (err) {
-    //     isStateValid = false;
-    //     node.errorCount += unFilledRequiredFields;
-    //     setErrorWarningFlagOnNode(node);
-    //   }
-    // });
+    errorFactory.isRequiredFieldsFilled(nodes, (err, node, unFilledRequiredFields) => {
+      if (err) {
+        isStateValid = false;
+        node.errorCount += unFilledRequiredFields;
+        setErrorWarningFlagOnNode(node);
+      }
+    });
     errorFactory.isUniqueNodeNames(nodes, (err, node) => {
       if (err) {
         isStateValid = false;
