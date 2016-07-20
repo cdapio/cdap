@@ -83,10 +83,27 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
       sec.fromDataset(SparkRuntimeEnv.getContext, datasetName, arguments.toMap, Option(splits).map(_.toIterable)))
   }
 
-  override def fromStream(streamName: String, startTime: Long, endTime: Long) : JavaRDD[StreamEvent] = {
+  override def fromDataset[K, V](namespace: String, datasetName: String, arguments: util.Map[String, String],
+                                 splits: java.lang.Iterable[_ <: Split]): JavaPairRDD[K, V] = {
+    // Create the implicit fake ClassTags to satisfy scala type system at compilation time.
+    implicit val kTag: ClassTag[K] = createClassTag
+    implicit val vTag: ClassTag[V] = createClassTag
+    JavaPairRDD.fromRDD(
+      sec.fromDataset(SparkRuntimeEnv.getContext, namespace, datasetName, arguments.toMap,
+        Option(splits).map(_.toIterable)))
+  }
+
+  override def fromStream(streamName: String, startTime: Long, endTime: Long): JavaRDD[StreamEvent] = {
     val ct: ClassTag[StreamEvent] = createClassTag
     JavaRDD.fromRDD(
       sec.fromStream(SparkRuntimeEnv.getContext, streamName, startTime, endTime)(ct, (e: StreamEvent) => e))
+  }
+
+  override def fromStream(namespace: String, streamName: String, startTime: Long, endTime: Long):
+  JavaRDD[StreamEvent] = {
+    val ct: ClassTag[StreamEvent] = createClassTag
+    JavaRDD.fromRDD(
+      sec.fromStream(SparkRuntimeEnv.getContext, namespace, streamName, startTime, endTime)(ct, (e: StreamEvent) => e))
   }
 
   override def fromStream[V](streamName: String, startTime: Long,
@@ -101,6 +118,18 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
       .map(t => (t._1.get(): java.lang.Long, t._2)))
   }
 
+  override def fromStream[V](namespace: String, streamName: String, startTime: Long,
+                             endTime: Long, valueType: Class[V]): JavaPairRDD[java.lang.Long, V] = {
+    val conf = new Configuration
+    StreamInputFormat.inferDecoderClass(conf, valueType)
+    val decoderClass: Class[_ <: StreamEventDecoder[LongWritable, V]] = StreamInputFormat.getDecoderClass(conf)
+
+    implicit val ct: ClassTag[StreamEvent] = createClassTag
+    implicit val vTag: ClassTag[V] = ClassTag(valueType)
+    JavaPairRDD.fromRDD(decodeFromStream(namespace, streamName, startTime, endTime, decoderClass)
+      .map(t => (t._1.get(): java.lang.Long, t._2)))
+  }
+
   override def fromStream[K, V](streamName: String, startTime: Long, endTime: Long,
                                 decoderClass: Class[_ <: StreamEventDecoder[K, V]],
                                 keyType: Class[K], valueType: Class[V]): JavaPairRDD[K, V] = {
@@ -112,12 +141,32 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
     JavaPairRDD.fromRDD(decodeFromStream(streamName, startTime, endTime, decoderClass))
   }
 
+  override def fromStream[K, V](namespace: String, streamName: String, startTime: Long, endTime: Long,
+                                decoderClass: Class[_ <: StreamEventDecoder[K, V]],
+                                keyType: Class[K], valueType: Class[V]): JavaPairRDD[K, V] = {
+
+    implicit val ct: ClassTag[StreamEvent] = createClassTag
+    implicit val kTag: ClassTag[K] = ClassTag(keyType)
+    implicit val vTag: ClassTag[V] = ClassTag(valueType)
+
+    JavaPairRDD.fromRDD(decodeFromStream(namespace, streamName, startTime, endTime, decoderClass))
+  }
+
   override def fromStream[T](streamName: String, formatSpec: FormatSpecification,
                              startTime: Long, endTime: Long,
                              dataType: Class[T]): JavaPairRDD[java.lang.Long, GenericStreamEventData[T]] = {
     implicit val dTag: ClassTag[T] = ClassTag(dataType)
     val stream: RDD[(Long, GenericStreamEventData[T])] =
       sec.fromStream(SparkRuntimeEnv.getContext, streamName, formatSpec, startTime, endTime)
+    JavaPairRDD.fromRDD(stream.map(t => (t._1: java.lang.Long, t._2)))
+  }
+
+  override def fromStream[T](namespace: String, streamName: String, formatSpec: FormatSpecification,
+                             startTime: Long, endTime: Long,
+                             dataType: Class[T]): JavaPairRDD[java.lang.Long, GenericStreamEventData[T]] = {
+    implicit val dTag: ClassTag[T] = ClassTag(dataType)
+    val stream: RDD[(Long, GenericStreamEventData[T])] =
+      sec.fromStream(SparkRuntimeEnv.getContext, namespace, streamName, formatSpec, startTime, endTime)
     JavaPairRDD.fromRDD(stream.map(t => (t._1: java.lang.Long, t._2)))
   }
 
@@ -143,7 +192,20 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
                                                         (implicit ct: ClassTag[StreamEvent]): RDD[(K, V)] = {
     val identity = (e: StreamEvent) => e
     sec.fromStream(SparkRuntimeEnv.getContext, streamName, startTime, endTime)(ct, identity)
-       .mapPartitions(createStreamMap(decoderClass))
+      .mapPartitions(createStreamMap(decoderClass))
+  }
+
+  /**
+    * Reads from the given stream and decode the event with the given decoder class. Take an extra namespace field
+    * comparing to the above one
+    */
+  private def decodeFromStream[K: ClassTag, V: ClassTag](namespace: String, streamName: String,
+                                                         startTime: Long, endTime: Long,
+                                                         decoderClass: Class[_ <: StreamEventDecoder[K, V]])
+                                                        (implicit ct: ClassTag[StreamEvent]): RDD[(K, V)] = {
+    val identity = (e: StreamEvent) => e
+    sec.fromStream(SparkRuntimeEnv.getContext, namespace, streamName, startTime, endTime)(ct, identity)
+      .mapPartitions(createStreamMap(decoderClass))
   }
 
 }

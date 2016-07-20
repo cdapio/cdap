@@ -65,16 +65,33 @@ public class TestFrameworkTestBase extends TestBase {
   }
 
   /**
+   * Deploys an {@link Application} using the given artifact jar.
+   */
+  protected static ApplicationManager deployWithArtifact(NamespaceId namespaceId,
+                                                         Class<? extends Application> appClass,
+                                                         File artifactJar) throws Exception {
+    return deployWithArtifact(namespaceId, appClass, artifactJar, null);
+  }
+
+  /**
    * Deploys an {@link Application} using the given artifact jar with an optional config object.
    */
   protected static <T> ApplicationManager deployWithArtifact(Class<? extends Application> appClass,
                                                              File artifactJar, @Nullable T config) throws Exception {
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(),
-                                           appClass.getSimpleName(), "1.0-SNAPSHOT");
+    return deployWithArtifact(NamespaceId.DEFAULT, appClass, artifactJar, config);
+  }
+
+  /**
+   * Deploys an {@link Application} using the given artifact jar with an optional config object.
+   */
+  protected static <T> ApplicationManager deployWithArtifact(NamespaceId namespaceId,
+                                                             Class<? extends Application> appClass,
+                                                             File artifactJar, @Nullable T config) throws Exception {
+    ArtifactId artifactId = new ArtifactId(namespaceId.getNamespace(), appClass.getSimpleName(), "1.0-SNAPSHOT");
     addArtifact(artifactId, artifactJar);
     AppRequest<T> appRequest = new AppRequest<>(new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
                                                 config);
-    return deployApplication(NamespaceId.DEFAULT.app(appClass.getSimpleName()).toId(), appRequest);
+    return deployApplication(namespaceId.app(appClass.getSimpleName()).toId(), appRequest);
   }
 
   protected void reset() {

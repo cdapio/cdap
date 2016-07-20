@@ -29,11 +29,13 @@ private[spark] trait DatasetCompute {
   /**
     * Performs computation on a [[co.cask.cdap.api.dataset.Dataset]] instance.
     *
+    * @param namespace namespace in which the dataset exists
     * @param datasetName name of the dataset
     * @param arguments arguments for the dataset
     * @param computeFunc function to operate on the dataset instance
     * @tparam T type of the result
     * @return result of the computation by the function
     */
-  def apply[T: ClassTag](datasetName: String, arguments: Map[String, String], computeFunc: Dataset => T): T
+  def apply[T: ClassTag](namespace: String, datasetName: String, arguments: Map[String, String],
+                         computeFunc: Dataset => T): T
 }
