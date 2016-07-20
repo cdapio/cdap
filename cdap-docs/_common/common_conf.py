@@ -404,13 +404,13 @@ html_theme = 'cdap'
 cdap_manuals_list = [
     ['introduction',      'introduction', 'Introduction to CDAP',            '',],
     ['developers-manual', 'developers',  u'Developers’ Manual',              '',],
-#     ['cdap-apps',         'cdapapps',     'CDAP Applications',               '',],
     ['admin-manual',      'admin',        'Administration Manual',           '',],
     ['integrations',      'integrations', 'Integrations',                    '',],
     ['examples-manual',   'examples',     'Examples, Guides, and Tutorials', '',],
     ['reference-manual',  'reference',    'Reference Manual',                '',],
     ['faqs',              'faqs',         'FAQs',                            '',],
 ]
+#     ['cdap-apps',         'cdapapps',     'CDAP Applications',               '',],
 
 cdap_extension_manuals_list = [
     ['hydrator-manual',   'hydrator',     'Cask Hydrator',                   '',],
