@@ -162,8 +162,13 @@ class HydratorPlusPlusNodeConfigCtrl {
       )
         .then(
           (res) => {
-            this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory
-              .generateNodeConfig(this.state.node._backendProperties, res);
+            try {
+              this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory
+                .generateNodeConfig(this.state.node._backendProperties, res);
+            } catch(e) {
+              noJsonErrorHandler();
+              return;
+            }
             const generateJumpConfig = (jumpConfig, properties) => {
               let streams = [], datasets = [];
               let jumpConfigStreams = jumpConfig.streams || [],

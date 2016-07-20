@@ -42,6 +42,13 @@
           output="MyBatchPipelineSettingsCtrl.cron"
           init="MyBatchPipelineSettingsCtrl.initialCron">
         </cron-selection>
+        <div data-name="field"
+           ng-if="MyBatchPipelineSettingsCtrl.scheduleWidget.type === 'advanced'"
+           class="my-widget-container"
+           data-model="MyBatchPipelineSettingsCtrl.cron"
+           data-myconfig="{properties: {}, widget: 'schedule'}"
+           widget-container>
+        </div>
       </my-card>
       <my-card title="Engine" class="engine">
         <form role="form">
