@@ -31,6 +31,7 @@
 @timeline-buffer-color: #a6a6a6;
 @error-color: #f65454;
 @warning-color: #f6b354;
+@selected-row-color: #e4e4e4;
 
 body {
   .source-tooltip.tooltip {
@@ -298,7 +299,11 @@ my-log-viewer {
         white-space: nowrap;
       }
       .selected-row {
-        background-color: #e4e4e4;
+        background-color: @selected-row-color;
+
+        td {
+          border-bottom: none;
+        }
       }
 
       .has-stack-trace {
@@ -329,6 +334,7 @@ my-log-viewer {
         .fa-chevron-down {
           color: #393939;
           position: relative;
+          top: -12px;
           font-size: 8px;
           bottom: 1px;
           margin-left: 4px;
@@ -340,11 +346,21 @@ my-log-viewer {
         padding-right: 5px;
       }
 
+      tr.display-time {
+        position: relative;
+        top: 0;
+      }
+      tr.level {
+        position: relative;
+        top: 0;
+      }
       tr.row-selected {
         white-space: normal;
 
-        .time {
-          text-align: top;
+        .display-time,
+        .level {
+          position: relative;
+          top: -9px;
         }
 
         td {
@@ -353,18 +369,24 @@ my-log-viewer {
       }
 
       .stack-trace {
+        border-top: none;
         height: 100%;
         width: 100%;
-        background-color: @stack-trace-background-color;
+        background-color: @selected-row-color;
         white-space: normal;
         padding-left: 0;
         padding-right: 0;
         cursor: text;
         pre {
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+          border-bottom-left-radius: 0;
+          margin-left: 15px;
+          margin-right: 0;
+          margin-top: 5px;
+          margin-bottom: 0;
           padding-left: 0;
           padding-right: 0;
-          margin-top: 0;
-          margin-bottom: 0;
           padding-top: 10px;
           font-size: 12px;
           font-family: inherit;
@@ -399,7 +421,7 @@ my-log-viewer {
       }
 
       tbody tr:hover {
-        background-color: #e4e4e4;
+        background-color: @selected-row-color;
       }
 
       td {
