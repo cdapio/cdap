@@ -88,6 +88,9 @@ angular.module(PKG.name + '.commons')
       settings.actionSource.anchor = [ 0.5, 1, 1, 0, 26, -43, 'actionAnchor'];
       settings.actionSink.anchor = [ 0.5, 1, -1, 0, -26, -43, 'actionAnchor'];
 
+      settings.actionSource.connectorStyle['stroke-dasharray'] = [2,2];
+      settings.actionSink.connectorStyle['stroke-dasharray'] = [2,2];
+
       return settings;
     }
 
