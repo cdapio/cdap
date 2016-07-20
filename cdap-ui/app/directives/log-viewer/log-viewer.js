@@ -93,10 +93,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       this.data[index].selected = false;
       return;
     }
-    //If the currently clicked row is a stack trace itself, remove it and deselect the above
+    //If the currently clicked row is a stack trace itself, do nothing
     else if(this.data[index].stackTrace && (index - 1) > 0){
-      this.data[index-1].selected = false;
-      this.data.splice(index, 1);
+      // this.data[index-1].selected = false;
+      // this.data.splice(index, 1);
       return;
     }
 
@@ -209,8 +209,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       method: 'GET'
     },
     function(res) {
+      if(res.length > 0){
         this.data = res;
-      if(res.length > 0) {
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       }
@@ -242,6 +242,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }).$promise.then(
       (res) => {
 
+        console.log('response is: ', res);
         this.loading = false;
         this.viewLimit = 100;
         this.cacheDecrement = 100;

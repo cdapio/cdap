@@ -287,15 +287,16 @@ my-log-viewer {
 
     .logs-table {
       overflow: auto;
-      height: ~"-moz-calc(100vh - 450px)";
+      height: ~"-moz-calc(100vh - 450px)"e;
       height: ~"-webkit-calc(100vh - 450px)";
       height: ~"calc(100vh - 450px)";
 
       tbody td {
         color: #666666;
         font-size: 11px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
-
       .selected-row {
         background-color: #e4e4e4;
       }
@@ -335,16 +336,40 @@ my-log-viewer {
         }
       }
 
+      tr .log-message {
+        padding-right: 5px;
+      }
+
+      tr.row-selected {
+        white-space: normal;
+
+        .time {
+          text-align: top;
+        }
+
+        td {
+          white-space: normal;
+        }
+      }
+
       .stack-trace {
         height: 100%;
         width: 100%;
         background-color: @stack-trace-background-color;
+        white-space: normal;
+        padding-left: 0;
+        padding-right: 0;
+        cursor: text;
         pre {
+          padding-left: 0;
+          padding-right: 0;
+          margin-top: 0;
+          margin-bottom: 0;
+          padding-top: 10px;
           font-size: 12px;
           font-family: inherit;
           background-color: @stack-trace-background-color;
           color: @stack-trace-font-color;
-          white-space: pre-wrap;
           border: none;
         }
       }
@@ -563,36 +588,6 @@ my-log-viewer {
 
         .message-column {
           padding-left: 5px;
-        }
-
-        .stack-trace {
-          position: relative;
-          padding-bottom: 11px;
-          height: 100%;
-          background-color: @stack-trace-background-color;
-          pre {
-            position: relative;
-            top: 8px;
-            left: -10px;
-            font-size: 12px;
-            font-family: inherit;
-            background-color: @stack-trace-background-color;
-            color: @stack-trace-font-color;
-            white-space: pre-wrap;
-            border: none;
-            border-radius: 0;
-            padding-left: 7px + 20px;
-            margin-bottom: 0;
-          }
-        }
-
-        &.stack-trace-expanded {
-          background-color: @message-expanded-color;
-          padding-top: 0;
-          padding-left: 0;
-          padding-bottom: 0;
-          overflow: hidden;
-          .message-column { padding-bottom: 10px; }
         }
       }
     }
