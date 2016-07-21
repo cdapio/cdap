@@ -10,11 +10,9 @@ Action Plugins
 
 Hydrator Version |cask-hydrator-version|
 
-.. Disabled as there are no action plugins currently
-.. 
-.. .. toctree::
-..     :maxdepth: 1
-..     :glob:
-.. 
-..     **
-.. 
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    **
+

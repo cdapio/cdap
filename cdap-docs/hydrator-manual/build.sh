@@ -215,6 +215,7 @@ function download_includes() {
   download_md_file core-plugins Deduplicate-batchaggregator.md
   download_md_file core-plugins Distinct-batchaggregator.md
   download_md_file core-plugins Email-postaction.md
+  download_md_file core-plugins ExcelInputReader-batchsource.md
   download_md_file core-plugins FTP-batchsource.md
   download_md_file core-plugins File-batchsource.md
   download_md_file core-plugins GroupByAggregate-batchaggregator.md
@@ -229,7 +230,7 @@ function download_includes() {
   download_md_file core-plugins S3-batchsource.md
   download_md_file core-plugins S3Avro-batchsink.md
   download_md_file core-plugins S3Parquet-batchsink.md
-  download_md_file core-plugins Script-transform.md
+  download_md_file core-plugins SSHAction-action.md
   download_md_file core-plugins ScriptFilter-transform.md
   download_md_file core-plugins SnapshotAvro-batchsink.md
   download_md_file core-plugins SnapshotAvro-batchsource.md
@@ -247,6 +248,7 @@ function download_includes() {
   download_md_file core-plugins Table-realtimesink.md
   download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
+  download_md_file core-plugins XMLReader-batchsource.md
 
   download_md_file database-plugins Database-batchsink.md _includes/database-batchsink-append.md.txt
   download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt
@@ -289,6 +291,9 @@ function download_includes() {
   download_md_file transform-plugins JSONFormatter-transform.md
   download_md_file transform-plugins JSONParser-transform.md
   download_md_file transform-plugins StreamFormatter-transform.md
+  download_md_file transform-plugins ValueMapper-transform.md
+  download_md_file transform-plugins XMLParser-transform.md
+  download_md_file transform-plugins XMLToJSON-transform.md
 
   extract_table ${BASE_TARGET} "batch/transforms/validator.md" _includes/validator-extract.txt
 }
