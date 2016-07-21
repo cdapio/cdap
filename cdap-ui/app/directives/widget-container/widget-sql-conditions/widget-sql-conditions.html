@@ -21,9 +21,9 @@
        ng-mouseenter="rule.hover = true"
        ng-mouseleave="rule.hover = false">
     <div class="select-fields-group">
-      <span class="delete-field-button"
-            ng-if="rule.hover && SqlConditions.rules.length !== 1"
-            ng-click="SqlConditions.deleteRule($index)">x</span>
+      <button class="delete-field-button btn btn-link"
+            ng-if="rule.hover && SqlConditions.rules.length !== 1 && !SqlConditions.disabled"
+            ng-click="SqlConditions.deleteRule($index)">x</button>
 
       <div class="select-field">
         <select class="form-control"
