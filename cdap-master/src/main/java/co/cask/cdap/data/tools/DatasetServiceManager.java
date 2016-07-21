@@ -16,8 +16,6 @@
 
 package co.cask.cdap.data.tools;
 
-import co.cask.cdap.app.guice.AuthorizationModule;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -37,10 +35,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.security.ImpersonationInfo;
 import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
-import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
-import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -70,7 +66,6 @@ public class DatasetServiceManager extends AbstractIdleService {
   private final ZKClientService zkClientService;
   private final DatasetFramework datasetFramework;
   private final DatasetOpExecutorService datasetOpExecutorService;
-  private final RemoteSystemOperationsService remoteSystemOperationsService;
 
   @Inject
   DatasetServiceManager(CConfiguration cConf, Configuration hConf) {
@@ -79,7 +74,6 @@ public class DatasetServiceManager extends AbstractIdleService {
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.datasetFramework = injector.getInstance(DatasetFramework.class);
     this.datasetOpExecutorService = injector.getInstance(DatasetOpExecutorService.class);
-    this.remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
   }
 
   public DatasetFramework getDSFramework() {
@@ -92,7 +86,6 @@ public class DatasetServiceManager extends AbstractIdleService {
       zkClientService.startAndWait();
     }
     datasetOpExecutorService.startAndWait();
-    remoteSystemOperationsService.startAndWait();
     datasetService.startAndWait();
 
     // wait 5 minutes for DatasetService to start up
@@ -113,7 +106,6 @@ public class DatasetServiceManager extends AbstractIdleService {
   protected void shutDown() throws Exception {
     try {
       datasetService.stopAndWait();
-      remoteSystemOperationsService.stopAndWait();
       datasetOpExecutorService.startAndWait();
       zkClientService.stopAndWait();
     } catch (Throwable e) {
@@ -136,12 +128,9 @@ public class DatasetServiceManager extends AbstractIdleService {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
-      new RemoteSystemOperationsServiceModule(),
-      new AuthorizationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(Store.class).to(DefaultStore.class);
           UGIProvider currentUGIProvider = new UGIProvider() {
             @Override
             public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
