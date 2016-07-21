@@ -50,6 +50,13 @@ What Hadoop distributions can CDAP run on?
 CDAP |version| has been tested on and supports CDH 5.0.0 through 5.6.x; HDP 2.0 through 2.3.x; 
 MapR 4.x and 5.x, and Apache Bigtop 1.0. 
 
+I'm seeing log messages about the failure to send audit log message while running the SDK. What's wrong?
+--------------------------------------------------------------------------------------------------------
+If your computer goes into sleep mode, then you may see these messages after the machine
+is restored from sleep mode, as the audit logs are not getting delivered while the machine
+sleeps. You may need to restart CDAP to restore its state depending on how long it has
+been asleep.
+
 
 .. _faq-cdap-user-groups:
 

@@ -57,6 +57,31 @@ state::
   b: 2
 
 
+Are there performance issues with Partition Metadata in CDAP?
+-------------------------------------------------------------
+Hive has a JIRA ticket to switch from using MySQL as the metadata store to HBase due to
+performance issues with a large number (on the order of tens of thousands) of partitions.
+Will we run into a similar issue with the partition metadata in CDAP? Does CDAP use the
+Hive metastore to back the partition metadata?
+
+CDAP already uses HBase to store the partition metadata. However, if you enable explore
+for the dataset, CDAP also creates a Hive table and registers all partitions in Hive. You
+may then encounter the same issue when exploring the Hive table. This should not affect
+the performance of the dataset in a CDAP application, because the app will not use Hive to
+access the data.
+
+
+Will adding an extra JAR to the classpath enable direct access to CDAP data?
+----------------------------------------------------------------------------
+We are remembering that we need to include an extra JAR in our classpath when using Hive
+to access CDAP data. Is that correct? If so, does that JAR add the bridge to CDAP’s
+metadata?
+
+If your dataset is a PartitionedFileSet, you can access it from Hive without additional
+jars in the classpath. For other datasets |---| for example, tables |---| you will need to
+go through CDAP’s Explore service to submit your SQL.
+
+
 Transactions
 ============
 
