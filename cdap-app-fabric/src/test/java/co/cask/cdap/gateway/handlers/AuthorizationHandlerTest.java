@@ -84,7 +84,8 @@ public class AuthorizationHandlerTest {
           //no-op
         }
       };
-      return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(), txnl);
+      return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(),
+                                             txnl, null);
     }
   };
   private final Principal admin = new Principal("admin", Principal.PrincipalType.USER);

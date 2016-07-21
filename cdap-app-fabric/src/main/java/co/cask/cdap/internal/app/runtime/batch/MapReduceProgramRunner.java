@@ -20,6 +20,8 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -90,6 +92,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final RuntimeStore runtimeStore;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -98,7 +102,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore) {
+                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore,
+                                SecureStore secureStore, SecureStoreManager secureStoreManager) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -110,6 +115,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.runtimeStore = runtimeStore;
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
   }
 
   @Inject (optional = true)
@@ -167,7 +174,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         new BasicMapReduceContext(program, options, spec,
                                   workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
-                                  getPluginArchive(options), pluginInstantiator);
+                                  getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

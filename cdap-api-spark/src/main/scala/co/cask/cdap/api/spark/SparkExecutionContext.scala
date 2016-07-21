@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
+import co.cask.cdap.api.security.store.SecureStore
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
@@ -73,6 +74,14 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * @return A [[scala.Serializable]] [[co.cask.cdap.api.plugin.PluginContext]]
     */
   def getPluginContext: PluginContext
+
+  /**
+    * Returns a [[scala.Serializable]] [[co.cask.cdap.api.security.store.SecureStore]] which can be used to request
+    * for plugins instances. The instance returned can also be used in Spark program's closures.
+    *
+    * @return A [[scala.Serializable]] [[co.cask.cdap.api.plugin.PluginContext]]
+    */
+  def getSecureStore: SecureStore
 
   /**
     * Returns the [[co.cask.cdap.api.workflow.WorkflowToken]] if the Spark program

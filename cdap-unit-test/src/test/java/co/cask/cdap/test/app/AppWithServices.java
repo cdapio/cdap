@@ -168,8 +168,9 @@ public class AppWithServices extends AbstractApplication {
 
     @Path("verifyClassLoader")
     @GET
-    public void verifyClassLoader(HttpServiceRequest request, HttpServiceResponder responder) {
-      if (Thread.currentThread().getContextClassLoader() != getClass().getClassLoader()) {
+    public void verifyClassLoader(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
+      Class<?> loadedThisClass = Thread.currentThread().getContextClassLoader().loadClass(getClass().getName());
+      if (loadedThisClass != this.getClass()) {
         responder.sendStatus(500);
       } else {
         responder.sendStatus(200);

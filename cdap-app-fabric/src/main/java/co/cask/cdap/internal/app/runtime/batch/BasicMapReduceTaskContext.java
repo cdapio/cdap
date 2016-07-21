@@ -26,6 +26,8 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
@@ -94,9 +96,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             Transaction transaction,
                             DatasetFramework dsFramework,
                             @Nullable PluginInstantiator pluginInstantiator,
-                            Map<String, File> localizedResources) {
+                            Map<String, File> localizedResources,
+                            SecureStore secureStore,
+                            SecureStoreManager secureStoreManager) {
     super(program, programOptions, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient, false,
-          metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), pluginInstantiator);
+          metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
+          secureStoreManager, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
     this.spec = spec;

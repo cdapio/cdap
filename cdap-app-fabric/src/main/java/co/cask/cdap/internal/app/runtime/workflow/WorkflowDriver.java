@@ -25,6 +25,8 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
@@ -129,6 +131,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
   @Nullable
   private final PluginInstantiator pluginInstantiator;
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
 
   private NettyHttpService httpService;
   private volatile Thread runningThread;
@@ -140,7 +144,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                  TransactionSystemClient txClient, RuntimeStore runtimeStore, CConfiguration cConf,
-                 @Nullable PluginInstantiator pluginInstantiator) {
+                 @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
+                 SecureStoreManager secureStoreManager) {
     this.program = program;
     this.programOptions = options;
     this.hostname = hostname;
@@ -158,7 +163,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null,
                                                          basicWorkflowToken, program, programOptions,
                                                          metricsCollectionService, datasetFramework, txClient,
-                                                         discoveryServiceClient, nodeStates, pluginInstantiator);
+                                                         discoveryServiceClient, nodeStates, pluginInstantiator,
+                                                         secureStore, secureStoreManager);
 
     this.workflowRunId = program.getId().toEntityId().run(basicWorkflowContext.getRunId());
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
@@ -167,6 +173,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                            workflowSpec.getLocalDatasetSpecs().keySet(),
                                                            workflowRunId.getRun());
     this.pluginInstantiator = pluginInstantiator;
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
   }
 
   @Override
@@ -424,7 +432,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                       node.getCustomActionSpecification(), info,
                                                                       metricsCollectionService, datasetFramework,
                                                                       txClient, discoveryServiceClient,
-                                                                      pluginInstantiator);
+                                                                      pluginInstantiator, secureStore,
+                                                                      secureStoreManager);
       customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
     }
 
@@ -481,7 +490,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, token, program, programOptions,
                                                        metricsCollectionService, datasetFramework, txClient,
-                                                       discoveryServiceClient, nodeStates, pluginInstantiator);
+                                                       discoveryServiceClient, nodeStates, pluginInstantiator,
+                                                       secureStore, secureStoreManager);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -588,7 +598,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new BasicWorkflowContext(workflowSpec, actionSpec, runner, token,
                                     program, programOptions, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
-                                    pluginInstantiator);
+                                    pluginInstantiator, secureStore, secureStoreManager);
   }
 
   private Supplier<List<WorkflowActionNode>> createStatusSupplier() {

@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
@@ -46,7 +47,8 @@ import javax.annotation.Nullable;
  * Spark program execution context. User Spark program can interact with CDAP through this context.
  */
 @Beta
-public abstract class JavaSparkExecutionContext implements RuntimeContext, Transactional, WorkflowInfoProvider {
+public abstract class JavaSparkExecutionContext implements RuntimeContext, Transactional,
+                                                           WorkflowInfoProvider, SecureStore {
 
   /**
    * @return The specification used to configure this {@link Spark} job instance.
@@ -85,6 +87,14 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    * @return A {@link Serializable} {@link PluginContext}.
    */
   public abstract PluginContext getPluginContext();
+
+  /**
+   * Returns a {@link Serializable} {@link SecureStore} which can be used to request for plugins instances. The
+   * instance returned can also be used in Spark program's closures.
+   *
+   * @return A {@link Serializable} {@link SecureStore}.
+   */
+  public abstract SecureStore getSecureStore();
 
   /**
    * Returns a {@link Serializable} {@link TaskLocalizationContext} which can be used to retrieve files localized to
@@ -375,7 +385,7 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
   public <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String namespace, String streamName,
                                                                      FormatSpecification formatSpec,
                                                                      Class<T> dataType) {
-    return fromStream(streamName, formatSpec, 0, Long.MAX_VALUE, dataType);
+    return fromStream(namespace, streamName, formatSpec, 0, Long.MAX_VALUE, dataType);
   }
 
   /**

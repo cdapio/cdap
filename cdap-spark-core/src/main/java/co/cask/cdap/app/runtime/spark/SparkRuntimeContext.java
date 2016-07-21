@@ -18,6 +18,8 @@ package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -65,9 +67,12 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       MetricsCollectionService metricsCollectionService,
                       StreamAdmin streamAdmin,
                       @Nullable WorkflowProgramInfo workflowProgramInfo,
-                      @Nullable PluginInstantiator pluginInstantiator) {
+                      @Nullable PluginInstantiator pluginInstantiator,
+                      SecureStore secureStore,
+                      SecureStoreManager secureStoreManager) {
     super(program, programOptions, Collections.<String>emptySet(), datasetFramework, txClient, discoveryServiceClient,
-          true, metricsCollectionService, createMetricsTags(workflowProgramInfo), pluginInstantiator);
+          true, metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
+          pluginInstantiator);
 
     this.hConf = hConf;
     this.txClient = txClient;

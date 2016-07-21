@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -57,16 +59,19 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
    * @param txClient txClient to do transaction operations.
    * @param pluginInstantiator {@link PluginInstantiator}
+   * @param secureStore
    */
   public BasicHttpServiceContext(Program program, ProgramOptions programOptions,
                                  @Nullable HttpServiceHandlerSpecification spec,
                                  int instanceId, AtomicInteger instanceCount,
                                  MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator) {
+                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
+                                 SecureStore secureStore, SecureStoreManager secureStoreManager) {
     super(program, programOptions, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
-          metricsCollectionService, createMetricsTags(spec, instanceId), pluginInstantiator);
+          metricsCollectionService, createMetricsTags(spec, instanceId),
+          secureStore, secureStoreManager, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

@@ -35,6 +35,8 @@ import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueReader;
@@ -135,6 +137,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final DatasetFramework dsFramework;
   private final RuntimeUsageRegistry runtimeUsageRegistry;
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -146,7 +150,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient,
                               DatasetFramework dsFramework,
-                              RuntimeUsageRegistry runtimeUsageRegistry) {
+                              RuntimeUsageRegistry runtimeUsageRegistry,
+                              SecureStore secureStore,
+                              SecureStoreManager secureStoreManager) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -157,6 +163,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.dsFramework = dsFramework;
     this.runtimeUsageRegistry = runtimeUsageRegistry;
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
   }
 
   @SuppressWarnings("unused")
@@ -212,7 +220,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       // Creates flowlet context
       flowletContext = new BasicFlowletContext(program, options, flowletName, instanceId, instanceCount,
                                                flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, discoveryServiceClient, txClient, dsFramework);
+                                               metricsCollectionService, discoveryServiceClient, txClient,
+                                               dsFramework, secureStore, secureStoreManager);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

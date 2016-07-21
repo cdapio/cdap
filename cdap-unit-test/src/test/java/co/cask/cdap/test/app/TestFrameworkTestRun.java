@@ -17,6 +17,7 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.AppUsingNamespace;
+import co.cask.cdap.AppUsingSecureStore;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
@@ -304,6 +305,52 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     serviceManager.stop();
     serviceManager.waitForStatus(false, 1, 10);
+  }
+
+  @Test
+  public void testSecureStoreRuntimeApis() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingSecureStore.class);
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingSecureStore.SERVICE_NAME);
+    serviceManager.start();
+    serviceManager.waitForStatus(true, 1, 10);
+
+    URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
+
+    // Put a value in the store
+    callServicePut(serviceURL, "put", "value");
+    // Test get
+    Assert.assertEquals("value", callServiceGet(serviceURL, "get"));
+    // Test put
+    Assert.assertEquals(AppUsingSecureStore.KEY, callServiceGet(serviceURL, "list"));
+    // Test delete
+    callServiceGet(serviceURL, "delete");
+    try {
+      callServiceGet(serviceURL, "get");
+      Assert.fail("Key not deleted in secure store");
+    } catch (IOException e) {
+      // Expect key not found IOExcpetion
+    }
+    serviceManager.stop();
+    serviceManager.waitForStatus(false, 1, 10);
+
+    // Test access in spark program
+    StreamManager streamManager = getStreamManager(testSpace, AppUsingSecureStore.STREAM_NAME);
+    streamManager.createStream();
+    for (int i = 0; i < 10; i++) {
+      streamManager.send(String.valueOf(i));
+    }
+
+    SparkManager sparkManager = applicationManager.getSparkManager(AppUsingSecureStore.SPARK_NAME);
+    sparkManager.start();
+    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+
+    // Verify results
+    DataSetManager<KeyValueTable> datasetManager = getDataset(testSpace, "result");
+    KeyValueTable results = datasetManager.get();
+    for (int i = 0; i < 10; i++) {
+      byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
+      Assert.assertEquals(AppUsingSecureStore.VALUE, new String(results.read(key)));
+    }
   }
 
   @Test

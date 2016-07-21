@@ -20,6 +20,10 @@ import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
@@ -59,11 +63,15 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       MetricsCollectionService metricsService,
                       DiscoveryServiceClient discoveryServiceClient,
                       TransactionSystemClient txClient,
-                      DatasetFramework dsFramework) {
+                      DatasetFramework dsFramework,
+                      SecureStore secureStore,
+                      SecureStoreManager secureStoreManager) {
     super(program, programOptions, datasets, dsFramework, txClient, discoveryServiceClient, false, metricsService,
           ImmutableMap.of(Constants.Metrics.Tag.FLOWLET, flowletId,
-                          Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId))
+                          Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
+          secureStore, secureStoreManager
     );
+
     this.flowId = program.getName();
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program.getId().toEntityId(), flowletId);

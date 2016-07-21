@@ -24,12 +24,14 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -42,16 +44,18 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   private final DatasetContext delegateDatasetContext;
   private final Admin delegateAdmin;
   private final Transactional delegateTxnl;
+  private final SecureStoreManager delegateSecureStoreManager;
 
   @Inject
   @VisibleForTesting
   public DefaultAuthorizationContext(@Assisted("extension-properties") Properties extensionProperties,
                                      DatasetContext delegateDatasetContext, Admin delegateAdmin,
-                                     Transactional delegateTxnl) {
+                                     Transactional delegateTxnl, SecureStoreManager delegateSecureStoreManager) {
     this.extensionProperties = extensionProperties;
     this.delegateDatasetContext = delegateDatasetContext;
     this.delegateAdmin = delegateAdmin;
     this.delegateTxnl = delegateTxnl;
+    this.delegateSecureStoreManager = delegateSecureStoreManager;
   }
 
   @Override
@@ -129,5 +133,16 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   @Override
   public Properties getExtensionProperties() {
     return extensionProperties;
+  }
+
+  @Override
+  public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
+    throws IOException {
+    delegateSecureStoreManager.put(namespace, name, data, description, properties);
+  }
+
+  @Override
+  public void delete(String namespace, String name) throws IOException {
+    delegateSecureStoreManager.delete(namespace, name);
   }
 }

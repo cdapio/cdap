@@ -24,11 +24,13 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.security.store.SecureStore;
 
 /**
  * Context for {@link Worker}.
  */
-public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, StreamWriter, PluginContext, Transactional {
+public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, StreamWriter,
+  PluginContext, Transactional, SecureStore {
 
   /**
    * Returns the specification used to configure {@link Worker} bounded to this context.

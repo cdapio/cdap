@@ -18,6 +18,9 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -109,7 +112,8 @@ public class ServiceHttpServer extends AbstractIdleService {
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
                            DiscoveryServiceClient discoveryServiceClient,
-                           @Nullable PluginInstantiator pluginInstantiator) {
+                           @Nullable PluginInstantiator pluginInstantiator,
+                           SecureStore secureStore, SecureStoreManager secureStoreManager) {
     this.program = program;
     this.instanceCount = new AtomicInteger(instanceCount);
     this.serviceAnnouncer = serviceAnnouncer;
@@ -118,7 +122,8 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                                          instanceId, this.instanceCount,
                                                                          metricsCollectionService,
                                                                          datasetFramework, discoveryServiceClient,
-                                                                         txClient, pluginInstantiator);
+                                                                         txClient, pluginInstantiator, secureStore,
+                                                                         secureStoreManager);
     this.handlerContexts = createHandlerDelegatorContexts(program, spec, contextFactory);
     this.context = contextFactory.create(null);
     this.service = createNettyHttpService(program, host, handlerContexts, context.getProgramMetrics());
@@ -197,13 +202,15 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                               final DatasetFramework datasetFramework,
                                                               final DiscoveryServiceClient discoveryServiceClient,
                                                               final TransactionSystemClient txClient,
-                                                              @Nullable final PluginInstantiator pluginInstantiator) {
+                                                              @Nullable final PluginInstantiator pluginInstantiator,
+                                                              final SecureStore secureStore,
+                                                              final SecureStoreManager secureStoreManager) {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec) {
         return new BasicHttpServiceContext(program, programOptions, spec, instanceId, instanceCount,
-                                           metricsCollectionService,
-                                           datasetFramework, discoveryServiceClient, txClient, pluginInstantiator);
+                                           metricsCollectionService, datasetFramework, discoveryServiceClient,
+                                           txClient, pluginInstantiator, secureStore, secureStoreManager);
       }
     };
   }

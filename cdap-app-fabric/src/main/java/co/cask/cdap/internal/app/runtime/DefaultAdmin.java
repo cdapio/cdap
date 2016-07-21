@@ -21,11 +21,13 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Implementation of Admin that delegates dataset operations to a dataset framework.
@@ -34,10 +36,12 @@ public class DefaultAdmin implements Admin {
 
   private final DatasetFramework dsFramework;
   private final NamespaceId namespace;
+  private final SecureStoreManager secureStoreManager;
 
-  public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace) {
+  public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace, SecureStoreManager secureStoreManager) {
     this.dsFramework = dsFramework;
     this.namespace = namespace;
+    this.secureStoreManager = secureStoreManager;
   }
 
   private Id.DatasetInstance createInstanceId(String name) {
@@ -109,5 +113,16 @@ public class DefaultAdmin implements Admin {
       throw new DatasetManagementException(String.format("Failed to truncate instance %s, details: %s",
                                                          name, ioe.getMessage()), ioe);
     }
+  }
+
+  @Override
+  public void put(String namespace, String name, byte[] data,
+                  String description, Map<String, String> properties) throws IOException {
+    secureStoreManager.put(namespace, name, data, description, properties);
+  }
+
+  @Override
+  public void delete(String namespace, String name) throws IOException {
+    secureStoreManager.delete(namespace, name);
   }
 }

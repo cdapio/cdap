@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -36,10 +38,12 @@ import com.google.common.base.Throwables;
 import org.apache.spark.SparkConf;
 import org.apache.twill.api.RunId;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -242,5 +246,15 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
     return sparkRuntimeContext.newPluginInstance(pluginId, evaluator);
+  }
+
+  @Override
+  public List<SecureStoreMetadata> list(String namespace) throws IOException {
+    return sparkRuntimeContext.list(namespace);
+  }
+
+  @Override
+  public SecureStoreData get(String namespace, String name) throws IOException {
+    return sparkRuntimeContext.get(namespace, name);
   }
 }

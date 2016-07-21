@@ -20,6 +20,8 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -54,12 +56,14 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   MetricsCollectionService metricsCollectionService,
                                   DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                   DiscoveryServiceClient discoveryServiceClient,
-                                  @Nullable PluginInstantiator pluginInstantiator) {
+                                  @Nullable PluginInstantiator pluginInstantiator,
+                                  SecureStore secureStore, SecureStoreManager secureStoreManager) {
 
     super(workflow, programOptions, customActionSpecification.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
-          metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()),
-          pluginInstantiator);
+          metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()), secureStore,
+          secureStoreManager, pluginInstantiator);
+
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;
   }

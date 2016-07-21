@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark
 
+import java.io.IOException
 import java.util
 
 import co.cask.cdap.api.app.ApplicationSpecification
@@ -24,6 +25,7 @@ import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
+import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
 import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
@@ -55,6 +57,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   override def getLogicalStartTime: Long = sec.getLogicalStartTime
 
   override def getPluginContext: PluginContext = sec.getPluginContext
+
+  override def getSecureStore: SecureStore = sec.getSecureStore
 
   override def getWorkflowToken: WorkflowToken = sec.getWorkflowToken.orNull
 
@@ -176,6 +180,16 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
     implicit val kTag: ClassTag[K] = createClassTag
     implicit val vTag: ClassTag[V] = createClassTag
     sec.saveAsDataset(JavaPairRDD.toRDD(rdd), datasetName, arguments.toMap)
+  }
+
+  @throws[IOException]
+  override def list(namespace: String): util.List[SecureStoreMetadata] = {
+    return sec.getSecureStore.list(namespace)
+  }
+
+  @throws[IOException]
+  override def get(namespace: String, name: String): SecureStoreData = {
+    return sec.getSecureStore.get(namespace, name)
   }
 
   /**

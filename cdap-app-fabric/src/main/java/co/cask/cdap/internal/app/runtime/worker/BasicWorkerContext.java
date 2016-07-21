@@ -20,6 +20,10 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
@@ -68,11 +72,14 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      TransactionSystemClient transactionSystemClient,
                      DiscoveryServiceClient discoveryServiceClient,
                      StreamWriterFactory streamWriterFactory,
-                     @Nullable PluginInstantiator pluginInstantiator) {
+                     @Nullable PluginInstantiator pluginInstantiator,
+                     SecureStore secureStore,
+                     SecureStoreManager secureStoreManager) {
     super(program, programOptions, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          pluginInstantiator);
+          secureStore, secureStoreManager, pluginInstantiator);
+
     this.specification = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

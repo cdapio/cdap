@@ -29,6 +29,7 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 
 import java.util.List;
@@ -38,7 +39,7 @@ import java.util.Map;
  * MapReduce job execution context.
  */
 public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer,
-                                          PluginContext, ClientLocalizationContext, WorkflowInfoProvider {
+                                          PluginContext, ClientLocalizationContext, WorkflowInfoProvider, SecureStore {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
