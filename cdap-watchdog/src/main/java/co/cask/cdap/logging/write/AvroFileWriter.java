@@ -156,13 +156,8 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
     AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment(logBaseDir));
-    Object lock1 = new Object();
     if (avroFile == null) {
-      synchronized (lock1) {
-        if (avroFile == null) {
-          avroFile = createAvroFile(loggingContext, timestamp);
-        }
-      }
+      avroFile = createAvroFile(loggingContext, timestamp);
     }
     return avroFile;
   }
