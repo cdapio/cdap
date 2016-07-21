@@ -337,9 +337,19 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   this.toggleLogExpansion = function() {
     this.toggleExpandAll = !this.toggleExpandAll;
-    angular.forEach(this.data, (entry) => {
-      if(entry.log.stackTrace.length > 0){
+    angular.forEach(this.displayData, (entry, key) => {
+      if(!entry.stackTrace && entry.log.stackTrace.length > 0){
         entry.isStackTraceExpanded = this.toggleExpandAll;
+
+        if(this.toggleExpandAll && !this.displayData[key+1].stackTrace){
+          this.displayData[key].selected = true;
+          var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[key]));
+          stackTraceObj.stackTrace = true;
+          this.displayData.splice(key+1, 0, stackTraceObj);
+        } else if(!this.toggleExpandAll && !entry.stackTrace && key+1 < this.displayData.length && this.displayData[key+1].stackTrace){
+          this.displayData[key].selected = false;
+          this.displayData.splice(key+1, 1);
+        }
       }
     });
   };
