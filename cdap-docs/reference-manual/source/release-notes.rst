@@ -29,9 +29,8 @@ Cask Data Application Platform Release Notes
 Bug Fixes
 ---------
 
-- `CDAP-6465 <https://issues.cask.co/browse/CDAP-6465>`__ - Fixed a problem with the log
-  saver process not processing log events after encountering an exception during the writing
-  of log files.
+- `CDAP-6465 <https://issues.cask.co/browse/CDAP-6465>`__ - Made log saver process resilient 
+  to underlying HDFS exceptions.
 
 - `CDAP-6486 <https://issues.cask.co/browse/CDAP-6486>`__ - Fixed a problem with the CDAP
   Master leaking memory (due to a `Twill Zookeeper issue
