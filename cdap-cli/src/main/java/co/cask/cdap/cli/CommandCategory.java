@@ -21,16 +21,16 @@ package co.cask.cdap.cli;
  */
 public enum CommandCategory {
   GENERAL("General"),
-  NAMESPACE("Namespace"),
-  ARTIFACT("Artifact"),
-  METADATA_AND_LINEAGE("Metadata and Lineage"),
   APPLICATION_LIFECYCLE("Application Lifecycle"),
+  ARTIFACT("Artifact"),
   DATASET("Dataset"),
-  EXPLORE("Explore"),
-  METRICS("Metrics"),
-  INGEST("Ingest"),
   EGRESS("Egress"),
-  SECURITY("Security (Beta)");
+  EXPLORE("Explore"),
+  INGEST("Ingest"),
+  METADATA_AND_LINEAGE("Metadata and Lineage"),
+  METRICS("Metrics"),
+  NAMESPACE("Namespace"),
+  SECURITY("Security");
 
   final String name;
 

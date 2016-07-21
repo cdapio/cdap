@@ -24,7 +24,7 @@ SECTION_LINE = SPACES + '**'
 COMMAND_LINE = SPACES + LITERAL
 LITERAL_LINE = SPACES + ' | '
 
-SKIP_SECTIONS = ['Security (Beta)']
+SKIP_SECTIONS = []
 
 MISSING_FILE_TEMPLATE = "   **Missing Input File**,\"Missing input file %s\""
 TABLE_HEADER = """.. csv-table::
