@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -70,7 +69,6 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 @Singleton
 public class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
-
   private static final String SCHEME_NAME = "jceks";
   /** Separator between the namespace name and the key name */
   private static final String NAME_SEPARATOR = ":";
@@ -102,7 +100,8 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param name Name of the element to store.
    * @param data The data that needs to be securely stored.
    * @param description User provided description of the entry.
-   * @param properties Metadata associated with the data  @throws IOException
+   * @param properties Metadata associated with the data
+   * @throws IOException If it failed to store the key in the store.
    */
   @Override
   public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
@@ -110,31 +109,17 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     String keyName = getKeyName(namespace, name);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data);
-    Key key = null;
     writeLock.lock();
     try {
       if (keyStore.containsAlias(keyName)) {
-        key = keyStore.getKey(keyName, password);
+        throw new IOException("The key " + name + " under namespace " + namespace + "already exists.");
       }
       keyStore.setKeyEntry(keyName, new KeyStoreEntry(secureStoreData, meta), password, null);
       // Attempt to persist the store.
       flush();
-    } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+    } catch (KeyStoreException e) {
       // We failed to store the key in the key store. Throw an IOException.
       throw new IOException("Failed to store the key. ", e);
-    } catch (IOException ioe) {
-      // The key was stored in the keystore successfully but we failed to flush it to the file system.
-      // Remove the key from the keystore and throw an IOException.
-      try {
-        if (key == null) {
-          deleteFromStore(keyName, password);
-        } else {
-          keyStore.setKeyEntry(keyName, key, password, null);
-        }
-      } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
-        ioe.addSuppressed(new IOException("Failed to recover the store after a failed flush."));
-      }
-      throw ioe;
     } finally {
       writeLock.unlock();
     }
@@ -221,10 +206,6 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     } finally {
       readLock.unlock();
     }
-  }
-
-  private String getKeyName(String namespace, String name) {
-    return namespace + NAME_SEPARATOR + name;
   }
 
   private Key deleteFromStore(String name, char[] password) throws KeyStoreException,
@@ -339,5 +320,9 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     } catch (CertificateException e) {
       throw new IOException("Certificate exception storing keystore.", e);
     }
+  }
+
+  private static String getKeyName(final String namespace, final String name) {
+    return namespace + NAME_SEPARATOR + name;
   }
 }

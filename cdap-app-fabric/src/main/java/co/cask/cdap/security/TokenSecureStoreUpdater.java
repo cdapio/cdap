@@ -18,6 +18,7 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.DelegationTokensUpdater;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
@@ -60,15 +61,20 @@ import java.util.concurrent.TimeUnit;
  */
 public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(TokenSecureStoreUpdater.class);
+
   private final YarnConfiguration hConf;
   private final LocationFactory locationFactory;
+  private final co.cask.cdap.api.security.store.SecureStore secureStore;
   private final long updateInterval;
   private final boolean secureExplore;
 
   @Inject
-  public TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf, LocationFactory locationFactory) {
+  TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
+                                 LocationFactory locationFactory,
+                                 co.cask.cdap.api.security.store.SecureStore secureStore) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
+    this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
     updateInterval = calculateUpdateInterval();
   }
@@ -88,6 +94,11 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
       if (secureExplore) {
         HiveTokenUtils.obtainToken(refreshedCredentials);
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
+      }
+
+      if (secureStore instanceof DelegationTokensUpdater) {
+        String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
+        ((DelegationTokensUpdater) secureStore).addDelegationTokens(renewer, refreshedCredentials);
       }
 
       addDelegationTokens(hConf, locationFactory, refreshedCredentials);
