@@ -88,23 +88,23 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   this.showStackTrace = (index) => {
     //If the stack trace is showing, remove it
-    if( (index+1 < this.data.length) && this.data[index+1].stackTrace){
-      this.data.splice(index+1, 1);
-      this.data[index].selected = false;
+    if( (index+1 < this.displayData.length) && this.displayData[index+1].stackTrace){
+      this.displayData.splice(index+1, 1);
+      this.displayData[index].selected = false;
       return;
     }
     //If the currently clicked row is a stack trace itself, do nothing
-    else if(this.data[index].stackTrace && (index - 1) > 0){
+    else if(this.displayData[index].stackTrace && (index - 1) > 0){
       // this.data[index-1].selected = false;
       // this.data.splice(index, 1);
       return;
     }
 
-    if(this.data[index].log.stackTrace){
-      this.data[index].selected = true;
-      var stackTraceObj = JSON.parse(JSON.stringify(this.data[index]));
+    if(this.displayData[index].log.stackTrace){
+      this.displayData[index].selected = true;
+      var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[index]));
       stackTraceObj.stackTrace = true;
-      this.data.splice(index+1, 0, stackTraceObj);
+      this.displayData.splice(index+1, 0, stackTraceObj);
     }
   };
 
@@ -248,17 +248,17 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   const requestWithStartTime = () => {
-  if(pollPromise){
-    dataSrc.stopPoll(pollPromise.__pollId__);
-    pollPromise = null;
-  }
+    if(pollPromise){
+      dataSrc.stopPoll(pollPromise.__pollId__);
+      pollPromise = null;
+    }
 
-  // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
-  const url = myCdapUrl.constructUrl({
-    _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?format=json&start=${this.startTimeSec}`
-  });
+    // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
+    const url = myCdapUrl.constructUrl({
+      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?format=json&start=${this.startTimeSec}`
+    });
 
-  this.rawUrl = url;
+    this.rawUrl = url;
 
     myLogsApi.getLogsStart({
         'namespace' : this.namespaceId,
@@ -357,6 +357,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.renderData = () => {
     //Clean slate
     this.displayData = [];
+
     if(numEvents === 0){
       angular.forEach(this.data, (value, key) => {
         this.displayData.push(this.data[key]);
