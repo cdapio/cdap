@@ -18,6 +18,7 @@ Earlier versions:
 
 **CDAP 3.3.x**
 
+- `Version 3.3.6 <http://docs.cdap.io/cdap/3.3.6>`__
 - `Version 3.3.5 <http://docs.cdap.io/cdap/3.3.5>`__
 - `Version 3.3.4 <http://docs.cdap.io/cdap/3.3.4>`__
 - `Version 3.3.3 <http://docs.cdap.io/cdap/3.3.3>`__
