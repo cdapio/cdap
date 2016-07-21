@@ -30,7 +30,7 @@ public enum CommandCategory {
   METRICS("Metrics"),
   INGEST("Ingest"),
   EGRESS("Egress"),
-  SECURITY("Security (Beta)");
+  SECURITY("Security");
 
   final String name;
 
