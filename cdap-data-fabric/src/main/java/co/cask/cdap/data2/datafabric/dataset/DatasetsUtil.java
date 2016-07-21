@@ -127,7 +127,7 @@ public final class DatasetsUtil {
         props.remove(Table.PROPERTY_SCHEMA_ROW_FIELD);
 
         // LineageDataset and UsageDataset add the conflict level of none
-      } else if (UsageDataset.class.getSimpleName().equals(type) ||
+      } else if (UsageDataset.class.getName().equals(type) ||
         LineageDataset.class.getName().equals(type) || "lineageDataset".equals(type)) {
         props.remove(Table.PROPERTY_CONFLICT_LEVEL);
       }
