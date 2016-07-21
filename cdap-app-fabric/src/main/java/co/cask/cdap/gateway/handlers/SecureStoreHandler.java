@@ -16,28 +16,22 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.internal.app.services.SecureStoreService;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -52,23 +46,19 @@ import javax.ws.rs.PathParam;
 public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = new Gson();
 
-  private final SecureStore secureStore;
-  private final SecureStoreManager secureStoreManager;
+  private final SecureStoreService secureStoreService;
 
   @Inject
-  public SecureStoreHandler(SecureStore secureStore, SecureStoreManager secureStoreManager) {
-    this.secureStore = secureStore;
-    this.secureStoreManager = secureStoreManager;
+  public SecureStoreHandler(SecureStoreService secureStoreService) {
+    this.secureStoreService = secureStoreService;
   }
 
   @Path("/keys/{key-name}")
   @PUT
   public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
-                     @PathParam("key-name") String name) throws BadRequestException, IOException {
-    if (!EntityId.isValidStoreKey(name)) {
-      throw new BadRequestException("Improperly formatted secure key name. The name can contain lower case " +
-                                      "alphabets, " + "numbers, _, and -");
-    }
+                     @PathParam("key-name") String name) throws Exception {
+
+    SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     SecureKeyCreateRequest secureKeyCreateRequest = parseBody(httpRequest, SecureKeyCreateRequest.class);
 
     if (secureKeyCreateRequest == null) {
@@ -78,32 +68,25 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
                                       " \n" + GSON.toJson(dummy));
     }
 
-    String description = secureKeyCreateRequest.getDescription();
-    String value = secureKeyCreateRequest.getData();
-    if (Strings.isNullOrEmpty(value)) {
-      throw new BadRequestException("The data field should not be empty. This is the data that will be stored " +
-                                      "securely.");
-    }
-
-    byte[] data = value.getBytes(StandardCharsets.UTF_8);
-    secureStoreManager.putSecureData(namespace, name, data, description, secureKeyCreateRequest.getProperties());
+    secureStoreService.put(secureKeyCreateRequest, secureKeyId);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/keys/{key-name}")
   @DELETE
   public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
-                     @PathParam("key-name") String name) throws IOException {
-    secureStoreManager.deleteSecureData(namespace, name);
+                     @PathParam("key-name") String name) throws Exception {
+    SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
+    secureStoreService.delete(secureKeyId);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/keys/{key-name}")
   @GET
   public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
-                  @PathParam("key-name") String name) throws IOException {
-    SecureStoreData secureStoreData = secureStore.getSecureData(namespace, name);
-    String data = new String(secureStoreData.get(), StandardCharsets.UTF_8);
+                  @PathParam("key-name") String name) throws Exception {
+    SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
+    String data = new String(secureStoreService.get(secureKeyId).get(), StandardCharsets.UTF_8);
     httpResponder.sendJson(HttpResponseStatus.OK, data);
   }
 
@@ -111,21 +94,17 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
                           @PathParam("namespace-id") String namespace, @PathParam("key-name") String name)
-    throws IOException {
-    SecureStoreData secureStoreData = secureStore.getSecureData(namespace, name);
+    throws Exception {
+    SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
+    SecureStoreData secureStoreData = secureStoreService.get(secureKeyId);
     httpResponder.sendJson(HttpResponseStatus.OK, secureStoreData.getMetadata());
   }
 
   @Path("/keys")
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
-    throws IOException {
-    List<SecureStoreMetadata> metadatas = secureStore.listSecureData(namespace);
-    List<SecureKeyListEntry> returnList = new ArrayList<>(metadatas.size());
-    for (SecureStoreMetadata metadata : metadatas) {
-      returnList.add(new SecureKeyListEntry(metadata.getName(), metadata.getDescription()));
-    }
-
-    httpResponder.sendJson(HttpResponseStatus.OK, returnList);
+    throws Exception {
+    NamespaceId namespacedId = new NamespaceId(namespace);
+    httpResponder.sendJson(HttpResponseStatus.OK, secureStoreService.list(namespacedId));
   }
 }
