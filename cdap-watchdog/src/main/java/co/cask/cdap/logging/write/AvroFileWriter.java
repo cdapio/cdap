@@ -156,8 +156,13 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
     AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment(logBaseDir));
+    Object lock1 = new Object();
     if (avroFile == null) {
-      avroFile = createAvroFile(loggingContext, timestamp);
+      synchronized (lock1) {
+        if (avroFile == null) {
+          avroFile = createAvroFile(loggingContext, timestamp);
+        }
+      }
     }
     return avroFile;
   }
@@ -244,6 +249,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     }
 
     public void append(LogWriteEvent event) throws IOException {
+      System.out.println("thread: " + Thread.currentThread().getName() + " writing to: " + location.getName());
       dataFileWriter.append(event.getGenericRecord());
       lastModifiedTs = System.currentTimeMillis();
     }

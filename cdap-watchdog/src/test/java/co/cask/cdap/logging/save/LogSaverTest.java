@@ -68,7 +68,6 @@ import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -158,7 +157,6 @@ public class LogSaverTest extends KafkaTestBase {
     txManager.stopAndWait();
   }
 
-  @Ignore
   @Test
   public void testCheckpoint() throws Exception {
     TypeLiteral<Set<KafkaLogProcessorFactory>> type = new TypeLiteral<Set<KafkaLogProcessorFactory>>() { };
@@ -220,13 +218,11 @@ public class LogSaverTest extends KafkaTestBase {
     testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
   }
 
-  @Ignore
   @Test
   public void testLogRead2() throws Exception {
     testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
   }
 
-  @Ignore
   @Test
   public void testLogRead3() throws Exception {
     testLogRead(new ServiceLoggingContext("system", "services", "metrics"));

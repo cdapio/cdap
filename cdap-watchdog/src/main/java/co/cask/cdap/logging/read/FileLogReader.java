@@ -156,10 +156,11 @@ public class FileLogReader implements LogReader {
       List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
       AvroFileReader avroFileReader = new AvroFileReader(schema);
       for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file);
+        LOG.info("Reading file {}", file);
         avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
       }
     } catch (Throwable e) {
+
       LOG.error("Got exception: ", e);
       throw  Throwables.propagate(e);
     }
