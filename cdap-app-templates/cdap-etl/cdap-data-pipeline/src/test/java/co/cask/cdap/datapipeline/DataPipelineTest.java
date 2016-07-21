@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
@@ -44,6 +45,9 @@ import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -138,6 +142,28 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(action1Value, MockAction.readOutput(actionTableDS, action1RowKey, action1ColumnKey));
     Assert.assertEquals(action2Value, MockAction.readOutput(actionTableDS, action2RowKey, action2ColumnKey));
     Assert.assertEquals(action3Value, MockAction.readOutput(actionTableDS, action3RowKey, action3ColumnKey));
+
+    List<RunRecord> history = workflowManager.getHistory(ProgramRunStatus.COMPLETED);
+    Assert.assertEquals(1, history.size());
+    String runId = history.get(0).getPid();
+
+    WorkflowTokenDetail tokenDetail = workflowManager.getToken(runId, WorkflowToken.Scope.USER,
+                                                               action1RowKey + action1ColumnKey);
+
+    validateToken(tokenDetail, action1RowKey + action1ColumnKey, action1Value);
+
+    tokenDetail = workflowManager.getToken(runId, WorkflowToken.Scope.USER, action2RowKey + action2ColumnKey);
+    validateToken(tokenDetail, action2RowKey + action2ColumnKey, action2Value);
+
+    tokenDetail = workflowManager.getToken(runId, WorkflowToken.Scope.USER, action3RowKey + action3ColumnKey);
+    validateToken(tokenDetail, action3RowKey + action3ColumnKey, action3Value);
+  }
+
+  private void validateToken(WorkflowTokenDetail tokenDetail, String key, String value) {
+    List<WorkflowTokenDetail.NodeValueDetail> nodeValueDetails = tokenDetail.getTokenData().get(key);
+    // Only one node should have corresponding key
+    Assert.assertEquals(1, nodeValueDetails.size());
+    Assert.assertEquals(value, nodeValueDetails.get(0).getValue());
   }
 
   @Test

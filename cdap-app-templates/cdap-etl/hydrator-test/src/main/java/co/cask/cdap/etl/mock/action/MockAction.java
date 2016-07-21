@@ -75,6 +75,9 @@ public class MockAction extends Action {
         table.put(put);
       }
     });
+
+    // Set the same value in the arguments as well.
+    context.getArguments().set(config.rowKey + config.columnKey, config.value);
   }
 
   public static ETLPlugin getPlugin(String tableName, String rowKey, String columnKey, String value) {

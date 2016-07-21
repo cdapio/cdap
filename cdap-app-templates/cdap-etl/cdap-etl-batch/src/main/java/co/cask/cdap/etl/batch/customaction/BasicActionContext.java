@@ -30,9 +30,11 @@ import co.cask.tephra.TransactionFailureException;
 public class BasicActionContext implements ActionContext {
 
   private final CustomActionContext context;
+  private final BasicSettableArguments arguments;
 
   public BasicActionContext(CustomActionContext context) {
     this.context = context;
+    this.arguments = new BasicSettableArguments(context.getRuntimeArguments());
   }
 
   @Override
@@ -42,7 +44,7 @@ public class BasicActionContext implements ActionContext {
 
   @Override
   public SettableArguments getArguments() {
-    return new BasicSettableArguments(context.getRuntimeArguments());
+    return arguments;
   }
 
   @Override
