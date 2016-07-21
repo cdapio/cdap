@@ -355,13 +355,18 @@ Port* is used by the CDAP UI to connect to the CDAP Router service.
 
    **Add Service Wizard, Page 4:** Reviewing changes and (initial) configuration.
 
-
 **Additional CDAP configuration properties** can be added after using the Cloudera Manager's 
 *Safety Valve* Advanced Configuration Snippets. Documentation of the available CDAP
 properties is in the :ref:`appendix-cdap-site.xml`.
 
 **Additional environment variables** can be set after, as required, using the Cloudera Manager's
 "Cask DAP Service Environment Advanced Configuration Snippet (Safety Valve)".
+
+.. Environment variables
+.. ---------------------
+.. include:: /../target/_includes/cloudera-starting.rst
+    :start-after: .. _cloudera-starting-services-java-heapmax:
+    :end-before: .. end_of_list
 
 At this point, the CDAP installation is configured and is ready to be installed. Review
 your settings before continuing to the next step, which will install and start CDAP.
@@ -415,7 +420,9 @@ needs to contain the location of the Spark libraries, typically as
 ``SPARK_HOME=/opt/cloudera/parcels/CDH/lib/spark``.
 
 **Additional environment variables** are set using the Cloudera Manager's
-"Cask DAP Service Environment Advanced Configuration Snippet (Safety Valve)". 
+"Cask DAP Service Environment Advanced Configuration Snippet (Safety Valve)".
+
+
 
 .. figure:: ../_images/cloudera/cloudera-csd-10.png
    :figwidth: 100%
