@@ -30,6 +30,8 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -92,6 +94,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
           bind(LocationFactory.class).toInstance(lf);
           bind(NamespacedLocationFactory.class).toInstance(nlf);
           bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
         }
       },
       new ExploreClientModule(),

@@ -32,6 +32,8 @@ import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimestampCloseable;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -68,6 +70,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriterTestBase.class);
   private static final CConfiguration cConf = CConfiguration.create();
+  private static final Impersonator impersonator = new Impersonator(cConf, new UnsupportedUGIProvider(), null);
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -208,7 +211,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     streamConfig.getLocation().mkdirs();
 
     return new ConcurrentStreamWriter(COORDINATOR_CLIENT, streamAdmin,
-                                      writerFactory, threads, new TestMetricsCollectorFactory());
+                                      writerFactory, threads, new TestMetricsCollectorFactory(), impersonator);
   }
 
   private Runnable createWriterTask(final Id.Stream streamId,
@@ -279,7 +282,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private StreamFileWriterFactory createStreamFileWriterFactory() {
     CConfiguration cConf = CConfiguration.create();
-    return new LocationStreamFileWriterFactory(cConf);
+    return new LocationStreamFileWriterFactory(cConf, impersonator);
   }
 
   private FileInfo generateFile(NamespacedLocationFactory locationFactory, int id, int events) throws IOException {

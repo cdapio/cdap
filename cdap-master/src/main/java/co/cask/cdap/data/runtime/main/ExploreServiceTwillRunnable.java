@@ -34,6 +34,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.security.RemoteUGIProvider;
+import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
@@ -51,6 +53,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -133,6 +136,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
           bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
+          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
         }
       });
   }

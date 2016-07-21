@@ -23,13 +23,16 @@ import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimePartitionedStreamFileWriter;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 /**
  * A {@link StreamFileWriterFactory} that provides {@link FileWriter} which writes to file location.
@@ -38,10 +41,12 @@ import java.io.IOException;
 public final class LocationStreamFileWriterFactory implements StreamFileWriterFactory {
 
   private final String filePrefix;
+  private final Impersonator impersonator;
 
   @Inject
-  public LocationStreamFileWriterFactory(CConfiguration cConf) {
+  public LocationStreamFileWriterFactory(CConfiguration cConf, Impersonator impersonator) {
     this.filePrefix = cConf.get(Constants.Stream.INSTANCE_FILE_PREFIX);
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -50,16 +55,23 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
   }
 
   @Override
-  public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
+  public FileWriter<StreamEvent> create(final StreamConfig config, final int generation) throws IOException {
     try {
       Preconditions.checkNotNull(config.getLocation(), "Location for stream {} is unknown.", config.getStreamId());
 
-      Location baseLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);
-      Locations.mkdirsIfNotExists(baseLocation);
+      Location baseLocation = impersonator.doAs(new NamespaceId(config.getStreamId().getNamespaceId()),
+                                                new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          Location baseLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);
+          Locations.mkdirsIfNotExists(baseLocation);
+          return baseLocation;
+        }
+      });
 
       return new TimePartitionedStreamFileWriter(baseLocation, config.getPartitionDuration(),
-                                                 filePrefix, config.getIndexInterval());
-
+                                                 filePrefix, config.getIndexInterval(),
+                                                 config.getStreamId().toEntityId(), impersonator);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw new IOException(e);
