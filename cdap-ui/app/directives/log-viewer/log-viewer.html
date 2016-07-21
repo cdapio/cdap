@@ -59,14 +59,14 @@
   </my-timeline>
 
   <!-- NO DATA MESSAGE -->
-  <div ng-if="LogViewer.data.length === 0" class="well well-lg">
+  <div ng-if="LogViewer.displayData.length === 0" class="well well-lg">
     No logs to be displayed.
   </div>
   <div ng-if="LogViewer.loading" class="text-center well well-lg">
     Loading..
   </div>
   <!-- LOGS TABLE -->
-  <div ng-if="LogViewer.data.length > 0 && !LogViewer.loading" class="logs-table">
+  <div ng-if="LogViewer.displayData.length > 0 && !LogViewer.loading" class="logs-table">
     <table class="table table-bordered scroll scroll-table">
       <thead>
         <th class="time time-header log-header"
@@ -109,16 +109,16 @@
         </th>
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
-             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.data.length"
+             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.displayData.length"
              infinite-scroll-container="'.logs-table'"
              >
 
-        <tr ng-class="{'selected-row' : entry.selected, 'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.data.length && LogViewer.data[$index + 1].stackTrace }" ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:searchText | filter:LogViewer.eventFilter | limitTo: LogViewer.viewLimit track by $index" ng-click="LogViewer.showStackTrace($index)">
+        <tr ng-class="{'selected-row' : entry.selected, 'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace }" ng-repeat="entry in LogViewer.displayData | filter:LogViewer.filterByStartDate | filter:searchText | limitTo: LogViewer.viewLimit track by $index" ng-click="LogViewer.showStackTrace($index)">
 
           <td class="time time-stack-trace" ng-if="!entry.stackTrace && entry.log.stackTrace.length > 0 && LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
             <span class="indicator-arrow" ng-if="entry.log.stackTrace.length > 0">
-              <i ng-if="($index+1 < LogViewer.data.length) && (LogViewer.data[$index +1].stackTrace )" class="fa fa-chevron-down"></i>
-              <i ng-if="($index+1 >= LogViewer.data.length) || !LogViewer.data[$index +1].stackTrace" class="fa fa-chevron-right"></i>
+              <i ng-if="($index+1 < LogViewer.displayData.length) && (LogViewer.displayData[$index +1].stackTrace )" class="fa fa-chevron-down"></i>
+              <i ng-if="($index+1 >= LogViewer.displayData.length) || !LogViewer.displayData[$index +1].stackTrace" class="fa fa-chevron-right"></i>
             </span>
             <span class="display-time">{{ entry.log.displayTime}}</span>
           </td>

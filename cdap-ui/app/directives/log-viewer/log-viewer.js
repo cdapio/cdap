@@ -18,6 +18,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   'ngInject';
 
   this.data = {};
+  this.displayData = {};
   this.errorCount = 0;
   this.warningCount = 0;
   this.totalCount = 0;
@@ -295,6 +296,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.fromOffset = res[res.length-1].offset;
         this.data = res;
+        this.renderData();
         this.cacheSize = res.length - this.cacheDecrement;
 
         if(res.length < this.viewLimit){
@@ -349,6 +351,24 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       numEvents++;
     }
     included[eventType] = !included[eventType];
+    this.renderData();
+  };
+
+  this.renderData = () => {
+    //Clean slate
+    this.displayData = [];
+    if(numEvents === 0){
+      angular.forEach(this.data, (value, key) => {
+        this.displayData.push(this.data[key]);
+      });
+      return;
+    } else {
+      angular.forEach(this.data, (value, key) => {
+        if(included[this.data[key].log.logLevel]){
+          this.displayData.push(this.data[key]);
+        }
+      });
+    }
   };
 
   this.eventFilter = function(entry){
