@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Tasks;
@@ -111,7 +111,7 @@ public abstract class NotificationTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
-      new LocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new DataFabricModules().getInMemoryModules(),

@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.stream.hbase;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -90,7 +90,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new LocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
       new DataFabricDistributedModule(),

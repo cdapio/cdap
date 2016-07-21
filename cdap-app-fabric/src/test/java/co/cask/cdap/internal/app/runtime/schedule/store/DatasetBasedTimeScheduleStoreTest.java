@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -95,7 +95,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
     injector = Guice.createInjector(new ConfigModule(conf),
-                                    new LocationUnitTestModule().getModule(),
+                                    new NonCustomLocationUnitTestModule().getModule(),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new MetricsClientRuntimeModule().getInMemoryModules(),
                                     new DataFabricModules().getInMemoryModules(),

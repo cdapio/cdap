@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.write;
 
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.io.RootLocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -35,15 +36,16 @@ public final class LogCleanup implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogCleanup.class);
 
   private final FileMetaDataManager fileMetaDataManager;
-  private final Location rootDir;
-  private final String namespacesDir;
+  private final RootLocationFactory rootLocationFactory;
   private final long retentionDurationMs;
 
-  public LogCleanup(FileMetaDataManager fileMetaDataManager, Location rootDir, String namespacesDir,
+  // this class takes a root location factory because for custom mapped namespaces the namespace is mapped to a
+  // location from the root of system and the logs are generated in the custom mapped location. To clean up  these
+  // locations we need to work with root based location factory
+  public LogCleanup(FileMetaDataManager fileMetaDataManager, RootLocationFactory rootLocationFactory,
                     long retentionDurationMs) {
     this.fileMetaDataManager = fileMetaDataManager;
-    this.rootDir = rootDir;
-    this.namespacesDir = namespacesDir;
+    this.rootLocationFactory = rootLocationFactory;
     this.retentionDurationMs = retentionDurationMs;
 
     LOG.debug("Log retention duration = {} ms", retentionDurationMs);
@@ -83,7 +85,7 @@ public final class LogCleanup implements Runnable {
     }
   }
 
-  Location getParent(Location location) {
+  private Location getParent(Location location) {
     Location parent = Locations.getParent(location);
     return (parent == null) ? location : parent;
   }
@@ -92,11 +94,10 @@ public final class LogCleanup implements Runnable {
    * For the specified directory to be deleted, finds its namespaced log location, then deletes
    * @param namespacedLogBaseDir namespaced log base dir without the root dir prefixed
    * @param dir dir to delete
-   * @throws IOException
    */
-  void deleteEmptyDir(String namespacedLogBaseDir, Location dir) throws IOException {
+  void deleteEmptyDir(String namespacedLogBaseDir, Location dir) {
     LOG.debug("Got path {}", dir);
-    Location namespacedLogBaseLocation = rootDir.append(namespacesDir).append(namespacedLogBaseDir);
+    Location namespacedLogBaseLocation = rootLocationFactory.create(namespacedLogBaseDir);
     deleteEmptyDirsInNamespace(namespacedLogBaseLocation, dir);
   }
 

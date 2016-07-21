@@ -19,7 +19,7 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -88,7 +88,7 @@ public class DataMigration {
       new ConfigModule(cConf, hConf),
       //  having a namespaced location factory which does not look up  namespace meta here is fine since this data
       // migration tool does not perform namespace specific operations
-      new LocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

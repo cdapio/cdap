@@ -17,9 +17,10 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.RootLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Factory to create {@link KafkaLogWriterPlugin}.
@@ -27,21 +28,25 @@ import org.apache.twill.filesystem.LocationFactory;
 public class KafkaLogWriterPluginFactory implements KafkaLogProcessorFactory {
   private final CConfiguration cConfig;
   private final FileMetaDataManager fileMetaDataManager;
-  private final LocationFactory locationFactory;
+  private final RootLocationFactory rootLocationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final CheckpointManagerFactory checkpointManagerFactory;
 
   @Inject
   public KafkaLogWriterPluginFactory(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
-                                     LocationFactory locationFactory,
+                                     RootLocationFactory rootLocationFactory,
+                                     NamespacedLocationFactory namespacedLocationFactory,
                                      CheckpointManagerFactory checkpointManagerFactory) {
     this.cConfig = cConfig;
     this.fileMetaDataManager = fileMetaDataManager;
-    this.locationFactory = locationFactory;
+    this.rootLocationFactory = rootLocationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.checkpointManagerFactory = checkpointManagerFactory;
   }
 
   @Override
   public KafkaLogProcessor create() throws Exception {
-    return new KafkaLogWriterPlugin(cConfig, fileMetaDataManager, locationFactory, checkpointManagerFactory);
+    return new KafkaLogWriterPlugin(cConfig, fileMetaDataManager, checkpointManagerFactory, rootLocationFactory,
+                                    namespacedLocationFactory);
   }
 }

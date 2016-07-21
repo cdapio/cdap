@@ -22,7 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -389,7 +389,7 @@ public class BaseHiveExploreServiceTest {
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new LocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -449,7 +449,7 @@ public class BaseHiveExploreServiceTest {
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
-      new LocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),

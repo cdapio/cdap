@@ -17,7 +17,8 @@
 package co.cask.cdap.logging.appender.file;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.RootLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
@@ -41,7 +42,6 @@ import com.google.inject.Inject;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,12 +56,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FileLogAppender extends LogAppender {
   private static final Logger LOG = LoggerFactory.getLogger(FileLogAppender.class);
 
-  public static final String APPENDER_NAME = "FileLogAppender";
+  private static final String APPENDER_NAME = "FileLogAppender";
 
   private final CConfiguration cConf;
   private final LogSaverTableUtil tableUtil;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final RootLocationFactory rootLocationFactory;
   private final String logBaseDir;
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
@@ -80,12 +81,14 @@ public class FileLogAppender extends LogAppender {
   public FileLogAppender(CConfiguration cConfig,
                          DatasetFramework dsFramework,
                          TransactionExecutorFactory txExecutorFactory,
-                         LocationFactory locationFactory) {
+                         NamespacedLocationFactory namespacedLocationFactory,
+                         RootLocationFactory rootLocationFactory) {
     setName(APPENDER_NAME);
     this.cConf = cConfig;
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
     this.txExecutorFactory = txExecutorFactory;
-    this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.rootLocationFactory = rootLocationFactory;
 
     this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(logBaseDir, "Log base dir cannot be null");
@@ -129,16 +132,15 @@ public class FileLogAppender extends LogAppender {
     try {
       logSchema = new LogSchema().getAvroSchema();
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txExecutorFactory,
-                                                                        locationFactory, cConf);
+                                                                        rootLocationFactory, namespacedLocationFactory,
+                                                                        cConf);
 
-      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, cConf, locationFactory.create(""),
-                                                         logBaseDir, logSchema, maxLogFileSizeBytes, syncIntervalBytes,
+      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, namespacedLocationFactory, logBaseDir,
+                                                         logSchema, maxLogFileSizeBytes, syncIntervalBytes,
                                                          inactiveIntervalMs);
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
-      String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
-      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
-                                             retentionDurationMs);
+      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, retentionDurationMs);
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
                                             logCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (Exception e) {

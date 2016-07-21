@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -53,7 +53,7 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),

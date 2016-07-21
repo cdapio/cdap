@@ -25,7 +25,7 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -151,8 +151,8 @@ public abstract class DatasetServiceTestBase {
     // TODO: this whole method is a mess. Streamline it!
     injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),

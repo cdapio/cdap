@@ -22,19 +22,23 @@ import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -65,7 +69,8 @@ public final class LoggingContextHelper {
 
   private LoggingContextHelper() {}
 
-  public static String getNamespacedBaseDir(String logBaseDir, String logPartition) {
+  public static String getNamespacedBaseDir(NamespacedLocationFactory namespacedLocationFactory, String logBaseDir,
+                                            String logPartition) throws IOException {
     Preconditions.checkArgument(logBaseDir != null, "Log Base dir cannot be null");
     Preconditions.checkArgument(logPartition != null, "Log partition cannot be null");
     String [] partitions = logPartition.split(":");
@@ -73,7 +78,38 @@ public final class LoggingContextHelper {
                                 "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
     // don't care about the app or the program, only need the namespace
     GenericLoggingContext loggingContext = new GenericLoggingContext(partitions[0], partitions[1], partitions[2]);
-    return loggingContext.getNamespacedLogBaseDir(logBaseDir);
+    return getNamesapcedDir(namespacedLocationFactory, loggingContext).append(logBaseDir).toString();
+  }
+
+  /**
+   * Return the absolute location of the namespace for the given logging context. Note: This location is just the
+   * location of the namespace and does not points to the logs directory under that namespace.
+   *
+   * @param namespacedLocationFactory the {@link NamespacedLocationFactory} to use for getting the location
+   * @param loggingContext the {@link LoggingContext} whose namespace needs to be found
+   * @return {@link Location} which points the namespace for the given logging context.
+   * @throws IOException if failed to get the location of the namespace for the given logging context.
+   */
+  public static Location getNamesapcedDir(NamespacedLocationFactory namespacedLocationFactory, LoggingContext
+    loggingContext) throws IOException {
+    NamespaceId namespaceId = getNamespaceId(loggingContext);
+    return namespacedLocationFactory.get(namespaceId.toId());
+  }
+
+  /**
+   * Gives the {@link NamespaceId} for  the given logging context.
+   *
+   * @param loggingContext the {@link LoggingContext} whose namespace id needs to be found.
+   * @return {@link NamespaceId} for the given logging context
+   */
+  public static NamespaceId getNamespaceId(LoggingContext loggingContext) {
+    Preconditions.checkArgument(loggingContext.getSystemTagsMap().containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID),
+                                String.format("Failed to identify the namespace in the logging context '%s' since " +
+                                                "it does not contains a '%s'. LoggingContexts should have a " +
+                                                "namespace.", loggingContext.getSystemTagsMap(),
+                                              NamespaceLoggingContext.TAG_NAMESPACE_ID));
+    return new NamespaceId(loggingContext.getSystemTagsMap()
+                             .get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
   }
 
   public static LoggingContext getLoggingContext(Map<String, String> tags) {

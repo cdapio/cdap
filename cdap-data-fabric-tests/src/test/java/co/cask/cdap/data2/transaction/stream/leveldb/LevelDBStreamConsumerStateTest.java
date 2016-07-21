@@ -19,7 +19,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
@@ -71,7 +71,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
       new DataFabricLevelDBModule(),
