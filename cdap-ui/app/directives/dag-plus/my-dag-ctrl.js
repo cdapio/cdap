@@ -23,14 +23,16 @@ angular.module(PKG.name + '.commons')
 
     var endpoints = [];
 
-    var sourceOrigin = angular.copy(DAGPlusPlusFactory.getSettings().sourceOrigin),
-        sourceTarget = angular.copy(DAGPlusPlusFactory.getSettings().sourceTarget),
-        transformOrigin = angular.copy(DAGPlusPlusFactory.getSettings().transformOrigin),
-        transformTarget = angular.copy(DAGPlusPlusFactory.getSettings().transformTarget),
-        sinkOrigin = angular.copy(DAGPlusPlusFactory.getSettings().sinkOrigin),
-        sinkTarget = angular.copy(DAGPlusPlusFactory.getSettings().sinkTarget),
-        actionOrigin = angular.copy(DAGPlusPlusFactory.getSettings().actionOrigin),
-        actionTarget = angular.copy(DAGPlusPlusFactory.getSettings().actionTarget);
+    var settings = DAGPlusPlusFactory.getSettings();
+
+    var sourceOrigin = settings.sourceOrigin,
+        sourceTarget = settings.sourceTarget,
+        transformOrigin = settings.transformOrigin,
+        transformTarget = settings.transformTarget,
+        sinkOrigin = settings.sinkOrigin,
+        sinkTarget = settings.sinkTarget,
+        actionOrigin = settings.actionOrigin,
+        actionTarget = settings.actionTarget;
 
 
     var SHOW_METRICS_THRESHOLD = 0.8;
