@@ -233,16 +233,23 @@ Customize CDAP
  
       **Ambari Dashboard:** Enabling *CDAP Explore*
 
-   **Additional environment variables** can be set, as required, using Ambari's 
-   "Configs > Advanced > Advanced cdap-env".
-
    **Additional CDAP configuration properties**, not shown in the web interface, can be
    added using Ambari's advanced custom properties at the end of the page. Documentation
    of the available CDAP properties is in the :ref:`appendix-cdap-site.xml`.
 
    For a **complete explanation of these options,** refer to the :ref:`CDAP documentation
-   of cdap-site.xml <appendix-cdap-site.xml>`. When finished with configuration changes,
-   click *Next*.
+   of cdap-site.xml <appendix-cdap-site.xml>`. 
+   
+   **Additional environment variables** can be set, as required, using Ambari's 
+   "Configs > Advanced > Advanced cdap-env".
+
+   .. Environment variables
+   .. ---------------------
+   .. include:: /../target/_includes/ambari-starting.rst
+       :start-after: .. _ambari-starting-services-java-heapmax:
+       :end-before: .. end_of_list
+
+   When finished with configuration changes, click *Next*.
 
 
 Starting CDAP Services

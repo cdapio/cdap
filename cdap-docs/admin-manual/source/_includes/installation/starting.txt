@@ -16,3 +16,19 @@ accessible through a browser at port ``9999``.
 
 The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
 one of the machines where you installed the packages and started the services.
+
+.. _|distribution|-starting-services-java-heapmax:
+
+**Note:** Service-specific Java heap memory settings (that override the default values)
+can be created by setting these environment variables::
+
+  AUTH_JAVA_HEAPMAX
+  KAFKA_JAVA_HEAPMAX
+  MASTER_JAVA_HEAPMAX
+  ROUTER_JAVA_HEAPMAX
+
+.. end_of_list
+
+such as::
+
+  $ export AUTH_JAVA_HEAPMAX="-Xmx1024m"
