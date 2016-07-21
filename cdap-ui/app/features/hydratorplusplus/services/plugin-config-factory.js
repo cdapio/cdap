@@ -74,16 +74,15 @@ class HydratorPlusPlusPluginConfigFactory {
       case '1.1':
         return this.generateConfigForNewSpec(backendProperties, nodeConfig);
       case '1.2':
-      case '1.3':
         return this.generateConfigFor12Spec(backendProperties, nodeConfig);
-      case '1.4':
-        return this.generateConfigFor14Spec(backendProperties, nodeConfig);
+      case '1.3':
+        return this.generateConfigFor13Spec(backendProperties, nodeConfig);
       default: // No spec version which means
         throw 'NO_JSON_FOUND';
     }
   }
 
-  generateConfigFor14Spec(backendProperties, nodeConfig) {
+  generateConfigFor13Spec(backendProperties, nodeConfig) {
     var config = this.generateConfigFor12Spec(backendProperties, nodeConfig);
     config.jumpConfig = {};
     if (typeof nodeConfig['jump-config'] === 'object') {
