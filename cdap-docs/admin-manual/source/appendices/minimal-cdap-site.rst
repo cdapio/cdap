@@ -4,9 +4,9 @@
 
 .. _appendix-minimal-cdap-site.xml:
 
-====================================================
-Appendix: Minimal ``cdap-site.xml``
-====================================================
+===============================
+Appendix: Minimal cdap-site.xml
+===============================
 
 The following properties are the minimal required configuration for the ``cdap-site.xml``
 file. They are included in the distribution in the file ``cdap-site.xml.example``.

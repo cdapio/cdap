@@ -51,7 +51,7 @@ from datetime import datetime
 from optparse import OptionParser
 
 SOURCE_PATH = os.path.dirname(os.path.abspath(__file__))
-RELATIVE_PATH = '../..'
+RELATIVE_PATH = '../../..'
 CDAP_DEFAULT_XML = 'cdap-common/src/main/resources/cdap-default.xml'
 CDAP_DEFAULT_EXCLUSIONS = 'cdap-default-exclusions.txt'
 
@@ -311,6 +311,13 @@ def parse_options():
         default=False)
 
     parser.add_option(
+        '-i', '--ignore',
+        dest='ignore',
+        action='store_true',
+        help="Ignores the %s file" % CDAP_DEFAULT_EXCLUSIONS,
+        default=False)
+
+    parser.add_option(
         '-s', '--source',
         dest='source',
         help="The XML to be loaded, if not the default '%s'" % CDAP_DEFAULT_XML,
@@ -389,7 +396,14 @@ def load_exclusions():
     exclusions_path = os.path.join(SOURCE_PATH, CDAP_DEFAULT_EXCLUSIONS)
     if not os.path.isfile(exclusions_path):
         raise Exception(func, "'%s' not a valid path" % exclusions_path)
-    return [line.rstrip('\n') for line in open(exclusions_path)]
+    lines = []
+    for line in open(exclusions_path):
+        if not line or line.startswith(' ') or line.startswith('#'):
+            continue
+        else:
+            lines.append(line.rstrip('\n'))
+    return lines
+#     return [line.rstrip('\n') for line in open(exclusions_path)]
 
 def load_xml_files():
     func = 'load_xml_files'
@@ -400,7 +414,10 @@ def load_xml_files():
 
 def load_xml(source, include_exclusions=False, include_comments=True):
     func = 'load_xml'
-    if not source:
+    if source:
+        print "Loading %s" % source
+    else:
+        print 'Loading cdap-default.xml'
         source = default_xml_filepath()
     try:
         if os.path.isfile(source):
@@ -430,7 +447,7 @@ def load_xml(source, include_exclusions=False, include_comments=True):
 
     return items, tree
 
-def create_rst(items):
+def create_rst(items, ignore):
     """Create rst from items"""
     table = ''    
     for item in items:
@@ -528,9 +545,9 @@ def rebuild(filepath=''):
         for line in xml.split('\n'):
             print line
 
-def load_create_rst(filesource='', filepath=''):
-    defaults, tree = load_xml(filesource)
-    table = create_rst(defaults)
+def load_create_rst(filesource='', filepath='', ignore=False):
+    defaults, tree = load_xml(filesource, include_exclusions=ignore)
+    table = create_rst(defaults, ignore)
     if filepath:
         f = open(filepath, 'w')
         f.write(table)
@@ -538,9 +555,8 @@ def load_create_rst(filesource='', filepath=''):
     else:
         print table
         
-def load_summary(props_only=False):
-    print 'Loading cdap-default.xml'
-    items, tree = load_xml('')
+def load_summary(source='', props_only=False, ignore=False):
+    items, tree = load_xml(source, include_exclusions=ignore)
     section_counter = 0
     properties_counter = 0
     for item in items:
@@ -735,13 +751,13 @@ def main():
             compare_xml(options.source, options.other_source, options.target)
         if options.generate:
             print "Generating RST..."
-            load_create_rst(options.source, options.target)
+            load_create_rst(options.source, options.target, options.ignore)
         if options.build:
             print "Building XML file..."
             rebuild(filepath = default_xml_filepath('_revised.xml'))
         if options.load_props:
             print "Loading XML file and printing properties..."
-            load_summary(props_only=True)
+            load_summary(source=options.source, props_only=True, ignore=options.ignore)
         if options.load_quick:
             print "Loading XML file and printing summary..."
             load_summary()

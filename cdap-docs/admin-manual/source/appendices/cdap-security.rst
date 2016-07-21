@@ -1,12 +1,12 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _appendix-cdap-security.xml:
 
-============================================
-Appendix: ``cdap-security.xml``
-============================================
+===========================
+Appendix: cdap-security.xml
+===========================
 
 Here are the parameters that can be defined in the ``cdap-security.xml`` file,
 their default values, descriptions, and notes.

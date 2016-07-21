@@ -113,11 +113,16 @@ def create_table(input_file, output_file):
     if os.path.isfile(input_file):
         print "Reading in %s" % input_file
         with open(input_file,'r') as f:
+            at_start = True
             in_spaces = False
             in_literal = False
             skip_section = False
             for line in f:
                 line = line.rstrip()
+                if at_start and not line.startswith(' '):
+                    continue
+                else:
+                    at_start = False
                 if line.startswith(SECTION_LINE) or line.startswith(COMMAND_LINE):
                     if line.startswith(SECTION_LINE):
                         skip_section = skip_this_section(line)
