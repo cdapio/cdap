@@ -24,7 +24,6 @@ import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
-import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -68,7 +67,6 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private final co.cask.cdap.api.security.store.SecureStore secureStore;
   private final long updateInterval;
   private final boolean secureExplore;
-  private final boolean supportsKMS;
 
   @Inject
   TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
@@ -78,7 +76,6 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
-    supportsKMS = SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable();
     updateInterval = calculateUpdateInterval();
   }
 

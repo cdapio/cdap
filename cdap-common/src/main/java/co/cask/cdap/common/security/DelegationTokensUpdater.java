@@ -19,7 +19,7 @@ package co.cask.cdap.common.security;
 import org.apache.hadoop.security.Credentials;
 
 /**
- *
+ * Implementors of this interface get the respective delegation token and add it to the credentials.
  */
 public interface DelegationTokensUpdater {
   Credentials addDelegationTokens(String renewer, Credentials credentials);
