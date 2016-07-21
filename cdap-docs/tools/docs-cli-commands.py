@@ -27,7 +27,11 @@ LITERAL_LINE = SPACES + ' | '
 SKIP_SECTIONS = ['Security (Beta)']
 
 MISSING_FILE_TEMPLATE = "   **Missing Input File**,\"Missing input file %s\""
-TABLE_HEADER = """.. csv-table::
+SECTION_TABLE_HEADER = """
+%s
+%s
+
+.. csv-table::
    :header: Command,Description
    :widths: 50, 50
 
@@ -101,6 +105,11 @@ def create_parsed_line(line):
             new_line += c
     return new_line
 
+def create_new_section(line):
+    sectionTitle = line.replace('**','').strip()
+    underline = len(sectionTitle) * '-'
+    return SECTION_TABLE_HEADER % (sectionTitle, underline)
+
 #
 # Create the table
 #
@@ -131,7 +140,10 @@ def create_table(input_file, output_file):
                     if in_spaces: # Insert a blank line
                         lines.append('')
                         in_spaces = False
-                    lines.append(create_parsed_line(line))
+                    if line.startswith(SECTION_LINE):
+                        lines.append(create_new_section(line))
+                    else:
+                        lines.append(create_parsed_line(line))
                 elif skip_section:
                     continue
                 elif line.startswith(SPACES): # Handle spaces: assume a literal
@@ -150,7 +162,6 @@ def create_table(input_file, output_file):
             
     output = open(output_file,'w')
     with open(output_file,'w') as output:
-        output.write(TABLE_HEADER)
         for line in lines:
             output.write(line+'\n')
     
