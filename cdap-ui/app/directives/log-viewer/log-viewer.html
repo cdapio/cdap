@@ -144,8 +144,8 @@
         </tr>
 
         <tr class="well well-sm">
-          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading logs...</td>
-          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No new logs to show</td>
+          <td ng-if="!LogViewer.applicationIsRunning" colspan="4" class="text-center">No more logs to show.</td>
+          <td ng-if="LogViewer.applicationIsRunning" colspan="4" class="text-center"><i class="fa fa-spinner fa-spin"></i></td>
         </tr>
       </tbody>
     </table>

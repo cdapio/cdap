@@ -22,8 +22,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.warningCount = 0;
   this.totalCount = 0;
   this.loading = true;
-  this.loadingMoreLogs = false;
   this.fullScreen = false;
+  this.applicationIsRunning = true;
 
   var dataSrc = new MyCDAPDataSource($scope);
   var pollPromise;
@@ -82,7 +82,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   LogViewerStore.subscribe(() => {
     this.logStartTime = LogViewerStore.getState().startTime;
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
-    this.loadingMoreLogs = true;
     requestWithStartTime();
   });
 
@@ -153,14 +152,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }).$promise.then(
       (res) => {
 
-        this.fromOffset = res[res.length-1].offset;
-        this.totalCount += res.length;
-
         if(res.length === 0){
-          this.loadingMoreLogs = false;
           getStatus();
           return;
         }
+
+        this.fromOffset = res[res.length-1].offset;
+        this.totalCount += res.length;
 
         angular.forEach(res, (element, index) => {
           if(res[index].log.logLevel === 'WARN'){
@@ -178,6 +176,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.data = this.data.concat(res);
         this.cacheSize = res.length - this.cacheDecrement;
+
+        if(res.length < this.viewLimit){
+          getStatus();
+        }
+
       },
       (err) => {
         console.log('ERROR: ', err);
@@ -194,7 +197,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       }).$promise.then(
         (statusRes) => {
           if(statusRes.status === 'RUNNING'){
+            this.applicationIsRunning = true;
             pollForNewLogs();
+          } else {
+            this.applicationIsRunning = false;
           }
         },
         (statusErr) => {
@@ -208,56 +214,64 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       _cdapPath: '/namespaces/' + this.namespaceId + '/apps/' + this.appId + '/' + this.programType + '/' + this.programId + '/runs/' + this.runId + '/logs?format=json&start=' + this.startTimeSec,
       method: 'GET'
     },
-    function(res) {
-      if(res.length > 0){
-        this.data = res;
+    (res) => {
+      //We have recieved more logs, append to current dataset
+      if(res.length > this.data.length){
+        res = res.slice(this.data.length, res.length);
+
+        angular.forEach(res, (element, index) => {
+          if(res[index].log.logLevel === 'WARN'){
+            this.warningCount++;
+          } else if(res[index].log.logLevel === 'ERROR'){
+            this.errorCount++;
+          }
+
+          //Format dates properly for rendering and computing
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + formattedDate.getSeconds());
+          res[index].log.stackTrace = res[index].log.stackTrace.trim();
+        });
+
+        this.data = this.data.concat(res);
+      }
+
+      if(this.data.length > this.viewLimit){
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       }
-    }, function(err){
+
+    }, (err) => {
       console.log('ERROR: ', err);
     });
   };
 
   const requestWithStartTime = () => {
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
-    }
+  if(pollPromise){
+    dataSrc.stopPoll(pollPromise.__pollId__);
+    pollPromise = null;
+  }
 
-    // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
-    const url = myCdapUrl.constructUrl({
-      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?format=json&start=${this.startTimeSec}`
-    });
+  // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
+  const url = myCdapUrl.constructUrl({
+    _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?format=json&start=${this.startTimeSec}`
+  });
 
-    this.rawUrl = url;
+  this.rawUrl = url;
 
-   myLogsApi.getLogsStart({
-      'namespace' : this.namespaceId,
-      'appId' : this.appId,
-      'programType' : this.programType,
-      'programId' : this.programId,
-      'runId' : this.runId,
-      'start' : this.startTimeSec
+    myLogsApi.getLogsStart({
+        'namespace' : this.namespaceId,
+        'appId' : this.appId,
+        'programType' : this.programType,
+        'programId' : this.programId,
+        'runId' : this.runId,
+        'start' : this.startTimeSec
     }).$promise.then(
       (res) => {
-
-        console.log('response is: ', res);
         this.loading = false;
         this.viewLimit = 100;
         this.cacheDecrement = 100;
         this.cacheSize = 0;
-
-        //If there are no logs yet to be retrieved let viewer know
-        this.loadingMoreLogs = res.length < this.viewLimit ? false : true;
-
-        //There are no more logs to be returned
-        if(res.length === 0){
-          getStatus();
-          return;
-        }
-
-        this.fromOffset = res[res.length-1].offset;
         this.totalCount = res.length;
         this.warningCount = 0;
         this.errorCount = 0;
@@ -273,8 +287,19 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           res[index].log.displayTime = formatDate(formattedDate);
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
+
+        if(res.length === 0){
+          getStatus();
+          return;
+        }
+
+        this.fromOffset = res[res.length-1].offset;
         this.data = res;
         this.cacheSize = res.length - this.cacheDecrement;
+
+        if(res.length < this.viewLimit){
+          getStatus();
+        }
       },
       (err) => {
         console.log('ERROR: ', err);
@@ -334,7 +359,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   this.scrollFn = function(){
-    this.loadingMoreLogs = true;
     this.cacheSize -= this.cacheDecrement;
     if(this.cacheSize <= 0){
       requestWithOffset();
