@@ -17,13 +17,14 @@
 package co.cask.cdap.common.logging;
 
 /**
- * Service Logging Context
+ * Service Logging Context used by different cdap system services such as metrics etc
  */
 public class ServiceLoggingContext extends ComponentLoggingContext {
   public static final String TAG_SERVICE_ID = ".serviceId";
 
   /**
    * Construct ServiceLoggingContext.
+   *
    * @param systemId system id
    * @param componentId component id
    * @param serviceId service id

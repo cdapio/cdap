@@ -28,7 +28,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
@@ -240,8 +239,8 @@ public class LogSaverTest extends KafkaTestBase {
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
       if (loggingContext instanceof ServiceLoggingContext) {
         Assert.assertEquals(
-          loggingContext.getSystemTagsMap().get(SystemLoggingContext.TAG_SYSTEM_ID).getValue(),
-          allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(SystemLoggingContext.TAG_SYSTEM_ID));
+          loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue(),
+          allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID));
         Assert.assertEquals(
           loggingContext.getSystemTagsMap().get(ComponentLoggingContext.TAG_COMPONENT_ID).getValue(),
           allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(ComponentLoggingContext.TAG_COMPONENT_ID));

@@ -19,11 +19,12 @@ package co.cask.cdap.common.logging;
 /**
  * Component Logging Context.
  */
-public class ComponentLoggingContext extends SystemLoggingContext {
+public abstract class ComponentLoggingContext extends NamespaceLoggingContext {
   public static final String TAG_COMPONENT_ID = ".componentId";
 
   /**
    * Constructs ComponentLoggingContext.
+   *
    * @param systemId system id
    * @param componentId component id
    */
