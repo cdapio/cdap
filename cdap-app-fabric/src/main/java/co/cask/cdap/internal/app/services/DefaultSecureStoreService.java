@@ -32,14 +32,12 @@ import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Service that manages access to the Secure Store,
+ * Default implementation of the service that manages access to the Secure Store,
  */
 public class DefaultSecureStoreService implements SecureStoreService {
   private final AuthorizerInstantiator authorizerInstantiator;
@@ -54,6 +52,13 @@ public class DefaultSecureStoreService implements SecureStoreService {
     this.secureStoreManager = secureStoreManager;
   }
 
+  /**
+   * Lists all the secure keys in the given namespace that the user has access to.
+   * @param namespaceId Id of the namespace we want the key list for.
+   * @return A list of {@link SecureKeyListEntry} of all the keys visible to the user under the given namespace.
+   * @throws Exception If either the caller does not have READ access to the namespace or if there was a problem
+   * getting the list from the underlying provider.
+   */
   @Override
   public List<SecureKeyListEntry> list(NamespaceId namespaceId) throws Exception {
     Principal principal = SecurityRequestContext.toPrincipal();
@@ -66,6 +71,13 @@ public class DefaultSecureStoreService implements SecureStoreService {
     return returnList;
   }
 
+  /**
+   * Checks if the user has access to read the secure key and returns the data associated with the key if they do.
+   * @param secureKeyId Id of the key that the user is trying to read.
+   * @return Data associated with the key if the user has read access.
+   * @throws Exception If either the caller does not have READ access to the key or if there was a problem
+   * getting the data from the underlying provider.
+   */
   @Override
   public SecureStoreData get(SecureKeyId secureKeyId) throws Exception {
     Principal principal = SecurityRequestContext.toPrincipal();
@@ -73,11 +85,20 @@ public class DefaultSecureStoreService implements SecureStoreService {
     return secureStore.get(secureKeyId.getNamespace(), secureKeyId.getName());
   }
 
+  /**
+   * Puts the user provided data in the secure store, if the user has write access to the namespace.
+   * @param secureKeyCreateRequest The request containing the data to be stored in the secure store.
+   * @param secureKeyId The Id for the key that needs to be stored.
+   * @throws Exception If either the caller does not have WRITE access to the namespace
+   * or if there was a problem storing the data to the underlying provider
+   * or if the request did not contain the value to be stored.
+   */
   @Override
   public synchronized void put(SecureKeyCreateRequest secureKeyCreateRequest, SecureKeyId secureKeyId)
     throws Exception {
     Principal principal = SecurityRequestContext.toPrincipal();
-    authorizerInstantiator.get().enforce(secureKeyId, principal, Action.WRITE);
+    NamespaceId namespaceId = new NamespaceId(secureKeyId.getNamespace());
+    authorizerInstantiator.get().enforce(namespaceId, principal, Action.WRITE);
     String description = secureKeyCreateRequest.getDescription();
     String value = secureKeyCreateRequest.getData();
     if (Strings.isNullOrEmpty(value)) {
@@ -90,6 +111,12 @@ public class DefaultSecureStoreService implements SecureStoreService {
                            secureKeyCreateRequest.getProperties());
   }
 
+  /**
+   * Deletes the key if the user has ADMIN privileges to the key.
+   * @param secureKeyId Id of the key to be deleted.
+   * @throws Exception If either the caller does not have ADMIN access to the key or if there was a problem
+   * deleting it from the underlying provider.
+   */
   @Override
   public void delete(SecureKeyId secureKeyId) throws Exception {
     Principal principal = SecurityRequestContext.toPrincipal();

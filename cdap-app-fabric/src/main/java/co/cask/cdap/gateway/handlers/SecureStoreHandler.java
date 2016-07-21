@@ -104,7 +104,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws Exception {
-    NamespaceId namespacedId = new NamespaceId(namespace);
-    httpResponder.sendJson(HttpResponseStatus.OK, secureStoreService.list(namespacedId));
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    httpResponder.sendJson(HttpResponseStatus.OK, secureStoreService.list(namespaceId));
   }
 }
