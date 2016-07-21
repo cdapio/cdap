@@ -18,7 +18,9 @@ package co.cask.cdap.logging.save;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
@@ -38,7 +40,6 @@ import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,8 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
   @Inject
   KafkaLogWriterPlugin(CConfiguration cConf, FileMetaDataManager fileMetaDataManager,
-                       LocationFactory locationFactory, CheckpointManagerFactory checkpointManagerFactory)
+                       CheckpointManagerFactory checkpointManagerFactory, RootLocationFactory rootLocationFactory,
+                       NamespacedLocationFactory namespacedLocationFactory)
     throws Exception {
 
     this.serializer = new LoggingEventSerializer();
@@ -133,19 +135,16 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
-    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, cConf, locationFactory.create(""),
-                                                       logBaseDir, serializer.getAvroSchema(), maxLogFileSizeBytes,
+    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, namespacedLocationFactory, logBaseDir,
+                                                       serializer.getAvroSchema(), maxLogFileSizeBytes,
                                                        syncIntervalBytes, inactiveIntervalMs);
 
     checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
                                                         CHECKPOINT_ROW_KEY_PREFIX);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
-
-    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
-    this.logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
-                                     retentionDurationMs);
+    this.logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, retentionDurationMs);
   }
 
   @Override

@@ -21,12 +21,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Function;
@@ -69,6 +72,7 @@ public class LogCleanupTest {
   private static TransactionManager txManager;
   private static String logBaseDir;
   private static String namespacesDir;
+  private static RootLocationFactory rootLocationFactory;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -88,6 +92,7 @@ public class LogCleanupTest {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
+    rootLocationFactory = injector.getInstance(RootLocationFactory.class);
   }
 
   @AfterClass
@@ -98,10 +103,7 @@ public class LogCleanupTest {
   @Test
   public void testCleanup() throws Exception {
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-
-    // Create base dir
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
+    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
     // Deletion boundary
     long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
@@ -110,7 +112,7 @@ public class LogCleanupTest {
     // Setup directories
     LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
 
-    Location namespacedLogsDir = baseDir.append(namespacesDir).append("ns").append(logBaseDir);
+    Location namespacedLogsDir = namespacedLocationFactory.get(Id.Namespace.from("ns")).append(logBaseDir);
     Location contextDir = namespacedLogsDir.append("app").append("flw");
     List<Location> toDelete = Lists.newArrayList();
     for (int i = 0; i < 5; ++i) {
@@ -152,7 +154,7 @@ public class LogCleanupTest {
     Assert.assertEquals(locationListsToString(toDelete, notDelete),
       toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
 
-    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, baseDir, namespacesDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, RETENTION_DURATION_MS);
     logCleanup.run();
     logCleanup.run();
 
@@ -173,7 +175,7 @@ public class LogCleanupTest {
   @Test
   public void testDeleteEmptyDir1() throws Exception {
     // Create base dir
-    Location baseDir = injector.getInstance(LocationFactory.class).create(TEMP_FOLDER.newFolder().toURI());
+    Location baseDir = rootLocationFactory.create(TEMP_FOLDER.newFolder().toURI());
     // Create namespaced logs dirs
     Location namespacedLogsDir1 = baseDir.append(namespacesDir).append("ns1").append(logBaseDir);
     Location namespacedLogsDir2 = baseDir.append(namespacesDir).append("ns2").append(logBaseDir);
@@ -212,10 +214,10 @@ public class LogCleanupTest {
       emptyDirs.add(createDir(namespacedLogsDir2.append("def").append("hij").append("dir_" + i)));
     }
 
-    LogCleanup logCleanup = new LogCleanup(null, baseDir, namespacesDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, RETENTION_DURATION_MS);
     for (Location location : Sets.newHashSet(Iterables.concat(nonEmptyDirs, emptyDirs))) {
-      logCleanup.deleteEmptyDir("ns1/" + logBaseDir, location);
-      logCleanup.deleteEmptyDir("ns2/" + logBaseDir, location);
+      logCleanup.deleteEmptyDir(namespacedLogsDir1.toString(), location);
+      logCleanup.deleteEmptyDir(namespacedLogsDir2.toString(), location);
     }
 
     // Assert non-empty dirs (and their files) are still present
@@ -240,7 +242,7 @@ public class LogCleanupTest {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
-    LogCleanup logCleanup = new LogCleanup(null, baseDir, namespacesDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, RETENTION_DURATION_MS);
 
     logCleanup.deleteEmptyDir(namespacesDir + "/ns/" + logBaseDir, baseDir);
     // Assert base dir exists

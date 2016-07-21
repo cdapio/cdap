@@ -21,7 +21,9 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -32,7 +34,6 @@ import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,17 +53,23 @@ public final class FileMetaDataManager {
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
   private static final NavigableMap<?, ?> EMPTY_MAP = Maps.unmodifiableNavigableMap(new TreeMap());
 
-  private final LocationFactory locationFactory;
+  private final RootLocationFactory rootLocationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final String logBaseDir;
   private final LogSaverTableUtil tableUtil;
   private final TransactionExecutorFactory transactionExecutorFactory;
 
+  /// Note: The FileMetaDataManager needs to have a RootLocationFactory because for custom mapped namespaces the
+  // location mapped to a namespace are from root of the filesystem. The FileMetaDataManager stores a location in
+  // bytes to a hbase table and to construct it back to a Location it needs to work with a root based location factory.
   @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
-                             LocationFactory locationFactory, CConfiguration cConf) {
+                             RootLocationFactory rootLocationFactory,
+                             NamespacedLocationFactory namespacedLocationFactory, CConfiguration cConf) {
     this.tableUtil = tableUtil;
     this.transactionExecutorFactory = txExecutorFactory;
-    this.locationFactory = locationFactory;
+    this.rootLocationFactory = rootLocationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
   }
 
@@ -120,7 +127,9 @@ public final class FileMetaDataManager {
 
         NavigableMap<Long, Location> files = new TreeMap<>();
         for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
-          files.put(Bytes.toLong(entry.getKey()), locationFactory.create(new URI(Bytes.toString(entry.getValue()))));
+          // the location can be any location from on the filesystem for custom mapped namespaces
+          files.put(Bytes.toLong(entry.getKey()),
+                    rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))));
         }
         return files;
       }
@@ -142,8 +151,9 @@ public final class FileMetaDataManager {
           Row row;
           while ((row = scanner.next()) != null) {
             byte[] rowKey = row.getRow();
-            String namespacedLogDir = LoggingContextHelper.getNamespacedBaseDir(logBaseDir, getLogPartition(rowKey));
-
+            String namespacedLogDir = LoggingContextHelper.getNamespacedBaseDir(namespacedLocationFactory, logBaseDir,
+                                                                                getLogPartition(rowKey));
+            byte[] maxCol = getMaxKey(row.getColumns());
             for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               byte[] colName = entry.getKey();
               if (LOG.isDebugEnabled()) {
@@ -151,7 +161,7 @@ public final class FileMetaDataManager {
                           Bytes.toLong(colName));
               }
 
-              Location fileLocation = locationFactory.create(new URI(Bytes.toString(entry.getValue())));
+              Location fileLocation = rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
               // Delete if file last modified time is less than tillTime
               if (fileLocation.lastModified() < tillTime) {
                 callback.handle(fileLocation, namespacedLogDir);
@@ -161,7 +171,6 @@ public final class FileMetaDataManager {
             }
           }
         }
-
         return deletedColumns;
       }
     });
