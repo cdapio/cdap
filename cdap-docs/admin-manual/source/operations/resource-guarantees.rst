@@ -11,10 +11,10 @@ Resource Guarantees for CDAP Programs in YARN
 =============================================
 
 CDAP :term:`Master Services <master services>` |---| Transaction, Twill, CDAP programs (flows, MapReduce, 
-services, workers) and Explore Queries |---| run in YARN on default YARN queues. 
+services, workers) and CDAP Explore queries |---| run in YARN on default YARN queues. 
 
 YARN provides capabilites for resource guarantees via Capacity Schedulers and Fair
-Schedulers. CDAP provides capabilities to submit CDAP programs and Explore Queries to
+Schedulers. CDAP provides capabilities to submit CDAP programs and CDAP Explore queries to
 non-default YARN queues.
 
 Configurations for submitting to non-default YARN queues can be specified in two levels.
@@ -22,19 +22,19 @@ Configurations for submitting to non-default YARN queues can be specified in two
 1. Using the CDAP site configuration ``cdap-site.xml``:
 
    The configuration parameter of the queue name for Master Services, CDAP programs and
-   Explore Queries can be specified at the CDAP instance level. This is then applied for
-   all programs and Hive queries::
+   CDAP Explore queries can be specified at the CDAP instance level. This is then applied
+   for all programs and Hive queries. For example::
 
     <property>
       <name>master.services.scheduler.queue</name>
       <value>sys</value>
-      <description>Scheduler queue for CDAP master services</description>
+      <description>Scheduler queue for CDAP Master Services</description>
     </property>
 
     <property>
       <name>apps.scheduler.queue</name>
       <value>app</value>
-      <description>Scheduler queue for CDAP programs and Explore Queries</description>
+      <description>Scheduler queue for CDAP programs and CDAP Explore queries</description>
     </property>
 
 2. Using a namespace-level property: 
@@ -61,6 +61,6 @@ Configurations for submitting to non-default YARN queues can be specified in two
    Master Services are not tied to a namespace level.
 
    **Note:** If the configuration is not specified at either the namespace or
-   ``cdap-site`` levels, then all the Master Services, CDAP programs and Explore queries
-   will be submitted to default YARN queues.
+   ``cdap-site`` levels, then all the Master Services, CDAP programs and CDAP Explore
+   queries will be submitted to default YARN queues.
 
