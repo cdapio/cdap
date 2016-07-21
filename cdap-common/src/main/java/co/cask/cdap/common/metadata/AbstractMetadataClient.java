@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-/*
+/**
  * Common implementation of methods to interact with metadata over HTTP.
  */
 public abstract  class AbstractMetadataClient {
@@ -1114,7 +1114,7 @@ public abstract  class AbstractMetadataClient {
       builder.withBody(body);
     }
     HttpResponse response = execute(builder.build(),
-                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+                                    HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }

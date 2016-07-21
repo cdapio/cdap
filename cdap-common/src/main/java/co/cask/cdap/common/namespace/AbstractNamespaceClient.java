@@ -46,7 +46,7 @@ public abstract class AbstractNamespaceClient implements NamespaceAdmin {
   protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnauthenticatedException;
 
   /**
-   * Resolves the specified URL.
+   * Resolve a specifed URL.
    */
   protected abstract URL resolve(String resource) throws IOException;
 
