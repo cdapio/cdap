@@ -23,7 +23,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnsupportedFileSystemException;
+import org.apache.hadoop.security.UserGroupInformation;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
 
@@ -71,6 +73,7 @@ public class FileContextLocationFactory implements LocationFactory {
 
   @Override
   public Location create(String path) {
+    FileContext fileContext = getFileContext();
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
@@ -80,25 +83,26 @@ public class FileContextLocationFactory implements LocationFactory {
     } else {
       locationPath = new Path(path);
     }
-    locationPath = locationPath.makeQualified(fc.getDefaultFileSystem().getUri(), pathBase);
-    return new FileContextLocation(this, fc, locationPath);
+    locationPath = locationPath.makeQualified(fileContext.getDefaultFileSystem().getUri(), pathBase);
+    return new FileContextLocation(this, fileContext, locationPath);
   }
 
   @Override
   public Location create(URI uri) {
-    URI contextURI = fc.getWorkingDirectory().toUri();
+    FileContext fileContext = getFileContext();
+    URI contextURI = fileContext.getWorkingDirectory().toUri();
     if (Objects.equals(contextURI.getScheme(), uri.getScheme())
       && Objects.equals(contextURI.getAuthority(), uri.getAuthority())) {
       // A full URI
-      return new FileContextLocation(this, fc, new Path(uri));
+      return new FileContextLocation(this, fileContext, new Path(uri));
     }
 
     if (uri.isAbsolute()) {
       // Needs to be of the same scheme
       Preconditions.checkArgument(Objects.equals(contextURI.getScheme(), uri.getScheme()),
                                   "Only URI with '%s' scheme is supported", contextURI.getScheme());
-      Path locationPath = new Path(uri).makeQualified(fc.getDefaultFileSystem().getUri(), pathBase);
-      return new FileContextLocation(this, fc, locationPath);
+      Path locationPath = new Path(uri).makeQualified(fileContext.getDefaultFileSystem().getUri(), pathBase);
+      return new FileContextLocation(this, fileContext, locationPath);
     }
 
     return create(uri.getPath());
@@ -107,15 +111,36 @@ public class FileContextLocationFactory implements LocationFactory {
   @Override
   public Location getHomeLocation() {
     // Fix for TWILL-163. FileContext.getHomeDirectory() uses System.getProperty("user.name") instead of UGI
-    return new FileContextLocation(this, fc,
-                                   new Path(fc.getHomeDirectory().getParent(), fc.getUgi().getShortUserName()));
+    FileContext fileContext = getFileContext();
+    return new FileContextLocation(this, fileContext,
+                                   new Path(fileContext.getHomeDirectory().getParent(),
+                                            fileContext.getUgi().getShortUserName()));
   }
 
   /**
    * Returns the {@link FileContext} used by this {@link LocationFactory}.
    */
   public FileContext getFileContext() {
-    return fc;
+    if (!UserGroupInformation.isSecurityEnabled()) {
+      // if security isn't enabled, return the cached FileContext for backwards-compatability
+      // See LocationRuntimeModule#HDFSLocationModule. Note that this must be re-thought when moving this class
+      // back to Twill
+      return fc;
+    }
+
+    // if the current user is same as FileContext's user, no need to get another FileContext
+    try {
+      if (UserGroupInformation.getCurrentUser().equals(fc.getUgi())) {
+        return fc;
+      }
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
+
+    // Create a new FileContext, to create a new underlying FileSystem object.
+    // FileContext internally does caching of FileSystem object, based upon the calling UserGroupInformation.
+    // Otherwise, we can run into an issue as described in CDAP-6606
+    return createFileContext(configuration);
   }
 
   /**
@@ -125,6 +150,7 @@ public class FileContextLocationFactory implements LocationFactory {
     return configuration;
   }
 
+  // always creates a new FileContext instance
   private static FileContext createFileContext(Configuration configuration) {
     try {
       return FileContext.getFileContext(configuration);
