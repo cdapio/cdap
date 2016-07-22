@@ -12,6 +12,7 @@ Types and Maven Archetypes
 ==========================
 In Cask Hydrator, there are |---| at present |---| these plugin types:
 
+- Action (*action*, restricted to batch pipelines)
 - Batch Source (*batchsource*)
 - Batch Sink (*batchsink*)
 - Real-time Source (*realtimesource*)
@@ -20,10 +21,11 @@ In Cask Hydrator, there are |---| at present |---| these plugin types:
 - Batch Aggregator (*batchaggregator*)
 - Spark Compute (*sparkcompute*)
 - Spark Sink (*sparksink*) 
+- Post-run Action (*postaction*, restricted to batch pipelines)
 
 To get started, you can use one of these Maven archetypes to create your project: 
 
-- ``cdap-data-pipeline-plugins-archetype`` (contains all batch and Spark plugin types)
+- ``cdap-data-pipeline-plugins-archetype`` (contains batch, Spark plugin, and other types)
 - ``cdap-etl-realtime-source-archetype`` (contains a realtime source)
 - ``cdap-etl-realtime-sink-archetype`` (contains a realtime sink)
 - ``cdap-etl-transform-archetype`` (contains a transform)

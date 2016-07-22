@@ -11,9 +11,23 @@ Creating a Plugin
 
 .. highlight:: java
 
+Action Plugin
+=============
+In order to implement an Action plugin (to be used with the Data Pipeline artifact), you
+extend the ``Action`` class. Only one method is required to be implemented::
+
+  run()
+
+.. rubric:: Methods
+
+- ``run()``: Used to implement the functionality of the plugin.
+- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
+  on the application configuration required by this plugin.
+
+
 Batch Source Plugin
 ===================
-In order to implement a Batch Source (to be used in either the ETL Batch or Data Pipeline artifacts), you extend the
+In order to implement a Batch Source (to be used with either the ETL Batch or Data Pipeline artifacts), you extend the
 ``BatchSource`` class. You need to define the types of the KEY and VALUE that the Batch
 Source will receive and the type of object that the Batch Source will emit to the
 subsequent stage (which could be either a Transformation or a Batch Sink). After defining
@@ -158,7 +172,7 @@ Example::
 
 Batch Sink Plugin
 =================
-In order to implement a Batch Sink (to be used in either the ETL Batch or Data Pipeline artifacts), you extend the
+In order to implement a Batch Sink (to be used with either the ETL Batch or Data Pipeline artifacts), you extend the
 ``BatchSink`` class. Similar to a Batch Source, you need to define the types of the KEY and
 VALUE that the Batch Sink will write in the Batch job and the type of object that it will
 accept from the previous stage (which could be either a Transformation or a Batch Source).
@@ -590,7 +604,7 @@ functions as part of your JavaScript::
 
 Batch Aggregator Plugin
 =======================
-In order to implement a Batch Aggregator (to be used in the Data Pipeline artifact), you extend the
+In order to implement a Batch Aggregator (to be used with the Data Pipeline artifact), you extend the
 ``BatchAggregator`` class. Unlike a ``Transform``, which operates on a single record at a time, a
 ``BatchAggregator`` operates on a collection of records. 
 
@@ -708,7 +722,7 @@ Example::
 
 Spark Compute Plugin
 ====================
-In order to implement a Spark Compute Plugin (to be used in the Data Pipeline artifact),
+In order to implement a Spark Compute Plugin (to be used with the Data Pipeline artifact),
 you extend the ``SparkCompute`` class. A ``SparkCompute`` plugin is similar to a
 ``Transform``, except instead of transforming its input record by record, it transforms an
 entire collection of records into another collection of records. In a ``SparkCompute``
@@ -787,7 +801,7 @@ Example::
 
 Spark Sink Plugin
 =================
-In order to implement a Spark Sink Plugin (to be used in the Data Pipeline artifact), you
+In order to implement a Spark Sink Plugin (to be used with the Data Pipeline artifact), you
 extend the ``SparkSink`` class. A ``SparkSink`` is similar to a ``SparkCompute`` plugin
 except that it has no output. This means other plugins cannot be connected to it. In this
 way, it is similar to a ``BatchSink``.
@@ -860,3 +874,19 @@ Example::
       sparkExecutionPluginContext.saveAsDataset(outputRDD, config.tableName);
     }
   }
+
+
+Post-run Action Plugin
+======================
+In order to implement an Post-run Action plugin (to be used with the Data Pipeline
+artifact), you extend the ``PostAction`` class. Only one method is required to be
+implemented::
+
+  run()
+
+.. rubric:: Methods
+
+- ``run()``: Used to implement the functionality of the plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  required by this plugin.
+
