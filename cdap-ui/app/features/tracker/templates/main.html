@@ -68,7 +68,7 @@
               <th class="text-center">Dataset</th>
               <th colspan="2"
                   class="text-center">
-                5 Programs
+                Programs
                 <div class="clearfix">
                   <span class="pull-left">Reading</span>
                   <span class="pull-right">Writing</span>
@@ -78,8 +78,9 @@
             <tbody>
               <tr ng-repeat="metric in ::MainController.topDatasets">
                 <td class="text-left">
+
                   <a ng-if="metric.entityType === 'dataset'"
-                    ui-sref="datasets.detail.overview.status({datasetId: metric.entityName })">
+                    ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: metric.entityName})">
                     <span uib-tooltip="{{ ::metric.entityName }}"
                       tooltip-ellipsis="{{ ::metric.entityName }}"
                       tooltip-enable="metric.entityName.length > 15"
@@ -90,7 +91,7 @@
                     </span>
                   </a>
                   <a ng-if="metric.entityType === 'stream'"
-                    ui-sref="streams.detail.overview.status({streamId: metric.entityName })">
+                    ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: metric.entityName})">
                     <span uib-tooltip="{{ ::metric.entityName }}"
                       tooltip-ellipsis="{{ ::metric.entityName }}"
                       tooltip-enable="metric.entityName.length > 15"

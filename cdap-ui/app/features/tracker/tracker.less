@@ -76,6 +76,8 @@ body[class*='state-tracker'] {
   }
   div.well {
     background-color: @well-bg;
+    border-color: @well-bg;
+    box-shadow: none;
     p {
       color: @tracker-grey;
       font-size: 14px;
@@ -491,6 +493,16 @@ body.state-tracker {
   table.table {
     tr.empty-row > td { height: 38px; }
   }
+
+  .tag {
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    padding: 5px 10px;
+    &.preferred { background-color: @preferred-tag-bg; }
+    &.user { background-color: @tag-bg; }
+    &:focus { outline: 0; }
+  }
 }
 
 body.state-tracker-detail-entity {
@@ -714,17 +726,25 @@ body.state-tracker-detail-entity {
       vertical-align: middle;
       width: 50%;
       cursor: pointer;
-      h4 { color: @tracker-grey; }
+      h4 { color: @title-font-color; }
 
       &:first-child { border-right: 1px solid @border-color; }
 
       &.active {
         background-color: white;
-        h4 { color: @title-font-color; }
+        h4 { color: @tracker-grey; }
       }
     }
 
     .table {
+      th {
+        background-color: @filter-sidebar-background-color;
+        border-bottom-width: 1px;
+      }
+      tbody > tr {
+        &:nth-of-type(odd) { background-color: #ffffff; }
+        &:nth-of-type(even) { background-color: @filter-sidebar-background-color; }
+      }
       td {
         vertical-align: middle;
 
@@ -800,9 +820,21 @@ body.state-tracker-detail-entity-audit {
 
 body.state-tracker-detail-entity-preview {
   .preview-table-container {
+    margin-top: 20px;
     overflow-x: auto;
-
-    .table td { word-break: normal; }
+    padding: 0 20px;
+    .table {
+      thead tr,
+      tbody tr:nth-of-type(even) { background-color: @filter-sidebar-background-color; }
+      th {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      td {
+        color: #666666;
+        word-break: normal;
+      }
+    }
   }
 }
 
@@ -1055,8 +1087,12 @@ body.state-tracker-integrations {
 }
 
 body.state-tracker-detail-entity-usage {
-  main {
-    div.btn-group { margin: 14px 0 9px 10px; }
+  main.container {
+    h3 {
+      color: @cdap-header;
+      margin-top: 20px;
+    }
+    div.btn-group { margin: 14px 0 9px 15px; }
   }
   div.usage-container > div.well { height: 100px; }
   div.tracker-metrics {
@@ -1077,16 +1113,6 @@ body.state-tracker-detail-entity-usage {
 }
 
 body.state-tracker-tags {
-  .tag {
-    border-radius: 4px;
-    color: white;
-    font-size: 12px;
-    padding: 5px 10px;
-    &.preferred { background-color: @preferred-tag-bg; }
-    &.user { background-color: @tag-bg; }
-    &:focus { outline: 0; }
-  }
-
   main {
     button.add-tags {
       border-color: @border-color;

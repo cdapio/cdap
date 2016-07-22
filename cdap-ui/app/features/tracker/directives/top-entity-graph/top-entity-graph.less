@@ -23,19 +23,13 @@ my-top-entity-graph {
   width: 100%;
   height: 100%;
 
-  .graph-container {
-    border: 1px solid @border-color;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
+  .graph-container { overflow: hidden; }
   .top-entity-container {
     .sidebar {
       background-color: white;
       position: absolute;
-      border-top-left-radius: 3px;
-      border-bottom-left-radius: 3px;
-      border-right: 1px solid @border-color;
+      border-radius: 3px 0 0 3px;
+      border: 1px solid @border-color;
 
       .entity-link {
         position: absolute;
@@ -56,7 +50,11 @@ my-top-entity-graph {
       }
     }
 
-    svg { background-color: @svg-background; }
+    svg {
+      background-color: @svg-background;
+      border: 1px solid @border-color;
+      border-radius: 3px;
+    }
 
     .axis {
       path,

@@ -57,7 +57,7 @@ angular.module(PKG.name + '.feature.tracker')
               metricContainer.append('div')
               .attr('class', 'well')
               .append('p')
-              .text('Not enough ' + scope.type + ' found');
+              .text('No ' + scope.type + ' are accessing this dataset');
             }
           }, (err) => {
             if (err.statusCode === 503) {
@@ -111,7 +111,7 @@ angular.module(PKG.name + '.feature.tracker')
 
 
         /* CREATE GRAPH */
-        y.domain(scope.model.results.map((d) => { return d.entityName; }));
+        y.domain(scope.model.results.map((d, i) => { return i; }));
         x.domain([0, d3.max(scope.model.results, (d) => { return d.value; })]).nice();
 
         /* X AXIS */
@@ -148,7 +148,7 @@ angular.module(PKG.name + '.feature.tracker')
             .data(scope.model.results)
           .enter().append('rect')
             .attr('class', 'bar')
-            .attr('y', (d) => { return y(d.entityName); })
+            .attr('y', (d, i) => { return y(i); })
             .attr('x', -3)
             .attr('rx', 3)
             .attr('ry', 3)
@@ -160,7 +160,7 @@ angular.module(PKG.name + '.feature.tracker')
         function addEntityLinks () {
           let sidebarElem = angular.element(parentContainer[0]).find('div');
 
-          angular.forEach(scope.model.results, (result) => {
+          angular.forEach(scope.model.results, (result, index) => {
             if (scope.type === 'applications') {
               scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.entityName + '" })';
             }
@@ -177,7 +177,7 @@ angular.module(PKG.name + '.feature.tracker')
               .text(result.entityName);
 
             let elem = $compile(link)(scope);
-            elem.css('top', y(result.entityName) + margin.top - 1 + (y.rangeBand()/2) + 'px');
+            elem.css('top', y(index) + margin.top - 1 + (y.rangeBand()/2) + 'px');
 
             sidebarElem.append(elem);
           });
