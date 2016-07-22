@@ -68,15 +68,8 @@ angular.module(PKG.name+'.commons')
   }
 
   function checkComplexType(displayType) {
-    if (displayType === 'array' ||
-        displayType === 'enum' ||
-        displayType === 'map' ||
-        displayType === 'record' ||
-        displayType === 'union') {
-      return true;
-    }
-
-    return false;
+    let complexTypes = ['array', 'enum', 'map', 'record', 'union'];
+    return complexTypes.indexOf(displayType) !== -1 ? true : false;
   }
 
   return {
