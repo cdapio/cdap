@@ -327,7 +327,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
   }
 
-  this.highlight = (text) => {
+  this.highlight = (text, index) => {
     if(!this.searchText || (this.searchText && !this.searchText.length)){
       return $sce.trustAsHtml(text);
     }

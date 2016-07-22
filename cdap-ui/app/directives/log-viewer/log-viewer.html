@@ -109,7 +109,7 @@
              infinite-scroll-container="'.logs-table'"
              >
 
-        <tr ng-class="{'selected-row' : entry.selected, 'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace }" ng-repeat="entry in LogViewer.displayData | filter:LogViewer.filterByStartDate | filter:searchText | limitTo: LogViewer.viewLimit track by $index" ng-click="LogViewer.showStackTrace($index)">
+        <tr ng-class="{'selected-row' : entry.selected, 'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace }" ng-repeat="entry in LogViewer.displayData | filter:LogViewer.filterByStartDate | limitTo: LogViewer.viewLimit track by $index" ng-show="([entry.log.message] | filter:LogViewer.searchText).length" ng-click="LogViewer.showStackTrace($index)">
 
           <td class="time time-stack-trace" ng-if="!entry.stackTrace && entry.log.stackTrace.length > 0 && LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
             <span class="indicator-arrow" ng-if="entry.log.stackTrace.length > 0">
