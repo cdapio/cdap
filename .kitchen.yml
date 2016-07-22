@@ -21,65 +21,32 @@ provisioner:
         init_actions: 'start'
       ui:
         init_actions: 'start'
+    hadoop:
+      hdfs_site:
+       'dfs.datanode.max.transfer.threads': 4096
+    hive:
+      hive_site:
+       'hive.support.concurrency': true
+       'hive.zookeeper.quorum': 'localhost'
 
 platforms:
   - name: centos-6.6
-    attributes:
-      hadoop:
-        hdfs_site:
-         'dfs.datanode.max.transfer.threads': 4096
-      hive:
-        hive_site:
-         'hive.support.concurrency': true
-         'hive.zookeeper.quorum': 'localhost'
   - name: debian-6.0.10
     run_list:
     - apt::default
-    attributes:
-      hadoop:
-        hdfs_site:
-         'dfs.datanode.max.transfer.threads': 4096
-      hive:
-        hive_site:
-         'hive.support.concurrency': true
-         'hive.zookeeper.quorum': 'localhost'
   - name: ubuntu-12.04
     run_list:
     - apt::default
-    attributes:
-      hadoop:
-        hdfs_site:
-         'dfs.datanode.max.transfer.threads': 4096
-      hive:
-        hive_site:
-         'hive.support.concurrency': true
-         'hive.zookeeper.quorum': 'localhost'
   - name: ubuntu-14.04
     run_list:
     - apt::default
-    attributes:
-      hadoop:
-        hdfs_site:
-         'dfs.datanode.max.transfer.threads': 4096
-      hive:
-        hive_site:
-         'hive.support.concurrency': true
-         'hive.zookeeper.quorum': 'localhost'
 
 suites:
   - name: cdh5
     run_list:
       - recipe[cdap::fullstack]
     attributes: { hadoop: { distribution: 'cdh', distribution_version: '5.4.1' } }
-  - name: hdp20
-    run_list:
-      - recipe[cdap::fullstack]
-    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.0.11.0' } }
-  - name: hdp21
-    run_list:
-      - recipe[cdap::fullstack]
-    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.1.10.0' } }
-  - name: hdp22
+  - name: hdp2
     run_list:
       - recipe[cdap::fullstack]
     attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.2.4.2' } }
