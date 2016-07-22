@@ -86,6 +86,19 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     requestWithStartTime();
   });
 
+  this.filterSearch = () => {
+    //Rerender data
+    this.renderData();
+    //If the search query is blank, otherwise filter
+    if(this.searchText.length === 0){
+      return;
+    }
+
+    this.displayData = this.displayData.filter( data => {
+      return data.log.message.toLowerCase().indexOf(this.searchText.toLowerCase()) !== -1;
+    });
+  };
+
   this.showStackTrace = (index) => {
     //If the stack trace is showing, remove it
     if( (index+1 < this.displayData.length) && this.displayData[index+1].stackTrace){
@@ -327,13 +340,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
   }
 
-  this.highlight = (text, index) => {
-    if(!this.searchText || (this.searchText && !this.searchText.length)){
-      return $sce.trustAsHtml(text);
-    }
-    return $sce.trustAsHtml(text.replace(new RegExp(this.searchText, 'gi'), '<span class="highlighted-text">$&</span>'));
-  };
-
   this.toggleLogExpansion = function() {
     this.toggleExpandAll = !this.toggleExpandAll;
     angular.forEach(this.displayData, (entry, key) => {
@@ -382,6 +388,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         }
       });
     }
+  };
+  this.highlight = (text) => {
+    if(!this.searchText || (this.searchText && !this.searchText.length)){
+     return $sce.trustAsHtml(text);
+    }
+
+    return $sce.trustAsHtml(
+      text.replace(new RegExp(this.searchText, 'gi'),
+      '<span class="highlighted-text">$&</span>'
+    ));
   };
 
   this.eventFilter = function(entry){
