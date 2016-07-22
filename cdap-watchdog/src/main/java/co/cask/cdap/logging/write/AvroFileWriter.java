@@ -21,6 +21,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -170,7 +171,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     return avroFile;
   }
 
-  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws IOException {
+  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
     long currentTs = System.currentTimeMillis();
     NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
     Location location = createLocation(loggingContext, currentTs);
@@ -209,12 +210,33 @@ public final class AvroFileWriter implements Closeable, Flushable {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     String fileName = String.format("%s.avro", timestamp);
 
-    Location namespaceLocation =
-      namespacedLocationFactory.get(LoggingContextHelper.getNamespaceId(loggingContext).toId());
+    final NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
+    Location namespaceLocation = null;
+    try {
+      namespaceLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          return namespacedLocationFactory.get(namespaceId.toId());
+        }
+      });
+    } catch (IOException e) {
+      throw e;
+
+    } catch (Exception t) {
+      Throwables.propagateIfPossible(t);
+
+      // since the callables we execute only throw IOException (besides unchecked exceptions),
+      // this should never happen
+      LOG.warn("Unexpected exception while getting namespace location for namespace {}.", namespaceId, t);
+      // the only checked exception that the Callables in this class is IOException, and we handle that in the previous
+      // catch statement. So, no checked exceptions should be wrapped by the following statement. However, we need it
+      // because ImpersonationUtils#doAs declares 'throws Exception', because it can throw other checked exceptions
+      // in the general case
+      throw Throwables.propagate(t);
+    }
     // drop the namespaceid from path fragment since the namespaceLocation already points to the directory inside the
     // namespace
-    String pathFragment = loggingContext.getLogPathFragment(logBaseDir).split(LoggingContextHelper.getNamespaceId
-      (loggingContext).getNamespace())[1];
+    String pathFragment = loggingContext.getLogPathFragment(logBaseDir).split(namespaceId.getNamespace())[1];
     return namespaceLocation.append(pathFragment).append(date).append(fileName);
   }
 

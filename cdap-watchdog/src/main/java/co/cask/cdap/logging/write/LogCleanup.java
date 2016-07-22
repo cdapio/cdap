@@ -69,7 +69,7 @@ public final class LogCleanup implements Runnable {
                                         new FileMetaDataManager.DeleteCallback() {
                                           @Override
                                           public void handle(NamespaceId namespaceId, final Location location,
-                                                             String namespacedLogBaseDir) {
+                                                             final String namespacedLogBaseDir) {
                                             try {
                                               impersonator.doAs(namespaceId, new Callable<Void>() {
                                                 @Override
@@ -77,11 +77,11 @@ public final class LogCleanup implements Runnable {
                                                   if (location.exists()) {
                                                     LOG.info("Deleting log file {}", location);
                                                     location.delete();
+                                                    parentDirs.put(namespacedLogBaseDir, getParent(location));
                                                   }
                                                   return null;
                                                 }
                                               });
-                                              parentDirs.put(namespacedLogBaseDir, getParent(location));
                                               namespacedLogBaseDirMap.put(namespacedLogBaseDir, namespaceId);
                                             } catch (Exception e) {
                                               LOG.error("Got exception when deleting path {}", location, e);

@@ -136,7 +136,7 @@ public class FileLogAppender extends LogAppender {
       logSchema = new LogSchema().getAvroSchema();
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txExecutorFactory,
                                                                         rootLocationFactory, namespacedLocationFactory,
-                                                                        cConf);
+                                                                        cConf, impersonator);
 
       AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, namespacedLocationFactory, logBaseDir,
                                                          logSchema, maxLogFileSizeBytes, syncIntervalBytes,
