@@ -22,10 +22,18 @@ angular.module(PKG.name + '.commons')
     var numberFilter = $filter('number');
 
     var endpoints = [];
-    var sourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).source);
-    var sinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).sink);
-    var transformSourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).transformSource);
-    var transformSinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).transformSink);
+
+    var settings = DAGPlusPlusFactory.getSettings();
+
+    var sourceOrigin = settings.sourceOrigin,
+        sourceTarget = settings.sourceTarget,
+        transformOrigin = settings.transformOrigin,
+        transformTarget = settings.transformTarget,
+        sinkOrigin = settings.sinkOrigin,
+        sinkTarget = settings.sinkTarget,
+        actionOrigin = settings.actionOrigin,
+        actionTarget = settings.actionTarget;
+
 
     var SHOW_METRICS_THRESHOLD = 0.8;
     var METRICS_THRESHOLD = 999999999999;
@@ -48,8 +56,8 @@ angular.module(PKG.name + '.commons')
     ];
 
     if ($scope.showMetrics) {
-      sourceSettings.overlays = metricsLabel;
-      transformSourceSettings.overlays = metricsLabel;
+      sourceOrigin.overlays = metricsLabel;
+      transformOrigin.overlays = metricsLabel;
     }
 
     var dragged = false;
@@ -58,7 +66,6 @@ angular.module(PKG.name + '.commons')
     vm.isDisabled = $scope.isDisabled;
     vm.disableNodeClick = $scope.disableNodeClick;
 
-    var popovers = [];
     var nodePopovers = {};
 
     vm.scale = 1.0;
@@ -128,15 +135,10 @@ angular.module(PKG.name + '.commons')
           if (!sourceNode.length || !targetNode.length) {
             return;
           }
-          let batch = GLOBALS.etlBatch, realtime = GLOBALS.etlRealtime, datapipeline = GLOBALS.etlDataPipeline;
-          let pluginTypes = GLOBALS.pluginTypes;
-          let notATransformTypeNode = [
-            pluginTypes[batch].source, pluginTypes[batch].sink,
-            pluginTypes[realtime].source,  pluginTypes[realtime].sink,
-            pluginTypes[datapipeline].sparksink
-          ];
-          var sourceId = notATransformTypeNode.indexOf(sourceNode[0].type) === -1 ? 'Left' + conn.from : conn.from;
-          var targetId = notATransformTypeNode.indexOf(targetNode[0].type) === -1 ? 'Right' + conn.to : conn.to;
+
+          var sourceId = 'Origin' + conn.from;
+          var targetId = 'Target' + conn.to;
+
           var connObj = {
             uuids: [sourceId, targetId]
           };
@@ -264,9 +266,6 @@ angular.module(PKG.name + '.commons')
             nodeInfo.popover.show();
           });
         });
-
-
-
     };
 
     vm.nodeMouseLeave = function (node) {
@@ -281,7 +280,6 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.zoomIn = function () {
-      closeAllPopovers();
       vm.scale += 0.1;
 
       if (vm.scale >= SHOW_METRICS_THRESHOLD) {
@@ -292,7 +290,6 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.zoomOut = function () {
-      closeAllPopovers();
       if (vm.scale <= 0.2) { return; }
 
       if (vm.scale <= SHOW_METRICS_THRESHOLD) {
@@ -359,15 +356,21 @@ angular.module(PKG.name + '.commons')
 
         switch(type) {
           case 'source':
-            vm.instance.addEndpoint(node.name, sourceSettings, {uuid: node.name});
+            vm.instance.addEndpoint(node.name, sourceOrigin, {uuid: 'Origin' + node.name});
+            vm.instance.addEndpoint(node.name, sourceTarget, {uuid: 'Target' + node.name});
             break;
           case 'sink':
-            vm.instance.addEndpoint(node.name, sinkSettings, {uuid: node.name});
+            vm.instance.addEndpoint(node.name, sinkOrigin, {uuid: 'Origin' + node.name});
+            vm.instance.addEndpoint(node.name, sinkTarget, {uuid: 'Target' + node.name});
+            break;
+          case 'action':
+            vm.instance.addEndpoint(node.name, actionOrigin, {uuid: 'Origin' + node.name});
+            vm.instance.addEndpoint(node.name, actionTarget, {uuid: 'Target' + node.name});
             break;
           default:
             // Need to id each end point so that it can be used later to make connections.
-            vm.instance.addEndpoint(node.name, transformSourceSettings, {uuid: 'Left' + node.name});
-            vm.instance.addEndpoint(node.name, transformSinkSettings, {uuid: 'Right' + node.name});
+            vm.instance.addEndpoint(node.name, transformOrigin, {uuid: 'Origin' + node.name});
+            vm.instance.addEndpoint(node.name, transformTarget, {uuid: 'Target' + node.name});
             break;
         }
       });
@@ -384,7 +387,6 @@ angular.module(PKG.name + '.commons')
     }
 
     function formatConnections() {
-      closeAllPopovers();
       var connections = [];
       angular.forEach(vm.instance.getConnections(), function (conn) {
         connections.push({
@@ -393,45 +395,6 @@ angular.module(PKG.name + '.commons')
         });
       });
       DAGPlusPlusNodesActionsFactory.setConnections(connections);
-    }
-
-    function addConnection (connectionObj) {
-      var connection = connectionObj.connection;
-
-      var label = angular.element(connection.getOverlay('label').getElement());
-      var scope = $rootScope.$new();
-
-      var popover = $popover(label, {
-        trigger: 'manual',
-        placement: 'auto',
-        target: label,
-        templateUrl: $scope.templatePopover,
-        container: 'main',
-        scope: scope
-      });
-
-      popovers.push(popover);
-
-      connection.bind('click', function (conn, event) {
-        event.stopPropagation();
-        scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
-        popover.show();
-      });
-
-      $scope.$on('$destroy', function () {
-        label = null;
-        scope.$destroy();
-      });
-
-      formatConnections();
-    }
-
-    function closeAllPopovers() {
-      if (popovers.length === 0) { return; }
-
-      angular.forEach(popovers, function (popover) {
-        popover.hide();
-      });
     }
 
     jsPlumb.ready(function() {
@@ -455,19 +418,16 @@ angular.module(PKG.name + '.commons')
           },
           start: function () {
             canvasDragged = true;
-            closeAllPopovers();
           }
         });
       }
-      vm.instance.bind('connection', addConnection);
+      vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
 
 
 
       // This should be removed once the node config is using FLUX
       $scope.$watch('nodes', function () {
-        closeAllPopovers();
-
         if (nodesTimeout) {
           $timeout.cancel(nodesTimeout);
         }
@@ -485,7 +445,6 @@ angular.module(PKG.name + '.commons')
                 }
 
                 dragged = true;
-                closeAllPopovers();
               },
               stop: function (dragEndEvent) {
                 var config = {
@@ -539,7 +498,6 @@ angular.module(PKG.name + '.commons')
         canvasDragged = false;
         return;
       }
-      closeAllPopovers();
       selected = [];
       vm.instance.clearDragSelection();
       DAGPlusPlusNodesActionsFactory.resetSelectedNode();
@@ -588,7 +546,6 @@ angular.module(PKG.name + '.commons')
 
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
-      closeAllPopovers();
       DAGPlusPlusNodesActionsFactory.removeNode(node.name);
       vm.instance.remove(node.name);
     };
@@ -743,7 +700,6 @@ angular.module(PKG.name + '.commons')
     };
 
     $scope.$on('$destroy', function () {
-      closeAllPopovers();
       labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();

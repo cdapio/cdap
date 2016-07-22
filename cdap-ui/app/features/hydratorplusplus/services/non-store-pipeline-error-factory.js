@@ -163,7 +163,6 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
   let inputConnection = {};
   let outputConnection = {};
 
-  let errors = [];
   angular.forEach(connections, (connection) => {
     inputConnection[connection.to] = connection.from;
     outputConnection[connection.from] = connection.to;
@@ -173,7 +172,6 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
     switch (GLOBALS.pluginConvert[node.type]) {
       case 'source':
         if (!outputConnection[node.name]){
-          errors.push(node.plugin.label);
           cb(node);
         }
         break;
@@ -185,6 +183,54 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
       case 'sink':
         if (!inputConnection[node.name]) {
           cb(node);
+        }
+        break;
+      case 'action':
+        if (!inputConnection[node.name] && !outputConnection[node.name]) {
+          cb(node);
+        }
+        break;
+    }
+  });
+};
+
+let allConnectionsValid = (GLOBALS, nodes, connections, cb) => {
+  let nodesMap = {};
+  angular.forEach(nodes, (node) => {
+    nodesMap[node.name] = node;
+  });
+
+
+  /**
+   * Rules:
+   *    1. Source can only be connected to Transform or Sink
+   *    2. Transform can only be connected to Transform or Sink
+   *    3. Sink can only be connected to Action
+   *    4. Action can only be connected to Action or Source
+   **/
+
+  angular.forEach(connections, (conn) => {
+    let from = nodesMap[conn.from],
+        to = nodesMap[conn.to];
+
+    let fromType = GLOBALS.pluginConvert[from.type],
+        toType = GLOBALS.pluginConvert[to.type];
+
+    switch (fromType) {
+      case 'source':
+      case 'transform':
+        if (!(toType === 'transform' || toType === 'sink')) {
+          cb(from.plugin.label + ' → ' + to.plugin.label);
+        }
+        break;
+      case 'sink':
+        if (toType !== 'action') {
+          cb(from.plugin.label + ' → ' + to.plugin.label);
+        }
+        break;
+      case 'action':
+        if (!(toType === 'action' || toType === 'source')) {
+          cb(from.plugin.label + ' → ' + to.plugin.label);
         }
         break;
     }
@@ -257,6 +303,7 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
     allNodesConnected: allNodesConnected.bind(null, GLOBALS),
+    allConnectionsValid: allConnectionsValid.bind(null, GLOBALS),
     validateImportJSON: validateImportJSON.bind(null, myHelpers, GLOBALS)
   };
 };

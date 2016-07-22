@@ -35,7 +35,8 @@ function HydratorPlusPlusOrderingFactory() {
       'realtimesource': 'Source',
       'sparksink': 'Model',
       'sparkcompute': 'Compute',
-      'batchjoiner': 'Join'
+      'batchjoiner': 'Join',
+      'action': 'Action'
     };
 
     return pluginTypeMap[pluginType];
@@ -54,6 +55,7 @@ function HydratorPlusPlusOrderingFactory() {
     let sparksink = pluginsMap.filter( p => { return p.name === 'Model'; });
     let sparkcompute = pluginsMap.filter( p => { return p.name === 'Compute'; });
     let joiner = pluginsMap.filter( p => { return p.name === 'Join'; });
+    let action = pluginsMap.filter( p => { return p.name === 'Action'; });
 
     orderedTypes.push(source[0]);
     orderedTypes.push(transform[0]);
@@ -69,6 +71,9 @@ function HydratorPlusPlusOrderingFactory() {
     }
     if (sparksink.length) {
       orderedTypes.push(sparksink[0]);
+    }
+    if (action.length) {
+      orderedTypes.push(action[0]);
     }
 
     // Doing this so that the SidePanel does not lose the reference of the original

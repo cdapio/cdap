@@ -19,6 +19,7 @@
 @import "../../styles/themes/cdap/mixins.less";
 
 @light-yellow: lighten(#ffff99, 10%);
+@brown: #988470;
 
 my-dag-plus {
   .zoom-control {
@@ -83,6 +84,7 @@ my-dag-plus {
             border-width: 6px;
           }
         }
+
         .icon.fa,
         .fa.fa-close {
           color: white;
@@ -119,7 +121,7 @@ my-dag-plus {
           border: 3px solid #48c038;
         }
       }
-      &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink):not(.sparksink) {
+      &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink):not(.sparksink):not(.action) {
         color: #4586f3;
         left: 30vw;
         .node {
@@ -133,6 +135,108 @@ my-dag-plus {
         left: 50vw;
         .node {
           border: 3px solid #8367df;
+        }
+      }
+
+      &.action {
+        color: @brown;
+
+        .plugin-name {
+          margin-top: 32px;
+        }
+
+        .node {
+          @border: 15px solid rgba(0, 0, 0, 0);
+          @border-offset: 17px;
+          @border-top-bottom: @border-offset solid @brown;
+
+          width: 55px;
+          height: 20px;
+          position: relative;
+          top: 13px;
+          border-radius: 0;
+          background: @brown;
+
+          &:before,
+          &:after {
+            box-sizing: content-box;
+            width: 25px;
+            position: absolute;
+            content: "";
+            left: 0;
+            border: @border;
+          }
+
+          &:before {
+            top: -@border-offset;
+            border-top: 0 solid;
+            border-bottom: @border-top-bottom;
+          }
+
+          &:after {
+            bottom: -@border-offset;
+            border-top: @border-top-bottom;
+            border-bottom: 0 solid;
+            z-index: -1;
+          }
+
+          .inner {
+            @bg-color: white;
+            @border: 13px solid rgba(0, 0, 0, 0);
+            @border-offset: 14px;
+            @border-top-bottom: (@border-offset + 1px) solid @bg-color;
+
+            width: 49px;
+            height: 20px;
+            position: relative;
+            top: 0;
+            left: 3px;
+            border-radius: 0;
+            background: @bg-color;
+            border-radius: 2px;
+
+            &:before,
+            &:after {
+              box-sizing: content-box;
+              width: 23px;
+              position: absolute;
+              content: "";
+              left: 0;
+              border: @border;
+            }
+
+            &:before {
+              top: -@border-offset;
+              border-top: 0 solid;
+              border-bottom: @border-top-bottom;
+            }
+
+            &:after {
+              bottom: -@border-offset;
+              border-top: @border-top-bottom;
+              border-bottom: 0 solid;
+            }
+          }
+
+          .icon.fa {
+            position: absolute;
+            color: @brown;
+            top: -9px;
+            left: 22px;
+          }
+
+          .fa.fa-close {
+            position: absolute;
+            top: -14px;
+            right: 14px;
+            color: @brown;
+          }
+
+          .error-node-notification {
+            top: -20px;
+            left: -5px;
+          }
+
         }
       }
 
@@ -257,6 +361,9 @@ my-dag-plus {
       }
       &-anchor-sinkAnchor circle {
         stroke: #8367df;
+      }
+      &-anchor-actionAnchor circle {
+        stroke: #988470;
       }
     }
 

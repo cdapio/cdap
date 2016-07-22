@@ -104,6 +104,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       isSource: config.isSource || false,
       isSink: config.isSink || false,
       isTransform: config.isTransform || false,
+      isAction: config.isAction || false,
 
       type: config.appType || null,
       watchers: [],

@@ -81,7 +81,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                       type: appType,
                       isSource: GLOBALS.pluginConvert[nodeWithInfo.type] === 'source',
                       isSink: GLOBALS.pluginConvert[nodeWithInfo.type] === 'sink',
-                      isTransform: GLOBALS.pluginConvert[nodeWithInfo.type] === 'transform'
+                      isTransform: GLOBALS.pluginConvert[nodeWithInfo.type] === 'transform',
+                      isAction: GLOBALS.pluginConvert[nodeWithInfo.type] === 'action'
                     }
                   ));
               }]
