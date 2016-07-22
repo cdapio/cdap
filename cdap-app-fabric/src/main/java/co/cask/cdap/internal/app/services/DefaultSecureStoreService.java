@@ -30,6 +30,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -49,14 +50,17 @@ import java.util.List;
 public class DefaultSecureStoreService implements SecureStoreService {
   private final Authorizer authorizer;
   private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
 
   @Inject
   DefaultSecureStoreService(AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
-                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                            AuthenticationContext authenticationContext, SecureStore secureStore,
+                            SecureStoreManager secureStoreManager) {
     this.authorizer = authorizerInstantiator.get();
     this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
   }
@@ -71,7 +75,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
    */
   @Override
   public List<SecureKeyListEntry> list(NamespaceId namespaceId) throws IOException, UnauthorizedException {
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     List<SecureStoreMetadata> metadatas = secureStore.list(namespaceId.getNamespace());
     List<SecureKeyListEntry> returnList = new ArrayList<>(metadatas.size());
     final Predicate<EntityId> filter;
@@ -101,7 +105,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
    */
   @Override
   public SecureStoreData get(SecureKeyId secureKeyId) throws UnauthorizedException, IOException {
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter;
     try {
       filter = authorizationEnforcer.createFilter(principal);
@@ -126,7 +130,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
   @Override
   public synchronized void put(SecureKeyId secureKeyId, SecureKeyCreateRequest secureKeyCreateRequest)
     throws BadRequestException, UnauthorizedException, IOException {
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespaceId = new NamespaceId(secureKeyId.getNamespace());
     try {
       authorizer.enforce(namespaceId, principal, Action.WRITE);
@@ -158,7 +162,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
    */
   @Override
   public void delete(SecureKeyId secureKeyId) throws UnauthorizedException, IOException {
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     try {
       authorizer.enforce(secureKeyId, principal, Action.ADMIN);
       secureStoreManager.delete(secureKeyId.getNamespace(), secureKeyId.getName());
