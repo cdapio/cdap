@@ -251,6 +251,9 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               controller: 'HydratorPlusPlusDetailCanvasCtrl',
               controllerAs: 'CanvasCtrl'
             }
+          },
+          onExit: function($uibModalStack) {
+            $uibModalStack.dismissAll();
           }
         })
 

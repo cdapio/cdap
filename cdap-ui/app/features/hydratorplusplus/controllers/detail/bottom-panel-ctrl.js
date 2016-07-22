@@ -20,10 +20,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       {
         title: 'Log',
         template: '/assets/features/hydratorplusplus/templates/detail/tabs/log.html'
-      },
-      {
-        title: 'Datasets',
-        template: '/assets/features/hydratorplusplus/templates/detail/tabs/datasets.html'
       }
     ];
 

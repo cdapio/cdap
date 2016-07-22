@@ -98,6 +98,15 @@
         white-space: nowrap;
         overflow: hidden;
         font-weight: 500;
+
+        @media(min-width: @screen-lg-min) {
+          width: 60%;
+        }
+
+        @media(min-width: @screen-sm-min) {
+          width: 50%;
+        }
+
         p {
           min-width: 100%;
           line-height: 0;
@@ -106,6 +115,18 @@
           overflow: hidden;
           white-space: nowrap;
         }
+      }
+
+      > div {
+        @media (max-width: @screen-sm-max) {
+          max-width: none;
+        }
+      }
+
+      my-link-button {
+        padding: 0;
+        margin-top: 12px;
+        margin-right: 10px;
       }
       a.btn {
         background: transparent;
@@ -136,6 +157,10 @@
       margin-left: 200px;
       margin-top: 90px;
       margin-bottom: 0;
+
+      @media(max-width: @screen-lg-min) {
+        margin-left: 100px;
+      }
 
       &.expand {
         margin-left: 0;

@@ -1,0 +1,45 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div uib-dropdown>
+  <button class="btn btn-my-link" uib-dropdown-toggle>
+    Jump <span class="fa fa-angle-down"></span>
+  </button>
+  <ul class="pull-right" uib-dropdown-menu>
+    <li ng-repeat="dataset in MyLinkButtonCtrl.entities">
+      <a ng-if="dataset.entityType === 'datasets'"
+          ui-sref="datasets.detail.overview.status({datasetId: dataset.datasetId})">
+          <span class="fa icon-fist"></span>
+          <span>{{dataset.datasetId}}</span>
+      </a>
+      <a ng-if="dataset.entityType === 'datasets'"
+          ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: dataset.datasetId})">
+          <span class="fa icon-tracker"></span>
+          <span>{{dataset.datasetId}}</span>
+      </a>
+      <a ng-if="dataset.entityType === 'streams'"
+          ui-sref="streams.detail.overview.status({streamId: dataset.streamId})">
+          <span class="fa icon-fist"></span>
+          <span>{{dataset.streamId}}</span>
+      </a>
+      <a ng-if="dataset.entityType === 'streams'"
+          ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: dataset.streamId})">
+          <span class="fa icon-tracker"></span>
+          <span>{{dataset.streamId}}</span>
+      </a>
+    </li>
+  </ul>
+</div>
