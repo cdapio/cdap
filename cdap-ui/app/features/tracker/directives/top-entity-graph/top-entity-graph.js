@@ -29,6 +29,14 @@ angular.module(PKG.name + '.feature.tracker')
           limit: 5
         };
 
+        if ($state.params.entityType) {
+          params.entityType = $state.params.entityType === 'datasets' ? 'dataset' : 'stream';
+        }
+
+        if ($state.params.entityId) {
+          params.entityName = $state.params.entityId;
+        }
+
         if(scope.start) {
           params.start = scope.start;
         }

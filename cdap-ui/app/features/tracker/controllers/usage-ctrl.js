@@ -100,7 +100,9 @@ class TrackerUsageController {
       namespace: this.$state.params.namespace,
       start: this.timeRange.start,
       end: this.timeRange.end,
-      scope: this.$scope
+      scope: this.$scope,
+      entityName: this.$state.params.entityId,
+      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset'
     };
 
     this.myTrackerApi.getAuditHistogram(params)
