@@ -820,9 +820,21 @@ body.state-tracker-detail-entity-audit {
 
 body.state-tracker-detail-entity-preview {
   .preview-table-container {
+    margin-top: 20px;
     overflow-x: auto;
-
-    .table td { word-break: normal; }
+    padding: 0 20px;
+    .table {
+      thead tr,
+      tbody tr:nth-of-type(even) { background-color: @filter-sidebar-background-color; }
+      th {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      td {
+        color: #666666;
+        word-break: normal;
+      }
+    }
   }
 }
 
