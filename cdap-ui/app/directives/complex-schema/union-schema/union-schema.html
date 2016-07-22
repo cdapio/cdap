@@ -21,9 +21,10 @@
   </div>
 
   <fieldset ng-disabled="UnionSchema.isDisabled">
-    <div ng-repeat="item in UnionSchema.types track by $index">
+    <div class="item"
+         ng-repeat="item in UnionSchema.types track by $index">
       <div class="clearfix">
-        <div class="input-column no-type"
+        <div class="input-column select-only no-type"
              ng-class="{ 'tab-header': item.nested }">
           <div class="select-wrapper">
             <select class="form-control"

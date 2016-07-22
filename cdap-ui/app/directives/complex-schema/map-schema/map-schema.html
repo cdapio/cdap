@@ -22,7 +22,8 @@
 
   <div class="key-field clearfix">
     <fieldset ng-disabled="MapSchema.isDisabled">
-      <div ng-class="{ 'tab-header': MapSchema.fields.keys.nested }">
+      <div class="map-input-group"
+           ng-class="{ 'tab-header': MapSchema.fields.keys.nested }">
         <div class="map-fields pull-left">
           Key:
         </div>
@@ -57,7 +58,8 @@
 
   <div class="value-field clearfix">
     <fieldset ng-disabled="MapSchema.isDisabled">
-      <div ng-class="{ 'tab-header': MapSchema.fields.values.nested }">
+      <div class="map-input-group"
+           ng-class="{ 'tab-header': MapSchema.fields.values.nested }">
         <div class="map-fields pull-left">
           Value:
         </div>

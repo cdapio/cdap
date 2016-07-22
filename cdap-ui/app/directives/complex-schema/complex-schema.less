@@ -100,18 +100,16 @@ my-complex-schema {
     .map-fields {
       width: 50px;
       line-height: 32px;
+      padding-left: 5px;
     }
 
-    .map-input-column {
-      float: left;
-
-      /**
-       * In case of Map, the 50px represent the label for 'Key' and 'Value'
-       **/
-      width: ~"-moz-calc(100% - 75px - 50px)";
-      width: ~"-webkit-calc(100% - 75px - 50px)";
-      width: ~"calc(100% - 75px - 50px)";
+    .map-input-group {
+      display: inline-block;
+      width: 140px;
+      height: 28px;
     }
+
+    .map-input-column { float: left; }
 
     .fields-actions {
       float: right;
@@ -153,17 +151,15 @@ my-complex-schema {
         }
       }
 
-      .map-input-column {
-        width: ~"-moz-calc(100% - 50px - 50px)";
-        width: ~"-webkit-calc(100% - 50px - 50px)";
-        width: ~"calc(100% - 50px - 50px)";
-      }
-
       .fields-actions {
         .nullable-header { margin-right: 18px; }
 
         .checkbox,
         .checkbox.no-trash { margin-right: 0; }
+      }
+
+      my-embedded-schema-selector [class*="col-"]:after {
+        width: 130px;
       }
     }
   }
@@ -194,5 +190,29 @@ my-complex-schema {
       &:focus { cursor: pointer; }
     }
     div.tab-toggle { position: relative; }
+  }
+
+  my-union-schema {
+    .item > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
+      width: ~"-moz-calc(100% - 85px)";
+      width: ~"-webkit-calc(100% - 85px)";
+      width: ~"calc(100% - 85px)";
+    }
+  }
+
+  my-array-schema {
+    & > .array-schema-container > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
+      width: ~"-moz-calc(100% - 85px)";
+      width: ~"-webkit-calc(100% - 85px)";
+      width: ~"calc(100% - 85px)";
+    }
+  }
+
+  my-map-schema {
+    & > .map-schema-container > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
+      width: ~"-moz-calc(100% - 150px)";
+      width: ~"-webkit-calc(100% - 150px)";
+      width: ~"calc(100% - 150px)";
+    }
   }
 }
