@@ -58,7 +58,7 @@ Example (in JSON format):
       "name": "MyPipeline",
       "artifact": {
         "name": "cdap-data-pipeline",
-        "version": "|version|",
+        "version": "|release|",
         "scope": "system"
       },
       "config": {
@@ -77,7 +77,7 @@ Example (in JSON format):
 
 Artifact Format
 ---------------
-The format of an``artifact`` object:
+The format of an ``artifact`` object:
 
 .. list-table::
    :widths: 20 80
@@ -104,11 +104,11 @@ The format of the ``config`` object:
    * - Key
      - Description
    * - ``connections``
-     - List of connection objects
+     - List of ``connection`` objects
    * - ``engine``
      - One of "mapreduce" or "spark", used only in batch pipelines
    * - ``postActions``
-     - List of post-action objects; optional, can be an empty list
+     - List of ``postaction`` objects; optional, can be an empty list
    * - ``instances``
      - Positive integer of the number of worker instances, defaults to 1 if not specified,
        used only in real-time pipelines
@@ -124,7 +124,7 @@ The format of the ``config`` object:
    * - ``schedule``
      - String in ``cron`` file format, used only in batch pipelines
    * - ``stages``
-     - List of stage objects
+     - List of ``stage`` objects
 
 The format of the ``post-action`` object is identical to that of a ``stage`` object, as
 they are both a JSON representation of a plugin. However, only plugins of type
@@ -186,7 +186,7 @@ specifying the frequency of the Batch job run, such as every day or every hour.
 For example, this JSON (when in a file such as ``config.json``) provides a
 configuration for a Batch pipeline that runs every minute, reading data from a stream
 *myStream* and writing to a dataset (Table) called *myTable*, without any transformations;
-when the run completes, a post-action send an email indicating that the run has completed:
+when the run completes, a post-run action send an email indicating that the run has completed:
 
 .. container:: highlight
 
@@ -204,7 +204,7 @@ when the run completes, a post-action send an email indicating that the run has 
         "engine": "mapreduce",
         "postActions": [
           {
-            "name": "Email-1",
+            "name": "Email",
             "plugin": {
               "name": "Email",
               "type": "postaction",
