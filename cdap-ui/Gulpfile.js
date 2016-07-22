@@ -239,7 +239,9 @@ function getEs6Directives(isNegate) {
     'my-post-run-actions',
     'widget-container/widget-complex-schema-editor',
     'timeline',
-    'my-pipeline-summary'
+    'my-pipeline-summary',
+    'widget-container',
+    'plugin-functions'
   ];
 
   return es6directives.map(function (directive) {
