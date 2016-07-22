@@ -87,7 +87,8 @@ public class ETLWorkflow extends AbstractWorkflow {
     BatchPipelineSpec batchPipelineSpec =
       GSON.fromJson(context.getWorkflowSpecification().getProperty("pipeline.spec"), BatchPipelineSpec.class);
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
-                                                              context.getLogicalStartTime());
+                                                              context.getLogicalStartTime(), context,
+                                                              context.getNamespace());
     for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {
       postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName(),
                                                                                    macroEvaluator));

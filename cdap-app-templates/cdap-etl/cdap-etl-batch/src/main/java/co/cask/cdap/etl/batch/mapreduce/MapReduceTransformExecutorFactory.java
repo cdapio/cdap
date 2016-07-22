@@ -70,7 +70,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                            String sourceStageName) {
     super((JobContext) taskContext.getHadoopContext(), pluginInstantiator, metrics, sourceStageName,
           new DefaultMacroEvaluator(taskContext.getWorkflowToken(), taskContext.getRuntimeArguments(),
-                                    taskContext.getLogicalStartTime()));
+                                    taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace()));
     this.taskContext = taskContext;
     this.pluginRuntimeArgs = pluginRuntimeArgs;
     JobContext hadoopContext = (JobContext) taskContext.getHadoopContext();
@@ -104,7 +104,8 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
     DefaultMacroEvaluator macroEvaluator = new DefaultMacroEvaluator(taskContext.getWorkflowToken(),
                                                                      taskContext.getRuntimeArguments(),
-                                                                     taskContext.getLogicalStartTime());
+                                                                     taskContext.getLogicalStartTime(), taskContext,
+                                                                     taskContext.getNamespace());
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
