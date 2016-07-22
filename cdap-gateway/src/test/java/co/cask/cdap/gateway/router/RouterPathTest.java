@@ -382,13 +382,13 @@ public class RouterPathTest {
 
   @Test
   public void testSecureStorePaths() {
-    assertSecureStoreRouting("/v3/////namespaces/default/securekeys/key", HttpMethod.PUT);
-    assertSecureStoreRouting("/v3/namespaces////default/securekeys/key", HttpMethod.PUT);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/keys/key1", HttpMethod.GET);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/keys/key1", HttpMethod.DELETE);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/keys///////key1", HttpMethod.DELETE);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/keys", HttpMethod.GET);
-    assertSecureStoreRouting("/v3/////namespaces/default/securekeys/keys", HttpMethod.GET);
+    assertSecureStoreRouting("/v3/////namespaces/default/key", HttpMethod.PUT);
+    assertSecureStoreRouting("/v3/namespaces////default/key", HttpMethod.PUT);
+    assertSecureStoreRouting("/v3/namespaces/default/keys/key1", HttpMethod.GET);
+    assertSecureStoreRouting("/v3/namespaces/default/keys/key1", HttpMethod.DELETE);
+    assertSecureStoreRouting("/v3/namespaces/default/keys///////key1", HttpMethod.DELETE);
+    assertSecureStoreRouting("/v3/namespaces/default/keys", HttpMethod.GET);
+    assertSecureStoreRouting("/v3/////namespaces/default/keys", HttpMethod.GET);
   }
 
   private void assertMetadataRouting(String path) {

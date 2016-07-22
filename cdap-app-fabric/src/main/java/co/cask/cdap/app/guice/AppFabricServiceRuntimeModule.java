@@ -319,8 +319,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
-      bind(SecureStoreService.class).to(DefaultSecureStoreService.class);
       bind(NamespaceQueryAdmin.class).to(DefaultNamespaceQueryAdmin.class).in(Scopes.SINGLETON);
+      bind(SecureStoreService.class).to(DefaultSecureStoreService.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
@@ -389,7 +389,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * @param store JobStore.
      * @param cConf CConfiguration.
      * @return an instance of {@link org.quartz.Scheduler}
-     * @throws SchedulerException
      */
     private org.quartz.Scheduler getScheduler(JobStore store,
                                               CConfiguration cConf) throws SchedulerException {

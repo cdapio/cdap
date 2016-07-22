@@ -49,11 +49,11 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   private final SecureStoreService secureStoreService;
 
   @Inject
-  public SecureStoreHandler(SecureStoreService secureStoreService) {
+  SecureStoreHandler(SecureStoreService secureStoreService) {
     this.secureStoreService = secureStoreService;
   }
 
-  @Path("/keys/{key-name}")
+  @Path("/{key-name}")
   @PUT
   public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws Exception {
@@ -68,11 +68,11 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
                                       " \n" + GSON.toJson(dummy));
     }
 
-    secureStoreService.put(secureKeyCreateRequest, secureKeyId);
+    secureStoreService.put(secureKeyId, secureKeyCreateRequest);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
-  @Path("/keys/{key-name}")
+  @Path("/{key-name}")
   @DELETE
   public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws Exception {
@@ -81,7 +81,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
-  @Path("/keys/{key-name}")
+  @Path("/{key-name}")
   @GET
   public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                   @PathParam("key-name") String name) throws Exception {
@@ -90,17 +90,17 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     httpResponder.sendJson(HttpResponseStatus.OK, data);
   }
 
-  @Path("/keys/{key-name}/metadata")
+  @Path("/{key-name}/metadata")
   @GET
   public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
-                          @PathParam("namespace-id") String namespace, @PathParam("key-name") String name)
-    throws Exception {
+                          @PathParam("namespace-id") String namespace,
+                          @PathParam("key-name") String name) throws Exception {
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     SecureStoreData secureStoreData = secureStoreService.get(secureKeyId);
     httpResponder.sendJson(HttpResponseStatus.OK, secureStoreData.getMetadata());
   }
 
-  @Path("/keys")
+  @Path("/")
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws Exception {
