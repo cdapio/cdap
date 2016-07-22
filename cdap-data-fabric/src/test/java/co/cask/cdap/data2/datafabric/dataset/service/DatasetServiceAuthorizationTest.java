@@ -43,11 +43,13 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
@@ -58,11 +60,17 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
 
-  private Authorizer authorizer;
+  private static Authorizer authorizer;
 
-  @Before
-  public void setup() throws Exception {
-    CConfiguration cConf = createCommonConf();
+  @BeforeClass
+  public static void setup() throws Exception {
+    locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    initializeAndStartService(createCConf());
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+  }
+
+  protected static CConfiguration createCConf() throws IOException {
+    CConfiguration cConf = DatasetServiceTestBase.createCConf();
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
@@ -70,8 +78,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
-    initializeAndStartService(cConf);
-    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+    return cConf;
   }
 
   @Test
@@ -79,7 +86,6 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     final DatasetId dsId = NamespaceId.DEFAULT.dataset("myds");
     final DatasetId dsId1 = NamespaceId.DEFAULT.dataset("myds1");
     DatasetId dsId2 = NamespaceId.DEFAULT.dataset("myds2");
-    // grant alice write access to the namespace
     SecurityRequestContext.setUserId(ALICE.getName());
     assertAuthorizationFailure(new DatasetOperationExecutor() {
       @Override
@@ -87,6 +93,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
         dsFramework.addInstance(Table.class.getName(), dsId.toId(), DatasetProperties.EMPTY);
       }
     }, "Alice should not be able to add a dataset instance since she does not have WRITE privileges on the namespace");
+    // grant alice write access to the namespace
     grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, ImmutableSet.of(Action.WRITE));
     // now adding an instance should succeed
     addInstanceAndAssertPrivileges(ALICE, dsId);

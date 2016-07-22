@@ -44,6 +44,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -124,7 +125,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           bind(NamespaceStore.class).to(InMemoryNamespaceStore.class);
         }
-      }
+      },
+      new AuthenticationContextModules().getMasterModule()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import com.google.inject.AbstractModule;
@@ -95,6 +96,7 @@ public class DistributedProgramRunnableModule {
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
+      new AuthenticationContextModules().getProgramContainerModule(),
       new SecureStoreModules().getDistributedModules(),
       new AbstractModule() {
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,8 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueEvictor;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
@@ -62,7 +63,8 @@ public class LevelDBQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule());
+      new TransactionMetricsModule(),
+      new AuthenticationContextModules().getMasterModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -76,7 +78,7 @@ public class LevelDBQueueTest extends QueueTest {
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "application1", "flow1", "flowlet1",
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getNamespace(), "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((LevelDBQueueAdmin) queueAdmin).getActualTableName(queueName);
     Assert.assertEquals("default.system.queue.application1.flow1", tableName);

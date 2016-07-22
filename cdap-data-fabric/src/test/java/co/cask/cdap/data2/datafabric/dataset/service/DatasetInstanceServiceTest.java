@@ -23,11 +23,17 @@ import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
 
 public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
+
+  @BeforeClass
+  public static void setup() throws Exception {
+    DatasetServiceTestBase.initialize();
+  }
 
   @Test
   public void testInstanceMetaCache() throws Exception {

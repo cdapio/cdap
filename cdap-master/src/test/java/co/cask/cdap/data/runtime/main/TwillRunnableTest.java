@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,19 +19,31 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
+ * Tests for {@link ExploreServiceTwillRunnable}, {@link DatasetOpExecutorServerTwillRunnable},
+ * {@link StreamHandlerRunnable}.
  */
-public class DatasetOpExecutorServerTwillRunnableTest {
+public class TwillRunnableTest {
   @Test
-  public void testInjector() throws Exception {
+  public void testExploreServiceTwillRunnableInjector() {
+    ExploreServiceTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+  }
+
+  @Test
+  public void testDatasetOpExecutorTwillRunnableInjector() throws Exception {
     Injector injector = DatasetOpExecutorServerTwillRunnable.createInjector(CConfiguration.create(),
                                                                             HBaseConfiguration.create());
     Store store = injector.getInstance(Store.class);
     Assert.assertNotNull(store);
+  }
+
+  @Test
+  public void testStreamHandlerTwillRunnableInjector() {
+    StreamHandlerRunnable.createInjector(CConfiguration.create(), new Configuration());
   }
 }

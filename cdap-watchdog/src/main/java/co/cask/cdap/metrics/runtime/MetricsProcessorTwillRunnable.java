@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,9 @@ import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -71,7 +73,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorTwillRunnable.class);
 
   public static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
-    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
+    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                     Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
   private MetricsProcessorService metricsProcessorService;
@@ -90,7 +92,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       getCConfiguration().set(Constants.MetricsProcessor.ADDRESS, context.getHost().getCanonicalHostName());
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.METRICS_PROCESSOR));
 
@@ -123,7 +125,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     services.add(metricsProcessorStatusService);
   }
 
-  public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -139,7 +142,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       new DataSetsModules().getDistributedModules(),
       new KafkaMetricsProcessorModule(),
       new MetricsProcessorStatusServiceModule(),
-      new AuditModule().getDistributedModules()
+      new AuditModule().getDistributedModules(),
+      new AuthenticationContextModules().getMasterModule()
      );
   }
 
