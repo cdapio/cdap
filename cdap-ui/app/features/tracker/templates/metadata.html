@@ -25,7 +25,7 @@
   <!-- TAGS SIDEBAR -->
   <div class="entity-detail-tags-column">
     <div class="entity-container">
-      <div class="user-tags" ng-if="MetadataController.tags.userTags.length > 0 || MetadataController.tags.preferredTags.length > 0">
+      <div class="user-tags">
         <h4>User Tags</h4>
         <div class="tags-container">
 
@@ -41,7 +41,8 @@
             </div>
           </div>
 
-          <div ng-repeat="tag in MetadataController.tags.preferredTags"
+          <div ng-if="MetadataController.tags.preferredTags.length > 0"
+              ng-repeat="tag in MetadataController.tags.preferredTags"
               class="tag preferred">
             <span uib-tooltip="{{ tag.name }}"
                   tooltip-append-to-body="true"
@@ -57,7 +58,8 @@
             <span ng-click="MetadataController.deleteTag(tag.name)"
                   class="fa fa-times pull-right"></span>
           </div>
-          <div ng-repeat="tag in MetadataController.tags.userTags"
+          <div ng-if="MetadataController.tags.userTags.length > 0"
+              ng-repeat="tag in MetadataController.tags.userTags"
               class="tag user">
             <span uib-tooltip="{{ tag.name }}"
                   tooltip-append-to-body="true"

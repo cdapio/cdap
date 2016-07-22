@@ -340,7 +340,7 @@ class TrackerMetadataController {
   }
 
   escapeInput() {
-    this.$scope.model = '';
+    this.model = '';
     this.inputOpen = false;
   }
 
