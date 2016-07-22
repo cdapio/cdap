@@ -28,8 +28,6 @@ Cask Data, Inc.:
      - Common descriptive name for the goods or services
    * - Cask
      - Computer software and related services
-   * - Tephra
-     - Computer software and related services
    * - Tigon
      - Computer software and related services
 
@@ -52,6 +50,7 @@ the addition of appropriate symbols has been made.
 
 Apache®, `Apache Hadoop <https://hadoop.apache.org>`__, `Hadoop®
 <https://hadoop.apache.org>`__, Avro, `Apache Avro <http://avro.apache.org/>`__,
+`Apache Tephra <http://tephra.incubator.apache.org>`__,
 and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
 are either registered trademarks or trademarks of the
 `Apache Software Foundation <https://www.apache.org>`__ in the United States and/or other

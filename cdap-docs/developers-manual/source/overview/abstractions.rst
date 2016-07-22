@@ -30,8 +30,8 @@ In CDAP applications, you interact with data through *datasets*. Datasets provid
 - Abstraction of the actual representation of data in storage. You can write your code or queries without
   having to know where and how your data is stored—be it in HBase, LevelDB or a relational database.
 - Encapsulation of data access patterns and business logic as reusable, managed Java code.
-- Consistency of your data under highly concurrent access using Cask's 
-  `Tephra™ transaction system <https://github.com/caskdata/tephra/>`__.
+- Consistency of your data under highly concurrent access using the 
+  `Apache Tephra™ transaction system <http://tephra.incubator.apache.org>`__.
 - Injection of datasets into different programming paradigms and runtimes. As soon as your data is in a
   dataset, you can immediately use it: in real-time programs; in batch processing applications such as MapReduce
   and Spark; in ad-hoc SQL queries.
