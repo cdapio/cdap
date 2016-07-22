@@ -58,15 +58,11 @@
     run-id="{{LogViewer.runId}}">
   </my-timeline>
 
-  <!-- NO DATA MESSAGE -->
-  <div ng-if="LogViewer.displayData.length === 0" class="well well-lg">
-    No logs to be displayed.
-  </div>
   <div ng-if="LogViewer.loading" class="text-center well well-lg">
     Loading..
   </div>
   <!-- LOGS TABLE -->
-  <div ng-if="LogViewer.displayData.length > 0 && !LogViewer.loading" class="logs-table">
+  <div class="logs-table" ng-if="!LogViewer.loading">
     <table class="table table-bordered scroll scroll-table">
       <thead>
         <th class="time time-header log-header"
@@ -137,7 +133,12 @@
               tooltip-class="source-tooltip">
               {{entry.log.threadName}}:{{entry.log.className}}#{{entry.log.lineNumber}}
           </td>
-          <td class="log-message" ng-if="!entry.stackTrace && LogViewer.configOptions.message && !LogViewer.hiddenColumns.message">
+          <td class="log-message" ng-if="!entry.stackTrace && LogViewer.configOptions.message && !LogViewer.hiddenColumns.message"
+              uib-tooltip="{{entry.log.message}}"
+              tooltip-append-to-body="true"
+              tooltip-placement="top"
+              tooltip-popup-delay="500"
+              tooltip-class="message-tooltip">
             <span ng-bind-html="LogViewer.highlight(entry.log.message)"></span>
           </td>
           <td class="stack-trace" ng-if="entry.stackTrace" colspan="4">

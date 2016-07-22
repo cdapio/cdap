@@ -95,8 +95,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
     //If the currently clicked row is a stack trace itself, do nothing
     else if(this.displayData[index].stackTrace && (index - 1) > 0){
-      // this.data[index-1].selected = false;
-      // this.data.splice(index, 1);
       return;
     }
 
@@ -177,7 +175,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.data = this.data.concat(res);
         this.cacheSize = res.length - this.cacheDecrement;
-
+        this.renderData();
         if(res.length < this.viewLimit){
           getStatus();
         }
@@ -241,6 +239,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       }
+      this.renderData();
 
     }, (err) => {
       console.log('ERROR: ', err);
