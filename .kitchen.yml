@@ -55,3 +55,11 @@ suites:
   - name: sdk
     run_list:
       - recipe[cdap::sdk]
+  - name: ambari
+    attributes: { cdap: { ambari: { install: true } } }
+    run_list:
+      - recipe[cdap::ambari]
+    excludes:
+      - debian-6.0.10
+      - ubuntu-12.04
+      - ubuntu-14.04
