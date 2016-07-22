@@ -30,6 +30,8 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope, SchemaHelp
     } else {
       vm.items.type = null;
     }
+
+    vm.items.nested = SchemaHelper.checkComplexType(vm.items.displayType);
   };
 
   vm.formatOutput = () => {
@@ -62,7 +64,8 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope, SchemaHelp
       vm.items = {
         displayType: 'string',
         type: 'string',
-        nullable: false
+        nullable: false,
+        nested: false
       };
       vm.formatOutput();
       return;

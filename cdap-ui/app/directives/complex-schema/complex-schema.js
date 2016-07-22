@@ -14,7 +14,7 @@
  * the License.
  */
 
-function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
+function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, SchemaHelper) {
   'ngInject';
   var vm = this;
 
@@ -32,7 +32,8 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
       type: 'string',
       displayType: 'string',
       nullable: false,
-      id: uuid.v4()
+      id: uuid.v4(),
+      nested: false
     };
 
     vm.parsedSchema.splice(placement, 0, newField);
@@ -62,6 +63,8 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
     } else {
       field.type = null;
     }
+
+    field.nested = SchemaHelper.checkComplexType(field.displayType);
   };
 
   function init(strJson) {
@@ -77,42 +80,14 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
 
     vm.parsedSchema = parsed.getFields().map((field) => {
       let type = field.getType();
-      let storedType = type;
-      let nullable = false;
-      let nestedFieldset = false;
 
-      if (type.getTypeName() === 'union:wrapped') {
-        type = type.getTypes();
+      let partialObj = SchemaHelper.parseType(type);
 
-        if (type[1] && type[1].getTypeName() === 'null') {
-          storedType = type[0];
-          type = type[0].getTypeName();
-          nullable = true;
-        } else {
-          type = 'union';
-        }
-      } else {
-        type = type.getTypeName();
-      }
-
-      console.log('type: ', type);
-
-      if (type === 'array' ||
-          type === 'enum' ||
-          type === 'map' ||
-          type === 'record' ||
-          type === 'union') {
-        nestedFieldset = true;
-      }
-
-      return {
+      return Object.assign({}, partialObj, {
         id: uuid.v4(),
-        name: field.getName(),
-        displayType: type,
-        type: storedType,
-        nullable: nullable,
-        nested: nestedFieldset
-      };
+        name: field.getName()
+      });
+
     });
 
     if (!vm.isDisabled && vm.parsedSchema.length === 0) {

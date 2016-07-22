@@ -35,6 +35,7 @@ my-complex-schema {
         background-color: transparent;
         border: 0;
         box-shadow: none;
+        border-radius: 0;
         .placeholder-color(@color: #666666, @font-weight: 500);
       }
     }
@@ -42,7 +43,11 @@ my-complex-schema {
     .type-column {
       width: @type-column-width;
       float: left;
+
+      &.header { padding-left: 10px; }
     }
+
+    .select-only { max-width: 85px; }
 
     .input-column {
       float: left;
@@ -62,6 +67,8 @@ my-complex-schema {
       }
 
       .form-control { padding-left: 5px; }
+
+      &.header { padding-left: 4px; }
     }
 
     .select-wrapper { .select-wrapper(@background-color: transparent, @arrow-color: @cdap-header, @right: 7px); }
