@@ -16,6 +16,10 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -81,31 +85,37 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     }
   }
 
+  @ReadWrite
   @Override
   public void addPartition(long time, String path) {
     addPartition(time, path, Collections.<String, String>emptyMap());
   }
 
+  @ReadWrite
   @Override
   public void addPartition(long time, String path, Map<String, String> metadata) {
     addPartition(partitionKeyForTime(time), path, metadata);
   }
 
+  @ReadWrite
   @Override
   public void addMetadata(long time, String metadataKey, String metadataValue) {
     addMetadata(partitionKeyForTime(time), metadataKey, metadataValue);
   }
 
+  @ReadWrite
   @Override
   public void addMetadata(long time, Map<String, String> metadata) {
     addMetadata(partitionKeyForTime(time), metadata);
   }
 
+  @WriteOnly
   @Override
   public void dropPartition(long time) {
     dropPartition(partitionKeyForTime(time));
   }
 
+  @ReadOnly
   @Nullable
   @Override
   public TimePartitionDetail getPartitionByTime(long time) {
@@ -115,6 +125,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
                                      partitionDetail.getMetadata());
   }
 
+  @ReadOnly
   @Override
   public Set<TimePartitionDetail> getPartitionsByTime(long startTime, long endTime) {
     final Set<TimePartitionDetail> partitions = Sets.newHashSet();
@@ -142,6 +153,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     return paths;
   }
 
+  @NoAccess
   @Override
   public TimePartitionOutput getPartitionOutput(long time) {
     if (isExternal) {
@@ -152,6 +164,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     return new BasicTimePartitionOutput(this, getOutputPath(key), key);
   }
 
+  @NoAccess
   @Override
   @Nullable
   protected Collection<String> computeFilterInputPaths() {

@@ -17,6 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.external;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
@@ -45,21 +48,25 @@ public class ExternalDataset implements Dataset, InputFormatProvider, OutputForm
       this.outputFormatClassName != null ? runtimeArgs : Collections.<String, String>emptyMap();
   }
 
+  @ReadOnly
   @Override
   public String getInputFormatClassName() {
     return inputFormatClassName;
   }
 
+  @ReadOnly
   @Override
   public Map<String, String> getInputFormatConfiguration() {
     return inputFormatConfiguration;
   }
 
+  @WriteOnly
   @Override
   public String getOutputFormatClassName() {
     return outputFormatClassName;
   }
 
+  @WriteOnly
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
     return outputFormatConfiguration;

@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.examples.wordcount;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
@@ -47,6 +49,7 @@ public class AssociationTable extends AbstractDataset {
    * in the set.
    * @param words words to store associations between
    */
+  @WriteOnly
   public void writeWordAssocs(Set<String> words) {
 
     // For sets of less than 2 words, there are no associations
@@ -84,6 +87,7 @@ public class AssociationTable extends AbstractDataset {
    * @param limit the number of associations to return, at most
    * @return a map of the top associated words to their co-occurrence count
    */
+  @ReadOnly
   public Map<String, Long> readWordAssocs(String word, int limit) {
 
     // Retrieve all columns of the word’s row
@@ -106,6 +110,7 @@ public class AssociationTable extends AbstractDataset {
    * @param word2 the other word
    * @return how many times word1 and word2 occurred together
    */
+  @ReadOnly
   public long getAssoc(String word1, String word2) {
     Long val = table.get(new Get(word1, word2)).getLong(word2);
     return val == null ? 0 : val;

@@ -17,8 +17,10 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Property;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
@@ -85,11 +87,13 @@ abstract class TimeseriesDataset extends AbstractDataset {
    * @param columnName column name to write to
    * @param value value passed with {@link Entry} into
    */
+  @WriteOnly
   void write(byte[] row, byte[] columnName, byte[] value) {
     Put put = new Put(row, columnName, value);
     table.put(put);
   }
 
+  @WriteOnly
   void write(byte[] key, byte[] value, long timestamp, byte[]... tags) {
 
     // Note: no need to validate entry as long as its fullness enforced by its constructor
@@ -107,6 +111,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
     write(row, columnName, value);
   }
 
+  @ReadWrite
   long internalIncrement(byte[] counter, long amount, long timestamp, byte[]... tags) {
     byte[][] sortedTags = tags.clone();
     sortTags(sortedTags);
@@ -212,6 +217,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
    *        NOTE: using tags returns entries containing all tags that were providing during writing
    * @return an iterator over entries that satisfy provided conditions
    */
+  @ReadOnly
   final Iterator<Entry> readInternal(byte[] key, long startTime, long endTime, byte[]... tags) {
     // validating params
     if (startTime > endTime) {

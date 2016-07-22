@@ -16,6 +16,10 @@
 
 package co.cask.cdap.data2.dataset2.lib.table;
 
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
@@ -74,12 +78,14 @@ public abstract class AbstractTable implements Table, TransactionAware {
       null : new RecordPutTransformer(rowFieldName, tableSchema);
   }
 
+  @ReadOnly
   @Override
   public byte[] get(byte[] row, byte[] column) {
     Row result = get(row, new byte[][]{column});
     return result.isEmpty() ? null : result.get(column);
   }
 
+  @ReadOnly
   @Override
   public Row get(Get get) {
     return get.getColumns() == null ?
@@ -87,6 +93,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
         get(get.getRow(), get.getColumns().toArray(new byte[get.getColumns().size()][]));
   }
 
+  @ReadOnly
   @Override
   public List<Row> get(List<Get> gets) {
     List<Row> results = Lists.newArrayListWithCapacity(gets.size());
@@ -96,11 +103,13 @@ public abstract class AbstractTable implements Table, TransactionAware {
     return results;
   }
 
+  @WriteOnly
   @Override
   public void put(byte [] row, byte [] column, byte[] value) {
     put(row, new byte[][]{column}, new byte[][]{value});
   }
 
+  @WriteOnly
   @Override
   public void put(Put put) {
     Preconditions.checkArgument(!put.getValues().isEmpty(), "Put must have at least one value");
@@ -115,12 +124,14 @@ public abstract class AbstractTable implements Table, TransactionAware {
     put(put.getRow(), columns, values);
   }
 
+  @ReadWrite
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long amount) {
     byte[] result = incrementAndGet(row, new byte[][]{column}, new long[]{amount}).get(column);
     return Bytes.toLong(result);
   }
 
+  @ReadWrite
   @Override
   public Row incrementAndGet(Increment increment) {
     Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
@@ -135,11 +146,13 @@ public abstract class AbstractTable implements Table, TransactionAware {
     return incrementAndGet(increment.getRow(), columns, values);
   }
 
+  @ReadWrite
   @Override
   public void increment(byte[] row, byte[] column, long amount) {
     increment(row, new byte[][]{column}, new long[]{amount});
   }
 
+  @ReadWrite
   @Override
   public void increment(Increment increment) {
     Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
@@ -154,11 +167,13 @@ public abstract class AbstractTable implements Table, TransactionAware {
     increment(increment.getRow(), columns, values);
   }
 
+  @WriteOnly
   @Override
   public void delete(byte[] row, byte[] column) {
     delete(row, new byte[][]{column});
   }
 
+  @WriteOnly
   @Override
   public void delete(Delete delete) {
     if (delete.getColumns() == null) {
@@ -170,32 +185,38 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
   // from TableDataset
 
+  @WriteOnly
   @Override
   public void write(byte[] key, Put put) {
     put(put);
   }
 
+  @NoAccess
   @Override
   public List<Split> getSplits() {
     return getSplits(-1, null, null);
   }
 
+  @ReadOnly
   @Override
   public SplitReader<byte[], Row> createSplitReader(Split split) {
     return new TableScanner();
   }
 
+  @NoAccess
   @Override
   public Type getRecordType() {
     return StructuredRecord.class;
   }
 
+  @ReadOnly
   @Override
   public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
     Preconditions.checkArgument(tableSchema != null, "Table has no schema and is not record scannable.");
     return new StructuredRecordScanner(createSplitReader(split));
   }
 
+  @WriteOnly
   @Override
   public void write(StructuredRecord structuredRecord) throws IOException {
     if (recordPutTransformer == null) {

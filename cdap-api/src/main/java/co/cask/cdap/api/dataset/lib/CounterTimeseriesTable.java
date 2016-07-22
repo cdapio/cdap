@@ -16,6 +16,9 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
@@ -51,6 +54,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    *             for more details.
    * @return value of the entry after increment
    */
+  @ReadWrite
   public long increment(byte[] counter, long amount, long timestamp, byte[]... tags) {
     return internalIncrement(counter, amount, timestamp, tags);
   }
@@ -64,6 +68,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    * @param tags optional list of tags associated with the counter. See {@link TimeseriesTable} class description
    *             for more details.
    */
+  @WriteOnly
   public void set(byte[] counter, long value, long timestamp, byte[]... tags) {
     write(counter, Bytes.toBytes(value), timestamp, tags);
   }
@@ -80,6 +85,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    *             entry is only returned if it contains all of these tags.
    * @return an iterator over entries that satisfy provided conditions
    */
+  @ReadOnly
   public Iterator<Counter> read(byte[] counter, long startTime, long endTime, byte[]... tags) {
     final Iterator<Entry> internalItor = readInternal(counter, startTime, endTime, tags);
     return new Iterator<Counter>() {
@@ -117,6 +123,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    *             entry is only returned if it contains all of these tags.
    * @return an iterator over entries that satisfy provided conditions
    */
+  @ReadOnly
   public Iterator<Counter> read(byte[] counter, long startTime, long endTime,
                                 int offset, final int limit, byte[]... tags) {
     if (offset < 0) {

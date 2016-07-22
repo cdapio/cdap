@@ -16,10 +16,14 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -61,6 +65,7 @@ public class LevelDBTable extends BufferingTable {
     this.tx = tx;
   }
 
+  @ReadWrite
   @Override
   public void increment(byte[] row, byte[][] columns, long[] amounts) {
     // for local operation with leveldb, we don't worry about the cost of reads
@@ -127,6 +132,30 @@ public class LevelDBTable extends BufferingTable {
         throw new DataSetException("Unknown filter type: " + filter);
       }
     }
-    return core.scan(scan.getStartRow(), scan.getStopRow(), filter, null, tx);
+    final Scanner scanner = core.scan(scan.getStartRow(), scan.getStopRow(), filter, null, tx);
+    return new Scanner() {
+      @Nullable
+      @Override
+      public Row next() {
+        return LevelDBTable.this.next(scanner);
+      }
+
+      @Override
+      public void close() {
+        LevelDBTable.this.close(scanner);
+      }
+    };
+  }
+
+  // Helper methods to help operate on the Scanner with authroization
+
+  @ReadOnly
+  private Row next(Scanner scanner) {
+    return scanner.next();
+  }
+
+  @NoAccess
+  private void close(Scanner scanner) {
+    scanner.close();
   }
 }
