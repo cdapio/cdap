@@ -171,20 +171,13 @@ public final class AvroFileWriter implements Closeable, Flushable {
     return avroFile;
   }
 
-  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
+  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws IOException {
     long currentTs = System.currentTimeMillis();
-    NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
     Location location = createLocation(loggingContext, currentTs);
     LOG.info("Creating Avro file {}", location);
-    final AvroFile avroFile = new AvroFile(location);
+    AvroFile avroFile = new AvroFile(location);
     try {
-      impersonator.doAs(namespaceId, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          avroFile.open();
-          return null;
-        }
-      });
+      avroFile.open();
     } catch (IOException e) {
       closeAndDelete(avroFile);
       throw e;
@@ -192,13 +185,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     try {
       fileMetaDataManager.writeMetaData(loggingContext, timestamp, location);
     } catch (Throwable e) {
-      impersonator.doAs(namespaceId, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          closeAndDelete(avroFile);
-          return null;
-        }
-      });
+      closeAndDelete(avroFile);
       throw new IOException(e);
     }
     fileMap.put(loggingContext.getLogPathFragment(logBaseDir), avroFile);
@@ -211,7 +198,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     String fileName = String.format("%s.avro", timestamp);
 
     final NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-    Location namespaceLocation = null;
+    Location namespaceLocation;
     try {
       namespaceLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
         @Override
@@ -221,7 +208,6 @@ public final class AvroFileWriter implements Closeable, Flushable {
       });
     } catch (IOException e) {
       throw e;
-
     } catch (Exception t) {
       Throwables.propagateIfPossible(t);
 

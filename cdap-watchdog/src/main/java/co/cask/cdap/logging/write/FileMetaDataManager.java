@@ -174,7 +174,6 @@ public final class FileMetaDataManager {
                                                                  namespaceId);
               }
             });
-            byte[] maxCol = getMaxKey(row.getColumns());
             for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               byte[] colName = entry.getKey();
               if (LOG.isDebugEnabled()) {
