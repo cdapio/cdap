@@ -85,6 +85,7 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -237,6 +238,7 @@ public class TestBase {
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         @SuppressWarnings("deprecation")

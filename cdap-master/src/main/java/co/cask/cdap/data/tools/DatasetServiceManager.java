@@ -43,6 +43,8 @@ import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -137,7 +139,9 @@ public class DatasetServiceManager extends AbstractIdleService {
       new ExploreClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
       new RemoteSystemOperationsServiceModule(),
+      new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

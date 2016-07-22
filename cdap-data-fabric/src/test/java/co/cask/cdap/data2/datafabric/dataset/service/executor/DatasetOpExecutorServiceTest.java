@@ -46,6 +46,8 @@ import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -122,6 +124,8 @@ public class DatasetOpExecutorServiceTest {
       new TransactionMetricsModule(),
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

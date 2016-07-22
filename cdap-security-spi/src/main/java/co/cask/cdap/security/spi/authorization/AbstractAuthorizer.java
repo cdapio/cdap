@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.spi.authorization;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -31,6 +32,13 @@ import java.util.Set;
  * have to implement these methods unless necessary.
  */
 public abstract class AbstractAuthorizer implements Authorizer {
+
+  protected static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
+    @Override
+    public boolean apply(EntityId entityId) {
+      return true;
+    }
+  };
 
   /**
    * Default no-op implementation of {@link Authorizer#initialize(AuthorizationContext)}.
@@ -54,22 +62,21 @@ public abstract class AbstractAuthorizer implements Authorizer {
   }
 
   @Override
-  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
     if (Principal.SYSTEM.equals(principal)) {
-      return unfiltered;
+      return ALLOW_ALL;
     }
 
     Set<Privilege> privileges = listPrivileges(principal);
-    Set<EntityId> allowedEntities = new HashSet<>();
+    final Set<EntityId> allowedEntities = new HashSet<>();
     for (Privilege privilege : privileges) {
       allowedEntities.add(privilege.getEntity());
     }
-    Set<T> result = new HashSet<>();
-    for (T entityId : unfiltered) {
-      if (allowedEntities.contains(entityId)) {
-        result.add(entityId);
+    return new Predicate<EntityId>() {
+      @Override
+      public boolean apply(EntityId entityId) {
+        return allowedEntities.contains(entityId);
       }
-    }
-    return Collections.unmodifiableSet(result);
+    };
   }
 }

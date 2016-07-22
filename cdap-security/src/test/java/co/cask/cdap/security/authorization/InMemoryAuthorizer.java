@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.authorization;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -32,7 +33,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -83,12 +83,12 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public <T extends EntityId> Set<T> filter(Set<T> unfiltered, Principal principal) throws Exception {
+  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
     // super users do not have any enforcement
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
-      return unfiltered;
+      return ALLOW_ALL;
     }
-    return super.filter(unfiltered, principal);
+    return super.createFilter(principal);
   }
 
   @Override

@@ -52,6 +52,8 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -131,6 +133,8 @@ public class DFSStreamHeartbeatsTest {
         new NotificationServiceRuntimeModule().getInMemoryModules(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new ViewAdminModules().getInMemoryModules(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
         // We need the distributed modules here to get the distributed stream service, which is the only one
         // that performs heartbeats aggregation
         new StreamServiceRuntimeModule().getDistributedModules(),

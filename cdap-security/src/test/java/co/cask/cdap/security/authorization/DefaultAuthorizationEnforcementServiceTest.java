@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.authorization;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -163,7 +164,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
       NamespaceId ns1 = new NamespaceId("ns1");
-      NamespaceId ns2 = new NamespaceId("ns1");
+      NamespaceId ns2 = new NamespaceId("ns2");
       DatasetId ds11 = ns1.dataset("ds1");
       DatasetId ds12 = ns1.dataset("ds2");
       DatasetId ds21 = ns2.dataset("ds1");
@@ -185,10 +186,26 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
         new DefaultAuthorizationEnforcementService(authorizer, CCONF);
       authEnforcementService.startAndWait();
       try {
-        Assert.assertEquals(namespaces, authEnforcementService.filter(namespaces, ALICE));
-        Assert.assertTrue(authEnforcementService.filter(namespaces, BOB).isEmpty());
-        Assert.assertEquals(ImmutableSet.of(ds11, ds21, ds23), authEnforcementService.filter(datasets, ALICE));
-        Assert.assertEquals(ImmutableSet.of(ds11, ds12, ds22), authEnforcementService.filter(datasets, BOB));
+        Predicate<EntityId> aliceFilter = authEnforcementService.createFilter(ALICE);
+        for (NamespaceId namespace : namespaces) {
+          Assert.assertTrue(aliceFilter.apply(namespace));
+        }
+        Predicate<EntityId> bobFilter = authEnforcementService.createFilter(BOB);
+        for (NamespaceId namespace : namespaces) {
+          Assert.assertFalse(bobFilter.apply(namespace));
+        }
+        for (DatasetId datasetId : ImmutableSet.of(ds11, ds21, ds23)) {
+          Assert.assertTrue(aliceFilter.apply(datasetId));
+        }
+        for (DatasetId datasetId : ImmutableSet.of(ds12, ds22)) {
+          Assert.assertFalse(aliceFilter.apply(datasetId));
+        }
+        for (DatasetId datasetId : ImmutableSet.of(ds11, ds12, ds22)) {
+          Assert.assertTrue(bobFilter.apply(datasetId));
+        }
+        for (DatasetId datasetId : ImmutableSet.of(ds21, ds23)) {
+          Assert.assertFalse(bobFilter.apply(datasetId));
+        }
       } finally {
         authEnforcementService.stopAndWait();
       }

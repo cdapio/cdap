@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+//TODO: CDAP-5411 Cannot use EntityId in this class until EntityId classes do name validation
 class ConversionHelpers {
 
   private static final Gson GSON = new Gson();

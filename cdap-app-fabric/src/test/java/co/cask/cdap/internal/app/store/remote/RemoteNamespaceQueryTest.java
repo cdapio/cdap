@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.store.remote;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.namespace.RemoteNamespaceQueryClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.gateway.handlers.meta.RemoteNamespaceQueryHandler;
@@ -28,12 +30,10 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.TransactionManager;
-import com.google.common.collect.Iterables;
+import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -41,7 +41,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -84,17 +83,9 @@ public class RemoteNamespaceQueryTest {
 
   private static void waitForService(DiscoveryServiceClient discoveryService, String discoverableName)
     throws InterruptedException {
-    final CountDownLatch startLatch = new CountDownLatch(1);
-    discoveryService.discover(discoverableName).watchChanges(
-      new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        if (!Iterables.isEmpty(serviceDiscovered)) {
-          startLatch.countDown();
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-    startLatch.await(5, TimeUnit.SECONDS);
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryService.discover(discoverableName));
+    Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
+                               "%s service is not up after 5 seconds", discoverableName);
   }
 
   @Test

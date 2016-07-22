@@ -16,8 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
@@ -38,17 +36,13 @@ import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
-import co.cask.cdap.security.authorization.NoOpAdmin;
-import co.cask.cdap.security.authorization.NoOpDatasetContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
+import co.cask.cdap.security.authorization.NoOpAuthorizationContextFactory;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.NettyHttpService;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -75,19 +69,8 @@ import java.util.Set;
 public class AuthorizationHandlerTest {
 
   private static final String USERNAME_PROPERTY = "cdap.username";
-  private static final AuthorizationContextFactory factory = new AuthorizationContextFactory() {
-    @Override
-    public AuthorizationContext create(Properties extensionProperties) {
-      Transactional txnl = new Transactional() {
-        @Override
-        public void execute(TxRunnable runnable) throws TransactionFailureException {
-          //no-op
-        }
-      };
-      return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(),
-                                             txnl, null);
-    }
-  };
+  private static final AuthorizationContextFactory FACTORY = new NoOpAuthorizationContextFactory();
+
   private final Principal admin = new Principal("admin", Principal.PrincipalType.USER);
   private final Properties properties = new Properties();
   private final EntityId ns1 = Ids.namespace("ns1");
@@ -106,10 +89,10 @@ public class AuthorizationHandlerTest {
     conf.setBoolean(Constants.Security.ENABLED, true);
     properties.setProperty("superusers", admin.getName());
     final InMemoryAuthorizer auth = new InMemoryAuthorizer();
-    auth.initialize(factory.create(properties));
+    auth.initialize(FACTORY.create(properties));
     service = new CommonNettyHttpServiceBuilder(conf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
-        new AuthorizerInstantiator(conf, factory) {
+        new AuthorizerInstantiator(conf, FACTORY) {
           @Override
           public Authorizer get() {
             return auth;
@@ -163,7 +146,7 @@ public class AuthorizationHandlerTest {
                             String configSetting) throws Exception {
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
-        new AuthorizerInstantiator(cConf, factory) {
+        new AuthorizerInstantiator(cConf, FACTORY) {
           @Override
           public Authorizer get() {
             return new InMemoryAuthorizer();
