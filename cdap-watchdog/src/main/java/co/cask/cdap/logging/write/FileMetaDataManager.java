@@ -26,11 +26,14 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -151,8 +154,9 @@ public final class FileMetaDataManager {
           Row row;
           while ((row = scanner.next()) != null) {
             byte[] rowKey = row.getRow();
+            NamespaceId namespaceId = getNamespaceId(rowKey);
             String namespacedLogDir = LoggingContextHelper.getNamespacedBaseDir(namespacedLocationFactory, logBaseDir,
-                                                                                getLogPartition(rowKey));
+                                                                                namespaceId);
             byte[] maxCol = getMaxKey(row.getColumns());
             for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               byte[] colName = entry.getKey();
@@ -160,11 +164,10 @@ public final class FileMetaDataManager {
                 LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),
                           Bytes.toLong(colName));
               }
-
               Location fileLocation = rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
               // Delete if file last modified time is less than tillTime
               if (fileLocation.lastModified() < tillTime) {
-                callback.handle(fileLocation, namespacedLogDir);
+                callback.handle(namespaceId, fileLocation, namespacedLogDir);
                 table.delete(rowKey, colName);
                 deletedColumns++;
               }
@@ -216,6 +219,16 @@ public final class FileMetaDataManager {
     return Bytes.toString(rowKey, offset, length);
   }
 
+  private NamespaceId getNamespaceId(byte[] rowKey) {
+    String logPartition = getLogPartition(rowKey);
+    Preconditions.checkArgument(logPartition != null, "Log partition cannot be null");
+    String [] partitions = logPartition.split(":");
+    Preconditions.checkArgument(partitions.length == 3,
+                                "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
+    // don't care about the app or the program, only need the namespace
+    return LoggingContextHelper.getNamespaceId(new GenericLoggingContext(partitions[0], partitions[1], partitions[2]));
+  }
+
   private byte[] getRowKey(LoggingContext loggingContext) {
     return getRowKey(loggingContext.getLogPartition());
   }
@@ -242,6 +255,6 @@ public final class FileMetaDataManager {
    * Implement to receive a location before its meta data is removed.
    */
   public interface DeleteCallback {
-    void handle(Location location, String namespacedLogBaseDir);
+    void handle(NamespaceId namespaceId, Location location, String namespacedLogBaseDir);
   }
 }

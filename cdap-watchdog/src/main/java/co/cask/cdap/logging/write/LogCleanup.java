@@ -18,6 +18,8 @@ package co.cask.cdap.logging.write;
 
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.RootLocationFactory;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -27,7 +29,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Handles log file retention.
@@ -38,15 +43,17 @@ public final class LogCleanup implements Runnable {
   private final FileMetaDataManager fileMetaDataManager;
   private final RootLocationFactory rootLocationFactory;
   private final long retentionDurationMs;
+  private final Impersonator impersonator;
 
   // this class takes a root location factory because for custom mapped namespaces the namespace is mapped to a
   // location from the root of system and the logs are generated in the custom mapped location. To clean up  these
   // locations we need to work with root based location factory
   public LogCleanup(FileMetaDataManager fileMetaDataManager, RootLocationFactory rootLocationFactory,
-                    long retentionDurationMs) {
+                    long retentionDurationMs, Impersonator impersonator) {
     this.fileMetaDataManager = fileMetaDataManager;
     this.rootLocationFactory = rootLocationFactory;
     this.retentionDurationMs = retentionDurationMs;
+    this.impersonator = impersonator;
 
     LOG.debug("Log retention duration = {} ms", retentionDurationMs);
   }
@@ -57,28 +64,45 @@ public final class LogCleanup implements Runnable {
     try {
       long tillTime = System.currentTimeMillis() - retentionDurationMs;
       final SetMultimap<String, Location> parentDirs = HashMultimap.create();
+      final Map<String, NamespaceId> namespacedLogBaseDirMap = new HashMap<>();
       fileMetaDataManager.cleanMetaData(tillTime,
                                         new FileMetaDataManager.DeleteCallback() {
                                           @Override
-                                          public void handle(Location location, String namespacedLogBaseDir) {
+                                          public void handle(NamespaceId namespaceId, final Location location,
+                                                             String namespacedLogBaseDir) {
                                             try {
-                                              if (location.exists()) {
-                                                LOG.info("Deleting log file {}", location);
-                                                location.delete();
-                                              }
+                                              impersonator.doAs(namespaceId, new Callable<Void>() {
+                                                @Override
+                                                public Void call() throws Exception {
+                                                  if (location.exists()) {
+                                                    LOG.info("Deleting log file {}", location);
+                                                    location.delete();
+                                                  }
+                                                  return null;
+                                                }
+                                              });
                                               parentDirs.put(namespacedLogBaseDir, getParent(location));
-                                            } catch (IOException e) {
+                                              namespacedLogBaseDirMap.put(namespacedLogBaseDir, namespaceId);
+                                            } catch (Exception e) {
                                               LOG.error("Got exception when deleting path {}", location, e);
                                               throw Throwables.propagate(e);
                                             }
                                           }
                                         });
       // Delete any empty parent dirs
-      for (String namespacedLogBaseDir : parentDirs.keySet()) {
-        Set<Location> locations = parentDirs.get(namespacedLogBaseDir);
-        for (Location location : locations) {
-          deleteEmptyDir(namespacedLogBaseDir, location);
-        }
+      for (final String namespacedLogBaseDir : parentDirs.keySet()) {
+        // this ensures that we only do doAs which will make an RPC call only once for a namespace
+        NamespaceId namespaceId = namespacedLogBaseDirMap.get(namespacedLogBaseDir);
+        impersonator.doAs(namespaceId, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            Set<Location> locations = parentDirs.get(namespacedLogBaseDir);
+            for (Location location : locations) {
+              deleteEmptyDir(namespacedLogBaseDir, location);
+            }
+            return null;
+          }
+        });
       }
     } catch (Throwable e) {
       LOG.error("Got exception when cleaning up. Will try again later.", e);

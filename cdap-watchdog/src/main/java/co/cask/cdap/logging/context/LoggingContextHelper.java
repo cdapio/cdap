@@ -34,7 +34,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,30 +69,9 @@ public final class LoggingContextHelper {
   private LoggingContextHelper() {}
 
   public static String getNamespacedBaseDir(NamespacedLocationFactory namespacedLocationFactory, String logBaseDir,
-                                            String logPartition) throws IOException {
+                                            NamespaceId namespaceId) throws IOException {
     Preconditions.checkArgument(logBaseDir != null, "Log Base dir cannot be null");
-    Preconditions.checkArgument(logPartition != null, "Log partition cannot be null");
-    String [] partitions = logPartition.split(":");
-    Preconditions.checkArgument(partitions.length == 3,
-                                "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
-    // don't care about the app or the program, only need the namespace
-    GenericLoggingContext loggingContext = new GenericLoggingContext(partitions[0], partitions[1], partitions[2]);
-    return getAbsoluteNamespaceDir(namespacedLocationFactory, loggingContext).append(logBaseDir).toString();
-  }
-
-  /**
-   * Return the absolute location of the namespace for the given logging context. Note: This location is just the
-   * location of the namespace and does not points to the logs directory under that namespace.
-   *
-   * @param namespacedLocationFactory the {@link NamespacedLocationFactory} to use for getting the location
-   * @param loggingContext the {@link LoggingContext} whose namespace needs to be found
-   * @return {@link Location} which points the namespace for the given logging context.
-   * @throws IOException if failed to get the location of the namespace for the given logging context.
-   */
-  public static Location getAbsoluteNamespaceDir(NamespacedLocationFactory namespacedLocationFactory, LoggingContext
-    loggingContext) throws IOException {
-    NamespaceId namespaceId = getNamespaceId(loggingContext);
-    return namespacedLocationFactory.get(namespaceId.toId());
+    return namespacedLocationFactory.get(namespaceId.toId()).append(logBaseDir).toString();
   }
 
   /**

@@ -18,6 +18,7 @@ package co.cask.cdap.logging.read;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.AndFilter;
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.concurrent.Callable;
 
 /**
  * Reads log events from a file.
@@ -48,15 +50,17 @@ public class FileLogReader implements LogReader {
 
   private final FileMetaDataManager fileMetaDataManager;
   private final Schema schema;
+  private final Impersonator impersonator;
 
   @Inject
-  public FileLogReader(CConfiguration cConf, FileMetaDataManager fileMetaDataManager) {
+  public FileLogReader(CConfiguration cConf, FileMetaDataManager fileMetaDataManager, Impersonator impersonator) {
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
 
     try {
       this.schema = new LogSchema().getAvroSchema();
       this.fileMetaDataManager = fileMetaDataManager;
+      this.impersonator = impersonator;
 
     } catch (Exception e) {
       LOG.error("Got exception", e);
@@ -66,7 +70,7 @@ public class FileLogReader implements LogReader {
 
   @Override
   public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     if (readRange == ReadRange.LATEST) {
       getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
       return;
@@ -75,9 +79,9 @@ public class FileLogReader implements LogReader {
     callback.init();
 
     try {
-      Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+      final Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
-      long fromTimeMs = readRange.getFromMillis() + 1;
+      final long fromTimeMs = readRange.getFromMillis() + 1;
 
       LOG.trace("Using fromTimeMs={}, readRange={}", fromTimeMs, readRange);
       NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
@@ -86,43 +90,56 @@ public class FileLogReader implements LogReader {
       }
 
       List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
-      AvroFileReader logReader = new AvroFileReader(schema);
-      for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file);
-        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
+      final AvroFileReader logReader = new AvroFileReader(schema);
+      for (final Location file : filesInRange) {
+        impersonator.doAs(LoggingContextHelper.getNamespaceId(loggingContext), new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            LOG.trace("Reading file {}", file);
+            logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
+            return null;
+          }
+        });
         if (callback.getCount() >= maxEvents) {
           break;
         }
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw  Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
   @Override
   public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     callback.init();
     try {
-      Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
-                                                        filter));
+      final Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
 
       NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
         return;
       }
 
-      long fromTimeMs = readRange.getToMillis() - 1;
+      final long fromTimeMs = readRange.getToMillis() - 1;
 
       LOG.trace("Using fromTimeMs={}, readRange={}", fromTimeMs, readRange);
       List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
       List<Collection<LogEvent>> logSegments = Lists.newLinkedList();
-      AvroFileReader logReader = new AvroFileReader(schema);
+      final AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
-      for (Location file : Lists.reverse(filesInRange)) {
-        LOG.trace("Reading file {}", file);
-        Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count);
+      for (final Location file : Lists.reverse(filesInRange)) {
+        final int finalCount = count;
+        Collection<LogEvent> events = impersonator.doAs(LoggingContextHelper.getNamespaceId(loggingContext),
+                                                        new Callable<Collection<LogEvent>>() {
+          @Override
+          public Collection<LogEvent> call() throws Exception {
+            LOG.trace("Reading file {}", file);
+            return logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - finalCount);
+          }
+        });
         logSegments.add(events);
         count += events.size();
         if (count >= maxEvents) {
@@ -135,17 +152,17 @@ public class FileLogReader implements LogReader {
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw  Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
   @Override
   public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                          final Filter filter, final Callback callback) {
+                     final Filter filter, final Callback callback) {
     callback.init();
     try {
-      Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
-                                                        filter));
+      final Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
 
       LOG.trace("Using fromTimeMs={}, toTimeMs={}", fromTimeMs, toTimeMs);
       NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
@@ -154,14 +171,20 @@ public class FileLogReader implements LogReader {
       }
 
       List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
-      AvroFileReader avroFileReader = new AvroFileReader(schema);
-      for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file);
-        avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+      final AvroFileReader avroFileReader = new AvroFileReader(schema);
+      for (final Location file : filesInRange) {
+        impersonator.doAs(LoggingContextHelper.getNamespaceId(loggingContext), new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            LOG.trace("Reading file {}", file);
+            avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+            return null;
+          }
+        });
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw  Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 

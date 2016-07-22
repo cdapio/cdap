@@ -23,10 +23,15 @@ import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
+import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -37,6 +42,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -73,6 +79,7 @@ public class LogCleanupTest {
   private static String logBaseDir;
   private static String namespacesDir;
   private static RootLocationFactory rootLocationFactory;
+  private static Impersonator impersonator;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -87,12 +94,20 @@ public class LogCleanupTest {
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules()
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+        }
+      }
     );
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     rootLocationFactory = injector.getInstance(RootLocationFactory.class);
+    impersonator = injector.getInstance(Impersonator.class);
   }
 
   @AfterClass
@@ -154,7 +169,8 @@ public class LogCleanupTest {
     Assert.assertEquals(locationListsToString(toDelete, notDelete),
       toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
 
-    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, RETENTION_DURATION_MS,
+                                           impersonator);
     logCleanup.run();
     logCleanup.run();
 
@@ -214,7 +230,7 @@ public class LogCleanupTest {
       emptyDirs.add(createDir(namespacedLogsDir2.append("def").append("hij").append("dir_" + i)));
     }
 
-    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, RETENTION_DURATION_MS, impersonator);
     for (Location location : Sets.newHashSet(Iterables.concat(nonEmptyDirs, emptyDirs))) {
       logCleanup.deleteEmptyDir(namespacedLogsDir1.toString(), location);
       logCleanup.deleteEmptyDir(namespacedLogsDir2.toString(), location);
@@ -242,7 +258,7 @@ public class LogCleanupTest {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
-    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, RETENTION_DURATION_MS, impersonator);
 
     logCleanup.deleteEmptyDir(namespacesDir + "/ns/" + logBaseDir, baseDir);
     // Assert base dir exists

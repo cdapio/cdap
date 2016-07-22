@@ -18,7 +18,9 @@ package co.cask.cdap.logging.write;
 
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -37,6 +39,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -54,6 +57,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private final Map<String, AvroFile> fileMap;
   private final long maxFileSize;
   private final long inactiveIntervalMs;
+  private final Impersonator impersonator;
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -69,7 +73,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
    */
   public AvroFileWriter(FileMetaDataManager fileMetaDataManager, NamespacedLocationFactory namespacedLocationFactory,
                         String logBaseDir, Schema schema, long maxFileSize, int syncIntervalBytes,
-                        long inactiveIntervalMs) {
+                        long inactiveIntervalMs, Impersonator impersonator) {
     this.fileMetaDataManager = fileMetaDataManager;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = logBaseDir;
@@ -78,6 +82,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     this.fileMap = Maps.newHashMap();
     this.maxFileSize = maxFileSize;
     this.inactiveIntervalMs = inactiveIntervalMs;
+    this.impersonator = impersonator;
   }
 
   /**
@@ -167,11 +172,18 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws IOException {
     long currentTs = System.currentTimeMillis();
+    NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
     Location location = createLocation(loggingContext, currentTs);
     LOG.info("Creating Avro file {}", location);
-    AvroFile avroFile = new AvroFile(location);
+    final AvroFile avroFile = new AvroFile(location);
     try {
-      avroFile.open();
+      impersonator.doAs(namespaceId, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          avroFile.open();
+          return null;
+        }
+      });
     } catch (IOException e) {
       closeAndDelete(avroFile);
       throw e;
@@ -179,7 +191,13 @@ public final class AvroFileWriter implements Closeable, Flushable {
     try {
       fileMetaDataManager.writeMetaData(loggingContext, timestamp, location);
     } catch (Throwable e) {
-      closeAndDelete(avroFile);
+      impersonator.doAs(namespaceId, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          closeAndDelete(avroFile);
+          return null;
+        }
+      });
       throw new IOException(e);
     }
     fileMap.put(loggingContext.getLogPathFragment(logBaseDir), avroFile);
@@ -190,8 +208,9 @@ public final class AvroFileWriter implements Closeable, Flushable {
     throws IOException {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     String fileName = String.format("%s.avro", timestamp);
-    Location namespaceLocation = LoggingContextHelper.getAbsoluteNamespaceDir(namespacedLocationFactory,
-                                                                              loggingContext);
+
+    Location namespaceLocation =
+      namespacedLocationFactory.get(LoggingContextHelper.getNamespaceId(loggingContext).toId());
     // drop the namespaceid from path fragment since the namespaceLocation already points to the directory inside the
     // namespace
     String pathFragment = loggingContext.getLogPathFragment(logBaseDir).split(LoggingContextHelper.getNamespaceId
