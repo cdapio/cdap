@@ -22,8 +22,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -35,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,16 +55,18 @@ public final class LogSaver extends AbstractIdleService {
   private final KafkaClientService kafkaClient;
   private final Set<Integer> partitions;
 
-  private Map<Integer, Cancellable> kafkaCancelMap;
-  private Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
-  private Set<KafkaLogProcessor> messageProcessors;
+  private final Map<Integer, Cancellable> kafkaCancelMap;
+  private final Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
+  private final Set<KafkaLogProcessorFactory> messageProcessorFactories;
+  private final SetMultimap<Integer, KafkaLogProcessor> partitionProcessorsMap;
 
   private final MetricsContext metricsContext;
 
   @Inject
   LogSaver(KafkaClientService kafkaClient,
            CConfiguration cConf,
-           @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<KafkaLogProcessor> messageProcessors,
+           @Named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)
+           Set<KafkaLogProcessorFactory> messageProcessorFactories,
            @Assisted Set<Integer> partitions,
            MetricsCollectionService metricsCollectionService)
     throws Exception {
@@ -74,7 +79,8 @@ public final class LogSaver extends AbstractIdleService {
     this.kafkaClient = kafkaClient;
     this.kafkaCancelMap = new HashMap<>();
     this.kafkaCancelCallbackLatchMap = new HashMap<>();
-    this.messageProcessors = messageProcessors;
+    this.messageProcessorFactories = messageProcessorFactories;
+    this.partitionProcessorsMap = HashMultimap.create();
 
     // TODO: add instance id of the log saver as a tag, when CDAP-3265 is fixed
     this.metricsContext = metricsCollectionService.getContext(
@@ -85,6 +91,7 @@ public final class LogSaver extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting LogSaver...");
+    createProcessors(partitions);
     waitForDatasetAvailability();
     scheduleTasks(partitions);
     LOG.info("Started LogSaver.");
@@ -106,7 +113,7 @@ public final class LogSaver extends AbstractIdleService {
   void unscheduleTasks() {
     cancelLogCollectorCallbacks();
 
-    for (KafkaLogProcessor processor : messageProcessors) {
+    for (KafkaLogProcessor processor : partitionProcessorsMap.values()) {
       try {
         // Catching the exception to let all the plugins a chance to stop cleanly.
         processor.stop();
@@ -114,6 +121,18 @@ public final class LogSaver extends AbstractIdleService {
         LOG.error("Error stopping processor {}",
                   processor.getClass().getSimpleName());
       }
+    }
+    partitionProcessorsMap.clear();
+  }
+
+  private void createProcessors(Set<Integer> partitions) throws Exception {
+    for (int partition : partitions) {
+      Set<KafkaLogProcessor> processors = new HashSet<>();
+      for (KafkaLogProcessorFactory factory : messageProcessorFactories) {
+        KafkaLogProcessor logProcessor = factory.create();
+        processors.add(logProcessor);
+      }
+      partitionProcessorsMap.putAll(partition, processors);
     }
   }
 
@@ -133,12 +152,13 @@ public final class LogSaver extends AbstractIdleService {
   private void subscribe(Set<Integer> partitions) throws Exception {
     LOG.info("Prepare to subscribe for partitions: {}", partitions);
 
-    for (KafkaLogProcessor processor : messageProcessors) {
-      processor.init(partitions);
-    }
-
     Map<Integer, Long> partitionOffset = Maps.newHashMap();
     for (int part : partitions) {
+      Set<KafkaLogProcessor> kafkaLogProcessors = partitionProcessorsMap.get(part);
+      for (KafkaLogProcessor kafkaLogProcessor : kafkaLogProcessors) {
+        kafkaLogProcessor.init(part);
+      }
+
       KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
       long offset = getLowestCheckpointOffset(part);
       partitionOffset.put(part, offset);
@@ -150,8 +170,9 @@ public final class LogSaver extends AbstractIdleService {
       }
 
       kafkaCancelCallbackLatchMap.put(part, new CountDownLatch(1));
+
       kafkaCancelMap.put(part, preparer.consume(
-        new KafkaMessageCallback(kafkaCancelCallbackLatchMap.get(part), messageProcessors, metricsContext)));
+        new KafkaMessageCallback(part, kafkaCancelCallbackLatchMap.get(part), kafkaLogProcessors, metricsContext)));
     }
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
@@ -160,8 +181,10 @@ public final class LogSaver extends AbstractIdleService {
   private long getLowestCheckpointOffset(int partition) {
     long lowestCheckpoint = -1L;
 
-    for (KafkaLogProcessor processor : messageProcessors) {
-      Checkpoint checkpoint = processor.getCheckpoint(partition);
+    for (KafkaLogProcessor processor : partitionProcessorsMap.get(partition)) {
+      Checkpoint checkpoint = processor.getCheckpoint();
+      LOG.trace("Got checkpoint {} for partition {} and processor {}",
+                checkpoint, partition, processor.getClass().getName());
       // If checkpoint offset is -1; then ignore the checkpoint offset
       if (checkpoint.getNextOffset() != -1) {
         lowestCheckpoint =  (lowestCheckpoint == -1 || checkpoint.getNextOffset() < lowestCheckpoint) ?
@@ -169,6 +192,7 @@ public final class LogSaver extends AbstractIdleService {
                              lowestCheckpoint;
       }
     }
+    LOG.debug("Lowest checkpoint for partition {} is {}", partition, lowestCheckpoint);
     return lowestCheckpoint;
   }
 
@@ -177,8 +201,8 @@ public final class LogSaver extends AbstractIdleService {
     boolean isDatasetAvailable = false;
     while (!isDatasetAvailable) {
       try {
-         for (KafkaLogProcessor processor : messageProcessors) {
-           processor.getCheckpoint(0);
+         for (KafkaLogProcessor processor : partitionProcessorsMap.values()) {
+           processor.getCheckpoint();
          }
         isDatasetAvailable = true;
       } catch (Exception e) {

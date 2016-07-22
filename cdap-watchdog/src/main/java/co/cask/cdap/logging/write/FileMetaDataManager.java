@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -138,8 +137,6 @@ public final class FileMetaDataManager {
     return execute(new TransactionExecutor.Function<Table, Integer>() {
       @Override
       public Integer apply(Table table) throws Exception {
-        byte[] tillTimeBytes = Bytes.toBytes(tillTime);
-
         int deletedColumns = 0;
         Scanner scanner = table.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
         try {
@@ -147,7 +144,6 @@ public final class FileMetaDataManager {
           while ((row = scanner.next()) != null) {
             byte[] rowKey = row.getRow();
             String namespacedLogDir = LoggingContextHelper.getNamespacedBaseDir(logBaseDir, getLogPartition(rowKey));
-            byte[] maxCol = getMaxKey(row.getColumns());
 
             for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               byte[] colName = entry.getKey();
@@ -155,9 +151,11 @@ public final class FileMetaDataManager {
                 LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),
                           Bytes.toLong(colName));
               }
-              // Delete if colName is less than tillTime, but don't delete the last one
-              if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
-                callback.handle(locationFactory.create(new URI(Bytes.toString(entry.getValue()))), namespacedLogDir);
+
+              Location fileLocation = locationFactory.create(new URI(Bytes.toString(entry.getValue())));
+              // Delete if file last modified time is less than tillTime
+              if (fileLocation.lastModified() < tillTime) {
+                callback.handle(fileLocation, namespacedLogDir);
                 table.delete(rowKey, colName);
                 deletedColumns++;
               }
@@ -185,7 +183,7 @@ public final class FileMetaDataManager {
                                                    "Please check why the table is not TransactionAware", table));
       }
     } catch (Exception e) {
-      throw new RuntimeException(String.format("Error accessing %s table", Constants.Stream.View.STORE_TABLE), e);
+      throw new RuntimeException(String.format("Error accessing %s table", tableUtil.getMetaTableName()), e);
     }
   }
 
@@ -202,7 +200,7 @@ public final class FileMetaDataManager {
                                                    "Please check why the table is not TransactionAware", table));
       }
     } catch (Exception e) {
-      throw new RuntimeException(String.format("Error accessing %s table", Constants.Stream.View.STORE_TABLE), e);
+      throw new RuntimeException(String.format("Error accessing %s table", tableUtil.getMetaTableName()), e);
     }
   }
 

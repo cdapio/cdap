@@ -31,70 +31,96 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Persists bucketized logs stored by {@link KafkaMessageCallback}.
  */
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);
+  private static final long SLEEP_TIME_NS = TimeUnit.MILLISECONDS.toNanos(100);
+
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable;
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
+  private final CountDownLatch stopLatch;
 
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
 
   public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter,
                    RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
-                   long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
+                   long eventBucketIntervalMs, long maxNumberOfBucketsInTable, CountDownLatch stopLatch) {
     this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
     this.maxNumberOfBucketsInTable = maxNumberOfBucketsInTable;
+    this.stopLatch = stopLatch;
   }
 
   @Override
   public void run() {
-    try {
-      // Read new messages only if previous write was successful.
-      if (writeListMap.isEmpty()) {
-        int messages = 0;
+    while (true) {
+      try {
+        // Read new messages only if previous write was successful.
+        if (writeListMap.isEmpty()) {
+          int messages = 0;
 
-        long limitKey = System.currentTimeMillis() / eventBucketIntervalMs;
-        synchronized (messageTable) {
-          SortedSet<Long> rowKeySet = messageTable.rowKeySet();
-          if (!rowKeySet.isEmpty()) {
-            // Get the oldest bucket in the table
-            long oldestBucketKey = rowKeySet.first();
+          // The newest event that we can write to disk
+          // We try to buffer events up to (eventBucketIntervalMs * maxNumberOfBucketsInTable) time
+          // so that we collect almost all events for a time bucket before we sort it.
+          long limitKey = (System.currentTimeMillis() / eventBucketIntervalMs) - maxNumberOfBucketsInTable;
+          synchronized (messageTable) {
+            SortedSet<Long> rowKeySet = messageTable.rowKeySet();
+            if (!rowKeySet.isEmpty()) {
+              int numBuckets = rowKeySet.size();
+              long oldestBucketKey = rowKeySet.first();
 
-            Map<String, Entry<Long, List<KafkaLogEvent>>> row = messageTable.row(oldestBucketKey);
-            for (Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
+              Map<String, Entry<Long, List<KafkaLogEvent>>> row = messageTable.row(oldestBucketKey);
+              for (Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
                    it.hasNext(); ) {
-              Map.Entry<String, Entry<Long, List<KafkaLogEvent>>> mapEntry = it.next();
-              if (limitKey < (mapEntry.getValue().getKey() + maxNumberOfBucketsInTable)) {
-                break;
+                Map.Entry<String, Entry<Long, List<KafkaLogEvent>>> mapEntry = it.next();
+                // Stop if event arrival time is more than the limit (this is for events being generated now)
+                // However, if we have reached maxNumberOfBucketsInTable then it means we are reading old
+                // events and we can write as soon as we fill up maxNumberOfBucketsInTable
+                if (numBuckets < maxNumberOfBucketsInTable &&
+                  limitKey < mapEntry.getValue().getKey()) {
+                  break;
+                }
+                writeListMap.putAll(mapEntry.getKey(), mapEntry.getValue().getValue());
+                messages += mapEntry.getValue().getValue().size();
+                it.remove();
               }
-              writeListMap.putAll(mapEntry.getKey(), mapEntry.getValue().getValue());
-              messages += mapEntry.getValue().getValue().size();
-              it.remove();
             }
           }
+
+          LOG.trace("Got {} log messages to save", messages);
         }
 
-        LOG.trace("Got {} log messages to save", messages);
+        long sleepTimeNanos = writeListMap.isEmpty() ? SLEEP_TIME_NS : 1;
 
-        for (Iterator<Map.Entry<String, Collection<KafkaLogEvent>>> it = writeListMap.asMap().entrySet().iterator();
+        // Wait for more data to arrive if writeListMap is empty, otherwise check if stopped
+        if (stopLatch.await(sleepTimeNanos, TimeUnit.NANOSECONDS)) {
+          // if count down occurred return
+          LOG.debug("Returning since stop latch is cancelled");
+          return;
+        } else {
+          LOG.trace("Waiting for events, sleeping for {} ns", sleepTimeNanos);
+        }
+
+        for (Iterator<Entry<String, Collection<KafkaLogEvent>>> it = writeListMap.asMap().entrySet().iterator();
              it.hasNext(); ) {
-          Map.Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
+          Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
           List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
           Collections.sort(list);
           logFileWriter.append(list);
           // Remove successfully written message
           it.remove();
         }
+      } catch (Throwable e) {
+        LOG.error("Caught exception during save, will try again.", e);
       }
-    } catch (Throwable e) {
-      LOG.error("Caught exception during save, will try again.", e);
     }
   }
 }
