@@ -195,9 +195,11 @@
   <div class="pipeline-specific-section">
     <div class="btn" ng-click="TopPanelCtrl.viewSummary = !TopPanelCtrl.viewSummary">
       <span class="fa fa-line-chart"></span>
+      <span class="fa fa-caret-down" ng-if="TopPanelCtrl.viewSummary"></span>
     </div>
     <div class="btn" ng-click="TopPanelCtrl.viewSettings = !TopPanelCtrl.viewSettings">
       <span class="fa fa-sliders"></span>
+      <span class="fa fa-caret-down" ng-if="TopPanelCtrl.viewSettings"></span>
     </div>
     <div class="btn"
          ui-sref="hydratorplusplus.create({data: TopPanelCtrl.config, type: TopPanelCtrl.app.type})" >
