@@ -11,8 +11,6 @@ provisioner:
   require_chef_omnibus: true
   attributes:
     cdap:
-      gateway:
-        init_actions: 'start'
       kafka:
         init_actions: 'start'
       master:
@@ -22,8 +20,6 @@ provisioner:
       security:
         init_actions: 'start'
       ui:
-        init_actions: 'start'
-      web_app:
         init_actions: 'start'
 
 platforms:
@@ -71,10 +67,6 @@ platforms:
          'hive.zookeeper.quorum': 'localhost'
 
 suites:
-  - name: cdh4
-    run_list:
-      - recipe[cdap::fullstack]
-    attributes: { hadoop: { distribution: 'cdh', distribution_version: '4.7.1' } }
   - name: cdh5
     run_list:
       - recipe[cdap::fullstack]
