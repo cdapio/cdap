@@ -50,7 +50,9 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -100,8 +102,9 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                         ArtifactRepository artifactRepository,
                         AuthorizerInstantiator authorizerInstantiator,
                         CConfiguration cConf, StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                        Impersonator impersonator, AuthorizationEnforcementService authorizationEnforcementService) {
-    super(nsStore, authorizationEnforcementService);
+                        Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
+                        AuthenticationContext authenticationContext) {
+    super(nsStore, authorizationEnforcer, authenticationContext);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = store;
@@ -140,6 +143,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     // thread can successfully create the default namespace
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
       authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
+      authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
     }
 
     // store the meta first in the namespace store because namespacedlocationfactory need to look up location
@@ -157,13 +161,12 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     } catch (IOException | ExploreException | SQLException e) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       nsStore.delete(metadata.getNamespaceId().toId());
+      if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
+        authorizerInstantiator.get().revoke(namespace);
+      }
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
 
-    // Skip authorization grants for the system user
-    if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-      authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
-    }
   }
 
   /**
@@ -188,9 +191,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                                                                 namespaceId));
     }
 
-    // Namespace can be deleted. Revoke all privileges first
     authorizerInstantiator.get().enforce(namespace, SecurityRequestContext.toPrincipal(), Action.ADMIN);
-    authorizerInstantiator.get().revoke(namespace);
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
@@ -239,6 +240,12 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
+
+    // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion, and
+    // deletion fails, we may have a valid (or invalid) namespace in the system, that no one has privileges on,
+    // so no one can clean up. This may result in orphaned privileges, which will be cleaned up by the create API
+    // if the same namespace is successfully re-created.
+    authorizerInstantiator.get().revoke(namespace);
   }
 
   private void deleteMetrics(NamespaceId namespaceId) throws Exception {

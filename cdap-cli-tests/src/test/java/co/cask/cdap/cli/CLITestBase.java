@@ -20,6 +20,7 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Function;
 import org.junit.Assert;

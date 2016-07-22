@@ -119,11 +119,10 @@ public class PluginService extends AbstractIdleService {
 
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return getPluginEndpoint(namespace, artifactDetail, pluginType, pluginName,
-                             pickParentArtifact(namespace, artifactDetail, artifactId), methodName);
+                             pickParentArtifact(artifactDetail, artifactId), methodName);
   }
 
-  private ArtifactDescriptor pickParentArtifact(NamespaceId namespace, ArtifactDetail artifactDetail,
-                                                Id.Artifact artifact)
+  private ArtifactDescriptor pickParentArtifact(ArtifactDetail artifactDetail, Id.Artifact artifact)
     throws Exception {
 
     // get parent artifacts
@@ -135,7 +134,7 @@ public class PluginService extends AbstractIdleService {
     // just pick the first parent artifact from the set.
     ArtifactRange parentArtifactRange = parentArtifactRanges.iterator().next();
 
-    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(namespace, parentArtifactRange);
+    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(parentArtifactRange);
     if (artifactDetails.isEmpty()) {
       // should not happen
       throw new ArtifactNotFoundException(artifact);

@@ -25,8 +25,8 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.collect.Iterables;
@@ -41,13 +41,16 @@ import java.util.List;
 public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
 
   protected final NamespaceStore nsStore;
-  protected final AuthorizationEnforcementService authorizationEnforcementService;
+  protected final AuthorizationEnforcer authorizationEnforcer;
+  protected final AuthenticationContext authenticationContext;
 
   @Inject
   public DefaultNamespaceQueryAdmin(NamespaceStore nsStore,
-                                    AuthorizationEnforcementService authorizationEnforcementService) {
+                                    AuthorizationEnforcer authorizationEnforcer,
+                                    AuthenticationContext authenticationContext) {
     this.nsStore = nsStore;
-    this.authorizationEnforcementService = authorizationEnforcementService;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -58,8 +61,8 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
   @Override
   public List<NamespaceMeta> list() throws Exception {
     List<NamespaceMeta> namespaces = nsStore.list();
-    Principal principal = SecurityRequestContext.toPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcementService.createFilter(principal);
+    Principal principal = authenticationContext.getPrincipal();
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     return Lists.newArrayList(
       Iterables.filter(namespaces, new com.google.common.base.Predicate<NamespaceMeta>() {
         @Override
@@ -84,8 +87,8 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
     if (ns == null) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    Principal principal = SecurityRequestContext.toPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcementService.createFilter(principal);
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!Principal.SYSTEM.equals(principal) && !filter.apply(namespaceId.toEntityId())) {
       throw new UnauthorizedException(principal, namespaceId.toEntityId());
     }

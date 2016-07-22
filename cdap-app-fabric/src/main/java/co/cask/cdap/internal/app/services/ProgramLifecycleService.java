@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -54,13 +55,12 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
@@ -107,14 +107,16 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final PropertiesResolver propertiesResolver;
   private final PreferencesStore preferencesStore;
   private final AuthorizerInstantiator authorizerInstantiator;
-  private final AuthorizationEnforcementService authorizationEnforcementService;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           NamespacedLocationFactory namespacedLocationFactory, PreferencesStore preferencesStore,
                           AuthorizerInstantiator authorizerInstantiator,
-                          AuthorizationEnforcementService authorizationEnforcementService) {
+                          AuthorizationEnforcer authorizationEnforcer,
+                          AuthenticationContext authenticationContext) {
     this.store = store;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
@@ -123,7 +125,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.cConf = cConf;
     this.preferencesStore = preferencesStore;
     this.authorizerInstantiator = authorizerInstantiator;
-    this.authorizationEnforcementService = authorizationEnforcementService;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -198,13 +201,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
-    ensureAccess(programId);
     ApplicationSpecification appSpec;
     appSpec = store.getApplication(Ids.namespace(programId.getNamespace()).app(programId.getApplication()).toId());
     if (appSpec == null) {
       return null;
     }
 
+    ensureAccess(programId);
     String programName = programId.getProgram();
     ProgramType type = programId.getType();
     ProgramSpecification programSpec;
@@ -272,7 +275,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug) throws Exception {
-    authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
+    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     ProgramDescriptor programDescriptor = store.loadProgram(programId.toId());
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -386,7 +389,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
   public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
-    authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
+    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
     if (runtimeInfo == null) {
       if (!store.applicationExists(programId.toId().getApplication())) {
@@ -423,7 +426,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               {@link Action#ADMIN} privileges on the program.
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
-    authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (!store.programExists(programId.toId())) {
       throw new NotFoundException(programId.toId());
     }
@@ -492,7 +495,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               To set instances for a program, a user needs {@link Action#ADMIN} on the program.
    */
   public void setInstances(ProgramId programId, int instances, @Nullable String component) throws Exception {
-    authorizerInstantiator.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (instances < 1) {
       throw new BadRequestException(String.format("Instance count should be greater than 0. Got %s.", instances));
     }
@@ -587,7 +590,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
     LOG.trace("Start getting run records not actually running ...");
-    List<RunRecordMeta> notActuallyRunning = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
+    List<RunRecordMeta> notActuallyRunning = store.getRuns(ProgramRunStatus.RUNNING,
+                                                           new com.google.common.base.Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta input) {
         String runId = input.getPid();
@@ -601,7 +605,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     LOG.trace("Start getting invalid run records  ...");
     Collection<RunRecordMeta> invalidRunRecords =
-      Collections2.filter(notActuallyRunning, new Predicate<RunRecordMeta>() {
+      Collections2.filter(notActuallyRunning, new com.google.common.base.Predicate<RunRecordMeta>() {
         @Override
         public boolean apply(RunRecordMeta input) {
           String runId = input.getPid();
@@ -620,7 +624,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     // don't correct run records for programs running inside a workflow
     // for instance, a MapReduce running in a Workflow will not be contained in the runtime info in this class
-    invalidRunRecords = Collections2.filter(invalidRunRecords, new Predicate<RunRecordMeta>() {
+    invalidRunRecords = Collections2.filter(invalidRunRecords, new com.google.common.base.Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta invalidRunRecordMeta) {
         boolean shouldCorrect = shouldCorrectForWorkflowChildren(invalidRunRecordMeta, processedInvalidRunRecordIds);
@@ -795,14 +799,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Ensures that the logged-in user has a {@link Action privilege} on the specified dataset instance.
+   * Ensures that the logged-in user has a {@link Action privilege} on the specified program instance.
    *
    * @param programId the {@link ProgramId} to check for privileges
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
   private void ensureAccess(ProgramId programId) throws Exception {
-    Principal principal = SecurityRequestContext.toPrincipal();
-    co.cask.cdap.api.Predicate<EntityId> filter = authorizationEnforcementService.createFilter(principal);
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!Principal.SYSTEM.equals(principal) && !filter.apply(programId)) {
       throw new UnauthorizedException(principal, Action.READ, programId);
     }

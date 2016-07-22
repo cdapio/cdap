@@ -75,6 +75,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutor;
@@ -479,6 +480,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

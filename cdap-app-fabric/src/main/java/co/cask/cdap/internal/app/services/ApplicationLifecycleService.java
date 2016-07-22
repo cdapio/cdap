@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -52,7 +52,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationDetail;
@@ -71,23 +70,18 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -98,7 +92,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -106,7 +99,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
-import javax.ws.rs.NotAuthorizedException;
 
 /**
  * Service that manage lifecycle of Applications.
@@ -136,7 +128,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final MetadataStore metadataStore;
   private final AuthorizerInstantiator authorizerInstantiator;
-  private final AuthorizationEnforcementService authorizationEnforcementService;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
@@ -148,7 +141,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataStore metadataStore,
                               AuthorizerInstantiator authorizerInstantiator,
-                              AuthorizationEnforcementService authorizationEnforcementService) {
+                              AuthorizationEnforcer authorizationEnforcer,
+                              AuthenticationContext authenticationContext) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.configuration = configuration;
@@ -163,7 +157,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.managerFactory = managerFactory;
     this.metadataStore = metadataStore;
     this.authorizerInstantiator = authorizerInstantiator;
-    this.authorizationEnforcementService = authorizationEnforcementService;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -201,7 +196,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return list of all applications in the namespace that satisfy the specified predicate
    */
   public List<ApplicationRecord> getApps(final Id.Namespace namespace,
-                                         Predicate<ApplicationRecord> predicate) throws Exception {
+                                         com.google.common.base.Predicate<ApplicationRecord> predicate)
+    throws Exception {
     List<ApplicationRecord> appRecords = new ArrayList<>();
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
       // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
@@ -214,9 +210,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       }
     }
 
-    Principal principal = SecurityRequestContext.toPrincipal();
-    final co.cask.cdap.api.Predicate<EntityId> filter = authorizationEnforcementService.createFilter(principal);
-    return Lists.newArrayList(Iterables.filter(appRecords, new Predicate<ApplicationRecord>() {
+    Principal principal = authenticationContext.getPrincipal();
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    return Lists.newArrayList(Iterables.filter(appRecords, new com.google.common.base.Predicate<ApplicationRecord>() {
       @Override
       public boolean apply(ApplicationRecord appRecord) {
         return filter.apply(namespace.toEntityId().app(appRecord.getName()));
@@ -265,7 +261,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     // App exists. Check if the current user has admin privileges on it before updating. The user's write privileges on
     // the namespace will get enforced in the deployApp method.
-    authorizerInstantiator.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     // if no artifact is given, use the current one.
@@ -380,7 +376,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     //Check if any program associated with this namespace is running
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
+                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
       public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
         return runtimeInfo.getProgramId().toEntityId().getNamespace().equals(namespaceId.getId());
@@ -422,7 +418,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     //Check if all are stopped.
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
+                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
       public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
         return runtimeInfo.getProgramId().toEntityId().getApplication().equals(appId.getId());
@@ -534,7 +530,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail) throws Exception {
     // Enforce that the current principal has write access to the namespace the app is being deployed to
-    authorizerInstantiator.get().enforce(namespaceId, SecurityRequestContext.toPrincipal(), Action.WRITE);
+    authorizerInstantiator.get().enforce(namespaceId, authenticationContext.getPrincipal(), Action.WRITE);
 
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
@@ -551,7 +547,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ApplicationWithPrograms applicationWithPrograms = manager.deploy(deploymentInfo).get();
     // Deployment successful. Grant all privileges on this app to the current principal.
     authorizerInstantiator.get().grant(applicationWithPrograms.getApplicationId(),
-                                       SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+                                       authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
     return applicationWithPrograms;
   }
 
@@ -566,7 +562,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteApp(Id.Application appId, ApplicationSpecification spec) throws Exception {
     // enfore ADMIN privileges on the app
-    authorizerInstantiator.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizerInstantiator.get().enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     // first remove all privileges on the app
     revokePrivileges(appId.toEntityId(), spec);
 
@@ -661,7 +657,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   // get filter for app specs by artifact name and version. if they are null, it means don't filter.
-  private Predicate<ApplicationRecord> getAppPredicate(Set<String> artifactNames,
+  private com.google.common.base.Predicate<ApplicationRecord> getAppPredicate(Set<String> artifactNames,
                                                        @Nullable String artifactVersion) {
     if (artifactNames.isEmpty() && artifactVersion == null) {
       return Predicates.alwaysTrue();
@@ -681,17 +677,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
   private void ensureAccess(ApplicationId appId) throws Exception {
-    Principal principal = SecurityRequestContext.toPrincipal();
-    co.cask.cdap.api.Predicate<EntityId> filter = authorizationEnforcementService.createFilter(principal);
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!Principal.SYSTEM.equals(principal) && !filter.apply(appId)) {
-      throw new UnauthorizedException(principal, Action.READ, appId);
+      throw new UnauthorizedException(principal, appId);
     }
   }
 
   /**
    * Returns true if the application artifact is in a whitelist of names
    */
-  private static class ArtifactNamesPredicate implements Predicate<ApplicationRecord> {
+  private static class ArtifactNamesPredicate implements com.google.common.base.Predicate<ApplicationRecord> {
     private final Set<String> names;
 
     ArtifactNamesPredicate(Set<String> names) {
@@ -707,7 +703,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Returns true if the application artifact is a specific version
    */
-  private static class ArtifactVersionPredicate implements Predicate<ApplicationRecord> {
+  private static class ArtifactVersionPredicate implements com.google.common.base.Predicate<ApplicationRecord> {
     private final String version;
 
     ArtifactVersionPredicate(String version) {
