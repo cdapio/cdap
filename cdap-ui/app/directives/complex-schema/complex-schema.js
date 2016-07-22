@@ -79,6 +79,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
       let type = field.getType();
       let storedType = type;
       let nullable = false;
+      let nestedFieldset = false;
 
       if (type.getTypeName() === 'union:wrapped') {
         type = type.getTypes();
@@ -94,12 +95,23 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
         type = type.getTypeName();
       }
 
+      console.log('type: ', type);
+
+      if (type === 'array' ||
+          type === 'enum' ||
+          type === 'map' ||
+          type === 'record' ||
+          type === 'union') {
+        nestedFieldset = true;
+      }
+
       return {
         id: uuid.v4(),
         name: field.getName(),
         displayType: type,
         type: storedType,
-        nullable: nullable
+        nullable: nullable,
+        nested: nestedFieldset
       };
     });
 

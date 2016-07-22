@@ -26,11 +26,13 @@
         Key:
       </div>
       <div class="map-input-column">
-        <select class="form-control"
-                ng-model="MapSchema.fields.keys.displayType"
-                ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
-                ng-change="MapSchema.changeType(MapSchema.fields.keys)">
-        </select>
+        <div class="select-wrapper">
+          <select class="form-control"
+                  ng-model="MapSchema.fields.keys.displayType"
+                  ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
+                  ng-change="MapSchema.changeType(MapSchema.fields.keys)">
+          </select>
+        </div>
       </div>
 
       <div class="fields-actions">
@@ -57,11 +59,13 @@
         Value:
       </div>
       <div class="map-input-column">
-        <select class="form-control"
-                ng-model="MapSchema.fields.values.displayType"
-                ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
-                ng-change="MapSchema.changeType(MapSchema.fields.values)">
-        </select>
+        <div class="select-wrapper">
+          <select class="form-control"
+                  ng-model="MapSchema.fields.values.displayType"
+                  ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
+                  ng-change="MapSchema.changeType(MapSchema.fields.values)">
+          </select>
+        </div>
       </div>
 
       <div class="fields-actions">

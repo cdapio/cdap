@@ -211,9 +211,6 @@
 }
 
 .appearance(@value: none) {
-  // Remove dashed border from select elements when in focus
-  text-shadow: 0 0 0 @cdap-header;
-
   appearance: @value;
   -webkit-appearance: @value;
   -moz-appearance: @value;
@@ -228,13 +225,13 @@
     font-weight: @font-weight;
 }
 
-.select-wrapper(@background-color: white, @color: @cdap-header, @right: 10px) {
+.select-wrapper(@background-color: white, @arrow-color: @cdap-header, @text-color: #555555, @right: 10px) {
   background-color: @background-color;
   display: inline-block;
   position: relative;
   width: 100%;
   &:after {
-    color: @color;
+    color: @arrow-color;
     content: "\f0d7";
     font-family: 'FontAwesome';
     position: absolute;
@@ -248,6 +245,6 @@
     position: relative;
     z-index: 10;
     .appearance();
-    color: @color;
+    color: @text-color;
   }
 }

@@ -15,11 +15,12 @@
 -->
 
 <div>
-  <div ng-if="['enum', 'array', 'map', 'union', 'record'].indexOf(Embedded.displayType) !== -1">
+  <div ng-if="['enum', 'array', 'map', 'union', 'record'].indexOf(Embedded.displayType) !== -1"
+      class="tab-toggle">
     <span class="fa fa-caret-down"
           ng-if="Embedded.expanded"
           ng-click="Embedded.expanded = false"></span>
-    <span class="fa fa-caret-right"
+    <span class="fa fa-caret-up"
           ng-if="!Embedded.expanded"
           ng-click="Embedded.expanded = true"></span>
   </div>
