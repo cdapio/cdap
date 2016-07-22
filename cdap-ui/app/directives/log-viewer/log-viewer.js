@@ -366,6 +366,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.renderData = () => {
     //Clean slate
     this.displayData = [];
+    this.viewLimit = 100;
+    this.cacheDecrement = 100;
+    this.cacheSize = 0;
 
     if(numEvents === 0){
       angular.forEach(this.data, (value, key) => {
@@ -393,7 +396,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     if(this.cacheSize <= 0){
       requestWithOffset();
     }
-    // computePinPosition();
     this.viewLimit += this.cacheDecrement;
   };
 

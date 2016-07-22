@@ -193,7 +193,6 @@ my-log-viewer {
       .align-items(@align: center);
 
       .log-stats-container {
-        width: 40%;
         background-color: @headerbar-background-color;
         margin: 0;
         div {
@@ -214,7 +213,6 @@ my-log-viewer {
           margin-right: 4px;
         }
         .stat-count {
-          min-width: 25px;
           font-weight: 900;
           border-radius: 10px;
           color: @headerbar-stat-color;
@@ -226,7 +224,6 @@ my-log-viewer {
       }
 
       .log-actions {
-        width: 60%;
         margin: 0;
 
         .log-action-btn {
@@ -241,10 +238,10 @@ my-log-viewer {
 
         .download-all {
           margin-left: 3px;
-          width: 100px;
+          max-width: 100px;
         }
         .view-raw {
-          width: 80px;
+          max-width: 80px;
         }
         .search {
           display: inline-block;
@@ -259,7 +256,7 @@ my-log-viewer {
         }
         .log-searchbar {
           height: 28px;
-          width: 140px;
+          max-width: 140px;
           padding-right: 20px;
           border: none;
           border-radius: 5px;
@@ -311,7 +308,7 @@ my-log-viewer {
 
     .logs-table {
       overflow: auto;
-      height: ~"-moz-calc(100vh - 450px)"e;
+      height: ~"-moz-calc(100vh - 450px)";
       height: ~"-webkit-calc(100vh - 450px)";
       height: ~"calc(100vh - 450px)";
 
@@ -320,13 +317,6 @@ my-log-viewer {
         font-size: 11px;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-      .selected-row {
-        background-color: @selected-row-color;
-
-        td {
-          border-bottom: none;
-        }
       }
 
       .has-stack-trace {
@@ -376,8 +366,10 @@ my-log-viewer {
         position: relative;
         top: 0;
       }
+
       tr.row-selected {
         white-space: normal;
+        background-color: @selected-row-color;
 
         .display-time,
         .level {
@@ -387,6 +379,7 @@ my-log-viewer {
 
         td {
           white-space: normal;
+          border-bottom: none;
         }
       }
       tr.well i {
