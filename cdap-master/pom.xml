@@ -206,9 +206,13 @@
         --depends cdap-hbase-compat-1.2-cdh5.7.0</package.rpm.depends>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
         <stage.runtime.ext.dir>${stage.opt.dir}/ext/runtimes</stage.runtime.ext.dir>
+        <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
+        <security.ext.jar.pattern>**/target/*.jar</security.ext.jar.pattern>
+        <security.ext.config.pattern>**/target/*.json</security.ext.config.pattern>
+        <security.ext.exclude.pattern>**/target/*-tests.jar</security.ext.exclude.pattern>
         <!-- contains hydrator upgrade tool. Should be moved out when Hydrator is moved out of CDAP -->
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
       </properties>
@@ -323,6 +327,28 @@
                 </configuration>
               </execution>
 
+              <!-- Copy cdap-kms. -->
+              <execution>
+                <id>copy-cdap-kms</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.lib.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-kms/target/
+                      </directory>
+                      <includes>
+                        <include>cdap-kms-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
               <!-- Copy runtime extensions. Currently only has Spark -->
               <execution>
                 <id>copy-runtime-extensions</id>
@@ -365,6 +391,26 @@
                         <include name="${additional.artifacts.jar.pattern}"/>
                         <include name="${additional.artifacts.config.pattern}"/>
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
+                        <exclude name="*:sources"/>
+                        <exclude name="*:javadoc"/>
+                      </fileset>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>copy-security-extensions-artifacts</id>
+                <phase>process-resources</phase>
+                <configuration>
+                  <target if="security.extensions.dir">
+                    <copy todir="${stage.artifacts.dir}" flatten="true">
+                      <fileset dir="${security.extensions.dir}">
+                        <include name="${security.ext.jar.pattern}"/>
+                        <include name="${security.ext.config.pattern}"/>
+                        <exclude name="${security.ext.exclude.pattern}"/>
                         <exclude name="*:sources"/>
                         <exclude name="*:javadoc"/>
                       </fileset>
