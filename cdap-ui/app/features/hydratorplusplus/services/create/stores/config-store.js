@@ -367,7 +367,7 @@ class HydratorPlusPlusConfigStore {
         node.outputSchema = outputSchema;
       }
       if (!node.outputSchema && nodeConfig.outputSchema.schemaProperties['default-schema']) {
-        node.outputSchema = nodeConfig.outputSchema.schemaProperties['default-schema'];
+        node.outputSchema = JSON.stringify(nodeConfig.outputSchema.schemaProperties['default-schema']);
         node.plugin.properties[node.outputSchemaProperty] = node.outputSchema;
       }
     };

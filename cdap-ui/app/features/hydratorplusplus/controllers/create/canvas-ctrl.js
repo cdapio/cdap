@@ -81,7 +81,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
 
               let sourceConn = HydratorPlusPlusConfigStore
                 .getSourceNodes(pluginId)
-                .filter( node => typeof node.outputSchema === 'string' || typeof node.outputSchema === 'object');
+                .filter( node => typeof node.outputSchema === 'string');
               return HydratorPlusPlusNodeService
                 .getPluginInfo(pluginNode, appType, sourceConn)
                 .then((nodeWithInfo) => (
