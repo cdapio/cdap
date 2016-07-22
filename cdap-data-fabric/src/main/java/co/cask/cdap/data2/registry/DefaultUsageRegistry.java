@@ -90,7 +90,7 @@ public class DefaultUsageRegistry implements UsageRegistry {
   private UsageDataset getOrCreateUsageDataset() {
     try {
       return DatasetsUtil.getOrCreateDataset(
-        datasetFramework, USAGE_INSTANCE_ID, UsageDataset.class.getSimpleName(),
+        datasetFramework, USAGE_INSTANCE_ID, UsageDataset.class.getName(),
         DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
     } catch (Exception e) {
       throw Throwables.propagate(e);

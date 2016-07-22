@@ -194,6 +194,6 @@ public class UsageDatasetTest {
   protected static UsageDataset getUsageDataset(String instanceId) throws Exception {
     Id.DatasetInstance id = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, instanceId);
     return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id,
-                                           UsageDataset.class.getSimpleName(), DatasetProperties.EMPTY, null, null);
+                                           UsageDataset.class.getName(), DatasetProperties.EMPTY, null, null);
   }
 }
