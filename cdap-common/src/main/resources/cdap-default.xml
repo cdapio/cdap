@@ -303,6 +303,12 @@
   </property>
 
   <property>
+    <name>apps.scheduler.queue</name>
+    <value></value>
+    <description>Scheduler queue for CDAP programs and CDAP Explore queries</description>
+  </property>
+
+  <property>
     <name>scheduler.max.thread.pool.size</name>
     <value>100</value>
     <description>
@@ -1049,7 +1055,7 @@
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
-      Maximum number of Master Service instances
+      Maximum number of master service instances
     </description>
   </property>
 
@@ -1057,7 +1063,7 @@
     <name>master.service.memory.mb</name>
     <value>512</value>
     <description>
-      Size of memory in megabytes for Master Service instance
+      Size of memory in megabytes for master service instance
     </description>
   </property>
 
@@ -1065,7 +1071,7 @@
     <name>master.service.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for Master Service instance
+      Number of cores for master service instance
     </description>
   </property>
 
@@ -1083,6 +1089,13 @@
       themselves.
     </description>
   </property>
+
+  <property>
+    <name>master.services.scheduler.queue</name>
+    <value></value>
+    <description>Scheduler queue for CDAP Master Services</description>
+  </property>
+
 
   <!-- Metadata Configuration -->
 
