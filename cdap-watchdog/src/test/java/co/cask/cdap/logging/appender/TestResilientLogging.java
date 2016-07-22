@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -105,7 +106,7 @@ public class TestResilientLogging {
       new ZKClientModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocationUnitTestModule().getModule(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
