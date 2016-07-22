@@ -29,7 +29,6 @@ import java.util.concurrent.Callable;
  * Responsible for executing code for a user, configurable at the namespace level.
  */
 public class Impersonator {
-
   private final boolean kerberosEnabled;
   private final UGIProvider ugiProvider;
   private final ImpersonationUserResolver impersonationUserResolver;

@@ -24,6 +24,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -80,6 +81,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final ArtifactRepository artifactRepository;
   private final MetadataStore metadataStore;
   private final AuthorizerInstantiator authorizerInstantiator;
+  private final Impersonator impersonator;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -90,7 +92,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           StreamAdmin streamAdmin, Scheduler scheduler,
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                          MetadataStore metadataStore, AuthorizerInstantiator authorizerInstantiator) {
+                          MetadataStore metadataStore, AuthorizerInstantiator authorizerInstantiator,
+                          Impersonator impersonator) {
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
@@ -107,12 +110,13 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.artifactRepository = artifactRepository;
     this.metadataStore = metadataStore;
     this.authorizerInstantiator = authorizerInstantiator;
+    this.impersonator = impersonator;
   }
 
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository));
+    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework,
                                                    inMemoryDatasetFramework));

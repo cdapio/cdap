@@ -24,6 +24,8 @@ import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.DefaultEndpointPluginContext;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -69,11 +71,12 @@ public class PluginService extends AbstractIdleService {
   private final File tmpDir;
   private final CConfiguration cConf;
   private final LoadingCache<ArtifactDescriptor, Instantiators> instantiators;
+  private final Impersonator impersonator;
 
   private File stageDir;
 
   @Inject
-  public PluginService(ArtifactRepository artifactRepository, CConfiguration cConf) {
+  public PluginService(ArtifactRepository artifactRepository, CConfiguration cConf, Impersonator impersonator) {
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -89,6 +92,7 @@ public class PluginService extends AbstractIdleService {
       })
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new InstantiatorsCacheLoader());
+    this.impersonator = impersonator;
   }
 
   /**
@@ -173,7 +177,12 @@ public class PluginService extends AbstractIdleService {
     private final File pluginDir;
 
     private Instantiators(ArtifactDescriptor parentArtifactDescriptor) throws IOException {
-      this.parentClassLoader = artifactRepository.createArtifactClassLoader(parentArtifactDescriptor.getLocation());
+      // todo : shouldn't pass null, should use ArtifactId instead of ArtifactDescriptor so we have namespace.
+      this.parentClassLoader =
+        artifactRepository.createArtifactClassLoader(
+          // todo : should not pass null to namespaceId, (Temporary)
+          // change Instantiators to accept ArtifactId instead of ArtifactDescriptor
+          parentArtifactDescriptor.getLocation(), new NamespacedImpersonator(null, impersonator));
       this.instantiatorInfoMap = new ConcurrentHashMap<>();
       this.pluginDir = DirUtils.createTempDir(stageDir);
     }
