@@ -17,6 +17,8 @@ provisioner:
         init_actions: 'start'
       router:
         init_actions: 'start'
+      sdk:
+        init_actions: 'start'
       security:
         init_actions: 'start'
       ui:
