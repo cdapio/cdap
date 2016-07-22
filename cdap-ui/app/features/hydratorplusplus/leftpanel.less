@@ -171,7 +171,7 @@ body.theme-cdap.state-hydratorplusplus-create {
               .item-body {
                 &.view-icon {
                   padding: 10px 5px 0;
-                  .flexbox();
+                  display: flex;
                   flex-direction: row;
                   flex-wrap: wrap;
                   align-items: baseline;
@@ -182,10 +182,8 @@ body.theme-cdap.state-hydratorplusplus-create {
                   }
                   .plugin-item {
                     text-align: left;
-                    width: 48%;
                     position: relative;
                     background-color: white;
-                    border: 1px solid transparent;
                     color: #666666;
                     line-height: 28px;
                     margin-bottom: 4px;
@@ -193,8 +191,8 @@ body.theme-cdap.state-hydratorplusplus-create {
                     height: 28px;
                     width: 49%;
                     border: 1px solid #dddddd;
-                    .border-radius(4px);
-                    .box-shadow(1px 4px 7px -5px rgba(0,0,0,0.65));
+                    border-radius: 4px;
+                    box-shadow: 1px 4px 7px -5px rgba(0, 0, 0, 0.65);
                     .name {
                       display: inline-block;
                       max-width: 90px;
@@ -278,8 +276,6 @@ body.theme-cdap.state-hydratorplusplus-create {
           left: 260px;
           top: 90px;
           height: 32px;
-          border-top-right-radius: 0;
-          border-bottom-right-radius: 0;
           .btn.btn-default {
             line-height: 20px;
           }
@@ -311,7 +307,7 @@ body.theme-cdap.state-hydratorplusplus-create {
       margin-left: 130px;
       height: 100%;
       position: relative;
-      .transition(all 0.2s ease);
+      transition: all 0.2s ease;
       top: 30px;
     }
 
@@ -385,7 +381,7 @@ body.theme-cdap.state-hydratorplusplus-create {
           .item-body {
             &.view-icon {
               padding: 10px 10px 0;
-              .flexbox();
+              display: flex;
               flex-direction: row;
               flex-wrap: wrap;
               align-items: baseline;
@@ -406,7 +402,7 @@ body.theme-cdap.state-hydratorplusplus-create {
                 padding: 0 8px;
                 height: 30px;
                 border: 1px solid #dddddd;
-                .border-radius(4px);
+                border-radius: 4px;
 
                 .name {
                   display: none;
@@ -478,8 +474,7 @@ body.theme-cdap.state-hydratorplusplus-create {
 
       }
       .hydrator-filter {
-        padding: 9px 5px;
-        padding-left: 10px;
+        padding: 9px 5px 9px 10px;
         background: #eeeeee;
         min-height: 41px;
 
@@ -491,13 +486,15 @@ body.theme-cdap.state-hydratorplusplus-create {
       }
     }
     .btn-left-panel-toggle {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
       position: absolute;
-      left: 100px;
+      left: 102px;
       top: 108px;
     }
     .btn-left-panel-add-plugin {
       position: absolute;
-      left: 10px;
+      left: 5px;
       top: 108px;
     }
 
@@ -582,7 +579,6 @@ body.theme-cdap.state-hydratorplusplus-create {
       .modal-content {
         .inner-section {
           border: 2px dotted grey;
-          height: inherit;
           height: 200px;
           border-radius: 8px;
           padding-top: 50px;
