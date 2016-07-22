@@ -45,6 +45,7 @@ body.theme-cdap {
       }
 
       div.btn {
+        position: relative;
         .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 5px 15px);
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
@@ -69,6 +70,14 @@ body.theme-cdap {
         }
         + .btn {
           margin-left: 0;
+        }
+
+        [class*="fa-"] {
+          font-size: 16px;
+        }
+
+        .fa-sliders {
+          transform: rotate(90deg);
         }
 
         @media (max-width: @screen-xs-max) {
@@ -300,6 +309,16 @@ body.theme-cdap {
                 margin-left: 5px;
               }
             }
+          }
+        }
+      }
+      .btn-group {
+        .btn {
+          .fa-caret-down {
+            position: absolute;
+            top: 25px;
+            left: 18px;
+            line-height: 1;
           }
         }
       }
