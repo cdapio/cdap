@@ -137,14 +137,14 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
+  public void putSecureData(String namespace, String name, byte[] data, String description, Map<String, String> properties)
     throws IOException {
-    delegateAdmin.put(namespace, name, data, description, properties);
+    delegateAdmin.putSecureData(namespace, name, data, description, properties);
   }
 
   @Override
-  public void delete(String namespace, String name) throws IOException {
-    delegateAdmin.delete(namespace, name);
+  public void deleteSecureData(String namespace, String name) throws IOException {
+    delegateAdmin.deleteSecureData(namespace, name);
   }
 
   public Principal getPrincipal() {

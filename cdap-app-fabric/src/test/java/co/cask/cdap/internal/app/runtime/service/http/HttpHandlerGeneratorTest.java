@@ -707,25 +707,25 @@ public class HttpHandlerGeneratorTest {
         }
 
         @Override
-        public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
+        public void putSecureData(String namespace, String name, byte[] data, String description, Map<String, String> properties)
           throws IOException {
           //no-op
         }
 
         @Override
-        public void delete(String namespace, String name) throws IOException {
+        public void deleteSecureData(String namespace, String name) throws IOException {
           //no-op
         }
       };
     }
 
     @Override
-    public List<SecureStoreMetadata> list(String namespace) throws IOException {
+    public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
       return null;
     }
 
     @Override
-    public SecureStoreData get(String namespace, String name) throws IOException {
+    public SecureStoreData getSecureData(String namespace, String name) throws IOException {
       return null;
     }
   }

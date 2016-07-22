@@ -271,12 +271,12 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   @throws[IOException]
   def list(namespace: String): util.List[SecureStoreMetadata] = {
-    return runtimeContext.list(namespace)
+    return runtimeContext.listSecureData(namespace)
   }
 
   @throws[IOException]
   def get(namespace: String, name: String): SecureStoreData = {
-    return runtimeContext.get(namespace, name)
+    return runtimeContext.getSecureData(namespace, name)
   }
 
   private def configureStreamInput(configuration: Configuration, streamId: StreamId, startTime: Long,

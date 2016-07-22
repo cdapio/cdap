@@ -78,22 +78,22 @@ public class FileSecureStoreTest {
   }
 
   private void populateStore() throws IOException {
-    secureStoreManager.put(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
-    secureStoreManager.put(NAMESPACE1, KEY2, VALUE2.getBytes(Charsets.UTF_8), DESCRIPTION2, PROPERTIES_2);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY2, VALUE2.getBytes(Charsets.UTF_8), DESCRIPTION2, PROPERTIES_2);
   }
 
   @Test
   public void testListEmpty() throws IOException {
-    Assert.assertEquals(new ArrayList<>(), secureStore.list(NAMESPACE1));
+    Assert.assertEquals(new ArrayList<>(), secureStore.listSecureData(NAMESPACE1));
   }
 
   @Test
   public void testList() throws IOException {
     populateStore();
     List<SecureStoreMetadata> expectedList = new ArrayList<>();
-    expectedList.add(secureStore.get(NAMESPACE1, KEY2).getMetadata());
-    expectedList.add(secureStore.get(NAMESPACE1, KEY1).getMetadata());
-    Assert.assertEquals(expectedList, secureStore.list(NAMESPACE1));
+    expectedList.add(secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata());
+    expectedList.add(secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata());
+    Assert.assertEquals(expectedList, secureStore.listSecureData(NAMESPACE1));
   }
 
   @Test
@@ -101,34 +101,34 @@ public class FileSecureStoreTest {
     populateStore();
     SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
-    Assert.assertArrayEquals(secureStoreData.get(), secureStore.get(NAMESPACE1, KEY1).get());
-    Assert.assertEquals(metadata.getDescription(), secureStore.get(NAMESPACE1, KEY1).getMetadata().getDescription());
-    Assert.assertEquals(metadata.getName(), secureStore.get(NAMESPACE1, KEY1).getMetadata().getName());
+    Assert.assertArrayEquals(secureStoreData.get(), secureStore.getSecureData(NAMESPACE1, KEY1).get());
+    Assert.assertEquals(metadata.getDescription(), secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getDescription());
+    Assert.assertEquals(metadata.getName(), secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getName());
   }
 
   @Test
   public void testGetMetadata() throws IOException {
     populateStore();
     SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
-    Assert.assertEquals(metadata.getDescription(), secureStore.get(NAMESPACE1, KEY1).getMetadata().getDescription());
-    Assert.assertEquals(metadata.getName(), secureStore.get(NAMESPACE1, KEY1).getMetadata().getName());
+    Assert.assertEquals(metadata.getDescription(), secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getDescription());
+    Assert.assertEquals(metadata.getName(), secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getName());
     SecureStoreMetadata metadata2 = SecureStoreMetadata.of(KEY2, DESCRIPTION2, PROPERTIES_2);
-    Assert.assertEquals(metadata2.getDescription(), secureStore.get(NAMESPACE1, KEY2).getMetadata().getDescription());
-    Assert.assertEquals(metadata2.getName(), secureStore.get(NAMESPACE1, KEY2).getMetadata().getName());
+    Assert.assertEquals(metadata2.getDescription(), secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata().getDescription());
+    Assert.assertEquals(metadata2.getName(), secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata().getName());
   }
 
   @Test(expected = IOException.class)
   public void testOverwrite() throws IOException, InterruptedException {
-    secureStoreManager.put(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
-    SecureStoreData oldData = secureStore.get(NAMESPACE1, KEY1);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    SecureStoreData oldData = secureStore.getSecureData(NAMESPACE1, KEY1);
     Assert.assertArrayEquals(VALUE1.getBytes(Charsets.UTF_8), oldData.get());
     String newVal = "New value";
-    secureStoreManager.put(NAMESPACE1, KEY1, newVal.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY1, newVal.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
   }
 
   @Test(expected = IOException.class)
   public void testGetNonExistent() throws IOException {
-    secureStore.get(NAMESPACE1, "Dummy");
+    secureStore.getSecureData(NAMESPACE1, "Dummy");
   }
 
   @Test(expected = IOException.class)
@@ -136,10 +136,10 @@ public class FileSecureStoreTest {
     populateStore();
     SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
-    Assert.assertArrayEquals(secureStoreData.get(), secureStore.get(NAMESPACE1, KEY1).get());
-    secureStoreManager.delete(NAMESPACE1, KEY1);
+    Assert.assertArrayEquals(secureStoreData.get(), secureStore.getSecureData(NAMESPACE1, KEY1).get());
+    secureStoreManager.deleteSecureData(NAMESPACE1, KEY1);
     try {
-      secureStore.get(NAMESPACE1, KEY1);
+      secureStore.getSecureData(NAMESPACE1, KEY1);
     } catch (IOException ioe) {
       Assert.assertTrue(ioe.getMessage().contains("not found in the secure store"));
       throw ioe;
@@ -150,13 +150,13 @@ public class FileSecureStoreTest {
   public void testMultipleNamespaces() throws IOException {
     populateStore();
     String ns = "namespace2";
-    secureStoreManager.put(ns, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
-    List<SecureStoreMetadata> expectedList = ImmutableList.of(secureStore.get(NAMESPACE1, KEY2).getMetadata(),
-                                                              secureStore.get(NAMESPACE1, KEY1).getMetadata());
-    Assert.assertEquals(expectedList, secureStore.list(NAMESPACE1));
-    Assert.assertNotEquals(expectedList, secureStore.list(ns));
-    List<SecureStoreMetadata> expectedList2 = ImmutableList.of(secureStore.get(ns, KEY1).getMetadata());
-    Assert.assertEquals(expectedList2, secureStore.list(ns));
-    Assert.assertNotEquals(expectedList2, secureStore.list(NAMESPACE1));
+    secureStoreManager.putSecureData(ns, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    List<SecureStoreMetadata> expectedList = ImmutableList.of(secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata(),
+                                                              secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata());
+    Assert.assertEquals(expectedList, secureStore.listSecureData(NAMESPACE1));
+    Assert.assertNotEquals(expectedList, secureStore.listSecureData(ns));
+    List<SecureStoreMetadata> expectedList2 = ImmutableList.of(secureStore.getSecureData(ns, KEY1).getMetadata());
+    Assert.assertEquals(expectedList2, secureStore.listSecureData(ns));
+    Assert.assertNotEquals(expectedList2, secureStore.listSecureData(NAMESPACE1));
   }
 }
