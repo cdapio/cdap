@@ -33,8 +33,8 @@ import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.RevokeRequest;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
+import co.cask.cdap.security.spi.authorization.PrincipalNotFoundException;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -103,7 +103,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/grant");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(grantRequest)).build();
-    executePrivilegeRequest(entity, request);
+    executePrivilegeRequest(request);
   }
 
   @Override
@@ -144,7 +144,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void dropRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthorizedException, PrincipalNotFoundException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
     executeExistingRolesRequest(role, request);
@@ -164,7 +164,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthenticatedException, UnauthorizedException, PrincipalNotFoundException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
@@ -173,7 +173,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthenticatedException, UnauthorizedException, PrincipalNotFoundException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
@@ -184,7 +184,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
     throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/revoke");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
-    executePrivilegeRequest(revokeRequest.getEntity(), request);
+    executePrivilegeRequest(request);
   }
 
   private Set<Role> listRolesHelper(@Nullable Principal principal) throws IOException, FeatureDisabledException,
@@ -201,19 +201,19 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   private void executeExistingRolesRequest(Role role, HttpRequest request) throws IOException,
-    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, RoleNotFoundException,
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, PrincipalNotFoundException,
     NotFoundException {
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new RoleNotFoundException(role);
+      throw new PrincipalNotFoundException(role);
     }
   }
 
-  private HttpResponse executePrivilegeRequest(EntityId entityId, HttpRequest request) throws FeatureDisabledException,
+  private HttpResponse executePrivilegeRequest(HttpRequest request) throws FeatureDisabledException,
     UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == httpResponse.getResponseCode()) {
-      throw new NotFoundException(entityId);
+      throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
     return httpResponse;
   }

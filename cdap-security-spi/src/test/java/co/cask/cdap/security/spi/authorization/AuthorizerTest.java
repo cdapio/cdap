@@ -151,7 +151,7 @@ public abstract class AuthorizerTest {
     try {
       authorizer.dropRole(admins);
       Assert.fail(String.format("Dropped a role %s which does not exists. Should have failed.", admins.getName()));
-    } catch (RoleNotFoundException expected) {
+    } catch (PrincipalNotFoundException expected) {
       // expected
     }
 
@@ -163,7 +163,7 @@ public abstract class AuthorizerTest {
     try {
       authorizer.addRoleToPrincipal(admins, spiderman);
       Assert.fail(String.format("Added role %s to principal %s. Should have failed.", admins, spiderman));
-    } catch (RoleNotFoundException expected) {
+    } catch (PrincipalNotFoundException expected) {
       // expectedRoles
     }
 
@@ -206,7 +206,7 @@ public abstract class AuthorizerTest {
       authorizer.removeRoleFromPrincipal(admins, spiderman);
       Assert.fail(String.format("Removed non-existing role %s from principal %s. Should have failed.", admins,
                                 spiderman));
-    } catch (RoleNotFoundException expected) {
+    } catch (PrincipalNotFoundException expected) {
       // expectedRoles
     }
   }
