@@ -155,7 +155,6 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins S3-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3Avro-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3Parquet-batchsink.md
-  download_md_doc_file $base_target $hydrator_source core-plugins Script-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins ScriptFilter-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotAvro-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotAvro-batchsource.md
