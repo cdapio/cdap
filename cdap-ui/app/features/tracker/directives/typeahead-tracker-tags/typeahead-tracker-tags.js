@@ -20,9 +20,11 @@ angular.module(PKG.name + '.feature.tracker')
       restrict: 'EA',
       templateUrl: '/assets/features/tracker/directives/typeahead-tracker-tags/typeahead-tracker-tags.html',
       scope: {
-        config: '='
+        list: '=',
+        model: '='
       },
       controller: 'TypeaheadTrackerTagsCtrl',
-      controllerAs: 'TypeaheadTrackerTagsCtrl'
+      controllerAs: 'TypeaheadTrackerTagsCtrl',
+      bindToController: true
     };
   });
