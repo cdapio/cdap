@@ -16,7 +16,6 @@
 
 package co.cask.cdap.logging.save;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -30,7 +29,9 @@ import co.cask.cdap.logging.write.LogFileWriter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
+import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -42,9 +43,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.AbstractMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -62,6 +63,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
   private final String logBaseDir;
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
+  // Table structure - <event time bucket, log context, event arrival time bucket, log event>
   private final RowSortedTable<Long, String, Map.Entry<Long, List<KafkaLogEvent>>> messageTable;
   private final long eventBucketIntervalMs;
   private final int logCleanupIntervalMins;
@@ -72,6 +74,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
   private ListeningScheduledExecutorService scheduledExecutor;
   private CountDownLatch countDownLatch;
+  private int partition;
 
   @Inject
   KafkaLogWriterPlugin(CConfiguration cConf, FileMetaDataManager fileMetaDataManager,
@@ -83,7 +86,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(this.logBaseDir, "Log base dir cannot be null");
-    LOG.info(String.format("Log base dir is %s", this.logBaseDir));
+    LOG.debug(String.format("Log base dir is %s", this.logBaseDir));
 
     long retentionDurationDays = cConf.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
                                                  LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
@@ -146,79 +149,94 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public void init(Set<Integer> partitions) {
-    super.init(partitions, checkpointManager);
+  public void init(int partition) throws Exception {
+    this.partition = partition;
+    Checkpoint checkpoint = checkpointManager.getCheckpoint(partition);
+    super.init(checkpoint);
 
-    scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("log-saver-log-processor")));
-
-    LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
-                                        eventBucketIntervalMs, maxNumberOfBucketsInTable);
-    scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
-    countDownLatch = new CountDownLatch(1);
-
-    if (partitions.contains(0)) {
+    // We schedule clean up task if partition is zero, so that only one cleanup task gets scheduled
+    if (partition == 0) {
+      scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(2,
+        Threads.createDaemonThreadFactory("log-saver-log-processor-" + partition)));
       LOG.info("Scheduling cleanup task");
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
+    } else {
+      scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("log-saver-log-processor-" + partition)));
     }
+
+    countDownLatch = new CountDownLatch(1);
+    LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
+                                        eventBucketIntervalMs, maxNumberOfBucketsInTable, countDownLatch);
+    scheduledExecutor.execute(logWriter);
   }
 
   @Override
-  public void doProcess(KafkaLogEvent event) {
+  public void doProcess(Iterator<KafkaLogEvent> events) {
+    // Get the timestamp from the first event to compute time bucket
+    PeekingIterator<KafkaLogEvent> peekingIterator = Iterators.peekingIterator(events);
+    KafkaLogEvent firstEvent = peekingIterator.peek();
 
-    LoggingContext loggingContext = event.getLoggingContext();
-    ILoggingEvent logEvent = event.getLogEvent();
     try {
-      // Compute the bucket number for the current event
-      long key = logEvent.getTimeStamp() / eventBucketIntervalMs;
+      // Compute the bucket number for the first event
+      long firstKey = firstEvent.getLogEvent().getTimeStamp() / eventBucketIntervalMs;
 
       // Sleep while we can add the entry
       while (true) {
         // Get the oldest bucket in the table
         long oldestBucketKey;
+        int numBuckets;
         synchronized (messageTable) {
           SortedSet<Long> rowKeySet = messageTable.rowKeySet();
-          if (rowKeySet.isEmpty()) {
-            // Table is empty so go ahead and add the current event in the table
+          numBuckets = rowKeySet.size();
+          oldestBucketKey = numBuckets == 0 ? System.currentTimeMillis() : rowKeySet.first();
+          long latestBucketKey = numBuckets == 0 ? oldestBucketKey : rowKeySet.last();
+
+          // If the number of buckets in memory are less than maxBuckets or
+          // if the current event falls in the bucket number which is in
+          // the window [oldestBucketKey, oldestBucketKey+maxBuckets]
+          // then we can add the event to message table
+          // We try to limit in-memory buckets to prevent OOM.
+          // Note that we can still have more than maxBuckets in memory if buckets are not consecutive, or
+          // we get an event older than oldest bucket
+          if (numBuckets < maxNumberOfBucketsInTable || firstKey <= latestBucketKey) {
+            while (peekingIterator.hasNext()) {
+              KafkaLogEvent event = peekingIterator.next();
+              LoggingContext loggingContext = event.getLoggingContext();
+              long key = event.getLogEvent().getTimeStamp() / eventBucketIntervalMs;
+
+              Map.Entry<Long, List<KafkaLogEvent>> entry =
+                messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir));
+              List<KafkaLogEvent> msgList;
+              if (entry == null) {
+                long eventArrivalBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
+                msgList = Lists.newArrayList();
+                messageTable.put(key, loggingContext.getLogPathFragment(logBaseDir),
+                                 new AbstractMap.SimpleEntry<>(eventArrivalBucketKey, msgList));
+              } else {
+                msgList = messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir)).getValue();
+              }
+              msgList.add(new KafkaLogEvent(event.getGenericRecord(), event.getLogEvent(), loggingContext,
+                                            event.getPartition(), event.getNextOffset()));
+            }
             break;
           }
-          oldestBucketKey = rowKeySet.first();
         }
 
-        // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
+        // Cannot insert event into message table
+        // since there are still maxNumberOfBucketsInTable buckets that need to be processed
         // sleep for the time duration till event falls in the window
-        if (key > (oldestBucketKey + maxNumberOfBucketsInTable)) {
-          LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
-                    key, oldestBucketKey, maxNumberOfBucketsInTable, SLEEP_TIME_MS);
+        LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}, buckets={}. Sleeping for {} ms.",
+                  firstKey, oldestBucketKey, maxNumberOfBucketsInTable, numBuckets, SLEEP_TIME_MS);
 
-          if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
-            // if count down occurred return
-            LOG.debug("Returning since callback is cancelled");
-            return;
-          }
-
-        } else {
-          break;
+        if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
+          // if count down occurred return
+          LOG.debug("Returning since callback is cancelled");
+          return;
         }
-      }
-
-      synchronized (messageTable) {
-        Map.Entry<Long, List<KafkaLogEvent>> entry = messageTable.get(key,
-                                                                      loggingContext.getLogPathFragment(logBaseDir));
-        List<KafkaLogEvent> msgList;
-        if (entry == null) {
-          long eventArrivalBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
-          msgList = Lists.newArrayList();
-          messageTable.put(key, loggingContext.getLogPathFragment(logBaseDir),
-                           new AbstractMap.SimpleEntry<>(eventArrivalBucketKey, msgList));
-        } else {
-          msgList = messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir)).getValue();
-        }
-        msgList.add(new KafkaLogEvent(event.getGenericRecord(), event.getLogEvent(), loggingContext,
-                                      event.getPartition(), event.getNextOffset()));
       }
     } catch (Throwable th) {
-      LOG.warn("Exception while processing message with nextOffset {}. Skipping it.", event.getNextOffset(), th);
+      LOG.warn("Exception while processing message with nextOffset {}. Skipping it.", firstEvent.getNextOffset(), th);
     }
   }
 
@@ -231,7 +249,9 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
       if (scheduledExecutor != null) {
         scheduledExecutor.shutdown();
-        scheduledExecutor.awaitTermination(5, TimeUnit.MINUTES);
+        if (!scheduledExecutor.awaitTermination(5, TimeUnit.MINUTES)) {
+          scheduledExecutor.shutdownNow();
+        }
       }
 
       logFileWriter.flush();
@@ -244,7 +264,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public Checkpoint getCheckpoint(int partition) {
+  public Checkpoint getCheckpoint() {
     try {
       return checkpointManager.getCheckpoint(partition);
     } catch (Exception e) {
