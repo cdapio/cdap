@@ -19,7 +19,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       searchPath = '/namespaces/:namespace/metadata/search?target=stream&target=dataset&target=view',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
-      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/auditlog/:entityType/:entityId',
+      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditlog/:entityType/:entityId',
       navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId,
       trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId,
       propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties',
