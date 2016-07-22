@@ -24,7 +24,9 @@ import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
@@ -69,10 +71,15 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory());
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory(),
+                                                             new Impersonator(CConfiguration.create(), null, null));
 
     // Create a configurator that is testable. Provide it a application.
-    try (CloseableClassLoader artifactClassLoader = artifactRepo.createArtifactClassLoader(appJar)) {
+    try (CloseableClassLoader artifactClassLoader =
+           artifactRepo.createArtifactClassLoader(appJar,
+                                                  new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                                                             new Impersonator(CConfiguration.create(),
+                                                                                              null, null)))) {
       Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
                                                            WordCountApp.class.getName(), artifactRepo,
                                                            artifactClassLoader, null, "");
@@ -95,11 +102,16 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory());
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory(),
+                                                             new Impersonator(CConfiguration.create(), null, null));
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     // Create a configurator that is testable. Provide it a application.
-    try (CloseableClassLoader artifactClassLoader = artifactRepo.createArtifactClassLoader(appJar)) {
+    try (CloseableClassLoader artifactClassLoader =
+           artifactRepo.createArtifactClassLoader(appJar,
+                                                  new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                                                             new Impersonator(CConfiguration.create(),
+                                                                                              null, null)))) {
       Configurator configuratorWithConfig =
         new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
                                  artifactRepo, artifactClassLoader, null, new Gson().toJson(config));

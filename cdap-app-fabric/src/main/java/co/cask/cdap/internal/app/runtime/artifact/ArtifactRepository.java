@@ -33,6 +33,8 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClass;
@@ -52,8 +54,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -88,12 +88,13 @@ public class ArtifactRepository {
   private final MetadataStore metadataStore;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final InstanceId instanceId;
+  private final Impersonator impersonator;
 
   @VisibleForTesting
   @Inject
   public ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
                             AuthorizerInstantiator authorizerInstantiator,
-                            ProgramRunnerFactory programRunnerFactory) {
+                            ProgramRunnerFactory programRunnerFactory, Impersonator impersonator) {
     this.artifactStore = artifactStore;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
@@ -110,17 +111,19 @@ public class ArtifactRepository {
     this.metadataStore = metadataStore;
     this.authorizerInstantiator = authorizerInstantiator;
     this.instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
+    this.impersonator = impersonator;
   }
 
   /**
    * Create a classloader that uses the artifact at the specified location to load classes, with access to
    * packages that all program type has access to.
-   * It delegates to {@link ArtifactClassLoaderFactory#createClassLoader(Location)}.
+   * It delegates to {@link ArtifactClassLoaderFactory#createClassLoader(Location, NamespacedImpersonator)}.
    *
    * @see ArtifactClassLoaderFactory
    */
-  public CloseableClassLoader createArtifactClassLoader(Location artifactLocation) throws IOException {
-    return artifactClassLoaderFactory.createClassLoader(artifactLocation);
+  public CloseableClassLoader createArtifactClassLoader(
+    Location artifactLocation, NamespacedImpersonator namespacedImpersonator) throws IOException {
+    return artifactClassLoaderFactory.createClassLoader(artifactLocation, namespacedImpersonator);
   }
 
   /**
@@ -264,7 +267,7 @@ public class ArtifactRepository {
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
   public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
-                                                                     String pluginType)
+                                                                    String pluginType)
     throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType);
   }
@@ -430,7 +433,7 @@ public class ArtifactRepository {
    *                               on the added artifact.
    */
   @VisibleForTesting
-  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
+  public ArtifactDetail addArtifact(final Id.Artifact artifactId, final File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins,
                                     Map<String, String> properties) throws Exception {
@@ -440,17 +443,19 @@ public class ArtifactRepository {
 
     parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
     CloseableClassLoader parentClassLoader;
+    NamespacedImpersonator namespacedImpersonator = new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                                                               impersonator);
     if (parentArtifacts.isEmpty()) {
-      parentClassLoader = createArtifactClassLoader(Locations.toLocation(artifactFile));
+      parentClassLoader = createArtifactClassLoader(Locations.toLocation(artifactFile), namespacedImpersonator);
     } else {
       validateParentSet(artifactId, parentArtifacts);
-      parentClassLoader = createParentClassLoader(artifactId, parentArtifacts);
+      parentClassLoader = createParentClassLoader(artifactId, parentArtifacts, namespacedImpersonator);
     }
-
     try {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts, properties);
-      ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+      ArtifactDetail artifactDetail =
+        artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile), namespacedImpersonator);
       ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
       ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
@@ -475,7 +480,7 @@ public class ArtifactRepository {
    */
   public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
     authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+                                         Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -498,7 +503,7 @@ public class ArtifactRepository {
    */
   public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
     authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+                                         Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -522,7 +527,7 @@ public class ArtifactRepository {
    */
   public void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception {
     authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+                                         Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -548,7 +553,7 @@ public class ArtifactRepository {
    */
   public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
     authorizerInstantiator.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+                                         Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -736,7 +741,8 @@ public class ArtifactRepository {
    * @throws InvalidArtifactException if one of the parents also has parents
    * @throws IOException if there was some error reading from the store
    */
-  private CloseableClassLoader createParentClassLoader(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts)
+  private CloseableClassLoader createParentClassLoader(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
+                                                       NamespacedImpersonator namespacedImpersonator)
     throws ArtifactRangeNotFoundException, IOException, InvalidArtifactException {
 
     List<ArtifactDetail> parents = new ArrayList<>();
@@ -776,7 +782,7 @@ public class ArtifactRepository {
     // assumes any of the parents will do
     Location parentLocation = parents.get(0).getDescriptor().getLocation();
 
-    return createArtifactClassLoader(parentLocation);
+    return createArtifactClassLoader(parentLocation, namespacedImpersonator);
   }
 
   private void addAppSummaries(List<ApplicationClassSummary> summaries, NamespaceId namespace) {
