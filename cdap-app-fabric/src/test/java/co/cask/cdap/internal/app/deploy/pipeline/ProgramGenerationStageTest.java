@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
@@ -63,7 +64,8 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     NamespacedLocationFactory namespacedLocationFactory = new NamespacedLocationFactoryTestClient(cConf, lf);
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(cConf, namespacedLocationFactory,
-                                                                 new NoOpAuthorizer());
+                                                                 new NoOpAuthorizer(),
+                                                                 new Impersonator(CConfiguration.create(), null, null));
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
     pgmStage.process(new ApplicationDeployable(NamespaceId.DEFAULT.artifact("ToyApp", "1.0"), appArchive,
                                                DefaultId.APPLICATION.toEntityId(), newSpec, null,

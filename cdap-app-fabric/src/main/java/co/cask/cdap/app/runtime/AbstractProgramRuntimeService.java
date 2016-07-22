@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -74,6 +75,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -98,14 +100,16 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository artifactRepository;
+  private final Impersonator impersonator;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository artifactRepository) {
+                                          ArtifactRepository artifactRepository, Impersonator impersonator) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
     this.artifactRepository = artifactRepository;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -149,17 +153,27 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   /**
    * Creates a {@link Program} for the given {@link ProgramRunner} from the given program jar {@link Location}.
    */
-  protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                  ProgramDescriptor programDescriptor,
-                                  Location programJarLocation, File tempDir) throws IOException {
+  protected Program createProgram(final CConfiguration cConf, final ProgramRunner programRunner,
+                                  final ProgramDescriptor programDescriptor,
+                                  final Location programJarLocation, final File tempDir) throws IOException {
     // Take a snapshot of the JAR file to avoid program mutation
-    File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
-
-    // Unpack the JAR file
-    File unpackedDir = new File(tempDir, "unpacked");
+    final File unpackedDir = new File(tempDir, "unpacked");
     unpackedDir.mkdirs();
-    BundleJarUtil.unJar(Files.newInputStreamSupplier(programJar), unpackedDir);
-
+    try {
+      impersonator.doAs(programDescriptor.getArtifactId().getParent(), new Callable<Void>() {
+        @Override
+        public Void call() throws IOException {
+          File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
+          // Unpack the JAR file
+          BundleJarUtil.unJar(Files.newInputStreamSupplier(programJar), unpackedDir);
+          return null;
+        }});
+    } catch (IOException ioe) {
+      throw ioe;
+    } catch (Exception e) {
+      // should not happen
+      throw Throwables.propagate(e);
+    }
     return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, unpackedDir);
   }
 
@@ -229,7 +243,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     builder.putAll(options.getArguments().asMap());
     for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
       Plugin plugin = pluginEntry.getValue();
-      File destFile = new File(tempDir, Artifacts.getFileName(plugin.getArtifactId()));
+      final File destFile = new File(tempDir, Artifacts.getFileName(plugin.getArtifactId()));
       // Skip if the file has already been copied.
       if (!files.add(destFile.getName())) {
         continue;
@@ -237,8 +251,20 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        ArtifactDetail detail = artifactRepository.getArtifact(artifactId.toId());
-        Locations.linkOrCopy(detail.getDescriptor().getLocation(), destFile);
+        final ArtifactDetail detail = artifactRepository.getArtifact(artifactId.toId());
+        try {
+          impersonator.doAs(artifactId.getParent(), new Callable<Void>() {
+            @Override
+            public Void call() throws IOException {
+              Locations.linkOrCopy(detail.getDescriptor().getLocation(), destFile);
+              return null;
+            }});
+        } catch (IOException ioe) {
+          throw ioe;
+        } catch (Exception e) {
+          // should not happen
+          throw Throwables.propagate(e);
+        }
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }

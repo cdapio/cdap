@@ -22,6 +22,7 @@ import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -38,6 +39,7 @@ import org.apache.twill.filesystem.Location;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  *
@@ -46,13 +48,15 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
   private final CConfiguration configuration;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final Authorizer authorizer;
+  private final Impersonator impersonator;
 
   public ProgramGenerationStage(CConfiguration configuration, NamespacedLocationFactory namespacedLocationFactory,
-                                Authorizer authorizer) {
+                                Authorizer authorizer, Impersonator impersonator) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.authorizer = authorizer;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -61,16 +65,24 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
     final ApplicationSpecification appSpec = input.getSpecification();
 
     // Make sure the namespace directory exists
-    Id.Namespace namespaceId = input.getApplicationId().getParent().toId();
-    Location namespacedLocation = namespacedLocationFactory.get(namespaceId);
-    // Note: deployApplication/deployAdapters have already checked for namespaceDir existence, so not checking again
-    // Make sure we have a directory to store the original artifact.
-    final Location appFabricDir = namespacedLocation.append(configuration.get(Constants.AppFabric.OUTPUT_DIR));
+    final Id.Namespace namespaceId = input.getApplicationId().getParent().toId();
 
-    // Check exists, create, check exists again to avoid failure due to race condition.
-    if (!appFabricDir.exists() && !appFabricDir.mkdirs() && !appFabricDir.exists()) {
-      throw new IOException(String.format("Failed to create directory %s", appFabricDir));
-    }
+    impersonator.doAs(namespaceId.toEntityId(), new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        Location namespacedLocation = namespacedLocationFactory.get(namespaceId);
+        // Note: deployApplication/deployAdapters have already checked for namespaceDir existence, so not checking again
+        // Make sure we have a directory to store the original artifact.
+        final Location appFabricDir = namespacedLocation.append(configuration.get(Constants.AppFabric.OUTPUT_DIR));
+
+        // Check exists, create, check exists again to avoid failure due to race condition.
+        if (!appFabricDir.exists() && !appFabricDir.mkdirs() && !appFabricDir.exists()) {
+          throw new IOException(String.format("Failed to create directory %s", appFabricDir));
+        }
+        return null;
+      }
+    });
+
 
     // Now, we iterate through all ProgramSpecification and generate programs
     Iterable<ProgramSpecification> specifications = Iterables.concat(

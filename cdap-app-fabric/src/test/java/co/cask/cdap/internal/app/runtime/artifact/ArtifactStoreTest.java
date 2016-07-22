@@ -24,7 +24,10 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
@@ -903,6 +906,8 @@ public class ArtifactStoreTest {
             throw new RuntimeException(e);
           } catch (ArtifactAlreadyExistsException | WriteConflictException e) {
             // these are ok, all but one thread should see this
+          } catch (Exception e) {
+            //
           } finally {
             latch.countDown();
           }
@@ -988,6 +993,8 @@ public class ArtifactStoreTest {
             throw new RuntimeException(e);
           } catch (WriteConflictException e) {
             // these are ok though unexpected (means couldn't write after a bunch of retries too)
+          } catch (Exception e) {
+            //
           } finally {
             latch.countDown();
           }
@@ -1041,7 +1048,9 @@ public class ArtifactStoreTest {
   }
 
   private void writeArtifact(Id.Artifact artifactId, ArtifactMeta meta, String contents)
-    throws ArtifactAlreadyExistsException, IOException, WriteConflictException {
-    artifactStore.write(artifactId, meta, ByteStreams.newInputStreamSupplier(Bytes.toBytes(contents)));
+    throws Exception {
+    artifactStore.write(artifactId, meta, ByteStreams.newInputStreamSupplier(Bytes.toBytes(contents)),
+                        new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                                   new Impersonator(CConfiguration.create(), null, null)));
   }
 }

@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
@@ -55,16 +56,19 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final Store store;
   private final ApplicationSpecificationAdapter adapter;
   private final ArtifactRepository artifactRepository;
+  private final Impersonator impersonator;
 
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository) {
+  public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
+                                  Impersonator impersonator) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     this.artifactRepository = artifactRepository;
+    this.impersonator = impersonator;
   }
 
   /**
@@ -82,7 +86,10 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     String appClassName = deploymentInfo.getAppClassName();
     String configString = deploymentInfo.getConfigString();
 
-    ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation);
+    NamespacedImpersonator classLoaderImpersonator =
+      new NamespacedImpersonator(artifactId.getParent(), impersonator);
+    ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
+                                                                                   classLoaderImpersonator);
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
 
     InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(cConf, deploymentInfo.getNamespaceId().toId(),
