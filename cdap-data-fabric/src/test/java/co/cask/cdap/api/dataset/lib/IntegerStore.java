@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectStoreDataset;
@@ -32,14 +34,17 @@ public class IntegerStore extends ObjectStoreDataset<Integer> {
           new ReflectionSchemaGenerator().generate(Integer.class));
   }
 
+  @WriteOnly
   public void write(int key, Integer value) throws Exception {
     super.write(Bytes.toBytes(key), value);
   }
 
+  @ReadOnly
   public Integer read(int key) throws Exception {
     return super.read(Bytes.toBytes(key));
   }
 
+  @WriteOnly
   public void delete(int key) {
     super.delete(Bytes.toBytes(key));
   }
