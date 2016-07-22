@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.security.store;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ import java.util.Map;
  * Provides write access to the secure store.
  * For read access use {@link SecureStore}.
  */
+@Beta
 public interface SecureStoreManager {
 
   /**
