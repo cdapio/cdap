@@ -312,7 +312,6 @@ body.theme-cdap {
       justify-content: space-between;
       .run-specific-section {
         display: flex;
-        flex-wrap: wrap;
         flex: 1;
         flex-basis: 60vw;
         width: ~"calc(100vw - 288px)";
@@ -336,9 +335,9 @@ body.theme-cdap {
             and still be able to have run specific section stick to metadata section.
           */
 
-          max-width: ~"calc(100vw - 679px)";
-          max-width: ~"-moz-calc(100vw - 679px)";
-          max-width: ~"-webkit-calc(100vw - 679px)";
+          max-width: ~"calc(100% - 410px)";
+          max-width: ~"-moz-calc(100% - 410px)";
+          max-width: ~"-webkit-calc(100% - 410px)";
           div.pipeline-type {
             text-decoration: none;
             padding: 0 10px 0 0;
@@ -349,6 +348,7 @@ body.theme-cdap {
           div.pipeline-name {
             text-align: left;
             overflow: hidden;
+            width: 100%;
           }
           h1,
           p {
@@ -364,14 +364,13 @@ body.theme-cdap {
             margin-bottom: 0;
             line-height: 20px;
             display: inline-block;
-            line-height: 1.4;
           }
           p {
             color: #666666;
             font-size: 12px;
             font-weight: 400;
             margin: 0;
-            margin-top: -8px; // FIXME: This is a bad hack. Need to come with a better way to do it.
+            line-height: 1.1;
           }
         }
         .next-run,
