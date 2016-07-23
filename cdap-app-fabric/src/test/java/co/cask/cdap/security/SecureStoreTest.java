@@ -47,7 +47,7 @@ public class SecureStoreTest extends AppFabricTestBase {
   public void testCreate() throws Exception {
     SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    HttpResponse response = doPut("/v3/namespaces/default/securekeys/keys/" + KEY,
+    HttpResponse response = doPut("/v3/namespaces/default/securekeys/" + KEY,
                                   GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = delete(KEY);
@@ -58,15 +58,15 @@ public class SecureStoreTest extends AppFabricTestBase {
   public void testGet() throws Exception {
     SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    HttpResponse response = doPut("/v3/namespaces/default/securekeys/keys/" + KEY,
+    HttpResponse response = doPut("/v3/namespaces/default/securekeys/" + KEY,
                                   GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet("/v3/namespaces/default/securekeys/keys/" + KEY);
+    response = doGet("/v3/namespaces/default/securekeys/" + KEY);
     Assert.assertEquals('"' + DATA + '"', readResponse(response));
 
     // Get again
-    response = doGet("/v3/namespaces/default/securekeys/keys/" + KEY);
+    response = doGet("/v3/namespaces/default/securekeys/" + KEY);
     Assert.assertEquals('"' + DATA + '"', readResponse(response));
 
     response = delete(KEY);
@@ -76,16 +76,16 @@ public class SecureStoreTest extends AppFabricTestBase {
   @Test
   public void testList() throws Exception {
     // Test empty list
-    HttpResponse response = doGet("/v3/namespaces/default/securekeys/keys/");
+    HttpResponse response = doGet("/v3/namespaces/default/securekeys/");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("[]", readResponse(response));
 
     // One element
     SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
                                                                                PROPERTIES);
-    response = doPut("/v3/namespaces/default/securekeys/keys/" + KEY, GSON.toJson(secureKeyCreateRequest));
+    response = doPut("/v3/namespaces/default/securekeys/" + KEY, GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/namespaces/default/securekeys/keys/");
+    response = doGet("/v3/namespaces/default/securekeys/");
     String result = readResponse(response);
     List<SecureKeyListEntry> expected = new ArrayList<>();
     expected.add(new SecureKeyListEntry(KEY, DESCRIPTION));
@@ -96,9 +96,9 @@ public class SecureStoreTest extends AppFabricTestBase {
 
     // Two elements
     secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION2, DATA2, PROPERTIES2);
-    response = doPut("/v3/namespaces/default/securekeys/keys/" + KEY2, GSON.toJson(secureKeyCreateRequest));
+    response = doPut("/v3/namespaces/default/securekeys/" + KEY2, GSON.toJson(secureKeyCreateRequest));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/namespaces/default/securekeys/keys/");
+    response = doGet("/v3/namespaces/default/securekeys/");
     String result2 = readResponse(response);
     list = GSON.fromJson(result2, listType);
     expected.add(new SecureKeyListEntry(KEY2, DESCRIPTION2));
@@ -108,7 +108,7 @@ public class SecureStoreTest extends AppFabricTestBase {
 
     // After deleting an element
     delete(KEY);
-    response = doGet("/v3/namespaces/default/securekeys/keys/");
+    response = doGet("/v3/namespaces/default/securekeys/");
     String result3 = readResponse(response);
     list = GSON.fromJson(result3, listType);
     expected.remove(new SecureKeyListEntry(KEY, DESCRIPTION));
@@ -118,6 +118,6 @@ public class SecureStoreTest extends AppFabricTestBase {
   }
 
   public HttpResponse delete(String key) throws Exception {
-    return doDelete("/v3/namespaces/default/securekeys/keys/" + key);
+    return doDelete("/v3/namespaces/default/securekeys/" + key);
   }
 }
