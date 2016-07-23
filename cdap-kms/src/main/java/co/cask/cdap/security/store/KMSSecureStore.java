@@ -43,7 +43,7 @@ import java.util.Map;
  * the provider is set to kms and Hadoop version is 2.6.0 or higher.
  */
 @SuppressWarnings("unused")
-class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
+public class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
   /** Separator between the namespace name and the key name */
   private static final String NAME_SEPARATOR = ":";
