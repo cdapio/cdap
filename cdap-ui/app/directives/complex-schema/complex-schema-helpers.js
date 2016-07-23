@@ -62,12 +62,19 @@ angular.module(PKG.name+'.commons')
     return {
       displayType: type,
       type: storedType,
-      nullable: nullable
+      nullable: nullable,
+      nested: checkComplexType(type)
     };
   }
 
+  function checkComplexType(displayType) {
+    let complexTypes = ['array', 'enum', 'map', 'record', 'union'];
+    return complexTypes.indexOf(displayType) !== -1 ? true : false;
+  }
+
   return {
-    parseType
+    parseType,
+    checkComplexType
   };
 });
 

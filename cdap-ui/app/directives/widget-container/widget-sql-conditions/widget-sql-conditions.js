@@ -129,7 +129,8 @@ angular.module(PKG.name + '.commons')
       bindToController: true,
       scope: {
         model: '=ngModel',
-        inputSchema: '='
+        inputSchema: '=',
+        disabled: '='
       },
       controller: SqlConditionsController,
       controllerAs: 'SqlConditions'

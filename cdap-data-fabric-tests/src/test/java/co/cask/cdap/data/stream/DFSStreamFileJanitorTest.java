@@ -37,6 +37,8 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.dataset2.InMemoryNamespaceStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
+import co.cask.cdap.data2.security.RemoteUGIProvider;
+import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
@@ -96,6 +98,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
           bind(NamespacedLocationFactory.class).toInstance(nlf);
           bind(NamespaceAdmin.class).toInstance(namespaceAdmin);
           bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+          bind(UGIProvider.class).to(RemoteUGIProvider.class);
         }
       },
       new TransactionMetricsModule(),

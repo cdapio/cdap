@@ -34,6 +34,8 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout
     } else {
       field.type = null;
     }
+
+    field.nested = SchemaHelper.checkComplexType(field.displayType);
   };
 
   function init(strJson) {
@@ -41,13 +43,15 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout
       vm.fields.keys = {
         type: 'string',
         displayType: 'string',
-        nullable: false
+        nullable: false,
+        nested: false
       };
 
       vm.fields.values = {
         type: 'string',
         displayType: 'string',
-        nullable: false
+        nullable: false,
+        nested: false
       };
       vm.formatOutput();
       return;

@@ -76,7 +76,8 @@ public abstract class SparkPipelineDriver<T> {
                           JavaSparkExecutionContext sec) throws Exception {
 
     MacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(), sec.getLogicalStartTime());
+      new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(), sec.getLogicalStartTime(), sec,
+                                sec.getNamespace());
     Map<String, T> stageDataCollections = new HashMap<>();
     for (String stageName : pipelinePhase.getDag().getTopologicalOrder()) {
       StageInfo stageInfo = pipelinePhase.getStage(stageName);

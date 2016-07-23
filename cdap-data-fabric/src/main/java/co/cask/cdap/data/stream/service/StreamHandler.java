@@ -31,6 +31,7 @@ import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.upload.ContentWriterFactory;
 import co.cask.cdap.data.stream.service.upload.LengthBasedContentWriterFactory;
 import co.cask.cdap.data.stream.service.upload.StreamBodyConsumerFactory;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.format.RecordFormats;
@@ -111,6 +112,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
   private final StreamWriterSizeCollector sizeCollector;
+  private final Impersonator impersonator;
 
   @Inject
   public StreamHandler(CConfiguration cConf,
@@ -118,7 +120,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                        StreamFileWriterFactory writerFactory,
                        final MetricsCollectionService metricsCollectionService,
                        StreamWriterSizeCollector sizeCollector,
-                       NamespaceQueryAdmin namespaceQueryAdmin) {
+                       NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.sizeCollector = sizeCollector;
@@ -135,8 +137,9 @@ public final class StreamHandler extends AbstractHttpHandler {
     StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
-                                                   metricsCollectorFactory);
+                                                   metricsCollectorFactory, impersonator);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -461,7 +464,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                                              ImmutableMap.<String, String>builder().put("content.type", contentType));
 
     StreamConfig config = streamAdmin.getConfig(streamId);
-    return new LengthBasedContentWriterFactory(config, streamWriter, headers, batchBufferThreshold);
+    return new LengthBasedContentWriterFactory(config, streamWriter, headers, batchBufferThreshold, impersonator);
   }
 
   /**

@@ -74,7 +74,7 @@ public class DatasetsUtilTest extends DatasetServiceTestBase {
             DatasetProperties.EMPTY);
     testFix(LineageDataset.class.getName(),
             DatasetProperties.builder().add(Table.PROPERTY_TTL, 1000).build());
-    testFix(UsageDataset.class.getName(), DatasetProperties.EMPTY);
+    testFix(UsageDataset.class.getSimpleName(), DatasetProperties.EMPTY);
 
     testFix("table",
             DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "fam").build());

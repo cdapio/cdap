@@ -24,6 +24,7 @@ class TrackerMetadataController {
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
+    this.newTag = '';
     this.$timeout = $timeout;
 
     this.propertyInput = {
@@ -32,7 +33,6 @@ class TrackerMetadataController {
     };
 
     let entitySplit = this.$state.params.entityType.split(':');
-
     this.entityType = entitySplit;
 
     let params = {
@@ -54,7 +54,17 @@ class TrackerMetadataController {
       metadataApi = this.myTrackerApi.properties(params).$promise;
     }
 
-    this.tags = {};
+    this.systemTags = {};
+    this.tags = {
+      preferredTags: [],
+      userTags: [],
+      allPreferredTags: [],
+      allUserTags: [],
+      availableTags: []
+    };
+    this.fetchEntityTags();
+    this.fetchAllTags();
+
     this.schema = [];
     this.properties = {};
     this.activePropertyTab = 0;
@@ -82,9 +92,8 @@ class TrackerMetadataController {
       }
     });
 
-    this.tags = {
-      system: systemMetadata.tags,
-      user: userMetadata.tags
+    this.systemTags = {
+      system: systemMetadata.tags
     };
 
     this.properties = {
@@ -208,6 +217,133 @@ class TrackerMetadataController {
       angular.element(elem)[0].focus();
     });
   }
+
+  fetchEntityTags() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      entityId: this.$state.params.entityId,
+      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+      scope: this.$scope
+    };
+
+    return this.myTrackerApi.getEntityTags(params)
+      .$promise
+      .then((response) => {
+        const getTags = (tagsObj) => {
+           return Object.keys(tagsObj)
+            .map(tag => ({
+              name: tag
+            }));
+        };
+        this.tags.preferredTags = getTags(response.preferredTags);
+        this.tags.userTags = getTags(response.userTags);
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  fetchAllTags() {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    this.myTrackerApi.getTags(params)
+      .$promise
+      .then((response) => {
+        this.response = response;
+        const getPreferredTags = (tagsObj) => {
+           return Object.keys(tagsObj)
+            .map(tag => ({
+              name: tag,
+              count: tagsObj[tag],
+              label: tag + ' (' + tagsObj[tag] + ')',
+              preferredTag: true
+            }));
+        };
+        const getUserTags = (tagsObj) => {
+           return Object.keys(tagsObj)
+            .map(tag => ({
+              name: tag,
+              count: tagsObj[tag],
+              label: tag
+            }));
+        };
+
+        this.tags.allPreferredTags = getPreferredTags(response.preferredTags);
+        this.tags.allUserTags = getUserTags(response.userTags);
+        this.updateAvailableTags();
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  updateAvailableTags() {
+    const getFilteredTags = (allTags, addedTags) => {
+      var addedTagNames = addedTags.map(tag => tag.name);
+      return allTags.filter(tag => addedTagNames.indexOf(tag.name) === -1);
+    };
+    var filteredPrefferedTags = getFilteredTags(this.tags.allPreferredTags, this.tags.preferredTags);
+    var filteredUserTags = getFilteredTags(this.tags.allUserTags, this.tags.userTags);
+    this.tags.availableTags = filteredPrefferedTags.concat(filteredUserTags);
+    return this.tags.availableTags;
+  }
+
+  addTag() {
+    if (!this.newTag) {
+      return;
+    }
+    let addParams = {
+      namespace: this.$state.params.namespace,
+      entityId: this.$state.params.entityId,
+      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+      scope: this.$scope
+    };
+
+    this.myTrackerApi.addEntityTag(addParams, [this.newTag])
+      .$promise
+      .then(() => {
+        this.fetchEntityTags()
+          .then(this.updateAvailableTags.bind(this));
+        this.newTag = '';
+
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  deleteTag(tag) {
+    this.tag = tag;
+    let deleteParams = {
+      namespace: this.$state.params.namespace,
+      tagname: tag,
+      entityId: this.$state.params.entityId,
+      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+      scope: this.$scope
+    };
+
+    this.myTrackerApi.deleteEntityTag(deleteParams)
+      .$promise
+      .then(() => {
+        this.fetchEntityTags();
+      }, (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
+  }
+
+  goToTag(event, tag) {
+    event.stopPropagation();
+    this.$state.go('search.objectswithtags', {tag: tag});
+  }
+
+  escapeInput() {
+    this.model = '';
+    this.inputOpen = false;
+  }
+
 }
 
 TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout'];

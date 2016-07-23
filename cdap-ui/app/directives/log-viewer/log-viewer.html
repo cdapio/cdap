@@ -38,10 +38,10 @@
 
     <div class="log-actions">
       <div class="log-action-container">
-        <button class="log-action-btn">View Raw</button>
-        <button class="log-action-btn">Download All</button>
+        <a  href="{{LogViewer.rawUrl}}" target="_blank"><button class="log-action-btn view-raw">View Raw</button></a>
+        <button class="log-action-btn download-all">Download All</button>
         <div class="search">
-          <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText">
+          <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText" ng-model-options="{ debounce: 500 }" ng-change="LogViewer.filterSearch()">
           <span class="fa fa-search"></span>
         </div>
         <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewer.fullScreen = !LogViewer.fullScreen"></i>
@@ -58,15 +58,11 @@
     run-id="{{LogViewer.runId}}">
   </my-timeline>
 
-  <!-- NO DATA MESSAGE -->
-  <div ng-if="LogViewer.data.length === 0" class="well well-lg">
-    No logs to be displayed.
-  </div>
   <div ng-if="LogViewer.loading" class="text-center well well-lg">
     Loading..
   </div>
   <!-- LOGS TABLE -->
-  <div ng-if="LogViewer.data.length > 0 && !LogViewer.loading" class="logs-table">
+  <div class="logs-table" ng-if="!LogViewer.loading">
     <table class="table table-bordered scroll scroll-table">
       <thead>
         <th class="time time-header log-header"
@@ -109,64 +105,50 @@
         </th>
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
-             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.data.length"
+             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.displayData.length"
              infinite-scroll-container="'.logs-table'"
              >
-        <tr ng-repeat="entry in LogViewer.data | filter:LogViewer.filterByStartDate | filter:searchText | filter:LogViewer.eventFilter | limitTo: LogViewer.viewLimit track by $index">
-          <!-- TIME -->
-          <td class="time"
-              ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
-              {{ entry.log.displayTime }}
+
+        <tr ng-class="{'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace }" ng-repeat="entry in LogViewer.displayData | filter:LogViewer.filterByStartDate | limitTo: LogViewer.viewLimit track by $index" ng-click="LogViewer.showStackTrace($index)">
+
+          <td class="time time-stack-trace" ng-if="!entry.stackTrace && entry.log.stackTrace.length > 0 && LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
+            <span class="indicator-arrow" ng-if="entry.log.stackTrace.length > 0">
+              <i ng-if="($index+1 < LogViewer.displayData.length) && (LogViewer.displayData[$index +1].stackTrace )" class="fa fa-chevron-down"></i>
+              <i ng-if="($index+1 >= LogViewer.displayData.length) || !LogViewer.displayData[$index +1].stackTrace" class="fa fa-chevron-right"></i>
+            </span>
+            <span class="display-time">{{ entry.log.displayTime}}</span>
           </td>
 
-          <!-- LEVEL -->
-          <td class="level"
-              ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-              {{ entry.log.logLevel }}
+          <td class="time" ng-if="!entry.stackTrace && entry.log.stackTrace.length === 0 && LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
+            <span class="display-time">{{ entry.log.displayTime}}</span>
           </td>
 
-          <!-- SOURCE -->
-          <td class="source"
-              ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
-              tooltip="testing"
-              uib-tooltip="{{ ::entry.log.threadName}}:{{::entry.log.lineNumber}}"
+          <td class="level" ng-if="!entry.stackTrace && LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">{{ entry.log.logLevel}}</td>
+
+          <td class="source" ng-if="!entry.stackTrace && LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
+              uib-tooltip="{{entry.log.threadName}}:{{entry.log.className}}#{{entry.log.lineNumber}}"
               tooltip-append-to-body="true"
               tooltip-placement="top"
               tooltip-popup-delay="500"
-              tooltip-class="source-tooltip"
-              >
-              {{ entry.log.threadName }}
+              tooltip-class="source-tooltip">
+              {{entry.log.threadName}}:{{entry.log.className}}#{{entry.log.lineNumber}}
           </td>
-
-          <!-- MESSAGE -->
-          <td class="message"
-              ng-if="LogViewer.configOptions.message"
-              ng-class="{'stack-trace-expanded': entry.isStackTraceExpanded,
-                'stack-trace-available': entry.log.stackTrace.length > 0 }">
-            <div class="message-main"
-                 ng-click="entry.log.stackTrace.length > 0 && (entry.isStackTraceExpanded = !entry.isStackTraceExpanded)">
-              <div class="icon-column"
-                   ng-if="(entry.log.stackTrace.length > 0 && entry.isStackTraceExpanded)"
-                   ng-class="Logviewer.message-class">
-                <span class="fa"
-                      ng-class="{'fa-minus': entry.isStackTraceExpanded}">
-                </span>
-              </div>
-              <span class="message-text"><span ng-bind-html="LogViewer.highlight(entry.log.message)"></span></span>
-            </div>
-
-            <div class="stack-trace"
-                 ng-class="{'expanded': LogViewer.isMessageExpanded}"
-                 ng-if="entry.isStackTraceExpanded">
-              <pre>{{ ::entry.log.stackTrace }}</pre>
-            </div>
-
+          <td class="log-message" ng-if="!entry.stackTrace && LogViewer.configOptions.message && !LogViewer.hiddenColumns.message"
+              uib-tooltip="{{entry.log.message}}"
+              tooltip-append-to-body="true"
+              tooltip-placement="top"
+              tooltip-popup-delay="500"
+              tooltip-class="message-tooltip">
+            <span ng-bind-html="LogViewer.highlight(entry.log.message)"></span>
+          </td>
+          <td class="stack-trace" ng-if="entry.stackTrace" colspan="4">
+            <pre>{{entry.log.stackTrace}}</pre>
           </td>
         </tr>
 
         <tr class="well well-sm">
-          <td ng-if="LogViewer.loadingMoreLogs" colspan="4" class="text-center">Loading logs...</td>
-          <td ng-if="!LogViewer.loadingMoreLogs" colspan="4" class="text-center">No new logs to show</td>
+          <td ng-if="!LogViewer.applicationIsRunning" colspan="4" class="text-center">No more logs to show.</td>
+          <td ng-if="LogViewer.applicationIsRunning" colspan="4" class="text-center"><i class="fa fa-spinner fa-spin"></i></td>
         </tr>
       </tbody>
     </table>

@@ -14,15 +14,9 @@
  * the License.
  */
 
-function HydratorPlusPlusOrderingFactory() {
+function HydratorPlusPlusOrderingFactory(GLOBALS) {
   function getArtifactDisplayName (artifactName) {
-    let artifactMap = {
-      'cdap-etl-batch': 'ETL Batch',
-      'cdap-etl-realtime': 'ETL Realtime',
-      'cdap-data-pipeline': 'Data Pipeline (Beta)'
-    };
-
-    return artifactMap[artifactName];
+    return GLOBALS.artifactConvert[artifactName];
   }
 
   function getPluginTypeDisplayName (pluginType) {

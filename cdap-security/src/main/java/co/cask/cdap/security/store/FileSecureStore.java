@@ -104,8 +104,8 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @throws IOException If it failed to store the key in the store.
    */
   @Override
-  public void put(String namespace, String name, byte[] data, String description, Map<String, String> properties)
-    throws IOException {
+  public void putSecureData(String namespace, String name, byte[] data, String description,
+                            Map<String, String> properties) throws IOException {
     String keyName = getKeyName(namespace, name);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data);
@@ -131,7 +131,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param name Name of the element to be deleted.
    */
   @Override
-  public void delete(String namespace, String name) throws IOException {
+  public void deleteSecureData(String namespace, String name) throws IOException {
     String keyName = getKeyName(namespace, name);
     Key key = null;
     writeLock.lock();
@@ -165,7 +165,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param namespace The namespace this key belongs to.
    */
   @Override
-  public List<SecureStoreMetadata> list(String namespace) throws IOException {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
     readLock.lock();
     try {
       Enumeration<String> aliases = keyStore.aliases();
@@ -192,7 +192,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @return An object representing the securely stored data associated with the name.
    */
   @Override
-  public SecureStoreData get(String namespace, String name) throws IOException {
+  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
     String keyName = getKeyName(namespace, name);
     readLock.lock();
     try {

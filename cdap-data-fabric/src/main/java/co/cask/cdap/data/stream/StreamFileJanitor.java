@@ -21,18 +21,23 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data2.security.ImpersonationUtils;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import com.google.common.annotations.VisibleForTesting;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Performs deletion of unused stream files.
@@ -45,15 +50,17 @@ public final class StreamFileJanitor {
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final String streamBaseDirPath;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final Impersonator impersonator;
 
   @Inject
   public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin,
                            NamespacedLocationFactory namespacedLocationFactory,
-                           NamespaceQueryAdmin namespaceQueryAdmin) {
+                           NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
     this.streamAdmin = streamAdmin;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.impersonator = impersonator;
   }
 
   /**
@@ -61,27 +68,54 @@ public final class StreamFileJanitor {
    */
   public void cleanAll() throws Exception {
     List<NamespaceMeta> namespaces = namespaceQueryAdmin.list();
+    for (final NamespaceMeta namespace : namespaces) {
+      UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(namespace.getName()));
+      final Location streamBaseLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          return namespacedLocationFactory.get(Id.Namespace.from(namespace.getName())).append(streamBaseDirPath);
+        }
+      });
 
-    for (NamespaceMeta namespace : namespaces) {
-      Location streamBaseLocation =
-        namespacedLocationFactory.get(Id.Namespace.from(namespace.getName())).append(streamBaseDirPath);
-      if (!streamBaseLocation.exists()) {
+      boolean exists = ImpersonationUtils.doAs(ugi, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          boolean exists = streamBaseLocation.exists();
+          if (exists) {
+            // Remove everything under the deleted directory
+            Location deletedLocation = StreamUtils.getDeletedLocation(streamBaseLocation);
+            if (deletedLocation.exists()) {
+              Locations.deleteContent(deletedLocation);
+            }
+          }
+          return exists;
+        }
+      });
+
+      if (!exists) {
         continue;
       }
 
-      // Remove everything under the deleted directory
-      Location deletedLocation = StreamUtils.getDeletedLocation(streamBaseLocation);
-      if (deletedLocation.exists()) {
-        Locations.deleteContent(deletedLocation);
-      }
-
-      for (Location streamLocation : StreamUtils.listAllStreams(streamBaseLocation)) {
-        Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
-        long ttl = 0L;
-        if (isStreamExists(streamId)) {
-          ttl = streamAdmin.getConfig(streamId).getTTL();
+      Iterable<Location> streamLocations = ImpersonationUtils.doAs(ugi, new Callable<Iterable<Location>>() {
+        @Override
+        public Iterable<Location> call() throws Exception {
+          return StreamUtils.listAllStreams(streamBaseLocation);
         }
-        clean(streamLocation, ttl, System.currentTimeMillis());
+      });
+
+      for (final Location streamLocation : streamLocations) {
+        ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
+            final AtomicLong ttl = new AtomicLong(0);
+            if (isStreamExists(streamId)) {
+              ttl.set(streamAdmin.getConfig(streamId).getTTL());
+            }
+            clean(streamLocation, ttl.get(), System.currentTimeMillis());
+            return null;
+          }
+        });
       }
     }
   }
@@ -94,7 +128,6 @@ public final class StreamFileJanitor {
    * @param ttl ttl for the cleanup
    * @param currentTime Current timestamp. Used for computing timestamp for expired partitions based on TTL.
    */
-  @VisibleForTesting
   void clean(Location streamLocation, long ttl, long currentTime) throws IOException {
     LOG.debug("Cleanup stream file in {}", streamLocation);
 

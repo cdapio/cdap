@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
@@ -36,6 +37,7 @@ import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -57,6 +59,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -217,6 +220,36 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
     testExternalDatasetTracking(Engine.SPARK, true);
   }
 
+  // todo : move this test to AppLifecycleHTTPHandlerTest, here currently due to availability of app with plugins.
+  @Test
+  public void testGetPlugins() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("daginput")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin("dagoutput1")))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin("dagoutput2")))
+      .addStage(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
+      .addConnection("source", "filter")
+      .addConnection("source", "sink1")
+      .addConnection("filter", "sink2")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+    Set<String> expectedPluginIds = new HashSet<String>();
+    expectedPluginIds.add("source");
+    expectedPluginIds.add("sink1");
+    expectedPluginIds.add("sink2");
+    expectedPluginIds.add("filter");
+
+    Assert.assertEquals(expectedPluginIds.size(), appManager.getPlugins().size());
+    for (PluginInstanceDetail pluginInstanceDetail : appManager.getPlugins()) {
+      Assert.assertTrue(expectedPluginIds.contains(pluginInstanceDetail.getId()));
+      expectedPluginIds.remove(pluginInstanceDetail.getId());
+    }
+    Assert.assertTrue(expectedPluginIds.isEmpty());
+  }
+
   private void testExternalDatasetTracking(Engine engine, boolean backwardsCompatible) throws Exception {
     String suffix = engine.name() + (backwardsCompatible ? "-bc" : "");
 
@@ -268,9 +301,16 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
     // Create input files
     MockExternalSource.writeInput(new File(inputDir, inputFile).getAbsolutePath(), allInput);
 
-    WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    final WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    // make sure the completed run record is stamped, before asserting it.
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workflowManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.MINUTES);
     List<RunRecord> history = workflowManager.getHistory();
     // there should be only one completed run
     Assert.assertEquals(1, history.size());

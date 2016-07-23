@@ -25,6 +25,8 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
@@ -68,6 +70,7 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
+import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -171,6 +174,8 @@ public class TestBase {
   private static TestManager testManager;
   private static NamespaceAdmin namespaceAdmin;
   private static AuthorizerInstantiator authorizerInstantiator;
+  private static SecureStore secureStore;
+  private static SecureStoreManager secureStoreManager;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -285,6 +290,8 @@ public class TestBase {
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
+    secureStore = injector.getInstance(SecureStore.class);
+    secureStoreManager = injector.getInstance(SecureStoreManager.class);
   }
 
   private static TestManager getTestManager() {
@@ -903,6 +910,20 @@ public class TestBase {
    */
   protected static NamespaceAdmin getNamespaceAdmin() {
     return namespaceAdmin;
+  }
+
+  /**
+   * Returns a {@link SecureStore} to interact with secure storage.
+   */
+  protected static SecureStore getSecureStore() {
+    return secureStore;
+  }
+
+  /**
+   * Returns a {@link SecureStoreManager} to interact with secure storage.
+   */
+  protected static SecureStoreManager getSecureStoreManager() {
+    return secureStoreManager;
   }
 
   /**

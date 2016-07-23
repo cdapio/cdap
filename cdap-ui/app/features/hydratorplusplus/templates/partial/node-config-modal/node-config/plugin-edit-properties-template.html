@@ -56,6 +56,7 @@
                      ng-class="{'select-wrapper': field.widget === 'select'}"
                      data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
                      data-myconfig="field"
+                     disabled="isDisabled"
                      data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
                      widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
                      input-schema="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema"

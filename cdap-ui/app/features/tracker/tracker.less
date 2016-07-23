@@ -499,9 +499,21 @@ body.state-tracker {
     color: white;
     font-size: 12px;
     padding: 5px 10px;
-    &.preferred { background-color: @preferred-tag-bg; }
-    &.user { background-color: @tag-bg; }
     &:focus { outline: 0; }
+    &.preferred {
+      background-color: @preferred-tag-bg;
+      span.fa-times { -webkit-text-stroke: 1px @preferred-tag-bg; }
+    }
+    &.user {
+      background-color: @tag-bg;
+      span.fa-times { -webkit-text-stroke: 1px @tag-bg; }
+    }
+    span.fa-times {
+      color: @well-bg;
+      font-size: 11px;
+      position: relative;
+      bottom: -2px;
+    }
   }
 }
 
@@ -635,9 +647,20 @@ body.state-tracker-detail-entity {
     background-color: @filter-sidebar-background-color;
     h4 { margin-top: 0; }
 
-    .user-tags .tags-container div {
-      background-color: @active-font;
-      color: white;
+    .invalid-tag {
+      border: 1px solid @brand-danger;
+    }
+
+    .preferred-tags .tags-container,
+    .user-tags .tags-container {
+      span:not(.fa) {
+        display: inline-block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 90%;
+        vertical-align: middle;
+      }
     }
 
     .system-tags .tags-container div {
@@ -645,23 +668,52 @@ body.state-tracker-detail-entity {
       color: @title-font-color;
     }
 
-    .tags-container {
+    div.tags-container {
       margin-bottom: 40px;
-
-      div {
+      div.tag {
+        border-radius: 4px;
         display: inline-block;
+        line-height: 1.3;
+        margin-right: 5px;
+        margin-bottom: 5px;
         max-width: 48%;
         padding: 6px 8px;
-        border-radius: 4px;
-        margin-right: 3px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        span:hover,
+        span:focus { cursor: pointer; }
       }
+    }
 
-      span {
-        font-size: 12px;
-        font-weight: 500;
+    div.add-tag {
+      display: inline-block;
+      line-height: 1.3;
+      vertical-align: initial;
+      a.btn {
+        .cask-btn(@background: #ffffff, @border: 1px solid @border-color, @border-radius: 4px, @color: @cdap-header, @font-size: 11px, @padding: 5px 8px);
+        transition: all 0.2s ease-in-out;
+        &:hover,
+        &:focus {
+          background-color: @tracker-green;
+          color: #ffffff;
+          outline: 0;
+        }
+      }
+    }
+
+    .tag-input {
+      width: 150px;
+      display: inline-block;
+      vertical-align: top;
+
+      .form-control {
+        background-color: transparent;
+        height: 27px;
+        border-radius: 4px;
+        line-height: 1.3;
+        margin-bottom: 5px;
+        &:focus {
+          border-color: @border-color;
+          box-shadow: none;
+        }
       }
     }
   }
@@ -703,7 +755,12 @@ body.state-tracker-detail-entity {
         padding-left: 10px;
       }
     }
-
+    .column-content {
+      h4 {
+        font-weight: 500;
+        font-size: 13px;
+      }
+    }
     .table {
       td:last-child { width: 15%; }
       td:first-child { width: 45%; }

@@ -15,7 +15,8 @@
 -->
 
 <div>
-  <div ng-if="['enum', 'array', 'map', 'union', 'record'].indexOf(Embedded.displayType) !== -1">
+  <div ng-if="Embedded.checkComplexType(Embedded.displayType)"
+      class="tab-toggle">
     <span class="fa fa-caret-down"
           ng-if="Embedded.expanded"
           ng-click="Embedded.expanded = false"></span>

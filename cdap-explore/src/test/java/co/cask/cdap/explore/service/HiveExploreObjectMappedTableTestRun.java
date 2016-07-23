@@ -90,6 +90,10 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
 
   @Test
   public void testSchema() throws Exception {
+    testSchema("row_key");
+  }
+
+  private void testSchema(String rowKey) throws Exception {
     runCommand(NAMESPACE_ID, "describe " + MY_TABLE_NAME,
                true,
                Lists.newArrayList(
@@ -98,7 +102,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("row_key", "string", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList(rowKey, "string", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("bytearrayfield", "binary", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("doublefield", "double", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("floatfield", "float", "from deserializer")),
@@ -107,6 +111,24 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
                  new QueryResult(Lists.<Object>newArrayList("stringfield", "string", "from deserializer"))
                )
     );
+  }
+
+  @Test
+  public void testUpdate() throws Exception {
+    datasetFramework.updateInstance(MY_TABLE, ObjectMappedTableProperties.builder()
+      .setType(Record.class)
+      .setRowKeyExploreName("new_key")
+      .setRowKeyExploreType(Schema.Type.STRING)
+      .build());
+    testSchema("new_key");
+
+    // update back to previous schema as other tests depend on it
+    datasetFramework.updateInstance(MY_TABLE, ObjectMappedTableProperties.builder()
+      .setType(Record.class)
+      .setRowKeyExploreName("row_key")
+      .setRowKeyExploreType(Schema.Type.STRING)
+      .build());
+    testSchema();
   }
 
   @Test

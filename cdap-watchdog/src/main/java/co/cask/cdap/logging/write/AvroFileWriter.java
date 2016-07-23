@@ -16,9 +16,9 @@
 
 package co.cask.cdap.logging.write;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -47,8 +47,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(AvroFileWriter.class);
 
   private final FileMetaDataManager fileMetaDataManager;
-  private final CConfiguration cConf;
-  private final Location rootDir;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final String logBaseDir;
   private final Schema schema;
   private final int syncIntervalBytes;
@@ -61,20 +60,18 @@ public final class AvroFileWriter implements Closeable, Flushable {
   /**
    * Constructs an AvroFileWriter object.
    * @param fileMetaDataManager used to store file meta data.
-   * @param cConf the CDAP configuration
-   * @param rootDir the CDAP root dir on the filesystem
+   * @param namespacedLocationFactory the namespaced location factory
    * @param logBaseDir the basedirectory for logs as defined in configuration
    * @param schema schema of the Avro data to be written.
    * @param maxFileSize Avro files greater than maxFileSize will get rotated.
    * @param syncIntervalBytes the approximate number of uncompressed bytes to write in each block.
    * @param inactiveIntervalMs files that have no data written for more than inactiveIntervalMs will be closed.
    */
-  public AvroFileWriter(FileMetaDataManager fileMetaDataManager, CConfiguration cConf, Location rootDir,
+  public AvroFileWriter(FileMetaDataManager fileMetaDataManager, NamespacedLocationFactory namespacedLocationFactory,
                         String logBaseDir, Schema schema, long maxFileSize, int syncIntervalBytes,
                         long inactiveIntervalMs) {
     this.fileMetaDataManager = fileMetaDataManager;
-    this.cConf = cConf;
-    this.rootDir = rootDir;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = logBaseDir;
     this.schema = schema;
     this.syncIntervalBytes = syncIntervalBytes;
@@ -170,7 +167,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws IOException {
     long currentTs = System.currentTimeMillis();
-    Location location = createLocation(loggingContext.getLogPathFragment(logBaseDir), currentTs);
+    Location location = createLocation(loggingContext, currentTs);
     LOG.info("Creating Avro file {}", location);
     AvroFile avroFile = new AvroFile(location);
     try {
@@ -189,11 +186,17 @@ public final class AvroFileWriter implements Closeable, Flushable {
     return avroFile;
   }
 
-  private Location createLocation(String pathFragment, long timestamp) throws IOException {
+  private Location createLocation(LoggingContext loggingContext, long timestamp)
+    throws IOException {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     String fileName = String.format("%s.avro", timestamp);
-    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
-    return rootDir.append(namespacesDir).append(pathFragment).append(date).append(fileName);
+    Location namespaceLocation = LoggingContextHelper.getNamesapcedDir(namespacedLocationFactory,
+                                                                       loggingContext);
+    // drop the namespaceid from path fragment since the namespaceLocation already points to the directory inside the
+    // namespace
+    String pathFragment = loggingContext.getLogPathFragment(logBaseDir)
+      .split(LoggingContextHelper.getNamespaceId(loggingContext).getNamespace())[1];
+    return namespaceLocation.append(pathFragment).append(date).append(fileName);
   }
 
   private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {

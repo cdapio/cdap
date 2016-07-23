@@ -36,6 +36,7 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -51,6 +52,7 @@ import org.junit.rules.TemporaryFolder;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -69,6 +71,8 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
   private static final Schema SCHEMA = Schema.recordOf("kv",
                                                        Schema.Field.of("key", Schema.of(Schema.Type.STRING)),
                                                        Schema.Field.of("value", Schema.of(Schema.Type.STRING)));
+  private static final Schema K_SCHEMA = Schema.recordOf("k",
+                                                         Schema.Field.of("key", Schema.of(Schema.Type.STRING)));
   private static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT,
                                                                                Locale.US);
 
@@ -327,9 +331,9 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     PartitionedFileSetProperties.Builder builder = (PartitionedFileSetProperties.Builder)
       PartitionedFileSetProperties.builder()
         .setPartitioning(Partitioning.builder().addIntField("number").build())
-          // properties for file set
+        // properties for file set
         .setBasePath(name)
-          // properties for partitioned hive table
+        // properties for partitioned hive table
         .setEnableExploreOnCreate(true)
         .setExploreSchema("key STRING, value INT")
         .setExploreFormat(format);
@@ -379,6 +383,225 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     runCommand(NAMESPACE_ID, "show tables", false,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Collections.<QueryResult>emptyList());
+  }
+
+  @Test
+  public void testPartitionedAvroSchemaUpdate() throws Exception {
+    final Id.DatasetInstance datasetId = Id.DatasetInstance.from(NAMESPACE_ID, "avroupd");
+    final String tableName = getDatasetHiveName(datasetId);
+
+    // create a time partitioned file set
+    datasetFramework.addInstance(PartitionedFileSet.class.getName(), datasetId, PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addIntField("number").build())
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+      .setTableProperty("avro.schema.literal", SCHEMA.toString())
+      .build());
+
+    // Accessing dataset instance to perform data operations
+    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS, null);
+    Assert.assertNotNull(partitioned);
+    FileSet fileSet = partitioned.getEmbeddedFileSet();
+
+    // add a partition
+    Location location4 = fileSet.getLocation("file4/nn");
+    FileWriterHelper.generateAvroFile(location4.getOutputStream(), "x", 4, 5);
+    addPartition(partitioned, PartitionKey.builder().addIntField("number", 4).build(), "file4");
+
+    // new partition should have new format, validate with query
+    List<ColumnDesc> expectedColumns = Lists.newArrayList(
+      new ColumnDesc(tableName + ".key", "STRING", 1, null),
+      new ColumnDesc(tableName + ".value", "STRING", 2, null),
+      new ColumnDesc(tableName + ".number", "INT", 3, null));
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE number=4", true,
+               expectedColumns,
+               Lists.newArrayList(
+                 // avro file has key=x4, value=#4
+                 new QueryResult(Lists.<Object>newArrayList("x4", "#4", 4))));
+
+    // create a time partitioned file set
+    datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addIntField("number").build())
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+      .setTableProperty("avro.schema.literal", K_SCHEMA.toString())
+      .build());
+    expectedColumns = Lists.newArrayList(
+      new ColumnDesc(tableName + ".key", "STRING", 1, null),
+      new ColumnDesc(tableName + ".number", "INT", 2, null));
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE number=4", true,
+               expectedColumns,
+               Lists.newArrayList(
+                 // avro file has key=x4, value=#4
+                 new QueryResult(Lists.<Object>newArrayList("x4", 4))));
+  }
+
+  @Test
+  public void testPartitionedTextSchemaUpdate() throws Exception {
+    final Id.DatasetInstance datasetId = Id.DatasetInstance.from(NAMESPACE_ID, "txtschemaupd");
+    final String tableName = getDatasetHiveName(datasetId);
+
+    // create a time partitioned file set
+    datasetFramework.addInstance(PartitionedFileSet.class.getName(), datasetId, PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addIntField("number").build())
+      .setEnableExploreOnCreate(true)
+      .setExploreSchema("key STRING, value STRING")
+      .setExploreFormat("csv")
+      .build());
+
+    // verify that the hive table was created for this file set
+    runCommand(NAMESPACE_ID, "show tables", true,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+
+    // Accessing dataset instance to perform data operations
+    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS, null);
+    Assert.assertNotNull(partitioned);
+    FileSet fileSet = partitioned.getEmbeddedFileSet();
+
+    // add a partitions. Beware that Hive expects a partition to be a directory, so we create a dir with one file
+    Location location1 = fileSet.getLocation("file1/nn");
+    FileWriterHelper.generateMultiDelimitersFile(location1.getOutputStream(), ImmutableList.of(",", "\1", ":"), 1, 2);
+    addPartition(partitioned, PartitionKey.builder().addIntField("number", 1).build(), "file1");
+
+    // verify that the partitions were added to Hive
+    runCommand(NAMESPACE_ID, "show partitions " + tableName, true,
+               Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("number=1"))));
+
+    // verify that we can query the key-values in the file with Hive.
+    List<ColumnDesc> expectedColumns = Lists.newArrayList(
+      new ColumnDesc(tableName + ".key", "STRING", 1, null),
+      new ColumnDesc(tableName + ".value", "STRING", 2, null),
+      new ColumnDesc(tableName + ".number", "INT", 3, null));
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE number=1", true,
+               expectedColumns,
+               Lists.newArrayList(
+                 // text line has the form 1,x\1x:1, format is csv -> key=1 value=x\1x:1
+                 new QueryResult(Lists.<Object>newArrayList("1", "x\1x:1", 1))));
+
+    // update the dataset properties with a different delimiter
+    datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addIntField("number").build())
+      .setEnableExploreOnCreate(true)
+      .setExploreSchema("str STRING")
+      .setExploreFormat("csv")
+      .build());
+    // new partition should have new schema, validate with query
+    expectedColumns = Lists.newArrayList(
+      new ColumnDesc(tableName + ".str", "STRING", 1, null),
+      new ColumnDesc(tableName + ".number", "INT", 2, null));
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE number=1", true,
+               expectedColumns,
+               Lists.newArrayList(
+                 // text line has the form 1,x\1x:1, format is csv -> key=1 value=x\1x:1
+                 new QueryResult(Lists.<Object>newArrayList("1", 1))));
+  }
+
+  @Test
+    public void testPartitionedTextFileUpdate() throws Exception {
+    final Id.DatasetInstance datasetId = Id.DatasetInstance.from(NAMESPACE_ID, "txtupd");
+    final String tableName = getDatasetHiveName(datasetId);
+
+    // create a time partitioned file set
+    datasetFramework.addInstance(PartitionedFileSet.class.getName(), datasetId, PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addIntField("number").build())
+      .setEnableExploreOnCreate(true)
+      .setExploreSchema("key STRING, value STRING")
+      .setExploreFormat("csv")
+      .build());
+
+    // verify that the hive table was created for this file set
+    runCommand(NAMESPACE_ID, "show tables", true,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+
+    // Accessing dataset instance to perform data operations
+    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS, null);
+    Assert.assertNotNull(partitioned);
+    FileSet fileSet = partitioned.getEmbeddedFileSet();
+
+    // add a partitions. Beware that Hive expects a partition to be a directory, so we create a dir with one file
+    Location location1 = fileSet.getLocation("file1/nn");
+    FileWriterHelper.generateMultiDelimitersFile(location1.getOutputStream(), ImmutableList.of(",", "\1", ":"), 1, 2);
+    addPartition(partitioned, PartitionKey.builder().addIntField("number", 1).build(), "file1");
+
+    // verify that the partitions were added to Hive
+    runCommand(NAMESPACE_ID, "show partitions " + tableName, true,
+               Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("number=1"))));
+
+    // verify that we can query the key-values in the file with Hive.
+    List<ColumnDesc> expectedColumns = Lists.newArrayList(
+      new ColumnDesc(tableName + ".key", "STRING", 1, null),
+      new ColumnDesc(tableName + ".value", "STRING", 2, null),
+      new ColumnDesc(tableName + ".number", "INT", 3, null));
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE number=1", true,
+               expectedColumns,
+               Lists.newArrayList(
+                 // text line has the form 1,x\1x:1, format is csv -> key=1 value=x\1x:1
+                 new QueryResult(Lists.<Object>newArrayList("1", "x\1x:1", 1))));
+
+    // update the dataset properties with a different delimiter
+    datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addIntField("number").build())
+      .setEnableExploreOnCreate(true)
+      .setExploreSchema("key STRING, value STRING")
+      .setExploreFormat("text")
+      .build());
+    // add another partition
+    Location location2 = fileSet.getLocation("file2/nn");
+    FileWriterHelper.generateMultiDelimitersFile(location2.getOutputStream(), ImmutableList.of(",", "\1", ":"), 2, 3);
+    addPartition(partitioned, PartitionKey.builder().addIntField("number", 2).build(), "file2");
+    // new partition should have new format, validate with query
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE number=2", true,
+               expectedColumns,
+               Lists.newArrayList(
+                 // text line has the form 2,x\1x:2, format is text -> key=2,x value=x:2
+                 new QueryResult(Lists.<Object>newArrayList("2,x", "x:2", 2))));
+
+    // update the dataset properties with a different delimiter
+    datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addIntField("number").build())
+      .setEnableExploreOnCreate(true)
+      .setExploreSchema("key STRING, value STRING")
+      .setExploreFormat("text")
+      .setExploreFormatProperty("delimiter", ":")
+      .build());
+    // add another partition
+    Location location3 = fileSet.getLocation("file3/nn");
+    FileWriterHelper.generateMultiDelimitersFile(location3.getOutputStream(), ImmutableList.of(",", "\1", ":"), 3, 4);
+    addPartition(partitioned, PartitionKey.builder().addIntField("number", 3).build(), "file3");
+    // new partition should have new format, validate with query
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE number=3", true,
+               expectedColumns,
+               Lists.newArrayList(
+                 // text line has the form 2,x\1x:2, format is text -> key=3,x\1x value=3
+                 new QueryResult(Lists.<Object>newArrayList("3,x\1x", "3", 3))));
+
+    // update the dataset properties with a different format (avro)
+    datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addIntField("number").build())
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+      .setTableProperty("avro.schema.literal", SCHEMA.toString())
+      .build());
+    // add another partition
+    Location location4 = fileSet.getLocation("file4/nn");
+    FileWriterHelper.generateAvroFile(location4.getOutputStream(), "x", 4, 5);
+    addPartition(partitioned, PartitionKey.builder().addIntField("number", 4).build(), "file4");
+    // new partition should have new format, validate with query
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE number=4", true,
+               expectedColumns,
+               Lists.newArrayList(
+                 // avro file has key=x4, value=#4
+                 new QueryResult(Lists.<Object>newArrayList("x4", "#4", 4))));
   }
 
   @Test

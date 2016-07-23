@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.common.Bytes;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
@@ -70,6 +71,23 @@ public class FileWriterHelper {
     try {
       for (int i = start; i < end; i++) {
         String line = String.format("%s%d%s%d\n", prefix, i, delim, i);
+        out.write(Bytes.toBytes(line));
+      }
+    } finally {
+      Closeables.closeQuietly(out);
+    }
+  }
+
+  /**
+   * Generate a text file where each line has the form i(delim0)x(delim1)x...x(delimK)i
+   * for start <= i < end, using the given delimiters. The file is written using the passed-in output stream.
+   */
+  public static void generateMultiDelimitersFile(OutputStream out, Iterable<String> delims, int start, int end)
+    throws IOException {
+    String delim = Joiner.on("x").join(delims);
+    try {
+      for (int i = start; i < end; i++) {
+        String line = String.format("%d%s%d\n", i, delim, i);
         out.write(Bytes.toBytes(line));
       }
     } finally {

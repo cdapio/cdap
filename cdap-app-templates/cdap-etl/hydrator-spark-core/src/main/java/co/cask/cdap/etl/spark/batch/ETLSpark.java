@@ -103,7 +103,8 @@ public class ETLSpark extends AbstractSpark {
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
     MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
-                                                         context.getLogicalStartTime());
+                                                         context.getLogicalStartTime(), context,
+                                                         context.getNamespace());
     SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     Map<String, Integer> stagePartitions = new HashMap<>();

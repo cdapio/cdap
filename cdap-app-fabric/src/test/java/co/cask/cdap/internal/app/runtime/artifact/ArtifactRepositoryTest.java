@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.macro.MacroFunction;
+import co.cask.cdap.api.macro.Macros;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -82,6 +84,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -181,7 +184,8 @@ public class ArtifactRepositoryTest {
   public void testAddSystemArtifacts() throws Exception {
     Id.Artifact systemAppArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "PluginTest", "1.0.0");
     File systemAppJar = createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
-      createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
+                                     createManifest(ManifestFields.EXPORT_PACKAGE,
+                                                    PluginTestRunnable.class.getPackage().getName()));
 
     // write plugins jar
     Id.Artifact pluginArtifactId1 = Id.Artifact.from(Id.Namespace.SYSTEM, "APlugin", "1.0.0");
@@ -279,7 +283,7 @@ public class ArtifactRepositoryTest {
   public void testExportPackage() {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE,
-      "co.cask.plugin;use:=\"\\\"test,test2\\\"\";version=\"1.0\",co.cask.plugin2");
+                                     "co.cask.plugin;use:=\"\\\"test,test2\\\"\";version=\"1.0\",co.cask.plugin2");
 
     Set<String> packages = ManifestFields.getExportPackages(manifest);
     Assert.assertEquals(ImmutableSet.of("co.cask.plugin", "co.cask.plugin2"), packages);
@@ -312,6 +316,23 @@ public class ArtifactRepositoryTest {
         }
       }
     }
+  }
+
+  @Test
+  public void testPluginProperties() throws Exception {
+    PluginProperties pluginProperties = PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
+      .add("timeout", "10")
+      .add("name", "${macro}")
+      .build();
+    Assert.assertTrue(pluginProperties.getMacros().getLookups().isEmpty());
+    Set<String> lookups = new HashSet<>();
+    lookups.add("macro");
+
+    PluginProperties updatedPluginProperties = pluginProperties.setMacros(new Macros(lookups,
+                                                                                     new HashSet<MacroFunction>()));
+    Assert.assertTrue(pluginProperties.getMacros().getLookups().isEmpty());
+    Assert.assertEquals(lookups, updatedPluginProperties.getMacros().getLookups());
+    Assert.assertTrue(updatedPluginProperties.getMacros().getMacroFunctions().isEmpty());
   }
 
   @Test
@@ -398,7 +419,7 @@ public class ArtifactRepositoryTest {
     // Build up the plugin repository.
     Set<ArtifactRange> parents = ImmutableSet.of(
       new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
-      new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+                        new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     artifactRepository.addArtifact(artifact1Id, jarFile, parents);
 
     // Should get the only version.
@@ -433,11 +454,11 @@ public class ArtifactRepositoryTest {
       // Use a custom plugin selector to select with smallest version
       plugin = artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
                                              "plugin", "TestPlugin2", new PluginSelector() {
-        @Override
-        public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
-          return plugins.entrySet().iterator().next();
-        }
-      });
+          @Override
+          public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
+            return plugins.entrySet().iterator().next();
+          }
+        });
       Assert.assertNotNull(plugin);
       Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
       Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
@@ -528,7 +549,8 @@ public class ArtifactRepositoryTest {
     // create system app artifact
     Id.Artifact systemAppArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "PluginTest", "1.0.0");
     File jar = createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
-                 createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
+                            createManifest(ManifestFields.EXPORT_PACKAGE,
+                                           PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addSystemArtifacts();
     Assert.assertTrue(jar.delete());
 
@@ -629,7 +651,7 @@ public class ArtifactRepositoryTest {
 
   private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
-      cls, manifest);
+                                                              cls, manifest);
     DirUtils.mkdirs(destFile.getParentFile());
     Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
     return destFile;
@@ -637,7 +659,7 @@ public class ArtifactRepositoryTest {
 
   private static File createPluginJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = PluginJarHelper.createPluginJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
-      manifest, cls);
+                                                             manifest, cls);
     DirUtils.mkdirs(destFile.getParentFile());
     Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
     return destFile;

@@ -16,11 +16,14 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.common.macro.LogicalStartTimeMacro;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -32,12 +35,14 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
   private final Map<String, String> resolvedArguments;
   private final long logicalStartTime;
   private final LogicalStartTimeMacro logicalStartTimeMacro;
+  private final SecureStore secureStore;
+  private final String namespace;
 
   private static final String LOGICAL_START_TIME_FUNCTION_NAME = "logicalStartTime";
   private static final String SECURE_FUNCTION_NAME = "secure";
 
   public DefaultMacroEvaluator(@Nullable WorkflowToken workflowToken, Map<String, String> runtimeArguments,
-                               long logicalStartTime) {
+                               long logicalStartTime, SecureStore secureStore, String namespace) {
     Map<String, String> resolvedArguments = new HashMap<>();
     resolvedArguments.putAll(runtimeArguments);
     // not expected, but can happen if user runs just the program and not the workflow
@@ -49,12 +54,17 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
     this.resolvedArguments = resolvedArguments;
     this.logicalStartTime = logicalStartTime;
     this.logicalStartTimeMacro = new LogicalStartTimeMacro();
+    this.secureStore = secureStore;
+    this.namespace = namespace;
   }
 
-  public DefaultMacroEvaluator(Map<String, String> arguments, long logicalStartTime) {
+  public DefaultMacroEvaluator(Map<String, String> arguments, long logicalStartTime, SecureStore secureStore,
+                               String namespace) {
     this.resolvedArguments = arguments;
     this.logicalStartTime = logicalStartTime;
     this.logicalStartTimeMacro = new LogicalStartTimeMacro();
+    this.secureStore = secureStore;
+    this.namespace = namespace;
   }
 
   @Override
@@ -73,9 +83,15 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
     if (macroFunction.equals(LOGICAL_START_TIME_FUNCTION_NAME)) {
       return logicalStartTimeMacro.evaluate(logicalStartTime, arguments);
     } else if (macroFunction.equals(SECURE_FUNCTION_NAME)) {
-      // todo lookup secure store, when available
-      return "";
+      if (arguments.length != 1) {
+        throw new InvalidMacroException("Secure store macro function only supports 1 argument.");
+      }
+      try {
+        return Bytes.toString(secureStore.getSecureData(namespace, arguments[0]).get());
+      } catch (IOException e) {
+        throw new InvalidMacroException("Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
+      }
     }
-    throw new InvalidMacroException(String.format("Unsupport macro function %s", macroFunction));
+    throw new InvalidMacroException(String.format("Unsupported macro function %s", macroFunction));
   }
 }

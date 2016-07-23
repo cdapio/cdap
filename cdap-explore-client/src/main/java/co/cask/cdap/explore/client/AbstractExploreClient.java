@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.client;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
@@ -94,11 +95,40 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
+  public ListenableFuture<Void> updateExploreDataset(final Id.DatasetInstance datasetInstance,
+                                                     final DatasetSpecification oldSpec,
+                                                     final DatasetSpecification newSpec) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doUpdateExploreDataset(datasetInstance, oldSpec, newSpec);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
   public ListenableFuture<Void> enableExploreDataset(final Id.DatasetInstance datasetInstance) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreDataset(datasetInstance);
+        return doEnableExploreDataset(datasetInstance, null);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> enableExploreDataset(final Id.DatasetInstance datasetInstance,
+                                                     final DatasetSpecification spec) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doEnableExploreDataset(datasetInstance, spec);
       }
     });
 

@@ -25,7 +25,9 @@ import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 /**
  * Given an artifact, creates a {@link CloseableClassLoader} from it. Takes care of unpacking the artifact and
@@ -108,19 +111,30 @@ final class ArtifactClassLoaderFactory {
    * @throws IOException if there was an error copying or unpacking the artifact
    * @see #createClassLoader(File)
    */
-  CloseableClassLoader createClassLoader(Location artifactLocation) throws IOException {
-    final File unpackDir = BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
-    final CloseableClassLoader classLoader = createClassLoader(unpackDir);
-    return new CloseableClassLoader(classLoader, new Closeable() {
-      @Override
-      public void close() throws IOException {
-        try {
-          Closeables.closeQuietly(classLoader);
-          DirUtils.deleteDirectoryContents(unpackDir);
-        } catch (IOException e) {
-          LOG.warn("Failed to delete directory {}", unpackDir, e);
+  CloseableClassLoader createClassLoader(final Location artifactLocation,
+                                         NamespacedImpersonator namespacedImpersonator) throws IOException {
+    try {
+      final File unpackDir = namespacedImpersonator.impersonate(new Callable<File>() {
+        @Override
+        public File call() throws IOException {
+          return BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
         }
-      }
-    });
+      });
+
+      final CloseableClassLoader classLoader = createClassLoader(unpackDir);
+      return new CloseableClassLoader(classLoader, new Closeable() {
+        @Override
+        public void close() throws IOException {
+          try {
+            Closeables.closeQuietly(classLoader);
+            DirUtils.deleteDirectoryContents(unpackDir);
+          } catch (IOException e) {
+            LOG.warn("Failed to delete directory {}", unpackDir, e);
+          }
+        }
+      });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }
