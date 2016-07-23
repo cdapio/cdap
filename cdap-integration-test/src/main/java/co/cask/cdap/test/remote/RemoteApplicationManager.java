@@ -22,6 +22,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -95,6 +96,15 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public WorkerManager getWorkerManager(String workerName) {
     Id.Worker programId = Id.Worker.from(application, workerName);
     return new RemoteWorkerManager(programId, clientConfig, restClient, this);
+  }
+
+  @Override
+  public List<PluginInstanceDetail> getPlugins() {
+    try {
+      return applicationClient.getPlugins(application.toEntityId());
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

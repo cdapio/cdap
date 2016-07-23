@@ -19,11 +19,13 @@ package co.cask.cdap.proto;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents an application returned for /apps/{app-id}.
@@ -36,6 +38,7 @@ public class ApplicationDetail {
   private final List<StreamDetail> streams;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
+  private final List<PluginDetail> plugins;
   private final ArtifactSummary artifact;
 
   public ApplicationDetail(String name,
@@ -44,6 +47,7 @@ public class ApplicationDetail {
                            List<StreamDetail> streams,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
+                           List<PluginDetail> plugins,
                            ArtifactSummary artifact) {
     this.name = name;
     this.version = artifact.getVersion();
@@ -52,6 +56,7 @@ public class ApplicationDetail {
     this.streams = streams;
     this.datasets = datasets;
     this.programs = programs;
+    this.plugins = plugins;
     this.artifact = artifact;
   }
 
@@ -130,12 +135,18 @@ public class ApplicationDetail {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }
 
+    List<PluginDetail> plugins = new ArrayList<>();
+    for (Map.Entry<String, Plugin> pluginEnty : spec.getPlugins().entrySet()) {
+      plugins.add(new PluginDetail(pluginEnty.getKey(),
+                                   pluginEnty.getValue().getPluginClass().getName(),
+                                   pluginEnty.getValue().getPluginClass().getType()));
+    }
     // this is only required if there are old apps lying around that failed to get upgrading during
     // the upgrade to v3.2 for some reason. In those cases artifact id will be null until they re-deploy the app.
     // in the meantime, we don't want this api call to null pointer exception.
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
     return new ApplicationDetail(spec.getName(), spec.getDescription(), spec.getConfiguration(),
-                                 streams, datasets, programs, summary);
+                                 streams, datasets, programs, plugins, summary);
   }
 }

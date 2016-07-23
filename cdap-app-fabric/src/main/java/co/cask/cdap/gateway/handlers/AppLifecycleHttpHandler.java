@@ -198,6 +198,20 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Returns the plugins in the application.
+   */
+  @GET
+  @Path("/apps/{app-id}/plugins")
+  public void getPluginsInfo(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("app-id") final String appId)
+    throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException {
+
+    Id.Application applicationId = validateApplicationId(namespaceId, appId);
+    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getPlugins(applicationId.toEntityId()));
+  }
+
+  /**
    * Delete an application specified by appId.
    */
   @DELETE

@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -102,6 +103,15 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public WorkerManager getWorkerManager(String workerName) {
     Id.Program programId = Id.Program.from(application, ProgramType.WORKER, workerName);
     return new DefaultWorkerManager(programId, appFabricClient, this);
+  }
+
+  @Override
+  public List<PluginInstanceDetail> getPlugins() {
+    try {
+      return appFabricClient.getPlugins(application.toEntityId());
+    } catch (Exception e) {
+     throw Throwables.propagate(e);
+    }
   }
 
   @Override

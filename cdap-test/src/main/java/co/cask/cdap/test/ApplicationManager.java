@@ -18,6 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -72,6 +73,12 @@ public interface ApplicationManager {
    * @return A {@link WorkerManager} for controlling the worker
    */
   WorkerManager getWorkerManager(String workerName);
+
+  /**
+   * Returns the list of plugins used in the application.
+   * @return list of plugins
+   */
+  List<PluginInstanceDetail> getPlugins();
 
   /**
    * Stops all processors managed by this manager and clear all associated runtime metrics.

@@ -36,6 +36,7 @@ import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -490,5 +491,18 @@ public class AppFabricClient {
                                                        programId.getApplication(),
                                                        programId.getType().getCategoryName(), programId.getProgram());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Saving runtime arguments failed");
+  }
+
+  public List<PluginInstanceDetail> getPlugins(ApplicationId application) throws Exception {
+    DefaultHttpRequest request = new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("%s/apps/%s", getNamespacePath(application.getNamespace()), application.getApplication())
+    );
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.getPluginsInfo(request, mockResponder, application.getNamespace(),
+                                           application.getApplication());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Getting app info failed");
+    return mockResponder.decodeResponseContent(new TypeToken<List<PluginInstanceDetail>>() { }.getType(), GSON);
   }
 }
