@@ -141,9 +141,10 @@ public class InMemoryExploreServiceTest {
   @Test
   public void testHiveIntegration() throws Exception {
     String otherNamespace = "otherNamespace";
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(otherNamespace).build());
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(otherNamespace).build();
+    namespaceAdmin.create(namespaceMeta);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
-    waitForCompletionStatus(exploreService.createNamespace(Id.Namespace.from(otherNamespace)));
+    waitForCompletionStatus(exploreService.createNamespace(namespaceMeta));
 
     runCleanup(ImmutableList.of(Id.Namespace.DEFAULT.getId(), otherNamespace));
 

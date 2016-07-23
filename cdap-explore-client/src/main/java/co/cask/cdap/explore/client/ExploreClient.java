@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
@@ -243,10 +244,10 @@ public interface ExploreClient extends Closeable {
   /**
    * Creates a namespace in Explore.
    *
-   * @param namespace namespace to create.
+   * @param namespaceMeta namespace meta of the namespace to create.
    * @return {@link ListenableFuture} eventually creating the namespace (database in Hive).
    */
-  ListenableFuture<ExploreExecutionResult> addNamespace(Id.Namespace namespace);
+  ListenableFuture<ExploreExecutionResult> addNamespace(NamespaceMeta namespaceMeta);
 
   /**
    * Deletes a namespace in Explore.

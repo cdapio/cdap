@@ -16,12 +16,15 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.common.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -33,14 +36,79 @@ import java.sql.ResultSet;
 public class TestSQLQueryTestRun extends TestFrameworkTestBase {
 
   private final Id.Namespace testSpace = Id.Namespace.from("testspace");
+  private static NamespaceAdmin namespaceAdmin;
 
-  @Before
-  public void setUp() throws Exception {
-    getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
+  @BeforeClass
+  public static void init() throws Exception {
+    namespaceAdmin = getNamespaceAdmin();
   }
 
   @Test(timeout = 90000L)
-  public void testSQLQuery() throws Exception {
+  public void testSQLQuerySimpleNS() throws Exception {
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testSpace).build());
+    testSQLQuery();
+    namespaceAdmin.delete(testSpace);
+  }
+
+  @Test(timeout = 120000L)
+  public void testSQLQueryWithCustomMapping() throws Exception {
+    // trying to create a cdap namespace with custom hive database when the database does not exists in hive should
+    // fail.
+    String customHiveDatabase = "custom_db";
+    try {
+      namespaceAdmin.create(new NamespaceMeta.Builder().setName(testSpace).setHiveDatabase(customHiveDatabase).build());
+      Assert.fail();
+    } catch (NamespaceCannotBeCreatedException e) {
+      // expected exception. Make sure that the namespace creation failed because of explore exception
+      Assert.assertTrue(e.getCause() instanceof ExploreException);
+
+    }
+
+    // create the custom database in hive
+    try (
+      Connection connection = getQueryClient();
+      ResultSet results = connection.prepareStatement(String.format("CREATE DATABASE %s",
+                                                                    customHiveDatabase)).executeQuery()
+    ) {
+      // run a query over the dataset
+      Assert.assertNotNull(results);
+    }
+
+    // check that the custom hive database got created
+    checkDatabaseExists(customHiveDatabase);
+
+    // now the namespace create should work
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testSpace).setHiveDatabase(customHiveDatabase).build());
+
+    // test some sql query on this custom hive database
+    testSQLQuery();
+
+    // delete the cdap namespace
+    namespaceAdmin.delete(testSpace);
+
+    // deleting the cdap namespace should not have deleted the custom hive database
+    checkDatabaseExists(customHiveDatabase);
+  }
+
+  private void checkDatabaseExists(String customHiveDatabase) throws Exception {
+    try (
+      // list all databases in hive
+      Connection connection = getQueryClient();
+      ResultSet results = connection.prepareStatement("SHOW DATABASES")
+        .executeQuery()
+    ) {
+      Assert.assertNotNull(results);
+      Assert.assertTrue(results.next());
+      // verify that the hive databases has the given custom database
+      Assert.assertEquals(customHiveDatabase, results.getString(1));
+      Assert.assertTrue(results.next());
+      // default is always expected to exists
+      Assert.assertEquals("default", results.getString(1));
+      Assert.assertFalse(results.next());
+    }
+  }
+
+  private void testSQLQuery() throws Exception {
     // Deploying app makes sure that the default namespace is available.
     deployApplication(testSpace, DummyApp.class);
     deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);

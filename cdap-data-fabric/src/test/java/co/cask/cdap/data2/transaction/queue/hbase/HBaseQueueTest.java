@@ -21,9 +21,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
@@ -54,7 +53,6 @@ import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
-import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
@@ -81,7 +79,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -150,12 +147,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      Modules.override(new NamespaceClientRuntimeModule().getInMemoryModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
-        }
-      }),
+      new NamespaceClientUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
       new DataSetsModules().getInMemoryModules(),

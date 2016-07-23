@@ -21,15 +21,20 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -44,6 +49,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/data/explore")
 public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespacedExploreMetadataHttpHandler.class);
+  private static final Gson GSON = new Gson();
 
   private final ExploreService exploreService;
 
@@ -121,7 +127,11 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        return exploreService.createNamespace(Id.Namespace.from(namespaceId));
+        NamespaceMeta namespaceMeta = GSON.fromJson(request.getContent().toString(Charsets.UTF_8), NamespaceMeta.class);
+        // Use the namespace id which was passed as path param. It will be same in the meta but this is for consistency
+        // we do the same thing in NamespaceHttpHandler.create
+        namespaceMeta = new NamespaceMeta.Builder(namespaceMeta).setName(namespaceId).build();
+        return exploreService.createNamespace(namespaceMeta);
       }
     });
   }

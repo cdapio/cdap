@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package co.cask.cdap.common.namespace;
 
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -27,17 +26,18 @@ import java.util.Map;
 
 /**
  * Implementation of {@link NamespaceQueryAdmin} which simply returns a {@link NamespaceMeta} with
- * a {@link NamespaceConfig} that contains a custom hbase mapping if it is created with one in its constructor.
+ * a {@link NamespaceConfig} that contains a custom mapping if it is created with one in its constructor else
+ * a {@link NamespaceMeta} with given NamespaceId.
  */
 public class SimpleNamespaceQueryAdmin implements NamespaceQueryAdmin {
-  private final Map<String, String> cdapToHBaseNamespaceMap;
+  private final Map<String, NamespaceMeta> customNSMap;
 
   public SimpleNamespaceQueryAdmin() {
-    this.cdapToHBaseNamespaceMap = ImmutableMap.of();
+    this.customNSMap = ImmutableMap.of();
   }
 
-  public SimpleNamespaceQueryAdmin(Map<String, String> cdapToHBaseNamespaceMap) {
-    this.cdapToHBaseNamespaceMap = ImmutableMap.copyOf(cdapToHBaseNamespaceMap);
+  public SimpleNamespaceQueryAdmin(Map<String, NamespaceMeta> customNSMap) {
+    this.customNSMap = ImmutableMap.copyOf(customNSMap);
   }
 
   @Override
@@ -47,9 +47,8 @@ public class SimpleNamespaceQueryAdmin implements NamespaceQueryAdmin {
 
   @Override
   public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
-    String hbaseNamespace = cdapToHBaseNamespaceMap.containsKey(namespaceId.getId()) ?
-      cdapToHBaseNamespaceMap.get(namespaceId.getId()) : "";
-    return new NamespaceMeta.Builder().setName(namespaceId.getId()).setHBaseDatabase(hbaseNamespace).build();
+    return customNSMap.containsKey(namespaceId.getId()) ? customNSMap.get(namespaceId.getId()) :
+      new NamespaceMeta.Builder().setName(namespaceId.getId()).build();
   }
 
   @Override

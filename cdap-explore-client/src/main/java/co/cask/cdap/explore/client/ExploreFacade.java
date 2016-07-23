@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -161,13 +162,13 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "drop", "partition", datasetInstance.getId());
   }
 
-  public void createNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+  public void createNamespace(NamespaceMeta namespace) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
     ListenableFuture<ExploreExecutionResult> futureSuccess = exploreClient.addNamespace(namespace);
-    handleExploreFuture(futureSuccess, "add", "namespace", namespace.getId());
+    handleExploreFuture(futureSuccess, "add", "namespace", namespace.getName());
   }
 
   public void removeNamespace(Id.Namespace namespace) throws ExploreException, SQLException {

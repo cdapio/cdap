@@ -34,6 +34,7 @@ import co.cask.cdap.explore.utils.TablesArgs;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -405,8 +406,9 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public QueryHandle createNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
-    HttpResponse response = doPut(String.format("data/explore/namespaces/%s", namespace.getId()), null, null);
+  public QueryHandle createNamespace(NamespaceMeta namespace) throws ExploreException, SQLException {
+    HttpResponse response = doPut(String.format("data/explore/namespaces/%s", namespace.getName()),
+                                  GSON.toJson(namespace), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }

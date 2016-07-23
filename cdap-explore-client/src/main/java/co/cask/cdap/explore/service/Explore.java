@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -292,12 +293,12 @@ public interface Explore {
   /**
    * Creates a new namespace in Explore.
    *
-   * @param namespace namespace to create.
+   * @param namespaceMeta namespace meta of the namespace to create.
    * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any errors creating the namespace.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  QueryHandle createNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
+  QueryHandle createNamespace(NamespaceMeta namespaceMeta) throws ExploreException, SQLException;
 
   /**
    * Deletes a new namespace in Explore.

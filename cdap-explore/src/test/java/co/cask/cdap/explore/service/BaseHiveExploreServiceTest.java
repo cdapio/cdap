@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -231,15 +232,17 @@ public class BaseHiveExploreServiceTest {
     transactionManager.stopAndWait();
   }
 
+
   /**
    * Create a namespace because app fabric is not started in explore tests.
    */
   protected static void createNamespace(NamespaceId namespaceId) throws Exception {
     namespacedLocationFactory.get(namespaceId.toId()).mkdirs();
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId.toId()).build();
+    namespaceAdmin.create(namespaceMeta);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
-      exploreService.createNamespace(namespaceId.toId());
+      exploreService.createNamespace(namespaceMeta);
     }
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId.toId()).build());
   }
 
   /**
@@ -247,10 +250,10 @@ public class BaseHiveExploreServiceTest {
    */
   protected static void deleteNamespace(NamespaceId namespaceId) throws Exception {
     namespacedLocationFactory.get(namespaceId.toId()).delete(true);
-    namespaceAdmin.delete(namespaceId.toId());
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
       exploreService.deleteNamespace(namespaceId.toId());
     }
+    namespaceAdmin.delete(namespaceId.toId());
   }
 
   protected static String getDatasetHiveName(Id.DatasetInstance datasetID) {
@@ -399,10 +402,10 @@ public class BaseHiveExploreServiceTest {
       new ViewAdminModules().getInMemoryModules(),
       new StreamAdminModules().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new NamespaceClientUnitTestModule().getModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
