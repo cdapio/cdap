@@ -102,7 +102,8 @@ public class FileSecureStoreTest {
     SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
     Assert.assertArrayEquals(secureStoreData.get(), secureStore.getSecureData(NAMESPACE1, KEY1).get());
-    Assert.assertEquals(metadata.getDescription(), secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getDescription());
+    Assert.assertEquals(metadata.getDescription(),
+                        secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getDescription());
     Assert.assertEquals(metadata.getName(), secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getName());
   }
 
@@ -110,10 +111,12 @@ public class FileSecureStoreTest {
   public void testGetMetadata() throws IOException {
     populateStore();
     SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
-    Assert.assertEquals(metadata.getDescription(), secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getDescription());
+    Assert.assertEquals(metadata.getDescription(),
+                        secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getDescription());
     Assert.assertEquals(metadata.getName(), secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata().getName());
     SecureStoreMetadata metadata2 = SecureStoreMetadata.of(KEY2, DESCRIPTION2, PROPERTIES_2);
-    Assert.assertEquals(metadata2.getDescription(), secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata().getDescription());
+    Assert.assertEquals(metadata2.getDescription(),
+                        secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata().getDescription());
     Assert.assertEquals(metadata2.getName(), secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata().getName());
   }
 
@@ -151,8 +154,9 @@ public class FileSecureStoreTest {
     populateStore();
     String ns = "namespace2";
     secureStoreManager.putSecureData(ns, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
-    List<SecureStoreMetadata> expectedList = ImmutableList.of(secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata(),
-                                                              secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata());
+    List<SecureStoreMetadata> expectedList =
+      ImmutableList.of(secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata(),
+                       secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata());
     Assert.assertEquals(expectedList, secureStore.listSecureData(NAMESPACE1));
     Assert.assertNotEquals(expectedList, secureStore.listSecureData(ns));
     List<SecureStoreMetadata> expectedList2 = ImmutableList.of(secureStore.getSecureData(ns, KEY1).getMetadata());

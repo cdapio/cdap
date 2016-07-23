@@ -137,8 +137,8 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, byte[] data, String description, Map<String, String> properties)
-    throws IOException {
+  public void putSecureData(String namespace, String name, byte[] data, String description,
+                            Map<String, String> properties) throws IOException {
     delegateAdmin.putSecureData(namespace, name, data, description, properties);
   }
 

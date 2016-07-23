@@ -104,8 +104,8 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @throws IOException If it failed to store the key in the store.
    */
   @Override
-  public void putSecureData(String namespace, String name, byte[] data, String description, Map<String, String> properties)
-    throws IOException {
+  public void putSecureData(String namespace, String name, byte[] data, String description,
+                            Map<String, String> properties) throws IOException {
     String keyName = getKeyName(namespace, name);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data);

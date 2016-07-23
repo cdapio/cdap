@@ -44,8 +44,8 @@ public class DummyKMSStore implements SecureStore, SecureStoreManager {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, byte[] data, String description, Map<String, String> properties)
-    throws IOException {
+  public void putSecureData(String namespace, String name, byte[] data, String description,
+                            Map<String, String> properties) throws IOException {
     throw new UnsupportedOperationException(UNSUPPORTED_ERROR_MSG);
   }
 
