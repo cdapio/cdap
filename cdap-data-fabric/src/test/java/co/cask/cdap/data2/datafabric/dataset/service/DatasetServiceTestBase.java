@@ -61,12 +61,14 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -171,6 +173,12 @@ public abstract class DatasetServiceTestBase {
         }
       });
 
+    AuthorizationEnforcer authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    AuthorizationEnforcementService authEnforcementService =
+      injector.getInstance(AuthorizationEnforcementService.class);
+    AuthorizerInstantiator authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
+
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     dsFramework = injector.getInstance(RemoteDatasetFramework.class);
@@ -220,16 +228,18 @@ public abstract class DatasetServiceTestBase {
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
     DatasetInstanceManager instanceManager =
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
-    AuthorizationEnforcementService authEnforceService = injector.getInstance(AuthorizationEnforcementService.class);
-    instanceService = new DatasetInstanceService(typeManager, instanceManager, opExecutor, exploreFacade,
-                                                 namespaceQueryAdmin, authEnforceService,
-                                                 injector.getInstance(AuthorizerInstantiator.class),
-                                                 injector.getInstance(AuthenticationContext.class));
+    instanceService = new DatasetInstanceService(
+      typeManager, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authEnforcer,
+      authorizerInstantiator, authenticationContext
+    );
 
-    service = new DatasetService(cConf, namespacedLocationFactory, discoveryService, discoveryServiceClient,
-                                 typeManager, metricsCollectionService, opExecutor,
-                                 new HashSet<DatasetMetricsReporter>(), instanceService, namespaceQueryAdmin,
-                                 authEnforceService);
+    DatasetTypeService typeService = new DatasetTypeService(
+      typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, authorizerInstantiator,
+      authenticationContext, cConf
+    );
+    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
+                                 opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService,
+                                 authEnforcementService);
 
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();
@@ -273,7 +283,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected URL getUrl(String path) throws MalformedURLException {
-    return getUrl(Id.Namespace.DEFAULT.getId(), path);
+    return getUrl(NamespaceId.DEFAULT.getNamespace(), path);
   }
 
   protected URL getUrl(String namespace, String path) throws MalformedURLException {

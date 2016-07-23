@@ -238,6 +238,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
+    } finally {
+      authorizerInstantiator.get().revoke(namespace);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
 

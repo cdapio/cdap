@@ -20,7 +20,6 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
@@ -43,6 +42,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -247,7 +248,7 @@ public class DatasetInstanceService {
     // If creation fails, revoke the granted privileges. This ensures that just like delete, there may be orphaned
     // privileges in rare scenarios, but there can never be orphaned datasets.
     DatasetId datasetId = newInstance.toEntityId();
-    // if the dataset previously existed and was deleted, but revoking privileges somehow failed, there may be orphaned
+    // If the dataset previously existed and was deleted, but revoking privileges somehow failed, there may be orphaned
     // privileges for the dataset. Revoke them first, so no users unintentionally get privileges on the dataset.
     authorizer.revoke(datasetId);
     // grant all privileges on the dataset to be created
@@ -410,13 +411,16 @@ public class DatasetInstanceService {
    * TODO: This may need to move to a util class eventually
    */
   @Nullable
-  private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) throws BadRequestException {
+  private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) throws Exception {
     Id.DatasetType datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName);
     DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetTypeId);
     if (typeMeta == null) {
       // Type not found in the instance's namespace. Now try finding it in the system namespace
       Id.DatasetType systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(Id.Namespace.SYSTEM, typeName);
       typeMeta = typeManager.getTypeInfo(systemDatasetTypeId);
+    } else {
+      // not using a system dataset type. ensure that the user has access to it before returning
+      ensureAccess(namespaceId.toEntityId().datasetType(typeName));
     }
     return typeMeta;
   }
@@ -509,14 +513,15 @@ public class DatasetInstanceService {
   /**
    * Ensures that the logged-in user has a {@link Action privilege} on the specified dataset instance.
    *
-   * @param datasetId the {@link DatasetId} to check for privileges
+   * @param datasetEntityId the {@link DatasetId}, {@link DatasetModuleId} or {@link DatasetTypeId} to check for
+   *                        privileges
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
-  private void ensureAccess(DatasetId datasetId) throws Exception {
+  private <T extends EntityId> void ensureAccess(T datasetEntityId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetId)) {
-      throw new UnauthorizedException(principal, datasetId);
+    if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetEntityId)) {
+      throw new UnauthorizedException(principal, datasetEntityId);
     }
   }
 }

@@ -146,6 +146,7 @@ class DatasetServiceClient {
     return GSON.fromJson(response.getResponseBodyAsString(), MODULE_META_LIST_TYPE);
   }
 
+  @Nullable
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
     HttpResponse response = doGet("types/" + typeName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
@@ -319,6 +320,7 @@ class DatasetServiceClient {
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
       // For getting a system dataset like MDS, use the system principal. It is ok to do so, since DatasetServiceClient
       // is an internal client that is not exposed to users.
+      // TODO: CDAP-6583: This is dangerous. Remove.
       userId = Principal.SYSTEM.getName();
     } else {
       // If the request originated from the router and was forwarded to any service other than dataset service, before
@@ -326,6 +328,7 @@ class DatasetServiceClient {
       // e.g. deploying an app that contains a dataset
       // For user datasets, if a dataset call is happening from a program runtime, then find the userId from
       // UserGroupInformation#getCurrentUser()
+
       userId = authenticationContext.getPrincipal().getName();
     }
     return builder.addHeader(Constants.Security.Headers.USER_ID, userId);

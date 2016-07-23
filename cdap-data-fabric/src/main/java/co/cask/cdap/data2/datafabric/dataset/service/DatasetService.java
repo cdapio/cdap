@@ -22,8 +22,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
@@ -73,20 +71,18 @@ public class DatasetService extends AbstractExecutionThreadService {
 
   @Inject
   public DatasetService(CConfiguration cConf,
-                        NamespacedLocationFactory namespacedLocationFactory,
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
                         DatasetTypeManager typeManager,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
                         Set<DatasetMetricsReporter> metricReporters,
+                        DatasetTypeService datasetTypeService,
                         DatasetInstanceService datasetInstanceService,
-                        NamespaceQueryAdmin namespaceQueryAdmin,
                         AuthorizationEnforcementService authorizationEnforcementService) throws Exception {
     this.typeManager = typeManager;
     this.authorizationEnforcementService = authorizationEnforcementService;
-    DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory,
-                                                                   namespaceQueryAdmin);
+    DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(datasetTypeService);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
