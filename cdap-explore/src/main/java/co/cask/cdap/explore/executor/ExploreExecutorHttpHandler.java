@@ -362,7 +362,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       LOG.error("Exception instantiating dataset {}.", datasetId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Exception instantiating dataset " + datasetId);
+                           "Exception instantiating dataset " + datasetId);
       return;
     }
 

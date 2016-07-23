@@ -21,9 +21,9 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
@@ -49,6 +49,7 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -116,6 +117,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -160,6 +162,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final ExploreTableManager exploreTableManager;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final ExploreTableNaming tableNaming;
+  private final Impersonator impersonator;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -187,12 +190,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf,
-                                   File previewsDir, StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
+                                   File previewsDir, StreamAdmin streamAdmin,
+                                   SchedulerQueueResolver schedulerQueueResolver,
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                   ExploreTableNaming tableNaming) {
+                                   ExploreTableNaming tableNaming, Impersonator impersonator) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, namespaceQueryAdmin);
+    this.schedulerQueueResolver = schedulerQueueResolver;
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
@@ -203,6 +207,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                                        new ExploreTableNaming(), hConf);
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.tableNaming = tableNaming;
+    this.impersonator = impersonator;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -214,7 +219,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.activeHandleCache =
       CacheBuilder.newBuilder()
         .expireAfterWrite(cConf.getLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS), TimeUnit.SECONDS)
-        .removalListener(new ActiveOperationRemovalHandler(this, scheduledExecutorService))
+        .removalListener(new ActiveOperationRemovalHandler(this, scheduledExecutorService, impersonator))
         .build();
     this.inactiveHandleCache =
       CacheBuilder.newBuilder()
@@ -237,7 +242,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return new CLIService(null);
   }
 
-  protected HiveConf getHiveConf() {
+  private HiveConf getHiveConf() {
     HiveConf conf = new HiveConf();
     // Read delegation token if security is enabled.
     if (UserGroupInformation.isSecurityEnabled()) {
@@ -726,7 +731,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public QueryHandle createNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+  public QueryHandle createNamespace(final Id.Namespace namespace) throws ExploreException, SQLException {
     startAndWait();
 
     try {
@@ -737,25 +742,32 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         return QueryHandle.NO_OP;
       }
 
-      Map<String, String> sessionConf = startSession();
-      SessionHandle sessionHandle = null;
-      OperationHandle operationHandle = null;
+      final Map<String, String> sessionConf = startSession();
 
-      try {
-        sessionHandle = cliService.openSession("", "", sessionConf);
+      return doAs(namespace.toEntityId(), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          SessionHandle sessionHandle = null;
+          OperationHandle operationHandle = null;
 
-        String database = getHiveDatabase(namespace.getId());
-        // "IF NOT EXISTS" so that this operation is idempotent.
-        String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
-        operationHandle = executeAsync(sessionHandle, statement);
-        QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
-        LOG.info("Creating database {} with handle {}", namespace, handle);
-        return handle;
-      } catch (Throwable e) {
-        closeInternal(getQueryHandle(sessionConf),
-                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
-        throw e;
-      }
+          try {
+            sessionHandle = cliService.openSession("", "", sessionConf);
+
+            String database = getHiveDatabase(namespace.getId());
+            // "IF NOT EXISTS" so that this operation is idempotent.
+            String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
+            operationHandle = executeAsync(sessionHandle, statement);
+            QueryHandle handle =
+              saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
+            LOG.info("Creating database {} with handle {}", namespace, handle);
+            return handle;
+          } catch (Throwable e) {
+            closeInternal(getQueryHandle(sessionConf),
+                          new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+            throw e;
+          }
+        }
+      });
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     } catch (Throwable e) {
@@ -764,28 +776,33 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+  public QueryHandle deleteNamespace(final Id.Namespace namespace) throws ExploreException, SQLException {
     startAndWait();
 
     try {
-      SessionHandle sessionHandle = null;
-      OperationHandle operationHandle = null;
-      Map<String, String> sessionConf = startSession();
+      final Map<String, String> sessionConf = startSession();
 
-      try {
-        sessionHandle = openHiveSession(sessionConf);
+      return doAs(namespace.toEntityId(), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          SessionHandle sessionHandle = null;
+          OperationHandle operationHandle = null;
 
-        String database = getHiveDatabase(namespace.getId());
-        String statement = String.format("DROP DATABASE %s", database);
-        operationHandle = executeAsync(sessionHandle, statement);
-        QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
-        LOG.info("Deleting database {} with handle {}", database, handle);
-        return handle;
-      } catch (Throwable e) {
-        closeInternal(getQueryHandle(sessionConf),
-                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
-        throw e;
-      }
+          try {
+            String database = getHiveDatabase(namespace.getId());
+            String statement = String.format("DROP DATABASE %s", database);
+            operationHandle = executeAsync(sessionHandle, statement);
+            QueryHandle handle =
+              saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
+            LOG.info("Deleting database {} with handle {}", database, handle);
+            return handle;
+          } catch (Throwable e) {
+            closeInternal(getQueryHandle(sessionConf),
+                          new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+            throw e;
+          }
+        }
+      });
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     } catch (Throwable e) {
@@ -793,44 +810,51 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  public QueryHandle execute(Id.Namespace namespace, String[] statements) throws ExploreException, SQLException {
+  public QueryHandle execute(final Id.Namespace namespace,
+                             final String[] statements) throws ExploreException, SQLException {
     Preconditions.checkArgument(statements.length > 0, "There must be at least one statement");
     startAndWait();
     try {
-      SessionHandle sessionHandle = null;
-      OperationHandle operationHandle = null;
-      Map<String, String> sessionConf = startSession(namespace);
-      try {
-        sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(namespace.getId());
-        // Switch database to the one being passed in.
-        setCurrentDatabase(database);
+      final Map<String, String> sessionConf = startSession(namespace);
 
-        // synchronously execute all but the last statement
-        for (int i = 0; i < statements.length - 1; i++) {
-          String statement = statements[i];
-          LOG.trace("Executing statement synchronously: {}", statement);
-          operationHandle = executeSync(sessionHandle, statement);
-          QueryStatus status = doFetchStatus(operationHandle);
-          if (QueryStatus.OpStatus.ERROR == status.getStatus()) {
-            throw new HiveSQLException(status.getErrorMessage(), status.getSqlState());
-          }
-          if (QueryStatus.OpStatus.FINISHED != status.getStatus()) {
-            throw new ExploreException(
-              "Expected operation status FINISHED for statement '{}' but received " + status.getStatus());
+      return doAs(namespace.toEntityId(), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          SessionHandle sessionHandle = null;
+          OperationHandle operationHandle = null;
+          try {
+            sessionHandle = openHiveSession(sessionConf);
+            String database = getHiveDatabase(namespace.getId());
+            // Switch database to the one being passed in.
+            setCurrentDatabase(database);
+
+            // synchronously execute all but the last statement
+            for (int i = 0; i < statements.length - 1; i++) {
+              String statement = statements[i];
+              LOG.trace("Executing statement synchronously: {}", statement);
+              operationHandle = executeSync(sessionHandle, statement);
+              QueryStatus status = doFetchStatus(operationHandle);
+              if (QueryStatus.OpStatus.ERROR == status.getStatus()) {
+                throw new HiveSQLException(status.getErrorMessage(), status.getSqlState());
+              }
+              if (QueryStatus.OpStatus.FINISHED != status.getStatus()) {
+                throw new ExploreException(
+                  "Expected operation status FINISHED for statement '{}' but received " + status.getStatus());
+              }
+            }
+            String statement = statements[statements.length - 1];
+            operationHandle = executeAsync(sessionHandle, statement);
+            QueryHandle handle = saveReadWriteOperation(operationHandle, sessionHandle, sessionConf,
+                                                        statement, database);
+            LOG.trace("Executing statement: {} with handle {}", statement, handle);
+            return handle;
+          } catch (Throwable e) {
+            closeInternal(getQueryHandle(sessionConf),
+                          new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+            throw e;
           }
         }
-        String statement = statements[statements.length - 1];
-        operationHandle = executeAsync(sessionHandle, statement);
-        QueryHandle handle = saveReadWriteOperation(operationHandle, sessionHandle, sessionConf,
-                                                    statement, database);
-        LOG.trace("Executing statement: {} with handle {}", statement, handle);
-        return handle;
-      } catch (Throwable e) {
-        closeInternal(getQueryHandle(sessionConf),
-                      new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
-        throw e;
-      }
+      });
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     } catch (Throwable e) {
@@ -844,33 +868,38 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public QueryHandle execute(Id.Namespace namespace, String statement,
+  public QueryHandle execute(final Id.Namespace namespace, final String statement,
                              @Nullable Map<String, String> additionalSessionConf)
     throws ExploreException, SQLException {
 
     startAndWait();
 
     try {
-      SessionHandle sessionHandle = null;
-      OperationHandle operationHandle = null;
       LOG.trace("Got statement '{}' with additional session configuration {}", statement, additionalSessionConf);
-      Map<String, String> sessionConf = startSession(namespace, additionalSessionConf);
-      try {
-        sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(namespace.getId());
-        // Switch database to the one being passed in.
-        setCurrentDatabase(database);
+      final Map<String, String> sessionConf = startSession(namespace, additionalSessionConf);
+      return doAs(namespace.toEntityId(), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          SessionHandle sessionHandle = null;
+          OperationHandle operationHandle = null;
+          try {
+            sessionHandle = openHiveSession(sessionConf);
+            String database = getHiveDatabase(namespace.getId());
+            // Switch database to the one being passed in.
+            setCurrentDatabase(database);
 
-        operationHandle = executeAsync(sessionHandle, statement);
-        QueryHandle handle = saveReadWriteOperation(operationHandle, sessionHandle, sessionConf,
-                                                    statement, database);
-        LOG.trace("Executing statement: {} with handle {}", statement, handle);
-        return handle;
-      } catch (Throwable e) {
-        closeInternal(getQueryHandle(sessionConf),
-                      new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
-        throw e;
-      }
+            operationHandle = executeAsync(sessionHandle, statement);
+            QueryHandle handle = saveReadWriteOperation(operationHandle, sessionHandle, sessionConf,
+                                                        statement, database);
+            LOG.trace("Executing statement: {} with handle {}", statement, handle);
+            return handle;
+          } catch (Throwable e) {
+            closeInternal(getQueryHandle(sessionConf),
+                          new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+            throw e;
+          }
+        }
+      });
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     } catch (Throwable e) {
@@ -939,18 +968,25 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                                           int size) throws Exception;
 
   @SuppressWarnings("unchecked")
-  protected List<QueryResult> fetchNextResults(QueryHandle handle, int size)
+  protected List<QueryResult> fetchNextResults(QueryHandle handle, final int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     startAndWait();
 
-    Lock nextLock = getOperationInfo(handle).getNextLock();
+    OperationInfo operationInfo = getOperationInfo(handle);
+    Lock nextLock = operationInfo.getNextLock();
     nextLock.lock();
     try {
       // Fetch results from Hive
       LOG.trace("Getting results for handle {}", handle);
-      OperationHandle operationHandle = getOperationHandle(handle);
+      final OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
-        return doFetchNextResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
+        return doAs(new NamespaceId(operationInfo.getNamespace()), new Callable<List<QueryResult>>() {
+
+          @Override
+          public List<QueryResult> call() throws Exception {
+            return doFetchNextResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
+          }
+        });
       } else {
         return Collections.emptyList();
       }
@@ -958,6 +994,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       throw Throwables.propagate(e);
     } finally {
       nextLock.unlock();
+    }
+  }
+
+  // helper method to throw only ExploreException and SQLException, since we know that the callables used
+  // only throw those checked exceptions
+  private <T> T doAs(NamespaceId namespaceId, Callable<T> callable) throws ExploreException, SQLException {
+    try {
+      return impersonator.doAs(namespaceId, callable);
+    } catch (ExploreException | HiveSQLException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 
@@ -1042,7 +1090,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return listBuilder.build();
   }
 
-  private void setCurrentDatabase(String dbName) throws Throwable {
+  private void setCurrentDatabase(String dbName) {
     SessionState.get().setCurrentDatabase(dbName);
   }
 
@@ -1192,56 +1240,58 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @return configuration for a hive session that contains a transaction, and serialized CDAP configuration and
    * HBase configuration. This will be used by the map-reduce tasks started by Hive.
    * @throws IOException
-   * @throws ExploreException
    */
-  protected Map<String, String> startSession()
-    throws IOException, ExploreException, NamespaceNotFoundException {
+  private Map<String, String> startSession() throws ExploreException, NamespaceNotFoundException {
     return startSession(null);
   }
 
-  protected Map<String, String> startSession(@Nullable Id.Namespace namespace)
-    throws IOException, ExploreException, NamespaceNotFoundException {
+  private Map<String, String> startSession(@Nullable Id.Namespace namespace)
+    throws ExploreException, NamespaceNotFoundException {
     return startSession(namespace, null);
   }
 
-  protected Map<String, String> startSession(@Nullable Id.Namespace namespace,
-                                             @Nullable Map<String, String> additionalSessionConf)
-    throws IOException, ExploreException, NamespaceNotFoundException {
+  private Map<String, String> startSession(@Nullable Id.Namespace namespace,
+                                           @Nullable Map<String, String> additionalSessionConf)
+    throws ExploreException, NamespaceNotFoundException {
 
     Map<String, String> sessionConf = Maps.newHashMap();
 
-    QueryHandle queryHandle = QueryHandle.generate();
-    sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
+    try {
+      QueryHandle queryHandle = QueryHandle.generate();
+      sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
 
-    String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace)
-                                              : schedulerQueueResolver.getDefaultQueue();
+      String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace)
+        : schedulerQueueResolver.getDefaultQueue();
 
-    if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
-      sessionConf.put(JobContext.QUEUE_NAME, schedulerQueue);
+      if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
+        sessionConf.put(JobContext.QUEUE_NAME, schedulerQueue);
+      }
+
+      Transaction tx = startTransaction();
+      ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
+      ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
+      ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
+
+      if (ExploreServiceUtils.isSparkEngine(getHiveConf())) {
+        sessionConf.putAll(sparkConf);
+      }
+
+      if (UserGroupInformation.isSecurityEnabled()) {
+        // make sure RM does not cancel delegation tokens after the query is run
+        sessionConf.put("mapreduce.job.complete.cancel.delegation.tokens", "false");
+        sessionConf.put("spark.hadoop.mapreduce.job.complete.cancel.delegation.tokens", "false");
+        // refresh delegations for the job - TWILL-170
+        updateTokenStore();
+      }
+
+      if (additionalSessionConf != null) {
+        sessionConf.putAll(additionalSessionConf);
+      }
+
+      return sessionConf;
+    } catch (IOException e) {
+      throw new ExploreException(e);
     }
-
-    Transaction tx = startTransaction();
-    ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
-
-    if (ExploreServiceUtils.isSparkEngine(getHiveConf())) {
-      sessionConf.putAll(sparkConf);
-    }
-
-    if (UserGroupInformation.isSecurityEnabled()) {
-      // make sure RM does not cancel delegation tokens after the query is run
-      sessionConf.put("mapreduce.job.complete.cancel.delegation.tokens", "false");
-      sessionConf.put("spark.hadoop.mapreduce.job.complete.cancel.delegation.tokens", "false");
-      // refresh delegations for the job - TWILL-170
-      updateTokenStore();
-    }
-
-    if (additionalSessionConf != null) {
-      sessionConf.putAll(additionalSessionConf);
-    }
-
-    return sessionConf;
   }
 
   /**
@@ -1249,7 +1299,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * This is because twill doesn't update the container_tokens on upon token refresh.
    * See: https://issues.apache.org/jira/browse/TWILL-170
    */
-  private void updateTokenStore() throws IOException, ExploreException {
+  private void updateTokenStore() throws IOException {
     String hadoopTokenFileLocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
     if (hadoopTokenFileLocation == null) {
       LOG.warn("Skipping update of token store due to failure to find environment variable '{}'.",
@@ -1275,7 +1325,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.debug("Secure store saved to {}", credentialsFile);
   }
 
-  protected QueryHandle getQueryHandle(Map<String, String> sessionConf) throws HandleNotFoundException {
+  private QueryHandle getQueryHandle(Map<String, String> sessionConf) throws HandleNotFoundException {
     return QueryHandle.fromId(sessionConf.get(Constants.Explore.QUERY_ID));
   }
 

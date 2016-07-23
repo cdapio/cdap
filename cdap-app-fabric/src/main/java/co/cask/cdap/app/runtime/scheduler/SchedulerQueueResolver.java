@@ -41,7 +41,7 @@ public class SchedulerQueueResolver {
    * Construct SchedulerQueueResolver with CConfiguration and Store.
    */
   @Inject
-  public SchedulerQueueResolver(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
+  SchedulerQueueResolver(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }

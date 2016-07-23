@@ -16,11 +16,12 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -71,11 +72,11 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                               CConfiguration cConf, Configuration hConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
-                              StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
+                              StreamAdmin streamAdmin, SchedulerQueueResolver schedulerQueueResolver,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                              ExploreTableNaming tableNaming) {
+                              ExploreTableNaming tableNaming, Impersonator impersonator) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir,
-          streamAdmin, namespaceQueryAdmin, datasetInstantiatorFactory, tableNaming);
+          streamAdmin, schedulerQueueResolver, datasetInstantiatorFactory, tableNaming, impersonator);
   }
 
   @Override
