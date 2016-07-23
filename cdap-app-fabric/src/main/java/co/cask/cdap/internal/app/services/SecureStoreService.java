@@ -37,14 +37,14 @@ public interface SecureStoreService {
    * @param namespaceId Id of the namespace we want the key list for.
    * @return A list of {@link SecureKeyListEntry} of all the keys visible to the user under the given namespace.
    */
-  List<SecureKeyListEntry> list(NamespaceId namespaceId) throws UnauthorizedException, IOException;
+  List<SecureKeyListEntry> list(NamespaceId namespaceId) throws Exception;
 
   /**
    * Returns the data associated with the key.
    * @param secureKeyId Id of the key that the user is trying to read.
    * @return Data associated with the key.
    */
-  SecureStoreData get(SecureKeyId secureKeyId) throws UnauthorizedException, IOException;
+  SecureStoreData get(SecureKeyId secureKeyId) throws Exception;
 
   /**
    * Puts the user provided data in the secure store.
@@ -52,11 +52,11 @@ public interface SecureStoreService {
    * @param secureKeyCreateRequest The request containing the data to be stored in the secure store.
    */
   void put(SecureKeyId secureKeyId, SecureKeyCreateRequest secureKeyCreateRequest)
-    throws BadRequestException, UnauthorizedException, IOException;
+    throws Exception;
 
   /**
    * Deletes the key.
    * @param secureKeyId Id of the key to be deleted
    */
-  void delete(SecureKeyId secureKeyId) throws UnauthorizedException, IOException;
+  void delete(SecureKeyId secureKeyId) throws Exception;
 }

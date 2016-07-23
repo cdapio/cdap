@@ -68,6 +68,10 @@ public class NamespaceId extends EntityId implements NamespacedId {
     return new StreamId(namespace, stream);
   }
 
+  public SecureKeyId secureKey(String keyName) {
+    return new SecureKeyId(namespace, keyName);
+  }
+
   @Override
   public Id.Namespace toId() {
     return Id.Namespace.from(namespace);

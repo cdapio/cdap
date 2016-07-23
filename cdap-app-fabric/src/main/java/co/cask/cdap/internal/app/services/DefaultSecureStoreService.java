@@ -49,17 +49,14 @@ import java.util.List;
  */
 public class DefaultSecureStoreService implements SecureStoreService {
   private final Authorizer authorizer;
-  private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
 
   @Inject
-  DefaultSecureStoreService(AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
-                            AuthenticationContext authenticationContext, SecureStore secureStore,
-                            SecureStoreManager secureStoreManager) {
+  DefaultSecureStoreService(AuthorizerInstantiator authorizerInstantiator, AuthenticationContext authenticationContext,
+                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
     this.authorizer = authorizerInstantiator.get();
-    this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
@@ -69,54 +66,45 @@ public class DefaultSecureStoreService implements SecureStoreService {
    * Lists all the secure keys in the given namespace that the user has access to.
    * @param namespaceId Id of the namespace we want the key list for.
    * @return A list of {@link SecureKeyListEntry} of all the keys visible to the user under the given namespace.
-   * @throws IOException If there was a problem getting the list from the underlying provider.
-   * @throws UnauthorizedException If we fail to create a filter for the current principal.
+   * @throws Exception If there was a problem getting the list from the underlying provider.
+   * or if we fail to create a filter for the current principal.
    *
    */
   @Override
-  public List<SecureKeyListEntry> list(NamespaceId namespaceId) throws IOException, UnauthorizedException {
+  public List<SecureKeyListEntry> list(NamespaceId namespaceId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    List<SecureStoreMetadata> metadatas = secureStore.list(namespaceId.getNamespace());
-    List<SecureKeyListEntry> returnList = new ArrayList<>(metadatas.size());
     final Predicate<EntityId> filter;
-    try {
-      filter = authorizationEnforcer.createFilter(principal);
-    } catch (Exception e) {
-      throw new UnauthorizedException(principal, Action.READ, namespaceId);
-    }
-
+    filter = authorizer.createFilter(principal);
+    List<SecureStoreMetadata> metadatas = secureStore.list(namespaceId.getNamespace());
+    List<SecureKeyListEntry> result = new ArrayList<>(metadatas.size());
     String namespace = namespaceId.getNamespace();
     for (SecureStoreMetadata metadata : metadatas) {
       String name = metadata.getName();
       if (filter.apply(new SecureKeyId(namespace, name))) {
-        returnList.add(new SecureKeyListEntry(name, metadata.getDescription()));
+        result.add(new SecureKeyListEntry(name, metadata.getDescription()));
       }
     }
-    return returnList;
+    return result;
   }
 
   /**
    * Checks if the user has access to read the secure key and returns the data associated with the key if they do.
    * @param secureKeyId Id of the key that the user is trying to read.
    * @return Data associated with the key if the user has read access.
-   * @throws UnauthorizedException If we fail to create a filter for the current principal
+   * @throws Exception If we fail to create a filter for the current principal
    * or the user does not have READ permissions on the secure key.
-   * @throws IOException If there was a problem getting the data from the underlying provider.
+   * or if there was a problem getting the data from the underlying provider.
    */
   @Override
-  public SecureStoreData get(SecureKeyId secureKeyId) throws UnauthorizedException, IOException {
+  public SecureStoreData get(SecureKeyId secureKeyId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter;
-    try {
-      filter = authorizationEnforcer.createFilter(principal);
-    } catch (Exception e) {
-      throw new UnauthorizedException(principal, Action.READ, secureKeyId);
-    }
+    filter = authorizer.createFilter(principal);
+
     if (filter.apply(secureKeyId)) {
       return secureStore.get(secureKeyId.getNamespace(), secureKeyId.getName());
-    } else {
-      throw new UnauthorizedException(principal, Action.READ, secureKeyId);
     }
+    throw new UnauthorizedException(principal, Action.READ, secureKeyId);
   }
 
   /**
@@ -128,15 +116,12 @@ public class DefaultSecureStoreService implements SecureStoreService {
    * @throws IOException If there was a problem storing the data to the underlying provider.
    */
   @Override
-  public synchronized void put(SecureKeyId secureKeyId, SecureKeyCreateRequest secureKeyCreateRequest)
-    throws BadRequestException, UnauthorizedException, IOException {
+  public synchronized void put(SecureKeyId secureKeyId,
+                               SecureKeyCreateRequest secureKeyCreateRequest) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespaceId = new NamespaceId(secureKeyId.getNamespace());
-    try {
-      authorizer.enforce(namespaceId, principal, Action.WRITE);
-    } catch (Exception e) {
-      throw new UnauthorizedException(principal, Action.WRITE, namespaceId);
-    }
+    authorizer.enforce(namespaceId, principal, Action.WRITE);
+
     String description = secureKeyCreateRequest.getDescription();
     String value = secureKeyCreateRequest.getData();
     if (Strings.isNullOrEmpty(value)) {
@@ -161,14 +146,10 @@ public class DefaultSecureStoreService implements SecureStoreService {
    * @throws IOException If there was a problem deleting it from the underlying provider.
    */
   @Override
-  public void delete(SecureKeyId secureKeyId) throws UnauthorizedException, IOException {
+  public void delete(SecureKeyId secureKeyId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    try {
-      authorizer.enforce(secureKeyId, principal, Action.ADMIN);
-      secureStoreManager.delete(secureKeyId.getNamespace(), secureKeyId.getName());
-      authorizer.revoke(secureKeyId);
-    } catch (Exception e) {
-      throw new UnauthorizedException(principal, Action.ADMIN, secureKeyId);
-    }
+    authorizer.enforce(secureKeyId, principal, Action.ADMIN);
+    secureStoreManager.delete(secureKeyId.getNamespace(), secureKeyId.getName());
+    authorizer.revoke(secureKeyId);
   }
 }
