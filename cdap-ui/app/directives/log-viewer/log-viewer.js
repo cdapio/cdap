@@ -329,6 +329,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       },
       (err) => {
         this.setDefault();
+        this.loading = false;
         console.log('ERROR: ', err);
       });
   };
