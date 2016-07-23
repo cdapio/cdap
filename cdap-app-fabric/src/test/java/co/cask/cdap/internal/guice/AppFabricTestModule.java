@@ -27,7 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -101,7 +101,7 @@ public final class AppFabricTestModule extends AbstractModule {
       }
     });
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
-    install(new LocationUnitTestModule().getModule());
+    install(new NonCustomLocationUnitTestModule().getModule());
     install(new LoggingModules().getInMemoryModules());
     install(new LogReaderRuntimeModules().getInMemoryModules());
     install(new MetricsHandlerModule());

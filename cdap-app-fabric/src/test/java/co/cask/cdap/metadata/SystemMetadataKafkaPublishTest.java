@@ -19,7 +19,7 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -64,7 +64,7 @@ public class SystemMetadataKafkaPublishTest {
           bind(MetadataStore.class).to(DefaultMetadataStore.class);
         }
       }),
-      new LocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule().getModule(),
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules()

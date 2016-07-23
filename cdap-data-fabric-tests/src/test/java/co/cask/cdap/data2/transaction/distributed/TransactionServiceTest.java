@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.Networks;
@@ -91,7 +91,7 @@ public class TransactionServiceTest {
       Injector injector = Guice.createInjector(
         new ConfigModule(cConf),
         new ZKClientModule(),
-        new LocationUnitTestModule().getModule(),
+        new NonCustomLocationUnitTestModule().getModule(),
         new DiscoveryRuntimeModule().getDistributedModules(),
         new TransactionMetricsModule(),
         new AbstractModule() {
@@ -208,7 +208,7 @@ public class TransactionServiceTest {
 
     final Injector injector =
       Guice.createInjector(new ConfigModule(cConf, hConf),
-                           new LocationUnitTestModule().getModule(),
+                           new NonCustomLocationUnitTestModule().getModule(),
                            new ZKClientModule(),
                            new DiscoveryRuntimeModule().getDistributedModules(),
                            new TransactionMetricsModule(),

@@ -30,7 +30,7 @@ import com.google.inject.util.Modules;
  * {@link DefaultNamespacedLocationFactory} and hence in unit tests the namespace does not need to be created to get
  * namespaces locations.
  */
-public class LocationUnitTestModule {
+public class NonCustomLocationUnitTestModule {
   public Module getModule() {
 
     return Modules.override(new LocationRuntimeModule().getInMemoryModules()).with(
