@@ -28,7 +28,8 @@
           class="form-control"
           ng-model="symbol.name"
           ng-blur="EnumSchema.formatOutput()"
-          ng-keypress="$event.keyCode === 13 && EnumSchema.addSymbol($index)">
+          ng-keypress="$event.keyCode === 13 && EnumSchema.addSymbol($index)"
+          placeholder="Symbol Name">
       </div>
       <div class="fields-actions" ng-if="!EnumSchema.isDisabled">
         <div class="actions-buttons no-checkbox text-right">

@@ -58,7 +58,8 @@
                  class="form-control"
                  ng-model="field.name"
                  ng-blur="ComplexSchema.formatOutput()"
-                 ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)">
+                 ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
+                 placeholder="Field Name">
         </div>
 
         <div class="type-column">
