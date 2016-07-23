@@ -18,9 +18,31 @@
 
 my-typeahead-tracker-tags {
   ul.dropdown-menu {
-    li.preferred-tag {
+    max-height: 300px;
+    min-width: 0;
+    overflow-y: auto;
+    width: 100%;
+    li {
+      &:focus,
+      a:hover,
+      a:focus { outline: 0; }
       a {
-        color: @tracker-green;
+        font-weight: 500;
+        padding-top: 1px;
+        padding-bottom: 1px;
+      }
+      &.active {
+        a,
+        a:hover,
+        a:focus {
+          color: #262626;
+          background-color: #f5f5f5;
+        }
+      }
+      &.preferred-tag {
+        a,
+        a:hover,
+        a:focus { color: @tracker-green; }
       }
     }
   }
