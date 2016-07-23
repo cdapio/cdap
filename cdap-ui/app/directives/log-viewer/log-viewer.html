@@ -38,7 +38,12 @@
 
     <div class="log-actions">
       <div class="log-action-container">
-        <a  href="{{LogViewer.rawUrl}}" target="_blank"><button class="log-action-btn view-raw">View Raw</button></a>
+        <a  href="{{LogViewer.rawUrl}}"
+            target="_blank">
+          <button class="log-action-btn view-raw" ng-disabled="!LogViewer.rawUrl.length">
+            View Raw
+          </button>
+        </a>
         <button class="log-action-btn download-all">Download All</button>
         <div class="search">
           <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText" ng-model-options="{ debounce: 500 }" ng-change="LogViewer.filterSearch()">
