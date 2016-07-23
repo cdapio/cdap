@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -90,7 +91,7 @@ public class DatasetAdminService {
    * @return dataset specification
    * @throws Exception
    */
-  public DatasetSpecification createOrUpdate(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+  public DatasetSpecification createOrUpdate(Id.DatasetInstance datasetInstanceId, final DatasetTypeMeta typeMeta,
                                              DatasetProperties props, @Nullable DatasetSpecification existing)
     throws Exception {
 
@@ -103,7 +104,12 @@ public class DatasetAdminService {
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
 
-      DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
+      DatasetType type = impersonator.doAs(datasetInstanceId.getNamespace().toEntityId(), new Callable<DatasetType>() {
+        @Override
+        public DatasetType call() throws Exception {
+          return dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
+        }
+      });
       if (type == null) {
         throw new BadRequestException(
           String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));

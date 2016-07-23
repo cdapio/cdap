@@ -34,6 +34,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -51,6 +52,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -67,6 +69,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -82,6 +85,7 @@ public class DatasetTypeService {
   private final Authorizer authorizer;
   private final AuthenticationContext authenticationContext;
   private final CConfiguration cConf;
+  private final Impersonator impersonator;
 
   @Inject
   @VisibleForTesting
@@ -89,7 +93,7 @@ public class DatasetTypeService {
                             NamespacedLocationFactory namespacedLocationFactory,
                             AuthorizationEnforcer authorizationEnforcer,
                             AuthorizerInstantiator authorizerInstantiator, AuthenticationContext authenticationContext,
-                            CConfiguration cConf) {
+                            CConfiguration cConf, Impersonator impersonator) {
     this.typeManager = typeManager;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -97,6 +101,7 @@ public class DatasetTypeService {
     this.authorizer = authorizerInstantiator.get();
     this.authenticationContext = authenticationContext;
     this.cConf = cConf;
+    this.impersonator = impersonator;
   }
 
   /**
@@ -287,9 +292,22 @@ public class DatasetTypeService {
   private AbstractBodyConsumer createModuleConsumer(final DatasetModuleId datasetModuleId,
                                                     final String className, final boolean forceUpdate,
                                                     final Principal principal) throws IOException, NotFoundException {
-    NamespaceId namespaceId = datasetModuleId.getParent();
+    final NamespaceId namespaceId = datasetModuleId.getParent();
+    final Location namespaceHomeLocation;
+    try {
+      namespaceHomeLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          return namespacedLocationFactory.get(namespaceId.toId());
+        }
+      });
+    } catch (Exception e) {
+      // the only checked exception that the callable throws is IOException
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
+
     // verify namespace directory exists
-    final Location namespaceHomeLocation = namespacedLocationFactory.get(namespaceId.toId());
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found", namespaceHomeLocation, namespaceId);
       LOG.debug(msg);

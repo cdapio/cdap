@@ -172,13 +172,14 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       injector.getInstance(AuthorizationEnforcementService.class);
 
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
-                                                            txExecutorFactory, mdsFramework, DEFAULT_MODULES);
+                                                            txExecutorFactory, mdsFramework, DEFAULT_MODULES,
+                                                            impersonator);
     DatasetInstanceManager instanceManager = new DatasetInstanceManager(txSystemClientService, txExecutorFactory,
                                                                         mdsFramework);
     AuthorizerInstantiator authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     DatasetTypeService typeService = new DatasetTypeService(typeManager, namespaceQueryAdmin, namespacedLocationFactory,
                                                             authorizationEnforcer, authorizerInstantiator,
-                                                            authenticationContext, cConf);
+                                                            authenticationContext, cConf, impersonator);
     DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       typeManager, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
