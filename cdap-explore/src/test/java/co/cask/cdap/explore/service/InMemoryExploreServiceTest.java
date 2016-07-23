@@ -44,6 +44,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -106,6 +107,7 @@ public class InMemoryExploreServiceTest {
         new NamespaceStoreModule().getStandaloneModules(),
         new AuthorizationTestModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getMasterModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

@@ -16,11 +16,23 @@
 my-batch-pipeline-settings {
   .pipeline-settings-content {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-
+    > div {
+      display: flex;
+      flex: 1;
+    }
     my-card {
+      &.engine {
+        flex-grow: 0.2;
+        label {
+          font-weight: 500;
+          color: gray;
+          display: block;
+        }
+      }
       &.schedule {
-        flex: 0.5;
+        flex: 0.8;
         margin-right: 10px;
         label {
           font-weight: 500;
@@ -89,15 +101,6 @@ my-batch-pipeline-settings {
       my-card {
         flex: 1;
         margin-right: 10px;
-        &.engine {
-          flex-grow: 0.5;
-          width: 200px;
-          label {
-            font-weight: 500;
-            color: gray;
-            display: block;
-          }
-        }
         &.post-run-actions {
           width: 100%;
           margin-right: 0;

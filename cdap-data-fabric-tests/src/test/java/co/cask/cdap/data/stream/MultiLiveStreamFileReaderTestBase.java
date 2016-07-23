@@ -16,7 +16,10 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.file.FileWriter;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
@@ -43,6 +46,10 @@ public abstract class MultiLiveStreamFileReaderTestBase {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
+  protected static CConfiguration cConf = CConfiguration.create();
+
+  private static final Impersonator impersonator = new Impersonator(cConf, new UnsupportedUGIProvider(), null);
 
   protected abstract LocationFactory getLocationFactory();
 
@@ -255,6 +262,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
 
   private FileWriter<StreamEvent> createWriter(StreamConfig config, String prefix) {
     return new TimePartitionedStreamFileWriter(config.getLocation(), config.getPartitionDuration(),
-                                               prefix, config.getIndexInterval());
+                                               prefix, config.getIndexInterval(), config.getStreamId().toEntityId(),
+                                               impersonator);
   }
 }

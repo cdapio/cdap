@@ -30,6 +30,7 @@ import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -63,7 +64,8 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule());
+      new TransactionMetricsModule(),
+      new AuthenticationContextModules().getMasterModule());
     service = injector.getInstance(LevelDBTableService.class);
   }
 
@@ -108,5 +110,4 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
       service.list().contains(tableName);
     }
   }
-
 }

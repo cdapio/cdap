@@ -17,13 +17,17 @@
 package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.id.StreamId;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Implementation of {@link ContentWriter} that dynamically decides to buffers all events in memory or writes to stream
@@ -34,16 +38,20 @@ final class LengthBasedContentWriter implements ContentWriter {
   private final long bufferThreshold;
   private final BufferedContentWriter bufferedContentWriter;
   private final FileContentWriterFactory fileContentWriterFactory;
+  private final StreamId streamId;
+  private final Impersonator impersonator;
 
   private ContentWriter fileContentWriter;
   private long bodySize;
 
   LengthBasedContentWriter(StreamConfig streamConfig, ConcurrentStreamWriter streamWriter, Map<String, String> headers,
-                           long bufferThreshold) throws IOException {
+                           long bufferThreshold, Impersonator impersonator) throws IOException {
     this.bufferThreshold = bufferThreshold;
     this.bufferedContentWriter = (BufferedContentWriter) new BufferedContentWriterFactory(
       streamConfig.getStreamId(), streamWriter, headers).create(ImmutableMap.<String, String>of());
     this.fileContentWriterFactory = new FileContentWriterFactory(streamConfig, streamWriter, headers);
+    this.streamId = streamConfig.getStreamId().toEntityId();
+    this.impersonator = impersonator;
     bodySize = 0;
     fileContentWriter = null;
   }
@@ -97,7 +105,18 @@ final class LengthBasedContentWriter implements ContentWriter {
   private boolean updateWriter(long length) throws IOException {
     bodySize += length;
     if (bodySize >= bufferThreshold) {
-      fileContentWriter = fileContentWriterFactory.create(ImmutableMap.<String, String>of());
+      ContentWriter fileContentWriter;
+      try {
+        fileContentWriter = impersonator.doAs(streamId.getParent(), new Callable<ContentWriter>() {
+          @Override
+          public ContentWriter call() throws Exception {
+            return fileContentWriterFactory.create(ImmutableMap.<String, String>of());
+          }
+        });
+      } catch (Exception e) {
+        Throwables.propagateIfPossible(e, IOException.class);
+        throw new IOException(e);
+      }
       fileContentWriter.appendAll(bufferedContentWriter.iterator(), true);
       bufferedContentWriter.cancel();
       return true;

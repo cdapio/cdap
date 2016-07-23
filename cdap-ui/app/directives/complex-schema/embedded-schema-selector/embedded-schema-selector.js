@@ -26,9 +26,9 @@ angular.module(PKG.name+'.commons')
       isDisabled: '='
     },
     bindToController: true,
-    controller: function () {
+    controller: function (SchemaHelper) {
       var vm = this;
-
+      vm.checkComplexType = SchemaHelper.checkComplexType;
       vm.expanded = true;
     },
     controllerAs: 'Embedded'

@@ -34,6 +34,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.security.RemoteUGIProvider;
+import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
@@ -43,12 +45,15 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -86,30 +91,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
 
     // NOTE: twill client will try to load all the classes present here - including hive classes but it
     // will fail since Hive classes are not in master classpath, and ignore those classes silently
-    injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new IOModule(), new ZKClientModule(),
-      new KafkaClientModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
-      new LocationRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
-      new ExploreRuntimeModule().getDistributedModules(),
-      new ExploreClientModule(),
-      new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedClientModule(),
-      new AuditModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(Store.class).to(DefaultStore.class);
-          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
-        }
-      });
+    injector = createInjector(cConf, hConf);
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
 
@@ -127,5 +109,35 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(ExploreExecutorService.class));
+  }
+
+  @VisibleForTesting
+  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+    return Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new IOModule(), new ZKClientModule(),
+      new KafkaClientModule(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new LocationRuntimeModule().getDistributedModules(),
+      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
+      new ExploreRuntimeModule().getDistributedModules(),
+      new ExploreClientModule(),
+      new ViewAdminModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
+      new AuditModule().getDistributedModules(),
+      new AuthenticationContextModules().getMasterModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(Store.class).to(DefaultStore.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
+          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+        }
+      });
   }
 }

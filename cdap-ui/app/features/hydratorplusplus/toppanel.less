@@ -45,6 +45,7 @@ body.theme-cdap {
       }
 
       div.btn {
+        position: relative;
         .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 5px 15px);
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
@@ -69,6 +70,14 @@ body.theme-cdap {
         }
         + .btn {
           margin-left: 0;
+        }
+
+        [class*="fa-"] {
+          font-size: 16px;
+        }
+
+        .fa-sliders {
+          transform: rotate(90deg);
         }
 
         @media (max-width: @screen-xs-max) {
@@ -143,6 +152,10 @@ body.theme-cdap {
       // Right now we don't have the height of the top panel to be the same
       // in both studio and published view.
       top: 91px;
+      max-height: ~"calc(100vh - 143px)";
+      max-height: ~"-moz-calc(100vh - 143px)";
+      max-height: ~"-webkit-calc(100vh - 143px)";
+      overflow: auto;
     }
     div.side-panel.top,
     .pipeline-settings {
@@ -243,7 +256,7 @@ body.theme-cdap {
         textarea {
           font-weight: 400;
           resize: none;
-          margin-bottom: 0;
+          margin-bottom: 7px;
           margin-top: 10px;
           min-height: 65px;
         }
@@ -303,6 +316,16 @@ body.theme-cdap {
           }
         }
       }
+      .btn-group {
+        .btn {
+          .fa-caret-down {
+            position: absolute;
+            top: 25px;
+            left: 18px;
+            line-height: 1;
+          }
+        }
+      }
     }
   }
   &.state-hydratorplusplus-detail {
@@ -312,7 +335,6 @@ body.theme-cdap {
       justify-content: space-between;
       .run-specific-section {
         display: flex;
-        flex-wrap: wrap;
         flex: 1;
         flex-basis: 60vw;
         width: ~"calc(100vw - 288px)";
@@ -336,9 +358,9 @@ body.theme-cdap {
             and still be able to have run specific section stick to metadata section.
           */
 
-          max-width: ~"calc(100vw - 679px)";
-          max-width: ~"-moz-calc(100vw - 679px)";
-          max-width: ~"-webkit-calc(100vw - 679px)";
+          max-width: ~"calc(100% - 410px)";
+          max-width: ~"-moz-calc(100% - 410px)";
+          max-width: ~"-webkit-calc(100% - 410px)";
           div.pipeline-type {
             text-decoration: none;
             padding: 0 10px 0 0;
@@ -349,6 +371,7 @@ body.theme-cdap {
           div.pipeline-name {
             text-align: left;
             overflow: hidden;
+            width: 100%;
           }
           h1,
           p {
@@ -364,14 +387,13 @@ body.theme-cdap {
             margin-bottom: 0;
             line-height: 20px;
             display: inline-block;
-            line-height: 1.4;
           }
           p {
             color: #666666;
             font-size: 12px;
             font-weight: 400;
             margin: 0;
-            margin-top: -8px; // FIXME: This is a bad hack. Need to come with a better way to do it.
+            line-height: 1.1;
           }
         }
         .next-run,
@@ -433,8 +455,14 @@ body.theme-cdap {
         padding: 7px 15px 0 15px;
         display: block;
         align-items: center;
+        position: relative;
         span {
           line-height: 48px;
+        }
+        .fa.fa-caret-down {
+          position: absolute;
+          top: 17px;
+          left: 18px;
         }
       }
       .pipeline-specific-section {

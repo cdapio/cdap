@@ -18,7 +18,7 @@
 
   <div class="row">
     <div class="col-xs-12">
-      <h2 class="pull-left">Audit Messages</h2>
+      <h3 class="pull-left">Audit Messages</h3>
       <div ng-if="UsageController.serviceUnavailable === false"
           class="btn-group time-range-picker-group" uib-dropdown>
         <button class="btn" uib-dropdown-toggle>
@@ -78,13 +78,13 @@
       </div>
       <div class="col-md-4">
         <div class="metric-heading">
-          <p>Top Datasets</p>
+          <p>Recent Activity</p>
         </div>
         <div class="metric-container">
           <table ng-if="UsageController.serviceUnavailable === false"
                 class="table">
             <thead>
-              <th>Dataset</th>
+              <th>Activity</th>
               <th>Time Since</th>
             </thead>
             <tbody>

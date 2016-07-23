@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService) {
     this.$scope = $scope;
     this.$timeout = $timeout;
     this.$state = $state;
@@ -30,6 +30,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.$uibModal = $uibModal;
     this.ConfigStore = HydratorPlusPlusConfigStore;
     this.$scope.isDisabled = rDisabled;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
 
     this.setDefaults(rPlugin);
     this.tabs = [
@@ -162,8 +163,13 @@ class HydratorPlusPlusNodeConfigCtrl {
       )
         .then(
           (res) => {
-            this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory
-              .generateNodeConfig(this.state.node._backendProperties, res);
+            try {
+              this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory
+                .generateNodeConfig(this.state.node._backendProperties, res);
+            } catch(e) {
+              noJsonErrorHandler();
+              return;
+            }
             const generateJumpConfig = (jumpConfig, properties) => {
               let streams = [], datasets = [];
               let jumpConfigStreams = jumpConfig.streams || [],
@@ -191,19 +197,7 @@ class HydratorPlusPlusNodeConfigCtrl {
             var configOutputSchema = this.state.groupsConfig.outputSchema;
             // If its an implicit schema, set the output schema to the implicit schema and inform ConfigActionFactory
             if (configOutputSchema.implicitSchema) {
-              var keys = Object.keys(configOutputSchema.implicitSchema);
-              var formattedSchema = [];
-              angular.forEach(keys, (key) => {
-                formattedSchema.push({
-                  name: key,
-                  type: configOutputSchema.implicitSchema[key]
-                });
-              });
-              this.state.node.outputSchema = JSON.stringify({
-                name: 'etlSchemaBody',
-                type: 'record',
-                fields: formattedSchema
-              });
+              this.state.node.outputSchema = this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(configOutputSchema.implicitSchema);
               this.HydratorPlusPlusConfigActions.editPlugin(this.state.node.name, this.state.node);
             } else {
               // If not an implcit schema check if a schema property exists in the node config.
@@ -315,7 +309,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
   }
 }
-HydratorPlusPlusNodeConfigCtrl.$inject = ['$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory', '$uibModal', 'HydratorPlusPlusConfigStore', 'rPlugin', 'rDisabled'];
+HydratorPlusPlusNodeConfigCtrl.$inject = ['$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory', '$uibModal', 'HydratorPlusPlusConfigStore', 'rPlugin', 'rDisabled', 'HydratorPlusPlusHydratorService'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusNodeConfigCtrl', HydratorPlusPlusNodeConfigCtrl);

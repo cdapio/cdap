@@ -48,7 +48,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -85,6 +85,7 @@ public class DatasetInstanceService {
   private final LoadingCache<Id.DatasetInstance, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final Authorizer authorizer;
+  private final AuthenticationContext authenticationContext;
 
   private AuditPublisher auditPublisher;
 
@@ -93,7 +94,8 @@ public class DatasetInstanceService {
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
-                                AuthorizerInstantiator authorizerInstantiator) {
+                                AuthorizerInstantiator authorizerInstantiator,
+                                AuthenticationContext authenticationContext) {
     this.opExecutorClient = opExecutorClient;
     this.typeManager = typeManager;
     this.instanceManager = instanceManager;
@@ -109,6 +111,7 @@ public class DatasetInstanceService {
     );
     this.authorizationEnforcer = authorizationEnforcer;
     this.authorizer = authorizerInstantiator.get();
+    this.authenticationContext = authenticationContext;
   }
 
   @VisibleForTesting
@@ -128,7 +131,7 @@ public class DatasetInstanceService {
    */
   Collection<DatasetSpecification> list(Id.Namespace namespace) throws Exception {
     final NamespaceId namespaceId = namespace.toEntityId();
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     ensureNamespaceExists(namespace);
     Collection<DatasetSpecification> datasets = instanceManager.getAll(namespace);
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
@@ -223,7 +226,7 @@ public class DatasetInstanceService {
    */
   void create(String namespaceId, String name, DatasetInstanceConfiguration props) throws Exception {
     Id.Namespace namespace = ConversionHelpers.toNamespaceId(namespaceId);
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     authorizationEnforcer.enforce(namespace.toEntityId(), principal, Action.WRITE);
 
     ensureNamespaceExists(namespace);
@@ -293,7 +296,7 @@ public class DatasetInstanceService {
     }
 
     LOG.info("Update dataset {}, properties: {}", instance.getId(), ConversionHelpers.toJson(properties));
-    authorizationEnforcer.enforce(instance.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(instance.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
 
     DatasetTypeMeta typeMeta = getTypeInfo(instance.getNamespace(), existing.getType());
     if (typeMeta == null) {
@@ -332,7 +335,7 @@ public class DatasetInstanceService {
       throw new DatasetNotFoundException(instance);
     }
 
-    authorizationEnforcer.enforce(datasetId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(datasetId, authenticationContext.getPrincipal(), Action.ADMIN);
     LOG.info("Deleting dataset {}.{}", instance.getNamespaceId(), instance.getId());
     // Drop the dataset first, so that it can never be returned by a subsequent list or get call.
     dropDataset(instance, spec);
@@ -360,14 +363,13 @@ public class DatasetInstanceService {
    *  <ol>
    */
   DatasetAdminOpResponse executeAdmin(Id.DatasetInstance instance, String method) throws Exception {
-    // Throws NamespaceNotFoundException if the namespace does not exist
     ensureNamespaceExists(instance.getNamespace());
 
     Object result = null;
 
     // NOTE: one cannot directly call create and drop, instead this should be called thru
     //       POST/DELETE @ /data/datasets/{instance-id}. Because we must create/drop metadata for these at same time
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     DatasetId datasetId = instance.toEntityId();
     switch (method) {
       case "exists":
@@ -493,6 +495,7 @@ public class DatasetInstanceService {
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
       if (namespaceQueryAdmin.get(namespace) == null) {
+        System.out.println("notfound ######## " + namespaceQueryAdmin);
         throw new NamespaceNotFoundException(namespace);
       }
     }
@@ -510,7 +513,7 @@ public class DatasetInstanceService {
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
   private void ensureAccess(DatasetId datasetId) throws Exception {
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetId)) {
       throw new UnauthorizedException(principal, datasetId);

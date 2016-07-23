@@ -19,7 +19,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       searchPath = '/namespaces/:namespace/metadata/search?target=stream&target=dataset&target=view',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
-      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/auditlog/:entityType/:entityId',
+      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.serviceId + '/methods/v1/auditlog/:entityType/:entityId',
       navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId,
       trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId,
       propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties',
@@ -67,7 +67,10 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     demotePreferredTags: myHelpers.getConfig('POST', 'REQUEST', tagsPath + '/demote', false, { suppressErrors: true }),
     promoteUserTags: myHelpers.getConfig('POST', 'REQUEST', tagsPath + '/promote', false, { suppressErrors: true }),
     validatePreferredTags: myHelpers.getConfig('POST', 'REQUEST', tagsPath + '/validate', false, { suppressErrors: true }),
+    getEntityTags: myHelpers.getConfig('GET', 'REQUEST', tagsPath + '/:entityType/:entityId', false, { suppressErrors: true }),
+    addEntityTag: myHelpers.getConfig('POST', 'REQUEST', tagsPath + '/promote/:entityType/:entityId', false, { suppressErrors: true }),
     deletePreferredTags: myHelpers.getConfig('DELETE', 'REQUEST', tagsPath + '/preferred', false, { suppressErrors: true }),
+    deleteEntityTag: myHelpers.getConfig('DELETE', 'REQUEST', tagsPath + '/delete/:entityType/:entityId', false, { suppressErrors: true }),
 
     // METADATA PROPERTIES CONTROL
     deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true }),

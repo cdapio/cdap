@@ -53,13 +53,15 @@ Standalone and Distributed CDAP
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
     -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
-    -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
+    -am -amd -DskipTests -P examples,templates,dist,release,unit-tests \
+    -Dsecurity.extensions.dir=</path/to/security/extensions>
 
 - Build Standalone distribution ZIP with additional system artifacts::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
     -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests \
+    -Dsecurity.extensions.dir=</path/to/security/extensions \
     -Dadditional.artifacts.dir=</path/to/additional/artifacts>
 
   This will copy any .jar and .json files in any 'target' directories under the specified path to the artifacts directory.

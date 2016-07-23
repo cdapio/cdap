@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -33,11 +34,14 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -76,7 +80,8 @@ public class LocalQueueTest extends QueueTest {
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
-      new DataFabricLocalModule());
+      new DataFabricLocalModule(),
+      new AuthenticationContextModules().getMasterModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -98,18 +103,20 @@ public class LocalQueueTest extends QueueTest {
       new DataSetsModules().getStandaloneModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getStandaloneModules(),
+      new AuthenticationContextModules().getMasterModule(),
+      new NamespaceClientRuntimeModule().getStandaloneModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override
           protected void configure() {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           }
         }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     QueueProducer producer = factory.createProducer(QueueName.fromFlowlet(
-      Id.Namespace.DEFAULT.getId(), "app", "my", "flowlet", "output"));
+      NamespaceId.DEFAULT.getNamespace(), "app", "my", "flowlet", "output"));
     Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,23 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.run;
+package co.cask.cdap.logging.run;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
-import com.google.inject.Injector;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.junit.Assert;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 
 /**
- * Test {@link co.cask.cdap.metrics.runtime.MetricsTwillRunnable}.
+ * Tests for {@link LogSaverTwillRunnable}.
  */
-public class MetricsTwillRunnableTest {
+public class LogSaverTwillRunnableTest {
 
   @Test
-  public void testInjection() throws Exception {
-    Injector injector = MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create());
-    Assert.assertNotNull(injector);
+  public void testLogSaverInjector() {
+    LogSaverTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration());
   }
 }

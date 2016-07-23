@@ -41,6 +41,7 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
@@ -58,10 +59,12 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
 
@@ -149,7 +152,8 @@ public abstract class MetricsSuiteTestBase {
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules()
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule()
     ).with(new AbstractModule() {
       @Override
       protected void configure() {
@@ -181,7 +185,9 @@ public abstract class MetricsSuiteTestBase {
 
     EndpointStrategy metricsEndPoints = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS));
 
-    port = metricsEndPoints.pick(1L, TimeUnit.SECONDS).getSocketAddress().getPort();
+    Discoverable discoverable = metricsEndPoints.pick(1L, TimeUnit.SECONDS);
+    Assert.assertNotNull("Could not discover metrics service", discoverable);
+    port = discoverable.getSocketAddress().getPort();
 
     return injector;
   }

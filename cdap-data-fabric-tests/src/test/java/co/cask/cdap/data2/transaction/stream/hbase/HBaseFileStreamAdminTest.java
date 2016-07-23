@@ -37,6 +37,8 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdminTest;
 import co.cask.cdap.data2.util.hbase.SimpleNamespaceQueryAdmin;
@@ -111,6 +113,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           }
         })
     );

@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
@@ -57,6 +58,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -268,9 +270,16 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
     // Create input files
     MockExternalSource.writeInput(new File(inputDir, inputFile).getAbsolutePath(), allInput);
 
-    WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    final WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    // make sure the completed run record is stamped, before asserting it.
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workflowManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.MINUTES);
     List<RunRecord> history = workflowManager.getHistory();
     // there should be only one completed run
     Assert.assertEquals(1, history.size());

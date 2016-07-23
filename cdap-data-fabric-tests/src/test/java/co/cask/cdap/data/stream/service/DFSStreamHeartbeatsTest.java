@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,6 +52,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
@@ -135,6 +136,7 @@ public class DFSStreamHeartbeatsTest {
         new ViewAdminModules().getInMemoryModules(),
         new AuthorizationTestModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getMasterModule(),
         // We need the distributed modules here to get the distributed stream service, which is the only one
         // that performs heartbeats aggregation
         new StreamServiceRuntimeModule().getDistributedModules(),

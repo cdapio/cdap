@@ -70,6 +70,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
           controller: 'HydratorPlusPlusNodeConfigCtrl',
           bindToController: true,
           controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
+          animation: false,
           resolve: {
             rDisabled: function() {
               return false;

@@ -43,7 +43,7 @@ import java.util.Map;
  * the provider is set to kms and Hadoop version is 2.6.0 or higher.
  */
 @SuppressWarnings("unused")
-class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
+public class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
   /** Separator between the namespace name and the key name */
   private static final String NAME_SEPARATOR = ":";
@@ -85,8 +85,8 @@ class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationToken
    * @throws IOException If it failed to store the key in the store.
    */
   @Override
-  public void put(String namespace, String name, byte[] data, String description,
-                  Map<String, String> properties) throws IOException {
+  public void putSecureData(String namespace, String name, byte[] data, String description,
+                            Map<String, String> properties) throws IOException {
     KeyProvider.Options options = new KeyProvider.Options(conf);
     options.setDescription(description);
     options.setAttributes(properties);
@@ -105,7 +105,7 @@ class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationToken
    * @param name Name of the element to be deleted.
    */
   @Override
-  public void delete(String namespace, String name) throws IOException {
+  public void deleteSecureData(String namespace, String name) throws IOException {
     try {
       provider.deleteKey(getKeyName(namespace, name));
     } catch (IOException e) {
@@ -119,7 +119,7 @@ class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationToken
    * @param namespace The namespace this key belongs to.
    */
   @Override
-  public List<SecureStoreMetadata> list(String namespace) throws IOException {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
     String prefix = namespace + NAME_SEPARATOR;
     List<String> keysInNamespace = new ArrayList<>();
     KeyProvider.Metadata[] metadatas;
@@ -151,7 +151,7 @@ class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationToken
    * @return An object representing the securely stored data associated with the name.
    */
   @Override
-  public SecureStoreData get(String namespace, String name) throws IOException {
+  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
     String keyName = getKeyName(namespace, name);
     KeyProvider.Metadata metadata = provider.getMetadata(keyName);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, metadata.getDescription(), metadata.getAttributes());

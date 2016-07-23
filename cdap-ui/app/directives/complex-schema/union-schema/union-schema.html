@@ -21,14 +21,18 @@
   </div>
 
   <fieldset ng-disabled="UnionSchema.isDisabled">
-    <div ng-repeat="item in UnionSchema.types track by $index">
+    <div class="item"
+         ng-repeat="item in UnionSchema.types track by $index">
       <div class="clearfix">
-        <div class="input-column no-type">
-          <select class="form-control"
-                  ng-model="item.displayType"
-                  ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
-                  ng-change="(item.type = item.displayType) && UnionSchema.formatOutput()">
-          </select>
+        <div class="input-column select-only no-type"
+             ng-class="{ 'tab-header': item.nested }">
+          <div class="select-wrapper">
+            <select class="form-control"
+                    ng-model="item.displayType"
+                    ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
+                    ng-change="UnionSchema.changeType(item)">
+            </select>
+          </div>
         </div>
 
         <div class="fields-actions">

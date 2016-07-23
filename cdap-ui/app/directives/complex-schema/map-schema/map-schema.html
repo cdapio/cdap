@@ -22,15 +22,20 @@
 
   <div class="key-field clearfix">
     <fieldset ng-disabled="MapSchema.isDisabled">
-      <div class="map-fields pull-left">
-        Key:
-      </div>
-      <div class="map-input-column">
-        <select class="form-control"
-                ng-model="MapSchema.fields.keys.displayType"
-                ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
-                ng-change="MapSchema.changeType(MapSchema.fields.keys)">
-        </select>
+      <div class="map-input-group"
+           ng-class="{ 'tab-header': MapSchema.fields.keys.nested }">
+        <div class="map-fields pull-left">
+          Key:
+        </div>
+        <div class="map-input-column select-only">
+          <div class="select-wrapper">
+            <select class="form-control"
+                    ng-model="MapSchema.fields.keys.displayType"
+                    ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
+                    ng-change="MapSchema.changeType(MapSchema.fields.keys)">
+            </select>
+          </div>
+        </div>
       </div>
 
       <div class="fields-actions">
@@ -53,15 +58,20 @@
 
   <div class="value-field clearfix">
     <fieldset ng-disabled="MapSchema.isDisabled">
-      <div class="map-fields pull-left">
-        Value:
-      </div>
-      <div class="map-input-column">
-        <select class="form-control"
-                ng-model="MapSchema.fields.values.displayType"
-                ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
-                ng-change="MapSchema.changeType(MapSchema.fields.values)">
-        </select>
+      <div class="map-input-group"
+           ng-class="{ 'tab-header': MapSchema.fields.values.nested }">
+        <div class="map-fields pull-left">
+          Value:
+        </div>
+        <div class="map-input-column select-only">
+          <div class="select-wrapper">
+            <select class="form-control"
+                    ng-model="MapSchema.fields.values.displayType"
+                    ng-options="option as option for option in MapSchema.SCHEMA_TYPES"
+                    ng-change="MapSchema.changeType(MapSchema.fields.values)">
+            </select>
+          </div>
+        </div>
       </div>
 
       <div class="fields-actions">

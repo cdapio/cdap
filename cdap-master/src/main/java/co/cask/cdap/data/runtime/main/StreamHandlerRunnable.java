@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,8 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.security.RemoteUGIProvider;
+import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -43,11 +45,15 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -79,34 +85,11 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       // Set the instance id
       cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, context.getInstanceId());
 
-      injector = Guice.createInjector(
-        new ConfigModule(cConf, hConf),
-        new IOModule(),
-        new ZKClientModule(),
-        new KafkaClientModule(),
-        new DiscoveryRuntimeModule().getDistributedModules(),
-        new LocationRuntimeModule().getDistributedModules(),
-        new NamespaceClientRuntimeModule().getDistributedModules(),
-        new MetricsClientRuntimeModule().getDistributedModules(),
-        new MetricsStoreModule(),
-        new DataFabricModules().getDistributedModules(),
-        new DataSetsModules().getDistributedModules(),
-        new LoggingModules().getDistributedModules(),
-        new ExploreClientModule(),
-        new StreamServiceRuntimeModule().getDistributedModules(),
-        new ViewAdminModules().getDistributedModules(),
-        new StreamAdminModules().getDistributedModules(),
-        new NotificationFeedClientModule(),
-        new NotificationServiceRuntimeModule().getDistributedModules(),
-        new NamespaceClientRuntimeModule().getDistributedModules(),
-        new AuditModule().getDistributedModules()
-        );
-
+      injector = createInjector(cConf, hConf);
       injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.STREAMS));
-
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -119,5 +102,37 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
     services.add(injector.getInstance(StreamService.class));
+  }
+
+  @VisibleForTesting
+  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+    return Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new IOModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new LocationRuntimeModule().getDistributedModules(),
+      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new MetricsStoreModule(),
+      new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
+      new ExploreClientModule(),
+      new StreamServiceRuntimeModule().getDistributedModules(),
+      new ViewAdminModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
+      new NotificationServiceRuntimeModule().getDistributedModules(),
+      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new AuditModule().getDistributedModules(),
+      new AuthenticationContextModules().getMasterModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+        }
+      });
   }
 }

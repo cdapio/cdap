@@ -46,6 +46,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -62,6 +63,11 @@ import javax.annotation.Nullable;
 public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private static final Gson GSON = new Gson();
+
+  @BeforeClass
+  public static void setup() throws Exception {
+    DatasetServiceTestBase.initialize();
+  }
 
   @Test
   public void testSystemDatasetNotInList() throws Exception {
@@ -84,7 +90,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {
-
     // nothing has been created, modules and types list is empty
     List<DatasetSpecificationSummary> instances = getInstances().getResponseObject();
 
@@ -181,7 +186,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testUpdateInstance() throws Exception {
-
     // nothing has been created, modules and types list is empty
     List<DatasetSpecificationSummary> instances = getInstances().getResponseObject();
 
@@ -405,8 +409,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstances(String namespace) throws IOException {
     return ObjectResponse.fromJsonBody(makeInstancesRequest(namespace),
-                                       new TypeToken<List<DatasetSpecificationSummary>>() {
-                                       }.getType());
+                                       new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
   }
 
   private HttpResponse makeInstancesRequest(String namespace) throws IOException {

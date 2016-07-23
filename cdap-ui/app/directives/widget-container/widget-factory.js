@@ -188,6 +188,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-sql-conditions></my-sql-conditions>',
         attributes: {
           'ng-model': 'model',
+          'disabled': 'disabled',
           'input-schema': 'inputSchema'
         }
       }

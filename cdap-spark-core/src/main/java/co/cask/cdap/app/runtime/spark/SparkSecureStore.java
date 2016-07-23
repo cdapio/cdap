@@ -50,13 +50,13 @@ public class SparkSecureStore implements SecureStore, Externalizable {
   }
 
   @Override
-  public List<SecureStoreMetadata> list(String namespace) throws IOException {
-    return delegate.list(namespace);
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+    return delegate.listSecureData(namespace);
   }
 
   @Override
-  public SecureStoreData get(String namespace, String name) throws IOException {
-    return delegate.get(namespace, name);
+  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+    return delegate.getSecureData(namespace, name);
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -57,8 +58,15 @@ public class Impersonator {
     if (!kerberosEnabled) {
       return callable.call();
     }
+    return ImpersonationUtils.doAs(getUGI(namespaceId), callable);
+  }
+
+  public UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException {
+    if (!kerberosEnabled) {
+      return UserGroupInformation.getCurrentUser();
+    }
+
     ImpersonationInfo impersonationInfo = impersonationUserResolver.getImpersonationInfo(namespaceId);
-    UserGroupInformation ugi = ugiProvider.getConfiguredUGI(impersonationInfo);
-    return ImpersonationUtils.doAs(ugi, callable);
+    return ugiProvider.getConfiguredUGI(impersonationInfo);
   }
 }

@@ -19,6 +19,8 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.PartitionedFileWriter;
 import co.cask.cdap.data.stream.TimePartitionedStreamFileWriter.TimePartition;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.io.OutputSupplier;
 import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.Location;
@@ -65,8 +67,10 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
   // TODO: Add a timer task to close file after duration has passed even there is no writer.
 
   public TimePartitionedStreamFileWriter(Location streamLocation, long partitionDuration,
-                                         String fileNamePrefix, long indexInterval) {
-    super(new StreamWriterFactory(streamLocation, partitionDuration, fileNamePrefix, indexInterval));
+                                         String fileNamePrefix, long indexInterval, StreamId streamId,
+                                         Impersonator impersonator) {
+    super(new StreamWriterFactory(streamLocation, partitionDuration, fileNamePrefix, indexInterval),
+          streamId, impersonator);
     this.partitionDuration = partitionDuration;
   }
 

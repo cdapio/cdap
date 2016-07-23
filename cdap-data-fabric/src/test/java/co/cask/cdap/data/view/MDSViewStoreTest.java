@@ -33,6 +33,7 @@ import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
@@ -66,6 +67,7 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

@@ -28,7 +28,8 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeo
     vm.types.splice(placement, 0, {
       type: 'string',
       displayType: 'string',
-      nullable: false
+      nullable: false,
+      nested: false
     });
     vm.formatOutput();
   };
@@ -39,6 +40,17 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeo
       vm.addType();
     }
     vm.formatOutput();
+  };
+
+  vm.changeType = (item) => {
+    if (SCHEMA_TYPES.simpleTypes.indexOf(item.displayType) !== -1) {
+      item.type = item.displayType;
+      vm.formatOutput();
+    } else {
+      item.type = null;
+    }
+
+    item.nested = SchemaHelper.checkComplexType(item.displayType);
   };
 
   function init(strJson) {

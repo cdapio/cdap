@@ -24,6 +24,7 @@ angular.module(PKG.name + '.services')
         templateUrl: 'pipeline-export-modal/pipeline-export-modal-template.html',
         size: 'lg',
         keyboard: true,
+        animation: false,
         windowTopClass: 'node-config-modal cdap-modal',
         controller: ['$scope', 'config', '$timeout', 'exportConfig', function($scope, config, $timeout, exportConfig) {
           var exportTimeout = null;
@@ -43,13 +44,13 @@ angular.module(PKG.name + '.services')
             });
           };
 
-          $scope.$on('$destroy', () => {
+          $scope.$on('$destroy', function() {
             $timeout.cancel(exportTimeout);
           });
         }],
         resolve: {
-          config: () => config,
-          exportConfig: () => exportConfig
+          config: function(){ return config; },
+          exportConfig: function() { return exportConfig; }
         }
       });
     };

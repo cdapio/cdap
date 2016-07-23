@@ -97,6 +97,7 @@ import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.security.DefaultUGIProvider;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
@@ -143,6 +144,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule().getInMemoryModule(),
                            new SecureStoreModules().getInMemoryModules(),
                            new EntityVerifierModule(),
+                           new AuthenticationContextModules().getMasterModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -178,6 +180,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule().getStandaloneModule(),
                            new SecureStoreModules().getStandaloneModules(),
                            new EntityVerifierModule(),
+                           new AuthenticationContextModules().getMasterModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -235,6 +238,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule().getDistributedModule(),
                            new SecureStoreModules().getDistributedModules(),
                            new EntityVerifierModule(),
+                           new AuthenticationContextModules().getMasterModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {

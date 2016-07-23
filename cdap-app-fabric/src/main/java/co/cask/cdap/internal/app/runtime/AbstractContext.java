@@ -378,13 +378,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public List<SecureStoreMetadata> list(String namespace) throws IOException {
-    return secureStore.list(namespace);
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+    return secureStore.listSecureData(namespace);
   }
 
   @Override
-  public SecureStoreData get(String namespace, String name) throws IOException {
-    return secureStore.get(namespace, name);
+  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+    return secureStore.getSecureData(namespace, name);
   }
 
 }

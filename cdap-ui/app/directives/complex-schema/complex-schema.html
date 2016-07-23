@@ -18,11 +18,11 @@
 
   <div class="clearfix"
        ng-if="::!ComplexSchema.hideHeader">
-    <div class="input-column">
+    <div class="input-column header">
       <h4>Name</h4>
     </div>
 
-    <div class="type-column">
+    <div class="type-column header">
       <h4>Type</h4>
     </div>
 
@@ -47,23 +47,29 @@
       </my-record-schema>
     </fieldset>
 
-    <div ng-repeat="field in ComplexSchema.parsedSchema track by $index">
+    <div ng-repeat="field in ComplexSchema.parsedSchema track by $index"
+        class="field-row"
+        ng-class="{'nested-row': !field.nested}">
       <div class="clearfix">
-        <div class="input-column">
+        <div class="input-column"
+            ng-class="{'tab-header': field.nested}">
           <input type="text"
                  id="{{ field.id }}"
                  class="form-control"
                  ng-model="field.name"
                  ng-blur="ComplexSchema.formatOutput()"
-                 ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)">
+                 ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
+                 placeholder="Field Name">
         </div>
 
         <div class="type-column">
-          <select class="form-control"
-                  ng-model="field.displayType"
-                  ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
-                  ng-change="ComplexSchema.changeType(field)">
-          </select>
+          <div class="select-wrapper">
+            <select class="form-control"
+                    ng-model="field.displayType"
+                    ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
+                    ng-change="ComplexSchema.changeType(field)">
+            </select>
+          </div>
         </div>
 
         <div class="fields-actions">

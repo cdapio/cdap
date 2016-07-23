@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.security.store;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -23,18 +25,19 @@ import java.util.List;
  * Provides read access to the secure store.
  * For write access use {@link SecureStoreManager}
  */
+@Beta
 public interface SecureStore {
 
   /**
    * @param namespace The namespace that this key belongs to.
    * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
    */
-  List<SecureStoreMetadata> list(String namespace) throws IOException;
+  List<SecureStoreMetadata> listSecureData(String namespace) throws IOException;
 
   /**
    * @param namespace The namespace that this key belongs to.
    * @param name Name of the data element.
    * @return An object representing the securely stored data associated with the name.
    */
-  SecureStoreData get(String namespace, String name) throws IOException;
+  SecureStoreData getSecureData(String namespace, String name) throws IOException;
 }

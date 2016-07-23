@@ -39,6 +39,8 @@ import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
+import co.cask.cdap.data2.security.ImpersonationUtils;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -49,6 +51,7 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -60,6 +63,7 @@ import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,6 +102,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final ExploreTableNaming tableNaming;
   private final ViewAdmin viewAdmin;
   private final MetadataStore metadataStore;
+  private final Impersonator impersonator;
 
   private ExploreFacade exploreFacade;
   private AuditPublisher auditPublisher;
@@ -113,7 +118,8 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamMetaStore streamMetaStore,
                          ExploreTableNaming tableNaming,
                          MetadataStore metadataStore,
-                         ViewAdmin viewAdmin) {
+                         ViewAdmin viewAdmin,
+                         Impersonator impersonator) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
@@ -126,6 +132,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.tableNaming = tableNaming;
     this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
+    this.impersonator = impersonator;
   }
 
   @SuppressWarnings("unused")
@@ -142,21 +149,32 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
-    Iterable<Location> locations;
-    try {
-      locations = StreamUtils.listAllStreams(getStreamBaseLocation(namespace));
-    } catch (FileNotFoundException e) {
-      // If the stream base doesn't exists, nothing need to be deleted
-      locations = ImmutableList.of();
-    }
+  public void dropAllInNamespace(final Id.Namespace namespace) throws Exception {
+    UserGroupInformation ugi = impersonator.getUGI(namespace.toEntityId());
+    Iterable<Location> locations = ImpersonationUtils.doAs(ugi, new Callable<Iterable<Location>>() {
+      @Override
+      public Iterable<Location> call() throws Exception {
+        try {
+          return StreamUtils.listAllStreams(getStreamBaseLocation(namespace));
+        } catch (FileNotFoundException e) {
+          // If the stream base doesn't exists, nothing need to be deleted
+          return ImmutableList.of();
+        }
+      }
+    });
 
-    for (final Location streamLocation : locations) {
-      doDrop(StreamUtils.getStreamIdFromLocation(streamLocation), streamLocation);
+    for (final Location location : locations) {
+      doDrop(StreamUtils.getStreamIdFromLocation(location), location, ugi);
     }
 
     // Also drop the state table
-    stateStoreFactory.dropAllInNamespace(namespace);
+    ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        stateStoreFactory.dropAllInNamespace(namespace);
+        return null;
+      }
+    });
   }
 
   @Override
@@ -237,24 +255,35 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
-    Location configLocation = getConfigLocation(streamId);
-    if (!configLocation.exists()) {
-      throw new FileNotFoundException(String.format("Configuration file %s for stream '%s' does not exist.",
-                                                    configLocation.toURI().getPath(), streamId));
-    }
-    StreamConfig config = GSON.fromJson(
-      CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(configLocation), Charsets.UTF_8)),
-      StreamConfig.class);
+  public StreamConfig getConfig(final Id.Stream streamId) throws IOException {
+    UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+    try {
+      return ImpersonationUtils.doAs(ugi, new Callable<StreamConfig>() {
+        @Override
+        public StreamConfig call() throws IOException {
+          Location configLocation = getConfigLocation(streamId);
+          if (!configLocation.exists()) {
+            throw new FileNotFoundException(String.format("Configuration file %s for stream '%s' does not exist.",
+                                                          configLocation.toURI().getPath(), streamId));
+          }
+          StreamConfig config = GSON.fromJson(
+            CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(configLocation),
+                                                               Charsets.UTF_8)), StreamConfig.class);
 
-    int threshold = config.getNotificationThresholdMB();
-    if (threshold <= 0) {
-      // Need to default it for existing configs that were created before notification threshold was added.
-      threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD);
-    }
+          int threshold = config.getNotificationThresholdMB();
+          if (threshold <= 0) {
+            // Need to default it for existing configs that were created before notification threshold was added.
+            threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD);
+          }
 
-    return new StreamConfig(streamId, config.getPartitionDuration(), config.getIndexInterval(),
-                            config.getTTL(), getStreamLocation(streamId), config.getFormat(), threshold);
+          return new StreamConfig(streamId, config.getPartitionDuration(), config.getIndexInterval(),
+                                  config.getTTL(), getStreamLocation(streamId), config.getFormat(), threshold);
+        }
+      });
+    } catch (Exception ex) {
+      Throwables.propagateIfPossible(ex, IOException.class);
+      throw new IOException(ex);
+    }
   }
 
   @Override
@@ -267,9 +296,20 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void updateConfig(final Id.Stream streamId, final StreamProperties properties) throws IOException {
-    Location streamLocation = getStreamLocation(streamId);
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
+    Location streamLocation;
+    try {
+      streamLocation = impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          return getStreamLocation(streamId);
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(e);
+    }
 
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
     try {
       streamCoordinatorClient.updateProperties(
         streamId, new Callable<CoordinatorStreamProperties>() {
@@ -303,9 +343,19 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean exists(Id.Stream streamId) throws Exception {
+  public boolean exists(final Id.Stream streamId) throws Exception {
     try {
-      return streamMetaStore.streamExists(streamId) && getConfigLocation(streamId).exists();
+      boolean metaExists = streamMetaStore.streamExists(streamId);
+      if (!metaExists) {
+        return false;
+      }
+      UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+      return ImpersonationUtils.doAs(ugi, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return getConfigLocation(streamId).exists();
+        }
+      });
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -319,9 +369,16 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig create(final Id.Stream streamId, @Nullable final Properties props) throws Exception {
-    assertNamespaceHomeExists(streamId.getNamespace());
-    final Location streamLocation = getStreamLocation(streamId);
-    Locations.mkdirsIfNotExists(streamLocation);
+    final UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+    final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+      @Override
+      public Location call() throws Exception {
+        assertNamespaceHomeExists(streamId.getNamespace());
+        Location streamLocation = getStreamLocation(streamId);
+        Locations.mkdirsIfNotExists(streamLocation);
+        return streamLocation;
+      }
+    });
 
     return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
       @Override
@@ -347,9 +404,16 @@ public class FileStreamAdmin implements StreamAdmin {
                                      FormatSpecification.class);
         }
 
-        StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
-                                               ttl, streamLocation, formatSpec, threshold);
-        writeConfig(config);
+        final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
+                                                     ttl, streamLocation, formatSpec, threshold);
+        ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            writeConfig(config);
+            return null;
+          }
+        });
+
         createStreamFeeds(config);
         alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId, description);
@@ -389,13 +453,26 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void truncate(Id.Stream streamId) throws Exception {
-    doTruncate(streamId, getStreamLocation(streamId));
+  public void truncate(final Id.Stream streamId) throws Exception {
+    impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        doTruncate(streamId, getStreamLocation(streamId));
+        return null;
+      }
+    });
   }
 
   @Override
-  public void drop(Id.Stream streamId) throws Exception {
-    doDrop(streamId, getStreamLocation(streamId));
+  public void drop(final Id.Stream streamId) throws Exception {
+    UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+    Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+      @Override
+      public Location call() throws Exception {
+        return getStreamLocation(streamId);
+      }
+    });
+    doDrop(streamId, streamLocation, ugi);
   }
 
   @Override
@@ -495,15 +572,23 @@ public class FileStreamAdmin implements StreamAdmin {
     });
   }
 
-  private void doDrop(final Id.Stream streamId, final Location streamLocation) throws Exception {
+  private void doDrop(final Id.Stream streamId, final Location streamLocation,
+                      final UserGroupInformation ugi) throws Exception {
     // Delete the stream config so that calls that try to access the stream will fail after this call returns.
     // The stream coordinator client will notify all clients that stream has been deleted.
     streamCoordinatorClient.deleteStream(streamId, new Runnable() {
       @Override
       public void run() {
         try {
-          Location configLocation = getConfigLocation(streamId);
-          if (!configLocation.exists()) {
+          final Location configLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+            @Override
+            public Location call() throws Exception {
+              Location configLocation = getConfigLocation(streamId);
+              return configLocation.exists() ? configLocation : null;
+            }
+          });
+
+          if (configLocation == null) {
             return;
           }
           alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false, null);
@@ -514,20 +599,25 @@ public class FileStreamAdmin implements StreamAdmin {
             viewAdmin.delete(view);
           }
 
-          if (!configLocation.delete()) {
-            LOG.debug("Could not delete stream config location {}", streamLocation);
-          }
 
-          // Remove metadata for the stream
-          metadataStore.removeMetadata(streamId);
+          ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              if (!configLocation.delete()) {
+                LOG.debug("Could not delete stream config location {}", streamLocation);
+              }
 
-          // Move the stream directory to the deleted directory
-          // The target directory has a timestamp appended to the stream name
-          // It is for the case when a stream is created and deleted in a short period of time before
-          // the stream janitor kicks in.
-          Location deleted = StreamUtils.getDeletedLocation(getStreamBaseLocation(streamId.getNamespace()));
-          Locations.mkdirsIfNotExists(deleted);
-          streamLocation.renameTo(deleted.append(streamId.getId() + System.currentTimeMillis()));
+              // Move the stream directory to the deleted directory
+              // The target directory has a timestamp appended to the stream name
+              // It is for the case when a stream is created and deleted in a short period of time before
+              // the stream janitor kicks in.
+              Location deleted = StreamUtils.getDeletedLocation(getStreamBaseLocation(streamId.getNamespace()));
+              Locations.mkdirsIfNotExists(deleted);
+              streamLocation.renameTo(deleted.append(streamId.getId() + System.currentTimeMillis()));
+              return null;
+            }
+          });
+
           streamMetaStore.removeStream(streamId);
           metadataStore.removeMetadata(streamId);
           publishAudit(streamId, AuditType.DELETE);
@@ -558,8 +648,15 @@ public class FileStreamAdmin implements StreamAdmin {
       streamMetaStore.addStream(streamId, description);
     }
 
-    StreamConfig newConfig = builder.build();
-    writeConfig(newConfig);
+    final StreamConfig newConfig = builder.build();
+    UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+    ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        writeConfig(newConfig);
+        return null;
+      }
+    });
 
     // Update system metadata for stream
     SystemMetadataWriter systemMetadataWriter = new StreamSystemMetadataWriter(

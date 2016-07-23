@@ -35,6 +35,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -100,6 +101,11 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
                                           "datasetType1x", ImmutableList.of("module1"),
                                           "datasetType2", ImmutableList.of("module1", "module2"));
 
+
+  @BeforeClass
+  public static void setup() throws Exception {
+    DatasetServiceTestBase.initialize();
+  }
 
   @Test
   public void testBasics() throws Exception {
@@ -283,8 +289,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   private ObjectResponse<List<DatasetTypeMeta>> getTypes(Id.Namespace namespaceId) throws IOException {
     return ObjectResponse.fromJsonBody(makeTypesRequest(namespaceId),
-                                       new TypeToken<List<DatasetTypeMeta>>() {
-                                       }.getType());
+                                       new TypeToken<List<DatasetTypeMeta>>() { }.getType());
   }
 
   private HttpResponse makeTypesRequest(Id.Namespace namespaceId) throws IOException {

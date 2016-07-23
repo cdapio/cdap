@@ -15,6 +15,9 @@
  */
 package co.cask.cdap.data.file;
 
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
@@ -28,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -42,6 +46,8 @@ public abstract class PartitionedFileWriter<T, P> implements FileWriter<T> {
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileWriter.class);
 
   private final PartitionedFileWriterFactory<T, P> fileWriterFactory;
+  private final StreamId streamId;
+  private final Impersonator impersonator;
   private final Map<P, FileWriter<T>> writers;
   private P currentPartition;
   private FileWriter<T> currentWriter;
@@ -50,8 +56,11 @@ public abstract class PartitionedFileWriter<T, P> implements FileWriter<T> {
   /**
    * Constructs with the given file writer factory.
    */
-  protected PartitionedFileWriter(PartitionedFileWriterFactory<T, P> fileWriterFactory) {
+  protected PartitionedFileWriter(PartitionedFileWriterFactory<T, P> fileWriterFactory,
+                                  StreamId streamId, Impersonator impersonator) {
     this.fileWriterFactory = fileWriterFactory;
+    this.streamId = streamId;
+    this.impersonator = impersonator;
     this.writers = Maps.newHashMap();
   }
 
@@ -129,7 +138,7 @@ public abstract class PartitionedFileWriter<T, P> implements FileWriter<T> {
    * Gets a {@link FileWriter} for the given event.
    */
   private FileWriter<T> getWriter(T event) throws IOException {
-    P partition = getPartition(event);
+    final P partition = getPartition(event);
 
     // If the partition changed, get the file writer for the new partition.
     if (!Objects.equal(currentPartition, partition)) {
@@ -137,7 +146,17 @@ public abstract class PartitionedFileWriter<T, P> implements FileWriter<T> {
       partitionChanged(currentPartition, partition);
       currentWriter = writers.get(partition);
       if (currentWriter == null) {
-        currentWriter = fileWriterFactory.create(partition);
+        try {
+          currentWriter = impersonator.doAs(new NamespaceId(streamId.getNamespace()), new Callable<FileWriter<T>>() {
+            @Override
+            public FileWriter<T> call() throws Exception {
+              return fileWriterFactory.create(partition);
+            }
+          });
+        } catch (Exception e) {
+          Throwables.propagateIfPossible(e, IOException.class);
+          throw new IOException(e);
+        }
         writers.put(partition, currentWriter);
       }
       currentPartition = partition;
