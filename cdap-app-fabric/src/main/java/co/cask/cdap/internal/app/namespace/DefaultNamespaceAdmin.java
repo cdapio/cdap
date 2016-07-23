@@ -299,12 +299,28 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     if (config != null && config.getRootDirectory() != null) {
       // if a root directory was given for update and it's not same as existing one throw exception
       if (!config.getRootDirectory().equals(existingMeta.getConfig().getRootDirectory())) {
-        throw new BadRequestException(String.format("%s cannot be updated.", NamespaceConfig.ROOT_DIRECTORY));
+        throw new BadRequestException(String.format("Updates to %s are not allowed. Cannot update from %s to %s.",
+                                                    NamespaceConfig.ROOT_DIRECTORY,
+                                                    existingMeta.getConfig().getRootDirectory(),
+                                                    config.getRootDirectory()));
       }
 
       if (config.getHbaseNamespace() != null
         && (!config.getHbaseNamespace().equals(existingMeta.getConfig().getHbaseNamespace()))) {
-        throw new BadRequestException(String.format("%s cannot be updated.", NamespaceConfig.HBASE_NAMESPACE));
+        throw new BadRequestException(String.format("Updates to %s are not allowed. Cannot update from %s to %s.",
+                                                    NamespaceConfig.HBASE_NAMESPACE,
+                                                    existingMeta.getConfig().getHbaseNamespace(),
+                                                    config.getHbaseNamespace()));
+      }
+    }
+
+    if (config != null && config.getHiveDatabase() != null) {
+      // if a root directory was given for update and it's not same as existing one throw exception
+      if (!config.getHiveDatabase().equals(existingMeta.getConfig().getHiveDatabase())) {
+        throw new BadRequestException(String.format("Updates to %s are not allowed. Cannot update from %s to %s.",
+                                                    NamespaceConfig.HIVE_DATABASE,
+                                                    existingMeta.getConfig().getHiveDatabase(),
+                                                    config.getHiveDatabase()));
       }
     }
 

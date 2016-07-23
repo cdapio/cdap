@@ -103,11 +103,12 @@ public class ExploreDisabledTest {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId).build();
+    namespaceAdmin.create(namespaceMeta);
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
     namespacedLocationFactory.get(namespaceId).mkdirs();
-    exploreClient.addNamespace(namespaceId);
+    exploreClient.addNamespace(namespaceMeta);
   }
 
   @AfterClass

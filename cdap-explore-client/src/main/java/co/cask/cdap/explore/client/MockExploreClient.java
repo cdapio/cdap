@@ -23,6 +23,7 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import com.google.common.collect.ImmutableMap;
@@ -180,7 +181,7 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<ExploreExecutionResult> addNamespace(Id.Namespace namespace) {
+  public ListenableFuture<ExploreExecutionResult> addNamespace(NamespaceMeta namespaceMeta) {
     return null;
   }
 

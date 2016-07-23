@@ -272,8 +272,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void testQueriesCount() throws Exception {
     Id.Namespace testNamespace1 = Id.Namespace.from("testQueriesCount");
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testNamespace1).build());
-    exploreClient.addNamespace(testNamespace1).get();
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(testNamespace1).build();
+    namespaceAdmin.create(namespaceMeta);
+    exploreClient.addNamespace(namespaceMeta).get();
 
     try {
       Assert.assertEquals(0, exploreService.getActiveQueryCount(testNamespace1));
@@ -305,10 +306,12 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Id.Namespace testNamespace1 = Id.Namespace.from("test1");
     Id.Namespace testNamespace2 = Id.Namespace.from("test2");
 
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testNamespace1).build());
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testNamespace2).build());
-    exploreClient.addNamespace(testNamespace1).get();
-    exploreClient.addNamespace(testNamespace2).get();
+    NamespaceMeta testNamespace1Meta = new NamespaceMeta.Builder().setName(testNamespace1).build();
+    namespaceAdmin.create(testNamespace1Meta);
+    NamespaceMeta testNamespace2Meta = new NamespaceMeta.Builder().setName(testNamespace2).build();
+    namespaceAdmin.create(testNamespace2Meta);
+    exploreClient.addNamespace(testNamespace1Meta).get();
+    exploreClient.addNamespace(testNamespace2Meta).get();
 
     exploreClient.submit(testNamespace1, "create table my_table (first INT, second STRING)").get();
 
@@ -731,7 +734,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                             new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
                             new QueryResult(Lists.<Object>newArrayList("default", ""))));
 
-    future = exploreClient.addNamespace(Id.Namespace.from("test"));
+    future = exploreClient.addNamespace(new NamespaceMeta.Builder().setName("test").build());
     future.get();
 
     future = exploreClient.schemas(null, null);

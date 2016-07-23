@@ -20,12 +20,14 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
@@ -69,7 +71,8 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private static final String CDAP_NS = "ns1";
   private static final String HBASE_NS = "custns1";
-  private static final Map<String, String> customMap = ImmutableMap.of(CDAP_NS, HBASE_NS);
+  private static final Map<String, NamespaceMeta> customMap =
+    ImmutableMap.of(CDAP_NS, new NamespaceMeta.Builder().setName(CDAP_NS).setHBaseDatabase(HBASE_NS).build());
 
   @BeforeClass
   public static void beforeClass() throws Exception {
