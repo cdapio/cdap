@@ -33,6 +33,7 @@ import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Guice;
@@ -66,20 +67,11 @@ public class DefaultSecureStoreServiceTest {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
-  @Before
-  public void before() {
-
-  }
-
-  public DefaultSecureStoreServiceTest() throws IOException, InterruptedException {
-  }
-
   @BeforeClass
   public static void setup() throws Exception {
     Injector injector = Guice.createInjector(new AppFabricTestModule(createCConf()));
     secureStoreService = injector.getInstance(SecureStoreService.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-
   }
 
   private static CConfiguration createCConf() throws IOException {
@@ -103,15 +95,16 @@ public class DefaultSecureStoreServiceTest {
     final SecureKeyId secureKeyId1 = NamespaceId.DEFAULT.secureKey(KEY1);
     SecurityRequestContext.setUserId(ALICE.getName());
     final SecureKeyCreateRequest createRequest = new SecureKeyCreateRequest(DESCRIPTION1, VALUE1,
-                                                                      Collections.<String, String>emptyMap());
-    assertAuthorizationFailure(new SecureStoreOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        secureStoreService.put(secureKeyId1, createRequest);
-      }
-    }, "Alice should not be able to store a key since she does not have WRITE privileges on the namespace");
+                                                                            Collections.<String, String>emptyMap());
+    try {
+      secureStoreService.put(secureKeyId1, createRequest);
+      Assert.fail("Alice should not be able to store a key since she does not have WRITE privileges on the namespace");
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
 
-    // grant alice write access to the namespace
+
+    // Grant ALICE write access to the namespace
     grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, ImmutableSet.of(Action.WRITE));
     // Write should succeed
     secureStoreService.put(secureKeyId1, createRequest);
@@ -132,17 +125,25 @@ public class DefaultSecureStoreServiceTest {
     Assert.assertEquals(1, secureKeyListEntries.size());
 
     // BOB should not be able to delete the key
-    assertAuthorizationFailure(new SecureStoreOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        secureStoreService.delete(secureKeyId1);
-      }
-    }, "Bob should not be able to delete a key since he does not have ADMIN privileges on the key");
+    try {
+      secureStoreService.delete(secureKeyId1);
+      Assert.fail("Bob should not be able to delete a key since he does not have ADMIN privileges on the key");
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
 
     // Grant Bob ADMIN access and he should be able to delete the key
     grantAndAssertSuccess(secureKeyId1, BOB, ImmutableSet.of(Action.ADMIN));
     secureStoreService.delete(secureKeyId1);
     Assert.assertEquals(0, secureStoreService.list(NamespaceId.DEFAULT).size());
+    Predicate<Privilege> secureKeyIdFilter = new Predicate<Privilege>() {
+      @Override
+      public boolean apply(Privilege input) {
+        return input.getEntity().equals(secureKeyId1);
+      }
+    };
+    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(ALICE), secureKeyIdFilter).isEmpty());
+    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), secureKeyIdFilter).isEmpty());
   }
 
   private void assertAuthorizationFailure(SecureStoreOperationExecutor operation, String failureMsg) throws Exception {
@@ -165,7 +166,6 @@ public class DefaultSecureStoreServiceTest {
                         authorizer.listPrivileges(principal));
   }
 
-
   private void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
     authorizer.revoke(entityId, principal, actions);
@@ -178,5 +178,4 @@ public class DefaultSecureStoreServiceTest {
   private interface SecureStoreOperationExecutor {
     void execute() throws Exception;
   }
-
 }
