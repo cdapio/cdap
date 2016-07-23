@@ -24,13 +24,17 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -42,6 +46,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
 
 /**
  * Handles reading/writing of file metadata.
@@ -58,6 +63,7 @@ public final class FileMetaDataManager {
   private final String logBaseDir;
   private final LogSaverTableUtil tableUtil;
   private final TransactionExecutorFactory transactionExecutorFactory;
+  private final Impersonator impersonator;
 
   /// Note: The FileMetaDataManager needs to have a RootLocationFactory because for custom mapped namespaces the
   // location mapped to a namespace are from root of the filesystem. The FileMetaDataManager stores a location in
@@ -65,12 +71,14 @@ public final class FileMetaDataManager {
   @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
                              RootLocationFactory rootLocationFactory,
-                             NamespacedLocationFactory namespacedLocationFactory, CConfiguration cConf) {
+                             NamespacedLocationFactory namespacedLocationFactory, CConfiguration cConf,
+                             Impersonator impersonator) {
     this.tableUtil = tableUtil;
     this.transactionExecutorFactory = txExecutorFactory;
     this.rootLocationFactory = rootLocationFactory;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    this.impersonator = impersonator;
   }
 
   /**
@@ -118,19 +126,26 @@ public final class FileMetaDataManager {
     return execute(new TransactionExecutor.Function<Table, NavigableMap<Long, Location>>() {
       @Override
       public NavigableMap<Long, Location> apply(Table table) throws Exception {
-        Row cols = table.get(getRowKey(loggingContext));
+        NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
+        final Row cols = table.get(getRowKey(loggingContext));
 
         if (cols.isEmpty()) {
           //noinspection unchecked
           return (NavigableMap<Long, Location>) EMPTY_MAP;
         }
 
-        NavigableMap<Long, Location> files = new TreeMap<>();
-        for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
-          // the location can be any location from on the filesystem for custom mapped namespaces
-          files.put(Bytes.toLong(entry.getKey()),
-                    rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))));
-        }
+        final NavigableMap<Long, Location> files = new TreeMap<>();
+        impersonator.doAs(namespaceId, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+              // the location can be any location from on the filesystem for custom mapped namespaces
+              files.put(Bytes.toLong(entry.getKey()),
+                        rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))));
+            }
+            return null;
+          }
+        });
         return files;
       }
     });
@@ -151,20 +166,29 @@ public final class FileMetaDataManager {
           Row row;
           while ((row = scanner.next()) != null) {
             byte[] rowKey = row.getRow();
-            String namespacedLogDir = LoggingContextHelper.getNamespacedBaseDir(namespacedLocationFactory, logBaseDir,
-                                                                                getLogPartition(rowKey));
-            byte[] maxCol = getMaxKey(row.getColumns());
-            for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
+            final NamespaceId namespaceId = getNamespaceId(rowKey);
+            String namespacedLogDir = impersonator.doAs(namespaceId, new Callable<String>() {
+              @Override
+              public String call() throws Exception {
+                return LoggingContextHelper.getNamespacedBaseDir(namespacedLocationFactory, logBaseDir,
+                                                                 namespaceId);
+              }
+            });
+            for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               byte[] colName = entry.getKey();
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),
                           Bytes.toLong(colName));
               }
-
-              Location fileLocation = rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+              Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
+                @Override
+                public Location call() throws Exception {
+                  return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+                }
+              });
               // Delete if file last modified time is less than tillTime
               if (fileLocation.lastModified() < tillTime) {
-                callback.handle(fileLocation, namespacedLogDir);
+                callback.handle(namespaceId, fileLocation, namespacedLogDir);
                 table.delete(rowKey, colName);
                 deletedColumns++;
               }
@@ -216,6 +240,16 @@ public final class FileMetaDataManager {
     return Bytes.toString(rowKey, offset, length);
   }
 
+  private NamespaceId getNamespaceId(byte[] rowKey) {
+    String logPartition = getLogPartition(rowKey);
+    Preconditions.checkArgument(logPartition != null, "Log partition cannot be null");
+    String [] partitions = logPartition.split(":");
+    Preconditions.checkArgument(partitions.length == 3,
+                                "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
+    // don't care about the app or the program, only need the namespace
+    return LoggingContextHelper.getNamespaceId(new GenericLoggingContext(partitions[0], partitions[1], partitions[2]));
+  }
+
   private byte[] getRowKey(LoggingContext loggingContext) {
     return getRowKey(loggingContext.getLogPartition());
   }
@@ -242,6 +276,6 @@ public final class FileMetaDataManager {
    * Implement to receive a location before its meta data is removed.
    */
   public interface DeleteCallback {
-    void handle(Location location, String namespacedLogBaseDir);
+    void handle(NamespaceId namespaceId, Location location, String namespacedLogBaseDir);
   }
 }
