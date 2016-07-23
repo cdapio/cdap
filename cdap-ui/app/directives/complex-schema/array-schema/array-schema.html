@@ -22,12 +22,15 @@
 
   <fieldset ng-disabled="ArraySchema.isDisabled">
     <div class="clearfix">
-      <div class="input-column no-type">
-        <select class="form-control"
-                ng-model="ArraySchema.items.displayType"
-                ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
-                ng-change="ArraySchema.changeType()">
-        </select>
+      <div class="input-column select-only no-type"
+           ng-class="{ 'tab-header': ArraySchema.items.nested }">
+        <div class="select-wrapper">
+          <select class="form-control"
+                  ng-model="ArraySchema.items.displayType"
+                  ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
+                  ng-change="ArraySchema.changeType()">
+          </select>
+        </div>
       </div>
 
       <div class="fields-actions">

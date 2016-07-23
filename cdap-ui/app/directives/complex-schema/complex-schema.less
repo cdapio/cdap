@@ -16,23 +16,40 @@
 
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/variables.less';
+@import '../../styles/themes/cdap/mixins.less';
 
 @type-column-width: 80px;
 @fields-right-offset: 70px;
 
 my-complex-schema {
   .complex-schema-container {
-    background-color: white;
+    background-color: transparent;
 
     [class*="col-"] {
       padding-right: 0;
       padding-left: 7px;
     }
 
+    .field-row {
+      .form-control {
+        background-color: transparent;
+        border: 0;
+        box-shadow: none;
+        border-radius: 0;
+        .placeholder-color(@color: #666666, @font-weight: 500);
+
+        .placeholder(@color: #cccccc);
+      }
+    }
+    .nested-row { border-top: 1px solid @table-border-color; }
     .type-column {
       width: @type-column-width;
       float: left;
+
+      &.header { padding-left: 10px; }
     }
+
+    .select-only { max-width: 85px; }
 
     .input-column {
       float: left;
@@ -51,30 +68,54 @@ my-complex-schema {
         width: ~"calc(100% - 75px)";
       }
 
+      .form-control { padding-left: 5px; }
+
+      &.header { padding-left: 4px; }
+    }
+
+    .select-wrapper { .select-wrapper(@background-color: transparent, @arrow-color: @cdap-header, @right: 7px); }
+
+    .tab-header {
+      box-shadow: 0 -7px 6px -6px rgba(1, 0, 0, 0.25), -7px 0 6px -6px rgba(1, 0, 0, 0.25), 7px 0 6px -6px rgba(1, 0, 0, 0.25);
+      position: relative;
+      &:before,
+      &:after {
+        content: '';
+        display: block;
+        position: absolute;
+        width: 20px;
+        height: 34px;
+        top: 10px;
+      }
+      &:before {
+        box-shadow: -7px 0 6px -6px rgba(1, 0, 0, 0.25);
+        left: 0;
+      }
+      &:after {
+        box-shadow: 7px 0 6px -6px rgba(1, 0, 0, 0.25);
+        right: 0;
+      }
       .form-control {
-        padding-left: 5px;
+        height: 22px;
+        padding: 0 5px;
       }
     }
 
-    .error {
-      color: @brand-danger;
-    }
+    .error { color: @brand-danger; }
 
     .map-fields {
       width: 50px;
       line-height: 32px;
+      padding-left: 5px;
     }
 
-    .map-input-column {
-      float: left;
-
-      /**
-       * In case of Map, the 50px represent the label for 'Key' and 'Value'
-       **/
-      width: ~"-moz-calc(100% - 75px - 50px)";
-      width: ~"-webkit-calc(100% - 75px - 50px)";
-      width: ~"calc(100% - 75px - 50px)";
+    .map-input-group {
+      display: inline-block;
+      width: 140px;
+      height: 28px;
     }
+
+    .map-input-column { float: left; }
 
     .fields-actions {
       float: right;
@@ -92,8 +133,9 @@ my-complex-schema {
         width: 60px;
         padding-right: 10px;
 
-        .btn-link { padding: 0; }
         &.no-checkbox { margin-top: 7px; }
+        .btn-link { padding: 0; }
+        .fa-plus { color: #666666; }
       }
     }
 
@@ -114,27 +156,80 @@ my-complex-schema {
         }
       }
 
-      .map-input-column {
-        width: ~"-moz-calc(100% - 50px - 50px)";
-        width: ~"-webkit-calc(100% - 50px - 50px)";
-        width: ~"calc(100% - 50px - 50px)";
-      }
-
       .fields-actions {
         .nullable-header { margin-right: 18px; }
 
         .checkbox,
-        .checkbox.no-trash {
-          margin-right: 0;
+        .checkbox.no-trash { margin-right: 0; }
+      }
+
+      my-embedded-schema-selector [class*="col-"]:after { width: 130px; }
+    }
+  }
+
+  my-embedded-schema-selector {
+    > div { box-shadow: -7px 0 6px -6px rgba(1, 0, 0, 0.25); }
+    [class*="col-"] {
+      position: relative;
+      &:after {
+        box-shadow: 0 -3px 5px 0 rgba(1, 0, 0, 0.25);
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 4px;
+        width: 155px;
+      }
+    }
+    span.fa { color: @hydrator-blue; }
+    div.tab-toggle {
+      position: relative;
+      top: -14px;
+      line-height: 10px;
+      height: 10px;
+      width: 20px;
+      text-align: center;
+      vertical-align: middle;
+      &:hover,
+      &:focus { cursor: pointer; }
+    }
+    my-embedded-schema-selector {
+      div.tab-toggle {
+        top: -10px;
+      }
+      my-embedded-schema-selector {
+        div.tag-toggle {
+          top: -5px;
         }
       }
     }
   }
 
-  my-embedded-schema-selector {
-    [class*="col-"] {
-      background-color: white;
-      box-shadow: 0 -3px 5px 0 rgba(1, 0, 0, 0.25);
+  my-union-schema {
+    .item > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
+      width: ~"-moz-calc(100% - 85px)";
+      width: ~"-webkit-calc(100% - 85px)";
+      width: ~"calc(100% - 85px)";
     }
+  }
+
+  my-array-schema {
+    & > .array-schema-container > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
+      width: ~"-moz-calc(100% - 85px)";
+      width: ~"-webkit-calc(100% - 85px)";
+      width: ~"calc(100% - 85px)";
+    }
+  }
+
+  my-map-schema {
+    & > .map-schema-container > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
+      width: ~"-moz-calc(100% - 150px)";
+      width: ~"-webkit-calc(100% - 150px)";
+      width: ~"calc(100% - 150px)";
+    }
+  }
+  my-embedded-schema-selector my-record-schema .complex-schema-container {
+    .nested-row { border-top: 0; }
   }
 }
