@@ -16,47 +16,39 @@
 <fieldset ng-disabled="MyBatchPipelineSettingsCtrl._isDisabled">
   <div class="pipeline-settings-content">
 
-    <my-card title="Schedule" class="schedule">
-      <div class="radio-inline" ng-if="!MyBatchPipelineSettingsCtrl._isDisabled">
-        <label>
-          <input type="radio"
+    <div>
+      <my-card title="Schedule" class="schedule">
+        <div class="radio-inline" ng-if="!MyBatchPipelineSettingsCtrl._isDisabled">
+          <label>
+            <input type="radio"
+                   ng-change="MyBatchPipelineSettingsCtrl.changeScheduler()"
+                   ng-model="MyBatchPipelineSettingsCtrl.scheduleWidget.type"
+                   value="basic"/>
+            Basic
+          </label>
+        </div>
+        <div class="radio-inline" ng-if="!MyBatchPipelineSettingsCtrl._isDisabled">
+          <label>
+            <input type="radio"
                  ng-change="MyBatchPipelineSettingsCtrl.changeScheduler()"
                  ng-model="MyBatchPipelineSettingsCtrl.scheduleWidget.type"
-                 value="basic"/>
-          Basic
-        </label>
-      </div>
-      <div class="radio-inline" ng-if="!MyBatchPipelineSettingsCtrl._isDisabled">
-        <label>
-          <input type="radio"
-               ng-change="MyBatchPipelineSettingsCtrl.changeScheduler()"
-               ng-model="MyBatchPipelineSettingsCtrl.scheduleWidget.type"
-               value="advanced"/>
-          Advanced
-        </label>
-      </div>
-      <cron-selection
-        ng-if="MyBatchPipelineSettingsCtrl.scheduleWidget.type === 'basic'"
-        class="select-wrapper"
-        output="MyBatchPipelineSettingsCtrl.cron"
-        init="MyBatchPipelineSettingsCtrl.initialCron">
-      </cron-selection>
-      <div data-name="field"
+                 value="advanced"/>
+            Advanced
+          </label>
+        </div>
+        <cron-selection
+          ng-if="MyBatchPipelineSettingsCtrl.scheduleWidget.type === 'basic'"
+          class="select-wrapper"
+          output="MyBatchPipelineSettingsCtrl.cron"
+          init="MyBatchPipelineSettingsCtrl.initialCron">
+        </cron-selection>
+        <div data-name="field"
            ng-if="MyBatchPipelineSettingsCtrl.scheduleWidget.type === 'advanced'"
            class="my-widget-container"
            data-model="MyBatchPipelineSettingsCtrl.cron"
            data-myconfig="{properties: {}, widget: 'schedule'}"
            widget-container>
-      </div>
-    </my-card>
-
-    <div class="engine-post-runs-section">
-      <my-card title="Post Run Actions" class="post-run-actions">
-        <my-post-run-actions
-          is-disabled="{{MyBatchPipelineSettingsCtrl._isDisabled}}"
-          action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
-          store="MyBatchPipelineSettingsCtrl.store">
-        </my-post-run-actions>
+        </div>
       </my-card>
       <my-card title="Engine" class="engine">
         <form role="form">
@@ -77,6 +69,16 @@
               Spark
           </label>
         </form>
+      </my-card>
+    </div>
+
+    <div class="engine-post-runs-section">
+      <my-card title="Post Run Actions" class="post-run-actions">
+        <my-post-run-actions
+          is-disabled="{{MyBatchPipelineSettingsCtrl._isDisabled}}"
+          action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
+          store="MyBatchPipelineSettingsCtrl.store">
+        </my-post-run-actions>
       </my-card>
     </div>
   </div>
