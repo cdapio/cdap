@@ -15,7 +15,7 @@
  */
 
 var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
-  const startTime = (state = Date.now(), action = {}) => {
+  const startTime = (state = new Date(), action = {}) => {
     switch(action.type) {
       case LOGVIEWERSTORE_ACTIONS.START_TIME:
         if(!action.payload.startTime) {

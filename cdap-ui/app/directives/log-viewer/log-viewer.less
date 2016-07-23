@@ -140,11 +140,6 @@ my-log-viewer {
       padding-top: 4px;
     }
 
-    .jumbotron {
-      font-size: 30px;
-      text-align: center;
-    }
-
     .slider .background {
       cursor: pointer;
     }
@@ -334,9 +329,6 @@ my-log-viewer {
         height: 100%;
         width: 10px;
       }
-      tr i {
-        font-size: 4px;
-      }
       tr td {
         line-height: 18px;
 
@@ -427,26 +419,25 @@ my-log-viewer {
 
       font-weight: 300;
 
-      .expand-all-btn {
-        width: 75px;
-        height: 20px;
-        line-height: 20px;
-        background-color: #999999;
-        border-radius: 5px;
-        float: right;
-        color: #ffffff;
-        margin-top: 3px;
-        margin-bottom: 3px;
-        margin-right: 2px;
-        font-weight: normal;
-        font-size: 11px;
-        cursor: pointer;
-      }
-
       tbody tr:hover {
         background-color: @selected-row-color;
       }
-
+      tr.message-holder {
+        &:hover {
+          background-color: transparent;
+        }
+        td {
+          padding-left: 0;
+          .well.well-sm {
+            margin: 10px;
+            &.spinner-container {
+              margin: 0;
+              padding: 0;
+              border-radius: 0;
+            }
+          }
+        }
+      }
       td {
         padding: 0;
         padding-left: 10px;
@@ -569,6 +560,13 @@ my-log-viewer {
         .fa-arrow-left,
         .fa-arrow-right {
           color: #525252;
+        }
+        .btn.btn-default {
+          background-color: #999999;
+          color: #ffffff;
+          border-radius: 4px;
+          padding: 2px 5px;
+          border: 0;
         }
       }
 

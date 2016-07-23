@@ -17,52 +17,53 @@
 function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl) {
   'ngInject';
 
-  this.data = {};
-  this.displayData = {};
-  this.errorCount = 0;
-  this.warningCount = 0;
-  this.totalCount = 0;
-  this.loading = true;
-  this.fullScreen = false;
-  this.applicationIsRunning = true;
-
   var dataSrc = new MyCDAPDataSource($scope);
   var pollPromise;
-
-  this.configOptions = {
-    time: true,
-    level: true,
-    source: true,
-    message: true
-  };
-
-  this.hiddenColumns = {
-    time: false,
-    level: false,
-    source: false,
-    message: false
-  };
-
-  //viewLimit and cacheDecrement should match
-  this.viewLimit = 100;
-  this.cacheDecrement = 100;
-  this.cacheSize = 0;
-
   //Collapsing LogViewer Table Columns
-  var theColumns = [];
-  var cols = this.configOptions;
+  var columnsList = [];
   var collapseCount = 0;
 
-  if(cols['source']){
-    theColumns.push('source');
-  }
-  if(cols['level']){
-    theColumns.push('level');
-  }
-  if(cols['time']){
-    theColumns.push('time');
-  }
+  this.setDefault = () => {
+    this.displayData = [];
+    this.data = [];
+    this.loading = false;
+    this.errorCount = 0;
+    this.warningCount = 0;
+    this.totalCount = 0;
+    this.fullScreen = false;
+    this.applicationIsRunning = false;
 
+    this.configOptions = {
+      time: true,
+      level: true,
+      source: true,
+      message: true
+    };
+
+    this.hiddenColumns = {
+      time: false,
+      level: false,
+      source: false,
+      message: false
+    };
+    //viewLimit and cacheDecrement should match
+    this.viewLimit = 100;
+    this.cacheDecrement = 100;
+    this.cacheSize = 0;
+    var cols = this.configOptions;
+
+    if(cols['source']){
+      columnsList.push('source');
+    }
+    if(cols['level']){
+      columnsList.push('level');
+    }
+    if(cols['time']){
+      columnsList.push('time');
+    }
+  };
+
+  this.setDefault();
   angular.forEach($scope.displayOptions, (value, key) => {
     this.configOptions[key] = value;
   });
@@ -82,6 +83,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   LogViewerStore.subscribe(() => {
     this.logStartTime = LogViewerStore.getState().startTime;
+    if (typeof this.logStartTime !== 'object') {
+      this.setDefault();
+      return;
+    }
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
     requestWithStartTime();
   });
@@ -123,9 +128,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     if(this.isMessageExpanded){
       this.isMessageExpanded = !this.isMessageExpanded;
     }
-    if(collapseCount < theColumns.length){
-      this.hiddenColumns[theColumns[collapseCount++]] = true;
-      if(collapseCount === theColumns.length){
+    if(collapseCount < columnsList.length){
+      this.hiddenColumns[columnsList[collapseCount++]] = true;
+      if(collapseCount === columnsList.length){
         this.isMessageExpanded = true;
       }
     } else {
@@ -210,9 +215,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         (statusRes) => {
           if(statusRes.status === 'RUNNING'){
             this.applicationIsRunning = true;
-            pollForNewLogs();
+            if (!pollPromise) {
+              pollForNewLogs();
+            }
           } else {
             this.applicationIsRunning = false;
+            if (pollPromise) {
+              pollPromise.stopPoll(pollPromise.__pollId__);
+            }
           }
         },
         (statusErr) => {
@@ -253,6 +263,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         pollPromise = null;
       }
       this.renderData();
+      getStatus();
 
     }, (err) => {
       console.log('ERROR: ', err);
@@ -260,6 +271,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   const requestWithStartTime = () => {
+    this.loading = true;
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;
@@ -316,6 +328,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         }
       },
       (err) => {
+        this.setDefault();
         console.log('ERROR: ', err);
       });
   };
@@ -421,6 +434,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
     return entry;
   };
+
 }
 
 angular.module(PKG.name + '.commons')
