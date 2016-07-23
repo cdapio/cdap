@@ -39,6 +39,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       resolution: '1m'
     }
   };
+  this.setDefaultTimeWindow = () => {
+    apiSettings.metric.startTime = '';
+    apiSettings.metric.endTime = '';
+    this.updateStartTimeInStore(apiSettings.metric.startTime);
+  };
 
   const pollForMetadata = () => {
     pollPromise = dataSrc.poll({
@@ -70,6 +75,10 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     }
   });
 
+  if (!this.namespaceId || !this.appId || !this.programType || !this.programId || !this.runId) {
+    this.setDefaultTimeWindow();
+    return;
+  }
   myLogsApi.getLogsMetadata({
     'namespace' : this.namespaceId,
     'appId' : this.appId,
@@ -83,6 +92,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       pollForMetadata();
     },
     (err) => {
+      this.setDefaultTimeWindow();
       console.log('ERROR: ', err);
     });
 }
