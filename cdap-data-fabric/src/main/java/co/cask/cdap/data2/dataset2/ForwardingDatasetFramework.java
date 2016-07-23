@@ -24,9 +24,11 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -55,6 +57,11 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   public void addModule(Id.DatasetModule moduleId, DatasetModule module, Location jarLocation)
     throws DatasetManagementException {
     delegate.addModule(moduleId, module, jarLocation);
+  }
+
+  @Override
+  public Collection<DatasetModuleMeta> getModules(NamespaceId namespaceId) throws DatasetManagementException {
+    return delegate.getModules(namespaceId);
   }
 
   @Override

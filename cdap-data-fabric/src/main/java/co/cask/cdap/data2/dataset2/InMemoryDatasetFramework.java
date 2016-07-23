@@ -53,7 +53,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.google.inject.Inject;
@@ -84,13 +83,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetFramework.class);
 
   private final DatasetDefinitionRegistryFactory registryFactory;
-  private final Set<Id.Namespace> namespaces;
   private final SetMultimap<Id.Namespace, String> nonDefaultTypes;
 
   // Id.Namespace is contained in Id.DatasetInstance. But we need to be able to get all instances in a namespace
   // and delete all instances in a namespace, so we keep it as a separate key
   private final Table<Id.Namespace, Id.DatasetInstance, DatasetSpecification> instances;
-  private final Table<Id.Namespace, Id.DatasetModule, String> moduleClasses;
+  private final Table<Id.Namespace, Id.DatasetModule, DatasetModuleMeta> modules;
   private final Map<Id.DatasetType, DatasetTypeMeta> types;
 
   private final Lock readLock;
@@ -112,34 +110,35 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                   @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
     this.registryFactory = registryFactory;
-    this.namespaces = Sets.newHashSet();
     this.nonDefaultTypes = HashMultimap.create();
     this.instances = HashBasedTable.create();
     this.types = Maps.newHashMap();
     this.registries = Maps.newHashMap();
     // the order in which module classes are inserted is important,
-    // so we use a table where Map<Id.DatasetModule, String> is a LinkedHashMap
-    Map<Id.Namespace, Map<Id.DatasetModule, String>> backingMap = Maps.newHashMap();
-    this.moduleClasses = Tables.newCustomTable(backingMap, new Supplier<Map<Id.DatasetModule, String>>() {
+    // so we use a table where Map<Id.DatasetModule, DatasetModuleMeta> is a LinkedHashMap
+    Map<Id.Namespace, Map<Id.DatasetModule, DatasetModuleMeta>> backingMap = new HashMap<>();
+    this.modules = Tables.newCustomTable(backingMap, new Supplier<Map<Id.DatasetModule, DatasetModuleMeta>>() {
       @Override
-      public Map<Id.DatasetModule, String> get() {
+      public Map<Id.DatasetModule, DatasetModuleMeta> get() {
         return Maps.newLinkedHashMap();
       }
     });
 
     // add default dataset modules to system namespace
-    namespaces.add(Id.Namespace.SYSTEM);
     DatasetDefinitionRegistry systemRegistry = registryFactory.create();
     for (Map.Entry<String, DatasetModule> entry : defaultModules.entrySet()) {
       LOG.debug("Adding Default module {} to system namespace", entry.getKey());
       String moduleName = entry.getKey();
       DatasetModule module = entry.getValue();
-      entry.getValue().register(systemRegistry);
+      module.register(systemRegistry);
       // keep track of default module classes. These are used when creating registries for other namespaces,
       // which need to register system classes too.
       String moduleClassName = DatasetModules.getDatasetModuleClass(module).getName();
       Id.DatasetModule moduleId = Id.DatasetModule.from(Id.Namespace.SYSTEM, moduleName);
-      moduleClasses.put(Id.Namespace.SYSTEM, moduleId, moduleClassName);
+      TypesTrackingRegistry trackingRegistry = new TypesTrackingRegistry(systemRegistry);
+      modules.put(Id.Namespace.SYSTEM, moduleId,
+                  new DatasetModuleMeta(moduleName, moduleClassName, null, trackingRegistry.getTypes(),
+                                        Collections.<String>emptyList()));
     }
     registries.put(Id.Namespace.SYSTEM, systemRegistry);
 
@@ -167,14 +166,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       TypesTrackingRegistry trackingRegistry = new TypesTrackingRegistry(registry);
       module.register(trackingRegistry);
       String moduleClassName = DatasetModules.getDatasetModuleClass(module).getName();
-      moduleClasses.put(moduleId.getNamespace(), moduleId, moduleClassName);
       List<String> types = trackingRegistry.getTypes();
       nonDefaultTypes.putAll(moduleId.getNamespace(), types);
+      DatasetModuleMeta moduleMeta = new DatasetModuleMeta(moduleId.getId(), moduleClassName, null,
+                                                           types, Collections.<String>emptyList());
+      modules.put(moduleId.getNamespace(), moduleId, moduleMeta);
       for (String type : types) {
         this.types.put(Id.DatasetType.from(moduleId.getNamespace(), type),
-                       new DatasetTypeMeta(type, Collections.singletonList(
-                         new DatasetModuleMeta(moduleId.getId(), moduleClassName, null,
-                                               types, Collections.<String>emptyList()))));
+                       new DatasetTypeMeta(type, Collections.singletonList(moduleMeta)));
       }
     } finally {
       writeLock.unlock();
@@ -189,15 +188,19 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public Collection<DatasetModuleMeta> getModules(final NamespaceId namespaceId) {
+    return modules.row(namespaceId.toId()).values();
+  }
+
+  @Override
   public void deleteModule(Id.DatasetModule moduleId) {
     // TODO (CDAP-6297): check if existing datasets or modules use this module
     writeLock.lock();
     try {
-      moduleClasses.remove(moduleId.getNamespace(), moduleId);
-      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(moduleId.getNamespace());
+      modules.remove(moduleId.getNamespace(), moduleId);
+      LinkedHashSet<DatasetModuleMeta> availableModules = getAvailableModuleClasses(moduleId.getNamespace());
       // this will cleanup types
-      DatasetDefinitionRegistry registry = createRegistry(availableModuleClasses,
-                                                          registries.getClass().getClassLoader());
+      DatasetDefinitionRegistry registry = createRegistry(availableModules, registries.getClass().getClassLoader());
       registries.put(moduleId.getNamespace(), registry);
     } finally {
       writeLock.unlock();
@@ -216,7 +219,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
             String.format("Cannot delete all modules in namespace '%s', some datasets use them", namespaceId));
         }
       }
-      moduleClasses.row(namespaceId).clear();
+      modules.row(namespaceId).clear();
       nonDefaultTypes.removeAll(namespaceId);
       registries.put(namespaceId, registryFactory.create());
     } finally {
@@ -427,8 +430,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       if (spec == null) {
         return null;
       }
-      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
-      DatasetDefinition impl = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
+      LinkedHashSet<DatasetModuleMeta> availableModules = getAvailableModuleClasses(datasetInstanceId.getNamespace());
+      DatasetDefinition impl = createRegistry(availableModules, classLoader).get(spec.getType());
       return (T) impl.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, classLoader);
     } finally {
       readLock.unlock();
@@ -446,8 +449,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       if (spec == null) {
         return null;
       }
-      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
-      DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
+      LinkedHashSet<DatasetModuleMeta> availableModules = getAvailableModuleClasses(datasetInstanceId.getNamespace());
+      DatasetDefinition def = createRegistry(availableModules, classLoader).get(spec.getType());
       return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
                                  spec, arguments, classLoader));
     } finally {
@@ -486,9 +489,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       if (spec == null) {
         return null;
       }
-      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
+      LinkedHashSet<DatasetModuleMeta> availableModules = getAvailableModuleClasses(datasetInstanceId.getNamespace());
       DatasetDefinition def =
-        createRegistry(availableModuleClasses, parentClassLoader).get(spec.getType());
+        createRegistry(availableModules, parentClassLoader).get(spec.getType());
       return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
                                  spec, arguments, parentClassLoader));
     } finally {
@@ -504,14 +507,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   // because there may be dependencies between modules, it is important that they are ordered correctly.
-  protected DatasetDefinitionRegistry createRegistry(LinkedHashSet<String> availableModuleClasses,
-                                                   @Nullable ClassLoader classLoader) {
+  protected DatasetDefinitionRegistry createRegistry(LinkedHashSet<DatasetModuleMeta> availableModules,
+                                                     @Nullable ClassLoader classLoader) {
     DatasetDefinitionRegistry registry = registryFactory.create();
-    for (String moduleClassName : availableModuleClasses) {
+    for (DatasetModuleMeta module : availableModules) {
       try {
-        DatasetDefinitionRegistries.register(moduleClassName, classLoader, registry);
+        DatasetDefinitionRegistries.register(module.getClassName(), classLoader, registry);
       } catch (Exception e) {
-        LOG.error("Was not able to load dataset module class {}", moduleClassName, e);
+        LOG.error("Was not able to load dataset module class {}", module.getClassName(), e);
         throw Throwables.propagate(e);
       }
     }
@@ -519,14 +522,13 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     return registry;
   }
 
-  // gets all module class names available in the given namespace. Includes system modules first, then
-  // namespace modules.
-  protected LinkedHashSet<String> getAvailableModuleClasses(Id.Namespace namespace) {
+  // gets all modules available in the given namespace. Includes system modules first, then namespace modules.
+  protected LinkedHashSet<DatasetModuleMeta> getAvailableModuleClasses(Id.Namespace namespace) {
     // order is important, system
-    LinkedHashSet<String> availableModuleClasses = Sets.newLinkedHashSet();
-    availableModuleClasses.addAll(moduleClasses.row(Id.Namespace.SYSTEM).values());
-    availableModuleClasses.addAll(moduleClasses.row(namespace).values());
-    return availableModuleClasses;
+    LinkedHashSet<DatasetModuleMeta> availableModules = new LinkedHashSet<>();
+    availableModules.addAll(modules.row(Id.Namespace.SYSTEM).values());
+    availableModules.addAll(modules.row(namespace).values());
+    return availableModules;
   }
 
   @Nullable

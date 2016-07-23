@@ -40,6 +40,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
@@ -122,6 +123,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
                         Location jarLocation) throws DatasetManagementException {
     clientCache.getUnchecked(moduleId.getNamespace())
       .addModule(moduleId.getId(), DatasetModules.getDatasetModuleClass(module).getName(), jarLocation);
+  }
+
+  @Override
+  public Collection<DatasetModuleMeta> getModules(NamespaceId namespaceId) throws DatasetManagementException {
+    return clientCache.getUnchecked(namespaceId.toId()).getAllModules();
   }
 
   @Override

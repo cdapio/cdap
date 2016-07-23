@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
@@ -49,14 +50,14 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
   }
 
   @Override
-  protected DatasetDefinitionRegistry createRegistry(final LinkedHashSet<String> availableModuleClasses,
+  protected DatasetDefinitionRegistry createRegistry(final LinkedHashSet<DatasetModuleMeta> availableModules,
                                                      @Nullable final ClassLoader classLoader) {
     try {
       // It is okay to have an unchecked cast here, as the same line populates the cache for REGISTRY_CACHE_KEY
       return (DatasetDefinitionRegistry) cache.get(REGISTRY_CACHE_KEY, new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          return StaticDatasetFramework.super.createRegistry(availableModuleClasses, classLoader);
+          return StaticDatasetFramework.super.createRegistry(availableModules, classLoader);
         }
       });
     } catch (ExecutionException e) {
@@ -65,16 +66,17 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
   }
 
   @Override
-  protected LinkedHashSet<String> getAvailableModuleClasses(final Id.Namespace namespace) {
+  protected LinkedHashSet<DatasetModuleMeta> getAvailableModuleClasses(final Id.Namespace namespace) {
     try {
       // It is okay to have an unchecked cast here, as the same line populates the cache for MODULES_CACHE_KEY
       @SuppressWarnings("unchecked")
-      LinkedHashSet<String> modules = (LinkedHashSet<String>) cache.get(MODULES_CACHE_KEY, new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-          return StaticDatasetFramework.super.getAvailableModuleClasses(namespace);
-        }
-      });
+      LinkedHashSet<DatasetModuleMeta> modules =
+        (LinkedHashSet<DatasetModuleMeta>) cache.get(MODULES_CACHE_KEY, new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            return StaticDatasetFramework.super.getAvailableModuleClasses(namespace);
+          }
+        });
       return modules;
     } catch (ExecutionException e) {
       throw Throwables.propagate(e);

@@ -31,14 +31,18 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -92,6 +96,14 @@ public interface DatasetFramework {
    */
   void addModule(Id.DatasetModule moduleId, DatasetModule module,
                  Location jarLocation) throws DatasetManagementException;
+
+  /**
+   * Lists all modules in the specified namespace
+   *
+   * @param namespaceId the namespace to list modules from
+   * @return a list of dataset modules in the specified namespace
+   */
+  Collection<DatasetModuleMeta> getModules(NamespaceId namespaceId) throws DatasetManagementException;
 
   /**
    * Deletes dataset module and its types from the system.
