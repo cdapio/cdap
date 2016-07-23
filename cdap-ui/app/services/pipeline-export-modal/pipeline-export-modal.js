@@ -44,13 +44,13 @@ angular.module(PKG.name + '.services')
             });
           };
 
-          $scope.$on('$destroy', () => {
+          $scope.$on('$destroy', function() {
             $timeout.cancel(exportTimeout);
           });
         }],
         resolve: {
-          config: () => config,
-          exportConfig: () => exportConfig
+          config: function(){ return config; },
+          exportConfig: function() { return exportConfig; }
         }
       });
     };
