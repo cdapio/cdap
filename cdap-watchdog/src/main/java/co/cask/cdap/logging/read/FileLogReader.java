@@ -18,12 +18,14 @@ package co.cask.cdap.logging.read;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -48,16 +50,17 @@ public class FileLogReader implements LogReader {
 
   private final FileMetaDataManager fileMetaDataManager;
   private final Schema schema;
+  private final Impersonator impersonator;
 
   @Inject
-  public FileLogReader(CConfiguration cConf, FileMetaDataManager fileMetaDataManager) {
+  public FileLogReader(CConfiguration cConf, FileMetaDataManager fileMetaDataManager, Impersonator impersonator) {
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
 
     try {
       this.schema = new LogSchema().getAvroSchema();
       this.fileMetaDataManager = fileMetaDataManager;
-
+      this.impersonator = impersonator;
     } catch (Exception e) {
       LOG.error("Got exception", e);
       throw Throwables.propagate(e);
@@ -66,7 +69,7 @@ public class FileLogReader implements LogReader {
 
   @Override
   public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     if (readRange == ReadRange.LATEST) {
       getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
       return;
@@ -87,9 +90,11 @@ public class FileLogReader implements LogReader {
 
       List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
       AvroFileReader logReader = new AvroFileReader(schema);
+      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : filesInRange) {
         LOG.trace("Reading file {}", file);
-        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
+        logReader.readLog(file, logFilter, fromTimeMs,
+                          Long.MAX_VALUE, maxEvents - callback.getCount(), callback, namespaceId, impersonator);
         if (callback.getCount() >= maxEvents) {
           break;
         }
@@ -102,7 +107,7 @@ public class FileLogReader implements LogReader {
 
   @Override
   public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     callback.init();
     try {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
@@ -120,9 +125,12 @@ public class FileLogReader implements LogReader {
       List<Collection<LogEvent>> logSegments = Lists.newLinkedList();
       AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
+      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : Lists.reverse(filesInRange)) {
         LOG.trace("Reading file {}", file);
-        Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count);
+
+        Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count,
+                                                            namespaceId, impersonator);
         logSegments.add(events);
         count += events.size();
         if (count >= maxEvents) {
@@ -141,7 +149,7 @@ public class FileLogReader implements LogReader {
 
   @Override
   public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                          final Filter filter, final Callback callback) {
+                     final Filter filter, final Callback callback) {
     callback.init();
     try {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
@@ -155,9 +163,11 @@ public class FileLogReader implements LogReader {
 
       List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
       AvroFileReader avroFileReader = new AvroFileReader(schema);
+      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : filesInRange) {
         LOG.trace("Reading file {}", file);
-        avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+        avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback,
+                               namespaceId, impersonator);
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);

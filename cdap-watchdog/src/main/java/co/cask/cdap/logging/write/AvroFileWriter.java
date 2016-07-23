@@ -18,7 +18,10 @@ package co.cask.cdap.logging.write;
 
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -37,6 +40,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -54,6 +58,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private final Map<String, AvroFile> fileMap;
   private final long maxFileSize;
   private final long inactiveIntervalMs;
+  private final Impersonator impersonator;
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -69,7 +74,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
    */
   public AvroFileWriter(FileMetaDataManager fileMetaDataManager, NamespacedLocationFactory namespacedLocationFactory,
                         String logBaseDir, Schema schema, long maxFileSize, int syncIntervalBytes,
-                        long inactiveIntervalMs) {
+                        long inactiveIntervalMs, Impersonator impersonator) {
     this.fileMetaDataManager = fileMetaDataManager;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = logBaseDir;
@@ -78,6 +83,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     this.fileMap = Maps.newHashMap();
     this.maxFileSize = maxFileSize;
     this.inactiveIntervalMs = inactiveIntervalMs;
+    this.impersonator = impersonator;
   }
 
   /**
@@ -190,12 +196,32 @@ public final class AvroFileWriter implements Closeable, Flushable {
     throws IOException {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     String fileName = String.format("%s.avro", timestamp);
-    Location namespaceLocation = LoggingContextHelper.getNamesapcedDir(namespacedLocationFactory,
-                                                                       loggingContext);
+    final NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
+    Location namespaceLocation;
+    try {
+      namespaceLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          return namespacedLocationFactory.get(namespaceId.toId());
+        }
+      });
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception t) {
+      Throwables.propagateIfPossible(t);
+
+      // since the callables we execute only throw IOException (besides unchecked exceptions),
+      // this should never happen
+      LOG.warn("Unexpected exception while getting namespace location for namespace {}.", namespaceId, t);
+      // the only checked exception that the Callables in this class is IOException, and we handle that in the previous
+      // catch statement. So, no checked exceptions should be wrapped by the following statement. However, we need it
+      // because ImpersonationUtils#doAs declares 'throws Exception', because it can throw other checked exceptions
+      // in the general case
+      throw Throwables.propagate(t);
+    }
     // drop the namespaceid from path fragment since the namespaceLocation already points to the directory inside the
     // namespace
-    String pathFragment = loggingContext.getLogPathFragment(logBaseDir)
-      .split(LoggingContextHelper.getNamespaceId(loggingContext).getNamespace())[1];
+    String pathFragment = loggingContext.getLogPathFragment(logBaseDir).split(namespaceId.getNamespace())[1];
     return namespaceLocation.append(pathFragment).append(date).append(fileName);
   }
 

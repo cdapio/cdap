@@ -19,6 +19,7 @@ package co.cask.cdap.logging.save;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.inject.Inject;
 
@@ -31,22 +32,24 @@ public class KafkaLogWriterPluginFactory implements KafkaLogProcessorFactory {
   private final RootLocationFactory rootLocationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final CheckpointManagerFactory checkpointManagerFactory;
+  private final Impersonator impersonator;
 
   @Inject
   public KafkaLogWriterPluginFactory(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
                                      RootLocationFactory rootLocationFactory,
                                      NamespacedLocationFactory namespacedLocationFactory,
-                                     CheckpointManagerFactory checkpointManagerFactory) {
+                                     CheckpointManagerFactory checkpointManagerFactory, Impersonator impersonator) {
     this.cConfig = cConfig;
     this.fileMetaDataManager = fileMetaDataManager;
     this.rootLocationFactory = rootLocationFactory;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.checkpointManagerFactory = checkpointManagerFactory;
+    this.impersonator = impersonator;
   }
 
   @Override
   public KafkaLogProcessor create() throws Exception {
     return new KafkaLogWriterPlugin(cConfig, fileMetaDataManager, checkpointManagerFactory, rootLocationFactory,
-                                    namespacedLocationFactory);
+                                    namespacedLocationFactory, impersonator);
   }
 }

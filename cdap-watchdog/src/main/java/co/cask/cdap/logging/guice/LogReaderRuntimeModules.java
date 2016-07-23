@@ -17,11 +17,14 @@
 package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data2.security.RemoteUGIProvider;
+import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogReader;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 
 /**
  * A {@link RuntimeModule} for providing guice modules for {@link LogReader}.
@@ -54,6 +57,7 @@ public final class LogReaderRuntimeModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogReader.class).to(DistributedLogReader.class);
+        bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
       }
     };
   }

@@ -29,6 +29,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -43,6 +44,7 @@ import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;
@@ -97,6 +99,7 @@ public class LogSaverTest extends KafkaTestBase {
   private static String logBaseDir;
   private static KafkaLogAppender appender;
   private static Gson gson;
+  private static Impersonator impersonator;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -105,6 +108,7 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     injector = KAFKA_TESTER.getInjector();
+    impersonator = injector.getInstance(Impersonator.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
@@ -449,7 +453,9 @@ public class LogSaverTest extends KafkaTestBase {
         AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
-        logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
+        NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
+        logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback,
+                          namespaceId, impersonator);
         logCallback.close();
         List<LogEvent> events = logCallback.getEvents();
         if (events.size() > 0) {
