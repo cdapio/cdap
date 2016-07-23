@@ -146,15 +146,6 @@ public class DefaultSecureStoreServiceTest {
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), secureKeyIdFilter).isEmpty());
   }
 
-  private void assertAuthorizationFailure(SecureStoreOperationExecutor operation, String failureMsg) throws Exception {
-    try {
-      operation.execute();
-      Assert.fail(failureMsg);
-    } catch (UnauthorizedException expected) {
-      // expected
-    }
-  }
-
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
     authorizer.grant(entityId, principal, actions);
@@ -173,9 +164,5 @@ public class DefaultSecureStoreServiceTest {
       existingPrivileges.remove(new Privilege(entityId, action));
     }
     Assert.assertEquals(existingPrivileges, authorizer.listPrivileges(principal));
-  }
-
-  private interface SecureStoreOperationExecutor {
-    void execute() throws Exception;
   }
 }
