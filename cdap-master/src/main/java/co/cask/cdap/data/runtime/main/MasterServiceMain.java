@@ -271,7 +271,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   private boolean checkDirectoryExists(FileContext fileContext, org.apache.hadoop.fs.Path path) throws IOException {
-    if ((fileContext.getFileStatus(path)) != null) {
+    if (fileContext.util().exists(path)) {
       // dir exists
       // check permissions
       FsAction action =
