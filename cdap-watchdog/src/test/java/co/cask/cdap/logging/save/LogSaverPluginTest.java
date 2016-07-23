@@ -114,6 +114,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static MetricStore metricStore;
   private static MetricsCollectionService metricsCollectionService;
   private static CConfiguration cConf;
+  private static Impersonator impersonator;
 
   @BeforeClass
   public static void initialize() throws IOException {
@@ -129,6 +130,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
     txManager = injector.getInstance(TransactionManager.class);
+    impersonator = injector.getInstance(Impersonator.class);
     txManager.startAndWait();
     metricsCollectionService.startAndWait();
   }
@@ -502,11 +504,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
         AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
-        NamespaceId namespaceId =
-          new NamespaceId(loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
+        NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
         logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback,
-                          namespaceId,
-                          new Impersonator(CConfiguration.create(), null, null));
+                          namespaceId, impersonator);
         logCallback.close();
         List<LogEvent> events = logCallback.getEvents();
         if (events.size() > 0) {

@@ -99,6 +99,7 @@ public class LogSaverTest extends KafkaTestBase {
   private static String logBaseDir;
   private static KafkaLogAppender appender;
   private static Gson gson;
+  private static Impersonator impersonator;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -107,6 +108,7 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     injector = KAFKA_TESTER.getInjector();
+    impersonator = injector.getInstance(Impersonator.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
@@ -451,11 +453,9 @@ public class LogSaverTest extends KafkaTestBase {
         AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
-        NamespaceId namespaceId =
-          new NamespaceId(loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
+        NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
         logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback,
-                          namespaceId,
-                          new Impersonator(CConfiguration.create(), null, null));
+                          namespaceId, impersonator);
         logCallback.close();
         List<LogEvent> events = logCallback.getEvents();
         if (events.size() > 0) {

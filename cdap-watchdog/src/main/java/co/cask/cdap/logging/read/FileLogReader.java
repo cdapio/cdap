@@ -18,7 +18,6 @@ package co.cask.cdap.logging.read;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -91,8 +90,7 @@ public class FileLogReader implements LogReader {
 
       List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
       AvroFileReader logReader = new AvroFileReader(schema);
-      NamespaceId namespaceId =
-        new NamespaceId(loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
+      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : filesInRange) {
         LOG.trace("Reading file {}", file);
         logReader.readLog(file, logFilter, fromTimeMs,
@@ -127,8 +125,7 @@ public class FileLogReader implements LogReader {
       List<Collection<LogEvent>> logSegments = Lists.newLinkedList();
       AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
-      NamespaceId namespaceId =
-        new NamespaceId(loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
+      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : Lists.reverse(filesInRange)) {
         LOG.trace("Reading file {}", file);
 
@@ -166,8 +163,7 @@ public class FileLogReader implements LogReader {
 
       List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
       AvroFileReader avroFileReader = new AvroFileReader(schema);
-      NamespaceId namespaceId =
-        new NamespaceId(loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
+      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : filesInRange) {
         LOG.trace("Reading file {}", file);
         avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback,
