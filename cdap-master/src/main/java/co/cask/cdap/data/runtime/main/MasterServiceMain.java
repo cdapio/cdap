@@ -82,9 +82,16 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileAlreadyExistsException;
+import org.apache.hadoop.fs.FileContext;
+import org.apache.hadoop.fs.ParentNotDirectoryException;
+import org.apache.hadoop.fs.UnsupportedFileSystemException;
+import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ElectionHandler;
@@ -109,6 +116,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -212,6 +220,8 @@ public class MasterServiceMain extends DaemonMain {
   public void start() {
     logAppenderInitializer.initialize();
 
+    createDirectory("twill");
+    createDirectory("queues");
     createSystemHBaseNamespace();
     updateConfigurationTable();
 
@@ -221,6 +231,58 @@ public class MasterServiceMain extends DaemonMain {
                                                   KeeperException.NodeExistsException.class, null));
 
     leaderElection.startAndWait();
+  }
+
+  /**
+   * CDAP-6644 for secure impersonation to work,
+   * we want other users to be able to write to the "path" directory,
+   * currently only cdap.user has read-write permissions while other users can only read the "/cdap/{path}" dir,
+   * we want to let others to be able to write to "path" directory, till we have a better solution.
+   */
+  private void createDirectory(String path) {
+    try {
+      String namespacedPath = String.format("/%s/%s", cConf.get(Constants.ROOT_NAMESPACE), path);
+      FileContext fileContext = FileContext.getFileContext(hConf);
+      createDirectory(fileContext, namespacedPath);
+    }  catch (UnsupportedFileSystemException e) {
+      LOG.error("Unsupported FileSystem Exception while trying to create directory", e);
+    }
+  }
+
+  private void createDirectory(FileContext fileContext, String path) {
+    try {
+      org.apache.hadoop.fs.Path fPath = new org.apache.hadoop.fs.Path(path);
+      boolean dirExists = checkDirectoryExists(fileContext, fPath);
+      if (!dirExists) {
+        FsPermission permission = new FsPermission(FsAction.ALL, FsAction.ALL, FsAction.ALL);
+        // file context does ( permission AND  (NOT of umask) ) and uses that as permission, by default umask is 022,
+        // if we want 777 permission, we have to set umask to 000
+        fileContext.setUMask(new FsPermission(FsAction.NONE, FsAction.NONE, FsAction.NONE));
+        fileContext.mkdir(fPath, permission, false);
+      }
+    } catch (FileAlreadyExistsException e) {
+      // should not happen as we create only if dir exists
+    } catch (AccessControlException | ParentNotDirectoryException | FileNotFoundException e) {
+      // just log the exception
+      LOG.error("Exception while trying to create directory at {}", path, e);
+    }  catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private boolean checkDirectoryExists(FileContext fileContext, org.apache.hadoop.fs.Path path) throws IOException {
+    if ((fileContext.getFileStatus(path)) != null) {
+      // dir exists
+      // check permissions
+      FsAction action =
+        fileContext.getFileStatus(path).getPermission().getOtherAction();
+      if (!action.implies(FsAction.WRITE)) {
+        LOG.error("Directory {} is not writable for others, If you are using secure impersonation, " +
+                    "make this directory writable for others, else you can ignore this message.", path);
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override
