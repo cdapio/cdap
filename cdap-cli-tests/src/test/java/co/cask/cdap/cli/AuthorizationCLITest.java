@@ -25,6 +25,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.server.BasicAuthenticationHandler;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.common.cli.CLI;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -85,12 +86,14 @@ public class AuthorizationCLITest extends CLITestBase {
         Constants.Security.AUTH_HANDLER_CLASS, BasicAuthenticationHandler.class.getName(),
         Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, ".*",
         Constants.Security.Authorization.ENABLED, "true",
+        Constants.Security.Authorization.CACHE_ENABLED, "false",
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
         // Bypass authorization enforcement for grant/revoke operations in this test. Authorization enforcement for
         // grant/revoke is tested in AuthorizationHandlerTest
         Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers", "*",
         // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
-        Constants.Security.KERBEROS_ENABLED, "false"
+        Constants.Security.KERBEROS_ENABLED, "false",
+        Constants.Explore.EXPLORE_ENABLED, "false"
       };
     }
   }
@@ -113,7 +116,14 @@ public class AuthorizationCLITest extends CLITestBase {
   public void testAuthorizationCLI() throws Exception {
     Role role = new Role("admins");
     Principal principal = new Principal("spiderman", Principal.PrincipalType.USER);
+
     NamespaceId namespaceId = new NamespaceId("ns1");
+    // Grant the privileges on ns1 first
+    getCommandOutput(cli, String.format("grant actions %s on entity %s to %s %s",
+                                        Action.ADMIN.name().toLowerCase(), "instance:cdap",
+                                        Principal.PrincipalType.USER.name().toLowerCase(),
+                                        SecurityRequestContext.toPrincipal().getName()));
+
     testCommandOutputContains(cli, String.format("create namespace %s", namespaceId.getNamespace()),
                               String.format("Namespace '%s' created successfully", namespaceId.getNamespace()));
 

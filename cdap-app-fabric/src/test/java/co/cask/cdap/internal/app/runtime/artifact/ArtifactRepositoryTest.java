@@ -590,7 +590,7 @@ public class ArtifactRepositoryTest {
   }
 
   @Test
-  public void testArtifactDataset() throws IOException, ArtifactNotFoundException {
+  public void testArtifactDataset() throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
 
     // The artifact being created in the setupData method is using dependency tracing

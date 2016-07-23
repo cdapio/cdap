@@ -16,12 +16,21 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -32,10 +41,16 @@ import java.util.List;
 public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
 
   protected final NamespaceStore nsStore;
+  protected final AuthorizationEnforcer authorizationEnforcer;
+  protected final AuthenticationContext authenticationContext;
 
   @Inject
-  public DefaultNamespaceQueryAdmin(NamespaceStore nsStore) {
+  public DefaultNamespaceQueryAdmin(NamespaceStore nsStore,
+                                    AuthorizationEnforcer authorizationEnforcer,
+                                    AuthenticationContext authenticationContext) {
     this.nsStore = nsStore;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -45,7 +60,17 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
    */
   @Override
   public List<NamespaceMeta> list() throws Exception {
-    return nsStore.list();
+    List<NamespaceMeta> namespaces = nsStore.list();
+    Principal principal = authenticationContext.getPrincipal();
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    return Lists.newArrayList(
+      Iterables.filter(namespaces, new com.google.common.base.Predicate<NamespaceMeta>() {
+        @Override
+        public boolean apply(NamespaceMeta namespaceMeta) {
+          return filter.apply(new NamespaceId(namespaceMeta.getName()));
+        }
+      })
+    );
   }
 
   /**
@@ -54,12 +79,18 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
    * @param namespaceId the {@link Id.Namespace} of the requested namespace
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
+   * @throws UnauthorizedException if the namespace is not authorized to the logged-user
    */
   @Override
   public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
     NamespaceMeta ns = nsStore.get(namespaceId);
     if (ns == null) {
       throw new NamespaceNotFoundException(namespaceId);
+    }
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    if (!Principal.SYSTEM.equals(principal) && !filter.apply(namespaceId.toEntityId())) {
+      throw new UnauthorizedException(principal, namespaceId.toEntityId());
     }
     return ns;
   }

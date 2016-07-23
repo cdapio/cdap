@@ -155,7 +155,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   public void getArtifacts(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @Nullable @QueryParam("scope") String scope)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws Exception {
 
     try {
       if (scope == null) {
@@ -177,7 +177,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") String artifactName,
                                   @QueryParam("scope") @DefaultValue("user") String scope)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
 
@@ -198,7 +198,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                               @PathParam("artifact-name") String artifactName,
                               @PathParam("artifact-version") String artifactVersion,
                               @QueryParam("scope") @DefaultValue("user") String scope)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
@@ -226,7 +226,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                             @PathParam("artifact-version") String artifactVersion,
                             @QueryParam("scope") @DefaultValue("user") String scope,
                             @QueryParam("keys") @Nullable String keys)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
@@ -320,7 +320,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                           @PathParam("artifact-name") String artifactName,
                           @PathParam("artifact-version") String artifactVersion,
                           @PathParam("property") String key)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws Exception {
 
     NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
       NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
@@ -460,7 +460,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                        @PathParam("plugin-type") String pluginType,
                                        @PathParam("plugin-method") String methodName,
                                        @QueryParam("scope") @DefaultValue("user") String scope)
-    throws NotFoundException, BadRequestException, IOException, ClassNotFoundException, IllegalAccessException {
+    throws Exception {
 
     String requestBody = request.getContent().toString(Charsets.UTF_8);
     NamespaceId namespace = Ids.namespace(namespaceId);

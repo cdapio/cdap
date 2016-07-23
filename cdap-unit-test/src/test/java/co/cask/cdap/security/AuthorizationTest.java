@@ -87,7 +87,7 @@ public class AuthorizationTest extends TestBase {
     Constants.Security.Authorization.CACHE_ENABLED, false
   );
 
-  private static final String OLD_USER = SecurityRequestContext.getUserId();
+  private static String olduser;
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
   private static final NamespaceId AUTH_NAMESPACE = new NamespaceId("authorization");
@@ -134,6 +134,7 @@ public class AuthorizationTest extends TestBase {
 
   @BeforeClass
   public static void setup() {
+    olduser = SecurityRequestContext.getUserId();
     instance = new InstanceId(getConfiguration().get(Constants.INSTANCE_NAME));
     SecurityRequestContext.setUserId(ALICE.getName());
   }
@@ -221,7 +222,7 @@ public class AuthorizationTest extends TestBase {
     try {
       appManager.update(new AppRequest(new ArtifactSummary(DummyApp.class.getSimpleName(), version)));
       Assert.fail("App update should have failed because Alice does not have admin privileges on the app.");
-    } catch (UnauthorizedException expected) {
+    } catch (Exception expected) {
       // expected
     }
     // grant READ and WRITE to Bob
@@ -229,12 +230,21 @@ public class AuthorizationTest extends TestBase {
     // delete should fail
     try {
       appManager.delete();
-    } catch (UnauthorizedException expected) {
+    } catch (Exception expected) {
       // expected
     }
     // grant ADMIN to Bob. Now delete should succeed
     grantAndAssertSuccess(dummyAppId, BOB, ImmutableSet.of(Action.ADMIN));
+    try {
+      appManager.delete();
+      Assert.fail("Deletion should have failed since Bob don't have any privileges to namespace");
+    } catch (Exception expected) {
+      // expected
+    }
+
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, ImmutableSet.of(Action.READ));
     appManager.delete();
+
     // All privileges on the app should have been revoked
     Assert.assertEquals(
       ImmutableSet.of(
@@ -245,6 +255,8 @@ public class AuthorizationTest extends TestBase {
       ),
       authorizer.listPrivileges(ALICE)
     );
+
+    authorizer.revoke(AUTH_NAMESPACE, BOB, ImmutableSet.of(Action.READ));
     Assert.assertTrue("Bob should not have any privileges because all privileges on the app have been revoked " +
                         "since the app got deleted", authorizer.listPrivileges(BOB).isEmpty());
     // switch back to Alice
@@ -466,6 +478,7 @@ public class AuthorizationTest extends TestBase {
     );
     // alice should be able to start and stop programs in the app she deployed
     dummyAppManager.startProgram(serviceId.toId());
+
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -495,6 +508,13 @@ public class AuthorizationTest extends TestBase {
       //noinspection ThrowableResultOfMethodCallIgnored
       Assert.assertTrue(Throwables.getRootCause(expected) instanceof UnauthorizedException);
     }
+    try {
+      dummyAppManager.getInfo();
+      Assert.fail("Bob should not be able to read the app info with out privileges");
+    } catch (Exception expected) {
+      // expected
+    }
+
     // TODO: CDAP-5452 can't verify running programs in this case, because DefaultApplicationManager maintains an
     // in-memory map of running processes that does not use ApplicationLifecycleService to get the runtime status.
     // So no matter if the start/stop call succeeds or fails, it updates its running state in the in-memory map.
@@ -537,7 +557,7 @@ public class AuthorizationTest extends TestBase {
   public static void cleanup() throws Exception {
     // we want to execute TestBase's @AfterClass after unsetting userid, because the old userid has been granted ADMIN
     // on default namespace in TestBase so it can clean the namespace.
-    SecurityRequestContext.setUserId(OLD_USER);
+    SecurityRequestContext.setUserId(olduser);
     finish();
   }
 

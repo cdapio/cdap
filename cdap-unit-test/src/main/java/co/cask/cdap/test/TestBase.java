@@ -284,9 +284,12 @@ public class TestBase {
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     // This is needed so the logged-in user can successfully create the default namespace
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+      String user = System.getProperty("user.name");
+      SecurityRequestContext.setUserId(user);
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
-      Principal principal = new Principal(SecurityRequestContext.getUserId(), Principal.PrincipalType.USER);
+      Principal principal = new Principal(user, Principal.PrincipalType.USER);
       authorizerInstantiator.get().grant(instance, principal, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(NamespaceId.DEFAULT, principal, ImmutableSet.of(Action.ADMIN));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
@@ -400,6 +403,13 @@ public class TestBase {
   public static void finish() throws Exception {
     if (--startCount != 0) {
       return;
+    }
+
+    if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+      InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
+      Principal principal = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
+      authorizerInstantiator.get().grant(instance, principal, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(NamespaceId.DEFAULT, principal, ImmutableSet.of(Action.ADMIN));
     }
 
     namespaceAdmin.delete(Id.Namespace.DEFAULT);
