@@ -29,9 +29,11 @@ import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimeRangeReadFilter;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -55,6 +57,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -75,12 +78,15 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
   private final StreamMetaStore streamMetaStore;
+  private final Impersonator impersonator;
 
   @Inject
-  public StreamFetchHandler(CConfiguration cConf, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore) {
+  public StreamFetchHandler(CConfiguration cConf, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+                            Impersonator impersonator) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
+    this.impersonator = impersonator;
   }
 
   /**
@@ -101,81 +107,91 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
    */
   @GET
   @Path("/{stream}/events")
-  public void fetch(HttpRequest request, HttpResponder responder,
+  public void fetch(HttpRequest request, final HttpResponder responder,
                     @PathParam("namespace-id") String namespaceId,
                     @PathParam("stream") String stream,
                     @QueryParam("start") @DefaultValue("0") String start,
                     @QueryParam("end") @DefaultValue("9223372036854775807") String end,
-                    @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
+                    @QueryParam("limit") @DefaultValue("2147483647") final int limitEvents) throws Exception {
     long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);
     long endTime = TimeMathParser.parseTime(end, TimeUnit.MILLISECONDS);
 
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
-    if (!verifyGetEventsRequest(streamId, startTime, endTime, limit, responder)) {
+    if (!verifyGetEventsRequest(streamId, startTime, endTime, limitEvents, responder)) {
       return;
     }
 
-    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    final StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     long now = System.currentTimeMillis();
     startTime = Math.max(startTime, now - streamConfig.getTTL());
     endTime = Math.min(endTime, now);
+    final long streamStartTime = startTime;
+    final long streamEndTime = endTime;
+    impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        int limit = limitEvents;
+        // Create the stream event reader
+        try (FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader = createReader(streamConfig,
+                                                                                             streamStartTime)) {
+          TimeRangeReadFilter readFilter = new TimeRangeReadFilter(streamStartTime, streamEndTime);
+          List<StreamEvent> events = Lists.newArrayListWithCapacity(100);
 
-    // Create the stream event reader
-    try (FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader = createReader(streamConfig, startTime)) {
-      TimeRangeReadFilter readFilter = new TimeRangeReadFilter(startTime, endTime);
-      List<StreamEvent> events = Lists.newArrayListWithCapacity(100);
+          // Reads the first batch of events from the stream.
+          int eventsRead = readEvents(reader, events, limit, readFilter);
 
-      // Reads the first batch of events from the stream.
-      int eventsRead = readEvents(reader, events, limit, readFilter);
-
-      // If empty already, return 204 no content
-      if (eventsRead <= 0) {
-        responder.sendStatus(HttpResponseStatus.NO_CONTENT);
-        return;
-      }
-
-      // Send with chunk response, as we don't want to buffer all events in memory to determine the content-length.
-      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
-                                                                                    "application/json; charset=utf-8"));
-      ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
-      JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(buffer),
-                                                                    Charsets.UTF_8));
-      // Response is an array of stream event
-      jsonWriter.beginArray();
-      while (limit > 0 && eventsRead > 0) {
-        limit -= eventsRead;
-
-        for (StreamEvent event : events) {
-          GSON.toJson(event, StreamEvent.class, jsonWriter);
-          jsonWriter.flush();
-
-          // If exceeded chunk size limit, send a new chunk.
-          if (buffer.readableBytes() >= CHUNK_SIZE) {
-            // If the connect is closed, sendChunk will throw IOException.
-            // No need to handle the exception as it will just propagated back to the netty-http library
-            // and it will handle it.
-            // Need to copy the buffer because the buffer will get reused and send chunk is an async operation
-            chunkResponder.sendChunk(buffer.copy());
-            buffer.clear();
+          // If empty already, return 204 no content
+          if (eventsRead <= 0) {
+            responder.sendStatus(HttpResponseStatus.NO_CONTENT);
+            return null;
           }
-        }
-        events.clear();
 
-        if (limit > 0) {
-          eventsRead = readEvents(reader, events, limit, readFilter);
-        }
-      }
-      jsonWriter.endArray();
-      jsonWriter.close();
+          // Send with chunk response, as we don't want to buffer all events in memory to determine the content-length.
+          ChunkResponder chunkResponder = responder.sendChunkStart(
+            HttpResponseStatus.OK, ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
+                                                        "application/json; charset=utf-8"));
+          ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
+          JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(buffer),
+                                                                        Charsets.UTF_8));
+          // Response is an array of stream event
+          jsonWriter.beginArray();
+          while (limit > 0 && eventsRead > 0) {
+            limit -= eventsRead;
 
-      // Send the last chunk that still has data
-      if (buffer.readable()) {
-        // No need to copy the last chunk, since the buffer will not be reused
-        chunkResponder.sendChunk(buffer);
+            for (StreamEvent event : events) {
+              GSON.toJson(event, StreamEvent.class, jsonWriter);
+              jsonWriter.flush();
+
+              // If exceeded chunk size limit, send a new chunk.
+              if (buffer.readableBytes() >= CHUNK_SIZE) {
+                // If the connect is closed, sendChunk will throw IOException.
+                // No need to handle the exception as it will just propagated back to the netty-http library
+                // and it will handle it.
+                // Need to copy the buffer because the buffer will get reused and send chunk is an async operation
+                chunkResponder.sendChunk(buffer.copy());
+                buffer.clear();
+              }
+            }
+            events.clear();
+
+            if (limit > 0) {
+              eventsRead = readEvents(reader, events, limit, readFilter);
+            }
+          }
+          jsonWriter.endArray();
+          jsonWriter.close();
+
+          // Send the last chunk that still has data
+          if (buffer.readable()) {
+            // No need to copy the last chunk, since the buffer will not be reused
+            chunkResponder.sendChunk(buffer);
+          }
+          Closeables.closeQuietly(chunkResponder);
+        }
+        return null;
       }
-      Closeables.closeQuietly(chunkResponder);
-    }
+    });
+
   }
 
   /**

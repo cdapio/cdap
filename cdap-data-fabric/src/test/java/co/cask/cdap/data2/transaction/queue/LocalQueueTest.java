@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationUnitTestModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -33,6 +34,8 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -101,12 +104,14 @@ public class LocalQueueTest extends QueueTest {
       new ExploreClientModule(),
       new ViewAdminModules().getStandaloneModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new NamespaceClientRuntimeModule().getStandaloneModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override
           protected void configure() {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           }
         }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);

@@ -34,6 +34,8 @@ import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
@@ -118,6 +120,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           }
         })
     );

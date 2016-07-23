@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
@@ -35,13 +36,15 @@ public final class LengthBasedContentWriterFactory implements ContentWriterFacto
   private final ConcurrentStreamWriter streamWriter;
   private final Map<String, String> headers;
   private final long bufferThreshold;
+  private final Impersonator impersonator;
 
   public LengthBasedContentWriterFactory(StreamConfig streamConfig, ConcurrentStreamWriter streamWriter,
-                                         Map<String, String> headers, long bufferThreshold) {
+                                         Map<String, String> headers, long bufferThreshold, Impersonator impersonator) {
     this.streamConfig = streamConfig;
     this.streamWriter = streamWriter;
     this.headers = ImmutableMap.copyOf(headers);
     this.bufferThreshold = bufferThreshold;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -53,6 +56,6 @@ public final class LengthBasedContentWriterFactory implements ContentWriterFacto
   public ContentWriter create(Map<String, String> headers) throws IOException {
     Map<String, String> allHeaders = Maps.newHashMap(this.headers);
     allHeaders.putAll(headers);
-    return new LengthBasedContentWriter(streamConfig, streamWriter, allHeaders, bufferThreshold);
+    return new LengthBasedContentWriter(streamConfig, streamWriter, allHeaders, bufferThreshold, impersonator);
   }
 }

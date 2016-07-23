@@ -16,11 +16,14 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
@@ -72,6 +75,10 @@ public abstract class StreamDataFileTestBase {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   protected abstract LocationFactory getLocationFactory();
+
+  protected static CConfiguration cConf = CConfiguration.create();
+
+  private static final Impersonator impersonator = new Impersonator(cConf, new UnsupportedUGIProvider(), null);
 
   @Test
   public void testEmptyFile() throws Exception {
@@ -987,6 +994,7 @@ public abstract class StreamDataFileTestBase {
 
   private FileWriter<StreamEvent> createWriter(StreamConfig config, String prefix) {
     return new TimePartitionedStreamFileWriter(config.getLocation(), config.getPartitionDuration(),
-                                               prefix, config.getIndexInterval());
+                                               prefix, config.getIndexInterval(), config.getStreamId().toEntityId(),
+                                               impersonator);
   }
 }

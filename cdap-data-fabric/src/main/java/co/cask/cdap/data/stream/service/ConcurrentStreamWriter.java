@@ -27,9 +27,11 @@ import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimestampCloseable;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
@@ -99,13 +102,13 @@ public final class ConcurrentStreamWriter implements Closeable {
 
   ConcurrentStreamWriter(StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
                          StreamFileWriterFactory writerFactory, int workerThreads,
-                         StreamMetricsCollectorFactory metricsCollectorFactory) {
+                         StreamMetricsCollectorFactory metricsCollectorFactory, Impersonator impersonator) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.streamAdmin = streamAdmin;
     this.workerThreads = workerThreads;
     this.metricsCollectorFactory = metricsCollectorFactory;
     this.eventQueues = new MapMaker().concurrencyLevel(workerThreads).makeMap();
-    this.streamFileFactory = new StreamFileFactory(writerFactory);
+    this.streamFileFactory = new StreamFileFactory(writerFactory, impersonator);
     this.generationWatched = Sets.newHashSet();
     this.cancellables = Lists.newArrayList();
     this.createLock = new ReentrantLock();
@@ -292,9 +295,11 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final class StreamFileFactory extends StreamPropertyListener {
 
     private final StreamFileWriterFactory writerFactory;
+    private final Impersonator impersonator;
 
-    StreamFileFactory(StreamFileWriterFactory writerFactory) {
+    StreamFileFactory(StreamFileWriterFactory writerFactory, Impersonator impersonator) {
       this.writerFactory = writerFactory;
+      this.impersonator = impersonator;
     }
 
     @Override
@@ -316,9 +321,14 @@ public final class ConcurrentStreamWriter implements Closeable {
      * @return A {@link FileWriter} for writing {@link StreamEvent} to the given stream
      * @throws IOException if failed to create the file writer
      */
-    FileWriter<StreamEvent> create(Id.Stream streamId) throws IOException {
-      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-      int generation = StreamUtils.getGeneration(streamConfig);
+    FileWriter<StreamEvent> create(Id.Stream streamId) throws Exception {
+      final StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+      int generation = impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Integer>() {
+        @Override
+        public Integer call() throws Exception {
+          return StreamUtils.getGeneration(streamConfig);
+        }
+      });
 
       LOG.info("Create stream writer for {} with generation {}", streamId, generation);
       return writerFactory.create(streamConfig, generation);
@@ -337,34 +347,46 @@ public final class ConcurrentStreamWriter implements Closeable {
      * @param timestamp close timestamp of the stream file
      * @throws IOException if failed to append the file to the stream
      */
-    void appendFile(StreamConfig config, Location eventFile, Location indexFile, long timestamp) throws IOException {
-      int generation = StreamUtils.getGeneration(config);
+    void appendFile(final StreamConfig config, final Location eventFile, final Location indexFile,
+                    final long timestamp) throws IOException {
+      try {
+        impersonator.doAs(new NamespaceId(config.getStreamId().getNamespaceId()), new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            int generation = StreamUtils.getGeneration(config);
 
-      // Figure out the partition directory based on generation and timestamp
-      Location baseLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);
-      long partitionDuration = config.getPartitionDuration();
-      long partitionStartTime = StreamUtils.getPartitionStartTime(timestamp, partitionDuration);
-      Location partitionLocation = StreamUtils.createPartitionLocation(baseLocation,
-                                                                       partitionStartTime, partitionDuration);
-      partitionLocation.mkdirs();
+            // Figure out the partition directory based on generation and timestamp
+            Location baseLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);
+            long partitionDuration = config.getPartitionDuration();
+            long partitionStartTime = StreamUtils.getPartitionStartTime(timestamp, partitionDuration);
+            Location partitionLocation = StreamUtils.createPartitionLocation(baseLocation,
+                                                                             partitionStartTime, partitionDuration);
+            partitionLocation.mkdirs();
 
-      // Figure out the final stream file name
-      String filePrefix = writerFactory.getFileNamePrefix();
-      int fileSequence = StreamUtils.getNextSequenceId(partitionLocation, filePrefix);
+            // Figure out the final stream file name
+            String filePrefix = writerFactory.getFileNamePrefix();
+            int fileSequence = StreamUtils.getNextSequenceId(partitionLocation, filePrefix);
 
-      Location destEventFile = StreamUtils.createStreamLocation(partitionLocation, filePrefix,
-                                                            fileSequence, StreamFileType.EVENT);
-      Location destIndexFile = StreamUtils.createStreamLocation(partitionLocation, filePrefix,
-                                                            fileSequence, StreamFileType.INDEX);
-      // The creation should succeed, as it's expected to only have one process running per fileNamePrefix.
-      if (!destEventFile.createNew() || !destIndexFile.createNew()) {
-        throw new IOException(String.format("Failed to create new file at %s and %s",
-                                            destEventFile, destIndexFile));
+            Location destEventFile = StreamUtils.createStreamLocation(partitionLocation, filePrefix,
+                                                                      fileSequence, StreamFileType.EVENT);
+            Location destIndexFile = StreamUtils.createStreamLocation(partitionLocation, filePrefix,
+                                                                      fileSequence, StreamFileType.INDEX);
+            // The creation should succeed, as it's expected to only have one process running per fileNamePrefix.
+            if (!destEventFile.createNew() || !destIndexFile.createNew()) {
+              throw new IOException(String.format("Failed to create new file at %s and %s",
+                                                  destEventFile, destIndexFile));
+            }
+
+            // Rename the index file first, then the event file
+            indexFile.renameTo(destIndexFile);
+            eventFile.renameTo(destEventFile);
+            return null;
+          }
+        });
+      } catch (Exception ex) {
+        throw new IOException(String.format("Error while trying to append the file to stream %s",
+                                            config.getStreamId()), ex);
       }
-
-      // Rename the index file first, then the event file
-      indexFile.renameTo(destIndexFile);
-      eventFile.renameTo(destEventFile);
     }
   }
 
@@ -517,7 +539,7 @@ public final class ConcurrentStreamWriter implements Closeable {
      * Returns the current {@link FileWriter}. A new {@link FileWriter} will be created
      * if none existed yet. This method should only be called from the writer leader thread.
      */
-    private FileWriter<StreamEventData> getFileWriter() throws IOException {
+    private FileWriter<StreamEventData> getFileWriter() throws Exception {
       if (closed) {
         throw new IOException("Stream writer already closed");
       }
