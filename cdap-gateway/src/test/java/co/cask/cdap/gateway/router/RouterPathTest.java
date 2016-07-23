@@ -384,11 +384,11 @@ public class RouterPathTest {
   public void testSecureStorePaths() {
     assertSecureStoreRouting("/v3/////namespaces/default/securekeys/key", HttpMethod.PUT);
     assertSecureStoreRouting("/v3/namespaces////default/securekeys/key", HttpMethod.PUT);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/keys/key1", HttpMethod.GET);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/keys/key1", HttpMethod.DELETE);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/keys///////key1", HttpMethod.DELETE);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/keys", HttpMethod.GET);
-    assertSecureStoreRouting("/v3/////namespaces/default/securekeys/keys", HttpMethod.GET);
+    assertSecureStoreRouting("/v3/namespaces/default/securekeys/key1", HttpMethod.GET);
+    assertSecureStoreRouting("/v3/namespaces/default/securekeys/key1", HttpMethod.DELETE);
+    assertSecureStoreRouting("/v3/namespaces/default/securekeys///////key1", HttpMethod.DELETE);
+    assertSecureStoreRouting("/v3/namespaces/default/securekeys/", HttpMethod.GET);
+    assertSecureStoreRouting("/v3/////namespaces/default/securekeys/", HttpMethod.GET);
   }
 
   private void assertMetadataRouting(String path) {

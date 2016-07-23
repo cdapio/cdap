@@ -61,7 +61,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     this.secureStoreManager = secureStoreManager;
   }
 
-  @Path("/keys/{key-name}")
+  @Path("/{key-name}")
   @PUT
   public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws BadRequestException, IOException {
@@ -90,7 +90,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
-  @Path("/keys/{key-name}")
+  @Path("/{key-name}")
   @DELETE
   public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws IOException {
@@ -98,7 +98,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
-  @Path("/keys/{key-name}")
+  @Path("/{key-name}")
   @GET
   public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                   @PathParam("key-name") String name) throws IOException {
@@ -107,7 +107,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     httpResponder.sendJson(HttpResponseStatus.OK, data);
   }
 
-  @Path("/keys/{key-name}/metadata")
+  @Path("/{key-name}/metadata")
   @GET
   public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
                           @PathParam("namespace-id") String namespace, @PathParam("key-name") String name)
@@ -116,7 +116,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     httpResponder.sendJson(HttpResponseStatus.OK, secureStoreData.getMetadata());
   }
 
-  @Path("/keys")
+  @Path("/")
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws IOException {
