@@ -86,7 +86,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
     }
 
     byte[] data = value.getBytes(StandardCharsets.UTF_8);
-    secureStoreManager.put(namespace, name, data, description, secureKeyCreateRequest.getProperties());
+    secureStoreManager.putSecureData(namespace, name, data, description, secureKeyCreateRequest.getProperties());
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -94,7 +94,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws IOException {
-    secureStoreManager.delete(namespace, name);
+    secureStoreManager.deleteSecureData(namespace, name);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -102,7 +102,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                   @PathParam("key-name") String name) throws IOException {
-    SecureStoreData secureStoreData = secureStore.get(namespace, name);
+    SecureStoreData secureStoreData = secureStore.getSecureData(namespace, name);
     String data = new String(secureStoreData.get(), StandardCharsets.UTF_8);
     httpResponder.sendJson(HttpResponseStatus.OK, data);
   }
@@ -112,7 +112,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
                           @PathParam("namespace-id") String namespace, @PathParam("key-name") String name)
     throws IOException {
-    SecureStoreData secureStoreData = secureStore.get(namespace, name);
+    SecureStoreData secureStoreData = secureStore.getSecureData(namespace, name);
     httpResponder.sendJson(HttpResponseStatus.OK, secureStoreData.getMetadata());
   }
 
@@ -120,7 +120,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws IOException {
-    List<SecureStoreMetadata> metadatas = secureStore.list(namespace);
+    List<SecureStoreMetadata> metadatas = secureStore.listSecureData(namespace);
     List<SecureKeyListEntry> returnList = new ArrayList<>(metadatas.size());
     for (SecureStoreMetadata metadata : metadatas) {
       returnList.add(new SecureKeyListEntry(metadata.getName(), metadata.getDescription()));

@@ -249,12 +249,12 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
-  public List<SecureStoreMetadata> list(String namespace) throws IOException {
-    return sparkRuntimeContext.list(namespace);
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+    return sparkRuntimeContext.listSecureData(namespace);
   }
 
   @Override
-  public SecureStoreData get(String namespace, String name) throws IOException {
-    return sparkRuntimeContext.get(namespace, name);
+  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+    return sparkRuntimeContext.getSecureData(namespace, name);
   }
 }
