@@ -1054,9 +1054,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.setInstances(2);
     workerInstancesCheck(workerManager, 2);
 
-    WorkerManager lifecycleWorkerManager =
-      applicationManager.getWorkerManager(AppUsingGetServiceURL.LIFECYCLE_WORKER).start();
-    lifecycleWorkerManager.waitForStatus(true);
+    WorkerManager lifecycleWorkerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.LIFECYCLE_WORKER);
+    lifecycleWorkerManager.setInstances(3);
+    lifecycleWorkerManager.start().waitForStatus(true);
+
+    workerInstancesCheck(lifecycleWorkerManager, 3);
+    for (int i = 0; i < 3; i++) {
+      kvTableKeyCheck(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET,
+                      Bytes.toBytes(String.format("init.%d", i)));
+    }
 
     // Set 5 instances for the LifecycleWorker
     lifecycleWorkerManager.setInstances(5);
