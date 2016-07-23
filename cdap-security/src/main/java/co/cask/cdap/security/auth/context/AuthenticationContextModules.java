@@ -54,4 +54,17 @@ public class AuthenticationContextModules {
       }
     };
   }
+
+  /**
+   * An {@link AuthenticationContext} for use in tests that do not need authentication/authorization. The
+   * authentication details in this context are determined based on the {@link System#props user.name} system property.
+   */
+  public AbstractModule getNoOpModule() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(AuthenticationContext.class).to(AuthenticationTestContext.class);
+      }
+    };
+  }
 }

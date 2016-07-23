@@ -24,6 +24,7 @@ import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
@@ -32,10 +33,16 @@ import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.security.auth.context.AuthenticationTestContext;
-import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -61,11 +68,20 @@ public class ConfiguratorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static CConfiguration conf;
+  private static AuthorizerInstantiator authorizerInstantiator;
+  private static AuthorizationEnforcer authEnforcer;
+  private static AuthenticationContext authenticationContext;
 
   @BeforeClass
   public static void setup() throws IOException {
     conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
+    Injector injector = Guice.createInjector(new ConfigModule(conf),
+                                             new AuthorizationTestModule(),
+                                             new AuthorizationEnforcementModule().getInMemoryModules(),
+                                             new AuthenticationContextModules().getNoOpModule());
+    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
   }
 
   @Test
@@ -73,9 +89,10 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory(),
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizerInstantiator,
+                                                             new DummyProgramRunnerFactory(),
                                                              new Impersonator(CConfiguration.create(), null, null),
-                                                             new NoOpAuthorizer(), new AuthenticationTestContext());
+                                                             authEnforcer, authenticationContext);
 
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
@@ -105,9 +122,10 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory(),
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizerInstantiator,
+                                                             new DummyProgramRunnerFactory(),
                                                              new Impersonator(CConfiguration.create(), null, null),
-                                                             new NoOpAuthorizer(), new AuthenticationTestContext());
+                                                             authEnforcer, authenticationContext);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     // Create a configurator that is testable. Provide it a application.
