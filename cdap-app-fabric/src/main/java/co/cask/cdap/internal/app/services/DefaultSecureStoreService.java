@@ -31,8 +31,6 @@ import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Strings;
@@ -75,7 +73,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter;
     filter = authorizer.createFilter(principal);
-    List<SecureStoreMetadata> metadatas = secureStore.list(namespaceId.getNamespace());
+    List<SecureStoreMetadata> metadatas = secureStore.listSecureData(namespaceId.getNamespace());
     List<SecureKeyListEntry> result = new ArrayList<>(metadatas.size());
     String namespace = namespaceId.getNamespace();
     for (SecureStoreMetadata metadata : metadatas) {
@@ -102,7 +100,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
     filter = authorizer.createFilter(principal);
 
     if (filter.apply(secureKeyId)) {
-      return secureStore.get(secureKeyId.getNamespace(), secureKeyId.getName());
+      return secureStore.getSecureData(secureKeyId.getNamespace(), secureKeyId.getName());
     }
     throw new UnauthorizedException(principal, Action.READ, secureKeyId);
   }
@@ -130,7 +128,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
     }
 
     byte[] data = value.getBytes(StandardCharsets.UTF_8);
-    secureStoreManager.put(secureKeyId.getNamespace(), secureKeyId.getName(), data, description,
+    secureStoreManager.putSecureData(secureKeyId.getNamespace(), secureKeyId.getName(), data, description,
                            secureKeyCreateRequest.getProperties());
     try {
       authorizer.grant(secureKeyId, principal, ImmutableSet.of(Action.ALL));
@@ -149,7 +147,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
   public void delete(SecureKeyId secureKeyId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     authorizer.enforce(secureKeyId, principal, Action.ADMIN);
-    secureStoreManager.delete(secureKeyId.getNamespace(), secureKeyId.getName());
+    secureStoreManager.deleteSecureData(secureKeyId.getNamespace(), secureKeyId.getName());
     authorizer.revoke(secureKeyId);
   }
 }
