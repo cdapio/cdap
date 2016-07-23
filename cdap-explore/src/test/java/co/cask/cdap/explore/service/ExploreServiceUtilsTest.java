@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.base.Joiner;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
@@ -36,7 +37,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -47,6 +51,18 @@ public class ExploreServiceUtilsTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  @Test
+  public void testCdapCommonJarName() throws Exception {
+    // This test case will succeed as long as the CConfiguration class is part of cdap-common.jar.
+    // ExploreServiceUtils.getCdapCommonJarName() method uses CConfiguration class to figure
+    // out the name of the cdap-common.jar. So in case if CConfiguration is moved out of cdap-common.jar
+    // we will need to fix ExploreServiceUtils.getCdapCommonJarName() method as well.
+    CodeSource codeSource = CConfiguration.class.getProtectionDomain().getCodeSource();
+    String cdapCommonLocation = codeSource.getLocation().getFile();
+    Assert.assertNotNull(cdapCommonLocation);
+    Assert.assertTrue(cdapCommonLocation.contains("cdap-common"));
+  }
 
   @Test
   public void testHiveVersion() throws Exception {
@@ -86,7 +102,7 @@ public class ExploreServiceUtilsTest {
       conf.writeXml(os);
     }
 
-    String yarnApplicationClassPath = "$PWD/*," +
+    String yarnApplicationClassPath = "$PWD/classes,$PWD/*," +
       conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 

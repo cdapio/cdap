@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -55,6 +56,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -63,6 +65,7 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.CodeSource;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -437,6 +440,19 @@ public class ExploreServiceUtils {
     }
   }
 
+  @Nullable
+  private static String getCdapCommonJarName() {
+    try {
+      CodeSource codeSource = CConfiguration.class.getProtectionDomain().getCodeSource();
+      if (codeSource != null) {
+        return Paths.get(codeSource.getLocation().toURI().getPath()).getFileName().toString();
+      }
+    } catch (SecurityException | URISyntaxException e) {
+      LOG.warn("Failed to get jar name for cdap-common.", e);
+    }
+    return null;
+  }
+
   /**
    * Change yarn-site.xml file, and return a temp copy of it to which are added
    * necessary options.
@@ -453,11 +469,15 @@ public class ExploreServiceUtils {
     String yarnAppClassPath = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                        Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
-    // add the pwd/* at the beginning of classpath. so user's jar will take precedence and without this change,
-    // job.jar will be at the beginning of the classpath, since job.jar has old guava version classes,
-    // we want to add pwd/* before
-    yarnAppClassPath = "$PWD/*," + yarnAppClassPath;
+    // We first add cdap-common.jar to the classpath so that FileContextLocationFactory from cdap-common gets
+    // picked instead of FileContextLocationFactory from Apache Twill. We then add the pwd/* to the classpath.
+    // so user's jar will take precedence. Without pwd/* in the beginning of classpath, job.jar will be at
+    // the beginning of the classpath. Since job.jar has old guava version classes, we want to add pwd/* before.
+    String cdapCommonJarName = getCdapCommonJarName();
+    String cdapCommonJarClassPath = cdapCommonJarName == null ? "" : "$PWD/" + cdapCommonJarName + ",";
+    yarnAppClassPath = cdapCommonJarClassPath + "$PWD/*," + yarnAppClassPath;
 
+    LOG.debug("Setting yarn.application.classpath to {}", yarnAppClassPath);
     conf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, yarnAppClassPath);
 
     File newYarnConfFile = new File(tempDir, "yarn-site.xml");
@@ -485,7 +505,7 @@ public class ExploreServiceUtils {
     }
 
     String mrAppClassPath = conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
-                                       MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
+                                     MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
 
     // Add the pwd/* at the beginning of classpath. Without this change, old jars from mr framework classpath
     // get into classpath.
