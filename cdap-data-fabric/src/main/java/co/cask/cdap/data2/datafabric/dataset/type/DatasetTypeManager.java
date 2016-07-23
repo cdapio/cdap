@@ -38,6 +38,7 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.TypeConflictException;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -69,6 +70,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -96,6 +98,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final Map<String, DatasetModule> defaultModules;
   private final Map<String, DatasetModule> extensionModules;
   private final Path systemTempPath;
+  private final Impersonator impersonator;
 
   @Inject
   public DatasetTypeManager(CConfiguration cConf,
@@ -103,7 +106,8 @@ public class DatasetTypeManager extends AbstractIdleService {
                             TransactionSystemClientService txClientService,
                             TransactionExecutorFactory txExecutorFactory,
                             @Named("datasetMDS") DatasetFramework datasetFramework,
-                            @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
+                            @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
+                            Impersonator impersonator) {
     this.cConf = cConf;
     this.locationFactory = locationFactory;
     this.txClientService = txClientService;
@@ -111,6 +115,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     this.extensionModules = getExtensionModules(cConf);
     this.txExecutorFactory = txExecutorFactory;
     this.datasetFramework = datasetFramework;
+    this.impersonator = impersonator;
 
     Map<String, String> emptyArgs = Collections.emptyMap();
     this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework, null, null),
@@ -371,7 +376,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       return txExecutorFactory.createExecutor(datasetCache).execute(new Callable<Boolean>() {
         @Override
         public Boolean call() throws DatasetModuleConflictException, IOException {
-          DatasetModuleMeta module = datasetTypeMDS.getModule(datasetModuleId);
+          final DatasetModuleMeta module = datasetTypeMDS.getModule(datasetModuleId);
 
           if (module == null) {
             return false;
@@ -412,10 +417,22 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           datasetTypeMDS.deleteModule(datasetModuleId);
-          // Also delete module jar
-          Location moduleJarLocation = locationFactory.create(module.getJarLocation());
-          if (!moduleJarLocation.delete()) {
-            LOG.debug("Could not delete dataset module archive");
+          try {
+            // Also delete module jar
+            Location moduleJarLocation =
+              impersonator.doAs(datasetModuleId.getNamespace().toEntityId(), new Callable<Location>() {
+                @Override
+                public Location call() throws Exception {
+                  return locationFactory.create(module.getJarLocation());
+                }
+              });
+            if (!moduleJarLocation.delete()) {
+              LOG.debug("Could not delete dataset module archive");
+            }
+          } catch (Exception e) {
+            // the only checked exception the try-catch throws is IOException
+            Throwables.propagateIfInstanceOf(e, IOException.class);
+            Throwables.propagate(e);
           }
 
           return true;
@@ -448,11 +465,23 @@ public class DatasetTypeManager extends AbstractIdleService {
       txExecutorFactory.createExecutor(datasetCache).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws DatasetModuleConflictException, IOException {
-          Set<String> typesToDelete = new HashSet<String>();
-          List<Location> moduleLocations = Lists.newArrayList();
-          for (DatasetModuleMeta module : datasetTypeMDS.getModules(namespaceId)) {
-            typesToDelete.addAll(module.getTypes());
-            moduleLocations.add(locationFactory.create(module.getJarLocation()));
+          final Set<String> typesToDelete = new HashSet<String>();
+          final List<Location> moduleLocations = new ArrayList<>();
+          final Collection<DatasetModuleMeta> modules = datasetTypeMDS.getModules(namespaceId);
+          try {
+            impersonator.doAs(namespaceId.toEntityId(), new Callable<Void>() {
+              @Override
+              public Void call() throws Exception {
+                for (DatasetModuleMeta module : modules) {
+                  typesToDelete.addAll(module.getTypes());
+                  moduleLocations.add(locationFactory.create(module.getJarLocation()));
+                }
+                return null;
+              }
+            });
+          } catch (Exception e) {
+            // the callable throws no checked exceptions
+            Throwables.propagate(e);
           }
 
           // check if there are any instances that use types of these modules?

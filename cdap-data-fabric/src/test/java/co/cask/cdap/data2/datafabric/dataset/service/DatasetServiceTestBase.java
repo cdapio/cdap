@@ -224,7 +224,8 @@ public abstract class DatasetServiceTestBase {
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
                                                             txExecutorFactory,
-                                                            inMemoryDatasetFramework, defaultModules);
+                                                            inMemoryDatasetFramework, defaultModules,
+                                                            impersonator);
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
     DatasetInstanceManager instanceManager =
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
@@ -235,7 +236,7 @@ public abstract class DatasetServiceTestBase {
 
     DatasetTypeService typeService = new DatasetTypeService(
       typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, authorizerInstantiator,
-      authenticationContext, cConf
+      authenticationContext, cConf, impersonator
     );
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
                                  opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService,
