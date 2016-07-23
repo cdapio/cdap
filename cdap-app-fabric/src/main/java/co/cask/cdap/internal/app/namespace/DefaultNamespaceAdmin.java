@@ -315,7 +315,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     }
 
     if (config != null && config.getHiveDatabase() != null) {
-      // if a root directory was given for update and it's not same as existing one throw exception
+      // if a hive database was given for update and it's not same as existing one throw exception
       if (!config.getHiveDatabase().equals(existingMeta.getConfig().getHiveDatabase())) {
         throw new BadRequestException(String.format("Updates to %s are not allowed. Cannot update from %s to %s.",
                                                     NamespaceConfig.HIVE_DATABASE,
