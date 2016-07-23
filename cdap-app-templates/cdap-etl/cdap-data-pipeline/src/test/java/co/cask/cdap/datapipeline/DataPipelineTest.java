@@ -29,7 +29,10 @@ import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.batch.ETLWorkflow;
 import co.cask.cdap.etl.mock.action.MockAction;
+import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
+import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
@@ -68,6 +71,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1205,6 +1209,52 @@ public class DataPipelineTest extends HydratorTestBase {
 
     validateMetric(3, appId, outerJoinName + ".records.out");
     validateMetric(3, appId, sinkName + ".records.in");
+  }
+
+  @Test
+  public void testSecureStoreMacroPipelines() throws Exception {
+    testSecureStorePipeline(Engine.MAPREDUCE, "mr");
+    testSecureStorePipeline(Engine.SPARK, "spark");
+  }
+
+  /**
+   * Tests the secure storage macro function in a pipelines by creating datasets from the secure store data.
+   */
+  private void testSecureStorePipeline(Engine engine, String prefix) throws Exception {
+    /*
+     * Trivial pipeline from batch source to batch sink.
+     *
+     * source --------- sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("input", "${secure(" + prefix + "Source)}")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("output", "${secure(" + prefix + "Sink)}")))
+      .addConnection("source", "sink")
+      .setEngine(engine)
+      .build();
+
+    // place dataset names into secure storage
+    getSecureStoreManager().put("default", prefix + "Source", (prefix + "MockSecureSourceDataset").getBytes(),
+                                "secure source dataset name", new HashMap<String, String>());
+    getSecureStoreManager().put("default", prefix + "Sink", (prefix + "MockSecureSinkDataset").getBytes(),
+                                "secure dataset name", new HashMap<String, String>());
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "App");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+
+    // make sure the datasets don't exist beforehand
+    Assert.assertNull(getDataset(prefix + "MockSecureSourceDataset").get());
+    Assert.assertNull(getDataset(prefix + "MockSecureSinkDataset").get());
+
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // now the datasets should exist
+    Assert.assertNotNull(getDataset(prefix + "MockSecureSourceDataset").get());
+    Assert.assertNotNull(getDataset(prefix + "MockSecureSinkDataset").get());
   }
 
   private void validateMetric(long expected, Id.Application appId,

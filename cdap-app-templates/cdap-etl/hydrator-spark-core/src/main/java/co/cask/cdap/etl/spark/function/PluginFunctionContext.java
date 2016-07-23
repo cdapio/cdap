@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -58,6 +59,8 @@ public class PluginFunctionContext implements Serializable {
   private final long logicalStartTime;
   private final Map<String, String> arguments;
   private final String pipelineStr;
+  private final SecureStore secureStore;
+  private final String namespace;
 
   public PluginFunctionContext(String stageName, JavaSparkExecutionContext sec, PipelinePhase pipelinePhase) {
     this.stageName = stageName;
@@ -72,10 +75,12 @@ public class PluginFunctionContext implements Serializable {
     }
     this.arguments = arguments;
     this.pipelineStr = GSON.toJson(pipelinePhase);
+    this.secureStore = sec.getSecureStore();
+    this.namespace = sec.getNamespace();
   }
 
   public <T> T createPlugin() throws Exception {
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime, secureStore, namespace);
     return pluginContext.newPluginInstance(stageName, macroEvaluator);
   }
 
