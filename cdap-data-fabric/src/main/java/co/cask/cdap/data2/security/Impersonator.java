@@ -66,6 +66,10 @@ public class Impersonator {
     }
 
     ImpersonationInfo impersonationInfo = impersonationUserResolver.getImpersonationInfo(namespaceId);
+    // no need to get a UGI if the current UGI is the one we're requesting; simply return it
+    if (UserGroupInformation.getCurrentUser().getUserName().equals(impersonationInfo.getPrincipal())) {
+      return UserGroupInformation.getCurrentUser();
+    }
     return ugiProvider.getConfiguredUGI(impersonationInfo);
   }
 }
