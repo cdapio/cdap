@@ -181,6 +181,7 @@ public class MasterServiceMain extends DaemonMain {
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     this.zkClient = injector.getInstance(ZKClientService.class);
     this.leaderElection = createLeaderElection();
+
     // leader election will normally stay running. Will only stop if there was some issue starting up.
     this.leaderElection.addListener(new ServiceListenerAdapter() {
       @Override
