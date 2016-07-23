@@ -48,6 +48,11 @@
       <artifactId>spark-core_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming_2.10</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>

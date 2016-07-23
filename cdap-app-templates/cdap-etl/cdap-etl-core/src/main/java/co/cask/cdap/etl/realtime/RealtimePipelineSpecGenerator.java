@@ -41,7 +41,7 @@ public class RealtimePipelineSpecGenerator extends PipelineSpecGenerator<ETLReal
 
   @Override
   public PipelineSpec generateSpec(ETLRealtimeConfig config) {
-    BatchPipelineSpec.Builder specBuilder = BatchPipelineSpec.builder();
+    PipelineSpec.Builder specBuilder = PipelineSpec.builder();
     configureStages(config, specBuilder);
     return specBuilder.build();
   }

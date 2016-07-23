@@ -86,7 +86,8 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter) throws Exception {
-    byte[] rowkey = Bytes.toBytes(UUID.randomUUID());
+    byte[] ts = Bytes.toBytes(System.currentTimeMillis());
+    byte[] rowkey = Bytes.concat(ts, Bytes.toBytes(UUID.randomUUID()));
     Put put = new Put(rowkey);
     put.add(SCHEMA_COL, input.getSchema().toString());
     put.add(RECORD_COL, StructuredRecordStringConverter.toJsonString(input));

@@ -34,7 +34,7 @@ import java.util.Map;
  * For example, can filter all records whose 'foo' field is equal to 'bar'. Assumes the field is of type string.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
-@Name("StringValueFilter")
+@Name("StringValueFilterCompute")
 public class StringValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
@@ -63,7 +63,7 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
     Map<String, String> properties = new HashMap<>();
     properties.put("field", field);
     properties.put("value", value);
-    return new ETLPlugin("StringValueFilter", Transform.PLUGIN_TYPE, properties, null);
+    return new ETLPlugin("StringValueFilterCompute", Transform.PLUGIN_TYPE, properties, null);
   }
 
   private static PluginClass getPluginClass() {

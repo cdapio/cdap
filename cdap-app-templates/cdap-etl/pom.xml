@@ -31,6 +31,7 @@
 
   <modules>
     <module>cdap-data-pipeline</module>
+    <module>cdap-data-streams</module>
     <module>cdap-etl-api</module>
     <module>cdap-etl-api-spark</module>
     <module>cdap-etl-archetypes</module>
