@@ -37,6 +37,7 @@ import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -217,6 +218,36 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
   @Test
   public void testBackwardsCompatibleExternalDatasetTrackingSpark() throws Exception {
     testExternalDatasetTracking(Engine.SPARK, true);
+  }
+
+  // todo : move this test to AppLifecycleHTTPHandlerTest, here currently due to availability of app with plugins.
+  @Test
+  public void testGetPlugins() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("daginput")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin("dagoutput1")))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin("dagoutput2")))
+      .addStage(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
+      .addConnection("source", "filter")
+      .addConnection("source", "sink1")
+      .addConnection("filter", "sink2")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+    Set<String> expectedPluginIds = new HashSet<String>();
+    expectedPluginIds.add("source");
+    expectedPluginIds.add("sink1");
+    expectedPluginIds.add("sink2");
+    expectedPluginIds.add("filter");
+
+    Assert.assertEquals(expectedPluginIds.size(), appManager.getPlugins().size());
+    for (PluginInstanceDetail pluginInstanceDetail : appManager.getPlugins()) {
+      Assert.assertTrue(expectedPluginIds.contains(pluginInstanceDetail.getId()));
+      expectedPluginIds.remove(pluginInstanceDetail.getId());
+    }
+    Assert.assertTrue(expectedPluginIds.isEmpty());
   }
 
   private void testExternalDatasetTracking(Engine engine, boolean backwardsCompatible) throws Exception {

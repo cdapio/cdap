@@ -29,12 +29,14 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Lists;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -55,19 +57,23 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
     initialize(tmpFolder);
+  }
 
-    Schema schema = Schema.recordOf(
-      "record",
-      Schema.Field.of("bool_field", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))),
-      Schema.Field.of("int_field", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-      Schema.Field.of("long_field", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
-      Schema.Field.of("float_field", Schema.nullableOf(Schema.of(Schema.Type.FLOAT))),
-      Schema.Field.of("double_field", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE))),
-      Schema.Field.of("bytes_field", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
-      Schema.Field.of("string_field", Schema.of(Schema.Type.STRING))
-    );
+  private static final Schema SCHEMA =
+    Schema.recordOf("record",
+                    Schema.Field.of("bool_field", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))),
+                    Schema.Field.of("int_field", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                    Schema.Field.of("long_field", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+                    Schema.Field.of("float_field", Schema.nullableOf(Schema.of(Schema.Type.FLOAT))),
+                    Schema.Field.of("double_field", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE))),
+                    Schema.Field.of("bytes_field", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
+                    Schema.Field.of("string_field", Schema.of(Schema.Type.STRING))
+  );
+
+  @Before
+  public void before() throws Exception {
     datasetFramework.addInstance(Table.class.getName(), MY_TABLE, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, schema.toString())
+      .add(Table.PROPERTY_SCHEMA, SCHEMA.toString())
       .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "string_field")
       .build());
 
@@ -85,7 +91,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     put.add("long_field", Long.MAX_VALUE);
     put.add("float_field", 3.14f);
     put.add("double_field", 3.14);
-    put.add("bytes_field", new byte[]{1, 2, 3});
+    put.add("bytes_field", new byte[]{'A', 'B', 'C'});
     table.put(put);
 
     Assert.assertTrue(txTable.commitTx());
@@ -99,20 +105,20 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     txTable.startTx(tx2);
   }
 
-  @AfterClass
-  public static void stop() throws Exception {
+  @After
+  public void after() throws Exception {
     datasetFramework.deleteInstance(MY_TABLE);
   }
 
   @Test
   public void testNoOpOnMissingSchema() throws Exception {
-    Id.DatasetInstance datasetId = Id.DatasetInstance.from(NAMESPACE_ID, "noschema");
-    datasetFramework.addInstance(Table.class.getName(), datasetId, DatasetProperties.EMPTY);
+    DatasetId datasetId = new DatasetId(NAMESPACE_ID.getId(), "noschema");
+    datasetFramework.addInstance(Table.class.getName(), datasetId.toId(), DatasetProperties.EMPTY);
     try {
-      DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetId);
+      DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetId.toId());
       Assert.assertEquals(QueryHandle.NO_OP, exploreTableManager.enableDataset(datasetId, spec));
     } finally {
-      datasetFramework.deleteInstance(datasetId);
+      datasetFramework.deleteInstance(datasetId.toId());
     }
   }
 
@@ -149,7 +155,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       new ColumnDesc(MY_TABLE_NAME + ".string_field", "STRING", 7, null)
     );
     ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
-    // check schema
+    // check SCHEMA
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
     // check record1
@@ -159,7 +165,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     // why does this come back as a double when it's a float???
     Assert.assertTrue(Math.abs(3.14f - (Double) columns.get(3)) < 0.000001);
     Assert.assertTrue(Math.abs(3.14 - (Double) columns.get(4)) < 0.000001);
-    Assert.assertArrayEquals(new byte[]{1, 2, 3}, (byte[]) columns.get(5));
+    Assert.assertArrayEquals(new byte[]{'A', 'B', 'C'}, (byte[]) columns.get(5));
     Assert.assertEquals("row1", columns.get(6));
     // should not be any more
     Assert.assertFalse(results.hasNext());
@@ -174,6 +180,93 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
                                   new ColumnDesc("double_field", "DOUBLE", 2, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(Integer.MAX_VALUE, 3.14)))
     );
+  }
+
+  @Test
+  public void testUpdateNoSchemaThenWithSchema() throws Exception {
+    // make sure we can get the table info
+    exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME);
+    // update the properties to be not explorable
+    datasetFramework.updateInstance(MY_TABLE, DatasetProperties.EMPTY);
+    // validate the new table SCHEMA
+    try {
+      exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME);
+      Assert.fail("Expected TableNotFoundException");
+    } catch (TableNotFoundException e) {
+      // expected
+    }
+
+    // update the properties again, to be explorable with the same schema as before
+    datasetFramework.updateInstance(MY_TABLE, DatasetProperties.builder()
+      .add(Table.PROPERTY_SCHEMA, SCHEMA.toString())
+      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "string_field")
+      .build());
+    // validate explore works after update
+    testSchema();
+    testSelectStar();
+  }
+
+  @Test
+  public void testUpdateSchema() throws Exception {
+    Schema newSchema = Schema.recordOf(
+      "record",
+      Schema.Field.of("int_field", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("long_field", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+      Schema.Field.of("float_field", Schema.nullableOf(Schema.of(Schema.Type.FLOAT))),
+      Schema.Field.of("double_field", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
+      Schema.Field.of("bytes_field", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("new_field", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("string_field", Schema.of(Schema.Type.STRING))
+    );
+    datasetFramework.updateInstance(MY_TABLE, DatasetProperties.builder()
+      .add(Table.PROPERTY_SCHEMA, newSchema.toString())
+      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "string_field")
+      .build());
+
+    // validate the new table SCHEMA
+    runCommand(NAMESPACE_ID, "describe " + MY_TABLE_NAME,
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+                 new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+                 new ColumnDesc("comment", "STRING", 3, "from deserializer")
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("int_field", "int", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("long_field", "bigint", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("float_field", "float", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("double_field", "binary", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("bytes_field", "string", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("new_field", "string", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("string_field", "string", "from deserializer"))
+               )
+    );
+
+    // validate that select * returns the new SCHEMA
+    List<ColumnDesc> expectedSchema = Lists.newArrayList(
+      new ColumnDesc(MY_TABLE_NAME + ".int_field", "INT", 1, null),
+      new ColumnDesc(MY_TABLE_NAME + ".long_field", "BIGINT", 2, null),
+      new ColumnDesc(MY_TABLE_NAME + ".float_field", "FLOAT", 3, null),
+      new ColumnDesc(MY_TABLE_NAME + ".double_field", "BINARY", 4, null),
+      new ColumnDesc(MY_TABLE_NAME + ".bytes_field", "STRING", 5, null),
+      new ColumnDesc(MY_TABLE_NAME + ".new_field", "STRING", 6, null),
+      new ColumnDesc(MY_TABLE_NAME + ".string_field", "STRING", 7, null)
+    );
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+    // check SCHEMA
+    Assert.assertEquals(expectedSchema, results.getResultSchema());
+    List<Object> columns = results.next().getColumns();
+    // check record1
+    Assert.assertEquals(Integer.MAX_VALUE, columns.get(0));
+    Assert.assertEquals(Long.MAX_VALUE, columns.get(1));
+    // why does this come back as a double when it's a float???
+    Assert.assertTrue(Math.abs(3.14f - (Double) columns.get(2)) < 0.000001);
+    Assert.assertArrayEquals(Bytes.toBytes(3.14D), (byte[]) columns.get(3));
+    Assert.assertEquals("ABC", columns.get(4));
+    Assert.assertNull(columns.get(5));
+    Assert.assertEquals("row1", columns.get(6));
+    // should not be any more
+    Assert.assertFalse(results.hasNext());
   }
 
   @Test

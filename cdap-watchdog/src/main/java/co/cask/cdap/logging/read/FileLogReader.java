@@ -66,7 +66,7 @@ public class FileLogReader implements LogReader {
 
   @Override
   public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     if (readRange == ReadRange.LATEST) {
       getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
       return;
@@ -102,7 +102,7 @@ public class FileLogReader implements LogReader {
 
   @Override
   public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     callback.init();
     try {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
@@ -141,7 +141,7 @@ public class FileLogReader implements LogReader {
 
   @Override
   public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                          final Filter filter, final Callback callback) {
+                     final Filter filter, final Callback callback) {
     callback.init();
     try {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),

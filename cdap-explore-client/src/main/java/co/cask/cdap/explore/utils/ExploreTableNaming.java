@@ -17,6 +17,8 @@
 package co.cask.cdap.explore.utils;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.StreamId;
 
 /**
  * Specifies how to name tables for Explore.
@@ -25,6 +27,14 @@ public final class ExploreTableNaming {
 
   public String getTableName(Id.Stream streamId) {
     return String.format("stream_%s", cleanTableName(streamId.getId()));
+  }
+
+  public String getTableName(StreamId streamId) {
+    return String.format("stream_%s", cleanTableName(streamId.getStream()));
+  }
+
+  public String getTableName(DatasetId datasetID) {
+    return String.format("dataset_%s", cleanTableName(datasetID.getDataset()));
   }
 
   public String getTableName(Id.DatasetInstance datasetID) {

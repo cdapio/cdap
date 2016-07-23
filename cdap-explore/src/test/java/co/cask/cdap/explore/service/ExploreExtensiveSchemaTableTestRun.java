@@ -77,7 +77,7 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
         new ExtensiveSchemaTableDefinition.Value[] {
           new ExtensiveSchemaTableDefinition.Value("bar", 3), new ExtensiveSchemaTableDefinition.Value("foobar", 4)
         }, ImmutableList.of(new ExtensiveSchemaTableDefinition.Value("foobar2", 3)),
-        ImmutableMap.of("key", new ExtensiveSchemaTableDefinition.Value("foobar3", 9)));
+        ImmutableMap.of("key", new ExtensiveSchemaTableDefinition.Value("foobar3", 9)), 42L);
     value1.setExt(value1);
     table.put("1", value1);
 
@@ -153,8 +153,9 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                  new QueryResult(Lists.<Object>newArrayList("vlist", "array<struct<s:string,i:int>>",
                                                             "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("stovmap", "map<string,struct<s:string,i:int>>",
-                                                       "from deserializer"))
-               )
+                                                       "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("date", "bigint", "from deserializer"))
+                 )
     );
 
     runCommand(NAMESPACE_ID, "select * from " + MY_TABLE_NAME,
@@ -198,7 +199,8 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                                   new ColumnDesc(MY_TABLE_NAME + ".vlist", "array<struct<s:string,i:int>>",
                                                  31, null),
                                   new ColumnDesc(MY_TABLE_NAME + ".stovmap",
-                                                 "map<string,struct<s:string,i:int>>", 32, null)
+                                                 "map<string,struct<s:string,i:int>>", 32, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".date", "BIGINT", 33, null)
                ),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList(
@@ -225,7 +227,8 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                    // maps
                    "{\"foo3\":51}", "{3.55:51.98}", "{890:45}",
                    "{true:27}", "{\"s\":\"foo\",\"i\":2}", "[{\"s\":\"bar\",\"i\":3},{\"s\":\"foobar\",\"i\":4}]",
-                   "[{\"s\":\"foobar2\",\"i\":3}]", "{\"key\":{\"s\":\"foobar3\",\"i\":9}}"
+                   "[{\"s\":\"foobar2\",\"i\":3}]", "{\"key\":{\"s\":\"foobar3\",\"i\":9}}",
+                   42L
                  )))
     );
 
@@ -265,8 +268,10 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                                          new TableInfo.ColumnInfo("v", "struct<s:string,i:int>", null),
                                          new TableInfo.ColumnInfo("varr", "array<struct<s:string,i:int>>", null),
                                          new TableInfo.ColumnInfo("vlist", "array<struct<s:string,i:int>>", null),
-                                         new TableInfo.ColumnInfo("stovmap", "map<string,struct<s:string,i:int>>", null)
-                        ),
+                                         new TableInfo.ColumnInfo("stovmap", "map<string,struct<s:string,i:int>>",
+                                                                  null),
+                                         new TableInfo.ColumnInfo("date", "bigint", null)
+                                         ),
                         exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME).getSchema());
   }
 }

@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.filesystem.Location;
 
+import java.lang.reflect.Type;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -86,6 +87,14 @@ public class CreateStatementBuilder {
    */
   public CreateStatementBuilder setSchema(Schema schema) throws UnsupportedTypeException {
     this.hiveSchema = schemaConverter.toHiveSchema(schema);
+    return this;
+  }
+
+  /**
+   * Set the schema for the table. Throws an exception if it is not valid for Hive.
+   */
+  public CreateStatementBuilder setSchema(Type type) throws UnsupportedTypeException {
+    this.hiveSchema = schemaConverter.toHiveSchema(type);
     return this;
   }
 

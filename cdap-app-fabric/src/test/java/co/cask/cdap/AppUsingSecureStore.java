@@ -84,7 +84,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     public void put(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       byte[] value = new byte[request.getContent().remaining()];
       request.getContent().get(value);
-      getContext().getAdmin().put(namespace, KEY, value, "", new HashMap<String, String>());
+      getContext().getAdmin().putSecureData(namespace, KEY, value, "", new HashMap<String, String>());
       responder.sendStatus(200);
     }
 
@@ -92,7 +92,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     @GET
     public void get(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       try {
-        byte[] bytes = getContext().get(namespace, KEY).get();
+        byte[] bytes = getContext().getSecureData(namespace, KEY).get();
         responder.sendString(new String(bytes));
       } catch (IOException e) {
         responder.sendError(500, e.getMessage());
@@ -102,14 +102,14 @@ public class AppUsingSecureStore extends AbstractApplication {
     @Path("/list")
     @GET
     public void list(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
-      String name = getContext().list(namespace).get(0).getName();
+      String name = getContext().listSecureData(namespace).get(0).getName();
       responder.sendString(name);
     }
 
     @Path("/delete")
     @GET
     public void delete(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
-      getContext().getAdmin().delete(namespace, KEY);
+      getContext().getAdmin().deleteSecureData(namespace, KEY);
       responder.sendStatus(200);
     }
   }
@@ -127,10 +127,10 @@ public class AppUsingSecureStore extends AbstractApplication {
     public void run(JavaSparkExecutionContext sec) throws Exception {
       final SecureStore secureStore = sec.getSecureStore();
       // Test secure store apis
-      sec.getAdmin().put(NAMESPACE, KEY, VALUE.getBytes(), "", new HashMap<String, String>());
-      Assert.assertEquals(new String(sec.get(NAMESPACE, KEY).get()), VALUE);
-      Assert.assertEquals(new String(secureStore.get(NAMESPACE, KEY).get()), VALUE);
-      sec.list(NAMESPACE);
+      sec.getAdmin().putSecureData(NAMESPACE, KEY, VALUE.getBytes(), "", new HashMap<String, String>());
+      Assert.assertEquals(new String(sec.getSecureData(NAMESPACE, KEY).get()), VALUE);
+      Assert.assertEquals(new String(secureStore.getSecureData(NAMESPACE, KEY).get()), VALUE);
+      sec.listSecureData(NAMESPACE);
 
       // Test access from a spark closure
       JavaSparkContext jsc = new JavaSparkContext();
@@ -139,13 +139,13 @@ public class AppUsingSecureStore extends AbstractApplication {
         byte[], byte[]>() {
         @Override
         public Tuple2<byte[], byte[]> call(Tuple2<Long, String> tuple2) throws Exception {
-          return new Tuple2<>(Bytes.toBytes(tuple2._2()), secureStore.get(NAMESPACE, KEY).get());
+          return new Tuple2<>(Bytes.toBytes(tuple2._2()), secureStore.getSecureData(NAMESPACE, KEY).get());
         }
       });
       sec.saveAsDataset(resultRDD, "result");
 
       // Delete the key
-      sec.getAdmin().delete(NAMESPACE, KEY);
+      sec.getAdmin().deleteSecureData(NAMESPACE, KEY);
     }
   }
 }

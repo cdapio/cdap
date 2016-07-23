@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.client;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -95,6 +96,36 @@ public class ExploreFacade {
 
     ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance);
     handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getId());
+  }
+
+  /**
+   * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   * @param datasetInstance dataset instance id.
+   */
+  public void enableExploreDataset(Id.DatasetInstance datasetInstance,
+                                   DatasetSpecification spec) throws ExploreException, SQLException {
+    if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
+      return;
+    }
+
+    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance, spec);
+    handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getId());
+  }
+
+  /**
+   * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   * @param datasetInstance dataset instance id.
+   * @param oldSpec the previous dataset spec
+   */
+  public void updateExploreDataset(Id.DatasetInstance datasetInstance,
+                                   DatasetSpecification oldSpec,
+                                   DatasetSpecification newSpec) throws ExploreException, SQLException {
+    if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
+      return;
+    }
+
+    ListenableFuture<Void> futureSuccess = exploreClient.updateExploreDataset(datasetInstance, oldSpec, newSpec);
+    handleExploreFuture(futureSuccess, "update", "dataset", datasetInstance.getId());
   }
 
   /**

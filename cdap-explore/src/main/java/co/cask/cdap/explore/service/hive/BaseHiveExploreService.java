@@ -52,6 +52,7 @@ import co.cask.cdap.proto.TableNameInfo;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -168,12 +169,15 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private final Map<String, String> sparkConf = new HashMap<>();
 
-  protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
+  protected abstract OperationHandle executeSync(SessionHandle sessionHandle, String statement)
+    throws HiveSQLException, ExploreException;
+
+  protected abstract OperationHandle executeAsync(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException;
 
   /**
-   * Fetch the status of a query that was submitted using {@link #doExecute}.
-   * @param handle a query handle returned by {@link #doExecute}.
+   * Fetch the status of a query that was submitted using {@link #executeAsync(SessionHandle, String)}.
+   * @param handle a query handle returned by {@link #executeAsync(SessionHandle, String)}.
    * @throws HiveSQLException if the query execution itself failed with this exception
    * @throws ExploreException if there is an (internal) error in the explore system that is causing failure
    * @throws HandleNotFoundException if a query with the given handle does not exist
@@ -743,7 +747,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         String database = getHiveDatabase(namespace.getId());
         // "IF NOT EXISTS" so that this operation is idempotent.
         String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
-        operationHandle = doExecute(sessionHandle, statement);
+        operationHandle = executeAsync(sessionHandle, statement);
         QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
         LOG.info("Creating database {} with handle {}", namespace, handle);
         return handle;
@@ -773,13 +777,58 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
         String database = getHiveDatabase(namespace.getId());
         String statement = String.format("DROP DATABASE %s", database);
-        operationHandle = doExecute(sessionHandle, statement);
+        operationHandle = executeAsync(sessionHandle, statement);
         QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
         LOG.info("Deleting database {} with handle {}", database, handle);
         return handle;
       } catch (Throwable e) {
         closeInternal(getQueryHandle(sessionConf),
                       new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+        throw e;
+      }
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
+    } catch (Throwable e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  public QueryHandle execute(Id.Namespace namespace, String[] statements) throws ExploreException, SQLException {
+    Preconditions.checkArgument(statements.length > 0, "There must be at least one statement");
+    startAndWait();
+    try {
+      SessionHandle sessionHandle = null;
+      OperationHandle operationHandle = null;
+      Map<String, String> sessionConf = startSession(namespace);
+      try {
+        sessionHandle = openHiveSession(sessionConf);
+        String database = getHiveDatabase(namespace.getId());
+        // Switch database to the one being passed in.
+        setCurrentDatabase(database);
+
+        // synchronously execute all but the last statement
+        for (int i = 0; i < statements.length - 1; i++) {
+          String statement = statements[i];
+          LOG.trace("Executing statement synchronously: {}", statement);
+          operationHandle = executeSync(sessionHandle, statement);
+          QueryStatus status = doFetchStatus(operationHandle);
+          if (QueryStatus.OpStatus.ERROR == status.getStatus()) {
+            throw new HiveSQLException(status.getErrorMessage(), status.getSqlState());
+          }
+          if (QueryStatus.OpStatus.FINISHED != status.getStatus()) {
+            throw new ExploreException(
+              "Expected operation status FINISHED for statement '{}' but received " + status.getStatus());
+          }
+        }
+        String statement = statements[statements.length - 1];
+        operationHandle = executeAsync(sessionHandle, statement);
+        QueryHandle handle = saveReadWriteOperation(operationHandle, sessionHandle, sessionConf,
+                                                    statement, database);
+        LOG.trace("Executing statement: {} with handle {}", statement, handle);
+        return handle;
+      } catch (Throwable e) {
+        closeInternal(getQueryHandle(sessionConf),
+                      new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
         throw e;
       }
     } catch (HiveSQLException e) {
@@ -797,8 +846,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public QueryHandle execute(Id.Namespace namespace, String statement,
                              @Nullable Map<String, String> additionalSessionConf)
-
-  throws ExploreException, SQLException {
+    throws ExploreException, SQLException {
 
     startAndWait();
 
@@ -813,7 +861,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // Switch database to the one being passed in.
         setCurrentDatabase(database);
 
-        operationHandle = doExecute(sessionHandle, statement);
+        operationHandle = executeAsync(sessionHandle, statement);
         QueryHandle handle = saveReadWriteOperation(operationHandle, sessionHandle, sessionConf,
                                                     statement, database);
         LOG.trace("Executing statement: {} with handle {}", statement, handle);

@@ -173,6 +173,9 @@ public class ExtensiveSchemaTableDefinition
     private final List<Value> vList;
     private final Map<String, Value> stovMap;
 
+    // field that is a reserved word in Hive
+    private final long date;
+
     // Transient and static fields - they shouldn't be included in the schema
     private transient int t = 0;
     private static int st = 80;
@@ -181,13 +184,13 @@ public class ExtensiveSchemaTableDefinition
     // TODO fix infinite loop
 //    private ExtensiveSchema ext;
 
-    public ExtensiveSchema(String s, int i, float f, double d, long l, byte b, boolean bo, short sh, int[] iArr,
-                           float[] fArr, double[] dArr, long[] lArr, byte[] bArr, boolean[] boArr, short[] shArr,
-                           String[] sArr, List<Integer> iList, List<Float> fList, List<Double> dList, List<Long> lList,
-                           List<Byte> bList, List<Boolean> boList, List<Short> shList, List<String> sList,
-                           Map<String, Integer> stoiMap, Map<Float, Double> ftodMap, Map<Long, Byte> ltobMap,
-                           Map<Boolean, Short> botoshMap, Value v, Value[] vArr, List<Value> vList,
-                           Map<String, Value> stovMap) {
+    public ExtensiveSchema(String s, int i, float f, double d, long l, byte b, boolean bo, short sh,
+                           int[] iArr, float[] fArr, double[] dArr, long[] lArr, byte[] bArr, boolean[] boArr,
+                           short[] shArr, String[] sArr, List<Integer> iList, List<Float> fList, List<Double> dList,
+                           List<Long> lList, List<Byte> bList, List<Boolean> boList, List<Short> shList,
+                           List<String> sList, Map<String, Integer> stoiMap, Map<Float, Double> ftodMap,
+                           Map<Long, Byte> ltobMap, Map<Boolean, Short> botoshMap, Value v, Value[] vArr,
+                           List<Value> vList, Map<String, Value> stovMap, long date) {
       this.s = s;
       this.i = i;
       this.f = f;
@@ -220,6 +223,7 @@ public class ExtensiveSchemaTableDefinition
       this.vArr = vArr;
       this.vList = vList;
       this.stovMap = stovMap;
+      this.date = date;
     }
 
     public void setExt(ExtensiveSchema ext) {

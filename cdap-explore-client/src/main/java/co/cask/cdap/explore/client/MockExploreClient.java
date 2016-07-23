@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.client;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
@@ -61,7 +62,18 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public ListenableFuture<Void> updateExploreDataset(Id.DatasetInstance datasetInstance,
+                                                     DatasetSpecification oldSpec, DatasetSpecification newSpec) {
+    return null;
+  }
+
+  @Override
   public ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance, DatasetSpecification spec) {
     return null;
   }
 

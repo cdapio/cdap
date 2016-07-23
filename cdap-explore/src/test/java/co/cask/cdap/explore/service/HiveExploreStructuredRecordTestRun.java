@@ -28,6 +28,7 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.Lists;
@@ -86,26 +87,26 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
 
   @Test(expected = IllegalArgumentException.class)
   public void testMissingSchemaFails() throws Exception {
-    Id.DatasetInstance instanceId = Id.DatasetInstance.from(NAMESPACE_ID, "badtable");
-    datasetFramework.addInstance("TableWrapper", instanceId, DatasetProperties.EMPTY);
+    DatasetId instanceId = new DatasetId(NAMESPACE_ID.getId(), "badtable");
+    datasetFramework.addInstance("TableWrapper", instanceId.toId(), DatasetProperties.EMPTY);
 
-    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId.toId());
     try {
       exploreTableManager.enableDataset(instanceId, spec);
     } finally {
-      datasetFramework.deleteInstance(instanceId);
+      datasetFramework.deleteInstance(instanceId.toId());
     }
   }
 
   @Test
   public void testRecordScannableAndWritableIsOK() throws Exception {
-    Id.DatasetInstance instanceId = Id.DatasetInstance.from(NAMESPACE_ID, "tabul");
-    datasetFramework.addInstance("TableWrapper", instanceId, DatasetProperties.builder()
+    DatasetId instanceId = new DatasetId(NAMESPACE_ID.getId(), "tabul");
+    datasetFramework.addInstance("TableWrapper", instanceId.toId(), DatasetProperties.builder()
       .add(DatasetProperties.SCHEMA,
            Schema.recordOf("intRecord", Schema.Field.of("x", Schema.of(Schema.Type.STRING))).toString())
       .build());
 
-    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId.toId());
     try {
       exploreTableManager.enableDataset(instanceId, spec);
       runCommand(NAMESPACE_ID, "describe dataset_tabul",
@@ -120,7 +121,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
         )
       );
     } finally {
-      datasetFramework.deleteInstance(instanceId);
+      datasetFramework.deleteInstance(instanceId.toId());
     }
   }
 

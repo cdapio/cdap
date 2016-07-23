@@ -37,6 +37,8 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
@@ -81,6 +83,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
 
 /**
  * This class manages artifacts as well as metadata for each artifact. Artifacts and their metadata cannot be changed
@@ -148,12 +151,13 @@ public class ArtifactStore {
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final Transactional<DatasetContext<Table>, Table> metaTable;
   private final Gson gson;
+  private final Impersonator impersonator;
 
   @Inject
   ArtifactStore(final DatasetFramework datasetFramework,
                 NamespacedLocationFactory namespacedLocationFactory,
                 LocationFactory locationFactory,
-                TransactionExecutorFactory txExecutorFactory) {
+                TransactionExecutorFactory txExecutorFactory, Impersonator impersonator) {
     this.locationFactory = locationFactory;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.gson = new GsonBuilder()
@@ -173,6 +177,7 @@ public class ArtifactStore {
         }
       }
     });
+    this.impersonator = impersonator;
   }
 
   /**
@@ -387,7 +392,7 @@ public class ArtifactStore {
    * @throws IOException if there was an exception reading metadata from the metastore
    */
   public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginClasses(final NamespaceId namespace,
-                                                                           final Id.Artifact parentArtifactId)
+                                                                          final Id.Artifact parentArtifactId)
     throws ArtifactNotFoundException, IOException {
 
     SortedMap<ArtifactDescriptor, Set<PluginClass>> pluginClasses = metaTable.executeUnchecked(
@@ -430,8 +435,8 @@ public class ArtifactStore {
    * @throws IOException if there was an exception reading metadata from the metastore
    */
   public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginClasses(final NamespaceId namespace,
-                                                                           final Id.Artifact parentArtifactId,
-                                                                           final String type)
+                                                                          final Id.Artifact parentArtifactId,
+                                                                          final String type)
     throws IOException, ArtifactNotFoundException {
 
     SortedMap<ArtifactDescriptor, Set<PluginClass>> pluginClasses = metaTable.executeUnchecked(
@@ -596,7 +601,8 @@ public class ArtifactStore {
    */
   public ArtifactDetail write(final Id.Artifact artifactId,
                               final ArtifactMeta artifactMeta,
-                              final InputSupplier<? extends InputStream> artifactContentSupplier)
+                              final InputSupplier<? extends InputStream> artifactContentSupplier,
+                              NamespacedImpersonator namespacedImpersonator)
     throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
 
     // if we're not a snapshot version, check that the artifact doesn't exist already.
@@ -615,59 +621,78 @@ public class ArtifactStore {
         throw new ArtifactAlreadyExistsException(artifactId);
       }
     }
+    try {
+      final Location destination = copyFileToDestination(artifactId, artifactContentSupplier, namespacedImpersonator);
 
+      // now try and write the metadata for the artifact
+      try {
+        boolean written = metaTable.execute(new TransactionExecutor.Function<DatasetContext<Table>, Boolean>() {
+
+          @Override
+          public Boolean apply(DatasetContext<Table> context) throws Exception {
+            Table table = context.get();
+
+            // we have to check that the metadata doesn't exist again since somebody else may have written
+            // the artifact while we were copying the artifact to the filesystem.
+            byte[] existingMetaBytes = table.get(artifactCell.rowkey, artifactCell.column);
+            boolean isSnapshot = artifactId.getVersion().isSnapshot();
+            if (existingMetaBytes != null && !isSnapshot) {
+              // non-snapshot artifacts are immutable. If there is existing metadata, stop here.
+              return false;
+            }
+
+            ArtifactData data = new ArtifactData(destination, artifactMeta);
+            // cleanup existing metadata if it exists and this is a snapshot
+            // if we are overwriting a previous snapshot, need to clean up the old snapshot data
+            // this means cleaning up the old jar, and deleting plugin and app rows.
+            if (existingMetaBytes != null) {
+              deleteMeta(table, artifactId, existingMetaBytes);
+            }
+            // write artifact metadata
+            writeMeta(table, artifactId, data);
+            return true;
+          }
+        });
+
+        if (!written) {
+          throw new ArtifactAlreadyExistsException(artifactId);
+        }
+      } catch (TransactionConflictException e) {
+        destination.delete();
+        throw new WriteConflictException(artifactId);
+      } catch (TransactionFailureException | InterruptedException e) {
+        destination.delete();
+        throw new IOException(e);
+      }
+      return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), destination), artifactMeta);
+    } catch (Exception e) {
+      throw  Throwables.propagate(e);
+    }
+  }
+
+  private Location copyFileToDestination(final Id.Artifact artifactId,
+                                         final InputSupplier<? extends InputStream> artifactContentSupplier,
+                                         NamespacedImpersonator namespacedImpersonator) throws Exception {
+    return namespacedImpersonator.impersonate(new Callable<Location>() {
+      @Override
+      public Location call() throws IOException {
+        return copyFile(artifactId, artifactContentSupplier);
+      }
+    });
+  }
+
+  private Location copyFile(Id.Artifact artifactId,
+                            InputSupplier<? extends InputStream> artifactContentSupplier) throws IOException {
     Location fileDirectory = namespacedLocationFactory.get(artifactId.getNamespace(),
                                                            ARTIFACTS_PATH).append(artifactId.getName());
+    Location destination = fileDirectory.append(artifactId.getVersion().getVersion()).getTempFile(".jar");
     Locations.mkdirsIfNotExists(fileDirectory);
-
     // write the file contents
-    final Location destination = fileDirectory.append(artifactId.getVersion().getVersion()).getTempFile(".jar");
     try (InputStream artifactContents = artifactContentSupplier.getInput();
          OutputStream destinationStream = destination.getOutputStream()) {
       ByteStreams.copy(artifactContents, destinationStream);
     }
-
-    // now try and write the metadata for the artifact
-    try {
-      boolean written = metaTable.execute(new TransactionExecutor.Function<DatasetContext<Table>, Boolean>() {
-
-        @Override
-        public Boolean apply(DatasetContext<Table> context) throws Exception {
-          Table table = context.get();
-
-          // we have to check that the metadata doesn't exist again since somebody else may have written
-          // the artifact while we were copying the artifact to the filesystem.
-          byte[] existingMetaBytes = table.get(artifactCell.rowkey, artifactCell.column);
-          boolean isSnapshot = artifactId.getVersion().isSnapshot();
-          if (existingMetaBytes != null && !isSnapshot) {
-            // non-snapshot artifacts are immutable. If there is existing metadata, stop here.
-            return false;
-          }
-
-          ArtifactData data = new ArtifactData(destination, artifactMeta);
-          // cleanup existing metadata if it exists and this is a snapshot
-          // if we are overwriting a previous snapshot, need to clean up the old snapshot data
-          // this means cleaning up the old jar, and deleting plugin and app rows.
-          if (existingMetaBytes != null) {
-            deleteMeta(table, artifactId, existingMetaBytes);
-          }
-          // write artifact metadata
-          writeMeta(table, artifactId, data);
-          return true;
-        }
-      });
-
-      if (!written) {
-        throw new ArtifactAlreadyExistsException(artifactId);
-      }
-    } catch (TransactionConflictException e) {
-      destination.delete();
-      throw new WriteConflictException(artifactId);
-    } catch (TransactionFailureException | InterruptedException e) {
-      destination.delete();
-      throw new IOException(e);
-    }
-    return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), destination), artifactMeta);
+    return destination;
   }
 
   /**
@@ -803,7 +828,7 @@ public class ArtifactStore {
     table.delete(artifactCell.rowkey, artifactCell.column);
 
     // delete old plugins
-    ArtifactData oldMeta = gson.fromJson(Bytes.toString(oldData), ArtifactData.class);
+    final ArtifactData oldMeta = gson.fromJson(Bytes.toString(oldData), ArtifactData.class);
     byte[] artifactColumn = new ArtifactColumn(artifactId).getColumn();
 
     for (PluginClass pluginClass : oldMeta.meta.getClasses().getPlugins()) {
@@ -823,15 +848,31 @@ public class ArtifactStore {
     }
 
     // delete the old jar file
-    locationFactory.create(oldMeta.locationURI).delete();
+
+    try {
+      new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                 impersonator).impersonate(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          locationFactory.create(oldMeta.locationURI).delete();
+          return null;
+        }
+      });
+    } catch (IOException ioe) {
+      throw ioe;
+    } catch (Exception e) {
+      // this should not happen
+      throw Throwables.propagate(e);
+    }
   }
 
+
   private SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginsInArtifact(Table table, Id.Artifact artifactId) {
-   return getPluginsInArtifact(table, artifactId, Predicates.<PluginClass>alwaysTrue());
+    return getPluginsInArtifact(table, artifactId, Predicates.<PluginClass>alwaysTrue());
   }
 
   private SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginsInArtifact(Table table, Id.Artifact artifactId,
-                                                                                Predicate<PluginClass> filter) {
+                                                                               Predicate<PluginClass> filter) {
     SortedMap<ArtifactDescriptor, Set<PluginClass>> result = new TreeMap<>();
 
     // Make sure the artifact exists
@@ -923,17 +964,19 @@ public class ArtifactStore {
   private Scan scanPlugins(Id.Artifact parentArtifactId) {
     return new Scan(
       Bytes.toBytes(String.format("%s:%s:%s:",
-        PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(), parentArtifactId.getName())),
+                                  PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(), parentArtifactId.getName())),
       Bytes.toBytes(String.format("%s:%s:%s;",
-        PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(), parentArtifactId.getName())));
+                                  PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(), parentArtifactId.getName())));
   }
 
   private Scan scanPlugins(Id.Artifact parentArtifactId, String type) {
     return new Scan(
       Bytes.toBytes(String.format("%s:%s:%s:%s:",
-        PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(), parentArtifactId.getName(), type)),
+                                  PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(),
+                                  parentArtifactId.getName(), type)),
       Bytes.toBytes(String.format("%s:%s:%s:%s;",
-        PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(), parentArtifactId.getName(), type)));
+                                  PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(),
+                                  parentArtifactId.getName(), type)));
   }
 
   private Scan scanAppClasses(NamespaceId namespace) {
@@ -985,7 +1028,8 @@ public class ArtifactStore {
 
     private byte[] getColumn() {
       return Bytes.toBytes(String.format("%s:%s:%s",
-        artifactId.getNamespace().getId(), artifactId.getName(), artifactId.getVersion().getVersion()));
+                                         artifactId.getNamespace().getId(), artifactId.getName(),
+                                         artifactId.getVersion().getVersion()));
     }
 
     private static ArtifactColumn parse(byte[] columnBytes) {
@@ -1053,7 +1097,7 @@ public class ArtifactStore {
       this.artifactLocationURI = artifactLocation.toURI();
     }
   }
-  
+
   // Data that will be stored for an application class.
   private static class AppData {
     private final ApplicationClass appClass;

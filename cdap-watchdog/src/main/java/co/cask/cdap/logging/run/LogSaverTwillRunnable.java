@@ -29,6 +29,8 @@ import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.security.RemoteUGIProvider;
+import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.guice.LogSaverServiceModule;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -41,8 +43,10 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -197,7 +201,12 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new LogSaverServiceModule(),
       new LoggingModules().getDistributedModules(),
       new AuditModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule()
-    );
+      new AuthenticationContextModules().getMasterModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+        }
+      });
   }
 }

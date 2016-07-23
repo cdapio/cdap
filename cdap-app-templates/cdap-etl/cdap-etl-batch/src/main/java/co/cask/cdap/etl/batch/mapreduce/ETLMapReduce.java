@@ -165,7 +165,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     // plugin name -> runtime args for that plugin
     Map<String, Map<String, String>> runtimeArgs = new HashMap<>();
     MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
-                                                         context.getLogicalStartTime());
+                                                         context.getLogicalStartTime(),
+                                                         context, context.getNamespace());
 
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);

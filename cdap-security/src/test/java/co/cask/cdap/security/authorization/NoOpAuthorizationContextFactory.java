@@ -122,13 +122,13 @@ public class NoOpAuthorizationContextFactory implements AuthorizationContextFact
     }
 
     @Override
-    public void put(String namespace, String name, byte[] data, String description,
-                    Map<String, String> properties) throws IOException {
+    public void putSecureData(String namespace, String name, byte[] data, String description,
+                              Map<String, String> properties) throws IOException {
       // no-op
     }
 
     @Override
-    public void delete(String namespace, String name) throws IOException {
+    public void deleteSecureData(String namespace, String name) throws IOException {
       // no-op
     }
   }

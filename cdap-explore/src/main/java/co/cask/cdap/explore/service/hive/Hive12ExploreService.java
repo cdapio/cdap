@@ -128,7 +128,13 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
+  protected OperationHandle executeSync(SessionHandle sessionHandle, String statement)
+    throws HiveSQLException, ExploreException {
+    return getCliService().executeStatement(sessionHandle, statement, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  protected OperationHandle executeAsync(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
   }

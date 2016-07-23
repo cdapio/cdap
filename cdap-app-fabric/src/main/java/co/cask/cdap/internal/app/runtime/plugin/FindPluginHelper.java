@@ -69,6 +69,8 @@ public final class FindPluginHelper {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+    CollectMacroEvaluator collectMacroEvaluator = new CollectMacroEvaluator();
+    MacroParser parser = new MacroParser(collectMacroEvaluator);
 
     // Just verify if all required properties are provided.
     // No type checking is done for now.
@@ -76,6 +78,9 @@ public final class FindPluginHelper {
       Preconditions.checkArgument(!field.isRequired() || (properties.getProperties().containsKey(field.getName())),
                                   "Required property '%s' missing for plugin of type %s, name %s.",
                                   field.getName(), pluginType, pluginName);
+      if (field.isMacroSupported()) {
+        parser.parse(properties.getProperties().get(field.getName()));
+      }
     }
 
     ArtifactId artifact = pluginEntry.getKey().getArtifactId();
@@ -84,7 +89,8 @@ public final class FindPluginHelper {
     } catch (IOException e) {
       Throwables.propagate(e);
     }
-    return new Plugin(artifact, pluginEntry.getValue(), properties);
+    return new Plugin(artifact, pluginEntry.getValue(),
+                      properties.setMacros(collectMacroEvaluator.getMacros()));
   }
 
 }

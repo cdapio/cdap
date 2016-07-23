@@ -32,6 +32,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
@@ -119,8 +120,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf,
                                    TransactionExecutorFactory txExecutorFactory,
-                                   ArtifactRepository artifactRepository) {
-    super(cConf, programRunnerFactory, artifactRepository);
+                                   ArtifactRepository artifactRepository, Impersonator impersonator) {
+    super(cConf, programRunnerFactory, artifactRepository, impersonator);
     this.twillRunner = twillRunner;
     this.store = store;
     this.queueAdmin = queueAdmin;

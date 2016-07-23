@@ -32,17 +32,22 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.explore.client.EnableExploreParameters;
+import co.cask.cdap.explore.client.UpdateExploreParameters;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -89,10 +94,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("streams/{stream}/tables/{table}/enable")
   public void enableStream(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId,
+                           @PathParam("namespace-id") String namespace,
                            @PathParam("stream") String streamName,
                            @PathParam("table") String tableName) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
+    StreamId streamId = new StreamId(namespace, streamName);
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
       FormatSpecification format = GSON.fromJson(reader, FormatSpecification.class);
       if (format == null) {
@@ -111,14 +116,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("streams/{stream}/tables/{table}/disable")
   public void disableStream(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("namespace-id") String namespace,
                             @PathParam("stream") String streamName,
                             @PathParam("table") String tableName) {
 
-    Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
+    StreamId streamId = new StreamId(namespace, streamName);
     try {
       // throws io exception if there is no stream
-      streamAdmin.getConfig(streamId);
+      streamAdmin.getConfig(streamId.toId());
     } catch (IOException e) {
       LOG.debug("Could not find stream {} to disable explore on.", streamName, e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
@@ -136,44 +141,115 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  @POST
+  @Path("datasets/{dataset}/enable-internal")
+  public void enableInternal(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespace,
+                             @PathParam("dataset") String datasetName)
+    throws BadRequestException, IOException {
+
+    enableDataset(responder, new DatasetId(namespace, datasetName), readEnableParameters(request).getSpec());
+  }
+
   /**
    * Enable ad-hoc exploration of a dataset instance.
    */
   @POST
   @Path("datasets/{dataset}/enable")
   public void enableDataset(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
-    Id.DatasetInstance datasetID = Id.DatasetInstance.from(namespaceId, datasetName);
+                            @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
+    DatasetId datasetId = new DatasetId(namespace, datasetName);
     DatasetSpecification datasetSpec;
     try {
-      datasetSpec = datasetFramework.getDatasetSpec(datasetID);
+      datasetSpec = datasetFramework.getDatasetSpec(datasetId.toId());
       if (datasetSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetID);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
         return;
       }
     } catch (DatasetManagementException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error getting spec for dataset " + datasetID);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error getting spec for dataset " + datasetId);
       return;
     }
+    enableDataset(responder, datasetId, datasetSpec);
+  }
 
+  private void enableDataset(HttpResponder responder, DatasetId datasetId, DatasetSpecification datasetSpec) {
     try {
-      QueryHandle handle = exploreTableManager.enableDataset(datasetID, datasetSpec);
+      QueryHandle handle = exploreTableManager.enableDataset(datasetId, datasetSpec);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (ExploreException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error enabling explore on dataset " + datasetID);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error enabling explore on dataset " + datasetId);
     } catch (SQLException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "SQL exception while trying to enable explore on dataset " + datasetID);
+                           "SQL exception while trying to enable explore on dataset " + datasetId);
     } catch (UnsupportedTypeException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Schema for dataset " + datasetID + " is not supported for exploration: " + e.getMessage());
+                           "Schema for dataset " + datasetId + " is not supported for exploration: " + e.getMessage());
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Enable ad-hoc exploration of a dataset instance.
+   */
+  @POST
+  @Path("datasets/{dataset}/update")
+  public void updateDataset(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName)
+    throws BadRequestException {
+
+    DatasetId datasetId = new DatasetId(namespace, datasetName);
+    try {
+      UpdateExploreParameters params = readUpdateParameters(request);
+      DatasetSpecification oldSpec = params.getOldSpec();
+      DatasetSpecification datasetSpec = params.getNewSpec();
+
+      QueryHandle handle;
+      if (oldSpec.equals(datasetSpec)) {
+        handle = QueryHandle.NO_OP;
+      } else {
+        handle = exploreTableManager.updateDataset(datasetId, datasetSpec, oldSpec);
+      }
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", handle.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (ExploreException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error updating explore on dataset " + datasetId);
+    } catch (SQLException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "SQL exception while trying to update explore on dataset " + datasetId);
+    } catch (UnsupportedTypeException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Schema for dataset " + datasetId + " is not supported for exploration: " + e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  private static EnableExploreParameters readEnableParameters(HttpRequest request)
+    throws BadRequestException, IOException {
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      return GSON.fromJson(reader, EnableExploreParameters.class);
+    } catch (JsonSyntaxException | NullPointerException e) {
+      throw new BadRequestException("Cannot read dataset specification from request: " + e.getMessage(), e);
+    }
+  }
+
+  private static UpdateExploreParameters readUpdateParameters(HttpRequest request)
+    throws BadRequestException, IOException {
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      return GSON.fromJson(reader, UpdateExploreParameters.class);
+    } catch (JsonSyntaxException | NullPointerException e) {
+      throw new BadRequestException("Cannot read dataset specification from request: " + e.getMessage(), e);
     }
   }
 
@@ -183,29 +259,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/disable")
   public void disableDataset(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
+                             @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
 
     LOG.debug("Disabling explore for dataset instance {}", datasetName);
-    Id.DatasetInstance datasetID = Id.DatasetInstance.from(namespaceId, datasetName);
-    DatasetSpecification spec;
+    DatasetId datasetId = new DatasetId(namespace, datasetName);
     try {
-      spec = datasetFramework.getDatasetSpec(datasetID);
-      if (spec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetID);
-        return;
-      }
-    } catch (DatasetManagementException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error getting spec for dataset " + datasetID);
-      return;
-    }
-
-    try {
-      QueryHandle handle = exploreTableManager.disableDataset(datasetID, spec);
+      QueryHandle handle = exploreTableManager.disableDataset(datasetId);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
-      LOG.error("Got exception while trying to disable explore on dataset {}", datasetID, e);
+      LOG.error("Got exception while trying to disable explore on dataset {}", datasetId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
@@ -213,14 +277,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/partitions")
   public void addPartition(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
+                           @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
+    DatasetId datasetId = new DatasetId(namespace, datasetName);
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetInstanceId);
+      dataset = datasetInstantiator.getDataset(datasetId.toId());
 
       if (dataset == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
         return;
       }
     } catch (IOException e) {
@@ -231,7 +295,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
-      LOG.error("Exception instantiating dataset {}.", datasetInstanceId, e);
+      LOG.error("Exception instantiating dataset {}.", datasetId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Exception instantiating dataset " + datasetName);
       return;
     }
@@ -263,7 +327,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      QueryHandle handle = exploreTableManager.addPartition(datasetInstanceId, partitionKey, fsPath);
+      QueryHandle handle = exploreTableManager.addPartition(datasetId, partitionKey, fsPath);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -278,15 +342,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/deletePartition")
   public void dropPartition(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("namespace-id") String namespace,
                             @PathParam("dataset") String datasetName) {
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
+    DatasetId datasetId = new DatasetId(namespace, datasetName);
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-
-      dataset = datasetInstantiator.getDataset(datasetInstanceId);
+      dataset = datasetInstantiator.getDataset(datasetId.toId());
       if (dataset == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
         return;
       }
     } catch (IOException e) {
@@ -297,9 +360,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
-      LOG.error("Exception instantiating dataset {}.", datasetInstanceId, e);
+      LOG.error("Exception instantiating dataset {}.", datasetId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Exception instantiating dataset " + datasetInstanceId);
+        "Exception instantiating dataset " + datasetId);
       return;
     }
 
@@ -325,7 +388,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      QueryHandle handle = exploreTableManager.dropPartition(datasetInstanceId, partitionKey);
+      QueryHandle handle = exploreTableManager.dropPartition(datasetId, partitionKey);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
