@@ -234,6 +234,8 @@ public class DatasetAdminService {
         });
       } catch (Exception e) {
         Throwables.propagateIfInstanceOf(e, IOException.class);
+        Throwables.propagateIfInstanceOf(e, DatasetManagementException.class);
+        Throwables.propagateIfInstanceOf(e, NotFoundException.class);
         throw Throwables.propagate(e);
       }
     }
