@@ -161,13 +161,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     final File unpackedDir = new File(tempDir, "unpacked");
     unpackedDir.mkdirs();
     try {
-      File programJar = new NamespacedImpersonator(programDescriptor.getArtifactId().getParent(),
-                                                   impersonator).impersonate(new Callable<File>() {
-        @Override
-        public File call() throws IOException {
-          return Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
-
-        }});
+      File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
       // Unpack the JAR file
       BundleJarUtil.unJar(Files.newInputStreamSupplier(programJar), unpackedDir);
     } catch (IOException ioe) {

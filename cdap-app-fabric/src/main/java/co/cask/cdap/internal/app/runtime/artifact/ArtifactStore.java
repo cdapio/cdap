@@ -285,7 +285,7 @@ public class ArtifactStore {
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
   public ArtifactDetail getArtifact(final Id.Artifact artifactId) throws ArtifactNotFoundException, IOException {
-    ArtifactData data = metaTable.executeUnchecked(
+    final ArtifactData data = metaTable.executeUnchecked(
       new TransactionExecutor.Function<DatasetContext<Table>, ArtifactData>() {
         @Override
         public ArtifactData apply(DatasetContext<Table> context) throws Exception {
@@ -298,9 +298,18 @@ public class ArtifactStore {
     if (data == null) {
       throw new ArtifactNotFoundException(artifactId);
     }
-    return new ArtifactDetail(
-      new ArtifactDescriptor(artifactId.toArtifactId(), locationFactory.create(data.locationURI)),
-      data.meta);
+    try {
+      Location artifactLocation = impersonator.doAs(artifactId.getNamespace().toEntityId(), new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          return locationFactory.create(data.locationURI);
+        }
+      });
+      return new ArtifactDetail(
+        new ArtifactDescriptor(artifactId.toArtifactId(), artifactLocation), data.meta);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
