@@ -42,6 +42,7 @@ import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -91,9 +92,9 @@ public class DatasetAdminService {
    * @return dataset specification
    * @throws Exception
    */
-  public DatasetSpecification createOrUpdate(Id.DatasetInstance datasetInstanceId, final DatasetTypeMeta typeMeta,
-                                             DatasetProperties props, @Nullable DatasetSpecification existing)
-    throws Exception {
+  public DatasetSpecification createOrUpdate(final Id.DatasetInstance datasetInstanceId, final DatasetTypeMeta typeMeta,
+                                             final DatasetProperties props,
+                                             @Nullable final DatasetSpecification existing) throws Exception {
 
     if (existing == null) {
       LOG.info("Creating dataset instance {}, type meta: {}, props: {}", datasetInstanceId, typeMeta, props);
@@ -104,36 +105,34 @@ public class DatasetAdminService {
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
 
-      DatasetType type = impersonator.doAs(datasetInstanceId.getNamespace().toEntityId(), new Callable<DatasetType>() {
+      return impersonator.doAs(datasetInstanceId.getNamespace().toEntityId(), new Callable<DatasetSpecification>() {
         @Override
-        public DatasetType call() throws Exception {
-          return dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
+        public DatasetSpecification call() throws Exception {
+          DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
+          if (type == null) {
+            throw new BadRequestException(
+              String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
+          }
+          DatasetSpecification spec = existing == null
+            ? type.configure(datasetInstanceId.getId(), props)
+            : type.reconfigure(datasetInstanceId.getId(), props, existing);
+
+          DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespaceId());
+          DatasetAdmin admin = type.getAdmin(context, spec);
+          if (existing != null) {
+            if (admin instanceof Updatable) {
+              ((Updatable) admin).update(existing);
+            } else {
+              admin.upgrade();
+            }
+          } else {
+            admin.create();
+          }
+
+          writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null);
+          return spec;
         }
       });
-      if (type == null) {
-        throw new BadRequestException(
-          String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
-      }
-      DatasetSpecification spec = existing == null
-          ? type.configure(datasetInstanceId.getId(), props)
-          : type.reconfigure(datasetInstanceId.getId(), props, existing);
-
-      DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespaceId());
-      DatasetAdmin admin =
-        createImpersonatingAdmin(type.getAdmin(context, spec), datasetInstanceId.getNamespace().toEntityId());
-      if (existing != null) {
-        if (admin instanceof Updatable) {
-          ((Updatable) admin).update(existing);
-        } else {
-          admin.upgrade();
-        }
-      } else {
-        admin.create();
-      }
-
-      writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null);
-      return spec;
-
     } catch (Exception e) {
       if (e instanceof IncompatibleUpdateException) {
         // this is expected to happen if user provides bad update properties, so we log this as debug
@@ -181,21 +180,26 @@ public class DatasetAdminService {
     }
   }
 
-  public void drop(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec)
-    throws Exception {
+  public void drop(final Id.DatasetInstance datasetInstanceId, final DatasetTypeMeta typeMeta,
+                   final DatasetSpecification spec) throws Exception {
     LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
-      DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
 
-      if (type == null) {
-        throw new BadRequestException(
-          String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
-      }
+      impersonator.doAs(datasetInstanceId.getNamespace().toEntityId(), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
 
-      DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
-      admin = createImpersonatingAdmin(admin, datasetInstanceId.getNamespace().toEntityId());
-      admin.drop();
+          if (type == null) {
+            throw new BadRequestException(
+              String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
+          }
+          DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
+          admin.drop();
+          return null;
+        }
+      });
     }
 
     // Remove metadata for the dataset
@@ -212,26 +216,27 @@ public class DatasetAdminService {
     datasetAdmin.upgrade();
   }
 
-  private DatasetAdmin getDatasetAdmin(Id.DatasetInstance datasetInstanceId) throws IOException,
+  private DatasetAdmin getDatasetAdmin(final Id.DatasetInstance datasetInstanceId) throws IOException,
     DatasetManagementException, NotFoundException {
 
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      DatasetAdmin admin = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
-      if (admin == null) {
-        throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+      try {
+        return impersonator.doAs(datasetInstanceId.getNamespace().toEntityId(), new Callable<DatasetAdmin>() {
+          @Override
+          public DatasetAdmin call() throws Exception {
+            DatasetAdmin admin = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
+            if (admin == null) {
+              throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+            }
+            // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
+            return new ImpersonatingDatasetAdmin(admin, impersonator, datasetInstanceId.getNamespace().toEntityId());
+          }
+        });
+      } catch (Exception e) {
+        Throwables.propagateIfInstanceOf(e, IOException.class);
+        throw Throwables.propagate(e);
       }
-      return createImpersonatingAdmin(admin, datasetInstanceId.getNamespace().toEntityId());
     }
-  }
-
-  // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
-  private DatasetAdmin createImpersonatingAdmin(DatasetAdmin datasetAdmin, NamespaceId namespaceId) throws IOException {
-    // if Kerberos isn't enabled (or if its in the system namespace), no wrapping is necessary
-    if (!SecurityUtil.isKerberosEnabled(cConf) || NamespaceId.SYSTEM.equals(namespaceId)) {
-      return datasetAdmin;
-    }
-
-    return new ImpersonatingDatasetAdmin(datasetAdmin, impersonator, namespaceId);
   }
 
   //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
