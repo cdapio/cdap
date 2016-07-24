@@ -59,6 +59,7 @@ public class Impersonator {
    * @throws Exception if the callable throws any exception
    */
   public <T> T doAs(NamespaceId namespaceId, final Callable<T> callable) throws Exception {
+    // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
       return callable.call();
     }
