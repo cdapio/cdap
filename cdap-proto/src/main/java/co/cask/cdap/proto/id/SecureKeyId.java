@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import javax.ws.rs.BadRequestException;
 
 /**
  * Uniquely identifies a Secure store key.
@@ -40,8 +39,9 @@ public class SecureKeyId extends EntityId implements NamespacedId, ParentedId<Na
   public SecureKeyId(String namespace, String name) {
     super(EntityType.SECUREKEY);
     if (!isValidSecureKey(name)) {
-      throw new BadRequestException("Improperly formatted secure key name. The name can contain lower case " +
-                                      "alphabets, numbers, _, and -");
+      throw new IllegalArgumentException(String.format("Improperly formatted secure key name '%s'." +
+                                                         " The name can contain lower case alphabets," +
+                                                         " numbers, _, and -", name));
     }
     this.namespace = namespace;
     this.name = name;
