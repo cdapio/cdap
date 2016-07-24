@@ -80,7 +80,9 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.app.services.DefaultSecureStoreService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.SecureStoreService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -318,6 +320,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
       bind(NamespaceQueryAdmin.class).to(DefaultNamespaceQueryAdmin.class).in(Scopes.SINGLETON);
+      bind(SecureStoreService.class).to(DefaultSecureStoreService.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
@@ -386,7 +389,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * @param store JobStore.
      * @param cConf CConfiguration.
      * @return an instance of {@link org.quartz.Scheduler}
-     * @throws SchedulerException
      */
     private org.quartz.Scheduler getScheduler(JobStore store,
                                               CConfiguration cConf) throws SchedulerException {

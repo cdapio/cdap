@@ -41,7 +41,9 @@ import java.util.Map;
 /**
  * Secure Store implementation backed by Hadoop KMS. This class is loaded using reflection if
  * the provider is set to kms and Hadoop version is 2.6.0 or higher.
+ * The class is public to allow javadoc to build.
  */
+// TODO: Find a better way to handle javadoc so this class does not need to be public.
 @SuppressWarnings("unused")
 public class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);

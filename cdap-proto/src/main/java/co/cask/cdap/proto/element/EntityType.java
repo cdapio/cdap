@@ -31,6 +31,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.QueryId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
@@ -67,6 +68,7 @@ public enum EntityType {
   NOTIFICATION_FEED(NotificationFeedId.class, Id.NotificationFeed.class),
   ARTIFACT(ArtifactId.class, Id.Artifact.class),
   DATASET(DatasetId.class, Id.DatasetInstance.class),
+  SECUREKEY(SecureKeyId.class, null),
 
   QUERY(QueryId.class, Id.QueryHandle.class),
   SYSTEM_SERVICE(SystemServiceId.class, Id.SystemService.class);
