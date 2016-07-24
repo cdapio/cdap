@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-realtime",
         "scope": "SYSTEM",
-        "version": "3.5.0-SNAPSHOT"
+        "version": "3.6.0-SNAPSHOT"
     },
     "description": "Ingests in real time from Kafka into a stream",
     "name": "KafkaToStream",
@@ -29,7 +29,7 @@
                     "artifact": {
                         "name": "kafka-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "kafka.topic": "",
@@ -46,7 +46,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
@@ -64,7 +64,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "name": "",

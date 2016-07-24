@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-realtime",
         "scope": "SYSTEM",
-        "version": "3.5.0-SNAPSHOT"
+        "version": "3.6.0-SNAPSHOT"
     },
     "description": "Generate an OLAP Cube in real time from Kafka",
     "name": "KafkaToOLAPCube",
@@ -25,7 +25,7 @@
                     "artifact": {
                         "name": "kafka-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"remote_host\",\"type\":\"string\"},{\"name\":\"status\",\"type\":\"int\"}]}",
@@ -47,7 +47,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "dataset.cube.resolutions": "1",
