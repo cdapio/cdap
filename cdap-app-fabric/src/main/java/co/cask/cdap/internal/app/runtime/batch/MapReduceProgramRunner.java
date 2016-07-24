@@ -35,6 +35,7 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -86,7 +87,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
   private final Configuration hConf;
-  private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final RuntimeStore runtimeStore;
@@ -97,7 +98,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
-                                LocationFactory locationFactory,
+                                NamespacedLocationFactory locationFactory,
                                 StreamAdmin streamAdmin,
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,

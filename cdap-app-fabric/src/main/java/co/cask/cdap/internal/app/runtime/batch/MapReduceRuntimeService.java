@@ -35,6 +35,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
@@ -147,7 +148,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final MapReduceSpecification specification;
   private final Location programJarLocation;
   private final BasicMapReduceContext context;
-  private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
 
@@ -163,7 +164,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           MapReduce mapReduce, MapReduceSpecification specification,
                           BasicMapReduceContext context,
-                          Location programJarLocation, LocationFactory locationFactory,
+                          Location programJarLocation, NamespacedLocationFactory locationFactory,
                           StreamAdmin streamAdmin, TransactionSystemClient txClient) {
     this.injector = injector;
     this.cConf = cConf;
@@ -473,7 +474,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                             programId.getType().name().toLowerCase(),
                                             programId.getNamespaceId(), programId.getApplicationId(),
                                             programId.getId(), context.getRunId().getId());
-    Location location = locationFactory.create(tempLocationName);
+    Location location = locationFactory.get(programId.getNamespace(), tempLocationName);
     location.mkdirs();
     return location;
   }
