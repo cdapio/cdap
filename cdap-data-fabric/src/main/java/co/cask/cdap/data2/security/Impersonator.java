@@ -22,6 +22,8 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -30,6 +32,9 @@ import java.util.concurrent.Callable;
  * Responsible for executing code for a user, configurable at the namespace level.
  */
 public class Impersonator {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Impersonator.class);
+
   private final boolean kerberosEnabled;
   private final UGIProvider ugiProvider;
   private final ImpersonationUserResolver impersonationUserResolver;
@@ -68,6 +73,8 @@ public class Impersonator {
     ImpersonationInfo impersonationInfo = impersonationUserResolver.getImpersonationInfo(namespaceId);
     // no need to get a UGI if the current UGI is the one we're requesting; simply return it
     if (UserGroupInformation.getCurrentUser().getUserName().equals(impersonationInfo.getPrincipal())) {
+      LOG.debug("Requested UGI is same as calling UGI. Simply returning current user: {}",
+                UserGroupInformation.getCurrentUser());
       return UserGroupInformation.getCurrentUser();
     }
     return ugiProvider.getConfiguredUGI(impersonationInfo);

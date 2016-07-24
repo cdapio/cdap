@@ -43,6 +43,7 @@ import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.CurrentUGIProvider;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -53,6 +54,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -148,14 +150,8 @@ public class DatasetServiceManager extends AbstractIdleService {
         @Override
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
-          UGIProvider currentUGIProvider = new UGIProvider() {
-            @Override
-            public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
-              return UserGroupInformation.getCurrentUser();
-            }
-          };
           // CDAP-6577 Perform impersonation when doing upgrade from CDAP 3.5.0
-          bind(UGIProvider.class).toInstance(currentUGIProvider);
+          bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
         }
       }
     );
