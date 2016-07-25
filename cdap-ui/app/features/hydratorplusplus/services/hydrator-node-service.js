@@ -15,11 +15,12 @@
  */
 
 class HydratorPlusPlusNodeService {
-  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers) {
+  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers, GLOBALS) {
     this.$q = $q;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.myHelpers = myHelpers;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
+    this.GLOBALS = GLOBALS;
   }
   getPluginInfo(node, appType, sourceConn) {
     var promise;
@@ -73,15 +74,17 @@ class HydratorPlusPlusNodeService {
       return inputSchema;
     };
 
-    node.inputSchema = sourceConn.map( source => ({
-      name: source.plugin.label,
-      schema: this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(getSchema(source))
-    }));
+    if (['action', 'source'].indexOf(this.GLOBALS.pluginConvert[node.type]) === -1) {
+      node.inputSchema = sourceConn.map( source => ({
+        name: source.plugin.label,
+        schema: this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(getSchema(source))
+      }));
+    }
 
     return node;
   }
 }
-HydratorPlusPlusNodeService.$inject = ['$q', 'HydratorPlusPlusHydratorService', 'IMPLICIT_SCHEMA', 'myHelpers'];
+HydratorPlusPlusNodeService.$inject = ['$q', 'HydratorPlusPlusHydratorService', 'IMPLICIT_SCHEMA', 'myHelpers', 'GLOBALS'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .service('HydratorPlusPlusNodeService', HydratorPlusPlusNodeService);
