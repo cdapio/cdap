@@ -143,12 +143,20 @@ angular.module(PKG.name + '.commons')
             uuids: [sourceId, targetId]
           };
 
-          if (vm.isDisabled) {
-            connObj.detachable = false;
-          }
-
           vm.instance.connect(connObj);
         });
+
+        if (vm.isDisabled) {
+          // Disable all endpoints
+          angular.forEach(endpoints, function (node) {
+            var endpointArr = vm.instance.getEndpoints(node);
+
+            // There should only be 2 endpoints per nodes, left and right
+            angular.forEach(endpointArr, function (endpoint) {
+              endpoint.setEnabled(false);
+            });
+          });
+        }
 
         // Process metrics data
         if ($scope.showMetrics) {
