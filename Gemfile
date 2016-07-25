@@ -16,6 +16,7 @@ else
 end
 
 gem 'chef-zero', '< 4.6' if RUBY_VERSION.to_f < 2.1
+gem 'ffi-yajl', '< 2.3' if RUBY_VERSION.to_f < 2.1
 gem 'rack', '< 2.0' if RUBY_VERSION.to_f < 2.2
 gem 'ridley', '~> 4.2.0'
 gem 'faraday', '< 0.9.2'
