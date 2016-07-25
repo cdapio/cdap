@@ -118,6 +118,7 @@ public final class Constants {
      * App Fabric Server.
      */
     public static final String SERVER_ADDRESS = "app.bind.address";
+    public static final String SERVER_PORT = "app.bind.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
@@ -261,6 +262,7 @@ public final class Constants {
     public static final class Manager {
       /** for the address (hostname) of the dataset server. */
       public static final String ADDRESS = "dataset.service.bind.address";
+      public static final String PORT = "dataset.service.bind.port";
 
       public static final String BACKLOG_CONNECTIONS = "dataset.service.connection.backlog";
       public static final String EXEC_THREADS = "dataset.service.exec.threads";
@@ -334,6 +336,7 @@ public final class Constants {
     // Stream http service configurations.
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String ADDRESS = "stream.bind.address";
+    public static final String PORT = "stream.bind.port";
     public static final String WORKER_THREADS = "stream.worker.threads";
     public static final String ASYNC_WORKER_THREADS = "stream.async.worker.threads";
     public static final String ASYNC_QUEUE_SIZE = "stream.async.queue.size";
@@ -802,6 +805,7 @@ public final class Constants {
     public static final String CDAP_VERSION = "cdap.version";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
+    public static final String SERVER_PORT = "explore.service.bind.port";
 
     public static final String BACKLOG_CONNECTIONS = "explore.service.connection.backlog";
     public static final String EXEC_THREADS = "explore.service.exec.threads";
@@ -957,6 +961,7 @@ public final class Constants {
   public static final class Metadata {
     public static final String SERVICE_DESCRIPTION = "Service to perform metadata operations.";
     public static final String SERVICE_BIND_ADDRESS = "metadata.service.bind.address";
+    public static final String SERVICE_BIND_PORT = "metadata.service.bind.port";
     public static final String SERVICE_WORKER_THREADS = "metadata.service.worker.threads";
     public static final String SERVICE_EXEC_THREADS = "metadata.service.exec.threads";
     public static final String HANDLERS_NAME = "metadata.handlers";
