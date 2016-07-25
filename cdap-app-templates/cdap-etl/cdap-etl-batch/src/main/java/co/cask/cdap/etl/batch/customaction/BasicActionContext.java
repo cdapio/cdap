@@ -20,9 +20,15 @@ import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
 import co.cask.tephra.TransactionFailureException;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Default implementation for the {@link ActionContext}.
@@ -71,5 +77,31 @@ public class BasicActionContext implements ActionContext {
   @Override
   public void execute(TxRunnable runnable) throws TransactionFailureException {
     context.execute(runnable);
+  }
+
+  @Override
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+    return context.listSecureData(namespace);
+  }
+
+  @Override
+  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+    return context.getSecureData(namespace, name);
+  }
+
+  @Override
+  public void putSecureData(String namespace, String name, byte[] data, String description,
+                            Map<String, String> properties) throws IOException {
+    context.getAdmin().putSecureData(namespace, name, data, description, properties);
+  }
+
+  @Override
+  public void deleteSecureData(String namespace, String name) throws IOException {
+    context.getAdmin().deleteSecureData(namespace, name);
+  }
+
+  @Override
+  public String getNamespace() {
+    return context.getNamespace();
   }
 }

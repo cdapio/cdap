@@ -18,11 +18,13 @@ package co.cask.cdap.etl.api.action;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 
 /**
  * Represents the context available to the action plugin during runtime.
  */
-public interface ActionContext extends Transactional, PluginContext {
+public interface ActionContext extends Transactional, PluginContext, SecureStore, SecureStoreManager {
 
   /**
    * Returns the logical start time of the batch job which triggers this instance of an action.
@@ -37,4 +39,10 @@ public interface ActionContext extends Transactional, PluginContext {
    * Return the arguments which can be updated.
    */
   SettableArguments getArguments();
+
+  /**
+   * @return The application namespace
+   */
+  String getNamespace();
+
 }
