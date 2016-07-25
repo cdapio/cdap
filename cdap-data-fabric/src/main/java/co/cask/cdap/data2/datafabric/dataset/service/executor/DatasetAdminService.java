@@ -140,7 +140,7 @@ public class DatasetAdminService {
       });
 
       // Writing system metadata should be done without impersonation since user may not have access to system tables.
-      writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null);
+      writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
       return spec;
     } catch (Exception e) {
       if (e instanceof IncompatibleUpdateException) {
@@ -154,15 +154,21 @@ public class DatasetAdminService {
     }
   }
 
-  private void writeSystemMetadata(Id.DatasetInstance datasetInstanceId, DatasetSpecification spec,
-                                   DatasetProperties props, DatasetTypeMeta typeMeta, DatasetType type,
-                                   DatasetContext context, boolean existing) throws IOException {
+  private void writeSystemMetadata(Id.DatasetInstance datasetInstanceId, final DatasetSpecification spec,
+                                   DatasetProperties props, final DatasetTypeMeta typeMeta, final DatasetType type,
+                                   final DatasetContext context, boolean existing, UserGroupInformation ugi)
+    throws IOException {
     // add system metadata for user datasets only
     if (isUserDataset(datasetInstanceId)) {
       Dataset dataset = null;
       try {
         try {
-          dataset = type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
+          dataset = ImpersonationUtils.doAs(ugi, new Callable<Dataset>() {
+            @Override
+            public Dataset call() throws Exception {
+              return type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
+            }
+          });
         } catch (Exception e) {
           LOG.warn("Exception while instantiating Dataset {}", datasetInstanceId, e);
         }
