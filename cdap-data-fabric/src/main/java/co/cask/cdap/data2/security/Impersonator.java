@@ -59,15 +59,19 @@ public class Impersonator {
    * @throws Exception if the callable throws any exception
    */
   public <T> T doAs(NamespaceId namespaceId, final Callable<T> callable) throws Exception {
-    // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
-    if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
-      return callable.call();
-    }
     return ImpersonationUtils.doAs(getUGI(namespaceId), callable);
   }
 
+  /**
+   * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
+   *
+   * @param namespaceId namespace to lookup the user
+   * @return {@link UserGroupInformation}
+   * @throws IOException if there was any error fetching the {@link UserGroupInformation}
+   */
   public UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException {
-    if (!kerberosEnabled) {
+    // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
+    if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
       return UserGroupInformation.getCurrentUser();
     }
 
