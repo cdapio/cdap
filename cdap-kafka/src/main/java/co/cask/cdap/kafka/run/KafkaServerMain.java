@@ -83,9 +83,9 @@ public class KafkaServerMain extends DaemonMain {
 
     kafkaProperties = generateKafkaConfig(cConf);
 
-    Preconditions.checkState(Integer.parseInt(
-      kafkaProperties.getProperty("num.partitions")) > 0,
-                             "Num partitions should be greater than zero.");
+    int partitions = Integer.parseInt(kafkaProperties.getProperty("num.partitions"), 10);
+    Preconditions.checkState(partitions > 0, "Num partitions should be greater than zero.");
+
     int port = Integer.parseInt(kafkaProperties.getProperty("port"), 10);
     Preconditions.checkState(port > 0, "Port number is invalid.");
 
