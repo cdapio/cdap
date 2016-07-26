@@ -508,6 +508,7 @@ angular.module(PKG.name + '.commons')
         programId: '@',
         runId: '@',
         getDownloadFilename: '&'
+        integratedWith: '@'
       },
       bindToController: true
     };
