@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsDetailStatusController', function($state, $scope, myServiceApi) {
+  .controller('ServicesRunsDetailStatusController', function($state, $scope, myServiceApi, $uibModal) {
 
     var path = '/apps/' +
           $state.params.appId + '/services/' +
@@ -49,5 +49,24 @@ angular.module(PKG.name + '.feature.services')
           this.status = res.status;
         }.bind(this));
     }
+
+    this.openModal = function (endpoint) {
+      $uibModal.open({
+        templateUrl: '/assets/features/services/templates/tabs/runs/tabs/status/make-request.html',
+        keyboard: true,
+        backdrop: 'static',
+        size: 'lg',
+        controller: 'StatusMakeRequestController',
+        controllerAs: 'RequestController',
+        resolve: {
+          rRequestUrl: function () {
+            return endpoint.path;
+          },
+          rRequestMethod: function () {
+            return endpoint.method;
+          }
+        }
+      });
+    };
 
   });

@@ -91,19 +91,5 @@ angular.module(PKG.name + '.feature.services')
             label: '{{$state.params.runid}}',
             parent: 'services.detail'
           }
-        })
-          .state('services.detail.run.makerequest', {
-            params: {
-              requestUrl: null,
-              requestMethod: null
-            },
-            onEnter: function ($state, $modal) {
-              var modal = $modal({
-                template: '/assets/features/services/templates/tabs/runs/tabs/status/make-request.html',
-              });
-              modal.$scope.$on('modal.hide', function() {
-                $state.go('^');
-              });
-            }
-          });
+        });
   });
