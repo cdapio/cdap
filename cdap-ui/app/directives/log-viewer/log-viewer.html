@@ -42,7 +42,9 @@
             target="_blank" class="log-action-btn view-raw btn btn-default" ng-diabled="!LogViewer.rawUrl.length">
             View Raw
         </a>
-        <button class="log-action-btn download-all">Download All</button>
+        <a class="log-action-btn download-all btn btn-default" ng-click="export()">
+          Download All
+        </a>
         <div class="search">
           <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText" ng-model-options="{ debounce: 500 }" ng-change="LogViewer.filterSearch()">
           <span class="fa fa-search"></span>
@@ -51,6 +53,9 @@
       </div>
     </div>
   </div>
+
+  <a class="sr-only" id="logs-export-link" href="{{url}}" download="{{exportFileName}}.text">Export</a>
+
 
   <!-- LOGS TIMELINE -->
   <my-timeline
