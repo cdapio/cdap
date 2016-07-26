@@ -769,24 +769,16 @@ public class FileStreamAdmin implements StreamAdmin {
     AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 
-  private <T extends EntityId> void ensureAccess(T entityId) throws Exception {
-    ensureAccess(entityId, ImmutableSet.<Action>of());
-  }
-
   private <T extends EntityId> void ensureAccess(T entityId, Action action) throws Exception {
     ensureAccess(entityId, ImmutableSet.of(action));
   }
 
-  private <T extends EntityId> void ensureAccess(T entityId, @Nullable Set<Action> action) throws Exception {
+  private <T extends EntityId> void ensureAccess(T entityId, Set<Action> action) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     co.cask.cdap.api.Predicate<EntityId> filter = authorizer.createFilter(principal);
     if (!Principal.SYSTEM.equals(principal) && !filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
     }
-
-    // If a non-null/non-empty action has been passed in, make sure the principal has permission to perform that action
-    if (action != null && !action.isEmpty()) {
-      authorizer.enforce(entityId, principal, action);
-    }
+    authorizer.enforce(entityId, principal, action);
   }
 }
