@@ -241,11 +241,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               controller: 'HydratorDetailTopPanelController',
               controllerAs: 'TopPanelCtrl'
             },
-            'bottompanel@hydratorplusplus.detail': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/detail/bottom-panel.html',
-              controller: 'HydratorPlusPlusDetailBottomPanelCtrl',
-              controllerAs: 'BottomPanelCtrl'
-            },
             'canvas@hydratorplusplus.detail': {
               templateUrl: '/assets/features/hydratorplusplus/templates/detail/canvas.html',
               controller: 'HydratorPlusPlusDetailCanvasCtrl',

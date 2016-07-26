@@ -35,10 +35,11 @@ class HydratorDetailTopPanelController {
       view: false,
       action: null
     };
+    this.viewSettings = false;
+    this.viewLogs = false;
     this.pipelineType = HydratorPlusPlusDetailNonRunsStore.getPipelineType();
     this.myLoadingService = myLoadingService;
     this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
-    this.viewSettings = false;
     this.setState();
     this.setAppStatus();
     var appType = HydratorPlusPlusDetailNonRunsStore.getAppType();

@@ -97,7 +97,11 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
 
     this.registerOnChangeListener = function(callback) {
-      this.changeListeners.push(callback);
+      var index = this.changeListeners.push(callback);
+      // un-subscribe for listners.
+      return () => {
+        this.changeListeners.splice(index-1, 1);
+      };
     };
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {

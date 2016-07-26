@@ -447,18 +447,20 @@ body.theme-cdap {
         .app-status-container {
           display: flex;
           position: relative;
+          .btn {
+            &.log-viewer {
+              border-left: 0;
+              border-right: 1px solid @table-border-color;
+            }
+          }
         }
       }
       .btn {
         flex-grow: 0;
-        padding: inherit;
-        padding: 7px 15px 0 15px;
         display: block;
         align-items: center;
         position: relative;
-        span {
-          line-height: 48px;
-        }
+
         .fa.fa-caret-down {
           position: absolute;
           top: 17px;
@@ -489,6 +491,20 @@ body.theme-cdap {
           top: 43px;
           background: #ebebeb;
           max-height: 400px;
+        }
+        &.pipeline-logs-section {
+          height: ~"calc(100vh - 143px)";
+          height: ~"-moz-calc(100vh - 143px)";
+          height: ~"-webkit-calc(100vh - 143px)";
+
+          .logs-table {
+            height: ~"calc(100vh - 240px)";
+            height: ~"-moz-calc(100vh - 240px)";
+            height: ~"-webkit-calc(100vh - 240px)";
+          }
+          .fa.fa-expand {
+            display: none;
+          }
         }
       }
     }

@@ -15,10 +15,12 @@
  */
 
  angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailLogCtrl', function(HydratorPlusPlusDetailRunsStore) {
+  .controller('HydratorPlusPlusDetailLogCtrl', function(HydratorPlusPlusDetailRunsStore, $scope) {
     this.setState = function() {
-      this.logsParams =  HydratorPlusPlusDetailRunsStore.getLogsParams();
+      this.params =  HydratorPlusPlusDetailRunsStore.getLogsParams();
     };
+
     this.setState();
-    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(this.setState.bind(this));
+    var sub = HydratorPlusPlusDetailRunsStore.registerOnChangeListener(this.setState.bind(this));
+    $scope.$on('$destroy', sub);
   });
