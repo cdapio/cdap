@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -22,8 +22,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   //Collapsing LogViewer Table Columns
   var columnsList = [];
   var collapseCount = 0;
+  //If we are replacing a previously generated file we need to manuually revoke the object URL to avoid memory leaks
+  this.textFile = null;
 
   this.setDefault = () => {
+    this.textFile = null;
     this.displayData = [];
     this.data = [];
     this.loading = false;
@@ -270,6 +273,50 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   };
 
+  var exportTimeout = null;
+
+  const downloadLogs = () => {
+    return myLogsApi.getLogsStartAsRaw({
+          'namespace' : this.namespaceId,
+          'appId' : this.appId,
+          'programType' : this.programType,
+          'programId' : this.programId,
+          'runId' : this.runId,
+          'start' : this.startTimeSec
+    }).$promise.then(
+      (res) => {
+        console.log('in downloadlogs: ', res);
+        this.downloadContent = res;
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+        return;
+      }
+    );
+  };
+
+  $scope.export = () => {
+    downloadLogs().then( () => {
+      var blob = new Blob([this.downloadContent], {type: 'text/plain'});
+        console.log('result is: ', downloadLogs());
+        $scope.url = URL.createObjectURL(blob);
+        $scope.exportFileName = '' + this.namespaceId + '-' + this.appId + '-' + this.programId + '-' + this.startTimeSec;
+        $scope.$on('$destroy', () => {
+          URL.revokeObjectURL($scope.url);
+        });
+
+        $timeout.cancel(exportTimeout);
+
+        exportTimeout = $timeout(() => {
+          document.getElementById('logs-export-link').click();
+        });
+    });
+  };
+
+  $scope.$on('$destroy', () => {
+    $timeout.cancel(exportTimeout);
+  });
+
   const requestWithStartTime = () => {
     this.loading = true;
     if(pollPromise){
@@ -279,12 +326,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
     const url = myCdapUrl.constructUrl({
-      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?format=json&start=${this.startTimeSec}`
+      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?&start=${this.startTimeSec}`
     });
 
     this.rawUrl = url;
 
-    myLogsApi.getLogsStart({
+    myLogsApi.getLogsStartAsJson({
         'namespace' : this.namespaceId,
         'appId' : this.appId,
         'programType' : this.programType,
@@ -293,6 +340,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         'start' : this.startTimeSec
     }).$promise.then(
       (res) => {
+
         this.loading = false;
         this.viewLimit = 100;
         this.cacheDecrement = 100;
@@ -321,6 +369,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         this.fromOffset = res[res.length-1].offset;
         this.data = res;
         this.renderData();
+
+        this.getDownload();
         this.cacheSize = res.length - this.cacheDecrement;
 
         if(res.length < this.viewLimit){
@@ -403,6 +453,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
     }
   };
+
   this.highlight = (text) => {
     if(!this.searchText || (this.searchText && !this.searchText.length)){
      return $sce.trustAsHtml(text);

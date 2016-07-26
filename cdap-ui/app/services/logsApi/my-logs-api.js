@@ -18,7 +18,8 @@ angular.module(PKG.name + '.services')
   .factory('myLogsApi', function(myCdapUrl, $resource, myAuth, myHelpers) {
 
     var url = myCdapUrl.constructUrl,
-        basepath = '/namespaces/:namespace/apps/:appId/:programType/:programId';
+        basepath = '/namespaces/:namespace/apps/:appId/:programType/:programId',
+        logsPath = basepath + '/runs/:runId/logs?';
 
     return $resource(
       url({ _cdapPath: basepath }),
@@ -35,8 +36,18 @@ angular.module(PKG.name + '.services')
     },
     {
       getLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs', true),
-      getLogsJson: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs?format=json', true),
-      getLogsStart: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs?format=json&start=:start', true),
+      getLogsStartAsJson: myHelpers.getConfig('GET', 'REQUEST', logsPath + 'format=json&start=:start', true),
+
+      getLogsStartAsRaw: myHelpers.getConfig('GET', 'REQUEST', logsPath + 'start=:start', false, {
+        interceptor: {
+          // This is very lame. ngResource by default considers EVERYTHING as json and converts plain string to JSON
+          // Thank you angular, $resource
+          response: function(data) {
+            return data.data;
+          }
+        }
+      }),
+
       getLogsMetadata: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/', false),
       nextLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
       nextLogsJson: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next?format=json', true),
