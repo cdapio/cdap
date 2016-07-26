@@ -14,12 +14,14 @@
   the License.
 -->
 
+
 <div ng-controller="FlowsRunDetailLogController as LogsController">
   <my-log-viewer
     namespace-id="{{LogsController.params.namespaceId}}"
     app-id="{{LogsController.params.appId}}"
     program-type="{{LogsController.params.programType}}"
     program-id="{{LogsController.params.programId}}"
+    get-download-filename="LogsController.getDownloadFileName()"
     run-id="{{LogsController.params.runId}}">
   </my-log-viewer>
 </div>
