@@ -45,7 +45,6 @@ body.theme-cdap {
       }
 
       div.btn {
-        position: relative;
         .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 5px 15px);
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
@@ -446,6 +445,7 @@ body.theme-cdap {
         }
         .app-status-container {
           display: flex;
+          min-width: 400px;
           position: relative;
           .btn {
             &.log-viewer {
@@ -456,11 +456,7 @@ body.theme-cdap {
         }
       }
       .btn {
-        flex-grow: 0;
-        display: block;
         align-items: center;
-        position: relative;
-
         .fa.fa-caret-down {
           position: absolute;
           top: 17px;

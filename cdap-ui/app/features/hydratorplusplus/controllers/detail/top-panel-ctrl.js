@@ -15,7 +15,7 @@
  */
 
 class HydratorDetailTopPanelController {
-  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService) {
+  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers) {
     this.GLOBALS = GLOBALS;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.myAlertOnValium = myAlertOnValium;
@@ -26,6 +26,9 @@ class HydratorDetailTopPanelController {
     this.HydratorPlusPlusDetailRunsStore = HydratorPlusPlusDetailRunsStore;
     this.HydratorPlusPlusDetailActions = HydratorPlusPlusDetailActions;
     this.config = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
+    this.myPipelineApi = myPipelineApi;
+    this.myHelpers = myHelpers;
+    this.myLoadingService = myLoadingService;
     this.app = {
       name: HydratorPlusPlusDetailNonRunsStore.getPipelineName(),
       description: this.config.description,
@@ -38,7 +41,6 @@ class HydratorDetailTopPanelController {
     this.viewSettings = false;
     this.viewLogs = false;
     this.pipelineType = HydratorPlusPlusDetailNonRunsStore.getPipelineType();
-    this.myLoadingService = myLoadingService;
     this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
     this.setState();
     this.setAppStatus();
@@ -54,6 +56,58 @@ class HydratorDetailTopPanelController {
       this.setState();
     });
     HydratorPlusPlusDetailNonRunsStore.registerOnChangeListener(this.setScheduleStatus.bind(this));
+    this.macrosList = '';
+    this.runTimeWidgetConfig = {
+      'widget-type': 'keyvalue',
+      'widget-attributes': {
+        'showDelimiter': 'false'
+      }
+    };
+    this.fetchMacros();
+  }
+  fetchMacros() {
+    const macroReducer = (prev, curr) => {
+      return prev.concat(this.myHelpers.objectQuery(curr, 'spec', 'properties', 'macros', 'lookupProperties') || []);
+    };
+    const parseMacros = macrosSpec => {
+      return macrosSpec
+        .reduce(macroReducer, [])
+        .map(macro => macro + ':')
+        .join(',');
+    };
+    let {namespace, app } = this.HydratorPlusPlusDetailRunsStore.getParams();
+    this.myPipelineApi
+        .fetchMacros({
+          namespace,
+          pipeline: app
+        })
+        .$promise
+        .then(
+          (res) => {
+            this.macrosList = parseMacros(res);
+          },
+          (err) => {
+            this.macroError = err;
+          }
+        );
+  }
+  isValidToStartOrSchedule() {
+    // If no macros for the pipeline
+    if (this.macrosList.length === 0) {
+      return true;
+    }
+    return this.macrosList.split(',')
+      .reduce((prev, curr) => prev && (curr && curr.split(':')[1]), true);
+  }
+  getMacrosMap() {
+    let macrosMap = {};
+    this.macrosList
+      .split(',')
+      .forEach(macro => {
+        let [key,value] = macro.split(':');
+        macrosMap[key] = value;
+      });
+    return macrosMap;
   }
   setState() {
     var runs = this.HydratorPlusPlusDetailRunsStore.getRuns();
@@ -159,7 +213,8 @@ class HydratorDetailTopPanelController {
     this.runPlayer.action = null;
     this.HydratorPlusPlusDetailActions.startPipeline(
       this.HydratorPlusPlusDetailRunsStore.getApi(),
-      this.HydratorPlusPlusDetailRunsStore.getParams()
+      this.HydratorPlusPlusDetailRunsStore.getParams(),
+      this.getMacrosMap()
     ).then(
       () => {},
       (err) => {
@@ -192,7 +247,8 @@ class HydratorDetailTopPanelController {
     this.scheduleStatus = 'SCHEDULING';
     this.HydratorPlusPlusDetailActions.schedulePipeline(
       this.HydratorPlusPlusDetailRunsStore.getApi(),
-      this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
+      this.HydratorPlusPlusDetailRunsStore.getScheduleParams(),
+      this.getMacrosMap()
     )
       .then(
         () => {
@@ -233,6 +289,6 @@ class HydratorDetailTopPanelController {
   }
 }
 
-HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService'];
+HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorDetailTopPanelController', HydratorDetailTopPanelController);

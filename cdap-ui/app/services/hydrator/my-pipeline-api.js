@@ -18,6 +18,7 @@ angular.module(PKG.name + '.services')
   .factory('myPipelineApi', function($resource, myHelpers, GLOBALS) {
     var templatePath = '/templates',
         pipelinePath = '/namespaces/:namespace/apps/:pipeline',
+        macrosPath = pipelinePath + '/plugins',
 
         loadArtifactPath = '/namespaces/:namespace/artifacts/:artifactName',
         loadArtifactJSON = loadArtifactPath + '/versions/:version/properties',
@@ -39,7 +40,7 @@ angular.module(PKG.name + '.services')
 
       },
       {
-
+        fetchMacros: myHelpers.getConfig('GET', 'REQUEST', macrosPath, true),
         loadArtifact: myHelpers.getConfig('POST', 'REQUEST', loadArtifactPath, false, {contentType: 'application/java-archive'}),
         loadJson: myHelpers.getConfig('PUT', 'REQUEST', loadArtifactJSON, false, {contentType: 'application/json'}),
         save: myHelpers.getConfig('PUT', 'REQUEST', pipelinePath, false, {contentType: 'application/json'}),
