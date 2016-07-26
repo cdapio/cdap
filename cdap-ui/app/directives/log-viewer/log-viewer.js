@@ -22,8 +22,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   //Collapsing LogViewer Table Columns
   var columnsList = [];
   var collapseCount = 0;
-  //If we are replacing a previously generated file we need to manuually revoke the object URL to avoid memory leaks
-  this.textFile = null;
 
   this.setDefault = () => {
     this.textFile = null;
@@ -277,21 +275,19 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   const downloadLogs = () => {
     return myLogsApi.getLogsStartAsRaw({
-          'namespace' : this.namespaceId,
-          'appId' : this.appId,
-          'programType' : this.programType,
-          'programId' : this.programId,
-          'runId' : this.runId,
-          'start' : this.startTimeSec
+      'namespace' : this.namespaceId,
+      'appId' : this.appId,
+      'programType' : this.programType,
+      'programId' : this.programId,
+      'runId' : this.runId,
+      'start' : this.startTimeSec
     }).$promise.then(
-      (res) => {
-        this.downloadContent = res;
-      },
-      (err) => {
-        console.log('ERROR: ', err);
-        return;
-      }
-    );
+    (res) => {
+      this.downloadContent = res;
+    },
+    (err) => {
+      console.log('ERROR: ', err);
+    });
   };
 
   this.export = () => {
@@ -317,10 +313,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         });
     });
   };
-
-  $scope.$on('$destroy', () => {
-    $timeout.cancel(exportTimeout);
-  });
 
   const requestWithStartTime = () => {
     this.loading = true;
