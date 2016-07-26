@@ -207,11 +207,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   const getStatus = () => {
       myLogsApi.getLogsMetadata({
-        'namespace' : this.namespaceId,
-        'appId' : this.appId,
-        'programType' : this.programType,
-        'programId' : this.programId,
-        'runId' : this.runId
+        namespace : this.namespaceId,
+        appId : this.appId,
+        programType : this.programType,
+        programId : this.programId,
+        runId : this.runId
       }).$promise.then(
         (statusRes) => {
           if(statusRes.status === 'RUNNING'){
@@ -275,12 +275,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   const downloadLogs = () => {
     return myLogsApi.getLogsStartAsRaw({
-      'namespace' : this.namespaceId,
-      'appId' : this.appId,
-      'programType' : this.programType,
-      'programId' : this.programId,
-      'runId' : this.runId,
-      'start' : this.startTimeSec
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId,
+      start : this.startTimeSec
     }).$promise.then(
     (res) => {
       this.downloadContent = res;
@@ -329,12 +329,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.rawUrl = url;
 
     myLogsApi.getLogsStartAsJson({
-        'namespace' : this.namespaceId,
-        'appId' : this.appId,
-        'programType' : this.programType,
-        'programId' : this.programId,
-        'runId' : this.runId,
-        'start' : this.startTimeSec
+        namespace : this.namespaceId,
+        appId : this.appId,
+        programType : this.programType,
+        programId : this.programId,
+        runId : this.runId,
+        start : this.startTimeSec
     }).$promise.then(
       (res) => {
 
