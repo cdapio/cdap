@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
@@ -67,7 +68,7 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
           janitor.cleanAll();
           LOG.debug("Completed stream file cleanup.");
         } catch (Throwable e) {
-          LOG.warn("Failed to cleanup stream file: {}", e.getMessage());
+          LOG.warn("Failed to cleanup stream files.", e);
         } finally {
           // Compute the next cleanup time. It is aligned to work clock based on the period.
           long now = System.currentTimeMillis();
