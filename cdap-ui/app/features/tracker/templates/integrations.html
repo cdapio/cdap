@@ -141,7 +141,14 @@
     </div>
 
     <div class="col-xs-12">
-      <my-old-log-viewer params="IntegrationsController.logsParams"></my-old-log-viewer>
+      <my-log-viewer
+        namespace-id="{{IntegrationsController.logsParams.namespace}}"
+        app-id="{{IntegrationsController.logsParams.appId}}"
+        program-type="{{IntegrationsController.logsParams.programType}}"
+        program-id="{{IntegrationsController.logsParams.programId}}"
+        run-id="{{IntegrationsController.logsParams.runId}}"
+        integrated-with="tracker">
+      </my-log-viewer>
     </div>
   </div>
 </div>

@@ -449,7 +449,8 @@ angular.module(PKG.name + '.commons')
         appId: '@',
         programType: '@',
         programId: '@',
-        runId: '@'
+        runId: '@',
+        integratedWith: '@'
       },
       bindToController: true,
       controllerAs: 'LogViewer'
