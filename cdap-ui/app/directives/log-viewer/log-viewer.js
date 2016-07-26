@@ -285,7 +285,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           'start' : this.startTimeSec
     }).$promise.then(
       (res) => {
-        console.log('in downloadlogs: ', res);
         this.downloadContent = res;
       },
       (err) => {
@@ -298,10 +297,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.export = () => {
     downloadLogs().then( () => {
       var blob = new Blob([this.downloadContent], {type: 'text/plain'});
-        console.log('result is: ', downloadLogs());
         $scope.url = URL.createObjectURL(blob);
         let filename = '';
-        if ('undefined' !== typeof this.getDownloadFilename) {
+        if ('undefined' !== typeof this.getDownloadFilename()) {
           filename = this.getDownloadFilename();
         } else {
           filename = this.namespaceId + '-' + this.appId + '-' + this.programId + '-' + this.startTimeSec;
