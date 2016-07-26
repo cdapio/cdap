@@ -42,6 +42,12 @@ import co.cask.cdap.data2.transaction.stream.StreamAdminTest;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.tephra.TransactionManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -64,12 +70,14 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static InMemoryAuditPublisher inMemoryAuditPublisher;
+  private static Authorizer authorizer;
+  private static AuthorizationEnforcementService authorizationEnforcementService;
 
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
-
+    addCConfProperties(cConf);
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new NonCustomLocationUnitTestModule().getModule(),
@@ -82,6 +90,9 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
       new ViewAdminModules().getInMemoryModules(),
       new AuditModule().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getNoOpModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override
@@ -98,14 +109,18 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     streamCoordinatorClient.startAndWait();
 
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     txManager.startAndWait();
+    authorizationEnforcementService.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    authorizationEnforcementService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
   }
@@ -122,5 +137,10 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
   @Override
   protected InMemoryAuditPublisher getInMemoryAuditPublisher() {
     return inMemoryAuditPublisher;
+  }
+
+  @Override
+  protected Authorizer getAuthorizer() {
+    return authorizer;
   }
 }
