@@ -84,7 +84,11 @@ public class AppUsingSecureStore extends AbstractApplication {
     public void put(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       byte[] value = new byte[request.getContent().remaining()];
       request.getContent().get(value);
-      getContext().getAdmin().putSecureData(namespace, KEY, value, "", new HashMap<String, String>());
+      try {
+        getContext().getAdmin().putSecureData(namespace, KEY, value, "", new HashMap<String, String>());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       responder.sendStatus(200);
     }
 
@@ -96,20 +100,30 @@ public class AppUsingSecureStore extends AbstractApplication {
         responder.sendString(new String(bytes));
       } catch (IOException e) {
         responder.sendError(500, e.getMessage());
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     }
 
     @Path("/list")
     @GET
     public void list(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
-      String name = getContext().listSecureData(namespace).get(0).getName();
+      try {
+        String name = getContext().listSecureData(namespace).get(0).getName();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       responder.sendString(name);
     }
 
     @Path("/delete")
     @GET
     public void delete(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
-      getContext().getAdmin().deleteSecureData(namespace, KEY);
+      try {
+        getContext().getAdmin().deleteSecureData(namespace, KEY);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       responder.sendStatus(200);
     }
   }

@@ -90,6 +90,8 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
         return Bytes.toString(secureStore.getSecureData(namespace, arguments[0]).get());
       } catch (IOException e) {
         throw new InvalidMacroException("Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     }
     throw new InvalidMacroException(String.format("Unsupported macro function %s", macroFunction));

@@ -88,7 +88,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
    */
   @Override
   public void putSecureData(String namespace, String name, byte[] data, String description,
-                            Map<String, String> properties) throws IOException {
+                            Map<String, String> properties) throws Exception {
     KeyProvider.Options options = new KeyProvider.Options(conf);
     options.setDescription(description);
     options.setAttributes(properties);
@@ -107,7 +107,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
    * @param name Name of the element to be deleted.
    */
   @Override
-  public void deleteSecureData(String namespace, String name) throws IOException {
+  public void deleteSecureData(String namespace, String name) throws Exception {
     try {
       provider.deleteKey(getKeyName(namespace, name));
     } catch (IOException e) {
@@ -121,7 +121,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
    * @param namespace The namespace this key belongs to.
    */
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
     String prefix = namespace + NAME_SEPARATOR;
     List<String> keysInNamespace = new ArrayList<>();
     KeyProvider.Metadata[] metadatas;
@@ -153,7 +153,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
    * @return An object representing the securely stored data associated with the name.
    */
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     String keyName = getKeyName(namespace, name);
     KeyProvider.Metadata metadata = provider.getMetadata(keyName);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, metadata.getDescription(), metadata.getAttributes());

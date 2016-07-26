@@ -20,6 +20,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.inject.Inject;
@@ -105,7 +106,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public void putSecureData(String namespace, String name, byte[] data, String description,
-                            Map<String, String> properties) throws IOException {
+                            Map<String, String> properties) throws Exception {
     String keyName = getKeyName(namespace, name);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data);
@@ -131,7 +132,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param name Name of the element to be deleted.
    */
   @Override
-  public void deleteSecureData(String namespace, String name) throws IOException {
+  public void deleteSecureData(String namespace, String name) throws Exception {
     String keyName = getKeyName(namespace, name);
     Key key = null;
     writeLock.lock();
@@ -165,7 +166,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param namespace The namespace this key belongs to.
    */
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
     readLock.lock();
     try {
       Enumeration<String> aliases = keyStore.aliases();
@@ -192,12 +193,12 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @return An object representing the securely stored data associated with the name.
    */
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     String keyName = getKeyName(namespace, name);
     readLock.lock();
     try {
       if (!keyStore.containsAlias(keyName)) {
-        throw new IOException(name + " not found in the secure store.");
+        throw new NotFoundException(name + " not found in the secure store.");
       }
       Key key = keyStore.getKey(keyName, password);
       return ((KeyStoreEntry) key).getData();

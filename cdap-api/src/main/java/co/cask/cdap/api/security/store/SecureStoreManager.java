@@ -37,12 +37,12 @@ public interface SecureStoreManager {
    * @throws IOException If the attempt to store the element failed.
    */
   void putSecureData(String namespace, String name, byte[] data, String description, Map<String, String> properties)
-    throws IOException;
+    throws Exception;
 
   /**
    * @param namespace The namespace that this key belongs to.
    * @param name of the element to delete.
    * @throws IOException If the store is not initialized or if the key could not be removed.
    */
-  void deleteSecureData(String namespace, String name) throws IOException;
+  void deleteSecureData(String namespace, String name) throws Exception;
 }
