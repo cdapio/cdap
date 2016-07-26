@@ -140,6 +140,14 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
             "with sufficient privileges for the user and then try creating a namespace.",
           customNamespacedLocation.toString(), namespaceMeta.getNamespaceId()));
       }
+      // we also expect it to empty since non-empty directories can lead to various inconsistencies CDAP-6743
+      if (customLocation.list().length != 0) {
+        // TODO: Add username in the below exception message.
+        throw new IOException(String.format(
+          "The provided home directory '%s' for namespace '%s' is not empty. Namespace can only be mapped to an " +
+            "empty directory. Please try creating the namespace again with an empty directory mapping.",
+          customNamespacedLocation.toString(), namespaceMeta.getNamespaceId()));
+      }
     } else {
       // no namespace custom location was provided one must be created by cdap
       namespaceHome = namespacedLocationFactory.get(namespaceMeta.getNamespaceId().toId());
