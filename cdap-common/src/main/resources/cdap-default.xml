@@ -755,60 +755,6 @@
   <!-- Kafka Server Configuration -->
 
   <property>
-    <name>kafka.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      CDAP Kafka service bind port (deprecated: replaced with
-      ${kafka.server.host.name})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.bind.port</name>
-    <value>9092</value>
-    <description>
-      CDAP Kafka service bind port (deprecated: replaced with
-      ${kafka.server.port})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.default.replication.factor</name>
-    <value>1</value>
-    <description>
-      CDAP Kafka service replication factor (deprecated: replaced with
-      ${kafka.server.default.replication.factor})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.log.dir</name>
-    <value>/tmp/kafka-logs</value>
-    <description>
-      CDAP Kafka service log storage directory (deprecated: replaced with
-      ${kafka.server.log.dirs})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.log.retention.hours</name>
-    <value>24</value>
-    <description>
-      The number of hours to keep a log file before deleting it (deprecated:
-      replaced with ${kafka.server.log.retention.hours})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.num.partitions</name>
-    <value>10</value>
-    <description>
-      Default number of partitions for a topic (deprecated: replaced with
-      ${kafka.server.num.partitions})
-    </description>
-  </property>
-
-  <property>
     <name>kafka.seed.brokers</name>
     <value>127.0.0.1:9092</value>
     <description>
@@ -819,7 +765,7 @@
 
   <property>
     <name>kafka.server.default.replication.factor</name>
-    <value>${kafka.default.replication.factor}</value>
+    <value>1</value>
     <description>
       CDAP Kafka service replication factor; used to replicate Kafka
       messages across multiple machines to prevent data loss in the event of
@@ -832,7 +778,7 @@
 
   <property>
     <name>kafka.server.host.name</name>
-    <value>${kafka.bind.address}</value>
+    <value>0.0.0.0</value>
     <description>
       CDAP Kafka service bind address
     </description>
@@ -840,7 +786,7 @@
 
   <property>
     <name>kafka.server.log.dirs</name>
-    <value>${kafka.log.dir}</value>
+    <value>/tmp/kafka-logs</value>
     <description>
       Comma-separated list of CDAP Kafka service log storage directories
     </description>
@@ -857,7 +803,7 @@
 
   <property>
     <name>kafka.server.log.retention.hours</name>
-    <value>${kafka.log.retention.hours}</value>
+    <value>24</value>
     <description>
       The number of hours to keep a log file before deleting it
     </description>
@@ -865,7 +811,7 @@
 
   <property>
     <name>kafka.server.num.partitions</name>
-    <value>${kafka.num.partitions}</value>
+    <value>10</value>
     <description>
       Default number of partitions for a topic
     </description>
@@ -873,7 +819,7 @@
 
   <property>
     <name>kafka.server.port</name>
-    <value>${kafka.bind.port}</value>
+    <value>9092</value>
     <description>
       CDAP Kafka service bind port
     </description>
@@ -881,20 +827,10 @@
 
   <property>
     <name>kafka.server.zookeeper.connection.timeout.ms</name>
-    <value>${kafka.zookeeper.connection.timeout.ms}</value>
-    <description>
-      The maximum time (in milliseconds) that the client will wait to
-      establish a connection to Zookeeper
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.zookeeper.connection.timeout.ms</name>
     <value>1000000</value>
     <description>
       The maximum time (in milliseconds) that the client will wait to
-      establish a connection to Zookeeper (deprecated: replaced with
-      ${kafka.server.zookeeper.connection.timeout.ms})
+      establish a connection to Zookeeper
     </description>
   </property>
 
