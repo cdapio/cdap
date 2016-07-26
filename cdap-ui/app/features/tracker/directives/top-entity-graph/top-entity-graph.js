@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.tracker')
-  .directive('myTopEntityGraph', function (d3, $compile, $state, myTrackerApi) {
+  .directive('myTopEntityGraph', function (d3, $compile, $state, myTrackerApi, myLineageService) {
 
     function EntityGraphLink (scope, element) {
 
@@ -165,7 +165,8 @@ angular.module(PKG.name + '.feature.tracker')
               scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.entityName + '" })';
             }
             if (scope.type === 'programs') {
-              scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.application + '", programId: "' + result.entityName + '" })';
+              let programType = myLineageService.parseProgramType(result.programType);
+              scope.programsPath = programType + '.detail.run({ appId: "' + result.application + '", programId: "' + result.entityName + '" })';
             }
             let link = angular.element('<a></a>')
               .attr('class', 'entity-link')
