@@ -168,7 +168,7 @@ angular.module(PKG.name + '.feature.tracker')
               scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.entityName + '" })';
             } else if (scope.type === 'programs') {
               let programType = myLineageService.parseProgramType(result.programType);
-              scope.programsPath = programType + '.detail.run({ appId: "' + result.application + '", programId: "' + result.entityName + '" })';
+              scope.programsPath = programType + '.detail({ appId: "' + result.application + '", programId: "' + result.entityName + '" })';
 
               tooltipContent = tooltipContent + ': ' + result.application;
 
