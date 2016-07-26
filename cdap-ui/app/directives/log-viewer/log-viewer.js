@@ -295,14 +295,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     );
   };
 
-  $scope.export = () => {
+  this.export = () => {
     downloadLogs().then( () => {
       var blob = new Blob([this.downloadContent], {type: 'text/plain'});
         console.log('result is: ', downloadLogs());
         $scope.url = URL.createObjectURL(blob);
-        $scope.exportFileName = '' + this.namespaceId + '-' + this.appId + '-' + this.programId + '-' + this.startTimeSec;
+        let filename = '';
+        if ('undefined' !== typeof this.getDownloadFilename) {
+          filename = this.getDownloadFilename();
+        } else {
+          filename = this.namespaceId + '-' + this.appId + '-' + this.programId + '-' + this.startTimeSec;
+        }
+        $scope.exportFileName = filename;
         $scope.$on('$destroy', () => {
           URL.revokeObjectURL($scope.url);
+          $timeout.cancel(exportTimeout);
         });
 
         $timeout.cancel(exportTimeout);
@@ -494,15 +501,16 @@ angular.module(PKG.name + '.commons')
     return {
       templateUrl: 'log-viewer/log-viewer.html',
       controller: LogViewerController,
+      controllerAs: 'LogViewer',
       scope: {
         displayOptions: '=?',
         namespaceId: '@',
         appId: '@',
         programType: '@',
         programId: '@',
-        runId: '@'
+        runId: '@',
+        getDownloadFilename: '&'
       },
-      bindToController: true,
-      controllerAs: 'LogViewer'
+      bindToController: true
     };
   });
