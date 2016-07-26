@@ -103,12 +103,24 @@ function link (scope, element) {
     xScale = d3.time.scale().range([0, (maxRange)]);
     xScale.domain([startTime, endTime]);
 
+    var customTimeFormat = d3.time.format.multi([
+      ['.%L', function(d) { return d.getMilliseconds(); }],
+      [':%S', function(d) { return d.getSeconds(); }],
+      ['%H:%M', function(d) { return d.getMinutes(); }],
+      ['%H:%M', function(d) { return d.getHours(); }],
+      ['%a %d', function(d) { return d.getDay() && d.getDate() !== 1; }],
+      ['%b %d', function(d) { return d.getDate() !== 1; }],
+      ['%B', function(d) { return d.getMonth(); }],
+      ['%Y', function() { return true; }]
+    ]);
+
     xAxis = d3.svg.axis().scale(xScale)
       .orient('bottom')
       .innerTickSize(-40)
       .outerTickSize(0)
       .tickPadding(7)
-      .ticks(8);
+      .ticks(8)
+      .tickFormat(customTimeFormat);
 
     generateEventCircles();
     renderBrushAndSlider();
