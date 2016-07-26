@@ -51,7 +51,15 @@ function makeApp (authAddress, cdapConfig) {
   // middleware
   try { app.use(serveFavicon(DIST_PATH + '/assets/img/favicon.png')); }
   catch(e) { log.error('Favicon missing! Please run `gulp build`'); }
-  app.use(compression());
+
+  // Check environment variable CDAP_UI_COMPRESSION_ENABLED
+  // Default to true, unless this variable is set to something else
+  if (typeof process.env.CDAP_UI_COMPRESSION_ENABLED === 'undefined' ||
+      process.env.CDAP_UI_COMPRESSION_ENABLED === true ||
+      process.env.CDAP_UI_COMPRESSION_ENABLED === 'true') {
+    app.use(compression());
+  }
+
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
@@ -260,7 +268,7 @@ function makeApp (authAddress, cdapConfig) {
           }
           res.status(500).send(err);
         } else {
-          res.status(response.statusCode).send();
+          res.status(response.statusCode).send('OK');
         }
       });
     }
