@@ -24,10 +24,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var collapseCount = 0;
 
   this.setDefault = () => {
-<<<<<<< HEAD
     this.textFile = null;
-=======
->>>>>>> 96f08338076b8c7b7299c1ce25fdf292aad8ffff
     this.statusType = 0;
     this.displayData = [];
     this.data = [];
@@ -420,25 +417,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         break;
       default:
         break;
-<<<<<<< HEAD
-=======
-    }
-  };
-
-  function formatDate(date) {
-    let month = date.getMonth() + 1;
-    let day = date.getDate();
-    let year = date.getFullYear();
-    let hours = date.getHours();
-    let minutes = date.getMinutes();
-    let seconds = date.getSeconds();
-
-    if(minutes < 10){
-      minutes = '0' + minutes.toString();
-    }
-    if(hours < 10){
-      hours = '0' + hours.toString();
->>>>>>> 96f08338076b8c7b7299c1ce25fdf292aad8ffff
     }
   };
 
