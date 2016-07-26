@@ -103,8 +103,12 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     Location namespaceHome = namespacedLocationFactory.get(namespaceId.toId());
     try {
       if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId.toId()))) {
-        LOG.debug("Custom location mapping %s was found while deleting namespace %s. Skipping location delete.",
-                  namespaceHome, namespaceId);
+        LOG.debug("Custom location mapping %s was found while deleting namespace %s. Deleting all data inside it but" +
+                    "skipping namespace home directory delete.", namespaceHome, namespaceId);
+        // delete everything inside the namespace home but not the namespace home as its user owned directory
+        for (Location childLocation : namespaceHome.list()) {
+          childLocation.delete(true);
+        }
       } else {
         // a custom location was not provided for this namespace so cdap is responsible for managing the lifecycle of
         // the location hence delete it.
