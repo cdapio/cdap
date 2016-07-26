@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.tracker')
-  .directive('myTopEntityGraph', function (d3, $compile, $state, myTrackerApi) {
+  .directive('myTopEntityGraph', function (d3, $compile, $state, myTrackerApi, myLineageService) {
 
     function EntityGraphLink (scope, element) {
 
@@ -161,23 +161,37 @@ angular.module(PKG.name + '.feature.tracker')
           let sidebarElem = angular.element(parentContainer[0]).find('div');
 
           angular.forEach(scope.model.results, (result, index) => {
+            let tooltipContent = result.entityName;
+            let topOffset = y(index) + margin.top + (y.rangeBand()/2);
+
             if (scope.type === 'applications') {
               scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.entityName + '" })';
+            } else if (scope.type === 'programs') {
+              let programType = myLineageService.parseProgramType(result.programType);
+              scope.programsPath = programType + '.detail({ appId: "' + result.application + '", programId: "' + result.entityName + '" })';
+
+              tooltipContent = tooltipContent + ': ' + result.application;
+
+              let app = angular.element('<p></p>')
+                .attr('class', 'app-link')
+                .text(result.application);
+              let appElem = $compile(app)(scope);
+              appElem.css('top', topOffset + 7 + 'px');
+
+              sidebarElem.append(appElem);
             }
-            if (scope.type === 'programs') {
-              scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.application + '", programId: "' + result.entityName + '" })';
-            }
+
             let link = angular.element('<a></a>')
               .attr('class', 'entity-link')
               .attr('ui-sref', scope.programsPath)
-              .attr('uib-tooltip', result.entityName)
+              .attr('uib-tooltip', tooltipContent)
               .attr('tooltip-ellipsis', result.entityName)
               .attr('tooltip-append-to-body', 'true')
               .attr('tooltip-class', 'tracker-tooltip')
               .text(result.entityName);
 
             let elem = $compile(link)(scope);
-            elem.css('top', y(index) + margin.top - 1 + (y.rangeBand()/2) + 'px');
+            elem.css('top', topOffset + 'px');
 
             sidebarElem.append(elem);
           });

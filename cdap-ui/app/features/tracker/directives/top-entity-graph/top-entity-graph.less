@@ -31,8 +31,23 @@ my-top-entity-graph {
       border-radius: 3px 0 0 3px;
       border: 1px solid @border-color;
 
+      .app-link,
       .entity-link {
         position: absolute;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 400;
+      }
+
+      .app-link {
+        left: 15px;
+        max-width: 90px;
+        color: #aaaaaa;
+        font-size: 10px;
+      }
+
+      .entity-link {
         font-size: 12px;
         left: 10px;
         font-weight: 600;
@@ -40,9 +55,7 @@ my-top-entity-graph {
         transform: translateY(-50%);
         letter-spacing: 0.5px;
         max-width: 110px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+
         &:hover {
           color: @tracker-green;
           text-decoration: none;

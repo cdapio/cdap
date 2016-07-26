@@ -77,7 +77,7 @@
             </thead>
             <tbody>
               <tr ng-repeat="metric in ::MainController.topDatasets">
-                <td class="text-left">
+                <td class="text-right">
 
                   <a ng-if="metric.entityType === 'dataset'"
                     ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: metric.entityName})">
