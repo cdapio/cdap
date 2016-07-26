@@ -45,6 +45,10 @@ import co.cask.cdap.data2.transaction.stream.StreamAdminTest;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -81,6 +85,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static InMemoryAuditPublisher inMemoryAuditPublisher;
+  private static Authorizer authorizer;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -88,7 +93,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     zkServer.startAndWait();
 
     Configuration hConf = testHBase.getConfiguration();
-
+    addCConfProperties(cConf);
     cConf.setInt(Constants.Stream.CONTAINER_INSTANCES, 1);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -104,6 +109,8 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
       new AuditModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -125,6 +132,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
 
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     txManager.startAndWait();
@@ -150,5 +158,10 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   @Override
   protected InMemoryAuditPublisher getInMemoryAuditPublisher() {
     return inMemoryAuditPublisher;
+  }
+
+  @Override
+  protected Authorizer getAuthorizer() {
+    return authorizer;
   }
 }

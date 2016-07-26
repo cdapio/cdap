@@ -78,7 +78,7 @@ public interface StreamAdmin {
    * @param streamId Id of the stream whose properties are being updated
    * @param properties New configuration of the stream.
    */
-  void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException;
+  void updateConfig(Id.Stream streamId, StreamProperties properties) throws Exception;
 
   /**
    * @param streamId Id of the stream.

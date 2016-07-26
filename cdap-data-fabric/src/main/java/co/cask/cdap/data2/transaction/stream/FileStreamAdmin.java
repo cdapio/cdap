@@ -51,12 +51,20 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
@@ -103,6 +111,8 @@ public class FileStreamAdmin implements StreamAdmin {
   private final ViewAdmin viewAdmin;
   private final MetadataStore metadataStore;
   private final Impersonator impersonator;
+  private final Authorizer authorizer;
+  private final AuthenticationContext authenticationContext;
 
   private ExploreFacade exploreFacade;
   private AuditPublisher auditPublisher;
@@ -119,7 +129,9 @@ public class FileStreamAdmin implements StreamAdmin {
                          ExploreTableNaming tableNaming,
                          MetadataStore metadataStore,
                          ViewAdmin viewAdmin,
-                         Impersonator impersonator) {
+                         Impersonator impersonator,
+                         AuthorizerInstantiator authorizerInstantiator,
+                         AuthenticationContext authenticationContext) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
@@ -133,6 +145,8 @@ public class FileStreamAdmin implements StreamAdmin {
     this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
     this.impersonator = impersonator;
+    this.authorizer = authorizerInstantiator.get();
+    this.authenticationContext = authenticationContext;
   }
 
   @SuppressWarnings("unused")
@@ -150,6 +164,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void dropAllInNamespace(final Id.Namespace namespace) throws Exception {
+    // To delete all streams in a namespace, one should have admin privileges on that namespace
+    ensureAccess(namespace.toEntityId(), Action.ADMIN);
     UserGroupInformation ugi = impersonator.getUGI(namespace.toEntityId());
     Iterable<Location> locations = ImpersonationUtils.doAs(ugi, new Callable<Iterable<Location>>() {
       @Override
@@ -256,6 +272,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig getConfig(final Id.Stream streamId) throws IOException {
+    // No Authorization check performed in this method. If required, it should be added before this method is invoked
     UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
     try {
       return ImpersonationUtils.doAs(ugi, new Callable<StreamConfig>() {
@@ -288,6 +305,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamProperties getProperties(Id.Stream streamId) throws Exception {
+    // User should have read access on the stream to read its properties
+    ensureAccess(streamId.toEntityId(), Action.READ);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
@@ -295,51 +314,43 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(final Id.Stream streamId, final StreamProperties properties) throws IOException {
+  public void updateConfig(final Id.Stream streamId, final StreamProperties properties) throws Exception {
     Location streamLocation;
-    try {
-      streamLocation = impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Location>() {
-        @Override
-        public Location call() throws Exception {
-          return getStreamLocation(streamId);
-        }
-      });
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      throw new IOException(e);
-    }
+    // User should have admin access on the stream to update its configuration
+    ensureAccess(streamId.toEntityId(), Action.ADMIN);
+    streamLocation = impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Location>() {
+      @Override
+      public Location call() throws Exception {
+        return getStreamLocation(streamId);
+      }
+    });
 
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
-    try {
-      streamCoordinatorClient.updateProperties(
-        streamId, new Callable<CoordinatorStreamProperties>() {
-          @Override
-          public CoordinatorStreamProperties call() throws Exception {
-            StreamProperties oldProperties = updateProperties(streamId, properties);
+    streamCoordinatorClient.updateProperties(
+      streamId, new Callable<CoordinatorStreamProperties>() {
+        @Override
+        public CoordinatorStreamProperties call() throws Exception {
+          StreamProperties oldProperties = updateProperties(streamId, properties);
 
-            FormatSpecification format = properties.getFormat();
-            if (format != null) {
-              // if the schema has changed, we need to recreate the hive table.
-              // Changes in format and settings don't require
-              // a hive change, as they are just properties used by the stream storage handler.
-              Schema currSchema = oldProperties.getFormat().getSchema();
-              Schema newSchema = format.getSchema();
-              if (!currSchema.equals(newSchema)) {
-                alterExploreStream(streamId, false, null);
-                alterExploreStream(streamId, true, format);
-              }
+          FormatSpecification format = properties.getFormat();
+          if (format != null) {
+            // if the schema has changed, we need to recreate the hive table.
+            // Changes in format and settings don't require
+            // a hive change, as they are just properties used by the stream storage handler.
+            Schema currSchema = oldProperties.getFormat().getSchema();
+            Schema newSchema = format.getSchema();
+            if (!currSchema.equals(newSchema)) {
+              alterExploreStream(streamId, false, null);
+              alterExploreStream(streamId, true, format);
             }
-
-            publishAudit(streamId, AuditType.UPDATE);
-            return new CoordinatorStreamProperties(properties.getTTL(), properties.getFormat(),
-                                                   properties.getNotificationThresholdMB(), null,
-                                                   properties.getDescription());
           }
-        });
-    } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, IOException.class);
-      throw new IOException(e);
-    }
+
+          publishAudit(streamId, AuditType.UPDATE);
+          return new CoordinatorStreamProperties(properties.getTTL(), properties.getFormat(),
+                                                 properties.getNotificationThresholdMB(), null,
+                                                 properties.getDescription());
+        }
+      });
   }
 
   @Override
@@ -369,6 +380,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig create(final Id.Stream streamId, @Nullable final Properties props) throws Exception {
+    // User should have write access to the namespace
+    ensureAccess(streamId.getNamespace().toEntityId(), Action.WRITE);
     final UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
     final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
       @Override
@@ -421,6 +434,8 @@ public class FileStreamAdmin implements StreamAdmin {
         SystemMetadataWriter systemMetadataWriter =
           new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
         systemMetadataWriter.write();
+        // Grant All access to the stream created to the User
+        authorizer.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
         return config;
       }
     });
@@ -454,6 +469,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void truncate(final Id.Stream streamId) throws Exception {
+    // User should have ADMIN access to truncate the stream
+    ensureAccess(streamId.toEntityId(), Action.ADMIN);
     impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -465,6 +482,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void drop(final Id.Stream streamId) throws Exception {
+    // User should have ADMIN access to drop the stream
+    ensureAccess(streamId.toEntityId(), Action.ADMIN);
     UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
     Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
       @Override
@@ -620,6 +639,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
           streamMetaStore.removeStream(streamId);
           metadataStore.removeMetadata(streamId);
+          // revoke all privileges on the stream
+          authorizer.revoke(streamId.toEntityId());
           publishAudit(streamId, AuditType.DELETE);
         } catch (Exception e) {
           throw Throwables.propagate(e);
@@ -746,5 +767,26 @@ public class FileStreamAdmin implements StreamAdmin {
 
   private void publishAudit(Id.Stream stream, AuditType auditType) {
     AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
+  }
+
+  private <T extends EntityId> void ensureAccess(T entityId) throws Exception {
+    ensureAccess(entityId, ImmutableSet.<Action>of());
+  }
+
+  private <T extends EntityId> void ensureAccess(T entityId, Action action) throws Exception {
+    ensureAccess(entityId, ImmutableSet.of(action));
+  }
+
+  private <T extends EntityId> void ensureAccess(T entityId, @Nullable Set<Action> action) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    co.cask.cdap.api.Predicate<EntityId> filter = authorizer.createFilter(principal);
+    if (!Principal.SYSTEM.equals(principal) && !filter.apply(entityId)) {
+      throw new UnauthorizedException(principal, entityId);
+    }
+
+    // If a non-null/non-empty action has been passed in, make sure the principal has permission to perform that action
+    if (action != null && !action.isEmpty()) {
+      authorizer.enforce(entityId, principal, action);
+    }
   }
 }
