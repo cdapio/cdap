@@ -153,6 +153,9 @@ function AddPreferredTagsModalCtrl (myTrackerApi, $scope, $state) {
       return parsedTags;
     }
     angular.forEach(tags.split('\n'), (line) => {
+      if (!line) {
+        return;
+      }
       parsedTags = parsedTags.concat(line.split(',').map((tag) => {
         return tag.trim();
       }));
@@ -174,6 +177,8 @@ function AddPreferredTagsModalCtrl (myTrackerApi, $scope, $state) {
         if (this.tagList.validTags.length > 0) {
           this.proceedToNextStep = true;
         }
+        this.validTagNum = this.tagList.validTags.length > 1 ? 'tags' : 'tag';
+        this.invalidTagNum = this.tagList.invalidTags.length > 1 ? 'tags' : 'tag';
       }, (err) => {
         console.log('Error', err);
       });
