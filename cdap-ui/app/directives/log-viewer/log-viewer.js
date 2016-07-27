@@ -293,7 +293,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.export = () => {
     downloadLogs().then( () => {
       var blob = new Blob([this.downloadContent], {type: 'text/plain'});
-        $scope.url = URL.createObjectURL(blob);
+        this.url = URL.createObjectURL(blob);
         let filename = '';
         if ('undefined' !== typeof this.getDownloadFilename()) {
           filename = this.getDownloadFilename();
