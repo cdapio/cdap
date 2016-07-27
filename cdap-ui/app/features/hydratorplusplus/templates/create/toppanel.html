@@ -33,8 +33,15 @@
            uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.state.metadata['name'] }}"
            tooltip-placement="bottom-left"
            tooltip-append-to-body="true"
+           tooltip-enable="!HydratorPlusPlusTopPanelCtrl.state.inValidName"
            tooltip-class="toppanel-tooltip">
       </div>
+      <div ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.state.inValidName"
+           uib-tooltip="Invalid Name"
+           tooltip-is-open="HydratorPlusPlusTopPanelCtrl.state.inValidName"
+           tooltip-placement="bottom-left"
+           tooltip-append-to-body="true"
+           tooltip-class="error-tooltip"></div>
       <input type="text"
              id="pipeline-name-input"
              ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"

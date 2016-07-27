@@ -20,7 +20,9 @@ class HydratorPlusPlusTopPanelCtrl{
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.consoleStore.registerOnChangeListener(() => {
       let messages = this.consoleStore.getMessages() || [];
-      let filteredMessages = messages.filter( message => message.type === 'MISSING-NAME');
+      let filteredMessages = messages.filter( message => {
+        return message.type === 'MISSING-NAME' || message.type === 'INVALID-NAME';
+      });
       this.state.inValidName = (filteredMessages.length ? true : false);
     });
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
