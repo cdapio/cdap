@@ -19,6 +19,7 @@ angular.module(PKG.name + '.services')
     // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
     etlBatch: 'cdap-etl-batch',
     etlRealtime: 'cdap-etl-realtime',
+    etlDataStreams: 'cdap-data-streams',
     etlDataPipeline: 'cdap-data-pipeline',
     etlBatchPipelines: ['cdap-etl-batch', 'cdap-data-pipeline'],
     pluginTypes: {
@@ -26,6 +27,15 @@ angular.module(PKG.name + '.services')
         'source': 'batchsource',
         'sink': 'batchsink',
         'transform': 'transform',
+      },
+      'cdap-data-streams':{
+        'transform': 'transform',
+        'source': 'streamingsource',
+        'sparkcompute': 'sparkcompute',
+        'batchaggregator': 'batchaggregator',
+        'sink': 'batchsink',
+        'batchjoiner': 'batchjoiner',
+        'windower': 'windower'
       },
       'cdap-etl-realtime': {
         'source': 'realtimesource',
@@ -48,8 +58,38 @@ angular.module(PKG.name + '.services')
         'httpcallback': 'Make HTTP Call'
       }
     },
+    'pluginTypeToID': {
+      'transform': 'Transform',
+      'batchsource': 'BatchSource',
+      'batchsink': 'BatchSink',
+      'batchaggregator': 'Aggregate',
+      'realtimesink': 'RealtimeSink',
+      'realtimesource': 'RealtimeSource',
+      'sparksink': 'Model',
+      'sparkcompute': 'Compute',
+      'batchjoiner': 'Join',
+      'action': 'Action',
+      'streamingsource': 'BatchSource',
+      'windower': 'Windower'
+    },
+    'pluginTypeToLabel': {
+      'transform': 'Transform',
+      'batchsource': 'Source',
+      'batchsink': 'Sink',
+      'batchaggregator': 'Aggregate',
+      'realtimesink': 'Sink',
+      'realtimesource': 'Source',
+      'sparksink': 'Model',
+      'sparkcompute': 'Compute',
+      'batchjoiner': 'Join',
+      'action': 'Action',
+      'streamingsource': 'Streaming Source',
+      'windower': 'Windower'
+    },
     pluginConvert: {
       'batchaggregator': 'transform',
+      'streamingsource': 'source',
+      'windower': 'sink',
       'batchsource': 'source',
       'realtimesource': 'source',
       'batchsink': 'sink',
@@ -64,7 +104,8 @@ angular.module(PKG.name + '.services')
     artifactConvert: {
       'cdap-etl-batch': 'Batch (Deprecated)',
       'cdap-etl-realtime': 'Realtime',
-      'cdap-data-pipeline': 'Data Pipeline'
+      'cdap-data-pipeline': 'Data Pipeline',
+      'cdap-data-streams': 'Spark Streams'
     },
 
     iconArtifact: {
