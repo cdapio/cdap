@@ -67,11 +67,12 @@ class HydratorPlusPlusLeftPanelCtrl {
       let extensions = this.leftpanelStore.getState().extensions;
       extensions.forEach( (ext) => {
         let isPluginAlreadyExist = (ext) => {
-          return this.pluginsMap.filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext));
+          return this.pluginsMap.filter( pluginObj => pluginObj.id === this.HydratorPlusPlusOrderingFactory.getPluginTypeID(ext));
         };
         if (!isPluginAlreadyExist(ext).length) {
           this.pluginsMap.push({
             name: this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext),
+            id: this.HydratorPlusPlusOrderingFactory.getPluginTypeID(ext),
             plugins: []
           });
           let params = {
@@ -84,7 +85,7 @@ class HydratorPlusPlusLeftPanelCtrl {
           this.leftpanelStore.dispatch(this.leftpanelActions.fetchPlugins(ext, params));
         } else {
           this.pluginsMap
-              .filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext))
+              .filter( pluginObj => pluginObj.id === this.HydratorPlusPlusOrderingFactory.getPluginTypeID(ext))
               .forEach( matchedObj => {
                 let getPluginTemplateNode = (ext) => {
                   return this.leftpanelStore.getState().plugins.pluginTypes[ext];
