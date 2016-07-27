@@ -24,7 +24,7 @@ angular.module(PKG.name + '.commons')
     $scope.$watch('MySidePanel.groups.length', function() {
 
       if (this.groups.length) {
-        this.openedGroup = this.groups[0].name;
+        this.openedGroup = this.groups[0].id;
       }
       /*
         42 = height of the each group's header
