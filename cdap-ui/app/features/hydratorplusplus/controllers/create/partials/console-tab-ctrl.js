@@ -56,7 +56,9 @@ class HydratorPlusPlusConsoleTabService {
           break;
       }
     });
-    if (missingNodesList.length) {
+    if (missingNodesList.length === 2) {
+      errorMessage.push(`Missing ${missingNodesList.join(', ')} or actions in the pipeline.`);
+    } else if (missingNodesList.length) {
       errorMessage.push(`Missing ${missingNodesList.join(', ')} in the pipeline.`);
     }
     if (successMessage.length) {
