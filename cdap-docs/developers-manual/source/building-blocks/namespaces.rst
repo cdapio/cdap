@@ -101,3 +101,8 @@ Namespace Examples
   
 - The CDAP :ref:`Command Line Interface <cli>` is namespace-aware. You set the
   namespace you are currently using; the command prompt displays it as a visual reminder.
+
+
+<Update this entire document with namespace mapping features>
+
+<Currently this seems to be the place to document impersonation too>

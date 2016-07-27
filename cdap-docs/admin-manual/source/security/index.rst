@@ -1,0 +1,70 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2016 Cask Data, Inc.
+
+:hide-toc: true
+
+.. _admin-security:
+.. _configuration-security:
+.. _security-index:
+
+========
+Security
+========
+
+.. toctree::
+
+    Perimeter Security <perimeter-security>
+    Authorization <authorization>
+    Impersonation <impersonation>
+    Secure Storage <secure-storage>
+
+Cask Data Application Platform (CDAP) supports securing clusters using various mechanisms such as
+:ref:`perimeter security <configuration-perimeter-security>`,
+:ref:`authorization <configuration-authorization>`,
+:ref:`impersonation <configuration-impersonation>`, and
+:ref:`secure storage <configuration-secure-storage>`.
+This section covers how to setup these security mechanisms on a secure CDAP instance.
+
+Additional security information, including client APIs, the authentication process,
+developing authorization extensions, and authorization policies is covered in the
+Developers’ Manual :ref:`developers:security-index` section.
+
+.. NOTE: INCLUDED IN OTHER FILES
+.. _admin-security-summary-start:
+
+We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
+`secure Hadoop clusters <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html>`__.
+In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
+running on the cluster are effectively "trusted”. Although there is still value in having perimeter security,
+authorization enforcement and secure storage in that situation, whenever possible a secure Hadoop
+cluster should be employed with CDAP security.
+
+.. _admin-security-summary-end:
+
+CDAP Security is configured in the files ``cdap-site.xml`` and ``cdap-security.xml``:
+
+* ``cdap-site.xml`` has non-sensitive information, such as the type of authentication, authorization and secure storage
+  mechanisms, and their configuration.
+* ``cdap-security.xml`` is used to store sensitive information such as keystore passwords and
+  SSL certificate keys. It should be owned and readable only by the CDAP user.
+
+These files are shown in :ref:`appendix-cdap-site.xml` and :ref:`appendix-cdap-security.xml`.
+
+File paths shown in this section are either absolute paths or, in the case of :ref:`standalone CDAP
+<standalone-index>`, can be relative to the CDAP SDK installation directory.
+
+
+- :ref:`configuration-perimeter-security`
+
+..
+
+- :ref:`configuration-authorization`
+
+..
+
+- :ref:`configuration-impersonation`
+
+..
+
+- :ref:`configuration-secure-storage`

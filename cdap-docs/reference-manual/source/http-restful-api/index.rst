@@ -27,6 +27,7 @@ CDAP HTTP RESTful API v3
     Namespace <namespace>
     Preferences <preferences>
     Query <query>
+    Security <security>
     Service <service>
     Stream <stream>
     Transactions <transactions>
@@ -52,6 +53,7 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
+- :doc:`Security: <security>` granting, revoking and listing privileges on CDAP entities, managing secure storage
 - :doc:`Transactions: <transactions>` interacting with the transaction service
 
 **Major CDAP Entities APIs**
@@ -92,6 +94,8 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Namespace: <namespace>` creating and managing namespaces
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets
+- :doc:`Security: <security>` granting, revoking, and listing privileges, as well as adding, retrieving,
+  and managing *Secure Keys*
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services
 - :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
 - :doc:`Transactions: <transactions>` interacting with the transaction service

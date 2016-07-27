@@ -54,6 +54,7 @@ function download_includes() {
   local pattern="\|distribution\|"  
   local distributions="cloudera ambari mapr packages"
   local types="installation configuration starting"
+  local dist
   local type
   for dist in ${distributions}; do
     for type in ${types}; do
@@ -67,7 +68,7 @@ function download_includes() {
     type="ha-installation"
     rewrite_references_sed "${source_rst}/${type}.txt" "${target_includes_dir}/${dist}-${type}.rst" "${pattern}" "${dist}"
   done
-  echo
+  echo  
 }
 
 run_command ${1}
