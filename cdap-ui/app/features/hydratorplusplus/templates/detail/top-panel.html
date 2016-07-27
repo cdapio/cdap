@@ -170,18 +170,23 @@
         </div>
       </div>
       <div class="pipeline-settings pipeline-run-section" ng-if="TopPanelCtrl.runPlayer.view">
-        <div ng-if="!TopPanelCtrl.macroError">
-          <h5><strong>Arguments</strong></h5>
+        <div>
+          <h5 ng-if="TopPanelCtrl.runPlayer.action === 'STARTING'">
+            <strong>Runtime Arguments</strong>
+          </h5>
+          <h5 ng-if="TopPanelCtrl.runPlayer.action === 'SCHEDULING'">
+            <strong>Preferences Store Arguments</strong>
+          </h5>
           <div
             data-model="TopPanelCtrl.macrosList"
             data-myconfig="TopPanelCtrl.runTimeWidgetConfig"
             widget-container
           ></div>
         </div>
-        <div ng-if="TopPanelCtrl.macroError">
-          <div class="text-danger text-center" ng-bind="TopPanelCtrl.macroError"></div>
-        </div>
         <div class="clearfix">
+          <span ng-if="TopPanelCtrl.macroError" class="pull-left macro-error-container">
+            <div class="text-danger" ng-bind="TopPanelCtrl.macroError"></div>
+          </span>
           <div class="pull-right">
             <button class="btn btn-default"
                  ng-if="TopPanelCtrl.runPlayer.action === 'STARTING'"
