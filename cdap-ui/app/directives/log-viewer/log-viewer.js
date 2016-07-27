@@ -194,8 +194,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.data = this.data.concat(res);
         this.cacheSize = res.length - this.cacheDecrement;
-        this.renderData();
-        if(res.length < this.viewLimit){
+        this.renderData(true);
+        if(this.displayData.length < this.viewLimit){
           getStatus();
         }
 
@@ -222,7 +222,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           } else {
             this.applicationIsRunning = false;
             if (pollPromise) {
-              pollPromise.stopPoll(pollPromise.__pollId__);
+              dataSrc.stopPoll(pollPromise.__pollId__);
             }
           }
         },
@@ -257,14 +257,15 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         });
 
         this.data = this.data.concat(res);
+        this.renderData(true);
       }
 
-      if(this.data.length > this.viewLimit){
+      if(this.displayData.length > this.viewLimit){
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
+      } else {
+        getStatus();
       }
-      this.renderData();
-      getStatus();
 
     }, (err) => {
       console.log('ERROR: ', err);
@@ -296,13 +297,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         this.url = URL.createObjectURL(blob);
         let filename = '';
         if ('undefined' !== typeof this.getDownloadFilename()) {
-          filename = this.getDownloadFilename();
+          filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeSec*1000), true);
         } else {
-          filename = this.namespaceId + '-' + this.appId + '-' + this.programId + '-' + this.startTimeSec;
+          filename = this.namespaceId + '-' + this.appId + '-' + this.programId + '-' + formatDate(new Date(this.startTimeSec*1000), true);
         }
-        $scope.exportFileName = filename;
+        this.exportFileName = filename;
         $scope.$on('$destroy', () => {
-          URL.revokeObjectURL($scope.url);
+          URL.revokeObjectURL(this.url);
           $timeout.cancel(exportTimeout);
         });
 
@@ -366,8 +367,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         this.fromOffset = res[res.length-1].offset;
         this.data = res;
         this.renderData();
-
-        this.getDownload();
         this.cacheSize = res.length - this.cacheDecrement;
 
         if(res.length < this.viewLimit){
@@ -381,24 +380,30 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
   };
 
-  function formatDate(date) {
-    let month = date.getMonth() + 1;
-    let day = date.getDate();
-    let year = date.getFullYear();
-    let hours = date.getHours();
-    let minutes = date.getMinutes();
-    let seconds = date.getSeconds();
+  function formatDate(date, isDownload) {
 
-    if(minutes < 10){
-      minutes = '0' + minutes.toString();
+    let dateObj = {
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      year: date.getFullYear(),
+      hours: date.getHours(),
+      minutes: date.getMinutes(),
+      seconds: date.getSeconds()
+    };
+
+    angular.forEach(dateObj, (value, key) => {
+      if(value < 10){
+        dateObj[key] = '0' + value;
+      } else {
+        dateObj[key] = value.toString();
+      }
+    });
+
+    if(isDownload){
+      return dateObj.year + dateObj.day + dateObj.month + dateObj.hours + dateObj.minutes + dateObj.seconds;
     }
-    if(hours < 10){
-      hours = '0' + hours.toString();
-    }
-    if(seconds < 10){
-      seconds = '0' + seconds.toString();
-    }
-    return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+
+    return dateObj.month + '/' + dateObj.day + '/' + dateObj.year + ' ' + dateObj.hours + ':' + dateObj.minutes + ':' + dateObj.seconds;
   }
 
   this.toggleLogExpansion = function() {
@@ -430,12 +435,15 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.renderData();
   };
 
-  this.renderData = () => {
+  this.renderData = (renderNewFromOffset) => {
     //Clean slate
-    this.displayData = [];
-    this.viewLimit = 100;
-    this.cacheDecrement = 100;
-    this.cacheSize = 0;
+
+    if(!renderNewFromOffset){
+      this.displayData = [];
+      this.viewLimit = 100;
+      this.cacheDecrement = 100;
+      this.cacheSize = 0;
+    }
 
     if(numEvents === 0){
       angular.forEach(this.data, (value, key) => {
