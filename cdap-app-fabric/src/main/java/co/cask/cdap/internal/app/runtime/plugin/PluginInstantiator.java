@@ -80,6 +80,7 @@ public class PluginInstantiator implements Closeable {
   private static final Map<String, Class> PROPERTY_TYPES = ImmutableMap.<String, Class>builder()
     .put("boolean", boolean.class)
     .put("byte", byte.class)
+    .put("char", char.class)
     .put("double", double.class)
     .put("int", int.class)
     .put("float", float.class)
@@ -428,6 +429,14 @@ public class PluginInstantiator implements Closeable {
 
       if (rawType.isPrimitive()) {
         rawType = Primitives.wrap(rawType);
+      }
+
+      if (Character.class.equals(rawType)) {
+        if (value.length() != 1) {
+          throw new InvalidPluginConfigException(String.format("Property of type char is not length 1: '%s'", value));
+        } else {
+          return value.charAt(0);
+        }
       }
 
       if (Primitives.isWrapperType(rawType)) {

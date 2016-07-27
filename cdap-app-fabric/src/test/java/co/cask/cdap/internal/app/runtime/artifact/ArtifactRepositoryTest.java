@@ -302,9 +302,10 @@ public class ArtifactRepositoryTest {
           Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
                                            .add("nullableLongFlag", "10")
-                                           .add("host", "${expansiveHostname}")
+                                           .add("host", "example.com")
                                            .add("aBoolean", "${aBoolean}")
                                            .add("aByte", "${aByte}")
+                                           .add("aChar", "${aChar}")
                                            .add("aDouble", "${aDouble}")
                                            .add("anInt", "${anInt}")
                                            .add("aFloat", "${aFloat}")
@@ -312,7 +313,7 @@ public class ArtifactRepositoryTest {
                                            .add("aShort", "${aShort}")
                                            .build());
           Callable<String> plugin = instantiator.newInstance(pluginInfo);
-          Assert.assertEquals("null,false,0,0.0,0.0,0,0,0", plugin.call());
+          Assert.assertEquals("example.com,false,0,\u0000,0.0,0.0,0,0,0", plugin.call());
         }
       }
     }
@@ -365,6 +366,7 @@ public class ArtifactRepositoryTest {
       .put("secondPortDigit", "0")
       .put("aBoolean", "true")
       .put("aByte", "101")
+      .put("aChar", "k")
       .put("aDouble", "64.0")
       .put("aFloat", "52.0")
       .put("anInt", "42")
@@ -382,6 +384,7 @@ public class ArtifactRepositoryTest {
                                            .add("host", "${expansiveHostname}")
                                            .add("aBoolean", "${aBoolean}")
                                            .add("aByte", "${aByte}")
+                                           .add("aChar", "${aChar}")
                                            .add("aDouble", "${aDouble}")
                                            .add("anInt", "${anInt}")
                                            .add("aFloat", "${aFloat}")
@@ -392,7 +395,7 @@ public class ArtifactRepositoryTest {
           TestMacroEvaluator testMacroEvaluator = new TestMacroEvaluator(propertySubstitutions,
                                                                          new HashMap<String, String>());
           Callable<String> plugin = instantiator.newInstance(pluginInfo, testMacroEvaluator);
-          Assert.assertEquals("localhost/index.html:80,true,101,64.0,52.0,42,32,81", plugin.call());
+          Assert.assertEquals("localhost/index.html:80,true,101,k,64.0,52.0,42,32,81", plugin.call());
         }
       }
     }
