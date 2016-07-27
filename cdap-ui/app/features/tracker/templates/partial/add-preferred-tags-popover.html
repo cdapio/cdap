@@ -49,13 +49,22 @@
   <div ng-if="AddTags.proceedToNextStep"
       class="text-left">
     <div class="valid-tags">
-      <p>{{ AddTags.tagList.validTags.length }} {{ AddTags.validTagNum }} loaded.</p>
+      <p>
+        <span>{{ AddTags.tagList.validTags.length }}</span>
+        <ng-pluralize data-count="AddTags.tagList.validTags.length"
+                      data-when="{'one': ' tag ', 'other': ' tags '}"></ng-pluralize>
+        <span>loaded.</span>
+      </p>
       <span ng-repeat="(key, value) in AddTags.tagList.validTags track by $index"
             class="tag preferred">{{ value }}</a>
     </div>
     <div ng-if="AddTags.tagList.invalidTags.length"
         class="invalid-tags">
-      <p class="text-danger">{{ AddTags.tagList.invalidTags.length }} {{ AddTags.invalidTagNum }} failed to load.</p>
+      <p class="text-danger">
+        <span>{{ AddTags.tagList.invalidTags.length }}</span>
+        <ng-pluralize data-count="AddTags.tagList.invalidTags.length"
+                      data-when="{'one': ' tag ', 'other': ' tags '}"></ng-pluralize>
+        <span>failed to load.</span></p>
       <span ng-repeat="(key, value) in AddTags.tagList.invalidTags track by $index">{{ value }}</span>
     </div>
   </div>
