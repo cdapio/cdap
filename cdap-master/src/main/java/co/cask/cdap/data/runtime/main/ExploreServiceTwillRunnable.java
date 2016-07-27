@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -46,6 +47,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
@@ -131,6 +133,8 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new SecureStoreModules().getDistributedModules(),
+      new AuthorizationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
