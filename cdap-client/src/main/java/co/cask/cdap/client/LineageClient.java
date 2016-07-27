@@ -208,7 +208,7 @@ public class LineageClient {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespacedId);
+      throw new NotFoundException(response.getResponseBodyAsString());
     }
     return GSON.fromJson(response.getResponseBodyAsString(), LineageRecord.class);
   }
