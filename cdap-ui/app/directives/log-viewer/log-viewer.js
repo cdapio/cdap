@@ -94,6 +94,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     requestWithStartTime();
   });
 
+  LogViewerStore.subscribe(() => {
+    this.programStatus = LogViewerStore.getState().programStatus;
+  });
+
   //Get Initial Status
   myLogsApi.getLogsMetadata({
     namespace : this.namespaceId,
@@ -232,7 +236,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       }).$promise.then(
         (statusRes) => {
           setProgramStatus(statusRes.status);
-
           if(this.statusType === 0){
             this.applicationIsRunning = true;
             if (!pollPromise) {
