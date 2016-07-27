@@ -33,6 +33,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.totalCount = 0;
     this.fullScreen = false;
     this.applicationIsRunning = false;
+    this.programStatus = 'STOPPED';
 
     this.configOptions = {
       time: true,
@@ -91,6 +92,38 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
     requestWithStartTime();
   });
+
+  LogViewerStore.subscribe(() => {
+    this.programStatus = LogViewerStore.getState().programStatus;
+  });
+
+  //Get Initial Status
+  myLogsApi.getLogsMetadata({
+    namespace : this.namespaceId,
+    appId : this.appId,
+    programType : this.programType,
+    programId : this.programId,
+    runId : this.runId
+  }).$promise.then(
+    (statusRes) => {
+      this.programStatus = statusRes.status;
+      if(this.programStatus === 'RUNNING' || this.programStatus === 'STARTED'){
+        this.programIsPrimary = true;
+        this.programIsSecondary = false;
+        this.programIsCompleted = false;
+      } else if(this.programStatus === 'KILLED' || this.programStatus === 'FAILED' || this.programStatus === 'STOPPED' || this.programStatus === 'SUSPENDED') {
+        this.programIsSecondary = true;
+        this.programIsPrimary = false;
+        this.programIsCompleted = false;
+      } else if(this.programStatus === 'COMPLETED'){
+        this.programIsPrimary = false;
+        this.programIsSecondary = false;
+        this.programIsCompleted = true;
+      }
+    },
+    (statusErr) => {
+      console.log('ERROR: ', statusErr);
+    });
 
   this.filterSearch = () => {
     //Rerender data
@@ -214,6 +247,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         runId : this.runId
       }).$promise.then(
         (statusRes) => {
+          this.programStatus = statusRes.status;
+
           if(statusRes.status === 'RUNNING'){
             this.applicationIsRunning = true;
             if (!pollPromise) {
@@ -509,6 +544,7 @@ angular.module(PKG.name + '.commons')
         runId: '@',
         getDownloadFilename: '&'
         integratedWith: '@'
+        statusName: '@'
       },
       bindToController: true
     };

@@ -14,11 +14,21 @@
   the License.
 -->
 
-<div class="log-viewer-container" ng-class="{'full-screen': LogViewer.fullScreen && LogViewer.integratedWith !== 'tracker', 'full-screen-navigator': LogViewer.integratedWith === 'tracker' && LogViewer.fullScreen}">
+<div class="log-viewer-container" ng-class="{'full-screen': LogViewer.fullScreen}">
 
   <!-- LOGS HEADERBAR -->
   <div class="logs-headerbar">
     <div class="log-stats-container">
+      <div class="logs-status-container" ng-if="LogViewer.fullScreen">
+        <span class="application-name">
+          {{LogViewer.statusName}}
+        </span>
+        <span class="application-status" ng-class="{'program-primary' : LogViewer.programIsPrimary, 'program-secondary' : LogViewer.programIsSecondary, 'program-completed' : LogViewer.programIsCompleted}">
+          <div class="status-circle" ng-class="{'program-primary-circle' : LogViewer.programIsPrimary, 'program-secondary-circle' : LogViewer.programIsSecondary, 'program-completed-circle' : LogViewer.programIsCompleted}">
+          </div>
+          {{LogViewer.programStatus}}
+        </span>
+      </div>
       <div class="log-stats-total log-stats text-center">
           <span class="stat-name">Total Messages</span>
           <div class="stat-count total-num">
