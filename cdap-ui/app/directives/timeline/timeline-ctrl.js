@@ -59,10 +59,6 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
-      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED') {
-        dataSrc.stopPoll(pollPromise.__pollId__);
-        pollPromise = null;
-      }
     }, (err) => {
       console.log('ERROR: ', err);
     });
