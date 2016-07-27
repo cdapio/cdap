@@ -42,6 +42,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -81,6 +83,8 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new NamespaceClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules()).with(new AbstractModule() {
         @Override
         protected void configure() {

@@ -40,6 +40,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.AbstractModule;
@@ -82,6 +84,8 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override
