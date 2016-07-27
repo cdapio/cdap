@@ -41,7 +41,7 @@
               <a class="btn btn-default"
                  ng-class="{'btn-success': StatusController.status === 'RUNNING'}"
                  ng-disabled="StatusController.status !== 'RUNNING'"
-                 ui-sref="services.detail.run.makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
+                 ng-click="StatusController.openModal(ep)">
               Make Request </a>
             </td>
           </tr>

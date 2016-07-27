@@ -241,7 +241,8 @@ function getEs6Directives(isNegate) {
     'timeline',
     'my-pipeline-summary',
     'widget-container',
-    'plugin-functions'
+    'plugin-functions',
+    'my-link-button'
   ];
 
   return es6directives.map(function (directive) {

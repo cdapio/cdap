@@ -38,7 +38,7 @@ angular.module(PKG.name + '.services')
       _.debounce(function() {
         if (isLoggedIn) {
           $http.get(
-            (MY_CONFIG.sslEnabled? 'https://': 'http://') + window.location.host + '/backendstatus',
+            '/backendstatus',
             {ignoreLoadingBar: true}
           )
                .success(success.bind(this))

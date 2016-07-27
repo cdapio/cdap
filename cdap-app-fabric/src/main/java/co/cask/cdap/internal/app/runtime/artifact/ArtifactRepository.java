@@ -735,10 +735,12 @@ public class ArtifactRepository {
     } else {
       authorizer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
     }
-    // revoke all privileges on the artifact
-    authorizer.revoke(artifactId.toEntityId());
+    // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
+    // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
     metadataStore.removeMetadata(artifactId);
+    // revoke all privileges on the artifact
+    authorizer.revoke(artifactId.toEntityId());
   }
 
   // convert details to summaries (to hide location and other unnecessary information)

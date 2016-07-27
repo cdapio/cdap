@@ -96,7 +96,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkArgument(programType == ProgramType.WORKER, "Only Worker process type is supported.");
 
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
-    Preconditions.checkArgument(workerSpec != null, "Missing Worker specification for {}", program.getId());
+    Preconditions.checkArgument(workerSpec != null, "Missing Worker specification for %s", program.getId());
     String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
                                                         String.valueOf(workerSpec.getInstances()));
     String resourceString = options.getArguments().getOption(ProgramOptionConstants.RESOURCES, null);

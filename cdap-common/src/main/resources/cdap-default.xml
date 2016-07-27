@@ -787,60 +787,6 @@
   <!-- Kafka Server Configuration -->
 
   <property>
-    <name>kafka.bind.address</name>
-    <value>${kafka.server.host.name}</value>
-    <description>
-      CDAP Kafka service bind port (deprecated: replaced with
-      ${kafka.server.host.name})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.bind.port</name>
-    <value>${kafka.server.port}</value>
-    <description>
-      CDAP Kafka service bind port (deprecated: replaced with
-      ${kafka.server.port})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.default.replication.factor</name>
-    <value>${kafka.server.default.replication.factor}</value>
-    <description>
-      CDAP Kafka service replication factor (deprecated: replaced with
-      ${kafka.server.default.replication.factor})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.log.dir</name>
-    <value>${kafka.server.log.dirs}</value>
-    <description>
-      CDAP Kafka service log storage directory (deprecated: replaced with
-      ${kafka.server.log.dirs})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.log.retention.hours</name>
-    <value>${kafka.server.log.retention.hours}</value>
-    <description>
-      The number of hours to keep a log file before deleting it (deprecated:
-      replaced with ${kafka.server.log.retention.hours})
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.num.partitions</name>
-    <value>${kafka.server.num.partitions}</value>
-    <description>
-      Default number of partitions for a topic (deprecated: replaced with
-      ${kafka.server.num.partitions})
-    </description>
-  </property>
-
-  <property>
     <name>kafka.seed.brokers</name>
     <value>127.0.0.1:9092</value>
     <description>
@@ -917,16 +863,6 @@
     <description>
       The maximum time (in milliseconds) that the client will wait to
       establish a connection to Zookeeper
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.zookeeper.connection.timeout.ms</name>
-    <value>${kafka.server.zookeeper.connection.timeout.ms}</value>
-    <description>
-      The maximum time (in milliseconds) that the client will wait to
-      establish a connection to Zookeeper (deprecated: replaced with
-      ${kafka.server.zookeeper.connection.timeout.ms})
     </description>
   </property>
 

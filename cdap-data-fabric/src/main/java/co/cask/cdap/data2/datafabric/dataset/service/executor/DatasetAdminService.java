@@ -28,7 +28,6 @@ import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
@@ -38,12 +37,13 @@ import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
+import co.cask.cdap.data2.security.ImpersonationUtils;
 import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,20 +104,27 @@ public class DatasetAdminService {
     }
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+      final DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespaceId());
+      UserGroupInformation ugi = impersonator.getUGI(datasetInstanceId.getNamespace().toEntityId());
 
-      return impersonator.doAs(datasetInstanceId.getNamespace().toEntityId(), new Callable<DatasetSpecification>() {
+      final DatasetType type = ImpersonationUtils.doAs(ugi, new Callable<DatasetType>() {
         @Override
-        public DatasetSpecification call() throws Exception {
+        public DatasetType call() throws Exception {
           DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
           if (type == null) {
             throw new BadRequestException(
               String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
           }
-          DatasetSpecification spec = existing == null
-            ? type.configure(datasetInstanceId.getId(), props)
+          return type;
+        }
+      });
+
+      DatasetSpecification spec = ImpersonationUtils.doAs(ugi, new Callable<DatasetSpecification>() {
+        @Override
+        public DatasetSpecification call() throws Exception {
+          DatasetSpecification spec = existing == null ? type.configure(datasetInstanceId.getId(), props)
             : type.reconfigure(datasetInstanceId.getId(), props, existing);
 
-          DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespaceId());
           DatasetAdmin admin = type.getAdmin(context, spec);
           if (existing != null) {
             if (admin instanceof Updatable) {
@@ -128,11 +135,13 @@ public class DatasetAdminService {
           } else {
             admin.create();
           }
-
-          writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null);
           return spec;
         }
       });
+
+      // Writing system metadata should be done without impersonation since user may not have access to system tables.
+      writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
+      return spec;
     } catch (Exception e) {
       if (e instanceof IncompatibleUpdateException) {
         // this is expected to happen if user provides bad update properties, so we log this as debug
@@ -145,15 +154,21 @@ public class DatasetAdminService {
     }
   }
 
-  private void writeSystemMetadata(Id.DatasetInstance datasetInstanceId, DatasetSpecification spec,
-                                   DatasetProperties props, DatasetTypeMeta typeMeta, DatasetType type,
-                                   DatasetContext context, boolean existing) throws IOException {
+  private void writeSystemMetadata(Id.DatasetInstance datasetInstanceId, final DatasetSpecification spec,
+                                   DatasetProperties props, final DatasetTypeMeta typeMeta, final DatasetType type,
+                                   final DatasetContext context, boolean existing, UserGroupInformation ugi)
+    throws IOException {
     // add system metadata for user datasets only
     if (isUserDataset(datasetInstanceId)) {
       Dataset dataset = null;
       try {
         try {
-          dataset = type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
+          dataset = ImpersonationUtils.doAs(ugi, new Callable<Dataset>() {
+            @Override
+            public Dataset call() throws Exception {
+              return type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
+            }
+          });
         } catch (Exception e) {
           LOG.warn("Exception while instantiating Dataset {}", datasetInstanceId, e);
         }
