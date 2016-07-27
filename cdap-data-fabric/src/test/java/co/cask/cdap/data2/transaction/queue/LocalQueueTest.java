@@ -42,6 +42,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
@@ -104,6 +105,7 @@ public class LocalQueueTest extends QueueTest {
       new DataSetsModules().getStandaloneModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getStandaloneModules(),
+      new AuthorizationEnforcementModule().getStandaloneModules(),
       new AuthenticationContextModules().getMasterModule(),
       new NamespaceClientRuntimeModule().getStandaloneModules(),
       new AuthorizationTestModule(),
