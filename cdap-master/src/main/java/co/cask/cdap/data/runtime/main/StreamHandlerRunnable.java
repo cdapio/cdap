@@ -49,6 +49,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -105,6 +106,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
     services.add(injector.getInstance(StreamService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
   }
 
   @VisibleForTesting
