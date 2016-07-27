@@ -305,8 +305,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamProperties getProperties(Id.Stream streamId) throws Exception {
-    // User should have read access on the stream to read its properties
-    ensureAccess(streamId.toEntityId(), Action.READ);
+    // User should have any access on the stream to read its properties
+    ensureAccess(streamId.toEntityId());
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
@@ -382,63 +382,71 @@ public class FileStreamAdmin implements StreamAdmin {
   public StreamConfig create(final Id.Stream streamId, @Nullable final Properties props) throws Exception {
     // User should have write access to the namespace
     ensureAccess(streamId.getNamespace().toEntityId(), Action.WRITE);
-    final UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
-    final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
-      @Override
-      public Location call() throws Exception {
-        assertNamespaceHomeExists(streamId.getNamespace());
-        Location streamLocation = getStreamLocation(streamId);
-        Locations.mkdirsIfNotExists(streamLocation);
-        return streamLocation;
-      }
-    });
-
-    return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
-      @Override
-      public StreamConfig call() throws Exception {
-        if (exists(streamId)) {
-          return null;
+    // revoke privleges to make sure there is no orphaned privleges
+    authorizer.revoke(streamId.toEntityId());
+    try {
+      // Grant All access to the stream created to the User
+      authorizer.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
+      final UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+      final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          assertNamespaceHomeExists(streamId.getNamespace());
+          Location streamLocation = getStreamLocation(streamId);
+          Locations.mkdirsIfNotExists(streamLocation);
+          return streamLocation;
         }
+      });
 
-        long createTime = System.currentTimeMillis();
-        Properties properties = (props == null) ? new Properties() : props;
-        long partitionDuration = Long.parseLong(properties.getProperty(
-          Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
-        long indexInterval = Long.parseLong(properties.getProperty(
-          Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
-        long ttl = Long.parseLong(properties.getProperty(
-          Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
-        int threshold = Integer.parseInt(properties.getProperty(
-          Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
-        String description = properties.getProperty(Constants.Stream.DESCRIPTION);
-        FormatSpecification formatSpec = null;
-        if (properties.containsKey(Constants.Stream.FORMAT_SPECIFICATION)) {
-          formatSpec = GSON.fromJson(properties.getProperty(Constants.Stream.FORMAT_SPECIFICATION),
-                                     FormatSpecification.class);
-        }
-
-        final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
-                                                     ttl, streamLocation, formatSpec, threshold);
-        ImpersonationUtils.doAs(ugi, new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            writeConfig(config);
+      return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
+        @Override
+        public StreamConfig call() throws Exception {
+          if (exists(streamId)) {
             return null;
           }
-        });
 
-        createStreamFeeds(config);
-        alterExploreStream(streamId, true, config.getFormat());
-        streamMetaStore.addStream(streamId, description);
-        publishAudit(streamId, AuditType.CREATE);
-        SystemMetadataWriter systemMetadataWriter =
-          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
-        systemMetadataWriter.write();
-        // Grant All access to the stream created to the User
-        authorizer.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
-        return config;
-      }
-    });
+          long createTime = System.currentTimeMillis();
+          Properties properties = (props == null) ? new Properties() : props;
+          long partitionDuration = Long.parseLong(properties.getProperty(
+            Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
+          long indexInterval = Long.parseLong(properties.getProperty(
+            Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
+          long ttl = Long.parseLong(properties.getProperty(
+            Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
+          int threshold = Integer.parseInt(properties.getProperty(
+            Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+          String description = properties.getProperty(Constants.Stream.DESCRIPTION);
+          FormatSpecification formatSpec = null;
+          if (properties.containsKey(Constants.Stream.FORMAT_SPECIFICATION)) {
+            formatSpec = GSON.fromJson(properties.getProperty(Constants.Stream.FORMAT_SPECIFICATION),
+                                       FormatSpecification.class);
+          }
+
+          final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
+                                                       ttl, streamLocation, formatSpec, threshold);
+          ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              writeConfig(config);
+              return null;
+            }
+          });
+
+          createStreamFeeds(config);
+          alterExploreStream(streamId, true, config.getFormat());
+          streamMetaStore.addStream(streamId, description);
+          publishAudit(streamId, AuditType.CREATE);
+          SystemMetadataWriter systemMetadataWriter =
+            new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
+          systemMetadataWriter.write();
+          return config;
+        }
+      });
+    } catch (Exception e) {
+      // there was a problem creating the stream. so revoke privilege.
+      authorizer.revoke(streamId.toEntityId());
+      throw e;
+    }
   }
 
   private void assertNamespaceHomeExists(Id.Namespace namespaceId) throws IOException {
@@ -770,15 +778,15 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   private <T extends EntityId> void ensureAccess(T entityId, Action action) throws Exception {
-    ensureAccess(entityId, ImmutableSet.of(action));
+    Principal principal = authenticationContext.getPrincipal();
+    authorizer.enforce(entityId, principal, action);
   }
 
-  private <T extends EntityId> void ensureAccess(T entityId, Set<Action> action) throws Exception {
+  private <T extends EntityId> void ensureAccess(T entityId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     co.cask.cdap.api.Predicate<EntityId> filter = authorizer.createFilter(principal);
     if (!Principal.SYSTEM.equals(principal) && !filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
     }
-    authorizer.enforce(entityId, principal, action);
   }
 }

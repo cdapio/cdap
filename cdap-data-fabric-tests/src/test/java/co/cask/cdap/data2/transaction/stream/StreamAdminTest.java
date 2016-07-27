@@ -189,11 +189,9 @@ public abstract class StreamAdminTest {
 
     try {
       streamAdmin.getProperties(stream);
-      Assert.fail("USer should not be able to get the properties.");
+      Assert.fail("User should not be able to get the properties.");
     } catch (UnauthorizedException e) {
       // expected
-    } catch (IOException e) {
-      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
     }
 
     // read action should be enough to get the stream config
@@ -217,7 +215,7 @@ public abstract class StreamAdminTest {
 
     try {
       streamAdmin.updateConfig(stream, properties);
-      Assert.fail("User should not be able to update the config with just READ permissions.");
+      Assert.fail("User should not be able to update the config with just READ and WRITE permissions.");
     } catch (UnauthorizedException e) {
       // expected
     }
@@ -239,6 +237,7 @@ public abstract class StreamAdminTest {
     grantAndAssertSuccess(stream.toEntityId(), USER, ImmutableSet.of(Action.ADMIN));
     streamAdmin.updateConfig(stream, properties);
     streamAdmin.truncate(stream);
+    Assert.assertEquals(0, getStreamSize(stream));
     streamAdmin.drop(stream);
   }
 

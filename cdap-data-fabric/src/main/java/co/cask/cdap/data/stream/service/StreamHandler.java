@@ -120,13 +120,13 @@ public final class StreamHandler extends AbstractHttpHandler {
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  public StreamHandler(CConfiguration cConf,
-                       StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
-                       StreamFileWriterFactory writerFactory,
-                       final MetricsCollectionService metricsCollectionService,
-                       StreamWriterSizeCollector sizeCollector,
-                       NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator,
-                       AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
+  StreamHandler(CConfiguration cConf,
+                StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
+                StreamFileWriterFactory writerFactory,
+                final MetricsCollectionService metricsCollectionService,
+                StreamWriterSizeCollector sizeCollector,
+                NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator,
+                AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.sizeCollector = sizeCollector;

@@ -86,9 +86,9 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  public StreamFetchHandler(CConfiguration cConf, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                            Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
-                            AuthenticationContext authenticationContext) {
+  StreamFetchHandler(CConfiguration cConf, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+                     Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
+                     AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
