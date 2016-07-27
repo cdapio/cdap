@@ -532,7 +532,7 @@ class HydratorPlusPlusConfigStore {
       return this.GLOBALS.pluginConvert[node.type] === 'action';
     }).length;
 
-    if (countActions !== nodes.length) {
+    if (countActions !== nodes.length || nodes.length === 0) {
       daglevelvalidation.forEach( validationFn => {
         validationFn(nodes, (err, node) => {
           if (err) {
