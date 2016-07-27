@@ -150,25 +150,32 @@ The CLI can be started with command-line options:
 Settings
 --------
 
-Certain commands (``connect`` and ``cli render as``) affect how the CLI works for the duration of a session.
+Certain commands (``cli render as``, ``connect``, and ``use namespace``) affect how the CLI works for the duration of a session.
 
-The command ``"cli render as <table-renderer>"`` sets how table data is rendered. Valid options are
-either ``"alt"`` (the default) and ``"csv"``. As the ``"alt"`` option may split a cell into multiple
-lines, you may need to use ``"csv"`` if you want to copy and paste the results into another
-application or include in a message.
+- The command ``cli render as <table-renderer>`` (from the `General`_ commands) sets how
+  table data is rendered. Valid options are either ``alt`` (the default) and ``csv``. As
+  the ``alt`` option may split a cell into multiple lines, you may need to use ``csv`` if
+  you want to copy and paste the results into another application or include in a message.
 
-- With ``"cli render as alt"`` (the default), a command such as ``"list apps"`` will be output as::
+  - With ``cli render as alt`` (the default), a command such as ``list apps`` will be output as::
 
-    +================================+
-    | app id      | description      |
-    +=============+==================+
-    | PurchaseApp | Some description |
-    +=============+==================+
+      +================================+
+      | app id      | description      |
+      +=============+==================+
+      | PurchaseApp | Some description |
+      +=============+==================+
 
-- With ``"cli render as csv"``, the same ``"list apps"`` would be output as::
+  - With ``cli render as csv``, the same ``list apps`` would be output as::
 
-    app id,description
-    PurchaseApp,Some description
+      app id,description
+      PurchaseApp,Some description
+      
+- The command ``connect`` (from the `General`_ commands) allows you to connect to a CDAP
+  instance that is not running locally.
+
+- The command ``use namespace`` (from the `Namespace`_ commands) allows you to set the
+  namespace used with all subsequent commands. By default, all sessions start in the
+  ``default`` namespace.
 
 .. _cli-available-commands:
 
