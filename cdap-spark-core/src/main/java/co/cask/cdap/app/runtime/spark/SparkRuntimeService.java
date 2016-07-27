@@ -72,7 +72,9 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -362,6 +364,19 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     return jarFile;
   }
 
+  @Nullable
+  private static String getCdapCommonJarName() {
+    try {
+      CodeSource codeSource = CConfiguration.class.getProtectionDomain().getCodeSource();
+      if (codeSource != null) {
+        return Paths.get(codeSource.getLocation().toURI().getPath()).getFileName().toString();
+      }
+    } catch (SecurityException | URISyntaxException e) {
+      LOG.warn("Failed to get jar name for cdap-common.", e);
+    }
+    return null;
+  }
+
   /**
    * Creates the configurations for the spark submitter.
    */
@@ -395,12 +410,24 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // classpath so adding them is not required. In non-local mode where spark driver and executors runs in a different
     // jvm we are adding these to their classpath.
     if (!localMode) {
-      String extraClassPath = Joiner.on(File.pathSeparator).join(Paths.get("$PWD", CDAP_LAUNCHER_JAR),
-                                                                 Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
+      // Find the name of the cdap-common.jar and add it to the classpath in the beginning.
+      // So that classpath looks like $PWD/cdap-spark.jar/cdap-common.jar:$PWD/cdap-spark-jar/*.
+      // This allows FileContextLocationFactory from cdap-common.jar to get picked up instead
+      // of FileContextLocationFactory from Apache Twill.
+      String cdapCommonJar = getCdapCommonJarName();
+      Path cdapCommonJarPath = cdapCommonJar == null ? null : Paths.get("$PWD", CDAP_SPARK_JAR, "lib", cdapCommonJar);
+      if (cdapCommonJarPath == null) {
+        LOG.warn("Failed to locate cdap-common.jar. It will not be added to the spark extra classpath in the" +
+                   " beginning.");
+      }
+      Joiner joiner = Joiner.on(File.pathSeparator).skipNulls();
+      String extraClassPath = joiner.join(Paths.get("$PWD", CDAP_LAUNCHER_JAR), cdapCommonJarPath,
+                                          Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
       if (logbackJarName != null) {
         extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
       }
 
+      LOG.debug("Setting spark.driver.extraClassPath and spark.executor.extraClassPath to {}.", extraClassPath);
       // These are system specific and shouldn't allow user to modify them
       configs.put("spark.driver.extraClassPath", extraClassPath);
       configs.put("spark.executor.extraClassPath", extraClassPath);
