@@ -113,6 +113,19 @@ public class StorageProviderNamespaceAdminTest {
 
     // create the custom location
     File custom = TEMP_FOLDER.newFolder(customSpace.getNamespace());
+    // create another directory inside this custom location and try creating the namespace with custom mapping it
+    // should fail since we expect the mapped directory to be empty
+    File dir1 = new File(custom, "dir1");
+    Assert.assertTrue(dir1.mkdir());
+    try {
+      storageProviderNamespaceAdmin.create(customSpaceMeta);
+      Assert.fail("Expected exception to be thrown while creating namespace with custom location since the custom " +
+                    "location is not empty.");
+    } catch (IOException e) {
+      // expected
+    }
+    // delete the content of the custom location and retry creating the namespace
+    Assert.assertTrue(dir1.delete());
     storageProviderNamespaceAdmin.create(customSpaceMeta);
     storageProviderNamespaceAdmin.delete(customSpace);
     namespaceStore.delete(customSpace.toId());
