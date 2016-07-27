@@ -207,7 +207,7 @@ public abstract class StreamAdminTest {
     }
 
     // This call bypasses the stream handler and thus authorization is not checked for this call and so write
-    // to stream will succeed
+    // to stream will succeed. It is done so that we can check and perform truncate call.
     writeEvent(stream);
 
     grantAndAssertSuccess(stream.toEntityId(), USER, ImmutableSet.of(Action.WRITE));
