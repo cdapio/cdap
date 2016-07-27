@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamSpecification;
@@ -61,7 +62,6 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -245,7 +245,8 @@ public class FileStreamAdmin implements StreamAdmin {
         final long groupId = entry.getKey();
 
         // Create a view of old states which match with the current groupId only.
-        mutateStates(groupId, entry.getValue(), Sets.filter(states, new Predicate<StreamConsumerState>() {
+        mutateStates(groupId, entry.getValue(), Sets.filter(
+          states, new com.google.common.base.Predicate<StreamConsumerState>() {
           @Override
           public boolean apply(StreamConsumerState state) {
             return state.getGroupId() == groupId;
@@ -784,7 +785,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   private <T extends EntityId> void ensureAccess(T entityId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    co.cask.cdap.api.Predicate<EntityId> filter = authorizer.createFilter(principal);
+    Predicate<EntityId> filter = authorizer.createFilter(principal);
     if (!Principal.SYSTEM.equals(principal) && !filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
     }
