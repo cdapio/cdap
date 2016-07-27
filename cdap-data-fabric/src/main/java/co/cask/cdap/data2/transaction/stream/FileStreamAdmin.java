@@ -58,6 +58,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
@@ -112,6 +113,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final MetadataStore metadataStore;
   private final Impersonator impersonator;
   private final Authorizer authorizer;
+  private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
   private ExploreFacade exploreFacade;
@@ -131,7 +133,8 @@ public class FileStreamAdmin implements StreamAdmin {
                          ViewAdmin viewAdmin,
                          Impersonator impersonator,
                          AuthorizerInstantiator authorizerInstantiator,
-                         AuthenticationContext authenticationContext) {
+                         AuthenticationContext authenticationContext,
+                         AuthorizationEnforcer authorizationEnforcer) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
@@ -147,6 +150,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.impersonator = impersonator;
     this.authorizer = authorizerInstantiator.get();
     this.authenticationContext = authenticationContext;
+    this.authorizationEnforcer = authorizationEnforcer;
   }
 
   @SuppressWarnings("unused")
@@ -780,12 +784,12 @@ public class FileStreamAdmin implements StreamAdmin {
 
   private <T extends EntityId> void ensureAccess(T entityId, Action action) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    authorizer.enforce(entityId, principal, action);
+    authorizationEnforcer.enforce(entityId, principal, action);
   }
 
   private <T extends EntityId> void ensureAccess(T entityId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizer.createFilter(principal);
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!Principal.SYSTEM.equals(principal) && !filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
     }
