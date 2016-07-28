@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.Charsets;
 import org.junit.After;
@@ -66,8 +67,9 @@ public class FileSecureStoreTest {
   @Before
   public void setUp() throws Exception {
     CConfiguration conf = CConfiguration.create();
+    SConfiguration sConf = SConfiguration.create();
     conf.set(Constants.Security.Store.FILE_PATH, STORE_PATH);
-    FileSecureStore fileSecureStore = new FileSecureStore(conf);
+    FileSecureStore fileSecureStore = new FileSecureStore(conf, sConf);
     secureStoreManager = fileSecureStore;
     secureStore = fileSecureStore;
   }
