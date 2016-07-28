@@ -161,11 +161,10 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     Key key = null;
     writeLock.lock();
     try {
-      if (keyStore.containsAlias(keyName)) {
-        key = deleteFromStore(keyName, password);
-      } else {
+      if (!keyStore.containsAlias(keyName)) {
         throw new NotFoundException(new SecureKeyId(namespace, name));
       }
+      key = deleteFromStore(keyName, password);
       flush();
       LOG.info(String.format("Successfully deleted key %s from namespace %s", name, namespace));
     } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {

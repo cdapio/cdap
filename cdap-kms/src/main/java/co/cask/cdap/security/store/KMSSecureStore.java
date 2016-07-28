@@ -91,7 +91,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
     } catch (IOException e) {
       throw new IOException("Secure store could not be loaded. KMS KeyProvider failed to initialize", e);
     }
-    LOG.debug("KMS backed secure Store initialized successfully.");
+    LOG.debug("KMS backed secure store initialized successfully.");
   }
 
   /**
