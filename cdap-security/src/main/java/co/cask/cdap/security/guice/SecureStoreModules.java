@@ -98,8 +98,8 @@ public class SecureStoreModules extends RuntimeModule {
       } catch (ClassNotFoundException e) {
         // KMSSecureStore could not be loaded
         LOG.warn("Could not find classes required for supporting KMS based secure store. KMS backed secure store " +
-                   "depends on org.apache.hadoop.crypto.key.kms.KMSClientProvider being available." +
-                   "This is supported in Apache Hadoop 2.6.0 and up and on distribution versions that are based" +
+                   "depends on org.apache.hadoop.crypto.key.kms.KMSClientProvider being available. " +
+                   "This is supported in Apache Hadoop 2.6.0 and up and on distribution versions that are based " +
                    "on Apache Hadoop 2.6.0 and up.");
       }
       return (T) injector.getInstance(DummyKMSStore.class);

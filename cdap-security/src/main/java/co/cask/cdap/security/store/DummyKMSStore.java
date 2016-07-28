@@ -32,8 +32,8 @@ import java.util.Map;
 public class DummyKMSStore implements SecureStore, SecureStoreManager {
 
   private static final String UNSUPPORTED_ERROR_MSG = "Installed version of Hadoop does not support KMS. " +
-    "KMS backed secure store depends on org.apache.hadoop.crypto.key.kms.KMSClientProvider being available." +
-    "This is supported in Apache Hadoop 2.6.0 and up and on distribution versions that are based" +
+    "KMS backed secure store depends on org.apache.hadoop.crypto.key.kms.KMSClientProvider being available. " +
+    "This is supported in Apache Hadoop 2.6.0 and up and on distribution versions that are based " +
     "on Apache Hadoop 2.6.0 and up.";
 
   @Override
