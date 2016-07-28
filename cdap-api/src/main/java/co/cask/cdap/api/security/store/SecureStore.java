@@ -18,6 +18,7 @@ package co.cask.cdap.api.security.store;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -28,15 +29,22 @@ import java.util.List;
 public interface SecureStore {
 
   /**
+   * List of all the entries in the secure store.
    * @param namespace The namespace that this key belongs to.
    * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
+   * throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws IOException If there was a problem reading from the keystore.
    */
   List<SecureStoreMetadata> listSecureData(String namespace) throws Exception;
 
   /**
+   * Returns the data stored in the secure store.
    * @param namespace The namespace that this key belongs to.
    * @param name Name of the data element.
    * @return An object representing the securely stored data associated with the name.
+   * throws NamespaceNotFoundException If the specified namespace does not exist.
+   * throws NotFoundException If the key is not found in the store.
+   * @throws IOException If there was a problem reading from the store.
    */
   SecureStoreData getSecureData(String namespace, String name) throws Exception;
 }
