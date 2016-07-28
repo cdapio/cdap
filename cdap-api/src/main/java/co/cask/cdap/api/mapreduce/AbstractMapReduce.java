@@ -17,10 +17,13 @@
 package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -30,6 +33,7 @@ import java.util.Map;
 public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapReduceConfigurer>
   implements MapReduce, ProgramLifecycle<MapReduceContext> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractMapReduce.class);
   private MapReduceConfigurer configurer;
   private MapReduceContext context;
 
@@ -177,9 +181,18 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
     beforeSubmit(context);
   }
 
+  /**
+   * Classes derived from {@link AbstractMapReduce} can override this method to destroy the {@link MapReduce}.
+   * Default implementation of this method calls the deprecated {@link AbstractMapReduce#onFinish} method.
+   */
   @Override
   public void destroy() {
-    // Do nothing by default
+    try {
+      onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
+    } catch (Throwable t) {
+      LOG.warn("Error executing the onFinish method of the MapReduce program {}",
+               context.getSpecification().getName(), t);
+    }
   }
 
   /**
