@@ -148,7 +148,7 @@ class HydratorPlusPlusConfigStore {
       node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
 
       let configObj = {
-        name: node.plugin.label,
+        name: node.name || node.plugin.label || node.plugin.name,
         plugin: {
           // Solely adding id and _backendProperties for validation.
           // Should be removed while saving it to backend.
@@ -182,18 +182,18 @@ class HydratorPlusPlusConfigStore {
       let fromConnectionName, toConnectionName;
 
       if (nodesMap[connection.from]) {
-        fromConnectionName = nodesMap[connection.from].plugin.label;
+        fromConnectionName = nodesMap[connection.from].name;
         addPluginToConfig(nodesMap[connection.from], connection.from);
       } else {
         fromConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.from)[0];
-        fromConnectionName = fromConnectionName.plugin.label;
+        fromConnectionName = fromConnectionName.name;
       }
       if (nodesMap[connection.to]) {
-        toConnectionName = nodesMap[connection.to].plugin.label;
+        toConnectionName = nodesMap[connection.to].name;
         addPluginToConfig(nodesMap[connection.to], connection.to);
       } else {
         toConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.to)[0];
-        toConnectionName = toConnectionName.plugin.label;
+        toConnectionName = toConnectionName.name;
       }
       connection.from = fromConnectionName;
       connection.to = toConnectionName;
