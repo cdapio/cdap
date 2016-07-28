@@ -44,6 +44,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -98,6 +99,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -130,6 +132,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final AuthorizerInstantiator authorizerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final Impersonator impersonator;
 
   @Inject
   ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
@@ -142,7 +145,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               MetadataStore metadataStore,
                               AuthorizerInstantiator authorizerInstantiator,
                               AuthorizationEnforcer authorizationEnforcer,
-                              AuthenticationContext authenticationContext) {
+                              AuthenticationContext authenticationContext, Impersonator impersonator) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.configuration = configuration;
@@ -159,6 +162,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -560,7 +564,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param spec the spec of the application to delete
    * @throws Exception
    */
-  private void deleteApp(Id.Application appId, ApplicationSpecification spec) throws Exception {
+  private void deleteApp(final Id.Application appId, ApplicationSpecification spec) throws Exception {
     // enfore ADMIN privileges on the app
     authorizerInstantiator.get().enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     // first remove all privileges on the app
@@ -583,7 +587,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, flowSpecification.getName());
 
       // Collects stream name to all group ids consuming that stream
-      Multimap<String, Long> streamGroups = HashMultimap.create();
+      final Multimap<String, Long> streamGroups = HashMultimap.create();
       for (FlowletConnection connection : flowSpecification.getConnections()) {
         if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
           long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
@@ -591,13 +595,21 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         }
       }
       // Remove all process states and group states for each stream
-      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
-      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-        streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
-          namespace, entry.getValue());
-      }
+      final String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
 
-      queueAdmin.dropAllForFlow(Id.Flow.from(appId, flowSpecification.getName()));
+      final Id.Flow flowId = Id.Flow.from(appId, flowSpecification.getName());
+      impersonator.doAs(new NamespaceId(appId.getNamespaceId()), new Callable<Void>() {
+
+        @Override
+        public Void call() throws Exception {
+          for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
+            streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
+                                          namespace, entry.getValue());
+          }
+          queueAdmin.dropAllForFlow(flowId);
+          return null;
+        }
+      });
     }
 
     ApplicationSpecification appSpec = store.getApplication(appId);

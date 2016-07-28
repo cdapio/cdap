@@ -124,7 +124,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateStreamsStage(streamAdmin));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, metricStore, metadataStore,
-                                                    authorizerInstantiator.get()));
+                                                    authorizerInstantiator.get(), impersonator));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory,
                                                 authorizerInstantiator.get()));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
