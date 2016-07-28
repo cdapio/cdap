@@ -38,8 +38,6 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.stream.StreamInputFormat;
-import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -53,6 +51,8 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsMai
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
+import co.cask.cdap.internal.app.runtime.batch.stream.MapReduceStreamInputFormat;
+import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -815,9 +815,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         classes.add(inputFormatClass);
 
         // If it is StreamInputFormat, also add the StreamEventCodec class as well.
-        if (StreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
+        if (MapReduceStreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
           Class<? extends StreamEventDecoder> decoderType =
-            StreamInputFormat.getDecoderClass(job.getConfiguration());
+            MapReduceStreamInputFormat.getDecoderClass(job.getConfiguration());
           if (decoderType != null) {
             classes.add(decoderType);
           }

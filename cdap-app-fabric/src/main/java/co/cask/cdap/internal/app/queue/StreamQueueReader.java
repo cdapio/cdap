@@ -20,8 +20,14 @@ import co.cask.cdap.app.queue.InputDatum;
 import co.cask.cdap.app.queue.QueueReader;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -36,18 +42,32 @@ public final class StreamQueueReader<T> implements QueueReader<T> {
   private final Supplier<StreamConsumer> consumerSupplier;
   private final int batchSize;
   private final Function<StreamEvent, T> eventTransform;
+  private final Principal principal;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final StreamId streamId;
 
   StreamQueueReader(Supplier<StreamConsumer> consumerSupplier, int batchSize,
-                    Function<StreamEvent, T> eventTransform) {
+                    Function<StreamEvent, T> eventTransform, AuthenticationContext authenticationContext,
+                    AuthorizationEnforcer authorizationEnforcer) {
     this.consumerSupplier = consumerSupplier;
     this.batchSize = batchSize;
     this.eventTransform = eventTransform;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.streamId = consumerSupplier.get().getStreamId().toEntityId();
+    this.principal = authenticationContext.getPrincipal();
   }
 
   @Override
   public InputDatum<T> dequeue(long timeout, TimeUnit timeoutUnit) throws IOException, InterruptedException {
     StreamConsumer consumer = consumerSupplier.get();
+    try {
+      // Ensure that the user has READ permission to access the stream
+      authorizationEnforcer.enforce(streamId, principal, Action.READ);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(e);
+    }
     return new BasicInputDatum<>(QueueName.fromStream(consumer.getStreamId()),
-                                               consumer.poll(batchSize, timeout, timeoutUnit), eventTransform);
+                                 consumer.poll(batchSize, timeout, timeoutUnit), eventTransform);
   }
 }

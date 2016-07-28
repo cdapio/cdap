@@ -38,6 +38,8 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -181,7 +183,9 @@ public final class SparkRuntimeContextProvider {
         contextConfig.getWorkflowProgramInfo(),
         pluginInstantiator,
         injector.getInstance(SecureStore.class),
-        injector.getInstance(SecureStoreManager.class)
+        injector.getInstance(SecureStoreManager.class),
+        injector.getInstance(AuthorizationEnforcer.class),
+        injector.getInstance(AuthenticationContext.class)
       );
       return sparkRuntimeContext;
     } catch (Exception e) {

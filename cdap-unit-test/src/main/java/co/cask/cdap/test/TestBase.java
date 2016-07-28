@@ -423,7 +423,7 @@ public class TestBase {
     authorizerInstantiator.close();
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
-    metricsCollectionService.startAndWait();
+    metricsCollectionService.stopAndWait();
     schedulerService.stopAndWait();
     if (exploreClient != null) {
       Closeables.closeQuietly(exploreClient);

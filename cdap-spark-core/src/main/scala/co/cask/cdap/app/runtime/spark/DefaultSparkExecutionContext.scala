@@ -34,8 +34,9 @@ import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
+import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.ConfigurationUtil
-import co.cask.cdap.data.stream.{StreamInputFormat, StreamUtils}
+import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import co.cask.cdap.proto.Id
@@ -219,7 +220,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
       streamId, startTime, endTime, formatSpec)
 
     val valueClass = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-    val rdd = sc.newAPIHadoopRDD(configuration, classOf[StreamInputFormat[LongWritable, T]],
+    val rdd = sc.newAPIHadoopRDD(configuration, classOf[SparkStreamInputFormat[LongWritable, T]],
       classOf[LongWritable], valueClass)
     recordStreamUsage(streamId)
     rdd.map(t => (t._1.get(), t._2))
@@ -284,15 +285,15 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     val streamConfig = runtimeContext.getStreamAdmin.getConfig(streamId.toId)
     val streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation,
                                                           StreamUtils.getGeneration(streamConfig))
-
-    StreamInputFormat.setTTL(configuration, streamConfig.getTTL)
-    StreamInputFormat.setStreamPath(configuration, streamPath.toURI)
-    StreamInputFormat.setTimeRange(configuration, startTime, endTime)
+    AbstractStreamInputFormat.setStreamId(configuration, streamId)
+    AbstractStreamInputFormat.setTTL(configuration, streamConfig.getTTL)
+    AbstractStreamInputFormat.setStreamPath(configuration, streamPath.toURI)
+    AbstractStreamInputFormat.setTimeRange(configuration, startTime, endTime)
     // Either use the identity decoder or use the format spec to decode
     formatSpec.fold(
-      StreamInputFormat.inferDecoderClass(configuration, classOf[StreamEvent])
+      AbstractStreamInputFormat.inferDecoderClass(configuration, classOf[StreamEvent])
     )(
-      spec => StreamInputFormat.setBodyFormatSpecification(configuration, spec)
+      spec => AbstractStreamInputFormat.setBodyFormatSpecification(configuration, spec)
     )
     configuration
   }

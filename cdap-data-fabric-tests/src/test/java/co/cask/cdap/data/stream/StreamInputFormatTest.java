@@ -28,6 +28,11 @@ import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
 import co.cask.cdap.format.TextRecordFormat;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.auth.context.AuthenticationTestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -74,6 +79,7 @@ public class StreamInputFormatTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static final long CURRENT_TIME = 2000;
+  private static final StreamId DUMMY_ID = new StreamId("ns", "str");
 
   @Test
   public void testTTL() throws Exception {
@@ -266,16 +272,16 @@ public class StreamInputFormatTest {
   @Test
   public void testStreamDecoderInference() {
     Configuration conf = new Configuration();
-    StreamInputFormat.inferDecoderClass(conf, BytesWritable.class);
-    Assert.assertEquals(BytesStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
-    StreamInputFormat.inferDecoderClass(conf, Text.class);
-    Assert.assertEquals(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
-    StreamInputFormat.inferDecoderClass(conf, String.class);
-    Assert.assertEquals(StringStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
-    StreamInputFormat.inferDecoderClass(conf, StreamEvent.class);
-    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
-    StreamInputFormat.inferDecoderClass(conf, StreamEventData.class);
-    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    AbstractStreamInputFormat.inferDecoderClass(conf, BytesWritable.class);
+    Assert.assertEquals(BytesStreamEventDecoder.class, AbstractStreamInputFormat.getDecoderClass(conf));
+    AbstractStreamInputFormat.inferDecoderClass(conf, Text.class);
+    Assert.assertEquals(TextStreamEventDecoder.class, AbstractStreamInputFormat.getDecoderClass(conf));
+    AbstractStreamInputFormat.inferDecoderClass(conf, String.class);
+    Assert.assertEquals(StringStreamEventDecoder.class, AbstractStreamInputFormat.getDecoderClass(conf));
+    AbstractStreamInputFormat.inferDecoderClass(conf, StreamEvent.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, AbstractStreamInputFormat.getDecoderClass(conf));
+    AbstractStreamInputFormat.inferDecoderClass(conf, StreamEventData.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, AbstractStreamInputFormat.getDecoderClass(conf));
   }
 
   @Test
@@ -297,8 +303,20 @@ public class StreamInputFormatTest {
     // one from 0 - some offset and one from offset - Long.MAX_VALUE.
     Configuration conf = new Configuration();
     TaskAttemptContext context = new TaskAttemptContextImpl(conf, new TaskAttemptID());
-    StreamInputFormat.setStreamPath(conf, inputDir.toURI());
-    StreamInputFormat format = new StreamInputFormat();
+    AbstractStreamInputFormat.setStreamId(conf, DUMMY_ID);
+    AbstractStreamInputFormat.setStreamPath(conf, inputDir.toURI());
+    AbstractStreamInputFormat format = new AbstractStreamInputFormat() {
+
+      @Override
+      public AuthorizationEnforcer getAuthorizationEnforcer(TaskAttemptContext context) {
+        return new NoOpAuthorizer();
+      }
+
+      @Override
+      public AuthenticationContext getAuthenticationContext(TaskAttemptContext context) {
+        return new AuthenticationTestContext();
+      }
+    };
     List<InputSplit> splits = format.getSplits(new JobContextImpl(new JobConf(conf), new JobID()));
     Assert.assertEquals(2, splits.size());
 
@@ -308,7 +326,8 @@ public class StreamInputFormatTest {
 
     // create a record reader for the 2nd split
     StreamRecordReader<LongWritable, StreamEvent> recordReader =
-      new StreamRecordReader<>(new IdentityStreamEventDecoder());
+      new StreamRecordReader<>(new IdentityStreamEventDecoder(), new NoOpAuthorizer(), new AuthenticationTestContext(),
+                               DUMMY_ID);
     recordReader.initialize(splits.get(1), context);
 
     // check that we read the 2nd stream event
@@ -344,11 +363,23 @@ public class StreamInputFormatTest {
                               Schema.recordOf("event", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
                               Collections.<String, String>emptyMap());
     Configuration conf = new Configuration();
-    StreamInputFormat.setBodyFormatSpecification(conf, formatSpec);
-    StreamInputFormat.setStreamPath(conf, inputDir.toURI());
+    AbstractStreamInputFormat.setStreamId(conf, DUMMY_ID);
+    AbstractStreamInputFormat.setBodyFormatSpecification(conf, formatSpec);
+    AbstractStreamInputFormat.setStreamPath(conf, inputDir.toURI());
     TaskAttemptContext context = new TaskAttemptContextImpl(conf, new TaskAttemptID());
 
-    StreamInputFormat format = new StreamInputFormat();
+    AbstractStreamInputFormat format = new AbstractStreamInputFormat() {
+
+      @Override
+      public AuthorizationEnforcer getAuthorizationEnforcer(TaskAttemptContext context) {
+        return new NoOpAuthorizer();
+      }
+
+      @Override
+      public AuthenticationContext getAuthenticationContext(TaskAttemptContext context) {
+        return new AuthenticationTestContext();
+      }
+    };
 
     // read all splits and store the results in the list
     List<GenericStreamEventData<StructuredRecord>> recordsRead = Lists.newArrayList();
@@ -404,10 +435,11 @@ public class StreamInputFormatTest {
     Job job = Job.getInstance();
     Configuration conf = job.getConfiguration();
 
-    StreamInputFormat.setTTL(conf, ttl);
-    StreamInputFormat.setStreamPath(conf, inputDir.toURI());
-    StreamInputFormat.setTimeRange(conf, startTime, endTime);
-    StreamInputFormat.setMaxSplitSize(conf, splitSize);
+    AbstractStreamInputFormat.setStreamId(conf, DUMMY_ID);
+    AbstractStreamInputFormat.setTTL(conf, ttl);
+    AbstractStreamInputFormat.setStreamPath(conf, inputDir.toURI());
+    AbstractStreamInputFormat.setTimeRange(conf, startTime, endTime);
+    AbstractStreamInputFormat.setMaxSplitSize(conf, splitSize);
     job.setInputFormatClass(TestStreamInputFormat.class);
 
     TextOutputFormat.setOutputPath(job, new Path(outputDir.toURI()));
@@ -446,11 +478,21 @@ public class StreamInputFormatTest {
   /**
    * StreamInputFormat for testing.
    */
-  private static final class TestStreamInputFormat extends StreamInputFormat<LongWritable, Text> {
+  private static final class TestStreamInputFormat extends AbstractStreamInputFormat<LongWritable, Text> {
 
     @Override
     protected StreamEventDecoder<LongWritable, Text> createStreamEventDecoder(Configuration conf) {
       return new TextStreamEventDecoder();
+    }
+
+    @Override
+    public AuthorizationEnforcer getAuthorizationEnforcer(TaskAttemptContext context) {
+      return new NoOpAuthorizer();
+    }
+
+    @Override
+    public AuthenticationContext getAuthenticationContext(TaskAttemptContext context) {
+      return new AuthenticationTestContext();
     }
 
     @Override
