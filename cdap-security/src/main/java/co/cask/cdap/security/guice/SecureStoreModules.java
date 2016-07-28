@@ -87,7 +87,9 @@ public class SecureStoreModules extends RuntimeModule {
     @SuppressWarnings("unchecked")
     public T get() {
       if (!SecureStoreUtils.isKMSBacked(cConf)) {
-        return (T) injector.getInstance(FileSecureStore.class);
+        throw new IllegalArgumentException("File based secure store is not supported in distributed mode. " +
+                                             "To be able to use secure store in a distributed environment you" +
+                                             "will need to use the Hadoop KMS based provider.");
       }
       try {
         if (SecureStoreUtils.isKMSCapable()) {
@@ -95,7 +97,10 @@ public class SecureStoreModules extends RuntimeModule {
         }
       } catch (ClassNotFoundException e) {
         // KMSSecureStore could not be loaded
-        LOG.warn("Could not find classes required for supporting KMS based secure store.");
+        LOG.warn("Could not find classes required for supporting KMS based secure store. KMS backed secure store " +
+                   "depends on org.apache.hadoop.crypto.key.kms.KMSClientProvider being available. " +
+                   "This is supported in Apache Hadoop 2.6.0 and up and on distribution versions that are based " +
+                   "on Apache Hadoop 2.6.0 and up.");
       }
       return (T) injector.getInstance(DummyKMSStore.class);
     }
