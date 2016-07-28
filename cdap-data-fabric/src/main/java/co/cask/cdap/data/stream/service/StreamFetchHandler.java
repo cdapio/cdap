@@ -34,6 +34,9 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -79,14 +82,19 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
   private final StreamAdmin streamAdmin;
   private final StreamMetaStore streamMetaStore;
   private final Impersonator impersonator;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  public StreamFetchHandler(CConfiguration cConf, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                            Impersonator impersonator) {
+  StreamFetchHandler(CConfiguration cConf, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+                     Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
+                     AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.impersonator = impersonator;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -121,6 +129,8 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
       return;
     }
 
+    // Make sure the user has READ permission on the stream since getConfig doesn't check for the same.
+    authorizationEnforcer.enforce(streamId.toEntityId(), authenticationContext.getPrincipal(), Action.READ);
     final StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     long now = System.currentTimeMillis();
     startTime = Math.max(startTime, now - streamConfig.getTTL());

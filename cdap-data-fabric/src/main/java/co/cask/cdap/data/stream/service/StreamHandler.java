@@ -38,6 +38,9 @@ import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
@@ -113,14 +116,17 @@ public final class StreamHandler extends AbstractHttpHandler {
   private ExecutorService asyncExecutor;
   private final StreamWriterSizeCollector sizeCollector;
   private final Impersonator impersonator;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  public StreamHandler(CConfiguration cConf,
-                       StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
-                       StreamFileWriterFactory writerFactory,
-                       final MetricsCollectionService metricsCollectionService,
-                       StreamWriterSizeCollector sizeCollector,
-                       NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
+  StreamHandler(CConfiguration cConf,
+                StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
+                StreamFileWriterFactory writerFactory,
+                final MetricsCollectionService metricsCollectionService,
+                StreamWriterSizeCollector sizeCollector,
+                NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator,
+                AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.sizeCollector = sizeCollector;
@@ -140,6 +146,8 @@ public final class StreamHandler extends AbstractHttpHandler {
                                                    metricsCollectorFactory, impersonator);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.impersonator = impersonator;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -232,7 +240,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
-
+    authorizationEnforcer.enforce(streamId.toEntityId(), authenticationContext.getPrincipal(), Action.WRITE);
     try {
       streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
       responder.sendStatus(HttpResponseStatus.OK);
@@ -250,6 +258,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
+    authorizationEnforcer.enforce(streamId.toEntityId(), authenticationContext.getPrincipal(), Action.WRITE);
     streamWriter.asyncEnqueue(streamId, getHeaders(request, stream),
                               request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
@@ -262,7 +271,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                             @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     checkStreamExists(streamId);
-
+    authorizationEnforcer.enforce(streamId.toEntityId(), authenticationContext.getPrincipal(), Action.WRITE);
     try {
       return streamBodyConsumerFactory.create(request, createContentWriterFactory(streamId, request));
     } catch (UnsupportedOperationException e) {
