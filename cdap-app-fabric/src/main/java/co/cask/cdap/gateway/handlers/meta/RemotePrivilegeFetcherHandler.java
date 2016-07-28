@@ -20,6 +20,7 @@ import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.http.HttpResponder;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -39,11 +40,11 @@ import javax.ws.rs.Path;
 public class RemotePrivilegeFetcherHandler extends AbstractRemoteSystemOpsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegeFetcherHandler.class);
 
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final Authorizer authorizer;
 
   @Inject
   RemotePrivilegeFetcherHandler(AuthorizerInstantiator authorizerInstantiator) {
-    this.authorizerInstantiator = authorizerInstantiator;
+    this.authorizer = authorizerInstantiator.get();
   }
 
   @POST
@@ -52,7 +53,7 @@ public class RemotePrivilegeFetcherHandler extends AbstractRemoteSystemOpsHandle
     Iterator<MethodArgument> arguments = parseArguments(request);
     Principal principal = deserializeNext(arguments);
     LOG.trace("Listing privileges for principal {}", principal);
-    Set<Privilege> privileges = authorizerInstantiator.get().listPrivileges(principal);
+    Set<Privilege> privileges = authorizer.listPrivileges(principal);
     LOG.debug("Returning privileges for principal {} as {}", principal, privileges);
     responder.sendJson(HttpResponseStatus.OK, privileges);
   }
