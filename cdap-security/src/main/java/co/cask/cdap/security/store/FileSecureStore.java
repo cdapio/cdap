@@ -20,8 +20,15 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.SecureKeyId;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -73,6 +80,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   /** Separator between the namespace name and the key name */
   private static final String NAME_SEPARATOR = ":";
 
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final char[] password;
   private final Path path;
   private final Lock readLock;
@@ -80,13 +88,14 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   private final KeyStore keyStore;
 
   @Inject
-  FileSecureStore(CConfiguration cConf) throws IOException {
+  FileSecureStore(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) throws IOException {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
     path = dir.resolve(cConf.get(Constants.Security.Store.FILE_NAME));
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
 
     keyStore = locateKeystore(path, password);
     ReadWriteLock lock = new ReentrantReadWriteLock(true);
@@ -95,28 +104,34 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   /**
-   * Stores an element in the secure store.
+   * Stores an element in the secure store. Although JCEKS supports overwriting keys the interface currently does not
+   * support it. If the key already exists then this method throws an AlreadyExistsException.
    * @param namespace The namespace this key belongs to.
    * @param name Name of the element to store.
    * @param data The data that needs to be securely stored.
    * @param description User provided description of the entry.
-   * @param properties Metadata associated with the data
-   * @throws IOException If it failed to store the key in the store.
+   * @param properties Metadata associated with the data.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws AlreadyExistsException If the key already exists in the namespace. Updating is not supported.
+   * @throws IOException If there was a problem storing the key to the in memory keystore
+   * or if there was problem persisting the keystore.
    */
   @Override
   public void putSecureData(String namespace, String name, byte[] data, String description,
-                            Map<String, String> properties) throws IOException {
+                            Map<String, String> properties) throws Exception {
+    checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data);
     writeLock.lock();
     try {
       if (keyStore.containsAlias(keyName)) {
-        throw new IOException("The key " + name + " under namespace " + namespace + "already exists.");
+        throw new AlreadyExistsException((new SecureKeyId(namespace, name)).toId());
       }
       keyStore.setKeyEntry(keyName, new KeyStoreEntry(secureStoreData, meta), password, null);
       // Attempt to persist the store.
       flush();
+      LOG.info(String.format("Successfully stored %s in namespace %s", name, namespace));
     } catch (KeyStoreException e) {
       // We failed to store the key in the key store. Throw an IOException.
       throw new IOException("Failed to store the key. ", e);
@@ -126,46 +141,57 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   /**
-   * Deletes the element with the given name.
+   * Deletes the element with the given name. Flushes the keystore after deleting the key from the in memory keystore.
+   * If the flush fails, we attempt to insert to key back to the in memory store and notify the user that delete failed.
+   * If the insertion in the key store fails after a flush failure then there would be a discrepancy between the
+   * in memory store and the file on the disk. This will be remedied the next time a flush happens.
+   * If another flush does not happen and the system is restarted, the only time that file is read,
+   * then we will have an extra key in the keystore.
    * @param namespace The namespace this key belongs to.
    * @param name Name of the element to be deleted.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws NotFoundException If the key to be deleted is not found.
+   * @throws IOException If their was a problem during deleting the key from the in memory store
+   * or if there was a problem persisting the keystore after deleting the element.
    */
   @Override
-  public void deleteSecureData(String namespace, String name) throws IOException {
+  public void deleteSecureData(String namespace, String name) throws Exception {
+    checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     Key key = null;
     writeLock.lock();
     try {
+      if (!keyStore.containsAlias(keyName)) {
+        throw new NotFoundException(new SecureKeyId(namespace, name));
+      }
       key = deleteFromStore(keyName, password);
-      // Attempt to persist the store. If this fails then the keystore file will have an extra key
-      // that the in-memory store does not. This will be remedied the next time a flush happens.
-      // If another flush does not happen and the system is restarted, the only time that file is read,
-      // then we will have an extra key.
       flush();
+      LOG.info(String.format("Successfully deleted key %s from namespace %s", name, namespace));
+    } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
+      throw new IOException("Failed to delete the key. ", e);
     } catch (IOException ioe) {
-      if (key != null) {
-        try {
-          keyStore.setKeyEntry(keyName, key, password, null);
-        } catch (KeyStoreException e) {
-          ioe.addSuppressed(e);
-          throw ioe;
-        }
+      try {
+        keyStore.setKeyEntry(keyName, key, password, null);
+      } catch (KeyStoreException e) {
+        ioe.addSuppressed(e);
       }
       throw ioe;
-    } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-        throw new IOException("Failed to delete the key. ", e);
     } finally {
       writeLock.unlock();
     }
   }
 
   /**
-   * List of all the entries in the secure store.
+   * List of all the entries in the secure store belonging to the specified namespace. No filtering or authentication
+   * is done here.
    * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
    * @param namespace The namespace this key belongs to.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws IOException If there was a problem reading from the keystore.
    */
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+    checkNamespaceExists(namespace);
     readLock.lock();
     try {
       Enumeration<String> aliases = keyStore.aliases();
@@ -187,17 +213,22 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   /**
+   * Returns the data stored in the secure store.
    * @param namespace The namespace this key belongs to.
    * @param name Name of the data element.
    * @return An object representing the securely stored data associated with the name.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws NotFoundException If the key is not found in the store.
+   * @throws IOException If there was a problem reading from the store.
    */
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+    checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     readLock.lock();
     try {
       if (!keyStore.containsAlias(keyName)) {
-        throw new IOException(name + " not found in the secure store.");
+        throw new NotFoundException(name + " not found in the secure store.");
       }
       Key key = keyStore.getKey(keyName, password);
       return ((KeyStoreEntry) key).getData();
@@ -208,15 +239,19 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     }
   }
 
+  private void checkNamespaceExists(String namespace) throws Exception {
+    Id.Namespace namespaceId = new Id.Namespace(namespace);
+    if (!namespaceQueryAdmin.exists(namespaceId)) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+  }
+
   private Key deleteFromStore(String name, char[] password) throws KeyStoreException,
     UnrecoverableKeyException, NoSuchAlgorithmException {
     writeLock.lock();
     try {
-      Key key = null;
-      if (keyStore.containsAlias(name)) {
-        key = keyStore.getKey(name, password);
-        keyStore.deleteEntry(name);
-      }
+      Key key = keyStore.getKey(name, password);
+      keyStore.deleteEntry(name);
       return key;
     } finally {
       writeLock.unlock();
@@ -225,19 +260,26 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
 
   /**
    * Returns the metadata for the element identified by the given name.
-   * @param name Name of the element
+   * The name must be of the format namespace + NAME_SEPARATOR + key name.
+   * @param keyName Name of the element
    * @return An object representing the metadata associated with the element
+   * @throws NotFoundException If the key was not found in the store.
+   * @throws IOException If there was a problem in getting the key from the store
    */
-  private SecureStoreMetadata getSecureStoreMetadata(String name) throws IOException {
+  private SecureStoreMetadata getSecureStoreMetadata(String keyName) throws Exception {
+    String[] namespaceAndName = keyName.split(NAME_SEPARATOR);
+    Preconditions.checkArgument(namespaceAndName.length == 2);
+    String namespace = namespaceAndName[0];
+    String name = namespaceAndName[1];
     readLock.lock();
     try {
-      if (!keyStore.containsAlias(name)) {
-        throw new IOException("Metadata for " + name + " not found in the secure store.");
+      if (!keyStore.containsAlias(keyName)) {
+        throw new NotFoundException(new SecureKeyId(namespace, name));
       }
-      Key key = keyStore.getKey(name, password);
+      Key key = keyStore.getKey(keyName, password);
       return ((KeyStoreEntry) key).getMetadata();
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
-      throw new IOException("Unable to retrieve the metadata for " + name, e);
+      throw new IOException("Unable to retrieve the metadata for " + name + " in namespace " + namespace, e);
     } finally {
       readLock.unlock();
     }
@@ -314,11 +356,13 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     try (OutputStream fos = new DataOutputStream(Files.newOutputStream(newPath))) {
       keyStore.store(fos, password);
     } catch (KeyStoreException e) {
-      throw new IOException("Can't store keystore.", e);
+      throw new IOException("The underlying java key store has not been initialized.", e);
     } catch (NoSuchAlgorithmException e) {
-      throw new IOException("No such algorithm storing keystore.", e);
+      throw new IOException("The appropriate data integrity algorithm for the underlying java key store could not " +
+                              "be found", e);
     } catch (CertificateException e) {
-      throw new IOException("Certificate exception storing keystore.", e);
+      // Should not happen as we are not storing certificates in the keystore.
+      throw new IOException("Failed to store the certificates included in the keystore data.", e);
     }
   }
 

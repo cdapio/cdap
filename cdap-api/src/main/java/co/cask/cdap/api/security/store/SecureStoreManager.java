@@ -29,20 +29,24 @@ import java.util.Map;
 public interface SecureStoreManager {
 
   /**
+   * Stores an element in the secure store.
    * @param namespace The namespace that this key belongs to.
    * @param name This is the identifier that will be used to retrieve this element.
    * @param data The sensitive data that has to be securely stored. Passed in as utf-8 formatted byte array.
    * @param description User provided description of the entry.
    * @param properties associated with this element.
    * @throws IOException If the attempt to store the element failed.
+   * @throws Exception If the specified namespace does not exist or the name already exists. Updating is not supported.
    */
   void putSecureData(String namespace, String name, byte[] data, String description, Map<String, String> properties)
-    throws IOException;
+    throws Exception;
 
   /**
+   * Deletes the element with the given name.
    * @param namespace The namespace that this key belongs to.
    * @param name of the element to delete.
    * @throws IOException If the store is not initialized or if the key could not be removed.
+   * @throws Exception If the specified namespace or name does not exist.
    */
-  void deleteSecureData(String namespace, String name) throws IOException;
+  void deleteSecureData(String namespace, String name) throws Exception;
 }

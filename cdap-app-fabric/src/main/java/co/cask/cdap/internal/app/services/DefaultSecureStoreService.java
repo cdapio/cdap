@@ -21,7 +21,10 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
@@ -61,11 +64,13 @@ public class DefaultSecureStoreService implements SecureStoreService {
   }
 
   /**
-   * Lists all the secure keys in the given namespace that the user has access to.
+   * Lists all the secure keys in the given namespace that the user has access to. Returns an empty list if the user
+   * does not have access to the namespace or any of the keys in the namespace.
    * @param namespaceId Id of the namespace we want the key list for.
-   * @return A list of {@link SecureKeyListEntry} of all the keys visible to the user under the given namespace.
-   * @throws Exception If there was a problem getting the list from the underlying provider.
-   * or if we fail to create a filter for the current principal.
+   * @return A list of {@link SecureKeyListEntry} for all the keys visible to the user under the given namespace.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws IOException If there was a problem reading from the store.
+   * @throws Exception If we fail to create a filter for the current principal.
    *
    */
   @Override
@@ -86,12 +91,15 @@ public class DefaultSecureStoreService implements SecureStoreService {
   }
 
   /**
-   * Checks if the user has access to read the secure key and returns the data associated with the key if they do.
+   * Checks if the user has access to read the secure key and returns the {@link SecureStoreData} associated
+   * with the key if they do.
    * @param secureKeyId Id of the key that the user is trying to read.
    * @return Data associated with the key if the user has read access.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws NotFoundException If the key is not found in the store.
+   * @throws IOException If there was a problem reading from the store.
+   * @throws UnauthorizedException If the user does not have READ permissions on the secure key.
    * @throws Exception If we fail to create a filter for the current principal
-   * or the user does not have READ permissions on the secure key.
-   * or if there was a problem getting the data from the underlying provider.
    */
   @Override
   public SecureStoreData get(SecureKeyId secureKeyId) throws Exception {
@@ -106,12 +114,15 @@ public class DefaultSecureStoreService implements SecureStoreService {
   }
 
   /**
-   * Puts the user provided data in the secure store, if the user has write access to the namespace.
+   * Puts the user provided data in the secure store, if the user has write access to the namespace. Grants the user
+   * all access to the newly created entity.
    * @param secureKeyId The Id for the key that needs to be stored.
    * @param secureKeyCreateRequest The request containing the data to be stored in the secure store.
    * @throws BadRequestException If the request does not contain the value to be stored.
    * @throws UnauthorizedException If the user does not have write permissions on the namespace.
-   * @throws IOException If there was a problem storing the data to the underlying provider.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws AlreadyExistsException If the key already exists in the namespace. Updating is not supported.
+   * @throws IOException If there was a problem storing the key to underlying provider.
    */
   @Override
   public synchronized void put(SecureKeyId secureKeyId,
@@ -130,17 +141,15 @@ public class DefaultSecureStoreService implements SecureStoreService {
     byte[] data = value.getBytes(StandardCharsets.UTF_8);
     secureStoreManager.putSecureData(secureKeyId.getNamespace(), secureKeyId.getName(), data, description,
                            secureKeyCreateRequest.getProperties());
-    try {
-      authorizer.grant(secureKeyId, principal, ImmutableSet.of(Action.ALL));
-    } catch (Exception e) {
-      throw new UnauthorizedException(principal, Action.ADMIN, secureKeyId);
-    }
+    authorizer.grant(secureKeyId, principal, ImmutableSet.of(Action.ALL));
   }
 
   /**
-   * Deletes the key if the user has ADMIN privileges to the key.
+   * Deletes the key if the user has ADMIN privileges to the key. Clears all the privileges associated with the key.
    * @param secureKeyId Id of the key to be deleted.
-   * @throws UnauthorizedException If the user does not have admin privilages required to delete the secure key.
+   * @throws UnauthorizedException If the user does not have admin privileges required to delete the secure key.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws NotFoundException If the key to be deleted is not found.
    * @throws IOException If there was a problem deleting it from the underlying provider.
    */
   @Override

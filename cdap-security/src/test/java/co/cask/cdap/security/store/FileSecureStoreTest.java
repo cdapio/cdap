@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.Charsets;
 import org.junit.After;
@@ -67,7 +68,7 @@ public class FileSecureStoreTest {
   public void setUp() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.Security.Store.FILE_PATH, STORE_PATH);
-    FileSecureStore fileSecureStore = new FileSecureStore(conf);
+    FileSecureStore fileSecureStore = new FileSecureStore(conf, new InMemoryNamespaceClient());
     secureStoreManager = fileSecureStore;
     secureStore = fileSecureStore;
   }
@@ -77,18 +78,18 @@ public class FileSecureStoreTest {
     Files.deleteIfExists(Paths.get(STORE_PATH, "securestore"));
   }
 
-  private void populateStore() throws IOException {
+  private void populateStore() throws Exception {
     secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
     secureStoreManager.putSecureData(NAMESPACE1, KEY2, VALUE2.getBytes(Charsets.UTF_8), DESCRIPTION2, PROPERTIES_2);
   }
 
   @Test
-  public void testListEmpty() throws IOException {
+  public void testListEmpty() throws Exception {
     Assert.assertEquals(new ArrayList<>(), secureStore.listSecureData(NAMESPACE1));
   }
 
   @Test
-  public void testList() throws IOException {
+  public void testList() throws Exception {
     populateStore();
     List<SecureStoreMetadata> expectedList = new ArrayList<>();
     expectedList.add(secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata());
@@ -97,7 +98,7 @@ public class FileSecureStoreTest {
   }
 
   @Test
-  public void testGet() throws IOException {
+  public void testGet() throws Exception {
     populateStore();
     SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
@@ -108,7 +109,7 @@ public class FileSecureStoreTest {
   }
 
   @Test
-  public void testGetMetadata() throws IOException {
+  public void testGetMetadata() throws Exception {
     populateStore();
     SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     Assert.assertEquals(metadata.getDescription(),
@@ -120,8 +121,8 @@ public class FileSecureStoreTest {
     Assert.assertEquals(metadata2.getName(), secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata().getName());
   }
 
-  @Test(expected = IOException.class)
-  public void testOverwrite() throws IOException, InterruptedException {
+  @Test(expected = Exception.class)
+  public void testOverwrite() throws Exception {
     secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
     SecureStoreData oldData = secureStore.getSecureData(NAMESPACE1, KEY1);
     Assert.assertArrayEquals(VALUE1.getBytes(Charsets.UTF_8), oldData.get());
@@ -129,13 +130,13 @@ public class FileSecureStoreTest {
     secureStoreManager.putSecureData(NAMESPACE1, KEY1, newVal.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
   }
 
-  @Test(expected = IOException.class)
-  public void testGetNonExistent() throws IOException {
+  @Test(expected = Exception.class)
+  public void testGetNonExistent() throws Exception {
     secureStore.getSecureData(NAMESPACE1, "Dummy");
   }
 
-  @Test(expected = IOException.class)
-  public void testDelete() throws IOException {
+  @Test(expected = Exception.class)
+  public void testDelete() throws Exception {
     populateStore();
     SecureStoreMetadata metadata = SecureStoreMetadata.of(KEY1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData secureStoreData = new SecureStoreData(metadata, VALUE1.getBytes(Charsets.UTF_8));
@@ -150,7 +151,7 @@ public class FileSecureStoreTest {
   }
 
   @Test
-  public void testMultipleNamespaces() throws IOException {
+  public void testMultipleNamespaces() throws Exception {
     populateStore();
     String ns = "namespace2";
     secureStoreManager.putSecureData(ns, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);

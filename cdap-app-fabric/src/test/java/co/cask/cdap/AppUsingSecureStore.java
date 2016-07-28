@@ -81,7 +81,7 @@ public class AppUsingSecureStore extends AbstractApplication {
 
     @Path("/put")
     @PUT
-    public void put(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void put(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
       byte[] value = new byte[request.getContent().remaining()];
       request.getContent().get(value);
       getContext().getAdmin().putSecureData(namespace, KEY, value, "", new HashMap<String, String>());
@@ -90,25 +90,25 @@ public class AppUsingSecureStore extends AbstractApplication {
 
     @Path("/get")
     @GET
-    public void get(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void get(HttpServiceRequest request, HttpServiceResponder responder) {
       try {
         byte[] bytes = getContext().getSecureData(namespace, KEY).get();
         responder.sendString(new String(bytes));
-      } catch (IOException e) {
+      } catch (Exception e) {
         responder.sendError(500, e.getMessage());
       }
     }
 
     @Path("/list")
     @GET
-    public void list(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void list(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
       String name = getContext().listSecureData(namespace).get(0).getName();
       responder.sendString(name);
     }
 
     @Path("/delete")
     @GET
-    public void delete(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void delete(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
       getContext().getAdmin().deleteSecureData(namespace, KEY);
       responder.sendStatus(200);
     }
