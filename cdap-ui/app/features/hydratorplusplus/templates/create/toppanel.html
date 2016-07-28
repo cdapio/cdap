@@ -27,18 +27,18 @@
     </div>
     <div class="metadata text-left">
       <div class="pipeline-name"
-           ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length, 'error': HydratorPlusPlusTopPanelCtrl.state.inValidName}"
+           ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length, 'error': HydratorPlusPlusTopPanelCtrl.invalidName}"
            ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
            ng-bind="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
            uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.state.metadata['name'] }}"
            tooltip-placement="bottom-left"
            tooltip-append-to-body="true"
-           tooltip-enable="!HydratorPlusPlusTopPanelCtrl.state.inValidName"
+           tooltip-enable="!HydratorPlusPlusTopPanelCtrl.invalidName"
            tooltip-class="toppanel-tooltip">
       </div>
-      <div ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.state.inValidName"
+      <div ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.invalidName"
            uib-tooltip="Invalid Name"
-           tooltip-is-open="HydratorPlusPlusTopPanelCtrl.state.inValidName"
+           tooltip-is-open="HydratorPlusPlusTopPanelCtrl.invalidName"
            tooltip-placement="bottom-left"
            tooltip-append-to-body="true"
            tooltip-class="error-tooltip"></div>

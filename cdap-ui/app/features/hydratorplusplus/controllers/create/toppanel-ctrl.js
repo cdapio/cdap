@@ -18,13 +18,15 @@ class HydratorPlusPlusTopPanelCtrl{
   constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
-    this.consoleStore.registerOnChangeListener(() => {
-      let messages = this.consoleStore.getMessages() || [];
-      let filteredMessages = messages.filter( message => {
-        return message.type === 'MISSING-NAME' || message.type === 'INVALID-NAME';
-      });
-      this.state.inValidName = (filteredMessages.length ? true : false);
-    });
+    // this.consoleStore.registerOnChangeListener(() => {
+    //   let messages = this.consoleStore.getMessages() || [];
+    //   let filteredMessages = messages.filter( message => {
+    //     return ['MISSING-NAME', 'INVALID-NAME'].indexOf(message.type) !== -1;
+    //   });
+
+    //   console.log('asdf');
+    //   this.state.inValidName = (filteredMessages.length ? true : false);
+    // });
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
@@ -91,6 +93,7 @@ class HydratorPlusPlusTopPanelCtrl{
 
   openMetadata() {
     this.metadataExpanded = true;
+    this.invalidName = false;
 
     this.$timeout.cancel(this.focusTimeout);
     this.focusTimeout = this.$timeout(() => {
@@ -136,6 +139,14 @@ class HydratorPlusPlusTopPanelCtrl{
   onSaveDraft() {
     this.HydratorPlusPlusConfigActions.saveAsDraft();
   }
+  checkNameError() {
+    let messages = this.consoleStore.getMessages() || [];
+    let filteredMessages = messages.filter( message => {
+      return ['MISSING-NAME', 'INVALID-NAME'].indexOf(message.type) !== -1;
+    });
+
+    this.invalidName = (filteredMessages.length ? true : false);
+  }
   onValidate() {
     this.HydratorPlusPlusConsoleActions.resetMessages();
     let isStateValid = this.HydratorPlusPlusConfigStore.validateState(true);
@@ -144,10 +155,13 @@ class HydratorPlusPlusTopPanelCtrl{
         type: 'success',
         content: 'Validation success! Pipeline ' + this.HydratorPlusPlusConfigStore.getName() + ' is valid.'
       }]);
+      return;
     }
+    this.checkNameError();
   }
   onPublish() {
     this.HydratorPlusPlusConfigActions.publishPipeline();
+    this.checkNameError();
   }
   showSettings() {
     this.state.viewSettings = !this.state.viewSettings;
