@@ -31,7 +31,7 @@
                   tooltip-placement="top"
                   tooltip-append-to-body="true"></span>
           </span>
-          <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlRealtime">
+          <span ng-if="[DetailController.GLOBALS.etlRealtime, DetailController.GLOBALS.etlDataStreams].indexOf(DetailController.artifact.name) !== -1">
             <span class="icon-ETLRealtime pull-left"
                   uib-tooltip="Type: ETL Realtime"
                   tooltip-placement="top"
