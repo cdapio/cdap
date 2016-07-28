@@ -102,8 +102,8 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
         $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
-      function loginError() {
-        $rootScope.$broadcast(MYAUTH_EVENT.loginFailed);
+      function loginError(err) {
+        $rootScope.$broadcast(MYAUTH_EVENT.loginFailed, err);
       }
     );
   };
@@ -158,8 +158,11 @@ module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $h
           username: credentials.username
         }));
       })
-      .error(function (data) {
-        deferred.reject(data);
+      .error(function (data, status) {
+        deferred.reject({
+          data: data,
+          statusCode: status
+        });
       });
 
     } else {

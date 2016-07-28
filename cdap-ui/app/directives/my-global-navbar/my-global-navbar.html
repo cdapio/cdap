@@ -167,12 +167,14 @@
       </div>
 
       <div class="navbar-item namespace-dropdown" uib-dropdown>
-        <div uib-dropdown-toggle ng-disabled="$state.includes('admin.**')">
-          <div class="namespace-display">
-            <span>{{ $state.params.namespace || 'Management' }}</span>
-          </div>
-          <div class="namespace-caret pull-right">
-            <span class="fa fa-angle-down"></span>
+        <div uib-dropdown-toggle ng-disabled="$state.includes('admin.**') || Navbar.namespaces.length === 0">
+          <div ng-if="Navbar.namespaces.length > 0">
+            <div class="namespace-display">
+              <span>{{ $state.params.namespace || 'Management' }}</span>
+            </div>
+            <div class="namespace-caret pull-right">
+              <span class="fa fa-angle-down"></span>
+            </div>
           </div>
         </div>
 

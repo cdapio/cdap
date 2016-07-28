@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyCDAPDataSource, EventPipe, $http, $rootScope, myAuth, MYAUTH_EVENT, myHelpers, $state, StatusFactory) {
+  .service('myNamespace', function myNamespace($q, MyCDAPDataSource, EventPipe, $http, $rootScope, myAuth, MYAUTH_EVENT, myHelpers, $state, StatusFactory, $state) {
 
     this.namespaceList = [];
     StatusFactory.startPolling();
@@ -41,10 +41,7 @@ angular.module(PKG.name + '.services')
               (function(res) {
 
                 if(!res.length) {
-                  res = [{
-                    id: 'default',
-                    name: 'default'
-                  }];
+                  $state.go('unauthorized');
                 }
 
                 this.namespaceList = res;
