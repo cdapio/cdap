@@ -46,10 +46,11 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
   }
   registerOnChangeListener(callback) {
-    let index = this.changeListeners.push(callback);
-    // un-subscribe for listners.
+    // index of the listener to be removed while un-subscribing
+    let index = this.changeListeners.push(callback) - 1;
+    // un-subscribe for listeners.
     return () => {
-      this.changeListeners.splice(index-1, 1);
+      this.changeListeners.splice(index, 1);
     };
   }
   emitChange() {
