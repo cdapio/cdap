@@ -35,9 +35,8 @@ public interface SecureStoreManager {
    * @param data The sensitive data that has to be securely stored. Passed in as utf-8 formatted byte array.
    * @param description User provided description of the entry.
    * @param properties associated with this element.
-   * throws NamespaceNotFoundException If the specified namespace does not exist.
-   * throws AlreadyExistsException If the key already exists in the namespace. Updating is not supported.
    * @throws IOException If the attempt to store the element failed.
+   * @throws Exception If the specified namespace does not exist or the name already exists. Updating is not supported.
    */
   void putSecureData(String namespace, String name, byte[] data, String description, Map<String, String> properties)
     throws Exception;
@@ -46,9 +45,8 @@ public interface SecureStoreManager {
    * Deletes the element with the given name.
    * @param namespace The namespace that this key belongs to.
    * @param name of the element to delete.
-   * throws NamespaceNotFoundException If the specified namespace does not exist.
-   * throws NotFoundException If the key to be deleted is not found.
    * @throws IOException If the store is not initialized or if the key could not be removed.
+   * @throws Exception If the specified namespace or name does not exist.
    */
   void deleteSecureData(String namespace, String name) throws Exception;
 }

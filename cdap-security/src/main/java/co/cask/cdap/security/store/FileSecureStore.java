@@ -110,7 +110,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @param name Name of the element to store.
    * @param data The data that needs to be securely stored.
    * @param description User provided description of the entry.
-   * @param properties Metadata associated with the data
+   * @param properties Metadata associated with the data.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws AlreadyExistsException If the key already exists in the namespace. Updating is not supported.
    * @throws IOException If there was a problem storing the key to the in memory keystore
@@ -174,7 +174,6 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
         keyStore.setKeyEntry(keyName, key, password, null);
       } catch (KeyStoreException e) {
         ioe.addSuppressed(e);
-        throw ioe;
       }
       throw ioe;
     } finally {
@@ -183,7 +182,8 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   /**
-   * List of all the entries in the secure store. No filtering or authentication is done here.
+   * List of all the entries in the secure store belonging to the specified namespace. No filtering or authentication
+   * is done here.
    * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
    * @param namespace The namespace this key belongs to.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
