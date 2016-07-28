@@ -24,7 +24,7 @@
               tooltip-placement="bottom-left"
               tooltip-append-to-body="true"
               tooltip-class="toppanel-tooltip"></span>
-        <span ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime"
+        <span ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1"
               class="icon-ETLRealtime"
               uib-tooltip="Type: Realtime"
               tooltip-placement="bottom-left"
@@ -118,7 +118,9 @@
           </div>
         </div>
       </div>
-      <div ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && (['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1)"
+
+      <!-- Realtime or data Streams -->
+      <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1 && (['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1)"
         class="btn"
         ng-click="TopPanelCtrl.do('Start')"
         ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
@@ -133,7 +135,7 @@
           <span class="fa fa-refresh fa-spin"></span>
         </span>
       </div>
-      <div ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && ['RUNNING', 'STOPPING'].indexOf(TopPanelCtrl.appStatus) !== -1"
+      <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1 && ['RUNNING', 'STOPPING'].indexOf(TopPanelCtrl.appStatus) !== -1"
         class="btn"
         ng-click="TopPanelCtrl.do('Stop')"
         ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
