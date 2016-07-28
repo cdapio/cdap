@@ -94,10 +94,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     requestWithStartTime();
   });
 
-  LogViewerStore.subscribe(() => {
-    this.programStatus = LogViewerStore.getState().programStatus;
-  });
-
   //Get Initial Status
   myLogsApi.getLogsMetadata({
     namespace : this.namespaceId,
@@ -227,31 +223,31 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   const getStatus = () => {
-      myLogsApi.getLogsMetadata({
-        namespace : this.namespaceId,
-        appId : this.appId,
-        programType : this.programType,
-        programId : this.programId,
-        runId : this.runId
-      }).$promise.then(
-        (statusRes) => {
-          setProgramStatus(statusRes.status);
-          if(this.statusType === 0){
-            this.applicationIsRunning = true;
-            if (!pollPromise) {
-              pollForNewLogs();
-            }
-          } else {
-            this.applicationIsRunning = false;
-            if (pollPromise) {
-              dataSrc.stopPoll(pollPromise.__pollId__);
-            }
+    myLogsApi.getLogsMetadata({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId
+    }).$promise.then(
+      (statusRes) => {
+        setProgramStatus(statusRes.status);
+        if(this.statusType === 0){
+          this.applicationIsRunning = true;
+          if (!pollPromise) {
+            pollForNewLogs();
           }
-        },
-        (statusErr) => {
-          console.log('ERROR: ', statusErr);
+        } else {
+          this.applicationIsRunning = false;
+          if (pollPromise) {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+          }
         }
-      );
+      },
+      (statusErr) => {
+        console.log('ERROR: ', statusErr);
+      }
+    );
   };
 
   const pollForNewLogs = () => {
@@ -422,6 +418,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         break;
     }
   };
+
 
   function formatDate(date, isDownload) {
     let dateObj = {
