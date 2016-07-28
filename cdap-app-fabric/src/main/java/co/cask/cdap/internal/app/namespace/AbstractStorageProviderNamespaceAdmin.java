@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -106,9 +107,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
         LOG.debug("Custom location mapping %s was found while deleting namespace %s. Deleting all data inside it but" +
                     "skipping namespace home directory delete.", namespaceHome, namespaceId);
         // delete everything inside the namespace home but not the namespace home as its user owned directory
-        for (Location childLocation : namespaceHome.list()) {
-          childLocation.delete(true);
-        }
+        Locations.deleteContent(namespaceHome);
       } else {
         // a custom location was not provided for this namespace so cdap is responsible for managing the lifecycle of
         // the location hence delete it.
