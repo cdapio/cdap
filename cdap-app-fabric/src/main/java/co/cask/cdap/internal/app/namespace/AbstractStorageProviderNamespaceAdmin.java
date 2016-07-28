@@ -145,7 +145,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
           namespaceMeta.getConfig().getPrincipal()));
       }
       // we also expect it to empty since non-empty directories can lead to various inconsistencies CDAP-6743
-      if (customLocation.list().length != 0) {
+      if (!customNamespacedLocation.list().isEmpty()) {
         throw new IOException(String.format(
           "The provided home directory '%s' for namespace '%s' is not empty. Please try creating the namespace " +
             "again with an empty directory mapping and sufficient privileges for the user %s.",
