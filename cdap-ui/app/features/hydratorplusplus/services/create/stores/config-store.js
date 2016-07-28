@@ -38,6 +38,7 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onPluginEdit', this.editNodeProperties.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetInstance', this.setInstance.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetBatchInterval', this.setBatchInterval.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
@@ -200,13 +201,18 @@ class HydratorPlusPlusConfigStore {
     config.connections = connections;
 
     let appType = this.getAppType();
-    if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
-      config.schedule = this.getSchedule();
-      config.engine = this.getEngine();
-    } else if (appType === this.GLOBALS.etlRealtime) {
-      config.instances = this.getInstance();
+    switch(appType) {
+      case this.GLOBALS.etlBatch:
+      case this.GLOBALS.etlDataPipeline:
+        config.schedule = this.getSchedule();
+        config.engine = this.getEngine();
+        break;
+      case this.GLOBALS.etlRealtime:
+        config.instances = this.getInstance();
+        break;
+      case this.GLOBALS.etlDataStreams:
+        config.batchInterval = this.getBatchInterval();
     }
-
     if (this.state.description) {
       config.description = this.state.description;
     }
@@ -596,6 +602,12 @@ class HydratorPlusPlusConfigStore {
       this.HydratorPlusPlusConsoleActions.addMessage(errors);
     }
     return isStateValid;
+  }
+  getBatchInterval() {
+    return this.getState().config.batchInterval;
+  }
+  setBatchInterval(interval) {
+    this.state.config.batchInterval = interval;
   }
   getInstance() {
     return this.getState().config.instances;
