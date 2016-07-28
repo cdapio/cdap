@@ -46,6 +46,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -85,6 +87,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static InMemoryAuditPublisher inMemoryAuditPublisher;
+  private static AuthorizationEnforcementService authorizationEnforcementService;
   private static Authorizer authorizer;
 
   @BeforeClass
@@ -110,6 +113,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
       new ViewAdminModules().getInMemoryModules(),
       new AuditModule().getInMemoryModules(),
       new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
       Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
@@ -133,14 +137,17 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
 
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     txManager.startAndWait();
     streamCoordinatorClient.startAndWait();
+    authorizationEnforcementService.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    authorizationEnforcementService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
   }

@@ -34,6 +34,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -68,6 +69,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
       new ViewAdminModules().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthenticationContextModules().getNoOpModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getInMemoryModules())
         .with(new AbstractModule() {
           @Override

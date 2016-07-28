@@ -42,6 +42,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -83,6 +84,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
       new ViewAdminModules().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
