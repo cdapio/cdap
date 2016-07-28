@@ -21,7 +21,7 @@ angular.module(PKG.name + '.services')
 
         loadArtifactPath = '/namespaces/:namespace/artifacts/:artifactName',
         loadArtifactJSON = loadArtifactPath + '/versions/:version/properties',
-        listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime + ',' + GLOBALS.etlDataPipeline,
+        listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime + ',' + GLOBALS.etlDataPipeline + ',' + GLOBALS.etlDataStreams,
         artifactsPath = '/namespaces/:namespace/artifacts?scope=SYSTEM',
         extensionsFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions',
         pluginFetchBase = extensionsFetchBase + '/:extensionType',
