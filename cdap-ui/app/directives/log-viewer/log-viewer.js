@@ -24,6 +24,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var collapseCount = 0;
 
   this.setDefault = () => {
+    this.statusType = 0;
     this.displayData = [];
     this.data = [];
     this.loading = false;
@@ -92,10 +93,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     requestWithStartTime();
   });
 
-  LogViewerStore.subscribe(() => {
-    this.programStatus = LogViewerStore.getState().programStatus;
-  });
-
   //Get Initial Status
   myLogsApi.getLogsMetadata({
     namespace : this.namespaceId,
@@ -105,20 +102,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     runId : this.runId
   }).$promise.then(
     (statusRes) => {
-      this.programStatus = statusRes.status;
-      if(this.programStatus === 'RUNNING' || this.programStatus === 'STARTED'){
-        this.programIsPrimary = true;
-        this.programIsSecondary = false;
-        this.programIsCompleted = false;
-      } else if(this.programStatus === 'KILLED' || this.programStatus === 'FAILED' || this.programStatus === 'STOPPED' || this.programStatus === 'SUSPENDED') {
-        this.programIsSecondary = true;
-        this.programIsPrimary = false;
-        this.programIsCompleted = false;
-      } else if(this.programStatus === 'COMPLETED'){
-        this.programIsPrimary = false;
-        this.programIsSecondary = false;
-        this.programIsCompleted = true;
-      }
+      setProgramStatus(statusRes.status);
     },
     (statusErr) => {
       console.log('ERROR: ', statusErr);
@@ -246,9 +230,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         'runId' : this.runId
       }).$promise.then(
         (statusRes) => {
-          this.programStatus = statusRes.status;
+          setProgramStatus(statusRes.status);
 
-          if(statusRes.status === 'RUNNING'){
+          if(this.statusType === '0'){
             this.applicationIsRunning = true;
             if (!pollPromise) {
               pollForNewLogs();
@@ -367,6 +351,27 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         this.loading = false;
         console.log('ERROR: ', err);
       });
+  };
+
+  const setProgramStatus = (status) => {
+    this.programStatus = status;
+    switch(status){
+      case 'RUNNING':
+      case 'STARTED':
+        this.statusType = 0;
+        break;
+      case 'STOPPED':
+      case 'KILLED':
+      case 'FAILED':
+      case 'SUSPENDED':
+        this.statusType = 1;
+        break;
+      case 'COMPLETED':
+        this.statusType = 2;
+        break;
+      default:
+        break;
+    }
   };
 
   function formatDate(date) {
