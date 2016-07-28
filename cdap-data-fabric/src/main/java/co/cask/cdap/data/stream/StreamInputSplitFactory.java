@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.proto.id.StreamId;
 import org.apache.hadoop.fs.Path;
 
 import javax.annotation.Nullable;
@@ -30,6 +31,7 @@ public interface StreamInputSplitFactory<T> {
   /**
    * Create a stream input split.
    *
+   * @param streamId id of the stream
    * @param eventPath path of the event file for the split
    * @param indexPath path to the index file for the split
    * @param startTime start timestamp for the split
@@ -39,6 +41,6 @@ public interface StreamInputSplitFactory<T> {
    * @param locations locations
    * @return stream input split
    */
-  T createSplit(Path eventPath, Path indexPath, long startTime, long endTime,
+  T createSplit(StreamId streamId, Path eventPath, Path indexPath, long startTime, long endTime,
                 long start, long length, @Nullable String[] locations);
 }

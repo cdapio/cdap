@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.proto.id.StreamId;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -48,8 +49,8 @@ final class StreamDataFileSplitter {
   /**
    * Computes splits for the event file.
    */
-  <T> void computeSplits(FileSystem fs, long minSplitSize, long maxSplitSize, long startTime, long endTime,
-                         List<T> splits, StreamInputSplitFactory<T> splitFactory) throws IOException {
+  <T> void computeSplits(StreamId streamId, FileSystem fs, long minSplitSize, long maxSplitSize, long startTime,
+                         long endTime, List<T> splits, StreamInputSplitFactory<T> splitFactory) throws IOException {
 
     // Compute the splits based on the min/max size
     Path eventFile = eventFileStatus.getPath();
@@ -71,12 +72,14 @@ final class StreamDataFileSplitter {
       }
 
       long splitSize = computeSplitSize(eventFileStatus, offset, minSplitSize, maxSplitSize);
-      splits.add(splitFactory.createSplit(eventFile, indexFile, startTime, endTime, offset, splitSize, hosts));
+      splits.add(splitFactory.createSplit(streamId, eventFile, indexFile, startTime, endTime, offset, splitSize,
+                                          hosts));
       offset += splitSize;
     }
 
     // One extra split for the tail of the file.
-    splits.add(splitFactory.createSplit(eventFile, indexFile, startTime, endTime, offset, Long.MAX_VALUE, null));
+    splits.add(splitFactory.createSplit(streamId, eventFile, indexFile, startTime, endTime, offset, Long.MAX_VALUE,
+                                        null));
   }
 
   /**

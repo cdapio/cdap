@@ -18,11 +18,16 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -43,11 +48,15 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ArtifactManager;
+import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.app.DummyApp;
+import co.cask.cdap.test.app.StreamWithMRApp;
 import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -178,6 +187,104 @@ public class AuthorizationTest extends TestBase {
     );
     NamespaceMeta updated = new NamespaceMeta.Builder(AUTH_NAMESPACE_META).setDescription("new desc").build();
     namespaceAdmin.updateProperties(AUTH_NAMESPACE.toId(), updated);
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testMRStreamAuth() throws Exception {
+    createAuthNamespace();
+    Authorizer authorizer = getAuthorizer();
+    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamWithMRApp.class);
+    StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.toId(), StreamWithMRApp.STREAM);
+    streamManager.send("Hello");
+    final MapReduceManager mrManager = appManager.getMapReduceManager(StreamWithMRApp.MAPREDUCE);
+    mrManager.start();
+    mrManager.waitForFinish(10, TimeUnit.SECONDS);
+    try {
+      mrManager.stop();
+    } catch (Exception e) {
+      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+    DataSetManager<KeyValueTable> kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamWithMRApp.KVTABLE);
+    KeyValueTable kvTable = kvManager.get();
+    byte[] value = kvTable.read("Hello");
+    Assert.assertArrayEquals(value, Bytes.toBytes("Hello"));
+    kvTable.close();
+    // Since Alice had full permissions, she should be able to execute the MR job successfully
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return mrManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+
+    ProgramId mrId = new ProgramId(AUTH_NAMESPACE.getNamespace(), StreamWithMRApp.APP, ProgramType.MAPREDUCE,
+                                   StreamWithMRApp.MAPREDUCE);
+    authorizer.grant(mrId.getNamespaceId(), BOB, ImmutableSet.of(Action.ALL));
+    ArtifactSummary artifactSummary = appManager.getInfo().getArtifact();
+
+    ArtifactId artifactId = new ArtifactId(AUTH_NAMESPACE.getNamespace(), artifactSummary.getName(),
+                                           artifactSummary.getVersion());
+    authorizer.grant(artifactId, BOB, ImmutableSet.of(Action.ALL));
+    authorizer.grant(mrId.getParent(), BOB, ImmutableSet.of(Action.ALL));
+    authorizer.grant(mrId, BOB, ImmutableSet.of(Action.ALL));
+    authorizer.grant(new StreamId(AUTH_NAMESPACE.getNamespace(), StreamWithMRApp.STREAM), BOB,
+                     ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(new DatasetId(AUTH_NAMESPACE.getNamespace(), StreamWithMRApp.KVTABLE), BOB,
+                     ImmutableSet.of(Action.ALL));
+    streamManager.send("World");
+
+    // Switch user to Bob. Note that he doesn't have READ access on the stream.
+    SecurityRequestContext.setUserId(BOB.getName());
+    mrManager.start();
+    mrManager.waitForFinish(10, TimeUnit.SECONDS);
+    try {
+      mrManager.stop();
+    } catch (Exception e) {
+      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return mrManager.getHistory(ProgramRunStatus.FAILED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+    kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamWithMRApp.KVTABLE);
+    kvTable = kvManager.get();
+    value = kvTable.read("World");
+    Assert.assertNull(value);
+    kvTable.close();
+
+    // Now grant Bob, READ access on the stream. MR job should execute successfully now.
+    authorizer.grant(new StreamId(AUTH_NAMESPACE.getNamespace(), StreamWithMRApp.STREAM), BOB,
+                     ImmutableSet.of(Action.READ));
+    mrManager.start();
+    mrManager.waitForFinish(10, TimeUnit.SECONDS);
+    try {
+      mrManager.stop();
+    } catch (Exception e) {
+      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+
+    Tasks.waitFor(2, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return mrManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+    kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamWithMRApp.KVTABLE);
+    kvTable = kvManager.get();
+    value = kvTable.read("World");
+    Assert.assertEquals("World", Bytes.toString(value));
+    kvTable.close();
+
+    SecurityRequestContext.setUserId(ALICE.getName());
+    appManager.delete();
+    assertNoAccess(new ApplicationId(AUTH_NAMESPACE.getNamespace(), StreamWithMRApp.APP));
   }
 
   @Test

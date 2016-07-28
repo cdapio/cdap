@@ -20,10 +20,15 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.data.stream.StreamInputSplit;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.TaggedInputSplit;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
@@ -37,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Wraps user-defined implementation of {@link Mapper} class which allows perform extra configuration.
@@ -75,15 +81,29 @@ public class MapperWrapper extends Mapper {
   public void run(Context context) throws IOException, InterruptedException {
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
     BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
+    AuthorizationEnforcer authorizationEnforcer = classLoader.getTaskContextProvider().getAuthorizationEnforcer();
+    AuthenticationContext authenticationContext = classLoader.getTaskContextProvider().getAuthenticationContext();
 
-    // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
-    WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
+    EntityId entityId = null;
 
-    basicMapReduceContext.setHadoopContext(flushingContext);
     InputSplit inputSplit = context.getInputSplit();
     if (inputSplit instanceof TaggedInputSplit) {
-      basicMapReduceContext.setInputName(((TaggedInputSplit) inputSplit).getName());
+      TaggedInputSplit taggedInputSplit = (TaggedInputSplit) inputSplit;
+      basicMapReduceContext.setInputName(taggedInputSplit.getName());
+      inputSplit = taggedInputSplit.getInputSplit();
     }
+
+    // Set the entityId to verify access permissions.
+    if (inputSplit instanceof StreamInputSplit) {
+      entityId = ((StreamInputSplit) inputSplit).getStreamId();
+    }
+
+    // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
+    WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext,
+                                                                      authorizationEnforcer, authenticationContext,
+                                                                      entityId);
+
+    basicMapReduceContext.setHadoopContext(flushingContext);
 
     ClassLoader programClassLoader = classLoader.getProgramClassLoader();
     Mapper delegate = createMapperInstance(programClassLoader, getWrappedMapper(context.getConfiguration()), context);
@@ -145,7 +165,10 @@ public class MapperWrapper extends Mapper {
   }
 
   private WrappedMapper.Context createAutoFlushingContext(final Context context,
-                                                          final BasicMapReduceTaskContext basicMapReduceContext) {
+                                                          final BasicMapReduceTaskContext basicMapReduceContext,
+                                                          final AuthorizationEnforcer authorizationEnforcer,
+                                                          final AuthenticationContext authenticationContext,
+                                                          @Nullable final EntityId entityId) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.mapper.flush.freq", 10000);
@@ -156,6 +179,16 @@ public class MapperWrapper extends Mapper {
 
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {
+        // If entity id is not null, verify that the user has read access to the entity.
+        if (entityId != null) {
+          try {
+            authorizationEnforcer.enforce(entityId, authenticationContext.getPrincipal(), Action.READ);
+          } catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, IOException.class);
+            throw new IOException(e);
+          }
+        }
+
         boolean result = super.nextKeyValue();
         if (++processedRecords > flushFreq) {
           try {

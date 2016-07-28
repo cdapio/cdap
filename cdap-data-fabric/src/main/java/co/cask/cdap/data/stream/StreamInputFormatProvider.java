@@ -91,6 +91,7 @@ public class StreamInputFormatProvider implements InputFormatProvider {
       Configuration hConf = new Configuration();
       hConf.clear();
 
+      StreamInputFormat.setStreamId(hConf, streamId.toEntityId());
       StreamInputFormat.setTTL(hConf, streamConfig.getTTL());
       StreamInputFormat.setStreamPath(hConf, streamPath.toURI());
       StreamInputFormat.setTimeRange(hConf, streamBatchReadable.getStartTime(), streamBatchReadable.getEndTime());

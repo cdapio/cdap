@@ -28,6 +28,7 @@ import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
 import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -88,9 +89,9 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     .create();
   private static final StreamInputSplitFactory<InputSplit> splitFactory = new StreamInputSplitFactory<InputSplit>() {
     @Override
-    public InputSplit createSplit(Path eventPath, Path indexPath, long startTime, long endTime,
+    public InputSplit createSplit(StreamId streamId, Path eventPath, Path indexPath, long startTime, long endTime,
                                   long start, long length, @Nullable String[] locations) {
-      return new StreamInputSplit(eventPath, indexPath, startTime, endTime, start, length, locations);
+      return new StreamInputSplit(streamId, eventPath, indexPath, startTime, endTime, start, length, locations);
     }
   };
 
@@ -103,6 +104,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   private static final String MIN_SPLIT_SIZE = "input.streaminputformat.min.splits.size";
   private static final String DECODER_TYPE = "input.streaminputformat.decoder.type";
   private static final String BODY_FORMAT = "input.streaminputformat.stream.body.format";
+  private static final String STREAM_ID = "input.streaminputformat.stream.id";
 
   /**
    * Sets the TTL for the stream events.
@@ -128,6 +130,16 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
 
     conf.setLong(EVENT_START_TIME, startTime);
     conf.setLong(EVENT_END_TIME, endTime);
+  }
+
+  /**
+   * Sets the stream id of the stream.
+   *
+   * @param conf The conf to modify.
+   * @param streamId {@link StreamId} id of the stream.
+   */
+  public static void setStreamId(Configuration conf, StreamId streamId) {
+    conf.set(STREAM_ID, streamId.toString());
   }
 
   /**
@@ -223,12 +235,14 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
+    StreamId streamId = StreamId.fromString(conf.get(STREAM_ID));
     long ttl = conf.getLong(STREAM_TTL, Long.MAX_VALUE);
     long endTime = conf.getLong(EVENT_END_TIME, Long.MAX_VALUE);
     long startTime = Math.max(conf.getLong(EVENT_START_TIME, 0L), getCurrentTime() - ttl);
     long maxSplitSize = conf.getLong(MAX_SPLIT_SIZE, Long.MAX_VALUE);
     long minSplitSize = Math.min(conf.getLong(MIN_SPLIT_SIZE, 1L), maxSplitSize);
-    StreamInputSplitFinder<InputSplit> splitFinder = StreamInputSplitFinder.builder(URI.create(conf.get(STREAM_PATH)))
+    StreamInputSplitFinder<InputSplit> splitFinder = StreamInputSplitFinder
+      .builder(streamId, URI.create(conf.get(STREAM_PATH)))
       .setStartTime(startTime)
       .setEndTime(endTime)
       .setMinSplitSize(minSplitSize)

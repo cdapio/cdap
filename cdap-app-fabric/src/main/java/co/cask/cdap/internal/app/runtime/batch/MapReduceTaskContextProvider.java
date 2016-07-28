@@ -30,6 +30,8 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -62,6 +64,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   // Each task should have it's own instance of MapReduceTaskContext so that different dataset instance will
   // be created for different task, which is needed in local mode since job runs with multiple threads
   private final LoadingCache<ContextCacheKey, BasicMapReduceTaskContext> taskContexts;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   /**
    * Helper method to tell if the MR is running in local mode or not. This method doesn't really belongs to this
@@ -78,6 +82,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   protected MapReduceTaskContextProvider(Injector injector) {
     this.injector = injector;
     this.taskContexts = CacheBuilder.newBuilder().build(createCacheLoader(injector));
+    this.authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    this.authenticationContext = injector.getInstance(AuthenticationContext.class);
   }
 
   protected Injector getInjector() {
@@ -99,6 +105,20 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         LOG.warn("Exception when closing context {}", context, e);
       }
     }
+  }
+
+  /**
+   * Returns the {@link AuthorizationEnforcer} for the given task.
+   */
+  public final AuthorizationEnforcer getAuthorizationEnforcer() {
+    return authorizationEnforcer;
+  }
+
+  /**
+   * Returns the {@link AuthenticationContext} for the given task.
+   */
+  public final AuthenticationContext getAuthenticationContext() {
+    return authenticationContext;
   }
 
   /**

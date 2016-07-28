@@ -23,6 +23,7 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -92,7 +93,7 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
 
-    StreamInputSplitFinder.Builder builder = StreamInputSplitFinder.builder(streamPath.toURI());
+    StreamInputSplitFinder.Builder builder = StreamInputSplitFinder.builder(streamId.toEntityId(), streamPath.toURI());
 
     // Get the Hive table path for the InputSplit created. It is just to satisfy hive. The InputFormat never uses it.
     JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(Job.getInstance(conf));
@@ -100,7 +101,7 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
 
     return setupBuilder(conf, streamConfig, builder).build(new StreamInputSplitFactory<InputSplit>() {
       @Override
-      public InputSplit createSplit(Path eventPath, Path indexPath, long startTime, long endTime,
+      public InputSplit createSplit(StreamId stream, Path eventPath, Path indexPath, long startTime, long endTime,
                                     long start, long length, @Nullable String[] locations) {
         return new StreamInputSplit(tablePaths[0], eventPath, indexPath, startTime, endTime, start, length, locations);
       }

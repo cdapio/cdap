@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Objects;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
@@ -31,6 +32,7 @@ import javax.annotation.Nullable;
  */
 public final class StreamInputSplit extends FileSplit implements Writable {
 
+  private StreamId streamId;
   private Path indexPath;
   private long startTime;
   private long endTime;
@@ -45,6 +47,7 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   /**
    * Constructs a split.
    *
+   * @param streamId {@link StreamId} of the stream.
    * @param path Path for the stream event file.
    * @param indexPath Path for the stream index file.
    * @param startTime Event start timestamp in milliseconds (inclusive).
@@ -53,9 +56,10 @@ public final class StreamInputSplit extends FileSplit implements Writable {
    * @param length Size of this split.
    * @param locations List of hosts containing this split.
    */
-  StreamInputSplit(Path path, @Nullable Path indexPath, long startTime, long endTime,
+  StreamInputSplit(StreamId streamId, Path path, @Nullable Path indexPath, long startTime, long endTime,
                    long start, long length, @Nullable String[] locations) {
     super(path, start, length, locations);
+    this.streamId = streamId;
     this.indexPath = indexPath;
     this.startTime = startTime;
     this.endTime = endTime;
@@ -67,6 +71,13 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   @Nullable
   public Path getIndexPath() {
     return indexPath;
+  }
+
+  /**
+   * Returns the stream id.
+   */
+  public StreamId getStreamId() {
+    return streamId;
   }
 
   /**
@@ -86,6 +97,7 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
+    WritableUtils.writeString(out, streamId.toString());
     if (indexPath == null) {
       out.writeBoolean(false);
     } else {
@@ -99,6 +111,7 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   @Override
   public void readFields(DataInput in) throws IOException {
     super.readFields(in);
+    streamId = StreamId.fromString(WritableUtils.readString(in));
     boolean hasIndex = in.readBoolean();
     if (hasIndex) {
       indexPath = new Path(WritableUtils.readString(in));
@@ -110,6 +123,7 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
+      .add("stream", getStreamId())
       .add("path", getPath())
       .add("index", getIndexPath())
       .add("start", getStart())

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -37,6 +38,7 @@ import java.util.List;
  * @see StreamInputFormat for details on stream file layout.
  */
 public class StreamInputSplitFinder<T> {
+  private final StreamId streamId;
   private final long startTime;
   private final long endTime;
   private final long maxSplitSize;
@@ -44,10 +46,11 @@ public class StreamInputSplitFinder<T> {
   private final Path path;
   private final StreamInputSplitFactory<T> splitFactory;
 
-  private StreamInputSplitFinder(URI path, long startTime, long endTime, long maxSplitSize,
+  private StreamInputSplitFinder(StreamId streamId, URI path, long startTime, long endTime, long maxSplitSize,
                                  long minSplitSize, StreamInputSplitFactory<T> splitFactory) {
     Preconditions.checkArgument(startTime >= 0, "Invalid start time %s", startTime);
     Preconditions.checkArgument(endTime >= 0, "Invalid end time %s", endTime);
+    this.streamId = streamId;
     this.path = new Path(path);
     this.startTime = startTime;
     this.endTime = endTime;
@@ -90,7 +93,7 @@ public class StreamInputSplitFinder<T> {
 
       // For each bucket inside the partition directory, compute the splits
       for (StreamDataFileSplitter splitter : eventFiles) {
-        splitter.computeSplits(fs, minSplitSize, maxSplitSize, startTime, endTime, splits, splitFactory);
+        splitter.computeSplits(streamId, fs, minSplitSize, maxSplitSize, startTime, endTime, splits, splitFactory);
       }
     }
 
@@ -118,22 +121,25 @@ public class StreamInputSplitFinder<T> {
    * @param path path of the stream
    * @return builder to create an input split finder for a stream.
    */
-  public static Builder builder(URI path) {
-    return new Builder(path);
+  public static Builder builder(StreamId streamId, URI path) {
+    return new Builder(streamId, path);
   }
 
   /**
    * Builder for creating a split finder.
    */
   public static class Builder {
+    private final StreamId streamId;
     private final URI path;
     private Long startTime = 0L;
     private Long endTime = Long.MAX_VALUE;
     private Long minSplitSize = 1L;
     private Long maxSplitSize = Long.MAX_VALUE;
 
-    public Builder(URI path) {
+    public Builder(StreamId streamId, URI path) {
+      Preconditions.checkNotNull(streamId, "StreamId must not be null.");
       Preconditions.checkNotNull(path, "Path to the stream must not be null.");
+      this.streamId = streamId;
       this.path = path;
     }
 
@@ -165,7 +171,7 @@ public class StreamInputSplitFinder<T> {
      * @return a new instance of {@link StreamInputSplitFinder}
      */
     public <T> StreamInputSplitFinder<T> build(StreamInputSplitFactory<T> splitFactory) {
-      return new StreamInputSplitFinder<>(path, startTime, endTime, maxSplitSize, minSplitSize, splitFactory);
+      return new StreamInputSplitFinder<>(streamId, path, startTime, endTime, maxSplitSize, minSplitSize, splitFactory);
     }
   }
 }
