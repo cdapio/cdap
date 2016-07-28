@@ -171,7 +171,7 @@ Certain commands (``cli render as``, ``connect``, and ``use namespace``) affect 
       PurchaseApp,Some description
       
 - The command ``connect`` (from the `General`_ commands) allows you to connect to a CDAP
-  instance that is not running locally.
+  instance.
 
 - The command ``use namespace`` (from the `Namespace`_ commands) allows you to set the
   namespace used with all subsequent commands. By default, all sessions start in the
