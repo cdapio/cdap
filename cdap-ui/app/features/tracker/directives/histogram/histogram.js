@@ -68,9 +68,12 @@ angular.module(PKG.name + '.feature.tracker')
         let height = parentHeight - margin.top - margin.bottom;
 
         /* FORMATTING TIME */
+        // We are getting the time in GMT from backend, therefore the graph can
+        // be off by +- 1 day. That is why we are offsetting the time by timezone offset.
+        let timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60;
         let data = scope.model.results.map((d) => {
           return {
-            time: new Date(d.timestamp * 1000),
+            time: new Date((d.timestamp + timezoneOffsetInSeconds) * 1000),
             count: d.value
           };
         });
@@ -140,17 +143,21 @@ angular.module(PKG.name + '.feature.tracker')
           });
         svg.call(tip);
 
+        // 0.2 is the total padding for all the bars
+        let barPadding = (width * 0.2) / durationAsDays;
+        let barWidth = (width / durationAsDays) - barPadding;
+
         /* BARS */
         svg.selectAll('.bar')
             .data(data)
           .enter().append('rect')
             .attr('class', 'bar')
             .attr('x', d => {
-              return x(d.time) - (((width + 130) / durationAsDays));
+              return x(d.time) - (barWidth / 2);
             })
             .attr('y', (d) => { return y(d.count); })
             .attr('width', () => {
-              return (width - 180) / durationAsDays;
+              return barWidth;
             })
             .attr('height', (d) => { return height - y(d.count); })
           .on('mouseover', tip.show)
