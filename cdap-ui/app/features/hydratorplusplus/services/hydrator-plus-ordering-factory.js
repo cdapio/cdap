@@ -18,9 +18,6 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
   function getArtifactDisplayName (artifactName) {
     return GLOBALS.artifactConvert[artifactName] || artifactName;
   }
-  function getPluginTypeID(pluginType) {
-    return GLOBALS.pluginTypeToID[pluginType] || pluginType;
-  }
   function getPluginTypeDisplayName (pluginType) {
     return GLOBALS.pluginTypeToLabel[pluginType] || pluginType;
   }
@@ -31,14 +28,14 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
     }
     let orderedTypes = [];
 
-    let source = pluginsMap.filter( p => { return ['BatchSource', 'RealtimeSource'].indexOf(p.id) !== -1; });
-    let transform = pluginsMap.filter( p => { return p.id === 'Transform'; });
-    let sink = pluginsMap.filter( p => { return ['BatchSink', 'RealtimeSink'].indexOf(p.id) !== -1; });
-    let aggregator = pluginsMap.filter( p => { return p.id === 'Aggregate'; });
-    let sparksink = pluginsMap.filter( p => { return p.id === 'Model'; });
-    let sparkcompute = pluginsMap.filter( p => { return p.id === 'Compute'; });
-    let joiner = pluginsMap.filter( p => { return p.id === 'Join'; });
-    let action = pluginsMap.filter( p => { return p.id === 'Action'; });
+    let source = pluginsMap.filter( p => { return ['Streaming Source', 'Source'].indexOf(p.name) !== -1; });
+    let transform = pluginsMap.filter( p => { return ['Transform', 'Windower'].indexOf(p.name) !== -1 ; });
+    let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
+    let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregate'; });
+    let sparksink = pluginsMap.filter( p => { return p.name === 'Model'; });
+    let sparkcompute = pluginsMap.filter( p => { return p.name === 'Compute'; });
+    let joiner = pluginsMap.filter( p => { return p.name === 'Join'; });
+    let action = pluginsMap.filter( p => { return p.name === 'Action'; });
 
     orderedTypes.push(source[0]);
     orderedTypes.push(transform[0]);
@@ -71,7 +68,6 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
   return {
     getArtifactDisplayName: getArtifactDisplayName,
     getPluginTypeDisplayName: getPluginTypeDisplayName,
-    getPluginTypeID: getPluginTypeID,
     orderPluginTypes: orderPluginTypes
   };
 }

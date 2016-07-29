@@ -58,20 +58,6 @@ angular.module(PKG.name + '.services')
         'httpcallback': 'Make HTTP Call'
       }
     },
-    'pluginTypeToID': {
-      'transform': 'Transform',
-      'batchsource': 'BatchSource',
-      'batchsink': 'BatchSink',
-      'batchaggregator': 'Aggregate',
-      'realtimesink': 'RealtimeSink',
-      'realtimesource': 'RealtimeSource',
-      'sparksink': 'Model',
-      'sparkcompute': 'Compute',
-      'batchjoiner': 'Join',
-      'action': 'Action',
-      'streamingsource': 'BatchSource',
-      'windower': 'Windower'
-    },
     'pluginTypeToLabel': {
       'transform': 'Transform',
       'batchsource': 'Source',

@@ -34,12 +34,12 @@
   <div class="groups-container">
     <div class="item"
           ng-repeat="group in MySidePanel.groups track by $index"
-          ng-click="MySidePanel.openedGroup = group.id"
-          ng-style="MySidePanel.openedGroup === group.id && {height: MySidePanel.groupWrapperHeight}"
-          ng-class="{'item-open': MySidePanel.openedGroup === group.id }">
+          ng-click="MySidePanel.openedGroup = group.name"
+          ng-style="MySidePanel.openedGroup === group.name && {height: MySidePanel.groupWrapperHeight}"
+          ng-class="{'item-open': MySidePanel.openedGroup === group.name }">
       <div class="text-left item-heading {{group.name}}" >
         <span class="fa"
-              ng-class="{'fa-caret-down': MySidePanel.openedGroup === group.id, 'fa-caret-right': MySidePanel.openedGroup !== group.id}">
+              ng-class="{'fa-caret-down': MySidePanel.openedGroup === group.name, 'fa-caret-right': MySidePanel.openedGroup !== group.name}">
         </span>
         <span class="name">{{group.name}} </span>
         <div class="pull-right">
@@ -47,7 +47,7 @@
         </div>
       </div>
       <div class="item-body-wrapper"
-           ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.id">
+           ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name">
         <div class="item-body" ng-class="{'view-icon': MySidePanel.view === 'icon', 'view-list': MySidePanel.view === 'list'}">
 
           <div ng-if="MySidePanel.view === 'icon'"
