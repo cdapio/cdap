@@ -205,12 +205,8 @@ public class AppFabricTestHelper {
 
     Assert.assertNotNull(program);
 
-    co.cask.cdap.proto.id.ArtifactId artifactId = app.getArtifactId();
-    ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
       ProgramOptionConstants.RUN_ID, RunIds.generate().getId(),
-      ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(artifactId),
-      ProgramOptionConstants.ARTIFACT_META, GSON.toJson(artifactRepository.getArtifact(artifactId.toId()).getMeta()),
       ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
     ));
 

@@ -17,6 +17,10 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
@@ -217,16 +221,19 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return files.getBaseLocation().append(QUARANTINE_DIR + "." + tx.getTransactionId());
   }
 
+  @NoAccess
   @Override
   public Partitioning getPartitioning() {
     return partitioning;
   }
 
+  @ReadWrite
   @Override
   public void addPartition(PartitionKey key, String path) {
     addPartition(key, path, Collections.<String, String>emptyMap());
   }
 
+  @ReadWrite
   @Override
   public void addPartition(PartitionKey key, String path, Map<String, String> metadata) {
     addPartition(key, path, true, metadata);
@@ -241,6 +248,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
    * @param explorable whether to add the partition to explore
    * @param metadata the metadata associated with the partition.
    */
+  @ReadWrite
   protected void addPartition(PartitionKey key, String path, boolean explorable, Map<String, String> metadata) {
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
@@ -279,6 +287,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  @ReadWrite
   @Override
   public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState) {
     return consumePartitions(partitionConsumerState, Integer.MAX_VALUE, new Predicate<PartitionDetail>() {
@@ -304,6 +313,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
    * @return Transaction ID of the partition that we reached in the scanner, but did not add to the list. This value
    *         can be useful in future scans.
    */
+  @ReadOnly
   @Nullable
   private Long scannerToPartitions(Scanner scanner, List<PartitionDetail> partitions, int limit,
                                    Predicate<PartitionDetail> predicate) {
@@ -343,6 +353,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   //   2) A transaction ID from which to start scanning for new partitions. This is an exclusive end range that the
   //      previous call stopped scanning partitions at.
   //   Note that each of the transactions IDs in (1) will be smaller than the transactionId in (2).
+  @ReadWrite
   @Override
   public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState, int limit,
                                                    Predicate<PartitionDetail> predicate) {
@@ -406,11 +417,13 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return oldLongsSet;
   }
 
+  @ReadWrite
   @Override
   public void addMetadata(PartitionKey key, String metadataKey, String metadataValue) {
     addMetadata(key, ImmutableMap.of(metadataKey, metadataValue));
   }
 
+  @ReadWrite
   @Override
   public void addMetadata(PartitionKey key, Map<String, String> metadata) {
     final byte[] rowKey = generateRowKey(key, partitioning);
@@ -440,6 +453,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  @WriteOnly
   protected void addPartitionToExplore(PartitionKey key, String path) {
     if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
@@ -454,6 +468,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  @WriteOnly
   @Override
   public void dropPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
@@ -489,6 +504,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  @WriteOnly
   protected void dropPartitionFromExplore(PartitionKey key) {
     if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
@@ -503,6 +519,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  @NoAccess
   @Override
   public PartitionOutput getPartitionOutput(PartitionKey key) {
     if (isExternal) {
@@ -512,6 +529,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return new BasicPartitionOutput(this, getOutputPath(key), key);
   }
 
+  @ReadOnly
   @Override
   public PartitionDetail getPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
@@ -528,6 +546,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return new BasicPartitionDetail(this, Bytes.toString(pathBytes), key, metadataFromRow(row));
   }
 
+  @ReadOnly
   @Override
   public Set<PartitionDetail> getPartitions(@Nullable PartitionFilter filter) {
     final Set<PartitionDetail> partitionDetails = Sets.newHashSet();
@@ -543,6 +562,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return partitionDetails;
   }
 
+  @ReadOnly
   @VisibleForTesting
   Collection<String> getPartitionPaths(@Nullable PartitionFilter filter) {
     // this avoids constructing the Partition object for every partition.
@@ -556,6 +576,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return paths;
   }
 
+  @ReadOnly
   protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer) {
     // by default, parse the metadata from the rows
     getPartitions(filter, consumer, true);
@@ -563,6 +584,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   // if decodeMetadata is false, null is passed as the PartitionMetadata to the PartitionConsumer,
   // for efficiency reasons, since the metadata is not always needed
+  @ReadOnly
   protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer, boolean decodeMetadata) {
     byte[] startKey = generateStartKey(filter);
     byte[] endKey = generateStopKey(filter);
@@ -619,6 +641,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
    * Generate an output path for a given partition key.
    */
   // package visible for PartitionedFileSetDefinition
+  @NoAccess
   String getOutputPath(PartitionKey key) {
     return getOutputPath(key, partitioning);
   }
@@ -649,6 +672,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  @ReadOnly
   @Override
   public String getInputFormatClassName() {
     Collection<String> inputPaths = filterInputPaths();
@@ -658,6 +682,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return files.getInputFormatClassName();
   }
 
+  @ReadOnly
   @Override
   public Map<String, String> getInputFormatConfiguration() {
     Collection<String> inputPaths = filterInputPaths();
@@ -687,6 +712,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
    * If a partition filter was specified, return the input locations of all partitions
    * matching the filter. Otherwise return null.
    */
+  @ReadOnly
   @Nullable
   protected Collection<String> computeFilterInputPaths() {
     PartitionFilter filter;
@@ -701,6 +727,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return getPartitionPaths(filter); // never returns null
   }
 
+  @ReadOnly
   @Override
   public String getOutputFormatClassName() {
     if (isExternal) {
@@ -714,6 +741,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return files.getOutputFormatClassName();
   }
 
+  @ReadOnly
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
     if (isExternal) {
@@ -747,6 +775,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return ImmutableMap.copyOf(outputArgs);
   }
 
+  @ReadWrite
   @Override
   public void onSuccess() throws DataSetException {
     String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
@@ -767,24 +796,26 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     ((FileSetDataset) files).onSuccess();
   }
 
+  @ReadWrite
   @Override
   public void onFailure() throws DataSetException {
     // depend on FileSetDataset's implementation of #onFailure to rollback
     ((FileSetDataset) files).onFailure();
   }
 
+  @NoAccess
   @Override
   public FileSet getEmbeddedFileSet() {
     return files;
   }
 
+  @NoAccess
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArguments;
   }
 
   //------ private helpers below here --------------------------------------------------------------
-
   @VisibleForTesting
   static byte[] generateRowKey(PartitionKey key, Partitioning partitioning) {
     // validate partition key, convert values, and compute size of output

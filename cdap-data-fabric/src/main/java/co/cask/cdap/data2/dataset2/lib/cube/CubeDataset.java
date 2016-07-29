@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.lib.cube;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
@@ -33,7 +35,6 @@ import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -62,36 +63,43 @@ public class CubeDataset extends AbstractDataset implements Cube {
                                 aggregations, ImmutableMap.<String, AggregationAlias>of());
   }
 
+  @WriteOnly
   @Override
   public void add(CubeFact fact) {
     cube.add(fact);
   }
 
+  @WriteOnly
   @Override
   public void add(Collection<? extends CubeFact> facts) {
     cube.add(facts);
   }
 
+  @ReadOnly
   @Override
   public Collection<TimeSeries> query(CubeQuery query) {
     return cube.query(query);
   }
 
+  @ReadOnly
   @Override
   public void delete(CubeDeleteQuery query) {
     cube.delete(query);
   }
 
+  @ReadOnly
   @Override
   public Collection<DimensionValue> findDimensionValues(CubeExploreQuery query) {
     return cube.findDimensionValues(query);
   }
 
+  @ReadOnly
   @Override
   public Collection<String> findMeasureNames(CubeExploreQuery query) {
     return cube.findMeasureNames(query);
   }
 
+  @WriteOnly
   @Override
   public void write(Object ignored, CubeFact cubeFact) {
     add(cubeFact);

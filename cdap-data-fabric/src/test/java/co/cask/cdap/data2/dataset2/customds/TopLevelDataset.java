@@ -14,24 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.customds;
-
-import co.cask.cdap.api.dataset.DatasetSpecification;
-
-import java.io.IOException;
+package co.cask.cdap.data2.dataset2.customds;
 
 /**
- *
+ * A top level dataset class.
  */
-public class DefaultTopLevelExtendsDataset implements TopLevelExtendsDataset {
+public class TopLevelDataset extends TopLevelDirectDataset {
 
-  @Override
-  public DatasetSpecification getSpecification() {
-    return null;
-  }
-
-  @Override
-  public void close() throws IOException {
-
-  }
 }

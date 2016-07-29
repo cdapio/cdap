@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package co.cask.cdap.app.runtime;
+
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 
 /**
- * A {@link Table} that stores all data in memory.
+ * A provider for for program classloading creation.
  */
-public interface MemoryTable extends Table {
+public interface ProgramClassLoaderProvider {
+
+  /**
+   * Creates a {@link ClassLoader} that will be used as the parent {@link ClassLoader} of
+   * {@link ProgramClassLoader}.
+   *
+   * @return an instance of {@link ClassLoader}
+   */
+  ClassLoader createProgramClassLoaderParent();
 }

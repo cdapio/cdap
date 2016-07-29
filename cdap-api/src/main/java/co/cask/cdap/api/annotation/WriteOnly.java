@@ -14,15 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.app.customds;
+package co.cask.cdap.api.annotation;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetSpecification;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- *
+ * Annotation to denote if a {@link Dataset} constructor or method only performs write operations.
  */
-public interface TopLevelExtendsDataset extends Dataset {
-
-  DatasetSpecification getSpecification();
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
+public @interface WriteOnly {
 }

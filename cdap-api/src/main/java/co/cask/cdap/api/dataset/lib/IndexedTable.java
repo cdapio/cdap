@@ -16,6 +16,10 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
@@ -164,31 +168,37 @@ public class IndexedTable extends AbstractDataset implements Table {
    * @param get the read operation, as if it were on a non-indexed table
    * @return the result of the read on the underlying primary table
    */
+  @ReadOnly
   @Override
   public Row get(Get get) {
     return table.get(get);
   }
 
+  @ReadOnly
   @Override
   public Row get(byte[] row) {
     return table.get(row);
   }
 
+  @ReadOnly
   @Override
   public byte[] get(byte[] row, byte[] column) {
     return table.get(row, column);
   }
 
+  @ReadOnly
   @Override
   public Row get(byte[] row, byte[][] columns) {
     return table.get(row, columns);
   }
 
+  @ReadOnly
   @Override
   public Row get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit) {
     return table.get(row, startColumn, stopColumn, limit);
   }
 
+  @ReadOnly
   @Override
   public List<Row> get(List<Get> gets) {
     return table.get(gets);
@@ -202,6 +212,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    * given value.
    * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
    */
+  @ReadOnly
   public Scanner readByIndex(byte[] column, byte[] value) {
     assertIndexedColumn(column);
     byte[] rowKeyPrefix = Bytes.concat(column, KEY_DELIMITER, value, KEY_DELIMITER);
@@ -223,6 +234,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    *         given range.
    * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
    */
+  @ReadOnly
   public Scanner scanByIndex(byte[] column, @Nullable byte[] startValue, @Nullable byte[] endValue) {
     assertIndexedColumn(column);
     // KEY_DELIMITER is not used at the end of the rowKeys, because they are used for a range scan,
@@ -247,6 +259,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    * 
    * @param put The put operation to store
    */
+  @ReadWrite
   @Override
   public void put(Put put) {
     // if different value exists, remove current index ref
@@ -287,6 +300,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     return Bytes.concat(column, KEY_DELIMITER, value, KEY_DELIMITER, row);
   }
 
+  @ReadWrite
   @Override
   public void put(byte[] row, byte[] column, byte[] value) {
     Put put = new Put(row);
@@ -294,6 +308,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     put(put);
   }
 
+  @ReadWrite
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) {
     Put put = new Put(row);
@@ -308,6 +323,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    * 
    * @param delete The delete operation identifying the row and optional columns to remove
    */
+  @ReadWrite
   @Override
   public void delete(Delete delete) {
     if (delete.getColumns() == null) {
@@ -318,6 +334,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     delete(delete.getRow(), delete.getColumns().toArray(new byte[0][]));
   }
 
+  @ReadWrite
   @Override
   public void delete(byte[] row) {
     Row existingRow = table.get(row);
@@ -333,11 +350,13 @@ public class IndexedTable extends AbstractDataset implements Table {
     table.delete(row);
   }
 
+  @ReadWrite
   @Override
   public void delete(byte[] row, byte[] column) {
     delete(row, new byte[][]{ column });
   }
 
+  @ReadWrite
   @Override
   public void delete(byte[] row, byte[][] columns) {
     Row existingRow = table.get(row, columns);
@@ -369,6 +388,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    * then the index must be updated; otherwise, this is a
    * pass-through to the underlying table.
    */
+  @ReadWrite
   @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expected, byte[] newValue) {
     // if the swap is on a column other than the column key, then
@@ -419,6 +439,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    *
    * @see Table#incrementAndGet(byte[], byte[], long)
    */
+  @ReadWrite
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long amount) {
     byte[] newValue = incrementAndGet(row, new byte[][]{ column }, new long[]{ amount }).get(column);
@@ -433,6 +454,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    *
    * @see Table#incrementAndGet(byte[], byte[][], long[])
    */
+  @ReadWrite
   @Override
   public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
     if (columns.length != amounts.length) {
@@ -476,6 +498,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    *
    * @see Table#incrementAndGet(Increment)
    */
+  @ReadWrite
   @Override
   public Row incrementAndGet(Increment increment) {
     Map<byte[], Long> incrementValues = increment.getValues();
@@ -497,6 +520,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    *
    * @see Table#increment(byte[], byte[], long)
    */
+  @ReadWrite
   @Override
   public void increment(byte[] row, byte[] column, long amount) {
     // read-less increments should not be used on indexed columns
@@ -513,6 +537,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    *
    * @see Table#increment(byte[], byte[][], long[])
    */
+  @ReadWrite
   @Override
   public void increment(byte[] row, byte[][] columns, long[] amounts) {
     // read-less increments should not be used on indexed columns
@@ -531,6 +556,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    *
    * @see Table#increment(Increment)
    */
+  @ReadWrite
   @Override
   public void increment(Increment increment) {
     for (byte[] col : increment.getValues().keySet()) {
@@ -542,11 +568,13 @@ public class IndexedTable extends AbstractDataset implements Table {
     table.increment(increment);
   }
 
+  @ReadOnly
   @Override
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow) {
     return table.scan(startRow, stopRow);
   }
 
+  @ReadOnly
   @Override
   public Scanner scan(Scan scan) {
     return table.scan(scan);
@@ -554,31 +582,37 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   /* BatchReadable implementation */
 
+  @NoAccess
   @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     return table.getSplits(numSplits, start, stop);
   }
 
+  @NoAccess
   @Override
   public Type getRecordType() {
     return table.getRecordType();
   }
 
+  @WriteOnly
   @Override
   public void write(StructuredRecord structuredRecord) throws IOException {
     table.write(structuredRecord);
   }
 
+  @NoAccess
   @Override
   public List<Split> getSplits() {
     return table.getSplits();
   }
 
+  @ReadOnly
   @Override
   public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
     return table.createSplitRecordScanner(split);
   }
 
+  @ReadOnly
   @Override
   public SplitReader<byte[], Row> createSplitReader(Split split) {
     return table.createSplitReader(split);
@@ -586,6 +620,7 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   /* BatchWritable implementation */
 
+  @WriteOnly
   @Override
   public void write(byte[] bytes, Put put) {
     put(put);
@@ -596,7 +631,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     private final Scanner baseScanner;
     private final byte[] column;
 
-    public AbstractIndexScanner(Scanner baseScanner, byte[] column) {
+    AbstractIndexScanner(Scanner baseScanner, byte[] column) {
       this.baseScanner = baseScanner;
       this.column = column;
     }
@@ -650,7 +685,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   private class IndexScanner extends AbstractIndexScanner {
     private final byte[] value;
 
-    public IndexScanner(Scanner baseScanner, byte[] column, byte[] value) {
+    IndexScanner(Scanner baseScanner, byte[] column, byte[] value) {
       super(baseScanner, column);
       this.value = value;
     }
@@ -666,7 +701,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     private final byte[] start;
     private final byte[] end;
 
-    public IndexRangeScanner(Scanner baseScanner, byte[] column, @Nullable byte[] start, @Nullable byte[] end) {
+    IndexRangeScanner(Scanner baseScanner, byte[] column, @Nullable byte[] start, @Nullable byte[] end) {
       super(baseScanner, column);
       this.start = start;
       this.end = end;

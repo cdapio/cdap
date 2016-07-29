@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
+import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.internal.asm.Methods;
 import com.google.common.base.Preconditions;
 import com.google.common.io.OutputSupplier;
@@ -74,14 +75,16 @@ public final class ContainerLauncherGenerator {
   /**
    * Generates a JAR file that contains a class with a static main method.
    *
-   * @param mainClassName Name of the generated class
+   * @param mainClassNames List of main class names to generate
    * @param mainDelegatorClass the actual class that the main method will delegate to
    * @param outputSupplier the {@link OutputSupplier} for the jar file
    */
-  public static void generateLauncherJar(String mainClassName, Class<?> mainDelegatorClass,
+  public static void generateLauncherJar(Iterable<String> mainClassNames, Class<?> mainDelegatorClass,
                                          OutputSupplier<? extends OutputStream> outputSupplier) throws IOException {
     try (JarOutputStream output = new JarOutputStream(outputSupplier.getOutput())) {
-      generateMainClass(mainClassName, Type.getType(mainDelegatorClass), output);
+      for (String mainClassName : mainClassNames) {
+        generateMainClass(mainClassName, Type.getType(mainDelegatorClass), output);
+      }
     }
   }
 
@@ -92,7 +95,7 @@ public final class ContainerLauncherGenerator {
    * <pre>{@code
    * class className {
    *   public static void main(String[] args) {
-   *     MapReduceContainerLauncher.launch(launcherClassPath, classLoaderName, className, args);
+   *     MapReduceContainerLauncher.launch(launcherClassPath, mainClassLoaderName, classLoaderName, className, args);
    *   }
    * }
    * }
@@ -134,11 +137,13 @@ public final class ContainerLauncherGenerator {
 
     // The Launcher classpath, classloader name and main classname are stored as string literal in the generated class
     mg.visitLdcInsn(launcherClassPath);
+    mg.visitLdcInsn(MainClassLoader.class.getName());
     mg.visitLdcInsn(classLoaderName);
     mg.visitLdcInsn(className);
     mg.loadArg(0);
     mg.invokeStatic(Type.getType(MapReduceContainerLauncher.class),
-                    Methods.getMethod(void.class, "launch", String.class, String.class, String.class, String[].class));
+                    Methods.getMethod(void.class, "launch",
+                                      String.class, String.class, String.class, String.class, String[].class));
     mg.returnValue();
     mg.endMethod();
 

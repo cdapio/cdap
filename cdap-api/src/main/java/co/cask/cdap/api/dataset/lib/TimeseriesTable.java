@@ -17,6 +17,9 @@
 package co.cask.cdap.api.dataset.lib;
 
 
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.IteratorBasedSplitReader;
@@ -117,6 +120,7 @@ public class TimeseriesTable extends TimeseriesDataset
    *
    * @param entry entry to write
    */
+  @WriteOnly
   public final void write(Entry entry) {
     write(entry.getKey(), entry.getValue(), entry.getTimestamp(), entry.getTags());
   }
@@ -140,6 +144,7 @@ public class TimeseriesTable extends TimeseriesDataset
    * @return an iterator over entries that satisfy provided conditions
    * @throws IllegalArgumentException when provided condition is incorrect
    */
+  @ReadOnly
   public final Iterator<Entry> read(byte[] key, long startTime, long endTime,
                                     int offset, final int limit, byte[]... tags) {
     final Iterator<Entry> iterator = read(key, startTime, endTime, tags);
@@ -186,6 +191,7 @@ public class TimeseriesTable extends TimeseriesDataset
    *
    * @return an iterator over entries that satisfy provided conditions
    */
+  @ReadOnly
   public Iterator<Entry> read(byte[] key, long startTime, long endTime, byte[]... tags) {
     final Iterator<TimeseriesDataset.Entry> internalIterator = readInternal(key, startTime, endTime, tags);
     return new Iterator<Entry>() {
@@ -237,6 +243,7 @@ public class TimeseriesTable extends TimeseriesDataset
    *             entry is only returned if it contains all of these tags.
    * @return the list of splits
    */
+  @NoAccess
   public List<Split> getInputSplits(int splitsCount, byte[] key, long startTime, long endTime, byte[]... tags) {
     long timeIntervalPerSplit = (endTime - startTime) / splitsCount;
     // we don't want splits to be empty
@@ -256,6 +263,7 @@ public class TimeseriesTable extends TimeseriesDataset
     return splits;
   }
 
+  @NoAccess
   @Override
   public List<Split> getSplits() {
     throw new UnsupportedOperationException("Cannot use TimeSeriesTable as input for Batch directly. " +
@@ -264,6 +272,7 @@ public class TimeseriesTable extends TimeseriesDataset
                                               "initialize(MapReduceContext context) method of the MapReduce app.");
   }
 
+  @ReadOnly
   @Override
   public SplitReader<byte[], Entry> createSplitReader(final Split split) {
     return new TimeseriesTableRecordsReader();
@@ -276,6 +285,7 @@ public class TimeseriesTable extends TimeseriesDataset
    * @param key row key to write to. Value is ignored
    * @param value entry to write. The key used to write to the table is extracted from this object
    */
+  @WriteOnly
   @Override
   public void write(final byte[] key, final Entry value) {
     write(value);

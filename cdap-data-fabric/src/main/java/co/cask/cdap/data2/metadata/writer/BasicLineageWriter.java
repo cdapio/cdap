@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
+import co.cask.cdap.data2.metadata.lineage.LineageStoreWriter;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -34,13 +35,13 @@ import javax.annotation.Nullable;
 public class BasicLineageWriter implements LineageWriter {
   private static final Logger LOG = LoggerFactory.getLogger(BasicLineageWriter.class);
 
-  private final LineageStore lineageStore;
+  private final LineageStoreWriter lineageStoreWriter;
 
   private final ConcurrentMap<DataAccessKey, Boolean> registered = new ConcurrentHashMap<>();
 
   @Inject
-  BasicLineageWriter(LineageStore lineageStore) {
-    this.lineageStore = lineageStore;
+  BasicLineageWriter(LineageStoreWriter lineageStoreWriter) {
+    this.lineageStoreWriter = lineageStoreWriter;
   }
 
   @Override
@@ -58,7 +59,7 @@ public class BasicLineageWriter implements LineageWriter {
     long accessTime = System.currentTimeMillis();
     LOG.debug("Writing access for run {}, dataset {}, accessType {}, component {}, accessTime = {}",
               run, datasetInstance, accessType, component, accessTime);
-    lineageStore.addAccess(run, datasetInstance, accessType, accessTime, component);
+    lineageStoreWriter.addAccess(run, datasetInstance, accessType, accessTime, component);
   }
 
   @Override
@@ -75,7 +76,7 @@ public class BasicLineageWriter implements LineageWriter {
     long accessTime = System.currentTimeMillis();
     LOG.debug("Writing access for run {}, stream {}, accessType {}, component {}, accessTime = {}",
               run, stream, accessType, component, accessTime);
-    lineageStore.addAccess(run, stream, accessType, accessTime, component);
+    lineageStoreWriter.addAccess(run, stream, accessType, accessTime, component);
   }
 
   private boolean alreadyRegistered(Id.Run run, Id.NamespacedId data, AccessType accessType,

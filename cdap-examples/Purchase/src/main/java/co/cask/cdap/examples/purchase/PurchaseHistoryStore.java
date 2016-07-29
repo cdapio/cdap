@@ -15,6 +15,9 @@
  */
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
@@ -78,21 +81,25 @@ public class PurchaseHistoryStore
     this.store = objStore;
   }
 
+  @NoAccess
   @Override // RecordScannable
   public Type getRecordType() {
     return PurchaseHistory.class;
   }
 
+  @NoAccess
   @Override // RecordScannable
   public List<Split> getSplits() {
     return store.getSplits();
   }
 
+  @ReadOnly
   @Override // RecordScannable
   public RecordScanner<PurchaseHistory> createSplitRecordScanner(Split split) {
     return Scannables.valueRecordScanner(store.createSplitReader(split));
   }
 
+  @WriteOnly
   @Override // BatchWritable
   public void write(String key, PurchaseHistory history) {
     store.write(key, history);
@@ -103,6 +110,7 @@ public class PurchaseHistoryStore
    *
    * @param history The purchase history to store.
    */
+  @WriteOnly
   public void write(PurchaseHistory history) {
     store.write(history.getCustomer(), history);
   }
@@ -111,6 +119,7 @@ public class PurchaseHistoryStore
    * @param customer the customer in question
    * @return the purchase history of the given customer
    */
+  @ReadOnly
   public PurchaseHistory read(String customer) {
     return store.read(customer);
   }

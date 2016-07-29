@@ -74,6 +74,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -356,9 +357,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   private File createLauncherJar(File tempDir) throws IOException {
     File jarFile = new File(tempDir, CDAP_LAUNCHER_JAR);
-    ContainerLauncherGenerator.generateLauncherJar("org.apache.spark.deploy.yarn.ApplicationMaster",
-                                                   SparkContainerLauncher.class,
-                                                   Files.newOutputStreamSupplier(jarFile));
+    ContainerLauncherGenerator.generateLauncherJar(
+      Arrays.asList("org.apache.spark.deploy.yarn.ApplicationMaster",
+                    "org.apache.spark.executor.CoarseGrainedExecutorBackend"),
+      SparkContainerLauncher.class, Files.newOutputStreamSupplier(jarFile));
     return jarFile;
   }
 

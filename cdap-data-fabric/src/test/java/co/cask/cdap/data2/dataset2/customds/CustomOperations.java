@@ -14,18 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package co.cask.cdap.data2.dataset2.customds;
 
 /**
- * A provider for for program classloading creation.
+ * An interface for testing dataset class rewrite.
  */
-public interface ProgramClassLoaderProvider {
+public interface CustomOperations {
 
-  /**
-   * Creates a {@link ClassLoader} that will be used as the parent {@link ClassLoader} of
-   * {@link ProgramClassLoader}.
-   *
-   * @return an instance of {@link ClassLoader}
-   */
-  ClassLoader createProgramClassLoaderParent();
+  void read();
+
+  void write();
+
+  void readWrite();
+
+  void invalidRead();
+
+  void invalidWrite();
+
+  void invalidReadFromWriteOnly();
+
+  void invalidWriteFromReadOnly();
 }

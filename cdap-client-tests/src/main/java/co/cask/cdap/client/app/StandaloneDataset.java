@@ -16,6 +16,9 @@
 
 package co.cask.cdap.client.app;
 
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
@@ -43,29 +46,35 @@ public class StandaloneDataset extends AbstractDataset
     this.table = table;
   }
 
+  @ReadOnly
   public byte[] get(byte[] key) {
     return table.read(key);
   }
 
+  @WriteOnly
   public void put(byte[] key, byte[] value) {
     table.write(key, value);
   }
 
+  @NoAccess
   @Override
   public Type getRecordType() {
     return table.getRecordType();
   }
 
+  @NoAccess
   @Override
   public List<Split> getSplits() {
     return table.getSplits();
   }
 
+  @ReadOnly
   @Override
   public RecordScanner<KeyValue<byte[], byte[]>> createSplitRecordScanner(Split split) {
     return table.createSplitRecordScanner(split);
   }
 
+  @ReadOnly
   @Override
   public SplitReader<byte[], byte[]> createSplitReader(Split split) {
     return table.createSplitReader(split);

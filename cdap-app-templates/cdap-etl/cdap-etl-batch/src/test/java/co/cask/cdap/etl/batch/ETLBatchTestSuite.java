@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.common.test.TestSuite;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -26,7 +27,7 @@ import org.junit.runners.Suite;
  * for every test class.
  */
 @Category(XSlowTests.class)
-@RunWith(Suite.class)
+@RunWith(TestSuite.class)
 @Suite.SuiteClasses({
   ETLWorkflowTestRun.class,
   ETLSparkTestRun.class

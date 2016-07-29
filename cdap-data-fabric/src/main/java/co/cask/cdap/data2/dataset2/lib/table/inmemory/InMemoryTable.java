@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
@@ -30,9 +32,11 @@ import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import javax.annotation.Nullable;
@@ -85,6 +89,7 @@ public class InMemoryTable extends BufferingTable {
     this.tx = tx;
   }
 
+  @ReadWrite
   @Override
   public void increment(byte[] row, byte[][] columns, long[] amounts) {
     // for in-memory use, no need to do fancy read-less increments
@@ -132,7 +137,7 @@ public class InMemoryTable extends BufferingTable {
 
     rows = applyFilter(rows, scan.getFilter());
 
-    return new InMemoryScanner(rows.entrySet().iterator());
+    return new InMemoryScanner(wrapIterator(rows.entrySet().iterator()));
   }
 
   private NavigableMap<byte[], NavigableMap<byte[], byte[]>> applyFilter(
@@ -243,5 +248,25 @@ public class InMemoryTable extends BufferingTable {
     }
 
     return result;
+  }
+
+  // Following methods assist the Dataset authorization of the scanner
+  @ReadOnly
+  private <T> boolean hasNext(Iterator<T> iterator) {
+    return iterator.hasNext();
+  }
+
+  @ReadOnly
+  private <T> T next(Iterator<T> iterator) {
+    return iterator.next();
+  }
+
+  private <T> Iterator<T> wrapIterator(final Iterator<T> iterator) {
+    return new AbstractIterator<T>() {
+      @Override
+      protected T computeNext() {
+        return InMemoryTable.this.hasNext(iterator) ? InMemoryTable.this.next(iterator) : endOfData();
+      }
+    };
   }
 }

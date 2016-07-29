@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.annotation.NoAccess;
+import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
@@ -44,6 +46,7 @@ import co.cask.tephra.TxConstants;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -60,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -105,6 +109,7 @@ public class HBaseTable extends BufferingTable {
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()}, Bytes.toBytes(this.hTableName));
   }
 
+  @NoAccess
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -120,6 +125,7 @@ public class HBaseTable extends BufferingTable {
     this.tx = tx;
   }
 
+  @ReadOnly
   @Override
   public List<Map<byte[], byte[]>> getPersisted(List<co.cask.cdap.api.dataset.table.Get> gets) {
     List<Get> hbaseGets = new ArrayList<>();
@@ -155,11 +161,12 @@ public class HBaseTable extends BufferingTable {
     }
   }
 
+  @NoAccess
   @Override
   public byte[] getNameAsTxChangePrefix() {
     return nameAsTxChangePrefix;
   }
-
+  
   @Override
   public void close() throws IOException {
     try {
@@ -279,7 +286,7 @@ public class HBaseTable extends BufferingTable {
     setFilterIfNeeded(hScan, scan.getFilter());
     hScan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
 
-    ResultScanner resultScanner = hTable.getScanner(hScan.build());
+    ResultScanner resultScanner = wrapResultScanner(hTable.getScanner(hScan.build()));
     return new HBaseScanner(resultScanner, columnFamily);
   }
 
@@ -366,5 +373,62 @@ public class HBaseTable extends BufferingTable {
     }
 
     return unwrapDeletes(rowMap);
+  }
+
+  // The following methods assist the Dataset authorization when the ResultScanner is used.
+
+  @ReadOnly
+  private Result next(ResultScanner scanner) throws IOException {
+    return scanner.next();
+  }
+
+  @ReadOnly
+  private Result[] next(ResultScanner scanner, int nbRows) throws IOException {
+    return scanner.next(nbRows);
+  }
+
+  @NoAccess
+  private void close(ResultScanner scanner) {
+    scanner.close();
+  }
+
+  @ReadOnly
+  private <T> boolean hasNext(Iterator<T> iterator) {
+    return iterator.hasNext();
+  }
+
+  @ReadOnly
+  private <T> T next(Iterator<T> iterator) {
+    return iterator.next();
+  }
+
+  private ResultScanner wrapResultScanner(final ResultScanner scanner) {
+    return new ResultScanner() {
+      @Override
+      public Result next() throws IOException {
+        return HBaseTable.this.next(scanner);
+      }
+
+      @Override
+      public Result[] next(int nbRows) throws IOException {
+        return HBaseTable.this.next(scanner, nbRows);
+      }
+
+      @Override
+      public void close() {
+        HBaseTable.this.close(scanner);
+      }
+
+      @Override
+      public Iterator<Result> iterator() {
+        final Iterator<Result> iterator = scanner.iterator();
+        return new AbstractIterator<Result>() {
+          @Override
+          protected Result computeNext() {
+            return HBaseTable.this.hasNext(iterator) ? HBaseTable.this.next(iterator) : endOfData();
+          }
+        };
+      }
+    };
   }
 }

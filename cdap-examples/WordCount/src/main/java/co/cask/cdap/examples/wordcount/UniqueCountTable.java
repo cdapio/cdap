@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.examples.wordcount;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
@@ -52,6 +54,7 @@ public class UniqueCountTable extends AbstractDataset {
    *
    * @return current number of unique entries
    */
+  @ReadOnly
   public Long readUniqueCount() {
     return uniqueCountTable.get(new Get(UNIQUE_COUNT, UNIQUE_COUNT)).getLong(UNIQUE_COUNT, 0);
   }
@@ -67,6 +70,7 @@ public class UniqueCountTable extends AbstractDataset {
    *
    * @param entry entry to add
    */
+  @ReadWrite
   public void updateUniqueCount(String entry) {
     long newCount = this.entryCountTable.incrementAndGet(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
     if (newCount == 1L) {

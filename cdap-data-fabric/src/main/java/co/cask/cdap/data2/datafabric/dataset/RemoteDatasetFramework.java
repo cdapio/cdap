@@ -226,29 +226,10 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public <T extends Dataset> T getDataset(
     Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
-    @Nullable ClassLoader classLoader,
-    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
-
-    return getDataset(datasetInstanceId, arguments, classLoader, new ConstantClassLoaderProvider(classLoader), owners);
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(
-    Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
     @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
 
-    return getDataset(datasetInstanceId, arguments, classLoader, null);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(
-    Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-    @Nullable ClassLoader classLoader,
-    DatasetClassLoaderProvider classLoaderProvider,
-    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
-
-    return getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, AccessType.UNKNOWN);
+    return getDataset(datasetInstanceId, arguments, classLoader,
+                      new ConstantClassLoaderProvider(classLoader), null, AccessType.UNKNOWN);
   }
 
   @Nullable
