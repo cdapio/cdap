@@ -34,20 +34,6 @@ Components
 The Java Client API allows you to interact with these CDAP components:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `ProgramClient: <#program-client>`_ interacting with flows, MapReduce programs, user services, workflows, and workers
-- `StreamClient: <#stream-client>`_ interacting with streams
-- `DatasetClient: <#dataset-client>`_ interacting with datasets
-- `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
-- `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
-- `QueryClient: <#query-client>`_ querying datasets
-- `ServiceClient: <#service-client>`_ interacting with user services
-- `MetricsClient: <#metrics-client>`_ interacting with metrics
-- `MonitorClient: <#monitor-client>`_ monitoring system services
-- `PreferencesClient: <#preferences-client>`_ interacting with preferences
-
-Alphabetical list:
-
-- `ApplicationClient: <#application-client>`_ interacting with applications
 - `DatasetClient: <#dataset-client>`_ interacting with datasets
 - `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
@@ -59,7 +45,7 @@ Alphabetical list:
 - `ServiceClient: <#service-client>`_ interacting with user services
 - `StreamClient: <#stream-client>`_ interacting with streams
 
-The above lists link to the examples below for each portion of the API.
+The above list links to the examples below for each portion of the API.
 
 .. _client-api-configuring-client:
 
