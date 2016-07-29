@@ -57,6 +57,7 @@ import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -314,8 +315,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         throw t;
       }
     } catch (Throwable t) {
-      LOG.error("Exception when submitting MapReduce Job: {}", context, t);
       cleanupTask.run();
+      // don't log the error. It will be logged by the ProgramControllerServiceAdapter.failed()
+      if (t instanceof TransactionFailureException && t.getCause() instanceof Exception
+        && !(t instanceof TransactionConflictException)) {
+        throw (Exception) t.getCause();
+      }
       throw t;
     }
   }
@@ -582,6 +587,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
       });
     } catch (Throwable e) {
+      if (e instanceof TransactionFailureException && e.getCause() != null
+        && !(e instanceof TransactionConflictException)) {
+        e = e.getCause();
+      }
       LOG.warn("Error executing the destroy method of the MapReduce program {}", context.getProgram().getName(), e);
     }
   }
