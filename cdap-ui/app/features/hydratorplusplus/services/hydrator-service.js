@@ -290,6 +290,8 @@ class HydratorPlusPlusHydratorService {
         console.log('ERROR: Parsing schema JSON ', e);
         return schema;
       }
+    } else if (schema === null || typeof schema === 'undefined' ) {
+      return '';
     } else {
       outputSchema = angular.copy(schema);
     }
