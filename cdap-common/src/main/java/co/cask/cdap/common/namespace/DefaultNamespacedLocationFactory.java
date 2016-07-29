@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -58,29 +59,37 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
   }
 
   @Override
+  public Location get(NamespaceMeta namespaceMeta) throws IOException {
+    String rootDirectory = namespaceMeta.getConfig().getRootDirectory();
+    Location namespaceLocation;
+    if (Strings.isNullOrEmpty(rootDirectory)) {
+      // if no custom mapping was specified the use the default namespaces location
+      namespaceLocation = getNonCustomMappedLocation(namespaceMeta.getNamespaceId().toId());
+    } else {
+      // custom mapping are expected to be given from the root of the filesystem.
+      // so here use the rootlocationfactory
+      namespaceLocation = rootLocationFactory.create("/").append(rootDirectory);
+    }
+    return namespaceLocation;
+  }
+
+  @Override
   public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
-    String rootDirectory;
     Location namespaceLocation;
     if (Id.Namespace.DEFAULT.equals(namespaceId) || Id.Namespace.SYSTEM.equals(namespaceId) ||
       Id.Namespace.CDAP.equals(namespaceId)) {
       // since these are cdap reserved namespace we know there cannot be a custom mapping for this.
       // for optimization don't query for namespace meta
-      namespaceLocation = getSimpleLocation(namespaceId);
+      namespaceLocation = getNonCustomMappedLocation(namespaceId);
     } else {
       // since this is not a cdap reserved namespace we look up meta if there is a custom mapping
+      NamespaceMeta namespaceMeta;
       try {
-        rootDirectory = namespaceQueryAdmin.get(namespaceId).getConfig().getRootDirectory();
+        namespaceMeta = namespaceQueryAdmin.get(namespaceId);
       } catch (Exception e) {
         throw new IOException(String.format("Failed to get namespace meta for namespace %s", namespaceId), e);
       }
-      if (Strings.isNullOrEmpty(rootDirectory)) {
-        // if no custom mapping was specified the use the default namespaces location
-        namespaceLocation = getSimpleLocation(namespaceId);
-      } else {
-        // custom mapping are expected to be given from the root of the filesystem.
-        // so here use the rootlocationfactory
-        namespaceLocation = rootLocationFactory.create("/").append(rootDirectory);
-      }
+      namespaceLocation = get(namespaceMeta);
     }
 
     if (subPath != null) {
@@ -95,7 +104,7 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
    * @param namespaceId the simple cdap namespace
    * @return location of the namespace
    */
-  private Location getSimpleLocation(Id.Namespace namespaceId) throws IOException {
+  private Location getNonCustomMappedLocation(Id.Namespace namespaceId) throws IOException {
     return locationFactory.create(namespaceDir).append(namespaceId.getId());
   }
 

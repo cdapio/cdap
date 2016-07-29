@@ -18,6 +18,7 @@ package co.cask.cdap.data2.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -63,6 +64,20 @@ public class Impersonator {
   }
 
   /**
+   * Executes a callable as the user, configurable at a namespace level
+   *
+   * @param namespaceMeta the metadata of the namespace to use to lookup the user
+   * @param callable the callable to execute
+   * @param <T> return type of the callable
+   *
+   * @return the return value of the callable
+   * @throws Exception if the callable throws any exception
+   */
+  public <T> T doAs(NamespaceMeta namespaceMeta, final Callable<T> callable) throws Exception {
+    return ImpersonationUtils.doAs(getUGI(namespaceMeta), callable);
+  }
+
+  /**
    * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
    *
    * @param namespaceId namespace to lookup the user
@@ -74,8 +89,25 @@ public class Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
       return UserGroupInformation.getCurrentUser();
     }
+    return getUGI(impersonationUserResolver.getImpersonationInfo(namespaceId));
+  }
 
-    ImpersonationInfo impersonationInfo = impersonationUserResolver.getImpersonationInfo(namespaceId);
+  /**
+   * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceMeta}
+   *
+   * @param namespaceMeta the {@link NamespaceMeta metadata} of the namespace to lookup the user
+   * @return {@link UserGroupInformation}
+   * @throws IOException if there was any error fetching the {@link UserGroupInformation}
+   */
+  public UserGroupInformation getUGI(NamespaceMeta namespaceMeta) throws IOException {
+    // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
+    if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceMeta.getNamespaceId())) {
+      return UserGroupInformation.getCurrentUser();
+    }
+    return getUGI(impersonationUserResolver.getImpersonationInfo(namespaceMeta));
+  }
+
+  private UserGroupInformation getUGI(ImpersonationInfo impersonationInfo) throws IOException {
     // no need to get a UGI if the current UGI is the one we're requesting; simply return it
     if (UserGroupInformation.getCurrentUser().getUserName().equals(impersonationInfo.getPrincipal())) {
       LOG.debug("Requested UGI is same as calling UGI. Simply returning current user: {}",

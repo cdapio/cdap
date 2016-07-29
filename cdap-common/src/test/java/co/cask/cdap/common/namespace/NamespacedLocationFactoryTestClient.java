@@ -49,6 +49,11 @@ public class NamespacedLocationFactoryTestClient implements NamespacedLocationFa
   }
 
   @Override
+  public Location get(NamespaceMeta namespaceMeta) throws IOException {
+    return get(namespaceMeta.getNamespaceId().toId(), null);
+  }
+
+  @Override
   public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
     Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
     if (subPath != null) {
