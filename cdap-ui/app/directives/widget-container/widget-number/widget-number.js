@@ -58,6 +58,7 @@ angular.module(PKG.name + '.commons')
         }
         $scope.$watch('internalModel', function(newValue, oldValue) {
           if (oldValue === newValue || !checkForBounds(newValue)) {
+            $scope.model = (typeof newValue === 'number' && !Number.isNaN(newValue) && newValue.toString()) || '';
             return;
           }
           $scope.model = (typeof $scope.internalModel === 'number' && !Number.isNaN($scope.internalModel) && $scope.internalModel.toString()) || '';
