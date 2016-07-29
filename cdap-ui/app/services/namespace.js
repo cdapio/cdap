@@ -40,11 +40,8 @@ angular.module(PKG.name + '.services')
             .then(
               (function(res) {
 
-                if(!res.length) {
-                  res = [{
-                    id: 'default',
-                    name: 'default'
-                  }];
+                if(!res.length && !$state.includes('admin.**')) {
+                  $state.go('unauthorized');
                 }
 
                 this.namespaceList = res;

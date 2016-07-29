@@ -70,11 +70,20 @@ angular.module(PKG.name+'.feature.home')
             return myNamespace.getList();
           }
         },
-        controller: 'HomeController'
+        controller: 'HomeController',
+        onEnter: function ($stateParams, $state) {
+          if (!$stateParams.namespace) {
+            $state.go('home');
+          }
+        }
       })
 
       .state('404', {
         templateUrl: '/assets/features/home/404.html'
+      })
+
+      .state('unauthorized', {
+        templateUrl: '/assets/features/home/unauthorized-namespace.html'
       })
 
       ;

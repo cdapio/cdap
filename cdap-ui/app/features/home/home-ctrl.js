@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.home')
-  .controller('HomeController', function ($state, rNsList, mySessionStorage, myLoadingService, $filter, EventPipe) {
+  .controller('HomeController', function ($state, rNsList, mySessionStorage, myLoadingService, $filter) {
     // Needed to inject StatusFactory here for angular to instantiate the service and start polling.
     // check that $state.params.namespace is valid
     var n = rNsList.filter(function (one) {
@@ -41,11 +41,10 @@ angular.module(PKG.name + '.feature.home')
           if (checkNamespace('default')){
             $state.go($state.current, {namespace: 'default'}, {reload: true});
             return;
+          } else {
+            $state.go($state.current, { namespace: rNsList[0].name }, { reload: true });
+            return;
           }
-
-          // evoke backend is down
-          EventPipe.emit('backendDown');
-
         });
     }
     else {
