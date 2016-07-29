@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _cloudera-ingesting:
 
@@ -99,59 +99,70 @@ are written in a custom format, they cannot be directly queried through Impala. 
 you can create an ETL batch application that regularly reads
 stream events and writes those events into files on HDFS that can then be queried by Impala.
 
-To do this, write the following JSON to a config file::
+To do this, write the following JSON to a config file:
 
+.. parsed-literal::
+  :class: copyable copyable-text
+           
   {
+    "name": "streamToTPFS",
     "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
+    "artifact": {
+      "name": "cdap-data-pipeline",
+      "scope": "system",
+      "version": "|release|"
+    },
     "config": {
-      "schedule": "*/10 * * * *",
-      "source": {
-        "name": "tradeStream",
-        "plugin": {
-          "name": "Stream",
-          "properties": {
-            "name": "trades",
-            "duration": "10m",
-            "format": "csv",
-            "schema": "{
-              \"type\":\"record\",
-              \"name\":\"purchase\",
-              \"fields\":[
-                {\"name\":\"ticker\",\"type\":\"string\"},
-                {\"name\":\"price\",\"type\":\"double\"},
-                {\"name\":\"trades\",\"type\":\"int\"}
-              ]
-            }",
-            "format.setting.delimiter":","
+      "schedule": "\*/10 \* \* \* \*",
+      "engine": "mapreduce",
+      "stages": [
+        {
+          "name": "tradeStream",
+          "plugin": {
+            "name": "Stream",
+            "type": "batchsource",
+            "properties": {
+              "name": "trades",
+              "duration": "10m",
+              "format": "csv",
+              "schema": "{
+                \\"type\\":\\"record\\",
+                \\"name\\":\\"purchase\\",
+                \\"fields\\":[
+                  {\\"name\\":\\"ticker\\",\\"type\\":\\"string\\"},
+                  {\\"name\\":\\"price\\",\\"type\\":\\"double\\"},
+                  {\\"name\\":\\"trades\\",\\"type\\":\\"int\\"}
+                ]
+              }",
+              "format.setting.delimiter":","
+            }
           }
-        }
-      },
-      "transforms": [
+        },
         {
           "name": "dropHeadersTransform",
           "plugin": {
             "name": "Projection",
+            "type": "transform",
             "properties": {
               "drop": "headers"
             }
           }
-        }
-      ],
-      "sinks": [
+        },
         {
           "name": "tpfsAvroSink",
           "plugin": {
             "name": "TPFSAvro",
+            "type": "batchsink",
             "properties": {
               "name": "trades_converted",
               "schema": "{
-                \"type\":\"record\",
-                \"name\":\"purchase\",
-                \"fields\":[
-                  {\"name\":\"ts\",\"type\":\"long\"},
-                  {\"name\":\"ticker\",\"type\":\"string\"},
-                  {\"name\":\"price\",\"type\":\"double\"},
-                  {\"name\":\"trades\",\"type\":\"int\"}
+                \\"type\\":\\"record\\",
+                \\"name\\":\\"purchase\\",
+                \\"fields\\":[
+                  {\\"name\\":\\"ts\\",\\"type\\":\\"long\\"},
+                  {\\"name\\":\\"ticker\\",\\"type\\":\\"string\\"},
+                  {\\"name\\":\\"price\\",\\"type\\":\\"double\\"},
+                  {\\"name\\":\\"trades\\",\\"type\\":\\"int\\"}
                 ]
               }",
               "basePath": "trades_converted"
@@ -175,19 +186,19 @@ To do this, write the following JSON to a config file::
 **Note:** The above JSON has been re-formatted to fit and requires editing (remove the line endings added to
 the ``schema`` values) to be a conforming JSON file. 
 
-Then use your config file with the ``cdap-etl-batch`` artifact to create an application through the CLI.
+Then use your config file with the ``cdap-data-pipeline`` artifact to create an application through the CLI.
 For example, if you wrote the above JSON to a file named ``conversion.json``:
 
 .. container:: highlight
 
   .. parsed-literal::
-    cdap > create app trades_conversion cdap-etl-batch |release| system <path-to-conversion.json>
+    cdap > create app trades_conversion cdap-data-pipeline |release| system <path-to-conversion.json>
 
 
-This will create and configure an application. The application's schedule (named, by default, to ``etlWorkflow``)
+This will create and configure an application. The application's schedule (named, by default, to ``dataPipelineSchedule``)
 will not run until you resume it::
 
-  cdap > resume schedule trades_conversion.etlWorkflow
+  cdap > resume schedule trades_conversion.dataPipelineSchedule
 
 This will start a schedule that will run the workflow every ten minutes. 
 The next time the workflow runs, it will spawn a MapReduce job that reads all events added

@@ -111,7 +111,7 @@ and then restart CDAP:
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
-#. To upgrade existing ETL applications created using the |previous-short-version|\.x versions of ``cdap-etl-batch``
+#. To upgrade existing applications created using the |previous-short-version|\.x versions of ``cdap-data-pipeline``
    or ``cdap-etl-realtime``, there are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
 
 

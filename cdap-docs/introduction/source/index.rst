@@ -831,7 +831,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Create a stream-conversion application using the ETL batch system artifact
+     * - Create a stream-conversion application using the batch ``cdap-data-pipeline`` system artifact
        - 
        
   .. list-table::
@@ -850,78 +850,82 @@ Transforming Your Data
        - - Write a configuration file, saving it to ``examples/resources/app-config.json``, with these contents:
 
      * - 
-       - .. code:: json
+       - .. parsed-literal::
            :class: copyable copyable-text
        
            {
+             "name": "logEventStreamConverter",
+             "description": "Batch Data Pipeline Application",
              "artifact": {
-               "name": "cdap-etl-batch",
-               "scope": "SYSTEM",
-               "version": "3.4.0-SNAPSHOT"
+               "name": "cdap-data-pipeline",
+               "scope": "system",
+               "version": "|release|"
              },
              "config": {
-               "schedule": "*/5 * * * *",
+               "schedule": "\*/5 \* \* \* \*",
                "engine": "mapreduce",
-               "source": {
-                 "name": "Stream",
-                 "plugin": {
+               "stages": [
+                 {
                    "name": "Stream",
-                   "properties": {
-                     "format": "clf",
-                     "name": "logEventStream",
-                     "duration": "5m"
+                   "plugin": {
+                     "name": "Stream",
+                     "type": "batchsource",
+                     "properties": {
+                       "format": "clf",
+                       "name": "logEventStream",
+                       "duration": "5m"
+                     }
                    }
-                 }
-               },
-               "sinks": [
+                 },
                  {
                    "name": "TPFSAvro",
                    "plugin": {
                      "name": "TPFSAvro",
+                     "type": "batchsink",
                      "properties": {
                        "schema": "{
-                         \"type\":\"record\",
-                         \"name\":\"etlSchemaBody\",
-                         \"fields\":[
-                           {\"name\":\"ts\",\"type\":\"long\"},
-                           {\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},
-                           {\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},
-                           {\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},
-                           {\"name\":\"date\",\"type\":[\"string\",\"null\"]},
-                           {\"name\":\"request\",\"type\":[\"string\",\"null\"]},
-                           {\"name\":\"status\",\"type\":[\"int\",\"null\"]},
-                           {\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},
-                           {\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},
-                           {\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]}]}",
+                         \\"type\\":\\"record\\",
+                         \\"name\\":\\"etlSchemaBody\\",
+                         \\"fields\\":[
+                           {\\"name\\":\\"ts\\",\\"type\\":\\"long\\"},
+                           {\\"name\\":\\"remote_host\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"remote_login\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"auth_user\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"date\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"request\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"status\\",\\"type\\":[\\"int\\",\\"null\\"]},
+                           {\\"name\\":\\"content_length\\",\\"type\\":[\\"int\\",\\"null\\"]},
+                           {\\"name\\":\\"referrer\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"user_agent\\",\\"type\\":[\\"string\\",\\"null\\"]}]}",
                        "name": "logEventStream_converted",
                        "basePath": "logEventStream_converted"
                      }
                    }
-                 }
-               ],
-               "transforms": [
+                 },
                  {
                    "name": "Projection",
                    "plugin": {
                      "name": "Projection",
+                     "type": "transform",
                      "properties": {
                        "drop": "headers"
                      }
                    }
                  }
                ],
-               "connections": [
-                 {
-                   "from": "Stream",
-                   "to": "Projection"
-                 },
-                 {
-                   "from": "Projection",
-                   "to": "TPFSAvro"
-                 }
-               ]
-             }
+              "connections": [
+                {
+                  "from": "Stream",
+                  "to": "Projection"
+                },
+                {
+                  "from": "Projection",
+                  "to": "TPFSAvro"
+                }
+              ]
+            }
            }
+
             
      * - 
        - - Create an application using that configuration through the CLI:
@@ -930,11 +934,11 @@ Transforming Your Data
        - .. tabbed-parsed-literal::
             :tabs: "CDAP CLI"
  
-            |cdap >| create app logEventStreamConverter cdap-etl-batch |release| system examples/resources/app-config.json
+            |cdap >| create app logEventStreamConverter cdap-data-pipeline |release| system examples/resources/app-config.json
             Successfully created application
           
-            |cdap >| resume schedule logEventStreamConverter.etlWorkflow
-            Successfully resumed schedule 'etlWorkflow' in app 'logEventStreamConverter'
+            |cdap >| resume schedule logEventStreamConverter.dataPipelineSchedule
+            Successfully resumed schedule 'dataPipelineSchedule' in app 'logEventStreamConverter'
 
 .. container:: table-block
 
@@ -959,17 +963,14 @@ Transforming Your Data
  
             |cdap >| list apps
  
-            +========================================================================================+
-            | id                      | descripti | artifactName   | artifactVersion | artifactScope |
-            |                         | on        |                |                 |               |
-            +========================================================================================+
-            | logEventStreamConverter | Extract-T | cdap-etl-batch | |version|           | SYSTEM        |
-            |                         | ransform- |                |                 |               |
-            |                         | Load (ETL |                |                 |               |
-            |                         | ) Batch A |                |                 |               |
-            |                         | pplicatio |                |                 |               |
-            |                         | n         |                |                 |               |
-            +========================================================================================+
+            +============================================================================================+
+            | id                      | descripti | artifactName       | artifactVersion | artifactScope |
+            |                         | on        |                    |                 |               |
+            +============================================================================================+
+            | logEventStreamConverter | Data Pipe | cdap-data-pipeline | |version|           | SYSTEM        |
+            |                         | line Appl |                    |                 |               |
+            |                         | ication   |                    |                 |               |
+            +============================================================================================+
  
          .. tabbed-parsed-literal::
             :tabs: "CDAP CLI"
@@ -977,10 +978,10 @@ Transforming Your Data
             |cdap >| describe app logEventStreamConverter
  
             +====================================================================================================+
-            | type      | id           | description                                                             |
+            | type      | id                   | description                                                     |
             +====================================================================================================+
-            | MapReduce | ETLMapReduce | DataFlow MapReduce phase executor. Sources 'Stream' to sinks 'TPFSAvro' |
-            | Workflow  | ETLWorkflow  | Workflow for ETL Batch MapReduce Driver                                 |
+            | MapReduce | phase-1              | MapReduce phase executor. Sources 'Stream' to sinks 'TPFSAvro'. |
+            | Workflow  | DataPipelineWorkflow | Data Pipeline Workflow                                          |
             +====================================================================================================+
  
          .. tabbed-parsed-literal::
@@ -1016,16 +1017,18 @@ Transforming Your Data
          .. tabbed-parsed-literal::
             :tabs: "CDAP CLI"
 
-            |cdap >| get workflow schedules logEventStreamConverter.ETLWorkflow
+            |cdap >| get workflow schedules logEventStreamConverter.DataPipelineWorkflow
  
-            +=================================================================================================================+
-            | application | program     | program type | name        | type        | description | properties  | runtime args |
-            +=================================================================================================================+
-            | logEventStr | ETLWorkflow | WORKFLOW     | etlWorkflow | co.cask.cda | ETL Batch s | cron entry: | {}           |
-            | eamConverte |             |              |             | p.internal. | chedule     |  */5 * * *  |              |
-            | r           |             |              |             | schedule.Ti |             | *           |              |
-            |             |             |              |             | meSchedule  |             |             |              |
-            +=================================================================================================================+  
+            +===========================================================================================================+
+            | applicatio | program    | program type | name       | type       | descriptio | properties | runtime args |
+            | n          |            |              |            |            | n          |            |              |
+            +===========================================================================================================+
+            | logEventSt | DataPipeli | WORKFLOW     | dataPipeli | co.cask.cd | Data pipel | cron entry | {}           |
+            | reamConver | neWorkflow |              | neSchedule | ap.interna | ine schedu | : */5 * *  |              |
+            | ter        |            |              |            | l.schedule | le         | * *        |              |
+            |            |            |              |            | .TimeSched |            |            |              |
+            |            |            |              |            | ule        |            |            |              |
+            +===========================================================================================================+
 
 .. container:: table-block
 
@@ -1165,18 +1168,18 @@ Transforming Your Data
        - .. tabbed-parsed-literal::
             :tabs: "CDAP CLI"
  
-            |cdap >| start workflow logEventStreamConverter.ETLWorkflow
+            |cdap >| start workflow logEventStreamConverter.DataPipelineWorkflow
             
-            Successfully started workflow 'ETLWorkflow' of application 'logEventStreamConverter'
+            Successfully started workflow 'DataPipelineWorkflow' of application 'logEventStreamConverter'
             with stored runtime arguments '{}'            
             
-            |cdap >| get workflow status logEventStreamConverter.ETLWorkflow
+            |cdap >| get workflow status logEventStreamConverter.DataPipelineWorkflow
             
             RUNNING
  
             ...
             
-            |cdap >| get workflow status logEventStreamConverter.ETLWorkflow
+            |cdap >| get workflow status logEventStreamConverter.DataPipelineWorkflow
             
             STOPPED
 
