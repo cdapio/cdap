@@ -109,13 +109,20 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   }
 
   @Override
-  protected void runOneIteration() throws Exception {
+  protected void runOneIteration() {
     if (!isAuthCacheEnabled()) {
       return;
     }
     LOG.trace("Running authorization enforcement service iteration...");
     for (Principal principal : authPolicyCache.asMap().keySet()) {
-      updatePrivileges(principal);
+      try {
+        updatePrivileges(principal);
+      } catch (Exception e) {
+        // Ok to silently ignore because the cache entries have a ttl as well, so even if repeated failures occur,
+        // eventually cache entries will expire and there won't be stale privileges
+        LOG.debug("Error while updating privileges for {}", principal, e);
+        LOG.warn("Error while updating privileges for {}.", principal);
+      }
     }
   }
 
