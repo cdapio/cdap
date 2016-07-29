@@ -34,20 +34,6 @@ Components
 The Java Client API allows you to interact with these CDAP components:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `ProgramClient: <#program-client>`_ interacting with flows, MapReduce programs, user services, workflows, and workers
-- `StreamClient: <#stream-client>`_ interacting with streams
-- `DatasetClient: <#dataset-client>`_ interacting with datasets
-- `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
-- `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
-- `QueryClient: <#query-client>`_ querying datasets
-- `ServiceClient: <#service-client>`_ interacting with user services
-- `MetricsClient: <#metrics-client>`_ interacting with metrics
-- `MonitorClient: <#monitor-client>`_ monitoring system services
-- `PreferencesClient: <#preferences-client>`_ interacting with preferences
-
-Alphabetical list:
-
-- `ApplicationClient: <#application-client>`_ interacting with applications
 - `DatasetClient: <#dataset-client>`_ interacting with datasets
 - `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
@@ -59,7 +45,7 @@ Alphabetical list:
 - `ServiceClient: <#service-client>`_ interacting with user services
 - `StreamClient: <#stream-client>`_ interacting with streams
 
-The above lists link to the examples below for each portion of the API.
+The above list links to the examples below for each portion of the API.
 
 .. _client-api-configuring-client:
 
@@ -122,6 +108,106 @@ ApplicationClient
 
   // List programs belonging to an application
   appClient.listPrograms(Id.Application.from(Id.Namespace.DEFAULT, "Purchase"));
+
+.. _dataset-client:
+
+DatasetClient
+-------------
+::
+
+  ClientConfig clientConfig;
+
+  // Construct the client used to interact with CDAP
+  DatasetClient datasetClient = new DatasetClient(clientConfig);
+
+  // Fetch the list of datasets
+  List<DatasetSpecificationSummary> datasets = datasetClient.list(Id.Namespace.DEFAULT);
+
+  // Create a dataset
+  Id.DatasetInstance datasetId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "someDataset");
+  datasetClient.create(datasetId, "someDatasetType");
+
+  // Truncate a dataset
+  datasetClient.truncate(datasetId);
+
+  // Delete a dataset
+  datasetClient.delete(datasetId);
+
+.. _dataset-module-client:
+
+DatasetModuleClient
+-------------------
+::
+
+  ClientConfig clientConfig;
+
+  // Construct the client used to interact with CDAP
+  DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
+
+  // Add a dataset module
+  File moduleJarFile = createAppJarFile(SomeDatasetModule.class);
+  Id.DatasetModule datasetModuleId = Id.DatasetModule.from(Id.Namespace.DEFAULT, "someDatasetModule");
+  datasetModuleClient.add(datasetModuleId, SomeDatasetModule.class.getName(), moduleJarFile);
+
+  // Fetch the dataset module information
+  DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(datasetModuleId);
+
+  // Delete all dataset modules
+  datasetModuleClient.deleteAll(Id.Namespace.DEFAULT);
+
+.. _dataset-type-client:
+
+DatasetTypeClient
+-----------------
+::
+
+  ClientConfig clientConfig;
+
+  // Construct the client used to interact with CDAP
+  DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
+
+  // Fetch the dataset type information using the type name
+  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, "someDatasetType"));
+
+  // Fetch the dataset type information using the classname
+  datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, SomeDataset.class.getName()));
+
+.. _metrics-client:
+
+MetricsClient
+-------------
+::
+
+  ClientConfig clientConfig;
+
+  // Construct the client used to interact with CDAP
+  MetricsClient metricsClient = new MetricsClient(clientConfig);
+
+  // Fetch the total number of events that have been processed by a flowlet
+  RuntimeMetrics metric = metricsClient.getFlowletMetrics(Id.Flow.from("user", "HelloWorld", "someFlow"), "process.events.processed");
+
+.. _monitor-client:
+
+MonitorClient
+-------------
+::
+
+  ClientConfig clientConfig;
+
+  // Construct the client used to interact with CDAP
+  MonitorClient monitorClient = new MonitorClient(clientConfig);
+
+  // Fetch the list of system services
+  List<SystemServiceMeta> services = monitorClient.listSystemServices();
+
+  // Fetch status of system transaction service
+  String serviceStatus = monitorClient.getSystemServiceStatus("transaction");
+
+  // Fetch the number of instances of the system transaction service
+  int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
+
+  // Set the number of instances of the system transaction service
+  monitorClient.setSystemServiceInstances("transaction", 1);
 
 .. _preferences-client:
 
@@ -193,6 +279,45 @@ ProgramClient
   // Stop a flow in the WordCount example
   programClient.stop(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"));
 
+.. _query-client:
+
+QueryClient
+-----------
+::
+
+  ClientConfig clientConfig;
+
+  // Construct the client used to interact with CDAP
+  QueryClient queryClient = new QueryClient(clientConfig);
+
+  // Perform an ad-hoc query using the Purchase example
+  ListenableFuture<ExploreExecutionResult> resultFuture = queryClient.execute(Id.Namespace.DEFAULT, "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')");
+  ExploreExecutionResult results = resultFuture.get();
+
+  // Fetch schema
+  List<ColumnDesc> schema = results.getResultSchema();
+  String[] header = new String[schema.size()];
+  for (int i = 0; i < header.length; i++) {
+    ColumnDesc column = schema.get(i);
+    // Hive columns start at 1
+    int index = column.getPosition() - 1;
+    header[index] = column.getName() + ": " + column.getType();
+  }
+
+.. _service-client:
+
+ServiceClient
+-------------
+::
+
+  ClientConfig clientConfig;
+
+  // Construct the client used to interact with CDAP
+  ServiceClient serviceClient = new ServiceClient(clientConfig);
+
+  // Fetch service information using the service in the PurchaseApp example
+  ServiceSpecification serviceSpec = serviceClient.get(Id.Service.from(Id.Namespace.DEFAULT, "PurchaseApp", "CatalogLookup"));
+
 .. _stream-client:
 
 StreamClient
@@ -255,142 +380,3 @@ StreamClient
     events.clear();
     streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
   }
-
-.. _dataset-client:
-
-DatasetClient
--------------
-::
-
-  ClientConfig clientConfig;
-
-  // Construct the client used to interact with CDAP
-  DatasetClient datasetClient = new DatasetClient(clientConfig);
-
-  // Fetch the list of datasets
-  List<DatasetSpecificationSummary> datasets = datasetClient.list(Id.Namespace.DEFAULT);
-
-  // Create a dataset
-  Id.DatasetInstance datasetId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "someDataset");
-  datasetClient.create(datasetId, "someDatasetType");
-
-  // Truncate a dataset
-  datasetClient.truncate(datasetId);
-
-  // Delete a dataset
-  datasetClient.delete(datasetId);
-
-.. _dataset-module-client:
-
-DatasetModuleClient
--------------------
-::
-
-  ClientConfig clientConfig;
-
-  // Construct the client used to interact with CDAP
-  DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
-
-  // Add a dataset module
-  File moduleJarFile = createAppJarFile(SomeDatasetModule.class);
-  Id.DatasetModule datasetModuleId = Id.DatasetModule.from(Id.Namespace.DEFAULT, "someDatasetModule");
-  datasetModuleClient.add(datasetModuleId, SomeDatasetModule.class.getName(), moduleJarFile);
-
-  // Fetch the dataset module information
-  DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(datasetModuleId);
-
-  // Delete all dataset modules
-  datasetModuleClient.deleteAll(Id.Namespace.DEFAULT);
-
-.. _dataset-type-client:
-
-DatasetTypeClient
------------------
-::
-
-  ClientConfig clientConfig;
-
-  // Construct the client used to interact with CDAP
-  DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
-
-  // Fetch the dataset type information using the type name
-  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, "someDatasetType"));
-
-  // Fetch the dataset type information using the classname
-  datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, SomeDataset.class.getName()));
-
-.. _query-client:
-
-QueryClient
------------
-::
-
-  ClientConfig clientConfig;
-
-  // Construct the client used to interact with CDAP
-  QueryClient queryClient = new QueryClient(clientConfig);
-
-  // Perform an ad-hoc query using the Purchase example
-  ListenableFuture<ExploreExecutionResult> resultFuture = queryClient.execute(Id.Namespace.DEFAULT, "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')");
-  ExploreExecutionResult results = resultFuture.get();
-
-  // Fetch schema
-  List<ColumnDesc> schema = results.getResultSchema();
-  String[] header = new String[schema.size()];
-  for (int i = 0; i < header.length; i++) {
-    ColumnDesc column = schema.get(i);
-    // Hive columns start at 1
-    int index = column.getPosition() - 1;
-    header[index] = column.getName() + ": " + column.getType();
-  }
-
-.. _service-client:
-
-ServiceClient
--------------
-::
-
-  ClientConfig clientConfig;
-
-  // Construct the client used to interact with CDAP
-  ServiceClient serviceClient = new ServiceClient(clientConfig);
-
-  // Fetch service information using the service in the PurchaseApp example
-  ServiceSpecification serviceSpec = serviceClient.get(Id.Service.from(Id.Namespace.DEFAULT, "PurchaseApp", "CatalogLookup"));
-
-.. _metrics-client:
-
-MetricsClient
--------------
-::
-
-  ClientConfig clientConfig;
-
-  // Construct the client used to interact with CDAP
-  MetricsClient metricsClient = new MetricsClient(clientConfig);
-
-  // Fetch the total number of events that have been processed by a flowlet
-  RuntimeMetrics metric = metricsClient.getFlowletMetrics(Id.Flow.from("user", "HelloWorld", "someFlow"), "process.events.processed");
-
-.. _monitor-client:
-
-MonitorClient
--------------
-::
-
-  ClientConfig clientConfig;
-
-  // Construct the client used to interact with CDAP
-  MonitorClient monitorClient = new MonitorClient(clientConfig);
-
-  // Fetch the list of system services
-  List<SystemServiceMeta> services = monitorClient.listSystemServices();
-
-  // Fetch status of system transaction service
-  String serviceStatus = monitorClient.getSystemServiceStatus("transaction");
-
-  // Fetch the number of instances of the system transaction service
-  int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
-
-  // Set the number of instances of the system transaction service
-  monitorClient.setSystemServiceInstances("transaction", 1);
