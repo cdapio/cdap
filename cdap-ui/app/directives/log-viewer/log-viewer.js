@@ -299,7 +299,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         if ('undefined' !== typeof this.getDownloadFilename()) {
           filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeSec*1000), true);
         } else {
-          filename = this.namespaceId + '-' + this.appId + '-' + this.programId + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+          filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeSec*1000), true);
         }
         this.exportFileName = filename;
         $scope.$on('$destroy', () => {
