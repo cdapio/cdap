@@ -84,7 +84,7 @@ class HydratorDetailTopPanelController {
       appId: this.$state.params.pipelineId,
       scope: this.$scope
     };
-    const errorHandler = err => console.log('ERRRO', err);
+    const errorHandler = err => console.log('ERROR', err);
     return this.myPipelineApi
       .fetchMacros({
         namespace,
@@ -268,7 +268,6 @@ class HydratorDetailTopPanelController {
   }
   schedulePipeline() {
     this.scheduleStatus = 'SCHEDULING';
-    var prom;
     let preferenceParams = {
       namespace: this.$state.params.namespace,
       appId: this.$state.params.pipelineId,
@@ -302,7 +301,7 @@ class HydratorDetailTopPanelController {
             this.myAlertOnValium.show({
               type: 'danger',
               title: 'Unable to schedule the pipeline',
-              content: angular.isObject(err) ? err.data: err
+              content: angular.isObject(err) ? err.data : err
             });
           }
           this.setScheduleStatus();
