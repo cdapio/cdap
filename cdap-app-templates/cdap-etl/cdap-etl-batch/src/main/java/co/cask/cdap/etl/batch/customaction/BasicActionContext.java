@@ -80,23 +80,23 @@ public class BasicActionContext implements ActionContext {
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
     return context.listSecureData(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
     return context.getSecureData(namespace, name);
   }
 
   @Override
   public void putSecureData(String namespace, String name, byte[] data, String description,
-                            Map<String, String> properties) throws Exception {
+                            Map<String, String> properties) throws IOException {
     context.getAdmin().putSecureData(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void deleteSecureData(String namespace, String name) throws IOException {
     context.getAdmin().deleteSecureData(namespace, name);
   }
 
