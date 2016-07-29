@@ -44,7 +44,8 @@
 
           <div class="actions-buttons text-right" ng-if="!UnionSchema.isDisabled">
             <button class="btn btn-link"
-                    ng-click="UnionSchema.removeType($index)">
+                    ng-click="UnionSchema.removeType($index)"
+                    ng-if="UnionSchema.types.length > 1">
               <i class="text-danger fa fa-trash"></i>
             </button>
             <button class="btn btn-link"
