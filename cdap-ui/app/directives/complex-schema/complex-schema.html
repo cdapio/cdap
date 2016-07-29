@@ -53,13 +53,15 @@
       <div class="clearfix">
         <div class="input-column"
             ng-class="{'tab-header': field.nested}">
-          <input type="text"
-                 id="{{ field.id }}"
-                 class="form-control"
-                 ng-model="field.name"
-                 ng-blur="ComplexSchema.formatOutput()"
-                 ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
-                 placeholder="Field Name">
+          <div ng-class="{'tab-header-inner': field.nested}">
+            <input type="text"
+                   id="{{ field.id }}"
+                   class="form-control"
+                   ng-model="field.name"
+                   ng-blur="ComplexSchema.formatOutput()"
+                   ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
+                   placeholder="Field Name">
+          </div>
         </div>
 
         <div class="type-column">

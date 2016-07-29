@@ -23,7 +23,6 @@
 
 my-complex-schema {
   .complex-schema-container {
-    background-color: transparent;
 
     [class*="col-"] {
       padding-right: 0;
@@ -37,8 +36,6 @@ my-complex-schema {
         box-shadow: none;
         border-radius: 0;
         .placeholder-color(@color: #666666, @font-weight: 500);
-
-        .placeholder(@color: #cccccc);
       }
     }
     .nested-row { border-top: 1px solid @table-border-color; }
@@ -48,8 +45,6 @@ my-complex-schema {
 
       &.header { padding-left: 10px; }
     }
-
-    .select-only { max-width: 85px; }
 
     .input-column {
       float: left;
@@ -63,9 +58,9 @@ my-complex-schema {
       width: ~"calc(100% - 75px - 80px)";
 
       &.no-type {
-        width: ~"-moz-calc(100% - 75px)";
-        width: ~"-webkit-calc(100% - 75px)";
-        width: ~"calc(100% - 75px)";
+        width: ~"-moz-calc(100% - 75px - 80px)";
+        width: ~"-webkit-calc(100% - 75px - 80px)";
+        width: ~"calc(100% - 75px - 80px)";
       }
 
       .form-control { padding-left: 5px; }
@@ -73,32 +68,29 @@ my-complex-schema {
       &.header { padding-left: 4px; }
     }
 
-    .select-wrapper { .select-wrapper(@background-color: transparent, @arrow-color: @cdap-header, @right: 7px); }
+    .select-wrapper {
+      height: 33px;
+      .select-wrapper(@background-color: transparent, @arrow-color: @cdap-header, @right: 7px);
+    }
 
     .tab-header {
-      box-shadow: 0 -7px 6px -6px rgba(1, 0, 0, 0.25), -7px 0 6px -6px rgba(1, 0, 0, 0.25), 7px 0 6px -6px rgba(1, 0, 0, 0.25);
+      border-radius: 4px 4px 0 0;
+      box-shadow: rgba(1, 0, 0, 0.25) 0 0 10px;
+      height: 26px;
       position: relative;
-      &:before,
-      &:after {
-        content: '';
-        display: block;
-        position: absolute;
-        width: 20px;
-        height: 34px;
-        top: 10px;
-      }
-      &:before {
-        box-shadow: -7px 0 6px -6px rgba(1, 0, 0, 0.25);
-        left: 0;
-      }
-      &:after {
-        box-shadow: 7px 0 6px -6px rgba(1, 0, 0, 0.25);
-        right: 0;
-      }
+      z-index: 100;
       .form-control {
         height: 22px;
         padding: 0 5px;
       }
+      .select-wrapper {
+        height: 26px;
+        &:after { top: 5px; }
+      }
+    }
+    .tab-header-inner {
+      border-radius: 4px 4px 0 0;
+      height: 33px;
     }
 
     .error { color: @brand-danger; }
@@ -109,17 +101,12 @@ my-complex-schema {
       padding-left: 5px;
     }
 
-    .map-input-group {
-      display: inline-block;
-      width: 140px;
-      height: 28px;
-    }
-
+    .map-input-group { display: inline-block; }
     .map-input-column { float: left; }
 
     .fields-actions {
       float: right;
-
+      height: 33px;
       .nullable-header { margin-right: 42px; }
 
       .checkbox {
@@ -148,12 +135,6 @@ my-complex-schema {
         width: ~"-moz-calc(100% - 50px - 80px)";
         width: ~"-webkit-calc(100% - 50px - 80px)";
         width: ~"calc(100% - 50px - 80px)";
-
-        &.no-type {
-          width: ~"-moz-calc(100% - 50px)";
-          width: ~"-webkit-calc(100% - 50px)";
-          width: ~"calc(100% - 50px)";
-        }
       }
 
       .fields-actions {
@@ -168,68 +149,55 @@ my-complex-schema {
   }
 
   my-embedded-schema-selector {
-    > div { box-shadow: -7px 0 6px -6px rgba(1, 0, 0, 0.25); }
+    > div { position: relative; }
     [class*="col-"] {
       position: relative;
+      &:before {
+        box-shadow: -2px 0 3px 0 rgba(1, 0, 0, 0.25);
+        content: '';
+        display: block;
+        position: absolute;
+        top: -8px;
+        left: 0;
+        bottom: 0;
+        width: 1px;
+      }
       &:after {
-        box-shadow: 0 -3px 5px 0 rgba(1, 0, 0, 0.25);
+        box-shadow: 0 -2px 3px 0 rgba(1, 0, 0, 0.25);
         content: '';
         display: block;
         position: absolute;
         top: 0;
         right: 0;
-        height: 4px;
+        height: 1px;
         width: 155px;
       }
     }
     span.fa { color: @hydrator-blue; }
     div.tab-toggle {
-      position: relative;
-      top: -14px;
-      line-height: 10px;
-      height: 10px;
-      width: 20px;
-      text-align: center;
-      vertical-align: middle;
+      position: absolute;
+      z-index: 9999;
+      top: -15px;
+      left: 5px;
       &:hover,
       &:focus { cursor: pointer; }
     }
-    my-embedded-schema-selector {
-      div.tab-toggle {
-        top: -10px;
-      }
-      my-embedded-schema-selector {
-        div.tag-toggle {
-          top: -5px;
-        }
-      }
-    }
   }
 
-  my-union-schema {
-    .item > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
-      width: ~"-moz-calc(100% - 85px)";
-      width: ~"-webkit-calc(100% - 85px)";
-      width: ~"calc(100% - 85px)";
-    }
-  }
-
-  my-array-schema {
-    & > .array-schema-container > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
-      width: ~"-moz-calc(100% - 85px)";
-      width: ~"-webkit-calc(100% - 85px)";
-      width: ~"calc(100% - 85px)";
-    }
-  }
-
-  my-map-schema {
-    & > .map-schema-container > my-embedded-schema-selector > div > .clearfix > .col-xs-12:after {
-      width: ~"-moz-calc(100% - 150px)";
-      width: ~"-webkit-calc(100% - 150px)";
-      width: ~"calc(100% - 150px)";
-    }
-  }
-  my-embedded-schema-selector my-record-schema .complex-schema-container {
+  my-embedded-schema-selector my-record-schema > my-complex-schema > .complex-schema-container {
     .nested-row { border-top: 0; }
   }
+}
+
+.column-content > my-complex-schema > .complex-schema-container > fieldset > div.field-row:not(.nested-row) {
+  box-shadow: -7px 0 6px -6px rgba(1, 0, 0, 0.25);
+  margin-left: 4px;
+}
+
+.state-hydratorplusplus {
+  .tab-header-inner { background-color: white; }
+}
+
+.state-tracker {
+  .tab-header-inner { background-color: #eeeeee; }
 }
