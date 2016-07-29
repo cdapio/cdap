@@ -46,17 +46,28 @@ public class LogWriter implements Runnable {
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
   private final CountDownLatch stopLatch;
+  private final ExponentialBackoff exponentialBackoff;
 
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
 
   public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter,
                    RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
-                   long eventBucketIntervalMs, long maxNumberOfBucketsInTable, CountDownLatch stopLatch) {
+                   long eventBucketIntervalMs, long maxNumberOfBucketsInTable, final CountDownLatch stopLatch) {
     this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
     this.maxNumberOfBucketsInTable = maxNumberOfBucketsInTable;
     this.stopLatch = stopLatch;
+    this.exponentialBackoff =
+      new ExponentialBackoff(1, 60,
+                             new ExponentialBackoff.BackoffHandler() {
+                               @Override
+                               public void handle(long backoff) throws InterruptedException {
+                                 // Use stop latch for waiting so that we can exit immediately
+                                 // when stopped.
+                                 stopLatch.await(backoff, TimeUnit.SECONDS);
+                               }
+                             });
   }
 
   @Override
@@ -118,8 +129,16 @@ public class LogWriter implements Runnable {
           // Remove successfully written message
           it.remove();
         }
+
+        // Reset backoff after a successful save
+        exponentialBackoff.reset();
       } catch (Throwable e) {
-        LOG.error("Caught exception during save, will try again.", e);
+        LOG.error("Caught exception during save, will try again with backoff.", e);
+        try {
+          exponentialBackoff.backoff();
+        } catch (InterruptedException e1) {
+          // Okay to ignore since we'll check stop latch in the next run, and exit if stopped
+        }
       }
     }
   }
