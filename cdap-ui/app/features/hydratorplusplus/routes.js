@@ -31,7 +31,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         .state('hydratorplusplus.create', {
           url: '/studio?artifactType&draftId',
           params: {
-            data: null
+            data: null,
+            isClone: null
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,

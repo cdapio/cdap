@@ -64,7 +64,9 @@ class HydratorPlusPlusTopPanelCtrl{
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
 
-    this.openMetadata();
+    if ($stateParams.isClone) {
+      this.openMetadata();
+    }
   }
   setMetadata(metadata) {
     this.state.metadata = metadata;
