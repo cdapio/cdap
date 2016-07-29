@@ -222,6 +222,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
   private Map<EntityId, Set<Action>> getPrivileges(Principal principal) throws Exception {
     return cacheEnabled ? authPolicyCache.get(principal) : fetchPrivileges(principal);
   }
+
   /**
    * On an authorization-enabled cluster, if caching is enabled too, updates the cache in the
    * {@link AuthorizationEnforcementService} with the privileges of the user running the program.

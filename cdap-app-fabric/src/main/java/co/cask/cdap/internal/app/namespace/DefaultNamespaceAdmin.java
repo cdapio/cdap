@@ -32,7 +32,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.security.ImpersonationUserResolver;
 import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -48,7 +47,6 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -151,7 +149,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     nsStore.create(metadata);
 
     try {
-      impersonator.doAs(namespace, new Callable<Void>() {
+      impersonator.doAs(metadata, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           storageProviderNamespaceAdmin.create(metadata);

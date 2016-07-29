@@ -144,7 +144,7 @@ public class StorageProviderNamespaceAdminTest {
       file1.exists()));
     // but custom namespace location should still exists
     Assert.assertTrue(custom.exists());
-    custom.delete();
+    Assert.assertTrue(custom.delete());
   }
 
   @AfterClass
