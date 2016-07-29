@@ -135,11 +135,11 @@ class HydratorDetailTopPanelController {
         this.HydratorPlusPlusDetailActions
           .deletePipeline(params)
           .then(
-            function success() {
+            () => {
               this.$state.go('hydratorplusplus.list');
               this.myLoadingService.hideLoadingIcon();
             },
-            function error(err) {
+            (err) => {
               this.myLoadingService.hideLoadingIcon();
               this.$timeout(() => {
                 this.myAlertOnValium.show({
