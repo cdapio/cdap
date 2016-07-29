@@ -112,7 +112,7 @@ and then restart CDAP:
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 #. To upgrade existing data pipeline applications created using the |previous-short-version|\.x versions of
-   system artifacts, there are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
+   system artifacts, there are :ref:`separate instructions on doing so <cask-hydrator-operating-upgrading-pipeline>`.
 
 
 .. _admin-upgrading-packages-upgrading-hadoop:

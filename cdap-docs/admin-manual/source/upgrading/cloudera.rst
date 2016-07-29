@@ -66,7 +66,7 @@ CDAP:
    Post-Upgrade Tasks."
 
 #. To upgrade existing data pipeline applications created using the |previous-short-version|\.x versions of 
-   the system artifacts, there are :ref:`separate instructions <cdap-apps-etl-upgrade>`.
+   the system artifacts, there are :ref:`separate instructions <cask-hydrator-operating-upgrading-pipeline>`.
 
 #. You must recompile and then redeploy your applications prior to using them.
 
