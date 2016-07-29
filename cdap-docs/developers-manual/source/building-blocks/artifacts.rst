@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _artifacts:
 
@@ -49,9 +49,9 @@ it is unaffected by changes made to the artifact.
 Plugin Artifacts
 ================
 Sometimes an application class exposes an interface that it expects other artifacts to implement.
-For example, CDAP ships with a ``cdap-etl-batch`` artifact that can be used to create ETL applications.
+For example, CDAP ships with a ``cdap-data-pipeline`` artifact that can be used to create data pipeline applications.
 The artifact exposes a ``batchsource`` interface that it expects others to implement.
-The cdap-etl-lib artifact contains several plugins that implement that interface. There is one source
+The ``core-plugins`` artifact contains several plugins that implement that interface. There is one source
 for databases, another for HDFS files, etc. To make plugins in one artifact available to
 another artifact, the plugin artifact must specify its parent artifacts. All of those parent artifacts
 will then be able to use those plugins. 
@@ -95,11 +95,11 @@ file.
 
 For example, suppose you want to add ``mysql-connector-java-5.1.3.jar`` as a system artifact. The
 artifact is the MySQL JDBC driver, and is a third-party JAR that we want to use as a JDBC plugin for
-the ``cdap-etl-batch`` artifact. You would place the JAR file in the artifacts directory along with a
+the ``cdap-data-pipeline`` artifact. You would place the JAR file in the artifacts directory along with a
 matching config file named ``mysql-connector-java-5.1.3.json``. The config file would contain::
 
   {
-    "parents": [ "cdap-etl-batch[3.2.0,4.0.0)" ],
+    "parents": [ "cdap-data-pipeline[3.2.0,4.0.0)" ],
     "plugins": [
       {
         "name": "mysql",
@@ -111,7 +111,7 @@ matching config file named ``mysql-connector-java-5.1.3.json``. The config file 
   }
 
 This config file specifies that the artifact can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive)
-of the cdap-etl-batch artifact. It also specifies that there is one plugin of type ``jdbc`` and name
+of the cdap-data-pipeline artifact. It also specifies that there is one plugin of type ``jdbc`` and name
 ``mysql`` with class ``com.mysql.jdbc.Driver``. Once added, this system artifact would be usable by
 applications in all namespaces.
 

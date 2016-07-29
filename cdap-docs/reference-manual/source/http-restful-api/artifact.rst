@@ -59,7 +59,7 @@ Several optional headers may also be specified:
    * - **Artifact-Extends**
      - If the artifact contains plugins, describes which parent artifacts should have access to those plugins.
        Multiple parents can be given by separating them with a ``/`` 
-     - ``cdap-etl-batch[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)``
+     - ``cdap-data-pipeline[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)``
    * - **Artifact-Plugins**
      - JSON Array of plugins contained in the artifact that are not annotated as a plugin.
        This should be used for third-party JARs that need to be plugins, such as JDBC drivers. Each element
@@ -95,7 +95,7 @@ Example output (pretty-printed):
     |$| GET /v3/namespaces/default/artifacts
     [
       {
-        "name": "cdap-etl-batch",
+        "name": "cdap-data-pipeline",
         "scope": "SYSTEM",
         "version": "|release|"
       },
@@ -133,15 +133,15 @@ To list all versions of a specific artifact, submit an HTTP GET request::
      - Optional scope filter. If not specified, defaults to ``user``.
 
 This will return a JSON array that lists each version of the specified artifact with
-its name, version, and scope. Example output for the ``cdap-etl-batch`` artifact (pretty-printed):
+its name, version, and scope. Example output for the ``cdap-data-pipeline`` artifact (pretty-printed):
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch?scope=system
+    |$| GET /v3/namespaces/default/artifacts/cdap-data-pipeline?scope=system
     [
       {
-        "name": "cdap-etl-batch",
+        "name": "cdap-data-pipeline",
         "scope": "SYSTEM",
         "version": "|release|"
       }
@@ -412,13 +412,13 @@ an HTTP GET request::
      - Optional scope filter. If not specified, defaults to 'user'.
   
 This will return a JSON array that lists the extensions (plugin types) available to the artifact.
-Example output for version |literal-release| of the ``cdap-etl-batch`` artifact:
+Example output for version |literal-release| of the ``cdap-data-pipeline`` artifact:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions?scope=system
-    "postaction","transform","batchaggregator","validator","realtimesource","batchsource","realtimesink","batchsink"]
+    |$| GET /v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|release|/extensions?scope=system
+    ["sparksink","postaction","transform","batchaggregator","sparkcompute","validator","realtimesource","action","batchsource","realtimesink","batchsink","batchjoiner"]
 
 .. _http-restful-api-artifact-available-plugins:
 
@@ -453,12 +453,12 @@ name, and type. Note that the details provided are a summary compared to those p
 the endpoint :ref:`http-restful-api-artifact-plugin-detail`.
 
 Example output for plugins of type ``transform`` available to version |literal-release|
-of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
+of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform?scope=system
+    |$| GET /v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|release|/extensions/transform?scope=system
 
     [
         {
@@ -517,12 +517,12 @@ artifact that the plugin originated from, and the plugin's class name, descripti
 type, and properties.
 
 Example output for the ``ScriptFilter`` plugin available to version |literal-release|
-of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
+of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform/plugins/ScriptFilter?scope=system
+    |$| GET /v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|release|/extensions/transform/plugins/ScriptFilter?scope=system
 
     [
         {
@@ -657,11 +657,11 @@ as well as the class name. Example output for the ``ScriptFilter`` (pretty-print
     [
       {
         "artifact": {
-          "name": "cdap-etl-batch",
+          "name": "cdap-data-pipeline",
           "scope": "SYSTEM",
           "version": "|release|"
         },
-        "className": "co.cask.cdap.etl.batch.ETLBatchApplication"
+        "className": "co.cask.cdap.datapipeline.DataPipelineApp"
       },
       {
         "artifact": {
