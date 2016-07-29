@@ -74,7 +74,7 @@ angular.module(PKG.name + '.commons')
                   .$promise
                   .then(function (res) {
                     mvm.error = null;
-                    mvm.resolvedSchema = res.fields;
+                    mvm.resolvedSchema = angular.copy(res);
                     mvm.schema = res.fields.filter(function (field) {
                       if (angular.isArray(field.type)) {
                         field.type = field.type[0];
