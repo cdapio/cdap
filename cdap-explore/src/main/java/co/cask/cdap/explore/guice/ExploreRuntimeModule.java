@@ -135,6 +135,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
       bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME))
         .toProvider(PreviewsDirProvider.class);
+
+      bind(File.class).annotatedWith(Names.named(Constants.Explore.CREDENTIALS_DIR_NAME))
+        .toProvider(CredentialsDirProvider.class);
     }
 
     private static final class PreviewsDirProvider implements Provider<File> {
@@ -151,6 +154,23 @@ public class ExploreRuntimeModule extends RuntimeModule {
         File previewsDir = new File(localDirStr, "previewsDir");
         previewsDir.mkdirs();
         return previewsDir;
+      }
+    }
+
+    private static final class CredentialsDirProvider implements Provider<File> {
+      private final CConfiguration cConf;
+
+      @Inject
+      public CredentialsDirProvider(CConfiguration cConf) {
+        this.cConf = cConf;
+      }
+
+      @Override
+      public File get() {
+        String localDirStr = cConf.get(Constants.Explore.LOCAL_DATA_DIR);
+        File credentialsDir = new File(localDirStr, "credentialsDir");
+        credentialsDir.mkdirs();
+        return credentialsDir;
       }
     }
 
@@ -247,8 +267,20 @@ public class ExploreRuntimeModule extends RuntimeModule {
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
 
         File previewDir = Files.createTempDir();
+        // users other than the CDAP system user will write preview files here
+        if (!previewDir.setWritable(true, false)) {
+          LOG.warn("Failed to make preview directory world-writable: {}.", previewDir.getAbsolutePath());
+        }
         LOG.info("Storing preview files in {}", previewDir.getAbsolutePath());
         bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME)).toInstance(previewDir);
+
+        File credentialsDir = Files.createTempDir();
+        // users other than the CDAP system user will write credential files (with restrictive permissions) here
+        if (!credentialsDir.setWritable(true, false)) {
+          LOG.warn("Failed to make credentials directory world-writable: {}.", credentialsDir.getAbsolutePath());
+        }
+        LOG.info("Storing credentials files in {}", credentialsDir.getAbsolutePath());
+        bind(File.class).annotatedWith(Names.named(Constants.Explore.CREDENTIALS_DIR_NAME)).toInstance(credentialsDir);
       } catch (Throwable e) {
         throw Throwables.propagate(e);
       }
