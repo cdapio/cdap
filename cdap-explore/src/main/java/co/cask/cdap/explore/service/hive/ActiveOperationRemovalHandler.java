@@ -16,13 +16,16 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -33,10 +36,13 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
 
   private final BaseHiveExploreService exploreService;
   private final ExecutorService executorService;
+  private final Impersonator impersonator;
 
-  public ActiveOperationRemovalHandler(BaseHiveExploreService exploreService, ExecutorService executorService) {
+  public ActiveOperationRemovalHandler(BaseHiveExploreService exploreService, ExecutorService executorService,
+                                       Impersonator impersonator) {
     this.exploreService = exploreService;
     this.executorService = executorService;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -57,26 +63,38 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
     @Override
     public void run() {
       try {
-        QueryStatus status = exploreService.fetchStatus(opInfo);
+        impersonator.doAs(new NamespaceId(opInfo.getNamespace()), new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            try {
+              QueryStatus status = exploreService.fetchStatus(opInfo);
 
-        // If operation is still not complete, cancel it.
-        if (status.getStatus() != QueryStatus.OpStatus.FINISHED && status.getStatus() != QueryStatus.OpStatus.CLOSED &&
-          status.getStatus() != QueryStatus.OpStatus.CANCELED && status.getStatus() != QueryStatus.OpStatus.ERROR) {
-          LOG.info("Cancelling handle {} with status {} due to timeout", handle.getHandle(), status.getStatus());
-          // This operation is aysnc, except with Hive CDH 4, in which case cancel throws an unsupported exception
-          exploreService.cancelInternal(handle);
-        }
+              // If operation is still not complete, cancel it.
+              if (status.getStatus() != QueryStatus.OpStatus.FINISHED &&
+                status.getStatus() != QueryStatus.OpStatus.CLOSED &&
+                status.getStatus() != QueryStatus.OpStatus.CANCELED &&
+                status.getStatus() != QueryStatus.OpStatus.ERROR) {
+                LOG.info("Cancelling handle {} with status {} due to timeout", handle.getHandle(), status.getStatus());
+                // This operation is aysnc, except with Hive CDH 4, in which case cancel throws an unsupported exception
+                exploreService.cancelInternal(handle);
+              }
 
-      } catch (Throwable e) {
-        LOG.error("Could not cancel handle {} due to exception", handle.getHandle(), e);
-      } finally {
-        LOG.debug("Timing out handle {}", handle);
-        try {
-          // Finally close the operation
-          exploreService.closeInternal(handle, opInfo);
-        } catch (Throwable e) {
-          LOG.error("Exception while closing handle {}", handle, e);
-        }
+            } catch (Throwable e) {
+              LOG.error("Could not cancel handle {} due to exception", handle.getHandle(), e);
+            } finally {
+              LOG.debug("Timing out handle {}", handle);
+              try {
+                // Finally close the operation
+                exploreService.closeInternal(handle, opInfo);
+              } catch (Throwable e) {
+                LOG.error("Exception while closing handle {}", handle, e);
+              }
+            }
+            return null;
+          }
+        });
+      } catch (Exception e) {
+        LOG.error("Failed to impersonate while closing handle {}", handle);
       }
     }
   }

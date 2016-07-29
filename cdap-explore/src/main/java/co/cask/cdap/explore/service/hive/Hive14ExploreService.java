@@ -19,12 +19,12 @@ package co.cask.cdap.explore.service.hive;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -63,10 +63,11 @@ public class Hive14ExploreService extends BaseHiveExploreService {
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                               AuthorizationEnforcementService authorizationEnforcementService,
                               AuthorizationEnforcer authorizationEnforcer,
-                              AuthenticationContext authenticationContext) {
+                              AuthenticationContext authenticationContext,
+                              Impersonator impersonator) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir, credentialsDir, streamAdmin, namespaceQueryAdmin,
           datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer,
-          authenticationContext);
+          authenticationContext, impersonator);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");
