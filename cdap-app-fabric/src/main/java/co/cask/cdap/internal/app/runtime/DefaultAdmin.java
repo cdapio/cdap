@@ -117,12 +117,12 @@ public class DefaultAdmin implements Admin {
 
   @Override
   public void putSecureData(String namespace, String name, byte[] data,
-                            String description, Map<String, String> properties) throws Exception {
+                            String description, Map<String, String> properties) throws IOException {
     secureStoreManager.putSecureData(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void deleteSecureData(String namespace, String name) throws IOException {
     secureStoreManager.deleteSecureData(namespace, name);
   }
 }

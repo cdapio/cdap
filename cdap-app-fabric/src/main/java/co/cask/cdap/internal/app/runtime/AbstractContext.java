@@ -62,6 +62,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -377,12 +378,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
     return secureStore.listSecureData(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
     return secureStore.getSecureData(namespace, name);
   }
 

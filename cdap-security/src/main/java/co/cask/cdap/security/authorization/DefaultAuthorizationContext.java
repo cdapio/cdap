@@ -32,6 +32,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -137,12 +138,12 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
 
   @Override
   public void putSecureData(String namespace, String name, byte[] data, String description,
-                            Map<String, String> properties) throws Exception {
+                            Map<String, String> properties) throws IOException {
     delegateAdmin.putSecureData(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void deleteSecureData(String namespace, String name) throws IOException {
     delegateAdmin.deleteSecureData(namespace, name);
   }
 
