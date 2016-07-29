@@ -88,6 +88,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -176,6 +177,7 @@ public class TestBase {
   private static AuthorizerInstantiator authorizerInstantiator;
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
+  private static AuthorizationEnforcementService authorizationEnforcementService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -260,6 +262,8 @@ public class TestBase {
       }
     );
 
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    authorizationEnforcementService.startAndWait();
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -282,6 +286,7 @@ public class TestBase {
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+
     // This is needed so the logged-in user can successfully create the default namespace
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       String user = System.getProperty("user.name");
@@ -434,6 +439,7 @@ public class TestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
+    authorizationEnforcementService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -60,6 +61,7 @@ public class MetadataAdminAuthorizationTest {
   private static CConfiguration cConf;
   private static MetadataAdmin metadataAdmin;
   private static Authorizer authorizer;
+  private static AuthorizationEnforcementService authorizationEnforcementService;
   private static RemoteSystemOperationsService remoteSystemOperationsService;
 
   @BeforeClass
@@ -69,6 +71,8 @@ public class MetadataAdminAuthorizationTest {
     metadataAdmin = injector.getInstance(MetadataAdmin.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     authorizer.grant(new InstanceId(cConf.get(Constants.INSTANCE_NAME)), ALICE, Collections.singleton(Action.ADMIN));
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    authorizationEnforcementService.startAndWait();
     remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
     remoteSystemOperationsService.startAndWait();
   }
@@ -88,6 +92,7 @@ public class MetadataAdminAuthorizationTest {
   @AfterClass
   public static void tearDown() {
     remoteSystemOperationsService.stopAndWait();
+    authorizationEnforcementService.stopAndWait();
   }
 
   private static CConfiguration createCConf() throws IOException {

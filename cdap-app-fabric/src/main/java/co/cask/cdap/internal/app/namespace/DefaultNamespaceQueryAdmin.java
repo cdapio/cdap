@@ -45,9 +45,9 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
   protected final AuthenticationContext authenticationContext;
 
   @Inject
-  public DefaultNamespaceQueryAdmin(NamespaceStore nsStore,
-                                    AuthorizationEnforcer authorizationEnforcer,
-                                    AuthenticationContext authenticationContext) {
+  DefaultNamespaceQueryAdmin(NamespaceStore nsStore,
+                             AuthorizationEnforcer authorizationEnforcer,
+                             AuthenticationContext authenticationContext) {
     this.nsStore = nsStore;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;

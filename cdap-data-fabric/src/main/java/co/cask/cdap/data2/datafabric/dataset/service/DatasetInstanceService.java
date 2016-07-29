@@ -420,7 +420,12 @@ public class DatasetInstanceService {
       typeMeta = typeManager.getTypeInfo(systemDatasetTypeId);
     } else {
       // not using a system dataset type. ensure that the user has access to it before returning
-      ensureAccess(namespaceId.toEntityId().datasetType(typeName));
+      DatasetTypeId typeId = datasetTypeId.toEntityId();
+      Principal principal = authenticationContext.getPrincipal();
+      Predicate<EntityId> filter = authorizer.createFilter(principal);
+      if (!Principal.SYSTEM.equals(principal) && !filter.apply(typeId)) {
+        throw new UnauthorizedException(principal, typeId);
+      }
     }
     return typeMeta;
   }
@@ -499,7 +504,6 @@ public class DatasetInstanceService {
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
       if (namespaceQueryAdmin.get(namespace) == null) {
-        System.out.println("notfound ######## " + namespaceQueryAdmin);
         throw new NamespaceNotFoundException(namespace);
       }
     }
@@ -513,15 +517,14 @@ public class DatasetInstanceService {
   /**
    * Ensures that the logged-in user has a {@link Action privilege} on the specified dataset instance.
    *
-   * @param datasetEntityId the {@link DatasetId}, {@link DatasetModuleId} or {@link DatasetTypeId} to check for
-   *                        privileges
+   * @param datasetId the {@link DatasetId} to check for privileges
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
-  private <T extends EntityId> void ensureAccess(T datasetEntityId) throws Exception {
+  private void ensureAccess(DatasetId datasetId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetEntityId)) {
-      throw new UnauthorizedException(principal, datasetEntityId);
+    if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetId)) {
+      throw new UnauthorizedException(principal, datasetId);
     }
   }
 }
