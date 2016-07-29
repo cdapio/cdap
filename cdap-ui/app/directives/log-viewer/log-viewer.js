@@ -232,7 +232,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         (statusRes) => {
           setProgramStatus(statusRes.status);
 
-          if(this.statusType === '0'){
+          if(this.statusType === 0){
             this.applicationIsRunning = true;
             if (!pollPromise) {
               pollForNewLogs();
