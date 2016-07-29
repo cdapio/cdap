@@ -99,6 +99,7 @@ public class ExploreTableManager {
                              ExploreTableNaming tableNaming,
                              Configuration hConf) {
     this.exploreService = exploreService;
+    // TODO: need impersonation in SystemDatasetInstantiator#getDataset?
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.tableNaming = tableNaming;
     this.shouldEscapeColumns = ExploreServiceUtils.shouldEscapeColumns(hConf);

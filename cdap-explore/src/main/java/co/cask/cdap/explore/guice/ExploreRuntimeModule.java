@@ -161,7 +161,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private final CConfiguration cConf;
 
       @Inject
-      public CredentialsDirProvider(CConfiguration cConf) {
+      CredentialsDirProvider(CConfiguration cConf) {
         this.cConf = cConf;
       }
 
@@ -267,18 +267,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
 
         File previewDir = Files.createTempDir();
-        // users other than the CDAP system user will write preview files here
-        if (!previewDir.setWritable(true, false)) {
-          LOG.warn("Failed to make preview directory world-writable: {}.", previewDir.getAbsolutePath());
-        }
         LOG.info("Storing preview files in {}", previewDir.getAbsolutePath());
         bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME)).toInstance(previewDir);
 
         File credentialsDir = Files.createTempDir();
-        // users other than the CDAP system user will write credential files (with restrictive permissions) here
-        if (!credentialsDir.setWritable(true, false)) {
-          LOG.warn("Failed to make credentials directory world-writable: {}.", credentialsDir.getAbsolutePath());
-        }
         LOG.info("Storing credentials files in {}", credentialsDir.getAbsolutePath());
         bind(File.class).annotatedWith(Names.named(Constants.Explore.CREDENTIALS_DIR_NAME)).toInstance(credentialsDir);
       } catch (Throwable e) {

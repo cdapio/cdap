@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.TableNotFoundException;
@@ -25,7 +26,9 @@ import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
 import co.cask.cdap.explore.utils.TablesArgs;
 import co.cask.cdap.proto.QueryHandle;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -34,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -47,18 +51,27 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   private static final Logger LOG = LoggerFactory.getLogger(NamespacedExploreMetadataHttpHandler.class);
 
   private final ExploreService exploreService;
+  private final Impersonator impersonator;
 
   @Inject
-  public NamespacedExploreMetadataHttpHandler(ExploreService exploreService) {
+  public NamespacedExploreMetadataHttpHandler(ExploreService exploreService, Impersonator impersonator) {
     this.exploreService = exploreService;
+    this.impersonator = impersonator;
   }
 
   @GET
   @Path("tables")
-  public void getTables(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  public void getTables(HttpRequest request, final HttpResponder responder,
+                        @PathParam("namespace-id") final String namespaceId) {
     LOG.trace("Received get tables for current user");
     try {
-      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(namespaceId));
+      impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(namespaceId));
+          return null;
+        }
+      });
     } catch (Throwable t) {
       LOG.error("Got exception:", t);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
@@ -67,11 +80,18 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
 
   @GET
   @Path("tables/{table}/info")
-  public void getTableSchema(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId, @PathParam("table") String table) {
+  public void getTableSchema(HttpRequest request, final HttpResponder responder,
+                             @PathParam("namespace-id") final String namespaceId,
+                             @PathParam("table") final String table) {
     LOG.trace("Received get table info for table {}", table);
     try {
-      responder.sendJson(HttpResponseStatus.OK, exploreService.getTableInfo(namespaceId, table));
+      impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          responder.sendJson(HttpResponseStatus.OK, exploreService.getTableInfo(namespaceId, table));
+          return null;
+        }
+      });
     } catch (TableNotFoundException e) {
       LOG.error("Could not find table {}", table, e);
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -91,6 +111,12 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         TablesArgs args = decodeArguments(request, TablesArgs.class, new TablesArgs(null, namespaceId, "%", null));
         LOG.trace("Received get tables with params: {}", args.toString());
+        doAs(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
+          @Override
+          public QueryHandle call() throws Exception {
+            return null;
+          }
+        });
         return exploreService.getTables(args.getCatalog(), args.getSchemaPattern(),
                                         args.getTableNamePattern(), args.getTableTypes());
       }
@@ -107,6 +133,12 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         ColumnsArgs args = decodeArguments(request, ColumnsArgs.class, new ColumnsArgs(null, namespaceId, "%", "%"));
         LOG.trace("Received get columns with params: {}", args.toString());
+        doAs(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
+          @Override
+          public QueryHandle call() throws Exception {
+            return null;
+          }
+        });
         return exploreService.getColumns(args.getCatalog(), args.getSchemaPattern(),
                                          args.getTableNamePattern(), args.getColumnNamePattern());
       }
@@ -123,6 +155,12 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         SchemasArgs args = decodeArguments(request, SchemasArgs.class, new SchemasArgs(null, namespaceId));
         LOG.trace("Received get schemas with params: {}", args.toString());
+        doAs(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
+          @Override
+          public QueryHandle call() throws Exception {
+            return null;
+          }
+        });
         return exploreService.getSchemas(args.getCatalog(), args.getSchemaPattern());
       }
     });
@@ -139,9 +177,29 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         FunctionsArgs args = decodeArguments(request, FunctionsArgs.class, new FunctionsArgs(null, namespaceId, "%"));
         LOG.trace("Received get functions with params: {}", args.toString());
+        doAs(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
+          @Override
+          public QueryHandle call() throws Exception {
+            return null;
+          }
+        });
         return exploreService.getFunctions(args.getCatalog(), args.getSchemaPattern(),
                                            args.getFunctionNamePattern());
       }
     });
+  }
+
+  private QueryHandle doAs(NamespaceId namespaceId,
+                           Callable<QueryHandle> callable) throws SQLException, ExploreException, IOException {
+    try {
+      return impersonator.doAs(namespaceId, callable);
+    } catch (Exception e) {
+      // we know that the callables passed in here are subclasses of EndpointCoreExecution, which only throw the
+      // following checked exceptions
+      Throwables.propagateIfInstanceOf(e, SQLException.class);
+      Throwables.propagateIfInstanceOf(e, ExploreException.class);
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 }
