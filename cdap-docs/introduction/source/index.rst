@@ -836,7 +836,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Create a stream-conversion application using the data pipeline system artifact
+     * - Create a stream-conversion application using the batch ``cdap-data-pipeline`` system artifact
        - 
        
   .. list-table::
@@ -855,81 +855,82 @@ Transforming Your Data
        - - Write a configuration file, saving it to ``examples/resources/app-config.json``, with these contents:
 
      * - 
-       - .. container:: highlight copyable copyable-text
- 
-           .. parsed-literal::
-        
-                    {
-                      "artifact": {
-                        "name": "cdap-data-pipeline",
-                        "version": "|release|",
-                        "scope": "SYSTEM"
-                      },
-                      "config": {
-                        "schedule": "\*/5 \* \* \* \*",
-                        "engine": "mapreduce",
-                        "stages": [ 
-                          {
-                            "name": "Stream",
-                            "plugin": {
-                              "name": "Stream",
-                              "type": "batchsource",
-                              "properties": {
-                                "format": "clf",
-                                "name": "logEventStream",
-                                "duration": "5m"
-                              }
-                            }
-                          },
-                          {
-                            "name": "Projection",
-                            "plugin": {
-                              "name": "Projection",
-                              "type": "transform",
-                              "properties": {
-                                "drop": "headers"
-                              }
-                            }
-                          },
-                          {
-                            "name": "TPFSAvro",
-                            "plugin": {
-                              "name": "TPFSAvro",
-                              "type": "batchsink",
-                              "properties": {
-                                "schema": "{
-                                  \\"type\\":\\"record\\",
-                                  \\"name\\":\\"etlSchemaBody\\",
-                                  \\"fields\\":[
-                                    {\\"name\\":\\"ts\\",\\"type\\":\\"long\\"},
-                                    {\\"name\\":\\"remote_host\\",\\"type\\":[\\"string\\",\\"null\\"]},
-                                    {\\"name\\":\\"remote_login\\",\\"type\\":[\\"string\\",\\"null\\"]},
-                                    {\\"name\\":\\"auth_user\\",\\"type\\":[\\"string\\",\\"null\\"]},
-                                    {\\"name\\":\\"request_time\\",\\"type\\":[\\"string\\",\\"null\\"]},
-                                    {\\"name\\":\\"request\\",\\"type\\":[\\"string\\",\\"null\\"]},
-                                    {\\"name\\":\\"status\\",\\"type\\":[\\"int\\",\\"null\\"]},
-                                    {\\"name\\":\\"content_length\\",\\"type\\":[\\"int\\",\\"null\\"]},
-                                    {\\"name\\":\\"referrer\\",\\"type\\":[\\"string\\",\\"null\\"]},
-                                    {\\"name\\":\\"user_agent\\",\\"type\\":[\\"string\\",\\"null\\"]}]}",
-                                "name": "logEventStream_converted",
-                                "basePath": "logEventStream_converted"
-                              }
-                            }
-                          }
-                        ],
-                        "connections": [
-                          {
-                            "from": "Stream",
-                            "to": "Projection"
-                          },
-                          {
-                            "from": "Projection",
-                            "to": "TPFSAvro"
-                          }
-                        ]
-                      }
-                    }
-                                
+       - .. parsed-literal::
+           :class: copyable copyable-text
+       
+           {
+             "description": "Batch Data Pipeline Application",
+             "artifact": {
+               "name": "cdap-data-pipeline",
+               "scope": "system",
+               "version": "|release|"
+             },
+             "config": {
+               "schedule": "\*/5 \* \* \* \*",
+               "engine": "mapreduce",
+               "stages": [
+                 {
+                   "name": "Stream",
+                   "plugin": {
+                     "name": "Stream",
+                     "type": "batchsource",
+                     "properties": {
+                       "format": "clf",
+                       "name": "logEventStream",
+                       "duration": "5m"
+                     }
+                   }
+                 },
+                 {
+                   "name": "TPFSAvro",
+                   "plugin": {
+                     "name": "TPFSAvro",
+                     "type": "batchsink",
+                     "properties": {
+                       "schema": "{
+                         \\"type\\":\\"record\\",
+                         \\"name\\":\\"etlSchemaBody\\",
+                         \\"fields\\":[
+                           {\\"name\\":\\"ts\\",\\"type\\":\\"long\\"},
+                           {\\"name\\":\\"remote_host\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"remote_login\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"auth_user\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"date\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"request\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"status\\",\\"type\\":[\\"int\\",\\"null\\"]},
+                           {\\"name\\":\\"content_length\\",\\"type\\":[\\"int\\",\\"null\\"]},
+                           {\\"name\\":\\"referrer\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"user_agent\\",\\"type\\":[\\"string\\",\\"null\\"]}]}",
+                       "name": "logEventStream_converted",
+                       "basePath": "logEventStream_converted"
+                     }
+                   }
+                 },
+                 {
+                   "name": "Projection",
+                   "plugin": {
+                     "name": "Projection",
+                     "type": "transform",
+                     "properties": {
+                       "drop": "headers"
+                     }
+                   }
+                 }
+               ],
+              "connections": [
+                {
+                  "from": "Stream",
+                  "to": "Projection"
+                },
+                {
+                  "from": "Projection",
+                  "to": "TPFSAvro"
+                }
+              ]
+            }
+           }
+
+            
      * - 
        - - Create an application using that configuration through the CLI:
 
@@ -1021,14 +1022,16 @@ Transforming Your Data
 
             |cdap >| get workflow schedules logEventStreamConverter.DataPipelineWorkflow
  
-            +=================================================================================================================+
-            | application | program     | program type | name        | type        | description | properties  | runtime args |
-            +=================================================================================================================+
-            | logEventStr | ETLWorkflow | WORKFLOW     | etlWorkflow | co.cask.cda | ETL Batch s | cron entry: | {}           |
-            | eamConverte |             |              |             | p.internal. | chedule     |  */5 * * *  |              |
-            | r           |             |              |             | schedule.Ti |             | *           |              |
-            |             |             |              |             | meSchedule  |             |             |              |
-            +=================================================================================================================+  
+            +===========================================================================================================+
+            | applicatio | program    | program type | name       | type       | descriptio | properties | runtime args |
+            | n          |            |              |            |            | n          |            |              |
+            +===========================================================================================================+
+            | logEventSt | DataPipeli | WORKFLOW     | dataPipeli | co.cask.cd | Data pipel | cron entry | {}           |
+            | reamConver | neWorkflow |              | neSchedule | ap.interna | ine schedu | : */5 * *  |              |
+            | ter        |            |              |            | l.schedule | le         | * *        |              |
+            |            |            |              |            | .TimeSched |            |            |              |
+            |            |            |              |            | ule        |            |            |              |
+            +===========================================================================================================+
 
 .. container:: table-block
 

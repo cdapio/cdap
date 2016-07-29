@@ -57,6 +57,16 @@ public class ImpersonationUserResolver {
       throw new RuntimeException(
         String.format("Failed to retrieve namespace meta for namespace id %s", namespacedId.getNamespace()));
     }
+    return getImpersonationInfo(meta);
+  }
+
+  /**
+   * Get impersonation info for a given namespace. If the info configured at the namespace level is empty,
+   * returns the info configured at the cdap level.
+   *
+   * @return configured {@link ImpersonationInfo}.
+   */
+  public ImpersonationInfo getImpersonationInfo(NamespaceMeta meta) {
     NamespaceConfig namespaceConfig = meta.getConfig();
 
     String principal = Objects.firstNonNull(namespaceConfig.getPrincipal(), defaultPrincipal);

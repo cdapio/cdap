@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _plugins:
 
@@ -128,7 +128,7 @@ the plugins when deploying the artifact. For example, if you are using the HTTP 
   $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
   -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
   -H "Artifact-Version: 5.1.35" \
-  -H "Artifact-Extends: system:cdap-etl-batch[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
+  -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
   --data-binary @mysql-connector-java-5.1.35.jar
 
 Or, using the CDAP CLI:
@@ -147,7 +147,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-etl-batch\[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ],
+      "parents": [ "system:cdap-data-pipeline\[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ],
       "plugins": [
         {
           "name": "mysql",
@@ -226,7 +226,7 @@ For each plugin JAR, there must also be a corresponding configuration file to sp
 can use the plugins. The file name must match the name of the JAR, except it must have the ``.json``
 extension instead of the ``.jar`` extension. For example, if your JAR file is named
 ``custom-transforms-1.0.0.jar``, there must be a corresponding ``custom-transforms-1.0.0.json`` file.
-If your ``custom-transforms-1.0.0.jar`` contains transforms that can be used by both the ``cdap-etl-batch``
+If your ``custom-transforms-1.0.0.jar`` contains transforms that can be used by both the ``cdap-data-pipeline``
 and ``cdap-etl-realtime`` artifacts, ``custom-transforms-1.0.0.json`` would contain:
 
 .. highlight:: json
@@ -235,11 +235,11 @@ and ``cdap-etl-realtime`` artifacts, ``custom-transforms-1.0.0.json`` would cont
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-etl-batch[|version|,\ |version|]", "cdap-etl-realtime[|version|,\ |version|]" ]
+      "parents": [ "cdap-data-pipeline[|version|,\ |version|]", "cdap-etl-realtime[|version|,\ |version|]" ]
     }
 
 This file specifies that the plugins in ``custom-transforms-1.0.0.jar`` can be used by version |version| of
-the ``cdap-etl-batch`` and ``cdap-etl-realtime`` artifacts. You can also specify a wider range of versions
+the ``cdap-data-pipeline`` and ``cdap-etl-realtime`` artifacts. You can also specify a wider range of versions
 that can use the plugins, with square brackets ``[ ]`` indicating an inclusive version and parentheses ``( )`` indicating
 an exclusive version. For example:
 
@@ -247,11 +247,11 @@ an exclusive version. For example:
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-etl-batch[3.2.0,4.0.0)", "cdap-etl-realtime[3.2.0,4.0.0)" ]
+      "parents": [ "cdap-data-pipeline[3.2.0,4.0.0)", "cdap-etl-realtime[3.2.0,4.0.0)" ]
     }
 
 specifies that these plugins can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive) of the
-``cdap-etl-batch`` and ``cdap-etl-realtime`` artifacts.
+``cdap-data-pipeline`` and ``cdap-etl-realtime`` artifacts.
 
 If the artifact contains third-party plugins, you can explicitly list them in the config file.
 For example, you may want to deploy a JDBC driver contained in a third-party JAR. In these cases,
@@ -262,7 +262,7 @@ list them in the configuration:
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-etl-batch[3.2.0,4.0.0)", "cdap-etl-realtime[3.2.0,4.0.0)" ],
+      "parents": [ "cdap-data-pipeline[3.2.0,4.0.0)", "cdap-etl-realtime[3.2.0,4.0.0)" ],
       "plugins": [
         {
           "name": "mysql",
@@ -299,7 +299,7 @@ For example, to deploy ``custom-transforms-1.0.0.jar`` using the RESTful API:
 .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/custom-transforms" \
-    -H "Artifact-Extends: system:cdap-etl-batch[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
+    -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
     --data-binary @/path/to/custom-transforms-1.0.0.jar
 
 Using the CLI:
@@ -317,7 +317,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-etl-batch[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ]
+      "parents": [ "system:cdap-data-pipeline[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ]
     }
 
 Note that when deploying a user artifact that extends a system artifact,
@@ -338,7 +338,7 @@ it needs to be set explicitly, as the JAR contents are uploaded without the file
   $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
   -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
   -H "Artifact-Version: 5.1.35" \
-  -H "Artifact-Extends: system:cdap-etl-batch[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
+  -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
   --data-binary @mysql-connector-java-5.1.35.jar
 
 Using the CLI (note that the artifact version, if not explicitly set, is derived from the JAR filename):
@@ -356,7 +356,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-etl-batch\[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ],
+      "parents": [ "system:cdap-data-pipeline\[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ],
       "plugins": [
         {
           "name": "mysql",
@@ -390,23 +390,23 @@ If you deployed the ``custom-transforms`` artifact as a user artifact, the scope
 
 You can verify that the plugins in your newly-added artifact are available to its parent by using the
 :ref:`Artifact HTTP RESTful API <http-restful-api-artifact-available-plugins>` to list plugins of a
-specific type. For example, to check if ``cdap-etl-batch`` can access the plugins in the
+specific type. For example, to check if ``cdap-data-pipeline`` can access the plugins in the
 ``custom-transforms`` artifact:
 
 .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/|version|/extensions/transform?scope=system"
+    $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|version|/extensions/transform?scope=system"
 
 Using the CLI:
 
 .. tabbed-parsed-literal::
     :tabs: "CDAP CLI"
  
-    |cdap >| list artifact plugins cdap-etl-batch |version| transform system
+    |cdap >| list artifact plugins cdap-data-pipeline |version| transform system
     
 You can then check the list returned to see if your transforms are in the list. Note that
 the scope here refers to the scope of the parent artifact. In this example it is the ``system``
-scope because ``cdap-etl-batch`` is a system artifact. This is true even if you deployed
+scope because ``cdap-data-pipeline`` is a system artifact. This is true even if you deployed
 ``custom-transforms`` as a user artifact because the parent is still a system artifact.
 
 .. _plugins-use-case:

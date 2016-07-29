@@ -138,9 +138,9 @@ This will return a JSON String map that lists each application with its name, de
 The list can optionally be filtered by one or more artifact names. It can also be filtered by artifact version.
 For example::
 
-  GET /v3/namespaces/<namespace-id>/apps?artifactName=cdap-etl-batch,cdap-etl-realtime
+  GET /v3/namespaces/<namespace-id>/apps?artifactName=cdap-data-pipeline,cdap-etl-realtime
 
-will return all applications that use either the ``cdap-etl-batch`` or ``cdap-etl-realtime`` artifacts.
+will return all applications that use either the ``cdap-data-pipeline`` or ``cdap-etl-realtime`` artifacts.
 
 
 Details of a Deployed Application
