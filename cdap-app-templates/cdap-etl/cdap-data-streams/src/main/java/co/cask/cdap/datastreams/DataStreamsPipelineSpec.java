@@ -30,13 +30,16 @@ import java.util.Set;
 public class DataStreamsPipelineSpec extends PipelineSpec {
   private final long batchIntervalMillis;
   private final Resources driverResources;
+  private final String extraJavaOpts;
 
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
                                   Resources resources, Resources driverResources,
-                                  boolean stageLoggingEnabled, long batchIntervalMillis) {
+                                  boolean stageLoggingEnabled, long batchIntervalMillis,
+                                  String extraJavaOpts) {
     super(stages, connections, resources, stageLoggingEnabled);
     this.driverResources = driverResources;
     this.batchIntervalMillis = batchIntervalMillis;
+    this.extraJavaOpts = extraJavaOpts;
   }
 
   public long getBatchIntervalMillis() {
@@ -45,6 +48,10 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
   public Resources getDriverResources() {
     return driverResources;
+  }
+
+  public String getExtraJavaOpts() {
+    return extraJavaOpts;
   }
 
   @Override
@@ -61,12 +68,14 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
     DataStreamsPipelineSpec that = (DataStreamsPipelineSpec) o;
 
-    return batchIntervalMillis == that.batchIntervalMillis && Objects.equals(driverResources, that.driverResources);
+    return batchIntervalMillis == that.batchIntervalMillis &&
+      Objects.equals(driverResources, that.driverResources) &&
+      Objects.equals(extraJavaOpts, that.extraJavaOpts);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), driverResources, batchIntervalMillis);
+    return Objects.hash(super.hashCode(), driverResources, batchIntervalMillis, extraJavaOpts);
   }
 
   @Override
@@ -74,6 +83,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     return "DataStreamsPipelineSpec{" +
       "batchIntervalMillis=" + batchIntervalMillis +
       ", driverResources=" + driverResources +
+      ", extraJavaOpts='" + extraJavaOpts + '\'' +
       "} " + super.toString();
   }
 
@@ -87,6 +97,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
   public static class Builder extends PipelineSpec.Builder<Builder> {
     private final long batchIntervalMillis;
     private Resources driverResources;
+    private String extraJavaOpts;
 
     public Builder(long batchIntervalMillis) {
       this.batchIntervalMillis = batchIntervalMillis;
@@ -97,10 +108,15 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return this;
     }
 
+    public Builder setExtraJavaOpts(String extraJavaOpts) {
+      this.extraJavaOpts = extraJavaOpts;
+      return this;
+    }
+
     public DataStreamsPipelineSpec build() {
       return new DataStreamsPipelineSpec(stages, connections, resources,
                                          driverResources == null ? resources : driverResources,
-                                         stageLoggingEnabled, batchIntervalMillis);
+                                         stageLoggingEnabled, batchIntervalMillis, extraJavaOpts);
     }
   }
 }

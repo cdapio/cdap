@@ -65,23 +65,27 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(pipelineSpec));
-    properties.put("cask.is.unit.test", String.valueOf(isUnitTest));
-    properties.put("cask.num.sources", String.valueOf(numSources));
+    properties.put("cask.hydrator.is.unit.test", String.valueOf(isUnitTest));
+    properties.put("cask.hydrator.num.sources", String.valueOf(numSources));
+    properties.put("cask.hydrator.extra.opts", pipelineSpec.getExtraJavaOpts());
     setProperties(properties);
   }
 
   @Override
   public void beforeSubmit(SparkClientContext context) throws Exception {
     SparkConf sparkConf = new SparkConf();
-    sparkConf.set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m");
-    sparkConf.set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m");
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
     // so... we have to set this hacky master variable based on the isUnitTest setting in the config
     Map<String, String> programProperties = context.getSpecification().getProperties();
-    Boolean isUnitTest = Boolean.valueOf(programProperties.get("cask.is.unit.test"));
+    String extraOpts = programProperties.get("cask.hydrator.extra.opts");
+    if (extraOpts != null && !extraOpts.isEmpty()) {
+      sparkConf.set("spark.driver.extraJavaOptions", extraOpts);
+      sparkConf.set("spark.executor.extraJavaOptions", extraOpts);
+    }
+    Boolean isUnitTest = Boolean.valueOf(programProperties.get("cask.hydrator.is.unit.test"));
     if (isUnitTest) {
-      Integer numSources = Integer.valueOf(programProperties.get("cask.num.sources"));
+      Integer numSources = Integer.valueOf(programProperties.get("cask.hydrator.num.sources"));
       sparkConf.setMaster(String.format("local[%d]", numSources + 1));
     }
     context.setSparkConf(sparkConf);

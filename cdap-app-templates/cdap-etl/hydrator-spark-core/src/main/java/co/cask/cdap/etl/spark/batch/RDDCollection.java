@@ -86,7 +86,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
 
-    // TODO: figure out how to do this in a better way...
+    // TODO:(Hydra-364) figure out how to do this in a better way...
     long recordsIn = rdd.cache().count();
     StageMetrics stageMetrics = new DefaultStageMetrics(sec.getMetrics(), stageName);
     stageMetrics.gauge("records.in", recordsIn);
@@ -108,7 +108,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
 
-    // TODO: figure out how to do this in a better way...
+    // TODO:(Hydra-364) figure out how to do this in a better way...
     long recordsIn = rdd.cache().count();
     StageMetrics stageMetrics = new DefaultStageMetrics(sec.getMetrics(), stageName);
     stageMetrics.gauge("records.in", recordsIn);
