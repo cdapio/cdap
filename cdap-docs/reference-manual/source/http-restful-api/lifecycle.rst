@@ -202,6 +202,8 @@ This does not delete the streams and datasets associated with the application
 because they belong to the namespace, not the application.
 Also, this does not delete the artifact used to create the application.
 
+.. _http-restful-api-program-lifecycle:
+
 Program Lifecycle
 =================
 

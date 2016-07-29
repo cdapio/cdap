@@ -2,9 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
+.. _scaling-instances:
+
+=================
 Scaling Instances
-============================================
+=================
 
 You can scale CDAP components using:
 
@@ -15,7 +17,8 @@ You can scale CDAP components using:
 - the :ref:`Get/Set Commands<cli-available-commands>` of the 
   :ref:`Command Line Interface<cli>`.
 
-The examples given below use the :ref:`Lifecycle HTTP RESTful API<http-restful-api-lifecycle-scale>`.
+The examples given below use the :ref:`Lifecycle HTTP RESTful API's <http-restful-api-lifecycle>`
+:ref:`Scaling API <http-restful-api-lifecycle-scale>`.
 
 .. highlight:: console
 

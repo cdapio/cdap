@@ -17,16 +17,16 @@ metrics.
 
 Other metrics are user-defined or "custom" and differ from application to application.
 To add user-defined metrics to your application, read this section in conjunction with the
-details on available system metrics in the :ref:`Metrics HTTP API. <http-restful-api-metrics>`
+details on available system metrics in the :ref:`Metrics HTTP RESTful API <http-restful-api-metrics>`.
 
 You embed user-defined metrics in the methods defining the components of your application.
-The metrics system currently supports two kinds of metrics: count and gauge:
+The metrics system currently supports two kinds of metrics: **count** and **gauge**:
 
-- count: Increments (or decrements) the metric named metricName by delta::
+- **count:** Increments (or decrements) the metric named *metricName* by delta::
 
     count(metricName, delta)
 
-- gauge: Sets the metric named metricName to a specific value::
+- **gauge:** Sets the metric named *metricName* to a specific value::
 
     gauge(metricName, value)
 

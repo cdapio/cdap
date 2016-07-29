@@ -40,6 +40,7 @@ function usage() {
   echo 
   echo "    docs-github-only  Clean build of HTML, zipped, with GitHub code, skipping Javadocs"
   echo "    docs-web-only     Clean build of HTML, zipped, with docs.cask.co code, skipping Javadocs"
+  echo "    docs-local        Clean build of docs (no Javadocs), using local copies of downloaded files"
   echo "    docs-outer        Dirty build of HTML with docs.cask.co code, skipping re-building inner doc, zipping, and Javadocs"
   echo "    docs              Dirty build of HTML with docs.cask.co code, skipping zipping and Javadocs"
   echo 
@@ -110,6 +111,7 @@ function run_command() {
     clean )             clean_targets;;
     docs-all )          build_all;;
     docs )              build_docs ${DOCS};;
+    docs-local )        build_docs ${DOCS_LOCAL};;
     docs-outer )        build_docs ${DOCS_OUTER};;
     docs-github-only )  build_docs ${GITHUB_ONLY};;
     docs-web-only )     build_docs ${WEB_ONLY};;
@@ -171,7 +173,11 @@ function build_docs() {
   fi
   if [ "${doc_type}" == "${WEB_ONLY}" -o "${doc_type}" == "${GITHUB_ONLY}" ]; then
     cli_docs="${WITH}"
-  fi  
+  fi
+  if [ "${doc_type}" == "${DOCS_LOCAL}" ]; then
+    DOCS_LOCAL="true"
+    export DOCS_LOCAL
+  fi
   echo "========================================================"
   echo "========================================================"
   echo "Building \"${doc_type}\""
@@ -249,7 +255,7 @@ function build_javadocs_api() {
   if [ "${javadoc_type}" == "${DOCS}" ]; then
     javadoc_run="mvn clean site -P templates"
   fi
-  local debug_flag=""
+  local debug_flag=''
   if [ "${DEBUG}" == "${TRUE}" ]; then
     debug_flag="-X"
   fi

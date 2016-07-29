@@ -111,8 +111,9 @@ and then restart CDAP:
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
-#. To upgrade existing ETL applications created using the |previous-short-version|\.x versions of ``cdap-etl-batch``
-   or ``cdap-etl-realtime``, there are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
+#. To upgrade existing Hydrator applications created using the |previous-short-version|\.x versions of
+   the ``cdap-etl-batch`` or ``cdap-etl-realtime`` artifacts, there are :ref:`separate instructions 
+   <cask-hydrator-operating-upgrading-pipeline>`.
 
 
 .. _admin-upgrading-packages-upgrading-hadoop:
