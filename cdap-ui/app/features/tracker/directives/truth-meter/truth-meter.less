@@ -51,6 +51,7 @@ my-truth-meter {
     color: #999999;
     font-size: 14px;
     margin-left: 8px;
+    vertical-align: top;
   }
 }
 
@@ -84,7 +85,18 @@ body.state-tracker-detail-result {
 
 body.state-tracker-detail-entity {
   my-truth-meter {
-    div.truth-meter { border-bottom-width: 15px; }
+    div.truth-meter {
+      border-bottom-width: 15px;
+      > span:last-child {
+        color: #999999;
+        font-size: 8px;
+        font-weight: 300;
+        letter-spacing: 1px;
+        position: absolute;
+        top: 18px;
+        left: 2px;
+      }
+    }
     div.truth-score {
       height: 25px;
       width: 10px;
