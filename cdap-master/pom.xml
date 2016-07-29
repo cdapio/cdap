@@ -283,6 +283,14 @@
                         <include>cdap-data-pipeline-${project.version}.jar</include>
                       </includes>
                     </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-streams-${project.version}.jar</include>
+                      </includes>
+                    </resource>
                   </resources>
                 </configuration>
               </execution>

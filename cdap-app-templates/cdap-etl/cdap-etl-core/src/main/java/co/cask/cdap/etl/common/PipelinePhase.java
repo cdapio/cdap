@@ -224,6 +224,11 @@ public class PipelinePhase implements Iterable<StageInfo> {
       return this;
     }
 
+    public Builder addConnections(Collection<co.cask.cdap.etl.proto.Connection> connections) {
+      this.connections.addAll(connections);
+      return this;
+    }
+
     public PipelinePhase build() {
       return new PipelinePhase(stages, connections.isEmpty() ? null : new Dag(connections));
     }

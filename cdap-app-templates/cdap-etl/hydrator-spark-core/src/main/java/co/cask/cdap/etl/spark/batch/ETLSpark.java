@@ -144,7 +144,7 @@ public class ETLSpark extends AbstractSpark {
       }
     }
 
-    File configFile = File.createTempFile("ETLSpark", ".config");
+    File configFile = File.createTempFile("HydratorSpark", ".config");
     cleanupFiles.add(configFile);
     try (OutputStream os = new FileOutputStream(configFile)) {
       sourceFactory.serialize(os);
@@ -154,7 +154,7 @@ public class ETLSpark extends AbstractSpark {
     }
 
     finisher = finishers.build();
-    context.localize("ETLSpark.config", configFile.toURI());
+    context.localize("HydratorSpark.config", configFile.toURI());
   }
 
   @Override
