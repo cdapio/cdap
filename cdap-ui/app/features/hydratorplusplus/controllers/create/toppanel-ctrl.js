@@ -18,15 +18,6 @@ class HydratorPlusPlusTopPanelCtrl{
   constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
-    // this.consoleStore.registerOnChangeListener(() => {
-    //   let messages = this.consoleStore.getMessages() || [];
-    //   let filteredMessages = messages.filter( message => {
-    //     return ['MISSING-NAME', 'INVALID-NAME'].indexOf(message.type) !== -1;
-    //   });
-
-    //   console.log('asdf');
-    //   this.state.inValidName = (filteredMessages.length ? true : false);
-    // });
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
