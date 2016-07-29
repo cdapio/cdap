@@ -47,6 +47,7 @@ import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.stream.StreamSerDe;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.CurrentUGIProvider;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -150,7 +151,7 @@ public class ContextManager {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+          bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           // bind PrivilegesManager to a remote implementation, so it does not need to instantiate the authorizer
           bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);

@@ -29,12 +29,10 @@ import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
-import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
@@ -63,6 +61,7 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -81,6 +80,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.service.auth.HiveAuthFactory;
@@ -111,9 +111,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -144,7 +142,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final Gson GSON = new Gson();
   private static final int PREVIEW_COUNT = 5;
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
-  public static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
+  private static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
   public static final String SPARK_YARN_DIST_FILES = "spark.yarn.dist.files";
 
   private final CConfiguration cConf;
@@ -161,12 +159,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final ScheduledExecutorService scheduledExecutorService;
   private final long cleanupJobSchedule;
   private final File previewsDir;
+  private final File credentialsDir;
   private final ScheduledExecutorService metastoreClientsExecutorService;
-  private final StreamAdmin streamAdmin;
-  private final DatasetFramework datasetFramework;
-  private final ExploreTableManager exploreTableManager;
-  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
-  private final ExploreTableNaming tableNaming;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final AuthorizationEnforcementService authorizationEnforcementService;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -198,9 +192,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf,
-                                   File previewsDir, StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
+                                   File previewsDir, File credentialsDir, StreamAdmin streamAdmin,
+                                   NamespaceQueryAdmin namespaceQueryAdmin,
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                   ExploreTableNaming tableNaming,
                                    AuthorizationEnforcementService authorizationEnforcementService,
                                    AuthorizationEnforcer authorizationEnforcer,
                                    AuthenticationContext authenticationContext) {
@@ -208,15 +202,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hConf = hConf;
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, namespaceQueryAdmin);
     this.previewsDir = previewsDir;
+    this.credentialsDir = credentialsDir;
     this.metastoreClientLocal = new ThreadLocal<>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
     this.metastoreClientReferenceQueue = new ReferenceQueue<>();
-    this.datasetFramework = datasetFramework;
-    this.streamAdmin = streamAdmin;
-    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory,
-                                                       new ExploreTableNaming(), hConf);
-    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
-    this.tableNaming = tableNaming;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
@@ -257,25 +246,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return new CLIService(null);
   }
 
-  protected HiveConf getHiveConf() {
+  private HiveConf getHiveConf() {
     HiveConf conf = new HiveConf();
     // Read delegation token if security is enabled.
     if (UserGroupInformation.isSecurityEnabled()) {
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
-
-      // mapreduce.job.credentials.binary is added by Hive only if Kerberos credentials are present and impersonation
-      // is enabled. However, in our case we don't have Kerberos credentials for Explore service.
-      // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
-      // TODO: When Explore does secure impersonation this has to be the tokens of the user,
-      // TODO: ... and not the tokens of the service itself.
-      String hadoopAuthToken = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
-      if (hadoopAuthToken != null) {
-        conf.set("mapreduce.job.credentials.binary", hadoopAuthToken);
-        if ("tez".equals(conf.get("hive.execution.engine"))) {
-          // Add token file location property for tez if engine is tez
-          conf.set("tez.credentials.path", hadoopAuthToken);
-        }
-      }
     }
 
     // Since we use delegation token in HIVE, unset the SPNEGO authentication if it is
@@ -1007,7 +982,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                                           int size) throws Exception;
 
   @SuppressWarnings("unchecked")
-  protected List<QueryResult> fetchNextResults(QueryHandle handle, int size)
+  private List<QueryResult> fetchNextResults(QueryHandle handle, int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     startAndWait();
 
@@ -1098,7 +1073,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  protected List<ColumnDesc> getResultSchemaInternal(OperationHandle operationHandle) throws SQLException {
+  private List<ColumnDesc> getResultSchemaInternal(OperationHandle operationHandle) throws SQLException {
     ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
     if (operationHandle.hasResultSet()) {
       TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
@@ -1286,18 +1261,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @throws IOException
    * @throws ExploreException
    */
-  protected Map<String, String> startSession()
+  private Map<String, String> startSession()
     throws IOException, ExploreException, NamespaceNotFoundException {
     return startSession(null);
   }
 
-  protected Map<String, String> startSession(@Nullable Id.Namespace namespace)
+  private Map<String, String> startSession(@Nullable Id.Namespace namespace)
     throws IOException, ExploreException, NamespaceNotFoundException {
     return startSession(namespace, null);
   }
 
-  protected Map<String, String> startSession(@Nullable Id.Namespace namespace,
-                                             @Nullable Map<String, String> additionalSessionConf)
+  private Map<String, String> startSession(@Nullable Id.Namespace namespace,
+                                           @Nullable Map<String, String> additionalSessionConf)
     throws IOException, ExploreException, NamespaceNotFoundException {
 
     Map<String, String> sessionConf = Maps.newHashMap();
@@ -1317,7 +1292,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
 
-    if (ExploreServiceUtils.isSparkEngine(getHiveConf())) {
+
+    HiveConf hiveConf = getHiveConf();
+    if (ExploreServiceUtils.isSparkEngine(hiveConf)) {
       sessionConf.putAll(sparkConf);
     }
 
@@ -1325,8 +1302,21 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // make sure RM does not cancel delegation tokens after the query is run
       sessionConf.put("mapreduce.job.complete.cancel.delegation.tokens", "false");
       sessionConf.put("spark.hadoop.mapreduce.job.complete.cancel.delegation.tokens", "false");
-      // refresh delegations for the job - TWILL-170
-      updateTokenStore();
+
+      // write the user's credentials to a file, to be used for the query
+      File credentialsFile = writeCredentialsFile(queryHandle);
+      String credentialsFilePath = credentialsFile.getAbsolutePath();
+
+      // mapreduce.job.credentials.binary is added by Hive only if Kerberos credentials are present and impersonation
+      // is enabled. However, in our case we don't have Kerberos credentials for Explore service.
+      // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
+      // TODO: When Explore does secure impersonation this has to be the tokens of the user,
+      // TODO: ... and not the tokens of the service itself.
+      sessionConf.put(MRJobConfig.MAPREDUCE_JOB_CREDENTIALS_BINARY, credentialsFilePath);
+      if (ExploreServiceUtils.isTezEngine(hiveConf)) {
+        // Add token file location property for tez if engine is tez
+        sessionConf.put("tez.credentials.path", credentialsFilePath);
+      }
     }
 
     if (additionalSessionConf != null) {
@@ -1337,37 +1327,31 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   /**
-   * Updates the token store to be used for the hive job, based upon the Explore container's credentials.
-   * This is because twill doesn't update the container_tokens on upon token refresh.
-   * See: https://issues.apache.org/jira/browse/TWILL-170
+   * Writes the {@link Credentials} of the current user to a file in the {@link #credentialsDir}, for a particular query
+   *
+   * @param queryHandle the query handler for the current operation
+   * @return a File where the credentials were written.
    */
-  private void updateTokenStore() throws IOException, ExploreException {
-    String hadoopTokenFileLocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
-    if (hadoopTokenFileLocation == null) {
-      LOG.warn("Skipping update of token store due to failure to find environment variable '{}'.",
-               UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
-      return;
-    }
+  private File writeCredentialsFile(QueryHandle queryHandle) throws IOException, ExploreException {
+    File credentialsFile = new File(credentialsDir, queryHandle.getHandle());
 
-    Path credentialsFile = Paths.get(hadoopTokenFileLocation);
+    // create a local file with restricted permissions
+    // only allow the owner to read/write, since it contains credentials
+    FileAttribute<Set<PosixFilePermission>> ownerOnlyAttrs =
+      PosixFilePermissions.asFileAttribute(ImmutableSet.of(PosixFilePermission.OWNER_WRITE,
+                                                           PosixFilePermission.OWNER_READ));
 
-    FileAttribute<Set<PosixFilePermission>> originalPermissionAttributes =
-      PosixFilePermissions.asFileAttribute(Files.getPosixFilePermissions(credentialsFile));
+    Files.createFile(credentialsFile.toPath(), ownerOnlyAttrs);
 
-    Path tmpFile = Files.createTempFile(credentialsFile.getParent(), "credentials.store", null,
-                                        originalPermissionAttributes);
-    LOG.debug("Writing to temporary file: {}", tmpFile);
-
-    try (DataOutputStream os = new DataOutputStream(Files.newOutputStream(tmpFile))) {
+    LOG.debug("Writing credentials to file: {}", credentialsFile);
+    try (DataOutputStream os = new DataOutputStream(Files.newOutputStream(credentialsFile.toPath()))) {
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
       credentials.writeTokenStorageToStream(os);
     }
-
-    Files.move(tmpFile, credentialsFile, StandardCopyOption.ATOMIC_MOVE);
-    LOG.debug("Secure store saved to {}", credentialsFile);
+    return credentialsFile;
   }
 
-  protected QueryHandle getQueryHandle(Map<String, String> sessionConf) throws HandleNotFoundException {
+  private QueryHandle getQueryHandle(Map<String, String> sessionConf) throws HandleNotFoundException {
     return QueryHandle.fromId(sessionConf.get(Constants.Explore.QUERY_ID));
   }
 
@@ -1377,7 +1361,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @return OperationHandle.
    * @throws ExploreException
    */
-  protected OperationHandle getOperationHandle(QueryHandle handle) throws ExploreException, HandleNotFoundException {
+  private OperationHandle getOperationHandle(QueryHandle handle) throws ExploreException, HandleNotFoundException {
     return getOperationInfo(handle).getOperationHandle();
   }
 
@@ -1411,8 +1395,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @param statement SQL statement executed with the call.
    * @return {@link QueryHandle} that represents the Hive operation being run.
    */
-  protected QueryHandle saveReadOnlyOperation(OperationHandle operationHandle, SessionHandle sessionHandle,
-                                              Map<String, String> sessionConf, String statement, String namespace) {
+  private QueryHandle saveReadOnlyOperation(OperationHandle operationHandle, SessionHandle sessionHandle,
+                                            Map<String, String> sessionConf, String statement, String namespace) {
     QueryHandle handle = QueryHandle.fromId(sessionConf.get(Constants.Explore.QUERY_ID));
     activeHandleCache.put(handle,
                           new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, statement, namespace));
@@ -1427,8 +1411,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @param statement SQL statement executed with the call.
    * @return {@link QueryHandle} that represents the Hive operation being run.
    */
-  protected QueryHandle saveReadWriteOperation(OperationHandle operationHandle, SessionHandle sessionHandle,
-                                               Map<String, String> sessionConf, String statement, String namespace) {
+  private QueryHandle saveReadWriteOperation(OperationHandle operationHandle, SessionHandle sessionHandle,
+                                             Map<String, String> sessionConf, String statement, String namespace) {
     QueryHandle handle = QueryHandle.fromId(sessionConf.get(Constants.Explore.QUERY_ID));
     activeHandleCache.put(handle,
                           new ReadWriteOperationInfo(sessionHandle, operationHandle,
@@ -1471,10 +1455,16 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * Cleans up the metadata associated with active {@link QueryHandle}. It also closes associated transaction.
    * @param handle handle of the running Hive operation.
    */
-  protected void cleanUp(QueryHandle handle, OperationInfo opInfo) {
+  private void cleanUp(QueryHandle handle, OperationInfo opInfo) {
     try {
       if (opInfo.getPreviewFile() != null) {
         opInfo.getPreviewFile().delete();
+      }
+      if (UserGroupInformation.isSecurityEnabled()) {
+        String credentialsFile = opInfo.getSessionConf().get(MRJobConfig.MAPREDUCE_JOB_CREDENTIALS_BINARY);
+        if (!new File(credentialsFile).delete()) {
+          LOG.warn("Failed to delete credentials file: {}", credentialsFile);
+        }
       }
       closeTransaction(handle, opInfo);
     } finally {

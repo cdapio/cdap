@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,14 +58,14 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   public Hive14ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                               CConfiguration cConf, Configuration hConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
+                              @Named(Constants.Explore.CREDENTIALS_DIR_NAME) File credentialsDir,
                               StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                              ExploreTableNaming tableNaming,
                               AuthorizationEnforcementService authorizationEnforcementService,
                               AuthorizationEnforcer authorizationEnforcer,
                               AuthenticationContext authenticationContext) {
-    super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, tableNaming, authorizationEnforcementService, authorizationEnforcer,
+    super(txClient, datasetFramework, cConf, hConf, previewsDir, credentialsDir, streamAdmin, namespaceQueryAdmin,
+          datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer,
           authenticationContext);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
