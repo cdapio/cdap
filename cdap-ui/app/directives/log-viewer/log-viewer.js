@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $uibModal) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -22,6 +22,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   //Collapsing LogViewer Table Columns
   var columnsList = [];
   var collapseCount = 0;
+  this.$uibModal = $uibModal;
 
   this.setDefault = () => {
     this.displayData = [];
@@ -102,6 +103,44 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.displayData = this.displayData.filter( data => {
       return data.log.message.toLowerCase().indexOf(this.searchText.toLowerCase()) !== -1;
     });
+  };
+
+  this.openRaw = () => {
+    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec) {
+      var modalDataSrc = new MyCDAPDataSource($scope);
+
+      modalDataSrc.request({
+        _cdapNsPath: `/apps/${rAppId}/${rProgramType}/${rProgramId}/runs/${rRunId}/logs?start=${rStartTimeSec}`
+      }).then((res) => {
+        this.rawDataResponse = res;
+        this.testStuff = 'bah';
+        console.log('Making sure this modal works with the response! ', res);
+      });
+    }
+
+   this.$uibModal.open({
+    size: 'lg',
+    templateUrl: 'log-viewer/raw.html',
+    controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', RawLogsModalCtrl],
+    controllerAs: 'RawLogsModalCtrl',
+    resolve: {
+      rAppId: () => {
+        return this.appId;
+      },
+      rProgramType: () => {
+        return this.programType;
+      },
+      rProgramId: () => {
+        return this.programId;
+      },
+      rRunId: () => {
+        return this.runId;
+      },
+      rStartTimeSec: () => {
+        return this.startTimeSec;
+      }
+    }
+   });
   };
 
   this.showStackTrace = (index) => {
