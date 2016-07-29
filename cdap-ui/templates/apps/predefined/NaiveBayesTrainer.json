@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-data-pipeline",
         "scope": "SYSTEM",
-        "version": "3.5.0-SNAPSHOT"
+        "version": "3.6.0-SNAPSHOT"
     },
     "description": "Training model using Naive-Bayes Classifier",
     "name": "NaiveBayesTrainer",
@@ -28,7 +28,7 @@
                     "label": "Training Data",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "1.5.0-SNAPSHOT",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -51,7 +51,7 @@
                     "artifact": {
                         "scope": "SYSTEM",
                         "name": "core-plugins",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"label\",\"type\":\"double\"},{\"name\":\"text\",\"type\":\"string\"}]}",
@@ -95,7 +95,7 @@
                     "artifact": {
                         "scope": "SYSTEM",
                         "name": "spark-plugins",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "fieldToClassify": "text",

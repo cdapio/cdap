@@ -93,6 +93,8 @@ public class DatasetService extends AbstractExecutionThreadService {
 
     builder.setHost(cConf.get(Constants.Dataset.Manager.ADDRESS));
 
+    builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT));
+
     builder.setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS,
                                               Constants.Dataset.Manager.DEFAULT_BACKLOG));
     builder.setExecThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.EXEC_THREADS,

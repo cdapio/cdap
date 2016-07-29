@@ -147,6 +147,7 @@ public class AppFabricServer extends AbstractIdleService {
     // Run http service on random port
     httpService = new CommonNettyHttpServiceBuilder(configuration)
       .setHost(hostname.getCanonicalHostName())
+      .setPort(configuration.getInt(Constants.AppFabric.SERVER_PORT))
       .setHandlerHooks(builder.build())
       .addHttpHandlers(handlers)
       .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,

@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-realtime",
         "scope": "SYSTEM",
-        "version": "3.5.0-SNAPSHOT"
+        "version": "3.6.0-SNAPSHOT"
     },
     "description": "Ingest real-time Twitter Stream into a stream",
     "name": "TwitterToStream",
@@ -29,7 +29,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "AccessToken": "",
@@ -49,7 +49,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
@@ -67,7 +67,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "name": "",

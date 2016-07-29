@@ -1,7 +1,7 @@
 {
     "artifact": {
         "name": "cdap-data-pipeline",
-        "version": "3.5.0-SNAPSHOT",
+        "version": "3.6.0-SNAPSHOT",
         "scope": "SYSTEM"
     },
     "description": "Score incoming events against a learned model to classify events as spam or not spam",
@@ -44,7 +44,7 @@
                     "label": "Events",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "1.5.0-SNAPSHOT",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -66,7 +66,7 @@
                     "label": "Projection",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "1.5.0-SNAPSHOT",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -106,7 +106,7 @@
                     "label": "Classify Event",
                     "artifact": {
                         "name": "spark-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "1.5.0-SNAPSHOT",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -133,7 +133,7 @@
                     "label": "Spam Messages",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "1.5.0-SNAPSHOT",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -163,7 +163,7 @@
                     "label": "Spam",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "1.5.0-SNAPSHOT",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -193,7 +193,7 @@
                     "label": "Non Spam Messages",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "1.5.0-SNAPSHOT",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -223,7 +223,7 @@
                     "label": "Non Spam",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "1.5.0-SNAPSHOT",
                         "scope": "SYSTEM"
                     },
                     "properties": {

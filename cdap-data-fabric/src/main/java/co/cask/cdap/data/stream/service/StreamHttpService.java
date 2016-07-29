@@ -63,6 +63,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Stream.STREAM_HANDLER)))
       .setHost(cConf.get(Constants.Stream.ADDRESS))
+      .setPort(cConf.getInt(Constants.Stream.PORT))
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(0)         // Execution happens in the io worker thread directly
       .setConnectionBacklog(20000)

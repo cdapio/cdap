@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-realtime",
         "scope": "SYSTEM",
-        "version": "3.5.0-SNAPSHOT"
+        "version": "3.6.0-SNAPSHOT"
     },
 
     "description": "Real-time updates from Amazon Simple Queue Service into an HBase table",
@@ -26,7 +26,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "region": "",
@@ -45,7 +45,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0-SNAPSHOT"
+                        "version": "1.5.0-SNAPSHOT"
                     },
                     "properties": {
                         "name": "",
