@@ -28,6 +28,7 @@ import java.util.Set;
 public final class DataStreamsConfig extends ETLConfig {
   private final String batchInterval;
   private final Resources driverResources;
+  private final String extraJavaOpts;
   // See comments in DataStreamsSparkLauncher for explanation on why we need this.
   private final boolean isUnitTest;
 
@@ -42,6 +43,7 @@ public final class DataStreamsConfig extends ETLConfig {
     this.batchInterval = batchInterval;
     this.driverResources = driverResources;
     this.isUnitTest = isUnitTest;
+    this.extraJavaOpts = "";
   }
 
   public Resources getDriverResources() {
@@ -54,6 +56,10 @@ public final class DataStreamsConfig extends ETLConfig {
 
   public boolean isUnitTest() {
     return isUnitTest;
+  }
+
+  public String getExtraJavaOpts() {
+    return extraJavaOpts;
   }
 
   @Override
@@ -70,12 +76,14 @@ public final class DataStreamsConfig extends ETLConfig {
 
     DataStreamsConfig that = (DataStreamsConfig) o;
 
-    return Objects.equals(batchInterval, that.batchInterval) && Objects.equals(driverResources, that.driverResources);
+    return Objects.equals(batchInterval, that.batchInterval) &&
+      Objects.equals(driverResources, that.driverResources) &&
+      Objects.equals(extraJavaOpts, that.extraJavaOpts);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), batchInterval, driverResources);
+    return Objects.hash(super.hashCode(), batchInterval, driverResources, extraJavaOpts);
   }
 
   @Override
@@ -83,6 +91,8 @@ public final class DataStreamsConfig extends ETLConfig {
     return "DataStreamsConfig{" +
       "batchInterval='" + batchInterval + '\'' +
       ", driverResources=" + driverResources +
+      ", extraJavaOpts='" + extraJavaOpts + '\'' +
+      ", isUnitTest=" + isUnitTest +
       "} " + super.toString();
   }
 

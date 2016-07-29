@@ -73,8 +73,8 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
   @Override
   public void beforeSubmit(SparkClientContext context) throws Exception {
     SparkConf sparkConf = new SparkConf();
-    sparkConf.set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m");
-    sparkConf.set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m");
+    sparkConf.set("spark.driver.extraJavaOptions", pipelineSpec.getExtraJavaOpts());
+    sparkConf.set("spark.executor.extraJavaOptions", pipelineSpec.getExtraJavaOpts());
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
     // so... we have to set this hacky master variable based on the isUnitTest setting in the config
