@@ -1,5 +1,5 @@
 {#
-    basic/layout.html
+    cdap/layout.html
     ~~~~~~~~~~~~~~~~~
 
     Master layout template for Sphinx themes.
@@ -106,7 +106,12 @@
     {%- endfor %}
     <script type="text/javascript" src="{{ pathto('_static/copy-to-clipboard.js', 1) }}"></script>
     <script type="text/javascript" src="{{ pathto('_static/tabbed-parsed-literal.js', 1) }}"></script>
-   
+    <!-- Annotator -->
+    <script type="text/javascript" src="{{ pathto('_static/cdap-annotator-full.js', 1) }}"></script>
+    <!-- annotator.min.css_t included in css files -->
+    <!-- cdap-annotator.js loaded at end of file -->
+    <script type="text/javascript" src="{{ pathto('_static/cdap-annotator.js', 1) }}"></script>
+    <!-- Annotator end -->
     <!-- Google Tag Manager start -->
     {%- if html_google_tag_manager_code is defined %}
     <script>dataLayer = [];</script>
@@ -124,6 +129,7 @@
 {%- macro css() %}
     <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
     <link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
+    <link rel="stylesheet" href="{{ pathto('_static/annotator.min.css', 1) }}" type="text/css" />
     {%- for cssfile in css_files %}
     <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
     {%- endfor %}
@@ -230,7 +236,7 @@
 
     <div class="document">
   {%- block document %}
-      <div class="documentwrapper">
+      <div id="documentwrapper" class="documentwrapper">
       {%- if render_sidebar %}
         <div class="bodywrapper">
       {%- endif %}
@@ -310,5 +316,8 @@
 
     </div>
 {%- endblock %}
+<!-- 
+    <script type="text/javascript" src="{{ pathto('_static/cdap-annotator.js', 1) }}"></script>
+ -->
   </body>
 </html>

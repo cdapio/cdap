@@ -75,6 +75,7 @@ fi
 API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
 CHECK_INCLUDES=''
+LOCAL_INCLUDES=''
 
 if [[ "x${COLOR_LOGS}" != "x" ]]; then
   SPHINX_COLOR=''
@@ -119,6 +120,7 @@ function usage() {
   echo "    build-web            Clean build and zip for placing on docs.cask.co webserver (no Javadocs)"
   echo "    build-docs           Clean build of docs (no Javadocs)"
   echo "    docs                 alias for 'build-docs'"
+  echo "    docs-local           Clean build of docs (no Javadocs), using local copies of downloaded files"
   echo
   echo "    license-pdfs         Clean build of License Dependency PDFs"
   echo "    check-includes       Check if included files have changed from source"
@@ -147,6 +149,11 @@ function build_docs() {
   check_includes
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${SOURCE} ${TARGET}/html
   consolidate_messages
+}
+
+function build_docs_local() {
+  LOCAL_INCLUDES="${TRUE}"
+  build_docs
 }
 
 function build_docs_google() {
@@ -347,8 +354,10 @@ function set_version() {
   
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     GIT_BRANCH_CASK_HYDRATOR="develop"
+    GIT_BRANCH_CASK_TRACKER="develop"
   fi
   get_cask_hydrator_version ${GIT_BRANCH_CASK_HYDRATOR}
+  get_cask_tracker_version ${GIT_BRANCH_CASK_TRACKER}
 }
 
 function display_version() {
@@ -360,16 +369,32 @@ function display_version() {
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
   echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
+  echo "Hydrator:"
   echo "GIT_BRANCH_CASK_HYDRATOR: ${GIT_BRANCH_CASK_HYDRATOR}"
   echo "CASK_HYDRATOR_VERSION: ${CASK_HYDRATOR_VERSION}"
+  echo "Tracker:"
+  echo "GIT_BRANCH_CASK_TRACKER: ${GIT_BRANCH_CASK_TRACKER}"
+  echo "CASK_TRACKER_VERSION: ${CASK_TRACKER_VERSION}"
 }
 
 function get_cask_hydrator_version() {
-  # $1 Branch of Hydrator Plugins to use
+  # $1 Branch of Hydrator to use
   CASK_HYDRATOR_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
   CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION#*<version>}
   CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION%%</version>*}
   export CASK_HYDRATOR_VERSION
+}
+
+function get_cask_tracker_version() {
+  # $1 Branch of Tracker to use
+  CASK_TRACKER_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/cask-tracker/${1}/pom.xml" | grep "<version>")
+  CASK_TRACKER_VERSION=${CASK_TRACKER_VERSION#*<version>}
+  CASK_TRACKER_VERSION=${CASK_TRACKER_VERSION%%</version>*}
+  if [ "x${CASK_TRACKER_VERSION}" == "x" ]; then
+    CASK_TRACKER_VERSION="0.2.0-SNAPSHOT"
+    echo "Using default CASK_TRACKER_VERSION ${CASK_TRACKER_VERSION}"
+  fi
+  export CASK_TRACKER_VERSION
 }
 
 function clear_messages_set_messages_file() {
@@ -488,11 +513,13 @@ function rewrite() {
 }
 
 function run_command() {
+  set_version
   case ${1} in
     build|build-github|build-web|build-docs)      "${1/-/_}";;
     check-includes|display-version)               "${1/-/_}";;
     license-pdfs)                                 "build_license_pdfs";;
     docs)                                         "build_docs";;
+    docs-local)                                   "build_docs_local";;
     *)                                            usage;;
   esac
 }

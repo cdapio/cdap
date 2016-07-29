@@ -26,15 +26,20 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+###############################################################
 # Component versions used in replacements:
 
-cask_tracker_version = '0.1.0-SNAPSHOT'
-
-cdap_apps_version = '0.7.0-SNAPSHOT'
+cdap_apps_version = '0.7.0'
 cdap_apps_compatibile_version = 'release/cdap-3.4-compatible'
 
 node_js_min_version = 'beginning with v0.10.36'
 node_js_max_version = 'v4.4.0'
+
+# These obtained from the OS environment
+# cask_hydrator_version
+# cask_tracker_version
+
+###############################################################
 
 import sys
 import os
@@ -122,15 +127,18 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
     'tabbed-parsed-literal',
+    'youtube',
 ]
+
+# The Inter-Sphinx mapping
 
 _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 
-# The Inter-Sphinx mapping keys must be alpha-numeric only
-intersphinx_mapping = {
+# Mapping keys must be alpha-numeric only
+intersphinx_mapping_cdap_manuals = {
   'introduction': ('../../introduction/',      os.path.abspath(_intersphinx_mapping % 'introduction')),
   'developers':   ('../../developers-manual/', os.path.abspath(_intersphinx_mapping % 'developers-manual')),
-  'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
+#   'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
   'admin':        ('../../admin-manual/',      os.path.abspath(_intersphinx_mapping % 'admin-manual')),
   'integrations': ('../../integrations/',      os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',    os.path.abspath(_intersphinx_mapping % 'examples-manual')),
@@ -138,11 +146,27 @@ intersphinx_mapping = {
   'faqs':         ('../../faqs',               os.path.abspath(_intersphinx_mapping % 'faqs')),
 }
 
+intersphinx_mapping_cdap_extensions = {
+  'hydrator':     ('../../hydrator-manual/',   os.path.abspath(_intersphinx_mapping % 'hydrator-manual')),
+  'tracker':      ('../../tracker-manual/',   os.path.abspath(_intersphinx_mapping % 'tracker-manual')),
+}
+
+# Merge dictionaries
+intersphinx_mapping = intersphinx_mapping_cdap_manuals.copy()
+intersphinx_mapping.update(intersphinx_mapping_cdap_extensions)
+
+# Used by the sphinx.ext.extlinks extension, these are available using this example syntax:
+# :cdap-ui-apps-programs:`application overview page, programs tab <ClicksAndViews>`
 extlinks = {
+    'cdap-ui': ('http://localhost:9999/ns/default/%s', None),
     'cdap-ui-apps': ('http://localhost:9999/ns/default/apps/%s', None),
     'cdap-ui-apps-programs': ('http://localhost:9999/ns/default/apps/%s/overview/programs', None),
     'cdap-ui-datasets': ('http://localhost:9999/ns/default/datasets/%s', None),
     'cdap-ui-datasets-explore': ('http://localhost:9999/ns/default/datasets/%s/overview/explore', None),
+    'cdap-ui-datasets-explore': ('http://localhost:9999/ns/default/datasets/%s/overview/explore', None),
+    'cask-hydrator': ('http://localhost:9999/ns/default/hydrator/%s', None),
+    'cask-hydrator-studio': ('http://localhost:9999/ns/default/hydrator/studio/%s', None),
+    'cask-hydrator-studio-artifact': ('http://localhost:9999/ns/default/hydrator/studio?artifactType=%s', None),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -216,7 +240,7 @@ rst_epilog = """
 .. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
 """
 
-if node_js_min_version:
+if node_js_min_version and node_js_max_version:
     rst_epilog += """
 .. |node-js-min-version| replace:: %(node_js_min_version)s
 
@@ -280,14 +304,18 @@ if copyright:
 .. |copyright| replace:: %(copyright)s
 """ % {'copyright': copyright}
 
-if cdap_apps_version:
+# cdap_apps_version is for https://github.com/caskdata/cdap-apps repo
+if cdap_apps_version and cdap_apps_compatibile_version:
     rst_epilog += """
 .. |cdap-apps-version| replace:: %(cdap-apps-version)s
 .. |literal-cdap-apps-version| replace:: ``%(cdap-apps-version)s``
 .. |cdap-apps-compatibile-version| replace:: %(cdap-apps-compatibile-version)s
 
 """ % {'cdap-apps-version': cdap_apps_version, 'cdap-apps-compatibile-version': cdap_apps_compatibile_version}
+else:
+    print 'Unable to find cdap_apps_version and cdap_apps_compatibile_version'    
 
+cask_tracker_version = os.environ.get('CASK_TRACKER_VERSION')
 if cask_tracker_version:
     rst_epilog += """
 .. |cask-tracker-version| replace:: %(cask-tracker-version)s
@@ -296,13 +324,19 @@ if cask_tracker_version:
 .. |literal-cask-tracker-version-jar| replace:: ``tracker-%(cask-tracker-version)s.jar``
 
 """ % {'cask-tracker-version': cask_tracker_version}
+else:
+    print 'Unable to find CASK_TRACKER_VERSION'    
 
-rst_epilog += """
+cask_hydrator_version = os.environ.get('CASK_HYDRATOR_VERSION')
+if cask_hydrator_version:
+    rst_epilog += """
 .. |cask-hydrator-version| replace:: %(cask-hydrator-version)s
 
 .. |literal-cask-hydrator-version| replace:: ``%(cask-hydrator-version)s``
 
-""" % {'cask-hydrator-version': os.environ.get('CASK_HYDRATOR_VERSION')}
+""" % {'cask-hydrator-version': cask_hydrator_version}
+else:
+    print 'Unable to find CASK_HYDRATOR_VERSION'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -361,46 +395,58 @@ html_theme = 'cdap'
 # versions_data is used to generate the JSONP file at http://docs.cask.co/cdap/json-versions.js
 # This is generated by a script in the documentation repo that is used to sync the webservers.
 #
-# manual_list is an ordered list of the manuals
-# Fields: directory, manual name, icon
+# manual_list is an ordered list of the cdap_manuals and cdap_extensions
+#
+# Fields: directory, intersphinx_mapping, manual name, icon
+#
 # icon: "" for none, "new-icon" for the ico_new.png
-manuals_list = [
-    ['introduction',       'Introduction to CDAP',            '',],
-    ['developers-manual', u'Developers’ Manual',              '',],
-    ['cdap-apps',          'CDAP Applications',               '',],
-    ['admin-manual',       'Administration Manual',           '',],
-    ['integrations',       'Integrations',                    '',],
-    ['examples-manual',    'Examples, Guides, and Tutorials', '',],
-    ['reference-manual',   'Reference Manual',                '',],
-    ['faqs',               'FAQs',                            '',],
+
+cdap_manuals_list = [
+    ['introduction',      'introduction', 'Introduction to CDAP',            '',],
+    ['developers-manual', 'developers',  u'Developers’ Manual',              '',],
+    ['admin-manual',      'admin',        'Administration Manual',           '',],
+    ['integrations',      'integrations', 'Integrations',                    '',],
+    ['examples-manual',   'examples',     'Examples, Guides, and Tutorials', '',],
+    ['reference-manual',  'reference',    'Reference Manual',                '',],
+    ['faqs',              'faqs',         'FAQs',                            '',],
+]
+#     ['cdap-apps',         'cdapapps',     'CDAP Applications',               '',],
+
+cdap_extension_manuals_list = [
+    ['hydrator-manual',   'hydrator',     'Cask Hydrator',                   '',],
+    ['tracker-manual',    'tracker',      'Cask Tracker',                    '',],
 ]
 
-manual_intersphinx_mapping = {
-  'introduction': 'introduction',
-  'developers-manual': 'developers',
-  'cdap-apps': 'cdapapps',
-  'admin-manual': 'admin',
-  'integrations': 'integrations',
-  'examples-manual': 'examples',
-  'reference-manual': 'reference',
-  'faqs': 'faqs',
-}
+manuals_list = cdap_manuals_list + cdap_extension_manuals_list
 
+manual_intersphinx_mapping = {}
 manuals_dict = {}
 manual_titles_list = []
 manual_dirs_list  = []
 manual_icons_list = []
 for m in manuals_list:
-    manuals_dict[m[0]]= m[1]
+    manual_intersphinx_mapping[m[0]] = m[1]
+    manuals_dict[m[0]]= m[2]
     manual_dirs_list.append(m[0])
-    manual_titles_list.append(m[1])
-    manual_icons_list.append(m[2])
+    manual_titles_list.append(m[2])
+    manual_icons_list.append(m[3])
+
+cdap_manuals = []
+for m in cdap_manuals_list:
+    cdap_manuals.append(m[0])
+    
+cdap_extension_manuals = []
+for m in cdap_extension_manuals_list:
+    cdap_extension_manuals.append(m[0])
 
 html_theme_options = {
+  'cdap_manuals': cdap_manuals,
+  'cdap_extension_manuals': cdap_extension_manuals,
   'docs_url': 'http://docs.cask.co/cdap',
+  'json_versions_js': 'http://docs.cask.co/cdap/json-versions.js',
   'language': 'en',
   'manual': '',
-  'manuals': manual_dirs_list,
+  'manual_dirs': manual_dirs_list,
   'manual_titles': manual_titles_list,
   'manual_icons': manual_icons_list,
   'meta_git':
@@ -408,13 +454,13 @@ html_theme_options = {
       'git_timestamp': git_timestamp,
       'git_release': release,
     },
+  'stickysidebar': True,
   'release': release,
   'version': version,
-  'json_versions_js': 'http://docs.cask.co/cdap/json-versions.js',
 }
 
-def get_manuals():
-    return html_theme_options['manuals']
+def get_manual_dirs():
+    return html_theme_options['manual_dirs']
 
 def get_manual_titles():
     return html_theme_options['manual_titles']
@@ -477,9 +523,8 @@ html_static_path = ['../../_common/_static']
 html_sidebars = {'**': [
     'manuals.html',
     'globaltoc.html',
-    'relations.html',
-    'downloads.html',
     'searchbox.html',
+    'downloads.html',
     'casksites.html',
      ],}
 
@@ -717,7 +762,8 @@ def set_conf_for_manual():
 
     html_theme_options['manual'] = m
     html_short_title_toc = manuals_dict[m]
-    html_short_title = u'CDAP %s' % html_short_title_toc
+#     html_short_title = u'CDAP %s' % html_short_title_toc
+    html_short_title = html_short_title_toc
     html_context = {'html_short_title_toc': html_short_title_toc}
 
     # Remove this guide from the mapping as it will fail as it has been deleted by clean

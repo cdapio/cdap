@@ -91,6 +91,10 @@ div.related a {
     font-weight: bold;
 }
 
+div.section {
+	clear: both;
+}
+
 div.sphinxsidebar {
     font-size: 0.75em;
     line-height: 1.5em;
@@ -127,6 +131,12 @@ div.sphinxsidebar h3 a {
     color: #444;
 }
 
+div.sphinxsidebar h3.cdap-extensions {
+    background-color: #eee;
+    margin-left: 0;
+    padding-bottom: 0;
+}
+
 div.sphinxsidebar p {
     color: #888;
     padding: 5px 20px;
@@ -136,7 +146,7 @@ div.sphinxsidebar p.topless {
 }
 
 div.sphinxsidebar ul {
-    margin-top:    10px;
+    margin-top:    5px;
     margin-bottom: 10px;
     margin-right:  10px;
     margin-left:   20px;
@@ -363,7 +373,7 @@ div.viewcode-block:target {
 
 img.bordered-image { 
     border:2px outset #708091;
-    display: inline-block; 
+    /* display: inline-block; */
 }
 
 img.bordered-image-top-margin { 
@@ -558,4 +568,12 @@ div.tab-contents {
 div.admin-manual-step-images.container {
     margin-left: -20px;
     margin-bottom: -20px;
+}
+
+/* -- Styles for custom "inline-sidebar" ------------- */
+
+div.inline-sidebar.container {
+    background-color: #F9FAFB;
+    border: 2px solid #d8d8d8;
+    padding: 0 10px 0 10px;
 }

@@ -18,20 +18,24 @@ WITH="with"
 WITHOUT="without"
 WITH_JAVADOCS="$WITHOUT"
 
-MANUALS="introduction developers-manual cdap-apps admin-manual integrations examples-manual reference-manual faqs"
+CDAP_MANUALS="introduction developers-manual admin-manual integrations examples-manual reference-manual faqs"
+EXTENSION_MANUALS="hydrator-manual tracker-manual"
+MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 
-# Used to monitor any changes in building of Javadocs
-# BUILD.rst
+# Used to monitor any changes in scripts or commands for the building of Javadocs
 BUILD_RST="BUILD.rst"
 BUILD_RST_HASH_LOCATION="cdap-docs/vars"
 BUILD_RST_HASH="039fc5b9a1decc5c67f17c332413f5d9"
 
-# This needs to be explicitly set as Git has trouble identifying it.
+# This needs to be explicitly set as Git has trouble identifying it
 GIT_BRANCH_PARENT="develop"
 
-# Used by cdap-apps for Hydrator documentation
+# Used by developers-manual
+GIT_BRANCH_CDAP_CLIENTS="1.2.0"
+GIT_BRANCH_CDAP_INGEST="1.3.0"
+
+# Used for building Hydrator documentation
 GIT_BRANCH_CASK_HYDRATOR="develop"
 
-# Used by developers-manual
-CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
-CDAP_INGEST_RELEASE_VERSION="1.3.0"
+# Used for Tracker documentation
+GIT_BRANCH_CASK_TRACKER="develop"

@@ -15,9 +15,18 @@ CDAP Documentation Table of Contents
     Overview </index>
     Introduction to CDAP </introduction/index>
     Developers’ Manual </developers-manual/index>
-    CDAP Applications </cdap-apps/index>
     Administration Manual </admin-manual/index>
     Integrations </integrations/index>
     Examples, Guides, and Tutorials </examples-manual/index>
     Reference Manual </reference-manual/index>
     FAQs </faqs/index>
+
+
+CDAP Extensions
+===============
+
+.. toctree::
+
+    Cask Hydrator </hydrator-manual/index>
+    Cask Tracker </tracker-manual/index>
+ 

@@ -3,6 +3,7 @@
     :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _cli:
+.. _cdap-cli:
 
 ============================================
 Command Line Interface API

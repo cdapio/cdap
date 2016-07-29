@@ -48,13 +48,12 @@ def build_common_index(app, exception):
     builder = app.builder
     if exception:
         return
-    manuals = html_theme_options["manuals"]
     master = load_index(builder)
     clean(master)
     
-    for manual in manuals:
-        index = load_index(builder, "../../%s/%s/html" % (manual, target))
-        master = merge(master, index, manual)
+    for manual_dir in get_manual_dirs():
+        index = load_index(builder, "../../%s/%s/html" % (manual_dir, target))
+        master = merge(master, index, manual_dir)
     
     dump_search_index(builder, master)
 

@@ -532,8 +532,9 @@ Bug Fix
 
 Improvements
 ------------
-- `CDAP-5047 <https://issues.cask.co/browse/CDAP-5047>`__ - Added a :ref:`Batch Source
-  Plugin <cdap-apps-etl-plugins-batchsources>` to read from Microsoft Azure Blob Storage.
+- `CDAP-5047 <https://issues.cask.co/browse/CDAP-5047>`__ - Added a `Batch Source Plugin 
+  <http://docs.cask.co/cdap/3.3.2/en/cdap-apps/hydrator/hydrator-plugins/batchsources/azureblobstore.html>`__
+  to read from Microsoft Azure Blob Storage.
 
 - `CDAP-5134 <https://issues.cask.co/browse/CDAP-5134>`__ - Added support for CDH 5.6 to CDAP.
 

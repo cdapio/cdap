@@ -249,7 +249,7 @@ function build_javadocs_api() {
   if [ "${javadoc_type}" == "${DOCS}" ]; then
     javadoc_run="mvn clean site -P templates"
   fi
-  local debug_flag=""
+  local debug_flag=''
   if [ "${DEBUG}" == "${TRUE}" ]; then
     debug_flag="-X"
   fi
