@@ -100,10 +100,7 @@ public class MasterStartupTool {
     List<CheckRunner.Failure> failures = checkRunner.runChecks();
     if (!failures.isEmpty()) {
       for (CheckRunner.Failure failure : failures) {
-        LOG.error("{} failed: {}", failure.getName(), failure.getException().getMessage());
-        if (failure.getException().getCause() != null) {
-          LOG.error("  Root cause: {}", ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
-        }
+        LOG.error("{} failed:", failure.getName(), failure.getException());
       }
       LOG.error("Errors detected while starting up master. " +
                   "Please check the logs, address all errors, then try again.");
