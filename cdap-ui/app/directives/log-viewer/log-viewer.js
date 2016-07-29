@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -24,6 +24,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var collapseCount = 0;
 
   this.setDefault = () => {
+    this.textFile = null;
     this.displayData = [];
     this.data = [];
     this.loading = false;
@@ -193,8 +194,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.data = this.data.concat(res);
         this.cacheSize = res.length - this.cacheDecrement;
-        this.renderData();
-        if(res.length < this.viewLimit){
+        this.renderData(true);
+        if(this.displayData.length < this.viewLimit){
           getStatus();
         }
 
@@ -206,11 +207,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   const getStatus = () => {
       myLogsApi.getLogsMetadata({
-        'namespace' : this.namespaceId,
-        'appId' : this.appId,
-        'programType' : this.programType,
-        'programId' : this.programId,
-        'runId' : this.runId
+        namespace : this.namespaceId,
+        appId : this.appId,
+        programType : this.programType,
+        programId : this.programId,
+        runId : this.runId
       }).$promise.then(
         (statusRes) => {
           if(statusRes.status === 'RUNNING'){
@@ -221,7 +222,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           } else {
             this.applicationIsRunning = false;
             if (pollPromise) {
-              pollPromise.stopPoll(pollPromise.__pollId__);
+              dataSrc.stopPoll(pollPromise.__pollId__);
             }
           }
         },
@@ -256,17 +257,61 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         });
 
         this.data = this.data.concat(res);
+        this.renderData(true);
       }
 
-      if(this.data.length > this.viewLimit){
+      if(this.displayData.length > this.viewLimit){
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
+      } else {
+        getStatus();
       }
-      this.renderData();
-      getStatus();
 
     }, (err) => {
       console.log('ERROR: ', err);
+    });
+  };
+
+  var exportTimeout = null;
+
+  const downloadLogs = () => {
+    return myLogsApi.getLogsStartAsRaw({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId,
+      start : this.startTimeSec
+    }).$promise.then(
+    (res) => {
+      this.downloadContent = res;
+    },
+    (err) => {
+      console.log('ERROR: ', err);
+    });
+  };
+
+  this.export = () => {
+    downloadLogs().then( () => {
+      var blob = new Blob([this.downloadContent], {type: 'text/plain'});
+        this.url = URL.createObjectURL(blob);
+        let filename = '';
+        if ('undefined' !== typeof this.getDownloadFilename()) {
+          filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+        } else {
+          filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+        }
+        this.exportFileName = filename;
+        $scope.$on('$destroy', () => {
+          URL.revokeObjectURL(this.url);
+          $timeout.cancel(exportTimeout);
+        });
+
+        $timeout.cancel(exportTimeout);
+
+        exportTimeout = $timeout(() => {
+          document.getElementById('logs-export-link').click();
+        });
     });
   };
 
@@ -279,20 +324,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
     const url = myCdapUrl.constructUrl({
-      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?format=json&start=${this.startTimeSec}`
+      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?&start=${this.startTimeSec}`
     });
 
     this.rawUrl = url;
 
-    myLogsApi.getLogsStart({
-        'namespace' : this.namespaceId,
-        'appId' : this.appId,
-        'programType' : this.programType,
-        'programId' : this.programId,
-        'runId' : this.runId,
-        'start' : this.startTimeSec
+    myLogsApi.getLogsStartAsJson({
+        namespace : this.namespaceId,
+        appId : this.appId,
+        programType : this.programType,
+        programId : this.programId,
+        runId : this.runId,
+        start : this.startTimeSec
     }).$promise.then(
       (res) => {
+
         this.loading = false;
         this.viewLimit = 100;
         this.cacheDecrement = 100;
@@ -334,24 +380,30 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
   };
 
-  function formatDate(date) {
-    let month = date.getMonth() + 1;
-    let day = date.getDate();
-    let year = date.getFullYear();
-    let hours = date.getHours();
-    let minutes = date.getMinutes();
-    let seconds = date.getSeconds();
+  function formatDate(date, isDownload) {
 
-    if(minutes < 10){
-      minutes = '0' + minutes.toString();
+    let dateObj = {
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      year: date.getFullYear(),
+      hours: date.getHours(),
+      minutes: date.getMinutes(),
+      seconds: date.getSeconds()
+    };
+
+    angular.forEach(dateObj, (value, key) => {
+      if(value < 10){
+        dateObj[key] = '0' + value;
+      } else {
+        dateObj[key] = value.toString();
+      }
+    });
+
+    if(isDownload){
+      return dateObj.year + dateObj.day + dateObj.month + dateObj.hours + dateObj.minutes + dateObj.seconds;
     }
-    if(hours < 10){
-      hours = '0' + hours.toString();
-    }
-    if(seconds < 10){
-      seconds = '0' + seconds.toString();
-    }
-    return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+
+    return dateObj.month + '/' + dateObj.day + '/' + dateObj.year + ' ' + dateObj.hours + ':' + dateObj.minutes + ':' + dateObj.seconds;
   }
 
   this.toggleLogExpansion = function() {
@@ -383,12 +435,15 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.renderData();
   };
 
-  this.renderData = () => {
+  this.renderData = (renderNewFromOffset) => {
     //Clean slate
-    this.displayData = [];
-    this.viewLimit = 100;
-    this.cacheDecrement = 100;
-    this.cacheSize = 0;
+
+    if(!renderNewFromOffset){
+      this.displayData = [];
+      this.viewLimit = 100;
+      this.cacheDecrement = 100;
+      this.cacheSize = 0;
+    }
 
     if(numEvents === 0){
       angular.forEach(this.data, (value, key) => {
@@ -403,6 +458,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
     }
   };
+
   this.highlight = (text) => {
     if(!this.searchText || (this.searchText && !this.searchText.length)){
      return $sce.trustAsHtml(text);
@@ -443,15 +499,16 @@ angular.module(PKG.name + '.commons')
     return {
       templateUrl: 'log-viewer/log-viewer.html',
       controller: LogViewerController,
+      controllerAs: 'LogViewer',
       scope: {
         displayOptions: '=?',
         namespaceId: '@',
         appId: '@',
         programType: '@',
         programId: '@',
-        runId: '@'
+        runId: '@',
+        getDownloadFilename: '&'
       },
-      bindToController: true,
-      controllerAs: 'LogViewer'
+      bindToController: true
     };
   });
