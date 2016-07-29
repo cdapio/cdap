@@ -109,38 +109,45 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec) {
       var modalDataSrc = new MyCDAPDataSource($scope);
 
+      this.toggleMaximizedView = (isExpanded) => {
+        this.windowMode = (isExpanded) ? 'expand' : 'regular';
+      };
+
+      this.windowMode = 'regular';
+
       modalDataSrc.request({
         _cdapNsPath: `/apps/${rAppId}/${rProgramType}/${rProgramId}/runs/${rRunId}/logs?start=${rStartTimeSec}`
       }).then((res) => {
         this.rawDataResponse = res;
-        this.testStuff = 'bah';
-        console.log('Making sure this modal works with the response! ', res);
       });
     }
 
-   this.$uibModal.open({
-    size: 'lg',
-    templateUrl: 'log-viewer/raw.html',
-    controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', RawLogsModalCtrl],
-    controllerAs: 'RawLogsModalCtrl',
-    resolve: {
-      rAppId: () => {
-        return this.appId;
-      },
-      rProgramType: () => {
-        return this.programType;
-      },
-      rProgramId: () => {
-        return this.programId;
-      },
-      rRunId: () => {
-        return this.runId;
-      },
-      rStartTimeSec: () => {
-        return this.startTimeSec;
+    this.$uibModal.open({
+      size: 'lg',
+      windowTemplateUrl: 'log-viewer/raw-template.html',
+      templateUrl: 'log-viewer/raw.html',
+      windowClass: 'raw-modal cdap-modal',
+      animation: false,
+      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', RawLogsModalCtrl],
+      controllerAs: 'RawLogsModalCtrl',
+      resolve: {
+        rAppId: () => {
+          return this.appId;
+        },
+        rProgramType: () => {
+          return this.programType;
+        },
+        rProgramId: () => {
+          return this.programId;
+        },
+        rRunId: () => {
+          return this.runId;
+        },
+        rStartTimeSec: () => {
+          return this.startTimeSec;
+        }
       }
-    }
-   });
+    });
   };
 
   this.showStackTrace = (index) => {
