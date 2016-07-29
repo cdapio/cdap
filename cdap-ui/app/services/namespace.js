@@ -40,7 +40,7 @@ angular.module(PKG.name + '.services')
             .then(
               (function(res) {
 
-                if(!res.length) {
+                if(!res.length && !$state.includes('admin.**')) {
                   $state.go('unauthorized');
                 }
 
