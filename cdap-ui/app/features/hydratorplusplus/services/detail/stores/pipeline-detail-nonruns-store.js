@@ -15,8 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService) {
+  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers) {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
+    this.myHelpers = myHelpers;
     this.setDefaults = function(app) {
       this.state = {
         scheduleStatus: null,
@@ -124,6 +125,12 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.getInstance = function() {
       return this.state.cloneConfig.config.instances;
     };
+    this.getMemoryMb = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'memoryMb');
+    };
+    this.getVirtualCores = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'virtualCores');
+    };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
       var appConfig = {};
@@ -167,6 +174,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         config: {
           instances: appConfigClone.configJson.instances,
           batchInterval: appConfigClone.configJson.batchInterval,
+          resources: appConfigClone.configJson.resources,
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,

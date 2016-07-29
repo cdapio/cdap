@@ -17,7 +17,7 @@
   <div class="pipeline-settings-content">
 
     <div>
-      <my-card title="Schedule" class="schedule">
+      <my-card data-title="Schedule" class="schedule">
         <div class="radio-inline" ng-if="!MyBatchPipelineSettingsCtrl._isDisabled">
           <label>
             <input type="radio"
@@ -50,7 +50,7 @@
            widget-container>
         </div>
       </my-card>
-      <my-card title="Engine" class="engine">
+      <my-card data-title="Engine" class="engine">
         <form role="form">
           <label>
             <input type="radio"
@@ -69,11 +69,40 @@
               Spark
           </label>
         </form>
+        <div class="form-horizontal resource-container">
+          <div ng-click="MyBatchPipelineSettingsCtrl.showResourcesView()">
+            <i class="fa fa-info-circle"
+               uib-tooltip="Resources don't take any effect in standalone environment."
+               ng-if="!MyBatchPipelineSettingsCtrl.isDistributed"></i>
+            <span class="title">
+              Resources
+            </span>
+            <span class="fa fa-caret-down" ng-if="MyBatchPipelineSettingsCtrl.showResources"></span>
+            <span class="fa fa-caret-right" ng-if="!MyBatchPipelineSettingsCtrl.showResources"></span>
+          </div>
+          <div class="resource-holder" ng-if="MyBatchPipelineSettingsCtrl.showResources">
+            <div class="resource-group">
+              <label class="control-label"> Virtual Cores </label>
+              <input class="form-control"
+                     type="number"
+                     ng-model="MyBatchPipelineSettingsCtrl.virtualCores"
+                     ng-change="MyBatchPipelineSettingsCtrl.onVirtualCoresChange()">
+            </div>
+            <div class="resource-group">
+              <label class="control-label"> Memory </label>
+              <input class="form-control"
+                     type="number"
+                     ng-model="MyBatchPipelineSettingsCtrl.memoryMb"
+                     ng-change="MyBatchPipelineSettingsCtrl.onMemoryMbChange()">
+              <label class="control-label">MB</span>
+            </div>
+          </div>
+        </div>
       </my-card>
     </div>
 
     <div class="engine-post-runs-section">
-      <my-card title="Post Run Actions" class="post-run-actions">
+      <my-card data-title="Post Run Actions" class="post-run-actions">
         <my-post-run-actions
           is-disabled="{{MyBatchPipelineSettingsCtrl._isDisabled}}"
           action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
