@@ -105,7 +105,6 @@ To do this, write the following JSON to a config file:
   :class: copyable copyable-text
            
   {
-    "name": "streamToTPFS",
     "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
     "artifact": {
       "name": "cdap-data-pipeline",

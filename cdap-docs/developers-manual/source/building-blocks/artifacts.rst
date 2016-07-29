@@ -51,7 +51,7 @@ Plugin Artifacts
 Sometimes an application class exposes an interface that it expects other artifacts to implement.
 For example, CDAP ships with a ``cdap-data-pipeline`` artifact that can be used to create data pipeline applications.
 The artifact exposes a ``batchsource`` interface that it expects others to implement.
-The ``cdap-etl-lib`` artifact contains several plugins that implement that interface. There is one source
+The ``core-plugins`` artifact contains several plugins that implement that interface. There is one source
 for databases, another for HDFS files, etc. To make plugins in one artifact available to
 another artifact, the plugin artifact must specify its parent artifacts. All of those parent artifacts
 will then be able to use those plugins. 

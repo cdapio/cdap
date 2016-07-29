@@ -854,7 +854,6 @@ Transforming Your Data
            :class: copyable copyable-text
        
            {
-             "name": "logEventStreamConverter",
              "description": "Batch Data Pipeline Application",
              "artifact": {
                "name": "cdap-data-pipeline",
