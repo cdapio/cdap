@@ -19,10 +19,11 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
+        disabled: '=',
         model: '=ngModel',
         config: '='
       },
-      template: '<input type="number" class="form-control" min="{{min}}" max="{{max}}" ng-model="internalModel" />',
+      templateUrl: 'widget-container/widget-number/widget-number.html',
       controller: function($scope, myHelpers) {
         $scope.model = $scope.model || myHelpers.objectQuery($scope.config, 'widget-attributes', 'default');
         $scope.internalModel = $scope.model;
@@ -34,6 +35,16 @@ angular.module(PKG.name + '.commons')
         if (typeof maxValueFromWidgetJSON === 'number') {
           maxValueFromWidgetJSON = maxValueFromWidgetJSON.toString();
         }
+        var checkForBounds = function(newValue) {
+          if ($scope.disabled) {
+            return true;
+          }
+          if (newValue < $scope.min || newValue > $scope.max) {
+            $scope.error = 'Value exceeds the limit [min: ' + $scope.min + ', max: ' + $scope.max + ']';
+            return false;
+          }
+          $scope.error = '';
+        };
 
         $scope.min =  minValueFromWidgetJSON || -Infinity;
         $scope.max =  maxValueFromWidgetJSON || Infinity;
@@ -46,7 +57,7 @@ angular.module(PKG.name + '.commons')
           $scope.internalModel = parseInt($scope.model, 10);
         }
         $scope.$watch('internalModel', function(newValue, oldValue) {
-          if (oldValue === newValue) {
+          if (oldValue === newValue || !checkForBounds(newValue)) {
             return;
           }
           $scope.model = (typeof $scope.internalModel === 'number' && !Number.isNaN($scope.internalModel) && $scope.internalModel.toString()) || '';
@@ -55,6 +66,7 @@ angular.module(PKG.name + '.commons')
         // This is needed when we hit reset in node configuration.
         $scope.$watch('model', function() {
           $scope.internalModel = parseInt($scope.model, 10);
+          checkForBounds($scope.internalModel);
         });
       }
     };
