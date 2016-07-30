@@ -97,7 +97,12 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
 
     this.registerOnChangeListener = function(callback) {
-      this.changeListeners.push(callback);
+      // index of the listener to be removed while un-subscribing
+      var index = this.changeListeners.push(callback) - 1;
+      // un-subscribe for listeners.
+      return () => {
+        this.changeListeners.splice(index, 1);
+      };
     };
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {

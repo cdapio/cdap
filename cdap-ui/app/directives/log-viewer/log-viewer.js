@@ -82,7 +82,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   let numEvents = 0;
   this.toggleExpandAll = false;
 
-  LogViewerStore.subscribe(() => {
+  var unsub = LogViewerStore.subscribe(() => {
     this.logStartTime = LogViewerStore.getState().startTime;
     if (typeof this.logStartTime !== 'object') {
       this.setDefault();
@@ -492,6 +492,15 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     return entry;
   };
 
+  $scope.$on('$destroy', function() {
+    if (unsub) {
+      unsub();
+    }
+    if(pollPromise){
+      dataSrc.stopPoll(pollPromise.__pollId__);
+      pollPromise = null;
+    }
+  });
 }
 
 angular.module(PKG.name + '.commons')

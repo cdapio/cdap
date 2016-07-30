@@ -188,6 +188,11 @@
           </div>
         </div>
       </div>
+      <div class="btn log-viewer" ng-click="TopPanelCtrl.viewLogs = !TopPanelCtrl.viewLogs">
+        <span class="fa icon-logview"></span>
+        <span class="fa fa-caret-down" ng-if="TopPanelCtrl.viewLogs">
+        </span>
+      </div>
     </div>
 
   </div>
@@ -235,8 +240,8 @@
     </div>
   </div>
   <div class="pipeline-settings-backdrop"
-       ng-if="TopPanelCtrl.viewSettings || TopPanelCtrl.viewSummary || TopPanelCtrl.runPlayer.view"
-       ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false; TopPanelCtrl.runPlayer.view = false"></div>
+       ng-if="TopPanelCtrl.viewSettings || TopPanelCtrl.viewSummary || TopPanelCtrl.viewLogs || TopPanelCtrl.runPlayer.view"
+       ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false; TopPanelCtrl.runPlayer.view = false; TopPanelCtrl.viewLogs = false;"></div>
   <div class="pipeline-settings">
     <div
       store="TopPanelCtrl.HydratorPlusPlusDetailNonRunsStore"
@@ -246,6 +251,15 @@
       template-type="{{TopPanelCtrl.config.artifact.name}}"
       my-pipeline-settings>
     </div>
+  </div>
+  <div class="pipeline-settings pipeline-logs-section" ng-if="TopPanelCtrl.viewLogs" ng-controller="HydratorPlusPlusDetailLogCtrl as LogsCtrl">
+    <my-log-viewer
+      namespace-id="{{LogsCtrl.params.namespace}}"
+      app-id="{{LogsCtrl.params.appId}}"
+      program-type="{{LogsCtrl.params.programType}}"
+      program-id="{{LogsCtrl.params.programId}}"
+      run-id="{{LogsCtrl.params.runId}}">
+    </my-log-viewer>
   </div>
   <div class="pipeline-settings">
     <div

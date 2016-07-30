@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal) {
     this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
@@ -29,11 +29,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       console.log('ERROR in configuration from backend: ', e);
       return;
     }
-    this.setState = function() {
-      this.setScroll = (HydratorPlusPlusBottomPanelStore.getPanelState() === 0 ? false: true);
-    };
-    this.setState();
-    HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setState.bind(this));
     var obj = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
 
     this.DAGPlusPlusNodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
