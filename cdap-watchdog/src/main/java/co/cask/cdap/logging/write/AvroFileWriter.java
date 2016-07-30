@@ -130,7 +130,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     }
 
     // Close all files
-    LOG.info("Closing all files");
+    LOG.debug("Closing all files");
     for (Map.Entry<String, AvroFile> entry : fileMap.entrySet()) {
       try {
         entry.getValue().close();
