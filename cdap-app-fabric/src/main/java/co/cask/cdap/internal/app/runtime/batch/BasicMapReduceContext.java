@@ -277,6 +277,11 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   @Override
   public void addOutput(Output output) {
     if (output instanceof Output.DatasetOutput) {
+      Output.DatasetOutput datasetOutput = ((Output.DatasetOutput) output);
+      String datasetNamespace = datasetOutput.getNamespace();
+      if (datasetNamespace == null) {
+        datasetNamespace = getNamespace();
+      }
       String datasetName = output.getName();
       Map<String, String> arguments = ((Output.DatasetOutput) output).getArguments();
 
@@ -285,8 +290,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
       // this dataset instantiation
       DatasetOutputFormatProvider outputFormatProvider =
-        new DatasetOutputFormatProvider(datasetName, arguments,
-                                        getDataset(datasetName, arguments, AccessType.WRITE),
+        new DatasetOutputFormatProvider(datasetNamespace, datasetName, arguments,
+                                        getDataset(datasetNamespace, datasetName, arguments, AccessType.WRITE),
                                         MapReduceBatchWritableOutputFormat.class);
       addOutput(output.getAlias(), outputFormatProvider);
 
