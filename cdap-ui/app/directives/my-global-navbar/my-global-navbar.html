@@ -168,7 +168,7 @@
 
       <div class="navbar-item namespace-dropdown" uib-dropdown>
         <div uib-dropdown-toggle ng-disabled="$state.includes('admin.**') || Navbar.namespaces.length === 0">
-          <div ng-if="Navbar.namespaces.length > 0">
+          <div ng-if="Navbar.namespaces.length > 0" class="namespace-holder">
             <div class="namespace-display">
               <span>{{ $state.params.namespace || 'Management' }}</span>
             </div>
