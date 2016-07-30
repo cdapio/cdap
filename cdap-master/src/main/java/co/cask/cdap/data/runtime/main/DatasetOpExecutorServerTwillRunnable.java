@@ -122,7 +122,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new EntityVerifierModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getProxyModule(),
       new AuthenticationContextModules().getProgramContainerModule(),
       new AbstractModule() {
         @Override

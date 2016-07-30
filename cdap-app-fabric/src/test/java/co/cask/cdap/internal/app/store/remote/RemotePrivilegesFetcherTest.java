@@ -20,7 +20,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
+import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramType;
@@ -32,8 +34,8 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
-import co.cask.cdap.security.authorization.RemotePrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
+import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Guice;
@@ -55,7 +57,7 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 /**
- * Tests for {@link RemotePrivilegesFetcher}.
+ * Tests for RemotePrivilegesFetcher. These are in app-fabric, because we need to start app-fabric in these tests.
  */
 public class RemotePrivilegesFetcherTest {
   @ClassRule
@@ -63,12 +65,17 @@ public class RemotePrivilegesFetcherTest {
 
   private static AuthorizerInstantiator authorizerInstantiator;
   private static PrivilegesFetcher privilegesFetcher;
+  private static TransactionManager txManager;
+  private static DatasetService datasetService;
+  private static AppFabricServer appFabricServer;
   private static RemoteSystemOperationsService remoteSysOpService;
 
   @BeforeClass
   public static void setup() throws IOException, InterruptedException {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAuthorizer.class.getName());
@@ -76,19 +83,29 @@ public class RemotePrivilegesFetcherTest {
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class, manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    appFabricServer.startAndWait();
     remoteSysOpService = injector.getInstance(RemoteSystemOperationsService.class);
     remoteSysOpService.startAndWait();
-    waitForService(injector.getInstance(DiscoveryServiceClient.class));
+    waitForServices(injector.getInstance(DiscoveryServiceClient.class));
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     privilegesFetcher = injector.getInstance(PrivilegesFetcher.class);
   }
 
-  private static void waitForService(DiscoveryServiceClient discoveryService) throws InterruptedException {
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
-      discoveryService.discover(Constants.Service.REMOTE_SYSTEM_OPERATION)
-    );
+  private static void waitForServices(DiscoveryServiceClient discoveryService) throws InterruptedException {
+    waitForService(discoveryService, Constants.Service.DATASET_MANAGER);
+    waitForService(discoveryService, Constants.Service.APP_FABRIC_HTTP);
+    waitForService(discoveryService, Constants.Service.REMOTE_SYSTEM_OPERATION);
+  }
+
+  private static void waitForService(DiscoveryServiceClient discoveryService, String name) throws InterruptedException {
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryService.discover(name));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
-                               "%s service is not up after 5 seconds", Constants.Service.REMOTE_SYSTEM_OPERATION);
+                               "%s service is not up after 5 seconds", name);
   }
 
   @Test
@@ -112,5 +129,8 @@ public class RemotePrivilegesFetcherTest {
   @AfterClass
   public static void tearDown() {
     remoteSysOpService.stopAndWait();
+    appFabricServer.stopAndWait();
+    datasetService.stopAndWait();
+    txManager.stopAndWait();
   }
 }

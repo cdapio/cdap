@@ -22,15 +22,15 @@ import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * A {@link AbstractPrivilegesFetcherClient} to make requests to fetch privileges from program containers and system
- * services to a dedicated system service (RemoteSystemOperationsService)
- * Communication over HTTP is necessary because program containers, which use this class (and run as the user running
- * the program) may not be white-listed to make calls to authorization providers (like Apache Sentry).
+ * A {@link AbstractPrivilegesFetcherClient} to proxy requests to list privileges from program containers and system
+ * services to the master (appfabric). It runs inside a dedicated service (RemoteSystemOperationsService) and needs to
+ * proxy requests to the master because non-master services may not have access to authorization backends, since they
+ * do not have the Kerberos credentials of the master.
  */
-class RemotePrivilegesFetcher extends AbstractPrivilegesFetcherClient {
+class PrivilegesFetcherProxyClient extends AbstractPrivilegesFetcherClient {
 
   @Inject
-  RemotePrivilegesFetcher(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
+  PrivilegesFetcherProxyClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
+    super(cConf, discoveryClient, Constants.Service.APP_FABRIC_HTTP);
   }
 }
