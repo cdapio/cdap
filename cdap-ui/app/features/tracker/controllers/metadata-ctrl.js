@@ -285,6 +285,7 @@ class TrackerMetadataController {
   }
 
   addTag() {
+    this.invalidFormat = false;
     if (!this.newTag) {
       return;
     }
@@ -303,7 +304,9 @@ class TrackerMetadataController {
         this.newTag = '';
 
       }, (err) => {
-        console.log('Error', err);
+        if (err.statusCode === 500) {
+          this.invalidFormat = true;
+        }
       });
   }
 
@@ -336,6 +339,7 @@ class TrackerMetadataController {
 
   escapeInput() {
     this.newTag = '';
+    this.invalidFormat = false;
     this.inputOpen = false;
   }
 
