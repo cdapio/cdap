@@ -110,7 +110,7 @@ public final class LogSaver extends AbstractIdleService {
 
   @VisibleForTesting
   void unscheduleTasks() {
-    cancelLogCollectorCallbacks();
+    Set<Cancellable> kafkaCancellables = stopKafkaMessageCallbacks();
 
     for (KafkaLogProcessor processor : partitionProcessorsMap.values()) {
       try {
@@ -120,6 +120,12 @@ public final class LogSaver extends AbstractIdleService {
         LOG.error("Error stopping processor {}",
                   processor.getClass().getSimpleName());
       }
+    }
+
+    // Cancel Kafka consumers, do this at the end since it waits for all processors to finish
+    // TODO: See if there is a better way to stop threads from Kafka consumers CDAP-6475
+    for (Cancellable cancellable : kafkaCancellables) {
+      cancellable.cancel();
     }
     partitionProcessorsMap.clear();
   }
@@ -135,17 +141,20 @@ public final class LogSaver extends AbstractIdleService {
     }
   }
 
-  private void cancelLogCollectorCallbacks() {
+  private Set<Cancellable> stopKafkaMessageCallbacks() {
+    Set<Cancellable> cancellables = new HashSet<>();
    for (Entry<Integer, Cancellable> entry : kafkaCancelMap.entrySet()) {
       if (entry.getValue() != null) {
         LOG.info("Cancelling kafka callback for partition {}", entry.getKey());
         kafkaCancelCallbackLatchMap.get(entry.getKey()).countDown();
-        entry.getValue().cancel();
+        cancellables.add(entry.getValue());
       }
     }
 
+    // TODO: refactor management of the kafka consumers and the callbacks CDAP-6475
     kafkaCancelMap.clear();
     kafkaCancelCallbackLatchMap.clear();
+    return cancellables;
   }
 
   private void subscribe(Set<Integer> partitions) throws Exception {

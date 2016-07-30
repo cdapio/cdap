@@ -241,6 +241,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   @Override
   public void stop() {
     try {
+      LOG.info("Stopping log writer plugin for partition {}", partition);
       if (countDownLatch != null) {
         countDownLatch.countDown();
       }
