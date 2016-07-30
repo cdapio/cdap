@@ -209,6 +209,7 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
       ValidExternalAuthorizer validAuthorizer = gson.fromJson(gson.toJson(externalAuthorizer1),
                                                               ValidExternalAuthorizer.class);
       Properties expectedProps = new Properties();
+      expectedProps.put("superusers", "hulk");
       expectedProps.put("config.path", "/path/config.ini");
       expectedProps.put("service.address", "http://foo.bar.co:5555");
       Properties actualProps = validAuthorizer.getProperties();

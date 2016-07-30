@@ -1650,6 +1650,18 @@
   </property>
 
   <property>
+    <name>security.authorization.extension.config.superusers</name>
+    <value>test</value>
+    <description>
+      If an external authorization system is used for authorizing operations
+      on CDAP entities, this property sets the path to the bundled JAR file
+      containing the extension code. This jar is only used when
+      authorization is enabled by setting ${security.authorization.enabled}
+      to true.
+    </description>
+  </property>
+
+  <property>
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>

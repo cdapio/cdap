@@ -703,6 +703,8 @@ public final class Constants {
       /** Prefix for extension properties */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
+      // Currently, superusers is used both by CDAP (for caching) and by extensions.
+      public static final String SUPERUSERS = EXTENSION_CONFIG_PREFIX + "superusers";
       public static final String CACHE_ENABLED = "security.authorization.cache.enabled";
       public static final String CACHE_TTL_SECS = "security.authorization.cache.ttl.secs";
       public static final String CACHE_REFRESH_INTERVAL_SECS = "security.authorization.cache.refresh.interval.secs";
