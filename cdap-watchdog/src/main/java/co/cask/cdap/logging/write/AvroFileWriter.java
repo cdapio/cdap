@@ -147,12 +147,19 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
     for (Iterator<Map.Entry<String, AvroFile>> it = fileMap.entrySet().iterator(); it.hasNext();) {
       AvroFile avroFile = it.next().getValue();
-      avroFile.sync();
-
-      // Close inactive files
-      if (currentTs - avroFile.getLastModifiedTs() > inactiveIntervalMs) {
-        avroFile.close();
+      // TODO: refactor fileMap into a class so that all these checks (and creation of files) can move there CDAP-6475
+      if (!avroFile.isOpen()) {
+        // If the file is already closed (due to an exception),
+        // then remove it from the map so that a new one gets created later
         it.remove();
+      } else {
+        avroFile.sync();
+
+        // Close inactive files
+        if (currentTs - avroFile.getLastModifiedTs() > inactiveIntervalMs) {
+          avroFile.close();
+          it.remove();
+        }
       }
     }
   }
@@ -226,6 +233,10 @@ public final class AvroFileWriter implements Closeable, Flushable {
   }
 
   private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {
+    if (!avroFile.isOpen()) {
+      LOG.info("Rotating a closed file {}", avroFile.getLocation());
+      return createAvroFile(loggingContext, timestamp);
+    }
     if (avroFile.getPos() > maxFileSize) {
       LOG.info("Rotating file {}", avroFile.getLocation());
       avroFile.close();
@@ -280,7 +291,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         this.lastModifiedTs = System.currentTimeMillis();
       } catch (Exception e) {
         close();
-        throw e;
+        throw new IOException("Exception while creating file " + location, e);
       }
       this.isOpen = true;
     }
@@ -299,7 +310,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         lastModifiedTs = System.currentTimeMillis();
       } catch (Exception e) {
         close();
-        throw e;
+        throw new IOException("Exception while appending to file " + location, e);
       }
     }
 
@@ -308,7 +319,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         return outputStream.getPos();
       } catch (Exception e) {
         close();
-        throw e;
+        throw new IOException("Exception while getting position of file " + location, e);
       }
     }
 
@@ -322,7 +333,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         outputStream.hflush();
       } catch (Exception e) {
         close();
-        throw e;
+        throw new IOException("Exception while flushing file " + location, e);
       }
     }
 
@@ -332,7 +343,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         outputStream.hsync();
       } catch (Exception e) {
         close();
-        throw e;
+        throw new IOException("Exception while syncing file " + location, e);
       }
     }
 
