@@ -54,6 +54,7 @@
 
           <div ng-click="TopPanelCtrl.do('Schedule')"
               class="btn"
+              ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'SCHEDULING'}"
             ng-disabled="TopPanelCtrl.scheduleStatus === 'SCHEDULING' || TopPanelCtrl.scheduleStatus.error">
             <span ng-if="TopPanelCtrl.scheduleStatus === 'SUSPENDED' || TopPanelCtrl.scheduleStatus.error">
               <span class="icon-calendar"
@@ -88,6 +89,7 @@
         <div ng-if="['STARTING', 'STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Start')"
                class="btn"
+               ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'STARTING'}"
                ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
             <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
               <span class="icon-start"
@@ -120,6 +122,7 @@
       </div>
       <div ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && (['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1)"
         class="btn"
+        ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'STARTING'}"
         ng-click="TopPanelCtrl.do('Start')"
         ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
         <span ng-if="TopPanelCtrl.appStatus !=='STARTING'">
@@ -170,13 +173,10 @@
         </div>
       </div>
       <div class="pipeline-settings pipeline-run-section" ng-if="TopPanelCtrl.runPlayer.view">
-        <div>
-          <h5 ng-if="TopPanelCtrl.runPlayer.action === 'STARTING'">
-            <strong>Runtime Arguments</strong>
-          </h5>
-          <h5 ng-if="TopPanelCtrl.runPlayer.action === 'SCHEDULING'">
-            <strong>Preferences Store Arguments</strong>
-          </h5>
+        <h5>
+          <strong>Runtime Arguments</strong>
+        </h5>
+        <div class="arguments-container">
           <div
             data-model="TopPanelCtrl.macrosList"
             data-myconfig="TopPanelCtrl.runTimeWidgetConfig"
@@ -256,7 +256,8 @@
   </div>
   <div class="pipeline-settings-backdrop"
        ng-if="TopPanelCtrl.viewSettings || TopPanelCtrl.viewSummary || TopPanelCtrl.viewLogs || TopPanelCtrl.runPlayer.view"
-       ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false; TopPanelCtrl.runPlayer.view = false; TopPanelCtrl.viewLogs = false;"></div>
+       ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false; TopPanelCtrl.runPlayer.view = false; TopPanelCtrl.viewLogs = false; TopPanelCtrl.runPlayer.action = null">
+  </div>
   <div class="pipeline-settings">
     <div
       store="TopPanelCtrl.HydratorPlusPlusDetailNonRunsStore"

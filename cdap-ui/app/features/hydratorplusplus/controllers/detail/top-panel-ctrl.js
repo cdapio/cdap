@@ -63,7 +63,9 @@ class HydratorDetailTopPanelController {
     this.runTimeWidgetConfig = {
       'widget-type': 'keyvalue',
       'widget-attributes': {
-        'showDelimiter': 'false'
+        'showDelimiter': 'false',
+        'key-placeholder': 'Argument name',
+        'value-placeholder': 'Argument value'
       }
     };
     this.fetchMacros();
@@ -76,6 +78,7 @@ class HydratorDetailTopPanelController {
       return macrosSpec
         .reduce(macroReducer, [])
         .map(macro => macro + ':')
+        .sort()
         .join(',');
     };
     let {namespace, app} = this.HydratorPlusPlusDetailRunsStore.getParams();

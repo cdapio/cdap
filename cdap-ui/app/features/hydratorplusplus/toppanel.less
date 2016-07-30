@@ -54,7 +54,8 @@ body.theme-cdap {
           line-height: 29px;
         }
         &:hover,
-        &:focus {
+        &:focus,
+        &.btn-select {
           background-color: #ebebeb;
           border-right: 1px solid #ebebeb;
           border-left: 1px solid @table-border-color;
@@ -121,9 +122,61 @@ body.theme-cdap {
       top: 93px;
       right: 0;
       z-index: 1039;
-      > div {
-        padding: 20px;
+      @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+      .box-shadow(@box-shadow);
+      h5 {
+        margin: 10px;
+        margin-bottom: 0;
+      }
+      .arguments-container {
+        padding: 5px 10px;
         width: 100%;
+        // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
+        max-height: ~"calc(100vh - 216px)";
+        max-height: ~"-moz-calc(100vh - 216px)";
+        max-height: ~"-webkit-calc(100vh - 216px)";
+        overflow-y: auto;
+        overflow-x: hidden;
+        // FIXME: Everything below. What follows is a custom styling for hydrator
+        // key-value widget was specifically meant for hydrator plugin configuration
+        // Tweaking it for run configuration is messy. Either fix keyvalue to occupy
+        // max space available or build a new widget for hydrator run configuration.
+        my-key-value {
+          .keyvalue-container {
+            padding: 0;
+            border: 0;
+            .row {
+              margin: 5px 0;
+              input.form-control {
+                height: 28px;
+                padding-top: 5px;
+                &:first-child {
+                  width: 30%;
+                }
+                &:nth-child(2) {
+                  width: 69%;
+                }
+              }
+              .col-xs-10.col-lg-8 {
+                padding: 0;
+                width: ~"calc(100% - 60px)";
+                width: ~"-webkit-calc(100% - 60px)";
+                width: ~"-moz-calc(100% - 60px)";
+              }
+              .col-xs-2.col-lg-4 {
+                padding: 0;
+                width: 60px;
+              }
+            }
+            .btn.btn-danger,
+            .btn.btn-info {
+              padding: 5px;
+            }
+          }
+        }
+      }
+      .clearfix {
+        padding: 0 10px 5px 10px;
       }
     }
     .pipeline-settings-backdrop {
@@ -447,6 +500,7 @@ body.theme-cdap {
           display: flex;
           min-width: 400px;
           position: relative;
+          border-right: 1px solid #dddddd;
           .btn {
             &.log-viewer {
               border-left: 0;
@@ -486,8 +540,7 @@ body.theme-cdap {
           left: 0;
           top: 43px;
           background: #ebebeb;
-          max-height: 400px;
-
+          width: 700px;
           .macro-error-container {
             width: 70%;
           }
