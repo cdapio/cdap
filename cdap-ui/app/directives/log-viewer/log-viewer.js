@@ -24,7 +24,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var collapseCount = 0;
 
   this.setDefault = () => {
+<<<<<<< HEAD
     this.textFile = null;
+=======
+>>>>>>> 96f08338076b8c7b7299c1ce25fdf292aad8ffff
+    this.statusType = 0;
     this.displayData = [];
     this.data = [];
     this.loading = false;
@@ -33,6 +37,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.totalCount = 0;
     this.fullScreen = false;
     this.applicationIsRunning = false;
+    this.programStatus = 'STOPPED';
 
     this.configOptions = {
       time: true,
@@ -91,6 +96,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
     requestWithStartTime();
   });
+
+  //Get Initial Status
+  myLogsApi.getLogsMetadata({
+    namespace : this.namespaceId,
+    appId : this.appId,
+    programType : this.programType,
+    programId : this.programId,
+    runId : this.runId
+  }).$promise.then(
+    (statusRes) => {
+      setProgramStatus(statusRes.status);
+    },
+    (statusErr) => {
+      console.log('ERROR: ', statusErr);
+    });
 
   this.filterSearch = () => {
     //Rerender data
@@ -214,7 +234,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         runId : this.runId
       }).$promise.then(
         (statusRes) => {
-          if(statusRes.status === 'RUNNING'){
+          setProgramStatus(statusRes.status);
+
+          if(this.statusType === 0){
             this.applicationIsRunning = true;
             if (!pollPromise) {
               pollForNewLogs();
@@ -380,8 +402,47 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
   };
 
-  function formatDate(date, isDownload) {
+  const setProgramStatus = (status) => {
+    this.programStatus = status;
+    switch(status){
+      case 'RUNNING':
+      case 'STARTED':
+        this.statusType = 0;
+        break;
+      case 'STOPPED':
+      case 'KILLED':
+      case 'FAILED':
+      case 'SUSPENDED':
+        this.statusType = 1;
+        break;
+      case 'COMPLETED':
+        this.statusType = 2;
+        break;
+      default:
+        break;
+<<<<<<< HEAD
+=======
+    }
+  };
 
+  function formatDate(date) {
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+    let year = date.getFullYear();
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    let seconds = date.getSeconds();
+
+    if(minutes < 10){
+      minutes = '0' + minutes.toString();
+    }
+    if(hours < 10){
+      hours = '0' + hours.toString();
+>>>>>>> 96f08338076b8c7b7299c1ce25fdf292aad8ffff
+    }
+  };
+
+  function formatDate(date, isDownload) {
     let dateObj = {
       month: date.getMonth() + 1,
       day: date.getDate(),
@@ -516,7 +577,9 @@ angular.module(PKG.name + '.commons')
         programType: '@',
         programId: '@',
         runId: '@',
-        getDownloadFilename: '&'
+        getDownloadFilename: '&',
+        integratedWith: '@',
+        statusName: '@'
       },
       bindToController: true
     };
