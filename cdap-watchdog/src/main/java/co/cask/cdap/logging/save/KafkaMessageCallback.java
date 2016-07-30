@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMessageCallback.class);
 
+  private final int partition;
   private final Set<KafkaLogProcessor> kafkaLogProcessors;
   private final LoggingEventSerializer serializer;
   private final CountDownLatch stopLatch;
@@ -51,6 +52,7 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
   public KafkaMessageCallback(int partition, CountDownLatch stopLatch,
                               Set<KafkaLogProcessor> kafkaLogProcessors,
                               MetricsContext metricsContext) throws Exception {
+    this.partition = partition;
     this.kafkaLogProcessors = kafkaLogProcessors;
     this.serializer = new LoggingEventSerializer();
     this.stopLatch = stopLatch;
@@ -64,7 +66,7 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
     try {
       if (stopLatch.await(1, TimeUnit.NANOSECONDS)) {
         // if count down occurred return
-        LOG.info("Returning since callback is cancelled.");
+        LOG.debug("Returning since callback is cancelled.");
         return;
       }
     } catch (InterruptedException e) {
@@ -117,6 +119,6 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
 
   @Override
   public void finished() {
-    LOG.info("KafkaMessageCallback finished.");
+    LOG.info("KafkaMessageCallback finished for partition {}.", partition);
   }
 }
