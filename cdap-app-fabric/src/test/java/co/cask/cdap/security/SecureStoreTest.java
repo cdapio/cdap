@@ -63,11 +63,11 @@ public class SecureStoreTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = doGet("/v3/namespaces/default/securekeys/" + KEY);
-    Assert.assertEquals('"' + DATA + '"', readResponse(response));
+    Assert.assertEquals(DATA, readResponse(response));
 
     // Get again
     response = doGet("/v3/namespaces/default/securekeys/" + KEY);
-    Assert.assertEquals('"' + DATA + '"', readResponse(response));
+    Assert.assertEquals(DATA, readResponse(response));
 
     response = delete(KEY);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
