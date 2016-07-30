@@ -32,6 +32,9 @@
 @error-color: #f65454;
 @warning-color: #f6b354;
 @selected-row-color: #e4e4e4;
+@application-primary-color: #43b82f;
+@application-secondary-color: #d15668;
+@application-completed-color: #5a84e4;
 
 body {
 
@@ -118,6 +121,11 @@ my-log-viewer {
     top: 50px;
     z-index: 1000;
 
+    .log-stats {
+      position: relative;
+      bottom: 9px;
+    }
+
     .empty-buffer {
       display: block;
       position: absolute;
@@ -135,7 +143,6 @@ my-log-viewer {
       height: ~"-webkit-calc(100vh - 166px)";
       height: ~"calc(100vh - 166px)";
     }
-
   }
 
   .highlighted-text {
@@ -210,6 +217,58 @@ my-log-viewer {
       .flex-wrap(@wrap: wrap);
       .justify-content(@justify: space-between);
       .align-items(@align: center);
+
+      .logs-status-container {
+        display: inline-block;
+        height: 100%;
+        margin-left: 11px;
+        font-weight: bold;
+        margin-right: 105px;
+
+        .application-name {
+          display: block;
+          color: white;
+          font-size: 14px;
+        }
+
+        .application-status {
+
+          .status-circle {
+            display: inline-block;
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            margin-right: 1px;
+            background-color: grey;
+          }
+
+          display: block;
+          color: grey;
+          font-size: 10px;
+        }
+
+        .application-status.program-primary {
+          .status-circle.program-primary-circle {
+            background-color: @application-primary-color;
+          }
+          color: @application-primary-color;
+        }
+
+        .application-status.program-secondary {
+          .status-circle.program-secondary-circle {
+            background-color: @application-secondary-color;
+          }
+          color: @application-secondary-color;
+        }
+
+        .application-status.program-completed {
+          .status-circle.program-completed-circle {
+            background-color: @application-completed-color;
+          }
+          color: @application-completed-color;
+        }
+
+      }
 
       .log-stats-container {
         background-color: @headerbar-background-color;
@@ -364,6 +423,7 @@ my-log-viewer {
         .fa-chevron-down {
           color: #393939;
           position: relative;
+          top: -12px;
           font-size: 8px;
           bottom: 1px;
           margin-left: 4px;
@@ -391,6 +451,7 @@ my-log-viewer {
         .display-time,
         .level {
           position: relative;
+          top: -9px;
         }
 
         td,

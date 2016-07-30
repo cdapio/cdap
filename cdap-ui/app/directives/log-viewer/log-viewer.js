@@ -25,6 +25,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   this.setDefault = () => {
     this.textFile = null;
+    this.statusType = 0;
     this.displayData = [];
     this.data = [];
     this.loading = false;
@@ -33,6 +34,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.totalCount = 0;
     this.fullScreen = false;
     this.applicationIsRunning = false;
+    this.programStatus = 'STOPPED';
 
     this.configOptions = {
       time: true,
@@ -82,7 +84,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   let numEvents = 0;
   this.toggleExpandAll = false;
 
-  var unsub = LogViewerStore.subscribe(() => {
+  LogViewerStore.subscribe(() => {
     this.logStartTime = LogViewerStore.getState().startTime;
     if (typeof this.logStartTime !== 'object') {
       this.setDefault();
@@ -91,6 +93,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
     requestWithStartTime();
   });
+
+  //Get Initial Status
+  myLogsApi.getLogsMetadata({
+    namespace : this.namespaceId,
+    appId : this.appId,
+    programType : this.programType,
+    programId : this.programId,
+    runId : this.runId
+  }).$promise.then(
+    (statusRes) => {
+      setProgramStatus(statusRes.status);
+    },
+    (statusErr) => {
+      console.log('ERROR: ', statusErr);
+    });
 
   this.filterSearch = () => {
     //Rerender data
@@ -215,30 +232,31 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   const getStatus = () => {
-      myLogsApi.getLogsMetadata({
-        namespace : this.namespaceId,
-        appId : this.appId,
-        programType : this.programType,
-        programId : this.programId,
-        runId : this.runId
-      }).$promise.then(
-        (statusRes) => {
-          if(statusRes.status === 'RUNNING'){
-            this.applicationIsRunning = true;
-            if (!pollPromise) {
-              pollForNewLogs();
-            }
-          } else {
-            this.applicationIsRunning = false;
-            if (pollPromise) {
-              dataSrc.stopPoll(pollPromise.__pollId__);
-            }
+    myLogsApi.getLogsMetadata({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId
+    }).$promise.then(
+      (statusRes) => {
+        setProgramStatus(statusRes.status);
+        if(this.statusType === 0){
+          this.applicationIsRunning = true;
+          if (!pollPromise) {
+            pollForNewLogs();
           }
-        },
-        (statusErr) => {
-          console.log('ERROR: ', statusErr);
+        } else {
+          this.applicationIsRunning = false;
+          if (pollPromise) {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+          }
         }
-      );
+      },
+      (statusErr) => {
+        console.log('ERROR: ', statusErr);
+      }
+    );
   };
 
   const pollForNewLogs = () => {
@@ -389,8 +407,29 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
   };
 
-  function formatDate(date, isDownload) {
+  const setProgramStatus = (status) => {
+    this.programStatus = status;
+    switch(status){
+      case 'RUNNING':
+      case 'STARTED':
+        this.statusType = 0;
+        break;
+      case 'STOPPED':
+      case 'KILLED':
+      case 'FAILED':
+      case 'SUSPENDED':
+        this.statusType = 1;
+        break;
+      case 'COMPLETED':
+        this.statusType = 2;
+        break;
+      default:
+        break;
+    }
+  };
 
+
+  function formatDate(date, isDownload) {
     let dateObj = {
       month: date.getMonth() + 1,
       day: date.getDate(),
@@ -513,15 +552,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     return entry;
   };
 
-  $scope.$on('$destroy', function() {
-    if (unsub) {
-      unsub();
-    }
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
-    }
-  });
 }
 
 angular.module(PKG.name + '.commons')
@@ -537,7 +567,9 @@ angular.module(PKG.name + '.commons')
         programType: '@',
         programId: '@',
         runId: '@',
-        getDownloadFilename: '&'
+        getDownloadFilename: '&',
+        integratedWith: '@',
+        statusName: '@'
       },
       bindToController: true
     };
