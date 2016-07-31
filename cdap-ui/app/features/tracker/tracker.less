@@ -801,6 +801,36 @@ body.state-tracker-detail-entity {
       tbody > tr {
         &:nth-of-type(odd) { background-color: #ffffff; }
         &:nth-of-type(even) { background-color: @filter-sidebar-background-color; }
+        &:first-child {
+          &.empty-row,
+          &.first-input-row {
+            td {
+              position: relative;
+              &:before {
+                display: block;
+                color: @tracker-grey;
+                position: absolute;
+                top: 12px;
+                left: 12px;
+              }
+              &:first-child {
+                border: 1px solid @tracker-green;
+                &:before { content: 'Property'; }
+              }
+              &:nth-child(2):before { content: 'Value'; }
+            }
+          }
+          &.placeholder-styling:not(.empty-row) {
+            td {
+              position: static;
+              &:before {
+                content: '';
+                position: static;
+              }
+              &:first-child { border: 0; }
+            }
+          }
+        }
       }
       td {
         vertical-align: middle;
@@ -841,7 +871,10 @@ body.state-tracker-detail-entity {
           border: none;
           border-radius: 0;
 
-          &:focus { border: 1px solid @tracker-green; }
+          &:focus {
+            border: 1px solid @tracker-green;
+            box-shadow: none;
+          }
         }
       }
     }

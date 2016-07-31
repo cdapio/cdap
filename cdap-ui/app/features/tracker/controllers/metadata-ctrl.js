@@ -149,6 +149,7 @@ class TrackerMetadataController {
   */
   enableAddProperty() {
     this.addPropertyEnable = true;
+    this.addPlaceholderStyling = true;
     this.propertyFocus();
   }
 
