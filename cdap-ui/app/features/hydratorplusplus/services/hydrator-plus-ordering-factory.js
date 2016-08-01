@@ -16,24 +16,10 @@
 
 function HydratorPlusPlusOrderingFactory(GLOBALS) {
   function getArtifactDisplayName (artifactName) {
-    return GLOBALS.artifactConvert[artifactName];
+    return GLOBALS.artifactConvert[artifactName] || artifactName;
   }
-
   function getPluginTypeDisplayName (pluginType) {
-    let pluginTypeMap = {
-      'transform': 'Transform',
-      'batchsource': 'Source',
-      'batchsink': 'Sink',
-      'batchaggregator': 'Aggregate',
-      'realtimesink': 'Sink',
-      'realtimesource': 'Source',
-      'sparksink': 'Model',
-      'sparkcompute': 'Compute',
-      'batchjoiner': 'Join',
-      'action': 'Action'
-    };
-
-    return pluginTypeMap[pluginType];
+    return GLOBALS.pluginTypeToLabel[pluginType] || pluginType;
   }
 
   function orderPluginTypes (pluginsMap) {
@@ -42,8 +28,8 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
     }
     let orderedTypes = [];
 
-    let source = pluginsMap.filter( p => { return p.name === 'Source'; });
-    let transform = pluginsMap.filter( p => { return p.name === 'Transform'; });
+    let source = pluginsMap.filter( p => { return ['Streaming Source', 'Source'].indexOf(p.name) !== -1; });
+    let transform = pluginsMap.filter( p => { return ['Transform', 'Windower'].indexOf(p.name) !== -1 ; });
     let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
     let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregate'; });
     let sparksink = pluginsMap.filter( p => { return p.name === 'Model'; });

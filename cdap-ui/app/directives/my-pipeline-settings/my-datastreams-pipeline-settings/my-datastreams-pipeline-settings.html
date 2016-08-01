@@ -1,5 +1,5 @@
-/*
-  Copyright © 2015 Cask Data, Inc.
+<!--
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -12,20 +12,16 @@
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
-*/
-
-angular.module(PKG.name + '.services')
-  .factory('myHydratorFactory', function(GLOBALS) {
-    function isCustomApp(artifactName) {
-      return !isETLApp(artifactName);
-    }
-
-    function isETLApp(artifactName) {
-      return [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams].indexOf(artifactName) !== -1;
-    }
-
-    return {
-      isCustomApp: isCustomApp,
-      isETLApp: isETLApp
-    };
-  });
+-->
+<fieldset ng-disabled="MyDataStreamsPipelineSettingsCtrl._isDisabled">
+  <div class="pipeline-settings-content">
+    <my-card title="Batch Interval">
+      <div class="batchinterval-wrapper">
+        <input type="text"
+               ng-model="MyDataStreamsPipelineSettingsCtrl.batchInterval"
+               class="form-control"
+               min="1">
+      </div>
+    </my-card>
+  </div>
+</fieldset>

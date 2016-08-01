@@ -132,8 +132,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       var appConfig = {};
       var appLevelParams,
           logsLevelParams,
-          metricProgramType,
-          programType;
+          metricProgramType;
 
       angular.extend(appConfig, app);
       appLevelParams = {
@@ -145,28 +144,37 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         namespace: $state.params.namespace,
         appId: app.name
       };
-
-      programType = GLOBALS.etlBatchPipelines.indexOf(app.artifact.name) !== -1 ? 'WORKFLOWS' : 'WORKER';
-
-      if (programType === 'WORKFLOWS') {
-        angular.forEach(app.programs, function (program) {
-          if (program.type === 'Workflow') {
+      switch(app.artifact.name) {
+        case GLOBALS.etlBatch:
+        case GLOBALS.etlDataPipeline:
+          angular.forEach(app.programs, function (program) {
+            if (program.type === 'Workflow') {
+              appLevelParams.programName = program.id;
+              appLevelParams.programType = program.type.toLowerCase() + 's';
+              metricProgramType = program.type.toLowerCase();
+              logsLevelParams.programId = program.id;
+              logsLevelParams.programType = appLevelParams.programType;
+            }
+          });
+          break;
+        case GLOBALS.etlRealtime:
+          angular.forEach(app.programs, function (program) {
             appLevelParams.programName = program.id;
             appLevelParams.programType = program.type.toLowerCase() + 's';
             metricProgramType = program.type.toLowerCase();
             logsLevelParams.programId = program.id;
-            logsLevelParams.programType = appLevelParams.programType;
-          }
-        });
-      } else {
-        angular.forEach(app.programs, function (program) {
-          metricProgramType = program.type.toLowerCase();
-          appLevelParams.programName = program.id;
-          appLevelParams.programType = program.type.toLowerCase() + 's';
-
-          logsLevelParams.programId = program.id;
-          logsLevelParams.programType = program.type.toLowerCase() + 's';
-        });
+            logsLevelParams.programType = program.type.toLowerCase() + 's';
+          });
+          break;
+        case GLOBALS.etlDataStreams:
+          angular.forEach(app.programs, function (program) {
+            appLevelParams.programName = program.id;
+            appLevelParams.programType = program.type.toLowerCase();
+            metricProgramType = program.type.toLowerCase();
+            logsLevelParams.programId = program.id;
+            logsLevelParams.programType = program.type.toLowerCase();
+          });
+          break;
       }
       appConfig.type = app.artifact.name;
       appConfig.logsParams = logsLevelParams;

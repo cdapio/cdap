@@ -118,6 +118,9 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.getPostActions = function() {
       return this.state.cloneConfig.config.postActions;
     };
+    this.getBatchInterval = function() {
+      return this.state.cloneConfig.config.batchInterval;
+    };
     this.getInstance = function() {
       return this.state.cloneConfig.config.instances;
     };
@@ -163,6 +166,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         __ui__: appConfigClone.DAGConfig,
         config: {
           instances: appConfigClone.configJson.instances,
+          batchInterval: appConfigClone.configJson.batchInterval,
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,

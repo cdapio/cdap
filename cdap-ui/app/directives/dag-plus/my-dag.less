@@ -64,13 +64,14 @@ my-dag-plus {
       width: 105px;
       &.selected {
         &.realtimesource,
+        &.streamingsource,
         &.batchsource {
           .node {
             background-color: #48c038;
             border-width: 6px;
           }
         }
-        &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink):not(.sparksink) {
+        &:not(.realtimesource):not(.streamingsource):not(.batchsource):not(.realtimesink):not(.batchsink):not(.sparksink) {
           .node {
             background-color: #4586f3;
             border-width: 6px;
@@ -114,6 +115,7 @@ my-dag-plus {
         }
       }
       &.realtimesource,
+      &.streamingsource,
       &.batchsource {
         color: #48c038;
         left: 10vw;
@@ -121,7 +123,7 @@ my-dag-plus {
           border: 3px solid #48c038;
         }
       }
-      &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink):not(.sparksink):not(.action) {
+      &:not(.realtimesource):not(.batchsource):not(.streamingsource):not(.realtimesink):not(.batchsink):not(.sparksink):not(.action) {
         color: #4586f3;
         left: 30vw;
         .node {
