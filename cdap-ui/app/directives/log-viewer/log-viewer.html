@@ -20,8 +20,8 @@
   <div class="logs-headerbar">
     <div class="log-stats-container">
       <div class="logs-status-container" ng-if="LogViewer.fullScreen">
-        <span class="application-name">
-          {{LogViewer.statusName}}
+        <span class="application-name" ng-bind="LogViewer.entityName">
+          {{LogViewer.entityName}}
         </span>
         <span class="application-status" ng-class="{'program-primary' : LogViewer.statusType === 0, 'program-secondary' : LogViewer.statusType === 1, 'program-completed' : LogViewer.statusType === 2, 'program-default' : LogViewer.statusType === 3}">
           <div class="status-circle" ng-class="{'program-primary-circle' : LogViewer.statusType === 0, 'program-secondary-circle' : LogViewer.statusType === 1, 'program-completed-circle' : LogViewer.statusType === 2, 'program-default-circle' : LogViewer.statusType === 3}">

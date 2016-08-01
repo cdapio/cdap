@@ -1124,8 +1124,8 @@ body.state-tracker-integrations {
       }
     }
 
-    & > .col-xs-10,
-    & > .col-xs-2 {
+    & .col-xs-10,
+    & .col-xs-2 {
       height: 60px;
       line-height: 60px;
       background-color: #dddddd;
@@ -1150,7 +1150,9 @@ body.state-tracker-integrations {
 
     .log-viewer-parent {
       position: static;
-      padding: 0;
+      max-height: ~"-moz-calc(100vh - 190px)";
+      max-height: ~"-webkit-calc(100vh - 190px)";
+      max-height: ~"calc(100vh - 190px)";
     }
   }
 }

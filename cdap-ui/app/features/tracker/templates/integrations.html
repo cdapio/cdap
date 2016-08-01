@@ -112,43 +112,48 @@
 
 <div ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
   <div class="integrations-log-viewer">
-    <div class="col-xs-10">
-      <div class="navigator-flow-title">
-        <h3>
-          <span class="icon-tigon"></span>
-          <span>MetadataFlow</span>
-        </h3>
-        <p>
-          Flow that subscribes to Metadata changes and propagates the same to Navigator
-        </p>
+    <div class="row">
+      <div class="col-xs-10">
+        <div class="navigator-flow-title">
+          <h3>
+            <span class="icon-tigon"></span>
+            <span>MetadataFlow</span>
+          </h3>
+          <p>
+            Flow that subscribes to Metadata changes and propagates the same to Navigator
+          </p>
+        </div>
+      </div>
+      <div class="col-xs-2 text-right">
+        <div uib-dropdown>
+          <button class="btn" uib-dropdown-toggle>
+            <span>Jump</span>
+            <span class="fa fa-angle-down"></span>
+          </button>
+
+          <ul class="pull-right" uib-dropdown-menu>
+            <li>
+              <a ui-sref="flows.detail({ appId: IntegrationsController.UI_CONFIG.navigator.appId, programId: IntegrationsController.UI_CONFIG.navigator.programId})">
+                View in CDAP
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
-    <div class="col-xs-2 text-right">
-      <div uib-dropdown>
-        <button class="btn" uib-dropdown-toggle>
-          <span>Jump</span>
-          <span class="fa fa-angle-down"></span>
-        </button>
 
-        <ul class="pull-right" uib-dropdown-menu>
-          <li>
-            <a ui-sref="flows.detail({ appId: IntegrationsController.UI_CONFIG.navigator.appId, programId: IntegrationsController.UI_CONFIG.navigator.programId})">
-              View in CDAP
-            </a>
-          </li>
-        </ul>
+    <div class="row">
+      <!-- FIXME: styling should not be applied to bootstrap container -->
+      <div class="col-xs-12 log-viewer-parent">
+        <my-log-viewer
+          namespace-id="{{IntegrationsController.logsParams.namespace}}"
+          app-id="{{IntegrationsController.logsParams.appId}}"
+          program-type="{{IntegrationsController.logsParams.programType}}"
+          program-id="{{IntegrationsController.logsParams.programId}}"
+          run-id="{{IntegrationsController.logsParams.runId}}"
+          entity-name="Cloudera Navigator">
+        </my-log-viewer>
       </div>
-    </div>
-
-    <div class="col-xs-12 log-viewer-parent">
-      <my-log-viewer
-        namespace-id="{{IntegrationsController.logsParams.namespace}}"
-        app-id="{{IntegrationsController.logsParams.appId}}"
-        program-type="{{IntegrationsController.logsParams.programType}}"
-        program-id="{{IntegrationsController.logsParams.programId}}"
-        run-id="{{IntegrationsController.logsParams.runId}}"
-        status-name="Cloudera Navigator">
-      </my-log-viewer>
     </div>
   </div>
 </div>

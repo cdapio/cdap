@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="modal-header clearfix">
+<div class="modal-header clearfix logs-raw-modal">
   <h4 class="modal-title pull-left">
     {{RawLogsModalCtrl.applicationName}} - {{RawLogsModalCtrl.startTime}}
   </h4>
@@ -31,14 +31,18 @@
         <span class="fa fa-expand"></span>
         <span class="sr-only"> Expand </span>
     </a>
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
   </div>
 </div>
-<div class="modal-body">
+<div class="modal-body logs-raw-modal">
   <div class="well well-sm spinner-container text-center"
-         ng-if="!RawLogsModalCtrl.rawDataResponse">
+         ng-if="!RawLogsModalCtrl.rawIsLoaded">
     <h4 >
       <i class="fa fa-spinner fa-spin"></i>
     </h4>
   </div>
-  <pre ng-if="RawLogsModalCtrl.rawDataResponse">{{RawLogsModalCtrl.rawDataResponse}}</pre>
+  <pre ng-if="RawLogsModalCtrl.rawDataResponse">{{::RawLogsModalCtrl.rawDataResponse}}</pre>
 </div>
