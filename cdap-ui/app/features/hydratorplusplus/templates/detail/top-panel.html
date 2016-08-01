@@ -189,7 +189,11 @@
         </div>
       </div>
       <div class="btn log-viewer" ng-click="TopPanelCtrl.viewLogs = !TopPanelCtrl.viewLogs">
-        <span class="fa icon-logview"></span>
+        <span class="fa icon-logview"
+              uib-tooltip="Log Viewer"
+              tooltip-placement="bottom"
+              tooltip-append-to-body="true"
+              tooltip-class="toppanel-tooltip"></span>
         <span class="fa fa-caret-down" ng-if="TopPanelCtrl.viewLogs">
         </span>
       </div>
@@ -199,11 +203,19 @@
 
   <div class="pipeline-specific-section">
     <div class="btn" ng-click="TopPanelCtrl.viewSummary = !TopPanelCtrl.viewSummary">
-      <span class="fa fa-line-chart"></span>
+      <span class="fa fa-line-chart"
+            uib-tooltip="History"
+            tooltip-placement="bottom"
+            tooltip-append-to-body="true"
+            tooltip-class="toppanel-tooltip"></span>
       <span class="fa fa-caret-down" ng-if="TopPanelCtrl.viewSummary"></span>
     </div>
     <div class="btn" ng-click="TopPanelCtrl.viewSettings = !TopPanelCtrl.viewSettings">
-      <span class="fa fa-sliders"></span>
+      <span class="fa fa-sliders"
+            uib-tooltip="Settings"
+            tooltip-placement="bottom"
+            tooltip-append-to-body="true"
+            tooltip-class="toppanel-tooltip"></span>
       <span class="fa fa-caret-down" ng-if="TopPanelCtrl.viewSettings"></span>
     </div>
     <div class="btn"
@@ -218,7 +230,11 @@
 
     <div class="btn"
          ng-click="TopPanelCtrl.exportConfig()">
-      <span class="fa icon-export"></span>
+      <span class="fa icon-export"
+            uib-tooltip="Export"
+            tooltip-placement="bottom"
+            tooltip-append-to-body="true"
+            tooltip-class="toppanel-tooltip"></span>
     </div>
     <div class="btn"
          ui-sref="apps.detail.overview.status({ appId: TopPanelCtrl.app.name })">
