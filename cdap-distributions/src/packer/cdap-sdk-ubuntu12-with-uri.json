@@ -1,6 +1,6 @@
 {
   "variables": {
-    "sdk_version": "3.3.6"
+    "sdk_version": "3.3.7"
   },
   "builders": [
     {
@@ -126,7 +126,7 @@
       "skip_install": true,
       "json": {
         "cdap": {
-          "version": "3.3.6-1",
+          "version": "3.3.7-1",
           "sdk": {
             "url": "file:///tmp/cdap-sdk.zip"
           }

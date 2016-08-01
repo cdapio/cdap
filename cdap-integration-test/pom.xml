@@ -20,7 +20,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>3.3.6</version>
+    <version>3.3.7-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
