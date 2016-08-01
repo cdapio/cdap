@@ -16,7 +16,8 @@
 
 <div>
   <div ng-if="Embedded.checkComplexType(Embedded.displayType)"
-      class="tab-toggle">
+      class="tab-toggle"
+      ng-class="{'expanded': Embedded.expanded}">
     <span class="fa fa-caret-down"
           ng-if="Embedded.expanded"
           ng-click="Embedded.expanded = false"></span>
