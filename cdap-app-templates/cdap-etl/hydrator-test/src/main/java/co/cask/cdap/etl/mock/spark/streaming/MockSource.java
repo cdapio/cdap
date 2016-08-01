@@ -24,6 +24,7 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.format.StructuredRecordStringConverter;
@@ -70,7 +71,7 @@ public class MockSource extends StreamingSource<StructuredRecord> {
   }
 
   @Override
-  public JavaDStream<StructuredRecord> getStream(JavaStreamingContext jssc) throws Exception {
+  public JavaDStream<StructuredRecord> getStream(StreamingContext context) throws Exception {
     Schema schema = Schema.parseJson(conf.schema);
     List<String> recordsAsStrings = new Gson().fromJson(conf.records, STRING_LIST_TYPE);
     final List<StructuredRecord> inputRecords = new ArrayList<>();
@@ -78,7 +79,8 @@ public class MockSource extends StreamingSource<StructuredRecord> {
       inputRecords.add(StructuredRecordStringConverter.fromJsonString(recordStr, schema));
     }
 
-    return jssc.receiverStream(new Receiver<StructuredRecord>(StorageLevel.MEMORY_ONLY()) {
+    JavaStreamingContext jsc = context.getSparkStreamingContext();
+    return jsc.receiverStream(new Receiver<StructuredRecord>(StorageLevel.MEMORY_ONLY()) {
       @Override
       public StorageLevel storageLevel() {
         return StorageLevel.MEMORY_ONLY();
