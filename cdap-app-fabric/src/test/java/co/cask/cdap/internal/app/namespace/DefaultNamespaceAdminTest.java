@@ -139,7 +139,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // Updating the HBase namespace for a namespace should fail
     try {
       namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
-                                      new NamespaceMeta.Builder(nsMeta).setHBaseDatabase("custns").build());
+                                      new NamespaceMeta.Builder(nsMeta).setHBaseNamespace("custns").build());
       Assert.fail();
     } catch (BadRequestException e) {
       // expected

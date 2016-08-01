@@ -72,7 +72,7 @@ public abstract class AbstractHBaseTableUtilTest {
   private static final String CDAP_NS = "ns1";
   private static final String HBASE_NS = "custns1";
   private static final Map<String, NamespaceMeta> customMap =
-    ImmutableMap.of(CDAP_NS, new NamespaceMeta.Builder().setName(CDAP_NS).setHBaseDatabase(HBASE_NS).build());
+    ImmutableMap.of(CDAP_NS, new NamespaceMeta.Builder().setName(CDAP_NS).setHBaseNamespace(HBASE_NS).build());
 
   @BeforeClass
   public static void beforeClass() throws Exception {

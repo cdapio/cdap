@@ -103,7 +103,7 @@ public class RemoteNamespaceQueryTest {
                             .setDescription(description)
                             .setSchedulerQueueName(schedulerQueue)
                             .setRootDirectory(rootDirectory)
-                            .setHBaseDatabase(hbaseNamespace)
+                            .setHBaseNamespace(hbaseNamespace)
                             .setHiveDatabase(hiveDb)
                             .build());
     NamespaceId namespaceId = new NamespaceId(cdapNamespace);

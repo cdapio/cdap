@@ -20,7 +20,6 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
-import javax.ws.rs.HEAD;
 
 /**
  * Represents the configuration of a namespace. This class needs to be GSON serializable.
