@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.tracker')
-  .controller('TypeaheadTrackerTagsCtrl', function() {
+  .controller('TypeaheadTrackerTagsCtrl', function(caskFocusManager) {
     this.modelLoading = false;
     this.isOpen = true;
     this.template = '/assets/features/tracker/directives/typeahead-tracker-tags/popup.html';
@@ -26,4 +26,6 @@ angular.module(PKG.name + '.feature.tracker')
     this.onTagsSelect = function(item) {
       this.model = item.name;
     };
+
+    caskFocusManager.focus('tagInput');
   });
