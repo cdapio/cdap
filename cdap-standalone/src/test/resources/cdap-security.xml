@@ -17,21 +17,6 @@
   -->
 <configuration>
     <property>
-      <name>security.auth.server.ssl.keystore.password</name>
-      <value>secret</value>
-      <description>Specifies the ssl keystore password</description>
-    </property>
-    <property>
-      <name>security.auth.server.ssl.keystore.keypassword</name>
-      <value>secret</value>
-      <description>Specifies the ssl keystore keypassword</description>
-    </property>
-    <property>
-      <name>security.auth.server.ssl.keystore.type</name>
-      <value>JKS</value>
-      <description>Specifies the ssl keystore type</description>
-    </property>
-    <property>
       <name>security.store.file.password</name>
       <value>cdapsecret</value>
       <description>Password to access the key store</description>

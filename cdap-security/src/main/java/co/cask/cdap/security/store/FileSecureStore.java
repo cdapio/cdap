@@ -22,6 +22,8 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -80,13 +82,19 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   private final KeyStore keyStore;
 
   @Inject
-  FileSecureStore(CConfiguration cConf) throws IOException {
+  FileSecureStore(CConfiguration cConf, SConfiguration sConf) throws IOException {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
     path = dir.resolve(cConf.get(Constants.Security.Store.FILE_NAME));
     // Get the keystore password
-    password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
+    String pass = sConf.get(Constants.Security.Store.FILE_PASSWORD);
+    if (Strings.isNullOrEmpty(pass)) {
+      throw new IllegalArgumentException("File secure store password is not set. " +
+                                           "Please set the security.store.file.password property in your " +
+                                           "cdap-security.xml");
+    }
+    password = pass.toCharArray();
 
     keyStore = locateKeystore(path, password);
     ReadWriteLock lock = new ReentrantReadWriteLock(true);
