@@ -35,6 +35,7 @@ my-complex-schema {
         border: 0;
         box-shadow: none;
         border-radius: 0;
+        outline-offset: -4px;
         .placeholder-color(@color: #666666, @font-weight: 500);
       }
     }
@@ -46,7 +47,6 @@ my-complex-schema {
       &.header { padding-left: 10px; }
     }
 
-    .enum-schema-container .input-column .form-control { outline-offset: -3px; }
     .input-column {
       float: left;
 
@@ -87,7 +87,7 @@ my-complex-schema {
       }
       div.tab-header-inner {
         border-radius: 4px 4px 0 0;
-        height: 35px;
+        height: 33px;
         div.select-wrapper {
           height: 26px;
           &:after { top: 5px; }
@@ -159,7 +159,6 @@ my-complex-schema {
   }
 
   my-embedded-schema-selector {
-    > div { position: relative; }
     [class*="col-"] {
       box-shadow: 0 2px 3px 0 rgba(1, 0, 0, 0.1);
       position: relative;
@@ -184,8 +183,24 @@ my-complex-schema {
         width: 100%;
       }
     }
-    span.fa { color: @hydrator-blue; }
     div.tab-toggle {
+      position: relative;
+      &.expanded:before {
+        background-color: white;
+        content: '';
+        display: block;
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        height: 3px;
+        z-index: 100;
+        width: ~"-moz-calc(100% - 75px - 80px)";
+        width: ~"-webkit-calc(100% - 75px - 80px)";
+        width: ~"calc(100% - 75px - 80px)";
+      }
+    }
+    span.fa {
+      color: @hydrator-blue;
       position: absolute;
       z-index: 150;
       top: -15px;
