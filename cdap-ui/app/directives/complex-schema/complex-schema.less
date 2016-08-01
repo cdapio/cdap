@@ -38,6 +38,7 @@ my-complex-schema {
         outline-offset: -4px;
         .placeholder-color(@color: #666666, @font-weight: 500);
       }
+      &:not(.nested-row) { box-shadow: 2px 0 2px 0 rgba(1, 0, 0, 0.2); }
     }
     .nested-row { border-top: 1px solid @table-border-color; }
     .type-column {
@@ -208,11 +209,11 @@ my-complex-schema {
       &:hover,
       &:focus { cursor: pointer; }
     }
-    // Addjust caret position for map tab headers containing Key/Value
+    // Adjust caret position for map tab headers containing Key/Value
     div.map-schema-container {
       .key-field,
       .value-field {
-        + my-embedded-schema-selector > div > div.tab-toggle span.fa { top: -10px; }
+        + my-embedded-schema-selector > div > div.tab-toggle span.fa { top: -12px; }
       }
     }
   }
