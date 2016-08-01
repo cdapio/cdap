@@ -24,6 +24,7 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.DelegationTokensUpdater;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -108,16 +109,17 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
   // Unfortunately KeyProvider does not specify
   // the underlying cause except in the message, so we can not throw a more specific exception.
   @Override
-  public void putSecureData(String namespace, String name, byte[] data, String description,
+  public void putSecureData(String namespace, String name, String data, String description,
                             Map<String, String> properties) throws Exception {
     checkNamespaceExists(namespace);
     KeyProvider.Options options = new KeyProvider.Options(conf);
     options.setDescription(description);
     options.setAttributes(properties);
-    options.setBitLength(data.length * Byte.SIZE);
+    byte[] buff = data.getBytes(Charsets.UTF_8);
+    options.setBitLength(buff.length * Byte.SIZE);
     String keyName = getKeyName(namespace, name);
     try {
-      provider.createKey(keyName, data, options);
+      provider.createKey(keyName, buff, options);
     } catch (IOException e) {
       throw new IOException("Failed to store the key " + name + " under namespace " + namespace, e);
     }

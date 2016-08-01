@@ -92,8 +92,8 @@ public class FileSecureStoreTest {
   }
 
   private void populateStore() throws Exception {
-    secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
-    secureStoreManager.putSecureData(NAMESPACE1, KEY2, VALUE2.getBytes(Charsets.UTF_8), DESCRIPTION2, PROPERTIES_2);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1, DESCRIPTION1, PROPERTIES_1);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY2, VALUE2, DESCRIPTION2, PROPERTIES_2);
   }
 
   @Test
@@ -136,11 +136,11 @@ public class FileSecureStoreTest {
 
   @Test(expected = Exception.class)
   public void testOverwrite() throws Exception {
-    secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData oldData = secureStore.getSecureData(NAMESPACE1, KEY1);
     Assert.assertArrayEquals(VALUE1.getBytes(Charsets.UTF_8), oldData.get());
     String newVal = "New value";
-    secureStoreManager.putSecureData(NAMESPACE1, KEY1, newVal.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY1, newVal, DESCRIPTION1, PROPERTIES_1);
   }
 
   @Test(expected = NotFoundException.class)
@@ -166,7 +166,8 @@ public class FileSecureStoreTest {
   @Test
   public void testMultipleNamespaces() throws Exception {
     populateStore();
-    secureStoreManager.putSecureData(NAMESPACE2, KEY1, VALUE1.getBytes(Charsets.UTF_8), DESCRIPTION1, PROPERTIES_1);
+    String ns = "namespace2";
+    secureStoreManager.putSecureData(ns, KEY1, VALUE1, DESCRIPTION1, PROPERTIES_1);
     List<SecureStoreMetadata> expectedList =
       ImmutableList.of(secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata(),
                        secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata());

@@ -41,7 +41,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -136,8 +135,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
                                       "securely.");
     }
 
-    byte[] data = value.getBytes(StandardCharsets.UTF_8);
-    secureStoreManager.putSecureData(secureKeyId.getNamespace(), secureKeyId.getName(), data, description,
+    secureStoreManager.putSecureData(secureKeyId.getNamespace(), secureKeyId.getName(), value, description,
                            secureKeyCreateRequest.getProperties());
     authorizer.grant(secureKeyId, principal, ImmutableSet.of(Action.ALL));
   }

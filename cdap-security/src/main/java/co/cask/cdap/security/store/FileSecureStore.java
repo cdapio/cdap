@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.SecureKeyId;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -117,12 +118,12 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * or if there was problem persisting the keystore.
    */
   @Override
-  public void putSecureData(String namespace, String name, byte[] data, String description,
+  public void putSecureData(String namespace, String name, String data, String description,
                             Map<String, String> properties) throws Exception {
     checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
-    SecureStoreData secureStoreData = new SecureStoreData(meta, data);
+    SecureStoreData secureStoreData = new SecureStoreData(meta, data.getBytes(Charsets.UTF_8));
     writeLock.lock();
     try {
       if (keyStore.containsAlias(keyName)) {
