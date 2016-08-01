@@ -19,7 +19,6 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -59,9 +58,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
   @Inject
   DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                   NamespacedLocationFactory namespacedLocationFactory,
-                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
-                  NamespaceQueryAdmin namespaceQueryAdmin) {
-
+                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework) {
     super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -69,8 +66,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
     this.datasetTablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*",
-                                                                  datasetTablePrefix));
+    this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", datasetTablePrefix));
   }
 
   @Override
@@ -98,10 +94,11 @@ public class DatasetUpgrader extends AbstractUpgrader {
     for (HTableDescriptor desc : hAdmin.listTables()) {
       if (isCDAPUserTable(desc)) {
         upgradeUserTable(desc);
+      } else if (isStreamOrQueueTable(desc.getNameAsString())) {
+        updateTableDesc(desc, hAdmin);
       }
     }
   }
-
 
   private void upgradeUserTable(HTableDescriptor desc) throws IOException {
     HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
@@ -110,7 +107,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
     final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
     final boolean transactional = HBaseTableAdmin.isTransactional(desc);
-    DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, hBaseTableUtil) {
+    DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, cConf, hBaseTableUtil) {
       @Override
       protected CoprocessorJar createCoprocessorJar() throws IOException {
         return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
@@ -135,6 +132,11 @@ public class DatasetUpgrader extends AbstractUpgrader {
     LOG.info("Upgraded hbase table: {}", tableId);
   }
 
+  private void updateTableDesc(HTableDescriptor desc, HBaseAdmin hBaseAdmin) throws IOException {
+    hBaseTableUtil.setVersion(desc);
+    hBaseTableUtil.setTablePrefix(desc);
+    hBaseTableUtil.modifyTable(hBaseAdmin, desc);
+  }
 
   private boolean isCDAPUserTable(HTableDescriptor desc) {
     String tableName = desc.getNameAsString();
@@ -151,8 +153,13 @@ public class DatasetUpgrader extends AbstractUpgrader {
     return defaultNSUserTablePrefix.matcher(tableName).matches() ||
       // Note: if the user has created a dataset called system.* then we will not upgrade the table.
       // CDAP-2977 should be fixed to have a cleaner fix for this.
-      !(tableName.contains("system.queue") || tableName.contains("system.stream") ||
-        tableName.contains("system.sharded.queue"));
+      !(isStreamOrQueueTable(tableName));
+  }
+
+  private boolean isStreamOrQueueTable(String tableName) {
+    // table name should start with "cdap_" or "cdap." for versions 3.4 or earlier (before namespace mapping)
+    return tableName.startsWith(datasetTablePrefix) && (tableName.contains("system.queue") ||
+      tableName.contains("system.stream") || tableName.contains("system.sharded.queue"));
   }
 
   // Note: This check can be safely used for user table since we create meta.
