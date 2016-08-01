@@ -208,6 +208,13 @@ my-complex-schema {
       &:hover,
       &:focus { cursor: pointer; }
     }
+    // Addjust caret position for map tab headers containing Key/Value
+    div.map-schema-container {
+      .key-field,
+      .value-field {
+        + my-embedded-schema-selector > div > div.tab-toggle span.fa { top: -10px; }
+      }
+    }
   }
 
   my-embedded-schema-selector my-record-schema > my-complex-schema > .complex-schema-container {
