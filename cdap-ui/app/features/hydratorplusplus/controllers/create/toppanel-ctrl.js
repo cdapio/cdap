@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.consoleStore.registerOnChangeListener(() => {
@@ -31,6 +31,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
     this.myHelpers = myHelpers;
+    this.$timeout = $timeout;
 
     this.canvasOperations = [
       {
@@ -62,6 +63,15 @@ class HydratorPlusPlusTopPanelCtrl{
     this.$stateParams = $stateParams;
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
+    this.focusTimeout = null;
+
+    if ($stateParams.isClone) {
+      this.openMetadata();
+    }
+
+    $scope.$on('$destroy', () => {
+      this.$timeout.cancel(this.focusTimeout);
+    });
   }
   setMetadata(metadata) {
     this.state.metadata = metadata;
@@ -79,6 +89,11 @@ class HydratorPlusPlusTopPanelCtrl{
 
   openMetadata() {
     this.metadataExpanded = true;
+
+    this.$timeout.cancel(this.focusTimeout);
+    this.focusTimeout = this.$timeout(() => {
+      document.getElementById('pipeline-name-input').focus();
+    });
   }
   resetMetadata(event) {
     this.setState();
@@ -137,7 +152,7 @@ class HydratorPlusPlusTopPanelCtrl{
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

@@ -27,7 +27,7 @@ class HydratorDetailTopPanelController {
     this.HydratorPlusPlusDetailActions = HydratorPlusPlusDetailActions;
     this.config = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
     this.app = {
-      name: this.config.name,
+      name: HydratorPlusPlusDetailNonRunsStore.getPipelineName(),
       description: this.config.description,
       type: this.config.artifact.name
     };
