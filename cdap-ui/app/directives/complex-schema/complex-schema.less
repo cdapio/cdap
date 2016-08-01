@@ -22,7 +22,7 @@
 @fields-right-offset: 70px;
 
 my-complex-schema {
-  .complex-schema-container {
+  div.complex-schema-container {
 
     [class*="col-"] {
       padding-right: 0;
@@ -46,6 +46,7 @@ my-complex-schema {
       &.header { padding-left: 10px; }
     }
 
+    .enum-schema-container .input-column .form-control { outline-offset: -3px; }
     .input-column {
       float: left;
 
@@ -70,10 +71,11 @@ my-complex-schema {
 
     .select-wrapper {
       height: 33px;
+      z-index: 100;
       .select-wrapper(@background-color: transparent, @arrow-color: @cdap-header, @right: 7px);
     }
 
-    .tab-header {
+    div.tab-header {
       border-radius: 4px 4px 0 0;
       box-shadow: rgba(1, 0, 0, 0.25) 0 0 10px;
       height: 26px;
@@ -83,13 +85,13 @@ my-complex-schema {
         height: 22px;
         padding: 0 5px;
       }
-      .select-wrapper {
-        height: 26px;
-        &:after { top: 5px; }
-      }
-      .tab-header-inner {
+      div.tab-header-inner {
         border-radius: 4px 4px 0 0;
-        height: 33px;
+        height: 35px;
+        div.select-wrapper {
+          height: 26px;
+          &:after { top: 5px; }
+        }
       }
     }
 
@@ -99,6 +101,14 @@ my-complex-schema {
       width: 50px;
       line-height: 32px;
       padding-left: 5px;
+    }
+
+    .key-field,
+    .value-field {
+      .map-input-group.tab-header {
+        .map-input-column { line-height: 32px; }
+        .select-wrapper:after { top: -4px; }
+      }
     }
 
     .map-input-group { display: inline-block; }
@@ -171,7 +181,7 @@ my-complex-schema {
         top: 0;
         right: 0;
         height: 1px;
-        width: 155px;
+        width: 100%;
       }
     }
     span.fa { color: @hydrator-blue; }
