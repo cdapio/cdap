@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.api.streaming;
 
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import org.apache.spark.streaming.api.java.JavaDStream;
@@ -28,6 +30,7 @@ import java.io.Serializable;
  *
  * @param <T> type of object contained in the stream
  */
+@Beta
 public abstract class StreamingSource<T> implements PipelineConfigurable, Serializable {
 
   public static final String PLUGIN_TYPE = "streamingsource";
@@ -37,10 +40,10 @@ public abstract class StreamingSource<T> implements PipelineConfigurable, Serial
   /**
    * Get the stream to read from.
    *
-   * @param jsc spark context
+   * @param context the streaming context for this stage of the pipeline
    * @return the stream to read from.
    */
-  public abstract JavaDStream<T> getStream(JavaStreamingContext jsc) throws Exception;
+  public abstract JavaDStream<T> getStream(StreamingContext context) throws Exception;
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {

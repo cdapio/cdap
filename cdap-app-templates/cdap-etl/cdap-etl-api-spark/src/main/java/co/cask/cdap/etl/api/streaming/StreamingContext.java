@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package co.cask.cdap.etl.api.streaming;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.etl.api.StageContext;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
 
 /**
- * Context passed to ETL stages.
+ * Context for streaming plugin stages.
  */
 @Beta
-public interface TransformContext extends StageContext, LookupProvider {
+public interface StreamingContext extends StageContext, Transactional {
+
+  /**
+   * @return Spark JavaStreamingContext for the pipeline.
+   */
+  JavaStreamingContext getSparkStreamingContext();
 
 }
