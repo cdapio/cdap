@@ -35,6 +35,7 @@
 @application-primary-color: #43b82f;
 @application-secondary-color: #d15668;
 @application-completed-color: #5a84e4;
+@application-default-color: #969696;
 
 body.theme-cdap {
   .modal.cdap-modal {
@@ -338,6 +339,12 @@ my-log-viewer {
           color: @application-completed-color;
         }
 
+        .application-status.program-default {
+          .status-circle.program-default-circle {
+            background-color: @application-default-color;
+          }
+          color: @application-default-color;
+        }
       }
 
       .log-stats-container {
