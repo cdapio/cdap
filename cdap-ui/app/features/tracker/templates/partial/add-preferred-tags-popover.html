@@ -72,6 +72,8 @@
 <div class="modal-footer text-right">
   <p class="pull-left text-danger"
      ng-if="!AddTags.proceedToNextStep && AddTags.tagList.invalidTags.length">No special characters allowed in tags.</p>
+  <p class="pull-left text-danger"
+     ng-if="AddTags.invalidFormat">Only .csv, .txt files allowed.</p>
   <button class="btn btn-default"
           ng-click="$dismiss('cancel')">Cancel</button>
   <button ng-if="!AddTags.proceedToNextStep"
