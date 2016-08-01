@@ -36,6 +36,76 @@
 @application-secondary-color: #d15668;
 @application-completed-color: #5a84e4;
 
+body.theme-cdap {
+  .modal.cdap-modal {
+    &.node-config-modal {
+      .modal-dialog {
+        margin-top: 120px;
+        &.expand {
+          margin-bottom: 0;
+          height: ~"calc(100vh - 120px)";
+          height: ~"-moz-calc(100vh - 120px)";
+          height: ~"-webkit-calc(100vh - 120px)";
+        }
+      }
+    }
+  }
+}
+
+.modal-dialog {
+  .modal-header {
+    background-color: white;
+    border-bottom: 0;
+    box-shadow: none;
+    height: inherit;
+
+    .modal-title {
+      font-size: 18px;
+      line-height: 1;
+      padding: 20px 20px 10px 20px;
+
+      .fa.fa-times {
+        cursor: pointer;
+        color: #999999;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 0 20px;
+  }
+
+  .modal-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+.modal-dialog {
+  width: 80%;
+  overflow-y: hidden;
+  margin-top: 90px;
+  margin-bottom: 0;
+
+  &.expand {
+    margin-left: 0;
+    width: 100%;
+    height: ~"calc(100vh - 100px)";
+    height: ~"-moz-calc(100vh - 100px)";
+    height: ~"-webkit-calc(100vh - 100px)";
+    margin-bottom: 0;
+  }
+
+  .modal-content {
+    height: inherit;
+
+    .modal-body {
+      padding: 0 10px;
+      max-height: 100%;
+    }
+  }
+}
+
 body {
 
   main.container > div {

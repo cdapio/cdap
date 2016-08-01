@@ -48,8 +48,8 @@
 
     <div class="log-actions">
       <div class="log-action-container">
-        <a  href="{{LogViewer.rawUrl}}"
-            target="_blank" class="log-action-btn view-raw btn btn-default" ng-diabled="!LogViewer.rawUrl.length">
+        <a  ng-click="LogViewer.openRaw()"
+            target="_blank" class="log-action-btn view-raw btn btn-default" ng-disabled="!LogViewer.rawUrl.length === 0">
             View Raw
         </a>
         <a class="log-action-btn download-all btn btn-default" ng-click="LogViewer.export()">
