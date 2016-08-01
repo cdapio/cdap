@@ -61,7 +61,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
                   NamespacedLocationFactory namespacedLocationFactory,
                   HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
                   NamespaceQueryAdmin namespaceQueryAdmin) {
-
     super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -69,8 +68,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
     this.datasetTablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*",
-                                                                  datasetTablePrefix));
+    this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", datasetTablePrefix));
   }
 
   @Override
@@ -110,7 +108,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
     final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
     final boolean transactional = HBaseTableAdmin.isTransactional(desc);
-    DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, hBaseTableUtil) {
+    DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, cConf, hBaseTableUtil) {
       @Override
       protected CoprocessorJar createCoprocessorJar() throws IOException {
         return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
