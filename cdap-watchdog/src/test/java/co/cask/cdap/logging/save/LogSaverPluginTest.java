@@ -38,12 +38,12 @@ import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
+import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -52,7 +52,6 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -66,11 +65,10 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -131,9 +129,11 @@ public class LogSaverPluginTest extends KafkaTestBase {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
-    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+    FlowletLoggingContext loggingContext = new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE");
+    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
+    waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
 
-    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"), logBaseDir);
+    testLogRead(loggingContext, logBaseDir);
 
     LogCallback logCallback = new LogCallback();
     FileLogReader fileLogReader = injector.getInstance(FileLogReader.class);
@@ -163,7 +163,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
     // Reset the log base dir back to original value
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
-    waitTillLogSaverDone(ns1LogBaseDir1, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+    fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
+    waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
     stopLogSaver();
 
     LogCallback callbackAfterReset = new LogCallback();
@@ -389,12 +390,15 @@ public class LogSaverPluginTest extends KafkaTestBase {
     }
   }
 
-  private static void waitTillLogSaverDone(Location logBaseDir, String filePattern, String logLine) throws Exception {
+  private static void waitTillLogSaverDone(FileMetaDataManager fileMetaDataManager, LoggingContext loggingContext,
+                                           String logLine) throws Exception {
     long start = System.currentTimeMillis();
 
     while (true) {
-      Location latestFile = getLatestFile(logBaseDir, filePattern);
-      if (latestFile != null) {
+      NavigableMap<Long, Location> files = fileMetaDataManager.listFiles(loggingContext);
+      Map.Entry<Long, Location> lastEntry = files.lastEntry();
+      if (lastEntry != null) {
+        Location latestFile = lastEntry.getValue();
         AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
@@ -415,26 +419,5 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
     LOG.info("Done waiting!");
     TimeUnit.SECONDS.sleep(1);
-  }
-
-  private static Location getLatestFile(Location logBaseDir, String filePattern) throws Exception {
-    String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-    Location dir = logBaseDir.append(String.format(filePattern, date));
-
-    if (!dir.exists()) {
-      return null;
-    }
-
-    List<Location> files = dir.list();
-    if (files.isEmpty()) {
-      return null;
-    }
-
-    SortedMap<Long, Location> map = Maps.newTreeMap();
-    for (Location file : files) {
-      String filename = FilenameUtils.getBaseName(file.getName());
-      map.put(Long.parseLong(filename), file);
-    }
-    return map.get(map.lastKey());
   }
 }
