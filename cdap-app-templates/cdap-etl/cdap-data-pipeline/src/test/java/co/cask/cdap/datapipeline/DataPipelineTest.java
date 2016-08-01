@@ -27,8 +27,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.action.MockAction;
@@ -53,7 +51,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -114,7 +111,12 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testMacroEvaluationActionPipeline() throws Exception {
+  public void testMacroActionPipelines() throws Exception {
+    testMacroEvaluationActionPipeline(Engine.MAPREDUCE);
+    testMacroEvaluationActionPipeline(Engine.SPARK);
+  }
+
+  public void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
 
       ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
                                                                                "${value}"));
@@ -125,7 +127,7 @@ public class DataPipelineTest extends HydratorTestBase {
         .addStage(action1)
         .addStage(action2)
         .addConnection(new Connection(action1.getName(), action2.getName()))
-        .setEngine(Engine.MAPREDUCE)
+        .setEngine(engine)
         .build();
 
       // set runtime arguments for macro substitution
