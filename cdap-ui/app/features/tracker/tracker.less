@@ -801,43 +801,12 @@ body.state-tracker-detail-entity {
       tbody > tr {
         &:nth-of-type(odd) { background-color: #ffffff; }
         &:nth-of-type(even) { background-color: @filter-sidebar-background-color; }
-        &:first-child {
-          &.empty-row,
-          &.first-input-row {
-            td {
-              position: relative;
-              &:before {
-                display: block;
-                color: @tracker-grey;
-                position: absolute;
-                top: 12px;
-                left: 12px;
-              }
-              &:first-child {
-                border: 1px solid @tracker-green;
-                &:before { content: 'Property'; }
-              }
-              &:nth-child(2):before { content: 'Value'; }
-            }
-          }
-          &.placeholder-styling:not(.empty-row) {
-            td {
-              position: static;
-              &:before {
-                content: '';
-                position: static;
-              }
-              &:first-child { border: 0; }
-            }
-          }
-        }
       }
       td {
         vertical-align: middle;
-
+        &.action { padding: 0; }
         &:first-child {
           color: @title-font-color;
-          font-weight: 500;
           width: 30%;
         }
         &:last-child { width: 50px; }
@@ -848,6 +817,12 @@ body.state-tracker-detail-entity {
           padding: 0;
           width: 70%;
         }
+        .btn {
+          width: 100%;
+          height: 39px;
+          border: none;
+          border-radius: 0;
+        }
       }
 
       .empty-row { height: 39px; }
@@ -857,14 +832,6 @@ body.state-tracker-detail-entity {
         height: @row-height;
 
         td { padding: 0; }
-
-        .btn {
-          width: 100%;
-          height: @row-height;
-          border: none;
-          border-radius: 0;
-        }
-
         .form-control {
           height: @row-height;
           width: 100%;
