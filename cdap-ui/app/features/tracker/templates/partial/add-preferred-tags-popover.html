@@ -38,7 +38,7 @@
       <div>
         <span class="fa fa-cloud-upload"
               aria-hidden="true"></span>
-        <div>Drag &amp; Drop or<br />
+        <div>
           <a class="file-import-link" ng-click="AddTags.importTags()">Browse</a> CSV, TXT
         </div>
         <my-file-select class="sr-only" id="file-select" data-button-icon="fa-upload" on-file-select="AddTags.importFiles($files)" data-button-label="Import">
@@ -72,6 +72,8 @@
 <div class="modal-footer text-right">
   <p class="pull-left text-danger"
      ng-if="!AddTags.proceedToNextStep && AddTags.tagList.invalidTags.length">No special characters allowed in tags.</p>
+  <p class="pull-left text-danger"
+     ng-if="AddTags.invalidFormat">Only .csv, .txt files allowed.</p>
   <button class="btn btn-default"
           ng-click="$dismiss('cancel')">Cancel</button>
   <button ng-if="!AddTags.proceedToNextStep"

@@ -77,7 +77,7 @@
             </thead>
             <tbody>
               <tr ng-repeat="metric in ::MainController.topDatasets">
-                <td class="text-right">
+                <td class="text-left">
 
                   <a ng-if="metric.entityType === 'dataset'"
                     ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: metric.entityName})">
@@ -87,6 +87,7 @@
                       tooltip-append-to-body="true"
                       tooltip-class="tracker-tooltip"
                       tooltip-placement="top">
+                      <i class="icon-datasets"></i>
                       {{ ::metric.entityName }}
                     </span>
                   </a>
@@ -98,6 +99,7 @@
                       tooltip-append-to-body="true"
                       tooltip-class="tracker-tooltip"
                       tooltip-placement="top">
+                      <i class="icon-streams"></i>
                       {{ ::metric.entityName }}
                     </span>
                   </a>
