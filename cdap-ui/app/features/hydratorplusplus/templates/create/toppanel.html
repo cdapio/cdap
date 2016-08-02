@@ -17,7 +17,7 @@
 <div class="side-panel top text-center">
   <div class="hydrator-metadata"
         ng-class="{'expanded': HydratorPlusPlusTopPanelCtrl.metadataExpanded}"
-        ng-click="HydratorPlusPlusTopPanelCtrl.openMetadata()">
+        ng-click="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.openMetadata()">
 
     <div class="pipeline-type">
       <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusTopPanelCtrl.state.artifact.name) !== -1"
