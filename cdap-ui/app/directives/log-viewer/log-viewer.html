@@ -49,10 +49,10 @@
     <div class="log-actions">
       <div class="log-action-container">
         <a  ng-click="LogViewer.openRaw()"
-            target="_blank" class="log-action-btn view-raw btn btn-default" ng-disabled="!LogViewer.rawUrl.length === 0">
+            target="_blank" class="log-action-btn view-raw btn btn-default" ng-disabled="!LogViewer.rawUrl.length === 0 || LogViewer.runId === ''">
             View Raw
         </a>
-        <a class="log-action-btn download-all btn btn-default" ng-click="LogViewer.export()">
+        <a class="log-action-btn download-all btn btn-default" ng-click="LogViewer.export()" ng-disabled="LogViewer.runId === ''">
           Download All
         </a>
         <div class="search">
