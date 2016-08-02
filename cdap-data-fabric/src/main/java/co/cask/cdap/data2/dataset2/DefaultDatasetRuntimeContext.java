@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.dataset2;
 
-import co.cask.cdap.api.annotation.NoAccess;
 import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
@@ -30,13 +29,11 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.common.Cancellable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -54,35 +51,34 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
    * and usage recording logic.
    */
   public interface DatasetAccessRecorder {
-    void recordAccess(AccessType accessType);
+
+    /**
+     * Records lineage for the given dataset with the given access type.
+     */
+    void recordLineage(AccessType accessType);
+
+    /**
+     * Emits an audit log for the given dataset with the given access type.
+     */
+    void emitAudit(AccessType accessType);
   }
 
-  private static final Map<Class<? extends Annotation>, ? extends Set<Action>> ANNOTATION_TO_ACTIONS = ImmutableMap.of(
-    ReadOnly.class, EnumSet.of(Action.READ),
-    WriteOnly.class, EnumSet.of(Action.WRITE),
-    ReadWrite.class, EnumSet.of(Action.READ, Action.WRITE),
-    NoAccess.class, EnumSet.noneOf(Action.class)
+  private static final Map<Class<? extends Annotation>, AccessInfo> ANNOTATION_TO_ACCESS_INFO = ImmutableMap.of(
+    ReadOnly.class, new AccessInfo(EnumSet.of(Action.READ), AccessType.READ),
+    WriteOnly.class, new AccessInfo(EnumSet.of(Action.WRITE), AccessType.WRITE),
+    ReadWrite.class, new AccessInfo(EnumSet.of(Action.READ, Action.WRITE), AccessType.READ_WRITE)
   );
 
-  private final ThreadLocal<Deque<Class<? extends Annotation>>> callStack =
-    new InheritableThreadLocal<Deque<Class<? extends Annotation>>>() {
+  private final ThreadLocal<CallStack> callStack = new InheritableThreadLocal<CallStack>() {
       @Override
-      protected Deque<Class<? extends Annotation>> initialValue() {
-        return new ArrayDeque<>(10);
+      protected CallStack initialValue() {
+        return new CallStack();
       }
 
       @Override
-      protected Deque<Class<? extends Annotation>> childValue(Deque<Class<? extends Annotation>> parentValue) {
-        // Copy the top of the stack
-        Deque<Class<? extends Annotation>> stack = new ArrayDeque<>(10);
-        Class<? extends Annotation> annotation = parentValue.peekLast();
-
-        // In normal case it shouldn't be null. However, in case the dataset calls the onMethodExit
-        // intentionally, then this can be null.
-        if (annotation != null) {
-          stack.addLast(annotation);
-        }
-        return stack;
+      protected CallStack childValue(CallStack parentValue) {
+        // Copy the stack
+        return new CallStack(parentValue);
       }
     };
 
@@ -91,17 +87,15 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
   private final Principal principal;
   private final DatasetId datasetId;
 
-  // Just use simple primitive to memorize whether a particular access type has lineage recorded or not
+  // Just use simple primitive array to memorize whether a particular access type has lineage/audit recorded or not
   // Don't worry about concurrency because
-  // 1. doesn't matter too much if the lineage get recorded again from different thread, but it'll be only once
+  // 1. doesn't matter too much if the lineage/audit get recorded again from different thread, but it'll be only once
   //    per type per thread
   // 2. the lineage writer implementation anyway has a concurrent map for caching. The check here acts as a
   //    low cost gate instead of hitting the ConcurrentMap.putIfAbsent method with new object creation on
-  //    every DS operation call.
-  private boolean recordedNoAccess;
-  private boolean recordedRead;
-  private boolean recordedWrite;
-  private boolean recordedReadWrite;
+  //    every DS operation call. Similar for audit log publisher, it has a cache.
+  private final boolean[] lineageRecorded;
+  private final boolean[] auditRecorded;
 
   /**
    * Helper method to execute a {@link Callable} with a {@link DatasetRuntimeContext}.
@@ -130,93 +124,123 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     this.accessRecorder = accessRecorder;
     this.principal = principal;
     this.datasetId = datasetId;
+    this.lineageRecorded = new boolean[AccessType.values().length];
+    this.auditRecorded = new boolean[AccessType.values().length];
   }
 
   @Override
-  public void onMethodEntry(@Nullable Class<? extends Annotation> annotation,
-                            Class<? extends Annotation> defaultAnnotation) {
-    final Deque<Class<? extends Annotation>> callStack = this.callStack.get();
-    Class<? extends Annotation> parentAnnotation = callStack.peekLast();
+  public void onMethodEntry(@Nullable Class<? extends Annotation> annotation) {
+    CallStack callStack = this.callStack.get();
+    AccessInfo accessInfo;
+    AccessType lineageType;
+    AccessType auditType;
 
-    if (annotation == null) {
-      // If there is no annotation on the method, either use immediate parent one from the call stack
-      // or use the default one if the call stack is empty
-      annotation = (parentAnnotation == null) ? defaultAnnotation : parentAnnotation;
+    if (annotation != null) {
+      accessInfo = ANNOTATION_TO_ACCESS_INFO.get(annotation);
+      if (accessInfo == null) {
+        // shouldn't happen
+        throw new DataSetException("Unsupported annotation " + annotation + " on dataset " + datasetId);
+      }
+
+      // Perform authorization if the method is annotated.
+      try {
+        enforcer.enforce(datasetId, principal, accessInfo.getActions());
+      } catch (Exception e) {
+        throw new DataSetException("The principal " + principal + " is not authorized to access " + datasetId +
+                                     " for operation types " + accessInfo.getActions(), e);
+      }
+
+      lineageType = callStack.enter(accessInfo.getAccessType());
+      auditType = accessInfo.getAccessType();
+    } else {
+      lineageType = callStack.enter(AccessType.UNKNOWN);
+      auditType = AccessType.UNKNOWN;
     }
-
-    // Do a quick check if the current permission is allowed by the immediate parent if there is one.
-    if (parentAnnotation != null && !isAllowed(parentAnnotation, annotation)) {
-      throw new DataSetException(
-        String.format("Current scope only allows @%s, but the current method requires @%s",
-                      parentAnnotation.getSimpleName(), annotation.getSimpleName()));
-    }
-
-    // Performs authentication and lineage recording
-    Set<Action> actions = ANNOTATION_TO_ACTIONS.get(annotation);
-    if (actions == null) {
-      // shouldn't happen
-      throw new DataSetException("Unsupported annotation " + annotation);
-    }
-    try {
-      enforcer.enforce(datasetId, principal, actions);
-    } catch (Exception e) {
-      // Need to turn the exception into runtime exception because the dataset method that call this
-      // may not have throws Exception.
-      throw Throwables.propagate(e);
-    }
-
-    // Record the access (lineage, audit).
-    recordAccess(annotation);
-
-    callStack.addLast(annotation);
+    recordAccess(lineageType, auditType);
   }
 
   @Override
   public void onMethodExit() {
-    // The cancellable should be called when the method exit, which should happen in the same thread
+    // This method should be called when the method exit, which should happen in the same thread
     // as the method entry call.
-    callStack.get().pollLast();
+    callStack.get().exit();
   }
 
-  private boolean isAllowed(Class<? extends Annotation> parent, Class<? extends Annotation> current) {
-    // If same annotation, then it's allowed
-    if (parent == current) {
-      return true;
+  private void recordAccess(AccessType lineageType, AccessType auditType) {
+    if (!lineageRecorded[lineageType.ordinal()]) {
+      accessRecorder.recordLineage(lineageType);
+      lineageRecorded[lineageType.ordinal()] = true;
     }
-    // If parent != current and parent is NoAccess, then it's not allowed
-    if (parent == NoAccess.class) {
-      return false;
+    if (!auditRecorded[auditType.ordinal()]) {
+      accessRecorder.emitAudit(auditType);
+      auditRecorded[auditType.ordinal()] = true;
     }
-    // If parent != current, then
-    // 1. if current is NoAccess, then it's allowed
-    // 2. if parent is ReadWrite, then current can be anything
-    // All other combinations should be rejected.
-    // reject (ReadOnly, WriteOnly)
-    // reject (ReadOnly, ReadWrite)
-    // reject (WriteOnly, ReadOnly)
-    // reject (WriteOnly, ReadWrite)
-    return current == NoAccess.class || parent == ReadWrite.class;
   }
 
-  private void recordAccess(Class<? extends Annotation> annotation) {
-    if (annotation == NoAccess.class && !recordedNoAccess) {
-      accessRecorder.recordAccess(AccessType.UNKNOWN);
-      recordedNoAccess = true;
-      return;
+  /**
+   * Inner container class for fast access information lookup based on method annotation.
+   */
+  private static final class AccessInfo {
+
+    private final Set<Action> actions;
+    private final AccessType accessType;
+
+    private AccessInfo(Set<Action> actions, AccessType accessType) {
+      this.actions = actions;
+      this.accessType = accessType;
     }
-    if (annotation == ReadOnly.class && !recordedRead) {
-      accessRecorder.recordAccess(AccessType.READ);
-      recordedRead = true;
-      return;
+
+    Set<Action> getActions() {
+      return actions;
     }
-    if (annotation == WriteOnly.class && !recordedWrite) {
-      accessRecorder.recordAccess(AccessType.WRITE);
-      recordedWrite = true;
-      return;
+
+    AccessType getAccessType() {
+      return accessType;
     }
-    if (annotation == ReadWrite.class && !recordedReadWrite) {
-      accessRecorder.recordAccess(AccessType.READ_WRITE);
-      recordedReadWrite = true;
+  }
+
+  /**
+   * Inner helper class to keep track of dataset method call stack.
+   */
+  private final class CallStack {
+
+    private final ArrayDeque<AccessType> stack;
+    private final int minSize;
+
+    CallStack() {
+      this.stack = new ArrayDeque<>(10);
+      this.minSize = 0;
+    }
+
+    CallStack(CallStack other) {
+      this.stack = new ArrayDeque<>(other.stack);
+      this.minSize = stack.size();
+    }
+
+    /**
+     * Called from {@link #onMethodEntry(Class)}.
+     *
+     * @param accessType the access type derived based on the method annotation
+     * @return the actual access type to use for lineage recording
+     */
+    AccessType enter(AccessType accessType) {
+      // If there is a parent access type (meaning the current call is nested inside some other dataset method call)
+      // and if it is not UNKNOWN, then use that as the lineage access type and keep propagating that in the stack.
+      AccessType parentType = stack.peekLast();
+      if (parentType != null && parentType != AccessType.UNKNOWN) {
+        accessType = parentType;
+      }
+      stack.addLast(accessType);
+      return accessType;
+    }
+
+    void exit() {
+      // Make sure we won't pop more than it should
+      if (stack.size() <= minSize) {
+        throw new DataSetException("Invalid dataset call stack for dataset " + datasetId +
+                                     ". Potentially caused by illegal manipulation of callstack");
+      }
+      stack.removeLast();
     }
   }
 }

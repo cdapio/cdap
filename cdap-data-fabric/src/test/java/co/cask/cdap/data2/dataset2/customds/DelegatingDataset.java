@@ -16,9 +16,6 @@
 
 package co.cask.cdap.data2.dataset2.customds;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.io.IOException;
@@ -26,39 +23,41 @@ import java.io.IOException;
 /**
  *
  */
-public class TopLevelDirectDataset implements Dataset, CustomOperations {
+public class DelegatingDataset implements Dataset, CustomOperations {
 
-  @Override
-  public void close() throws IOException {
-    // no-op
+  private final CustomOperations delegate;
+
+  public DelegatingDataset(CustomOperations delegate) {
+    this.delegate = delegate;
   }
 
-  @ReadOnly
   @Override
   public void read() {
+    delegate.read();
   }
 
-  @WriteOnly
   @Override
   public void write() {
+    delegate.write();
   }
 
-  @ReadWrite
   @Override
   public void readWrite() {
-    read();
-    write();
+    delegate.readWrite();
   }
 
-  @WriteOnly
   @Override
   public void lineageWriteActualReadWrite() {
-    read();
-    write();
+    delegate.lineageWriteActualReadWrite();
   }
 
   @Override
   public void noDataOp() {
+    delegate.noDataOp();
+  }
 
+  @Override
+  public void close() throws IOException {
+    // no-op
   }
 }

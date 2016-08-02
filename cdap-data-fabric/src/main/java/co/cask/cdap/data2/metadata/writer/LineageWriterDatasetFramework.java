@@ -54,7 +54,12 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   private static final DefaultDatasetRuntimeContext.DatasetAccessRecorder SYSTEM_NAMESPACE_ACCESS_RECORDER =
     new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
       @Override
-      public void recordAccess(AccessType accessType) {
+      public void recordLineage(AccessType accessType) {
+        // no-op
+      }
+
+      @Override
+      public void emitAudit(AccessType accessType) {
         // no-op
       }
     };
@@ -172,16 +177,15 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Override
   public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
     super.writeLineage(datasetInstanceId, accessType);
+    publishAudit(datasetInstanceId, accessType);
     doWriteLineage(datasetInstanceId, accessType);
   }
 
   private void doWriteLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
     Id.Run programRunId = programContext.getRun();
-    Id.NamespacedId componentId = programContext.getComponentId();
     if (programRunId != null) {
+      Id.NamespacedId componentId = programContext.getComponentId();
       try {
-        // Failure to publish to audit log should fail the dataset operation.
-        AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programRunId);
         lineageWriter.addAccess(programRunId, datasetInstanceId, accessType, componentId);
       } catch (Throwable t) {
         // Failure to write to lineage shouldn't cause dataset operation failure
@@ -189,6 +193,11 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
                  datasetInstanceId, accessType, programRunId, componentId);
       }
     }
+  }
+
+  private void publishAudit(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    Id.Run programRunId = programContext.getRun();
+    AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programRunId);
   }
 
   private final class BasicDatasetAccessRecorder implements DefaultDatasetRuntimeContext.DatasetAccessRecorder {
@@ -207,7 +216,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     }
 
     @Override
-    public void recordAccess(AccessType accessType) {
+    public void recordLineage(AccessType accessType) {
       // If the access type is unknown, default it to the access type being provided to the getDataset call
       if (accessType == AccessType.UNKNOWN) {
         accessType = requestedAccessType;
@@ -221,6 +230,15 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
       } catch (Exception e) {
         LOG.warn("Failed to register usage of {} -> {}", owners, datasetInstanceId, e);
       }
+    }
+
+    @Override
+    public void emitAudit(AccessType accessType) {
+      // If the access type is unknown, default it to the access type being provided to the getDataset call
+      if (accessType == AccessType.UNKNOWN) {
+        accessType = requestedAccessType;
+      }
+      publishAudit(datasetInstanceId, accessType);
     }
   }
 }

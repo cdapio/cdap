@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.dataset;
 
-import co.cask.cdap.api.annotation.NoAccess;
 import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
@@ -54,7 +53,7 @@ import javax.annotation.Nullable;
  * 2. In each constructor, insert this._datasetRuntimeContext = DatasetRuntimeContext.getContext()
  * 3. For each constructor and method, transform the code to:
  *
- *    this._datasetRuntimeContext0.onMethodEnter([annotation], [defaultAnnotation]);
+ *    this._datasetRuntimeContext0.onMethodEntry([annotation]);
  *    try {
  *      // original code
  *    } finally {
@@ -155,7 +154,6 @@ public final class DatasetClassRewriter implements ClassRewriter {
 
         private boolean hasRead;
         private boolean hasWrite;
-        private boolean hasNoAccess;
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
@@ -168,8 +166,6 @@ public final class DatasetClassRewriter implements ClassRewriter {
             } else if (ReadWrite.class.getName().equals(annotation)) {
               hasRead = true;
               hasWrite = true;
-            } else if (NoAccess.class.getName().equals(annotation)) {
-              hasNoAccess = true;
             }
           }
           return super.visitAnnotation(desc, visible);
@@ -186,17 +182,15 @@ public final class DatasetClassRewriter implements ClassRewriter {
             putField(datasetType, datasetRuntimeContextField, DATASET_RUNTIME_CONTEXT_TYPE);
           }
 
-          Type methodAnnotationType = getMethodAnnotationType(hasRead, hasWrite, hasNoAccess);
-          Type defaultAnnotationType = isConstructor ? Type.getType(NoAccess.class) : Type.getType(ReadWrite.class);
+          Type methodAnnotationType = getMethodAnnotationType(hasRead, hasWrite);
 
-          // this._datasetRuntimeContext.onMethodEntry(methodAnnotation, defaultAnnotation);
+          // this._datasetRuntimeContext.onMethodEntry(methodAnnotation);
           // try {
           loadThis();
           getField(datasetType, datasetRuntimeContextField, DATASET_RUNTIME_CONTEXT_TYPE);
           push(methodAnnotationType);
-          push(defaultAnnotationType);
           invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
-                        new Method("onMethodEntry", Type.getMethodDescriptor(Type.VOID_TYPE, CLASS_TYPE, CLASS_TYPE)));
+                        new Method("onMethodEntry", Type.getMethodDescriptor(Type.VOID_TYPE, CLASS_TYPE)));
           beginTry();
         }
 
@@ -212,10 +206,7 @@ public final class DatasetClassRewriter implements ClassRewriter {
         }
 
         @Nullable
-        private Type getMethodAnnotationType(boolean hasRead, boolean hasWrite, boolean hasNoAccess) {
-          if (!hasRead && !hasWrite && !hasNoAccess) {
-            return null;
-          }
+        private Type getMethodAnnotationType(boolean hasRead, boolean hasWrite) {
           if (hasRead && hasWrite) {
             return Type.getType(ReadWrite.class);
           }
@@ -225,7 +216,7 @@ public final class DatasetClassRewriter implements ClassRewriter {
           if (hasWrite) {
             return Type.getType(WriteOnly.class);
           }
-          return Type.getType(NoAccess.class);
+          return null;
         }
       };
     }

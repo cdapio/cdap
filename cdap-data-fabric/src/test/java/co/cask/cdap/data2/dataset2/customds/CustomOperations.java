@@ -27,11 +27,7 @@ public interface CustomOperations {
 
   void readWrite();
 
-  void invalidRead();
+  void lineageWriteActualReadWrite();
 
-  void invalidWrite();
-
-  void invalidReadFromWriteOnly();
-
-  void invalidWriteFromReadOnly();
+  void noDataOp();
 }

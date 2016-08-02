@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.dataset;
 
-import co.cask.cdap.api.annotation.NoAccess;
 import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
@@ -48,8 +47,7 @@ public abstract class DatasetRuntimeContext {
     // For user dataset, there is always one being set.
     return new DatasetRuntimeContext() {
       @Override
-      public void onMethodEntry(@Nullable Class<? extends Annotation> annotation,
-                                Class<? extends Annotation> defaultAnnotation) {
+      public void onMethodEntry(@Nullable Class<? extends Annotation> annotation) {
         // no-op
       }
 
@@ -67,10 +65,12 @@ public abstract class DatasetRuntimeContext {
     final Class[] callerClasses = CallerClassSecurityManager.getCallerClasses();
     // 0 is the CallerClassSecurityManager, 1 is this class, hence 2 is the actual caller
     if (callerClasses.length < 3) {
+      // This shouldn't happen as there should be someone calling this method.
       throw new IllegalStateException("Invalid call stack.");
     }
     // This is the guard against if someone tries to call this method outside of CDAP system (e.g. from user code)
-    if (callerClasses[2].getClassLoader() != DatasetRuntimeContext.class.getClassLoader()) {
+    if (callerClasses[2].getClassLoader() != DatasetRuntimeContext.class.getClassLoader()
+      || !callerClasses[2].getName().equals("co.cask.cdap.data2.dataset2.DefaultDatasetRuntimeContext")) {
       throw new IllegalAccessError("Not allow to set context from " + callerClasses[2]);
     }
 
@@ -94,14 +94,11 @@ public abstract class DatasetRuntimeContext {
   /**
    * Method to call when a dataset method is invoked.
    *
-   * @param annotation one of the {@link NoAccess}, {@link ReadOnly}, {@link WriteOnly} or {@link ReadWrite} annotation
-   *                   on the method, or {@code null} if the method is not annotated
-   * @param defaultAnnotation the default annotation to use if the method is not annotated and the annotation
-   *                          cannot be derived from the current call stack.
+   * @param annotation one of the {@link ReadOnly}, {@link WriteOnly} or {@link ReadWrite} annotation
+   *                   on the method. Use {@code null} for method that is not annotated,
    */
   @SuppressWarnings("unused")
-  public abstract void onMethodEntry(@Nullable Class<? extends Annotation> annotation,
-                                     Class<? extends Annotation> defaultAnnotation);
+  public abstract void onMethodEntry(@Nullable Class<? extends Annotation> annotation);
 
   /**
    * Method to call when a dataset method is about to return.

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.dataset2.customds;
 
-import co.cask.cdap.api.annotation.NoAccess;
 import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
@@ -50,27 +49,15 @@ public class DefaultTopLevelExtendsDataset implements TopLevelExtendsDataset, Cu
     write();
   }
 
-  @NoAccess
-  @Override
-  public void invalidRead() {
-    read();
-  }
-
-  @NoAccess
-  @Override
-  public void invalidWrite() {
-    write();
-  }
-
   @WriteOnly
   @Override
-  public void invalidReadFromWriteOnly() {
+  public void lineageWriteActualReadWrite() {
     read();
+    write();
   }
 
-  @ReadOnly
   @Override
-  public void invalidWriteFromReadOnly() {
-    write();
+  public void noDataOp() {
+
   }
 }

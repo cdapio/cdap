@@ -23,6 +23,7 @@ import co.cask.cdap.common.dataset.DatasetClassRewriter;
 import co.cask.cdap.data2.dataset2.customds.CustomDatasetApp;
 import co.cask.cdap.data2.dataset2.customds.CustomOperations;
 import co.cask.cdap.data2.dataset2.customds.DefaultTopLevelExtendsDataset;
+import co.cask.cdap.data2.dataset2.customds.DelegatingDataset;
 import co.cask.cdap.data2.dataset2.customds.TopLevelDataset;
 import co.cask.cdap.data2.dataset2.customds.TopLevelDirectDataset;
 import co.cask.cdap.data2.dataset2.customds.TopLevelExtendsDataset;
@@ -34,7 +35,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import com.google.common.base.Throwables;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,6 +44,7 @@ import org.objectweb.asm.Type;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -55,7 +57,7 @@ import javax.annotation.Nullable;
 public class DatasetClassRewriterTest {
 
   @Test
-  public void testDatasetACL() throws Exception {
+  public void testDatasetAccessRecorder() throws Exception {
     ByteCodeClassLoader classLoader = new ByteCodeClassLoader(getClass().getClassLoader());
     classLoader.addClass(rewrite(TopLevelExtendsDataset.class));
     classLoader.addClass(rewrite(TopLevelDirectDataset.class));
@@ -65,82 +67,236 @@ public class DatasetClassRewriterTest {
     classLoader.addClass(rewrite(CustomDatasetApp.InnerDataset.class));
 
     InMemoryAccessRecorder accessRecorder = new InMemoryAccessRecorder();
-    testDatasetMethods(accessRecorder, createDataset(accessRecorder, TopLevelDataset.class.getName(), classLoader));
+    TestAuthorizationEnforcer authEnforcer = new TestAuthorizationEnforcer(EnumSet.allOf(Action.class));
+    testDatasetAccessRecord(accessRecorder,
+                            createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader));
 
     accessRecorder.clear();
-    testDatasetMethods(accessRecorder,
-                       createDataset(accessRecorder, DefaultTopLevelExtendsDataset.class.getName(), classLoader));
+    testDatasetAccessRecord(accessRecorder,
+                            createDataset(accessRecorder, authEnforcer,
+                                          DefaultTopLevelExtendsDataset.class.getName(), classLoader));
 
     accessRecorder.clear();
-    testDatasetMethods(accessRecorder,
-                       createDataset(accessRecorder, CustomDatasetApp.InnerStaticInheritDataset.class.getName(),
-                                     classLoader));
+    Dataset delegate = createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader);
+    testDatasetAccessRecord(accessRecorder,
+                            createDataset(accessRecorder, authEnforcer, DelegatingDataset.class.getName(), classLoader,
+                                          new Class<?>[] { CustomOperations.class },
+                                          new Object[] { delegate }));
 
     accessRecorder.clear();
-    testDatasetMethods(accessRecorder,
-                       createDataset(accessRecorder, CustomDatasetApp.InnerDataset.class.getName(), classLoader,
-                                     new CustomDatasetApp()));
+    testDatasetAccessRecord(accessRecorder,
+                            createDataset(accessRecorder, authEnforcer,
+                                          CustomDatasetApp.InnerStaticInheritDataset.class.getName(), classLoader));
+
+    accessRecorder.clear();
+    testDatasetAccessRecord(accessRecorder,
+                            createDataset(accessRecorder, authEnforcer,
+                                          CustomDatasetApp.InnerDataset.class.getName(), classLoader,
+                                          new Class<?>[] { CustomDatasetApp.class },
+                                          new Object[] { new CustomDatasetApp()}));
+  }
+
+  @Test
+  public void testDatasetAuthorization() throws Exception {
+    ByteCodeClassLoader classLoader = new ByteCodeClassLoader(getClass().getClassLoader());
+    classLoader.addClass(rewrite(TopLevelExtendsDataset.class));
+    classLoader.addClass(rewrite(TopLevelDirectDataset.class));
+    classLoader.addClass(rewrite(TopLevelDataset.class));
+    classLoader.addClass(rewrite(DefaultTopLevelExtendsDataset.class));
+    classLoader.addClass(rewrite(CustomDatasetApp.InnerStaticInheritDataset.class));
+    classLoader.addClass(rewrite(CustomDatasetApp.InnerDataset.class));
+
+    InMemoryAccessRecorder accessRecorder = new InMemoryAccessRecorder();
+
+    // Test no access
+    TestAuthorizationEnforcer authEnforcer = new TestAuthorizationEnforcer(EnumSet.noneOf(Action.class));
+    testNoAccess(createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader));
+    testNoAccess(createDataset(accessRecorder, authEnforcer,
+                               DefaultTopLevelExtendsDataset.class.getName(), classLoader));
+    Dataset delegate = createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader);
+    testNoAccess(createDataset(accessRecorder, authEnforcer, DelegatingDataset.class.getName(), classLoader,
+                               new Class<?>[] { CustomOperations.class }, new Object[] { delegate }));
+    testNoAccess(createDataset(accessRecorder, authEnforcer,
+                               CustomDatasetApp.InnerStaticInheritDataset.class.getName(), classLoader));
+    testNoAccess(createDataset(accessRecorder, authEnforcer,
+                               CustomDatasetApp.InnerDataset.class.getName(), classLoader,
+                               new Class<?>[] { CustomDatasetApp.class }, new Object[] { new CustomDatasetApp()}));
+
+    // Test read only access
+    authEnforcer = new TestAuthorizationEnforcer(EnumSet.of(Action.READ));
+    testReadOnlyAccess(createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader));
+    testReadOnlyAccess(createDataset(accessRecorder, authEnforcer,
+                                     DefaultTopLevelExtendsDataset.class.getName(), classLoader));
+    delegate = createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader);
+    testReadOnlyAccess(createDataset(accessRecorder, authEnforcer, DelegatingDataset.class.getName(), classLoader,
+                                     new Class<?>[] { CustomOperations.class }, new Object[] { delegate }));
+    testReadOnlyAccess(createDataset(accessRecorder, authEnforcer,
+                                     CustomDatasetApp.InnerStaticInheritDataset.class.getName(), classLoader));
+    testReadOnlyAccess(createDataset(accessRecorder, authEnforcer,
+                                     CustomDatasetApp.InnerDataset.class.getName(), classLoader,
+                                     new Class<?>[] { CustomDatasetApp.class },
+                                     new Object[] { new CustomDatasetApp()}));
+
+    // Test write only access
+    authEnforcer = new TestAuthorizationEnforcer(EnumSet.of(Action.WRITE));
+    testWriteOnlyAccess(createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader));
+    testWriteOnlyAccess(createDataset(accessRecorder, authEnforcer,
+                                      DefaultTopLevelExtendsDataset.class.getName(), classLoader));
+    delegate = createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader);
+    testWriteOnlyAccess(createDataset(accessRecorder, authEnforcer, DelegatingDataset.class.getName(), classLoader,
+                                      new Class<?>[] { CustomOperations.class }, new Object[] { delegate }));
+    testWriteOnlyAccess(createDataset(accessRecorder, authEnforcer,
+                                      CustomDatasetApp.InnerStaticInheritDataset.class.getName(), classLoader));
+    testWriteOnlyAccess(createDataset(accessRecorder, authEnforcer,
+                                      CustomDatasetApp.InnerDataset.class.getName(), classLoader,
+                                      new Class<?>[] { CustomDatasetApp.class },
+                                      new Object[] { new CustomDatasetApp()}));
   }
 
   private <T extends Dataset & CustomOperations> T createDataset(InMemoryAccessRecorder accessRecorder,
+                                                                 AuthorizationEnforcer authEnforcer,
+                                                                 final String className,
+                                                                 final ClassLoader classLoader) throws Exception {
+    return createDataset(accessRecorder, authEnforcer, className, classLoader, new Class<?>[0], new Object[0]);
+  }
+
+  private <T extends Dataset & CustomOperations> T createDataset(InMemoryAccessRecorder accessRecorder,
+                                                                 AuthorizationEnforcer authEnforcer,
                                                                  final String className,
                                                                  final ClassLoader classLoader,
-                                                                 final Object...constructorParams) throws Exception {
-    return DefaultDatasetRuntimeContext.execute(new AlwaysAllowAuthorizationEnforcer(),
+                                                                 final Class<?>[] paramTypes,
+                                                                 final Object[] constructorParams) throws Exception {
+    return DefaultDatasetRuntimeContext.execute(authEnforcer,
                                                 accessRecorder,
                                                 new Principal("cdap", Principal.PrincipalType.USER),
                                                 NamespaceId.DEFAULT.dataset("custom"), new Callable<T>() {
         @Override
         public T call() throws Exception {
           Class<?> cls = classLoader.loadClass(className);
-          if (constructorParams.length == 0) {
+          if (paramTypes.length == 0) {
             return (T) cls.newInstance();
-          }
-          Class<?>[] paramTypes = new Class<?>[constructorParams.length];
-          for (int i = 0; i < constructorParams.length; i++) {
-            paramTypes[i] = constructorParams[i].getClass();
           }
           return (T) cls.getConstructor(paramTypes).newInstance(constructorParams);
         }
       });
   }
 
-  private <T extends Dataset & CustomOperations> void testDatasetMethods(InMemoryAccessRecorder accessRecorder,
-                                                                         T dataset) throws Exception {
+  private <T extends Dataset & CustomOperations> void testDatasetAccessRecord(InMemoryAccessRecorder accessRecorder,
+                                                                              T dataset) throws Exception {
+
+    // Expect an unknown from the constructor
+    Assert.assertEquals(ImmutableList.of(AccessType.UNKNOWN), accessRecorder.getLineageRecorded());
+    Assert.assertEquals(ImmutableList.of(AccessType.UNKNOWN), accessRecorder.getAuditRecorded());
+
+    accessRecorder.clear();
+    dataset.noDataOp();
+    // Since UNKNOWN is already record, expect no new lineage and audit being emitted
+    Assert.assertTrue(accessRecorder.getLineageRecorded().isEmpty());
+    Assert.assertTrue(accessRecorder.getAuditRecorded().isEmpty());
+
+
+    accessRecorder.clear();
+    dataset.lineageWriteActualReadWrite();
+    // Expect an WRITE lineage, but a WRITE and READ audit
+    Assert.assertEquals(ImmutableList.of(AccessType.WRITE), accessRecorder.getLineageRecorded());
+    Assert.assertEquals(ImmutableList.of(AccessType.WRITE, AccessType.READ), accessRecorder.getAuditRecorded());
+
+    accessRecorder.clear();
     dataset.read();
     dataset.write();
     dataset.readWrite();
-    try {
-      dataset.invalidRead();
-      Assert.fail("Exception expected");
-    } catch (Exception e) {
-      Assert.assertTrue(Throwables.getRootCause(e) instanceof DataSetException);
-    }
-    try {
-      dataset.invalidWrite();
-      Assert.fail("Exception expected");
-    } catch (Exception e) {
-      Assert.assertTrue(Throwables.getRootCause(e) instanceof DataSetException);
-    }
-    try {
-      dataset.invalidReadFromWriteOnly();
-      Assert.fail("Exception expected");
-    } catch (Exception e) {
-      Assert.assertTrue(Throwables.getRootCause(e) instanceof DataSetException);
-    }
-    try {
-      dataset.invalidWriteFromReadOnly();
-      Assert.fail("Exception expected");
-    } catch (Exception e) {
-      Assert.assertTrue(Throwables.getRootCause(e) instanceof DataSetException);
-    }
+    // Expect a READ, READ_WRITE for lineage and a READ_WRITE for audit.
+    // This is because only UNKNOWN and WRITE were encountered for lineage,
+    // while UNKNOW, READ and WRITE were encountered for audit
+    Assert.assertEquals(ImmutableList.of(AccessType.READ, AccessType.READ_WRITE), accessRecorder.getLineageRecorded());
+    Assert.assertEquals(ImmutableList.of(AccessType.READ_WRITE), accessRecorder.getAuditRecorded());
 
     dataset.close();
+  }
 
-    // The access being recorded should be
-    // unknown (constructor), read, write and read_write
-    Assert.assertEquals(ImmutableList.of(AccessType.UNKNOWN, AccessType.READ, AccessType.WRITE, AccessType.READ_WRITE),
-                        accessRecorder.getAccessRecorded());
+  private <T extends Dataset & CustomOperations> void testNoAccess(T dataset) throws Exception {
+    dataset.noDataOp();
+
+    try {
+      dataset.read();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    try {
+      dataset.write();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    try {
+      dataset.readWrite();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    try {
+      dataset.lineageWriteActualReadWrite();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+  }
+
+  private <T extends Dataset & CustomOperations> void testReadOnlyAccess(T dataset) throws Exception {
+    dataset.read();
+    dataset.noDataOp();
+
+    try {
+      dataset.write();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    try {
+      dataset.readWrite();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    try {
+      dataset.lineageWriteActualReadWrite();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+  }
+
+  private <T extends Dataset & CustomOperations> void testWriteOnlyAccess(T dataset) throws Exception {
+    dataset.write();
+    dataset.noDataOp();
+
+    try {
+      dataset.read();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    try {
+      dataset.readWrite();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    try {
+      // Even the method is annotated with @WriteOnly, it actually performs read operation, hence the failure
+      dataset.lineageWriteActualReadWrite();
+      Assert.fail("Expected an DataSetException");
+    } catch (DataSetException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
   }
 
   private ClassDefinition rewrite(Class<? extends Dataset> dataset) throws Exception {
@@ -152,16 +308,26 @@ public class DatasetClassRewriterTest {
     }
   }
 
-  private static final class AlwaysAllowAuthorizationEnforcer implements AuthorizationEnforcer {
+  private static final class TestAuthorizationEnforcer implements AuthorizationEnforcer {
+
+    private final Set<Action> allowedActions;
+
+    private TestAuthorizationEnforcer(Set<Action> allowedActions) {
+      this.allowedActions = allowedActions;
+    }
 
     @Override
     public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
-      // no-op
+      if (!allowedActions.contains(action)) {
+        throw new UnauthorizedException("Not allow to perform " + action + " " + entity + " by " + principal);
+      }
     }
 
     @Override
     public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-      // no-op
+      if (!allowedActions.containsAll(actions)) {
+        throw new UnauthorizedException("Not allow to perform " + actions + " " + entity + " by " + principal);
+      }
     }
 
     @Override
@@ -179,19 +345,30 @@ public class DatasetClassRewriterTest {
 
     // Use a list because in the unit-test we would like to verify there is no duplicated access information
     // being written from DefaultDatasetRuntimeContext
-    private final List<AccessType> accessRecorded = new ArrayList<>();
-
-    @Override
-    public void recordAccess(AccessType accessType) {
-      accessRecorded.add(accessType);
-    }
+    private final List<AccessType> lineageRecorded = new ArrayList<>();
+    private final List<AccessType> auditRecorded = new ArrayList<>();
 
     void clear() {
-      accessRecorded.clear();
+      lineageRecorded.clear();
+      auditRecorded.clear();
     }
 
-    List<AccessType> getAccessRecorded() {
-      return accessRecorded;
+    List<AccessType> getLineageRecorded() {
+      return lineageRecorded;
+    }
+
+    List<AccessType> getAuditRecorded() {
+      return auditRecorded;
+    }
+
+    @Override
+    public void recordLineage(AccessType accessType) {
+      lineageRecorded.add(accessType);
+    }
+
+    @Override
+    public void emitAudit(AccessType accessType) {
+      auditRecorded.add(accessType);
     }
   }
 }
