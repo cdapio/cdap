@@ -35,7 +35,6 @@ import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.security.ImpersonationInfo;
 import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
@@ -56,10 +55,8 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.zookeeper.ZKClientService;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -144,7 +141,8 @@ public class DatasetServiceManager extends AbstractIdleService {
       new RemoteSystemOperationsServiceModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
+      // we use the proxy module here because this class starts up dataset service
+      new AuthorizationEnforcementModule().getProxyModule(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override

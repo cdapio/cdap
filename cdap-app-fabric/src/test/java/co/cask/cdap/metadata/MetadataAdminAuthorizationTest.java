@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.InstanceId;
@@ -33,6 +34,7 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.tephra.TransactionManager;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -62,6 +64,7 @@ public class MetadataAdminAuthorizationTest {
   private static MetadataAdmin metadataAdmin;
   private static Authorizer authorizer;
   private static AuthorizationEnforcementService authorizationEnforcementService;
+  private static AppFabricServer appFabricServer;
   private static RemoteSystemOperationsService remoteSystemOperationsService;
 
   @BeforeClass
@@ -73,6 +76,8 @@ public class MetadataAdminAuthorizationTest {
     authorizer.grant(new InstanceId(cConf.get(Constants.INSTANCE_NAME)), ALICE, Collections.singleton(Action.ADMIN));
     authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     authorizationEnforcementService.startAndWait();
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    appFabricServer.startAndWait();
     remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
     remoteSystemOperationsService.startAndWait();
   }
@@ -92,6 +97,7 @@ public class MetadataAdminAuthorizationTest {
   @AfterClass
   public static void tearDown() {
     remoteSystemOperationsService.stopAndWait();
+    appFabricServer.stopAndWait();
     authorizationEnforcementService.stopAndWait();
   }
 

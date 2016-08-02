@@ -29,6 +29,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -147,7 +148,11 @@ public class AppFabricTestHelper {
   public static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
     NamespaceAdmin namespaceAdmin = getInjector(cConf).getInstance(NamespaceAdmin.class);
     if (!namespaceAdmin.exists(namespace)) {
-      namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+      try {
+        namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+      } catch (NamespaceAlreadyExistsException e) {
+        // ok to ignore, since we're just ensuring the existence of this namespace
+      }
     }
   }
 

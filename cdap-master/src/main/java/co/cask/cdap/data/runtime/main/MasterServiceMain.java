@@ -502,7 +502,7 @@ public class MasterServiceMain extends DaemonMain {
       new NamespaceStoreModule().getDistributedModules(),
       new AuditModule().getDistributedModules(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),
       new ServiceStoreModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
