@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Helper for serde of Fact into columnar format.
@@ -93,6 +94,15 @@ public class FactCodec {
                                 long ts, boolean anyAggGroup) {
     // "false" would write null in dimension values as "undefined"
     return createRowKey(dimensionValues, measureName, ts, true, anyAggGroup);
+  }
+
+  /**
+   * for the given measureName return the id from entity table
+   * @param measureName
+   * @return entity id
+   */
+  public long getMeasureEntityId(String measureName) {
+    return entityTable.getId(TYPE_MEASURE_NAME, measureName);
   }
 
   private byte[] createRowKey(List<DimensionValue> dimensionValues, String measureName, long ts, boolean stopKey,
@@ -175,7 +185,14 @@ public class FactCodec {
     return (ts / resolution) * resolution;
   }
 
-  public byte[] createFuzzyRowMask(List<DimensionValue> dimensionValues, String measureName) {
+  /**
+   * create fuzzy row mask based on dimension values and measure name.
+   * if dimension value/measure name is null it matches any dimension values / measures.
+   * @param dimensionValues
+   * @param measureName
+   * @return fuzzy mask byte array
+   */
+  public byte[] createFuzzyRowMask(List<DimensionValue> dimensionValues, @Nullable String measureName) {
     // See createRowKey for row format info
     byte[] mask = new byte[VERSION.length + (dimensionValues.size() + 2) * entityTable.getIdSize() + Bytes.SIZEOF_INT];
     int offset = writeVersion(mask);
