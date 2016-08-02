@@ -20,6 +20,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -161,6 +162,66 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       Assert.fail();
     } catch (BadRequestException e) {
       //expected
+    }
+
+    //clean up
+    namespaceAdmin.delete(namespaceId);
+    Locations.deleteQuietly(customlocation);
+  }
+
+  @Test
+  public void testSameCustomMapping() throws Exception {
+
+    String namespace = "custompaceNamespace";
+    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    // check that root directory for a namespace cannot be updated
+    // create the custom directory since the namespace is being created with custom root directory it needs to exist
+    Location customlocation = namespacedLocationFactory.get(namespaceId);
+    Assert.assertTrue(customlocation.mkdirs());
+    NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
+      .setRootDirectory(customlocation.toString()).setHBaseNamespace("hbasens").setHiveDatabase("hivedb").build();
+    namespaceAdmin.create(nsMeta);
+
+
+    // creating a new namespace with same location should fail
+    verifyAlreadyExist(new NamespaceMeta.Builder(nsMeta).setName("otherNamespace").build(), namespaceId);
+
+    // creating a new namespace with subdir should fail.
+    // subdirLocation here looks like: ..../junit/custompaceNamespace/subdir
+    Location subdirLocation = customlocation.append("subdir");
+    verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace")
+                         .setRootDirectory(subdirLocation.toString()).build(), namespaceId);
+
+    // trying to create a namespace one level up should fail
+    // parentCustomLocation here looks like: ..../junit
+    Location parentCustomLocation = Locations.getParent(customlocation);
+    verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace")
+                         .setRootDirectory(parentCustomLocation.toString()).build(), namespaceId);
+
+    // but we should be able to create namespace in a different directory under same path
+    // otherNamespace here looks like: ..../junit/otherNamespace
+    Location otherNamespace = parentCustomLocation.append("otherNamespace");
+    Assert.assertTrue(otherNamespace.mkdirs());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName("otherNamespace")
+                            .setRootDirectory(otherNamespace.toString()).build());
+    namespaceAdmin.delete(Id.Namespace.from("otherNamespace"));
+
+    // creating a new namespace with same hive database should fails
+    verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace").setHiveDatabase("hivedb").build(),
+                       namespaceId);
+
+    // creating a new namespace with same hbase namespace should fail
+    verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace").setHBaseNamespace("hbasens").build(),
+                       namespaceId);
+  }
+
+  private static void verifyAlreadyExist(NamespaceMeta namespaceMeta, Id.Namespace existingNamespace)
+    throws Exception {
+    try {
+      namespaceAdmin.create(namespaceMeta);
+      Assert.fail(String.format("Namespace '%s' should not have been created", namespaceMeta.getName()));
+    } catch (NamespaceAlreadyExistsException e) {
+      Assert.assertEquals(existingNamespace, e.getId());
     }
   }
 
