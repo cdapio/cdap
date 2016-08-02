@@ -16,7 +16,6 @@
 <input
   type="text"
   ng-model="TypeaheadTrackerTagsCtrl.model"
-  ng-model-options="{ debounce: 500 }"
   ng-click="$event.stopPropagation()"
   typeahead-popup-template-url="/assets/features/tracker/directives/typeahead-tracker-tags/popup.html"
   typeahead-min-length="0"
@@ -29,4 +28,5 @@
   uib-typeahead="data.label as data.label for data in TypeaheadTrackerTagsCtrl.list  | filter:{name:$viewValue}"
   max-length="50"
   cask-focus="tagInput"
+  ng-change="TypeaheadTrackerTagsCtrl.onChange()"
 />
