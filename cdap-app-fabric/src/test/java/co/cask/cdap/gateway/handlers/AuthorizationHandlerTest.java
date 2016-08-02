@@ -98,7 +98,7 @@ public class AuthorizationHandlerTest {
           public Authorizer get() {
             return auth;
           }
-        }, conf, new MasterAuthenticationContext(), entityExistenceVerifier)))
+        }, conf, auth, new MasterAuthenticationContext(), entityExistenceVerifier)))
       .modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {
@@ -145,14 +145,15 @@ public class AuthorizationHandlerTest {
 
   private void testDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature,
                             String configSetting) throws Exception {
+    final InMemoryAuthorizer authorizer = new InMemoryAuthorizer();
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
         new AuthorizerInstantiator(cConf, FACTORY) {
           @Override
           public Authorizer get() {
-            return new InMemoryAuthorizer();
+            return authorizer;
           }
-        }, cConf, new MasterAuthenticationContext(), entityExistenceVerifier)))
+        }, cConf, authorizer, new MasterAuthenticationContext(), entityExistenceVerifier)))
       .build();
     service.startAndWait();
     try {

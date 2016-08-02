@@ -23,6 +23,7 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -63,22 +64,17 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
   }
 
   @Test
+  public void testAuthenticationDisabled() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.setBoolean(Constants.Security.ENABLED, false);
+    verifyDisabled(cConfCopy);
+  }
+
+  @Test
   public void testAuthorizationDisabled() throws Exception {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setBoolean(Constants.Security.Authorization.ENABLED, false);
-    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
-      authEnforcementService.startAndWait();
-      try {
-        Assert.assertTrue(authEnforcementService.getCache().isEmpty());
-        // despite the cache being empty, any enforcement operations should succeed, since authorization is disabled
-        authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
-        authEnforcementService.enforce(NS.dataset("ds"), BOB, Action.ADMIN);
-      } finally {
-        authEnforcementService.stopAndWait();
-      }
-    }
+    verifyDisabled(cConfCopy);
   }
 
   @Test
@@ -239,6 +235,62 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
       );
     } finally {
       authorizationEnforcementService.stopAndWait();
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNoSuperUsers() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.unset(Constants.Security.Authorization.SUPERUSERS);
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      Authorizer authorizer = authorizerInstantiator.get();
+      new DefaultAuthorizationEnforcementService(authorizer, cConfCopy);
+    }
+  }
+
+  @Test
+  public void testSuperUsers() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    Principal superUser = new Principal("tom", Principal.PrincipalType.USER);
+    cConfCopy.set(Constants.Security.Authorization.SUPERUSERS, superUser.getName());
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      Authorizer authorizer = authorizerInstantiator.get();
+      DefaultAuthorizationEnforcementService authorizationEnforcementService =
+        new DefaultAuthorizationEnforcementService(authorizer, cConfCopy);
+      NamespaceId ns1 = new NamespaceId("ns1");
+      DatasetId ds1 = ns1.dataset("ds1");
+      StreamId s1 = ns1.stream("s1");
+      authorizationEnforcementService.startAndWait();
+      try {
+        authorizationEnforcementService.enforce(ns1, superUser, Action.ALL);
+        authorizationEnforcementService.enforce(ds1, superUser, ImmutableSet.of(Action.WRITE, Action.READ));
+        Predicate<EntityId> filter = authorizationEnforcementService.createFilter(superUser);
+        Assert.assertTrue(filter.apply(ns1));
+        Assert.assertTrue(filter.apply(ds1));
+        Assert.assertTrue(filter.apply(s1));
+      } finally {
+        authorizationEnforcementService.stopAndWait();
+      }
+    }
+  }
+
+  private void verifyDisabled(CConfiguration cConf) throws Exception {
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConf, AUTH_CONTEXT_FACTORY)) {
+      DefaultAuthorizationEnforcementService authEnforcementService =
+        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConf);
+      authEnforcementService.startAndWait();
+      try {
+        DatasetId ds = NS.dataset("ds");
+        Assert.assertTrue(authEnforcementService.getCache().isEmpty());
+        // despite the cache being empty, any enforcement operations should succeed, since authorization is disabled
+        authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
+        authEnforcementService.enforce(ds, BOB, Action.ADMIN);
+        Predicate<EntityId> filter = authEnforcementService.createFilter(BOB);
+        Assert.assertTrue(filter.apply(NS));
+        Assert.assertTrue(filter.apply(ds));
+      } finally {
+        authEnforcementService.stopAndWait();
+      }
     }
   }
 

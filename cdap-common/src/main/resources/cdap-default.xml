@@ -1650,6 +1650,16 @@
   </property>
 
   <property>
+    <name>security.authorization.extension.config.superusers</name>
+    <value>test</value>
+    <description>
+      Determines a comma-separated list of users for whom authorization is bypassed.
+      This is necessary for bootstrapping authorization in CDAP, hence it is required
+      that at least one super user be defined.
+    </description>
+  </property>
+
+  <property>
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>

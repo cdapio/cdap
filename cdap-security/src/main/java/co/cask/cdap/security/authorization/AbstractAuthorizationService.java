@@ -235,6 +235,6 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
   }
 
   private boolean isAuthCacheEnabled() {
-    return authorizationEnabled && cacheEnabled;
+    return securityEnabled && authorizationEnabled && cacheEnabled;
   }
 }
