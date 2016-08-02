@@ -116,6 +116,31 @@ body.theme-cdap {
       }
     }
 
+    .error-tooltip {
+      z-index: 1029;
+      &.top {
+        .tooltip-arrow {
+          border-top: 5px solid @brand-danger;
+        }
+      }
+      &.right {
+        width: 100%;
+        .tooltip-arrow {
+          border-right: 5px solid @brand-danger;
+        }
+      }
+      &.bottom {
+        .tooltip-arrow {
+          border-bottom: 5px solid @brand-danger;
+        }
+      }
+
+      .tooltip-inner {
+        background-color: @brand-danger;
+        border: 1px solid @brand-danger;
+      }
+    }
+
     .pipeline-settings {
       background: lightgray;
       position: fixed;
@@ -275,6 +300,7 @@ body.theme-cdap {
           }
           .pipeline-name {
             &.error {
+              color: @brand-danger;
               &:before {
                 color: @brand-danger;
                 font-weight: bold;
