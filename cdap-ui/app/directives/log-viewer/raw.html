@@ -39,10 +39,14 @@
 </div>
 <div class="modal-body logs-raw-modal">
   <div class="well well-sm spinner-container text-center"
-         ng-if="!RawLogsModalCtrl.rawIsLoaded">
+         ng-if="!RawLogsModalCtrl.rawIsLoaded && !RawLogsModalCtrl.noRawData">
     <h4 >
       <i class="fa fa-spinner fa-spin"></i>
     </h4>
   </div>
-  <pre ng-if="RawLogsModalCtrl.rawDataResponse">{{::RawLogsModalCtrl.rawDataResponse}}</pre>
+  <div class="well well-sm text-center"
+         ng-if="RawLogsModalCtrl.noRawData">
+    <h4>No Raw Data to Show</h4>
+  </div>
+  <pre ng-if="RawLogsModalCtrl.rawDataResponse && !RawLogsModalCtrl.noRawData">{{::RawLogsModalCtrl.rawDataResponse}}</pre>
 </div>

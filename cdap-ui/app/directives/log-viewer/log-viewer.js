@@ -102,6 +102,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       var modalDataSrc = new MyCDAPDataSource($scope);
 
       this.rawIsLoaded = false;
+      this.noRawData = false;
 
       this.toggleMaximizedView = (isExpanded) => {
         this.windowMode = (isExpanded) ? 'expand' : 'regular';
@@ -112,8 +113,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       modalDataSrc.request({
         _cdapNsPath: `/apps/${rAppId}/${rProgramType}/${rProgramId}/runs/${rRunId}/logs?start=${rStartTimeSec}`
       }).then((res) => {
-        this.rawDataResponse = res;
-        this.rawIsLoaded = true;
+        if(res === undefined || res.length === 0){
+          this.noRawData = true;
+        } else {
+          this.rawDataResponse = res;
+          this.rawIsLoaded = true;
+        }
       });
 
       this.applicationName = rProgramId;
@@ -125,7 +130,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       size: 'lg',
       windowTemplateUrl: 'log-viewer/raw-template.html',
       templateUrl: 'log-viewer/raw.html',
-      windowClass: 'node-config-modal cdap-modal',
+      windowClass: 'node-config-modal raw-modal cdap-modal',
       animation: false,
       controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', RawLogsModalCtrl],
       controllerAs: 'RawLogsModalCtrl',
