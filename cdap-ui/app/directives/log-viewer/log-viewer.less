@@ -39,8 +39,8 @@
 
 body.theme-cdap {
   .modal.cdap-modal {
-    &.node-config-modal {
-      .modal-dialog {
+    &.node-config-modal.raw-modal {
+      .modal-dialog.raw-modal-modal {
         margin-top: 120px;
         &.expand {
           margin-bottom: 0;
@@ -272,6 +272,34 @@ my-log-viewer {
 
         .application-status {
 
+          &.program-primary {
+            .status-circle.program-primary-circle {
+              background-color: @application-primary-color;
+            }
+            color: @application-primary-color;
+          }
+
+          &.program-secondary {
+            .status-circle.program-secondary-circle {
+              background-color: @application-secondary-color;
+            }
+            color: @application-secondary-color;
+          }
+
+          &.program-completed {
+            .status-circle.program-completed-circle {
+              background-color: @application-completed-color;
+            }
+            color: @application-completed-color;
+          }
+
+          &.program-default {
+            .status-circle.program-default-circle {
+              background-color: @application-default-color;
+            }
+            color: @application-default-color;
+          }
+
           .status-circle {
             display: inline-block;
             border-radius: 50%;
@@ -284,34 +312,6 @@ my-log-viewer {
           display: block;
           color: grey;
           font-size: 10px;
-        }
-
-        .application-status.program-primary {
-          .status-circle.program-primary-circle {
-            background-color: @application-primary-color;
-          }
-          color: @application-primary-color;
-        }
-
-        .application-status.program-secondary {
-          .status-circle.program-secondary-circle {
-            background-color: @application-secondary-color;
-          }
-          color: @application-secondary-color;
-        }
-
-        .application-status.program-completed {
-          .status-circle.program-completed-circle {
-            background-color: @application-completed-color;
-          }
-          color: @application-completed-color;
-        }
-
-        .application-status.program-default {
-          .status-circle.program-default-circle {
-            background-color: @application-default-color;
-          }
-          color: @application-default-color;
         }
       }
 

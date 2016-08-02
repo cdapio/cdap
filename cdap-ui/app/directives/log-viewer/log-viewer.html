@@ -45,16 +45,15 @@
         </div>
       </div>
     </div>
-
     <div class="log-actions">
       <div class="log-action-container">
-        <a  ng-click="LogViewer.openRaw()"
+        <button  ng-click="LogViewer.openRaw()"
             target="_blank" class="log-action-btn view-raw btn btn-default" ng-disabled="!LogViewer.rawUrl.length === 0 || LogViewer.runId === ''">
             View Raw
-        </a>
-        <a class="log-action-btn download-all btn btn-default" ng-click="LogViewer.export()" ng-disabled="LogViewer.runId === ''">
+        </button>
+        <button class="log-action-btn download-all btn btn-default" ng-click="LogViewer.export()" ng-disabled="LogViewer.runId === ''">
           Download All
-        </a>
+        </button>
         <div class="search">
           <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText" ng-model-options="{ debounce: 500 }" ng-change="LogViewer.filterSearch()">
           <span class="fa fa-search"></span>
