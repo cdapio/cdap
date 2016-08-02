@@ -336,7 +336,7 @@ class TrackerMetadataController {
 
   goToTag(event, tag) {
     event.stopPropagation();
-    this.$state.go('search.objectswithtags', {tag: tag});
+    this.$state.go('tracker.detail.result', {searchQuery: tag});
   }
 
   openTagInput(event) {
