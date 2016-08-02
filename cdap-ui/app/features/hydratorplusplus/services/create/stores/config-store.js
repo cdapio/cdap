@@ -38,6 +38,7 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onPluginEdit', this.editNodeProperties.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetInstance', this.setInstance.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetBatchInterval', this.setBatchInterval.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
@@ -46,10 +47,11 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
   }
   registerOnChangeListener(callback) {
-    let index = this.changeListeners.push(callback);
-    // un-subscribe for listners.
+    // index of the listener to be removed while un-subscribing
+    let index = this.changeListeners.push(callback) - 1;
+    // un-subscribe for listeners.
     return () => {
-      this.changeListeners.splice(index-1, 1);
+      this.changeListeners.splice(index, 1);
     };
   }
   emitChange() {
@@ -147,7 +149,7 @@ class HydratorPlusPlusConfigStore {
       node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
 
       let configObj = {
-        name: node.plugin.label,
+        name: node.name || node.plugin.label || node.plugin.name,
         plugin: {
           // Solely adding id and _backendProperties for validation.
           // Should be removed while saving it to backend.
@@ -181,18 +183,18 @@ class HydratorPlusPlusConfigStore {
       let fromConnectionName, toConnectionName;
 
       if (nodesMap[connection.from]) {
-        fromConnectionName = nodesMap[connection.from].plugin.label;
+        fromConnectionName = nodesMap[connection.from].name;
         addPluginToConfig(nodesMap[connection.from], connection.from);
       } else {
         fromConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.from)[0];
-        fromConnectionName = fromConnectionName.plugin.label;
+        fromConnectionName = fromConnectionName.name;
       }
       if (nodesMap[connection.to]) {
-        toConnectionName = nodesMap[connection.to].plugin.label;
+        toConnectionName = nodesMap[connection.to].name;
         addPluginToConfig(nodesMap[connection.to], connection.to);
       } else {
         toConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.to)[0];
-        toConnectionName = toConnectionName.plugin.label;
+        toConnectionName = toConnectionName.name;
       }
       connection.from = fromConnectionName;
       connection.to = toConnectionName;
@@ -200,13 +202,18 @@ class HydratorPlusPlusConfigStore {
     config.connections = connections;
 
     let appType = this.getAppType();
-    if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
-      config.schedule = this.getSchedule();
-      config.engine = this.getEngine();
-    } else if (appType === this.GLOBALS.etlRealtime) {
-      config.instances = this.getInstance();
+    switch(appType) {
+      case this.GLOBALS.etlBatch:
+      case this.GLOBALS.etlDataPipeline:
+        config.schedule = this.getSchedule();
+        config.engine = this.getEngine();
+        break;
+      case this.GLOBALS.etlRealtime:
+        config.instances = this.getInstance();
+        break;
+      case this.GLOBALS.etlDataStreams:
+        config.batchInterval = this.getBatchInterval();
     }
-
     if (this.state.description) {
       config.description = this.state.description;
     }
@@ -525,7 +532,7 @@ class HydratorPlusPlusConfigStore {
       return this.GLOBALS.pluginConvert[node.type] === 'action';
     }).length;
 
-    if (countActions !== nodes.length) {
+    if (countActions !== nodes.length || nodes.length === 0) {
       daglevelvalidation.forEach( validationFn => {
         validationFn(nodes, (err, node) => {
           if (err) {
@@ -596,6 +603,12 @@ class HydratorPlusPlusConfigStore {
       this.HydratorPlusPlusConsoleActions.addMessage(errors);
     }
     return isStateValid;
+  }
+  getBatchInterval() {
+    return this.getState().config.batchInterval;
+  }
+  setBatchInterval(interval) {
+    this.state.config.batchInterval = interval;
   }
   getInstance() {
     return this.getState().config.instances;

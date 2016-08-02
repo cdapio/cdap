@@ -484,34 +484,42 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
-    verifyMapperJobOutput(DatasetWithMRApp.class);
+
+    DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
+    verifyMapperJobOutput(DatasetWithMRApp.class, outTableManager);
   }
 
   @Category(SlowTests.class)
   @Test
-  public void testMapperDatasetFromOtherSpaceAccess() throws Exception {
-    NamespaceId datasetSpace = new NamespaceId(DatasetFromOtherSpaceWithMPApp.DATASETSPACE);
-    createNamespace(datasetSpace.toId());
-    addDatasetInstance(datasetSpace.toId(), "keyValueTable", "table1").create();
-    addDatasetInstance("keyValueTable", "table2").create();
-    DataSetManager<KeyValueTable> tableManager = getDataset(datasetSpace.toId(), "table1");
+  public void testCrossNSMapperDatasetAccess() throws Exception {
+    getNamespaceAdmin().create(new NamespaceMeta.Builder()
+                                 .setName(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE).build());
+    getNamespaceAdmin().create(new NamespaceMeta.Builder()
+                                 .setName(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE).build());
+    NamespaceId datasetInputSpace = new NamespaceId(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE);
+    NamespaceId datasetOutputSpace = new NamespaceId(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE);
+
+    addDatasetInstance(datasetInputSpace.toId(), "keyValueTable", "table1").create();
+    addDatasetInstance(datasetOutputSpace.toId(), "keyValueTable", "table2").create();
+    DataSetManager<KeyValueTable> tableManager = getDataset(datasetInputSpace.toId(), "table1");
     KeyValueTable inputTable = tableManager.get();
     inputTable.write("hello", "world");
     tableManager.flush();
 
-    ApplicationManager appManager = deployApplication(DatasetFromOtherSpaceWithMPApp.class);
-    Map<String, String> argsForMR = ImmutableMap.of(DatasetFromOtherSpaceWithMPApp.INPUT_KEY, "table1",
-                                                    DatasetFromOtherSpaceWithMPApp.OUTPUT_KEY, "table2");
-    MapReduceManager mrManager = appManager.getMapReduceManager(DatasetFromOtherSpaceWithMPApp.MAPREDUCE_PROGRAM)
+    ApplicationManager appManager = deployApplication(DatasetCrossNSAccessWithMAPApp.class);
+    Map<String, String> argsForMR = ImmutableMap.of(DatasetCrossNSAccessWithMAPApp.INPUT_KEY, "table1",
+                                                    DatasetCrossNSAccessWithMAPApp.OUTPUT_KEY, "table2");
+    MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM)
       .start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
 
-    verifyMapperJobOutput(DatasetFromOtherSpaceWithMPApp.class);
+    DataSetManager<KeyValueTable> outTableManager = getDataset(datasetOutputSpace.toId(), "table2");
+    verifyMapperJobOutput(DatasetCrossNSAccessWithMAPApp.class, outTableManager);
   }
 
-  private void verifyMapperJobOutput(Class<?> appClass) throws Exception {
-    DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
+  private void verifyMapperJobOutput(Class<?> appClass,
+                                     DataSetManager<KeyValueTable> outTableManager) throws Exception {
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
 

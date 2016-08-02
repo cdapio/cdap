@@ -19,7 +19,7 @@ package co.cask.cdap.gateway.handlers.meta;
 import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.http.HttpResponder;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -28,32 +28,25 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 
 /**
  * An {@link AbstractRemoteSystemOpsHandler} for serving HTTP requests to list privileges of a user.
  */
-@Path(AbstractRemoteSystemOpsHandler.VERSION + "/execute")
-public class RemotePrivilegeFetcherHandler extends AbstractRemoteSystemOpsHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegeFetcherHandler.class);
+public class AbstractRemotePrivilegesFetcherHandler extends AbstractRemoteSystemOpsHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesFetcherProxyHandler.class);
 
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final PrivilegesFetcher privilegesFetcher;
 
-  @Inject
-  RemotePrivilegeFetcherHandler(AuthorizerInstantiator authorizerInstantiator) {
-    this.authorizerInstantiator = authorizerInstantiator;
+  protected AbstractRemotePrivilegesFetcherHandler(PrivilegesFetcher privilegesFetcher) {
+    this.privilegesFetcher = privilegesFetcher;
   }
 
-  @POST
-  @Path("/listPrivileges")
-  public void listPrivileges(HttpRequest request, HttpResponder responder) throws Exception {
+  protected void doListPrivileges(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
     Principal principal = deserializeNext(arguments);
     LOG.trace("Listing privileges for principal {}", principal);
-    Set<Privilege> privileges = authorizerInstantiator.get().listPrivileges(principal);
-    LOG.debug("Returning privileges for principal {} as {}", principal, privileges);
+    Set<Privilege> privileges = privilegesFetcher.listPrivileges(principal);
+    LOG.debug("Returning privileges for principal {} as {} via {}", principal, privileges, privilegesFetcher);
     responder.sendJson(HttpResponseStatus.OK, privileges);
   }
 }

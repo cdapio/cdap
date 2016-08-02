@@ -23,11 +23,15 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -36,7 +40,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -58,22 +64,17 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
   }
 
   @Test
+  public void testAuthenticationDisabled() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.setBoolean(Constants.Security.ENABLED, false);
+    verifyDisabled(cConfCopy);
+  }
+
+  @Test
   public void testAuthorizationDisabled() throws Exception {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setBoolean(Constants.Security.Authorization.ENABLED, false);
-    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
-      authEnforcementService.startAndWait();
-      try {
-        Assert.assertTrue(authEnforcementService.getCache().isEmpty());
-        // despite the cache being empty, any enforcement operations should succeed, since authorization is disabled
-        authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
-        authEnforcementService.enforce(NS.dataset("ds"), BOB, Action.ADMIN);
-      } finally {
-        authEnforcementService.stopAndWait();
-      }
-    }
+    verifyDisabled(cConfCopy);
   }
 
   @Test
@@ -171,7 +172,6 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
       DatasetId ds22 = ns2.dataset("ds2");
       DatasetId ds23 = ns2.dataset("ds3");
       Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
-      Set<DatasetId> datasets = ImmutableSet.of(ds11, ds12, ds21, ds22, ds23);
       authorizer.grant(ns1, ALICE, Collections.singleton(Action.WRITE));
       authorizer.grant(ns2, ALICE, Collections.singleton(Action.ADMIN));
       authorizer.grant(ds11, ALICE, Collections.singleton(Action.READ));
@@ -212,6 +212,88 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     }
   }
 
+  @Test
+  public void testResiliency() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.setInt(Constants.Security.Authorization.CACHE_REFRESH_INTERVAL_SECS, 1);
+    CountDownLatch countDownLatch = new CountDownLatch(10);
+    DefaultAuthorizationEnforcementService authorizationEnforcementService =
+      new DefaultAuthorizationEnforcementService(new FailingPrivilegesFetcher(countDownLatch), cConfCopy);
+    Map<Principal, Map<EntityId, Set<Action>>> cache = authorizationEnforcementService.getCache();
+    cache.put(new Principal("bob", Principal.PrincipalType.USER), Collections.<EntityId, Set<Action>>emptyMap());
+    cache.put(new Principal("tom", Principal.PrincipalType.USER), Collections.<EntityId, Set<Action>>emptyMap());
+    authorizationEnforcementService.startAndWait();
+    try {
+      // CountDownLatch is initialized to 10 and we have 2 users in the cache, so it should countdown twice in every
+      // iteration. That way, the service runs for 5 iterations, throwing exceptions in every iteration.
+      countDownLatch.await();
+      Assert.assertEquals(
+        String.format("Expected authorization enforcement service to be %s, but it is %s",
+                      Service.State.RUNNING, authorizationEnforcementService.state()),
+        Service.State.RUNNING,
+        authorizationEnforcementService.state()
+      );
+    } finally {
+      authorizationEnforcementService.stopAndWait();
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNoSuperUsers() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.unset(Constants.Security.Authorization.SUPERUSERS);
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      Authorizer authorizer = authorizerInstantiator.get();
+      new DefaultAuthorizationEnforcementService(authorizer, cConfCopy);
+    }
+  }
+
+  @Test
+  public void testSuperUsers() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    Principal superUser = new Principal("tom", Principal.PrincipalType.USER);
+    cConfCopy.set(Constants.Security.Authorization.SUPERUSERS, superUser.getName());
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      Authorizer authorizer = authorizerInstantiator.get();
+      DefaultAuthorizationEnforcementService authorizationEnforcementService =
+        new DefaultAuthorizationEnforcementService(authorizer, cConfCopy);
+      NamespaceId ns1 = new NamespaceId("ns1");
+      DatasetId ds1 = ns1.dataset("ds1");
+      StreamId s1 = ns1.stream("s1");
+      authorizationEnforcementService.startAndWait();
+      try {
+        authorizationEnforcementService.enforce(ns1, superUser, Action.ALL);
+        authorizationEnforcementService.enforce(ds1, superUser, ImmutableSet.of(Action.WRITE, Action.READ));
+        Predicate<EntityId> filter = authorizationEnforcementService.createFilter(superUser);
+        Assert.assertTrue(filter.apply(ns1));
+        Assert.assertTrue(filter.apply(ds1));
+        Assert.assertTrue(filter.apply(s1));
+      } finally {
+        authorizationEnforcementService.stopAndWait();
+      }
+    }
+  }
+
+  private void verifyDisabled(CConfiguration cConf) throws Exception {
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConf, AUTH_CONTEXT_FACTORY)) {
+      DefaultAuthorizationEnforcementService authEnforcementService =
+        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConf);
+      authEnforcementService.startAndWait();
+      try {
+        DatasetId ds = NS.dataset("ds");
+        Assert.assertTrue(authEnforcementService.getCache().isEmpty());
+        // despite the cache being empty, any enforcement operations should succeed, since authorization is disabled
+        authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
+        authEnforcementService.enforce(ds, BOB, Action.ADMIN);
+        Predicate<EntityId> filter = authEnforcementService.createFilter(BOB);
+        Assert.assertTrue(filter.apply(NS));
+        Assert.assertTrue(filter.apply(ds));
+      } finally {
+        authEnforcementService.stopAndWait();
+      }
+    }
+  }
+
   private void assertAuthorizationFailure(DefaultAuthorizationEnforcementService authEnforcementService,
                                           EntityId entityId, Principal principal, Action action) throws Exception {
     try {
@@ -232,6 +314,22 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
                                 principal, actions, entityId));
     } catch (UnauthorizedException expected) {
       // expected
+    }
+  }
+
+  private static final class FailingPrivilegesFetcher implements PrivilegesFetcher {
+
+    private final CountDownLatch countDownLatch;
+
+    private FailingPrivilegesFetcher(CountDownLatch countDownLatch) {
+      this.countDownLatch = countDownLatch;
+    }
+
+    @Override
+    public Set<Privilege> listPrivileges(Principal principal) throws Exception {
+      countDownLatch.countDown();
+      throw new UnsupportedOperationException(
+        String.format("Deliberately failing list privileges for %s to test resiliency.", principal));
     }
   }
 }

@@ -19,9 +19,11 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Futures;
+import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.common.Threads;
+import org.apache.twill.yarn.YarnTwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +80,19 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
             // the twill program failed.
             twillController.awaitTerminated();
             // Service completed by itself. Simply signal the state change of this controller.
+            // TODO (CDAP-6806): this should not be done with reflection but through a proper Twill API
+            // Figure out whether the final Yarn status is in error, if so, set state accordingly
+            if (twillController instanceof YarnTwillController) {
+              FinalApplicationStatus finalStatus = ((YarnTwillController) twillController).getTerminationStatus();
+              if (FinalApplicationStatus.FAILED.equals(finalStatus)) {
+                complete(State.ERROR);
+                return;
+              } else if (FinalApplicationStatus.KILLED.equals(finalStatus)) {
+                complete(State.KILLED);
+                return;
+              }
+            }
+            // normal termination
             complete();
           } catch (Exception e) {
             error(e);

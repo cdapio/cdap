@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
@@ -70,7 +71,13 @@ public class PipelineAction extends AbstractCustomAction {
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
     StageInfo stageInfo = phase.iterator().next();
-    Action action = context.newPluginInstance(stageInfo.getName());
+    Action action =
+      context.newPluginInstance(stageInfo.getName(),
+                                new DefaultMacroEvaluator(context.getWorkflowToken(),
+                                                          context.getRuntimeArguments(),
+                                                          context.getLogicalStartTime(),
+                                                          context,
+                                                          context.getNamespace()));
     ActionContext actionContext = new BasicActionContext(context);
     action.run(actionContext);
     WorkflowToken token = context.getWorkflowToken();

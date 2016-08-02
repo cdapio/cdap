@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Defines output of a program, such as MapReduce.
@@ -66,17 +67,16 @@ public abstract class Output {
    *
    * @param datasetName the name of the output dataset
    */
-  public static Output ofDataset(String datasetName) {
+  public static DatasetOutput ofDataset(String datasetName) {
     return ofDataset(datasetName, RuntimeArguments.NO_ARGUMENTS);
   }
 
   /**
    * Returns an Output defined by a dataset.
-   *
-   * @param datasetName the name of the output dataset
+   *  @param datasetName the name of the output dataset
    * @param arguments the arguments to use when instantiating the dataset
    */
-  public static Output ofDataset(String datasetName, Map<String, String> arguments) {
+  public static DatasetOutput ofDataset(String datasetName, Map<String, String> arguments) {
     return new DatasetOutput(datasetName, arguments);
   }
 
@@ -95,6 +95,7 @@ public abstract class Output {
   public static class DatasetOutput extends Output {
 
     private final Map<String, String> arguments;
+    private String namespace;
 
     private DatasetOutput(String name, Map<String, String> arguments) {
       super(name);
@@ -103,6 +104,17 @@ public abstract class Output {
 
     public Map<String, String> getArguments() {
       return arguments;
+    }
+
+    public DatasetOutput fromNamespace(String namespace) {
+      DatasetOutput datasetOutput = new DatasetOutput(super.name, arguments);
+      datasetOutput.namespace = namespace;
+      return datasetOutput;
+    }
+
+    @Nullable
+    public String getNamespace() {
+      return namespace;
     }
   }
 

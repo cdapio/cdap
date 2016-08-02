@@ -66,9 +66,11 @@ public class SystemArtifactsAuthorizationTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
+    cConf.set(Constants.Security.Authorization.SUPERUSERS, "hulk");
     Injector injector =  AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     AuthorizerInstantiator instantiatorService = injector.getInstance(AuthorizerInstantiator.class);

@@ -36,7 +36,8 @@ class HydratorPlusPlusPreConfiguredCtrl {
   selectTemplate(template) {
     this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
     this.$state.go('hydratorplusplus.create', {
-      data: template._properties
+      data: template._properties,
+      draftId: null
     });
   }
 

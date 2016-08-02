@@ -18,7 +18,11 @@ class AppDetailController {
   constructor(rAppData, GLOBALS, myHydratorFactory, $state) {
     this.myHydratorFactory = myHydratorFactory;
 
-    this.isHydrator = (GLOBALS.etlBatchPipelines.concat([GLOBALS.etlRealtime]).indexOf(rAppData.artifact.name) !== -1);
+    this.isHydrator = [
+      ...GLOBALS.etlBatchPipelines,
+      GLOBALS.etlRealtime,
+      GLOBALS.etlDataStreams
+    ].indexOf(rAppData.artifact.name) !== -1;
     this.artifact = {
       name: rAppData.artifact.name
     };

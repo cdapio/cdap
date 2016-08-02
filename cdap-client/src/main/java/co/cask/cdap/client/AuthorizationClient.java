@@ -104,7 +104,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/grant");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(grantRequest)).build();
-    executePrivilegeRequest(entity, request);
+    executePrivilegeRequest(request);
   }
 
   @Override
@@ -185,7 +185,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
     throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/revoke");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
-    executePrivilegeRequest(revokeRequest.getEntity(), request);
+    executePrivilegeRequest(request);
   }
 
   private Set<Role> listRolesHelper(@Nullable Principal principal) throws IOException, FeatureDisabledException,
@@ -210,11 +210,11 @@ public class AuthorizationClient extends AbstractAuthorizer {
     }
   }
 
-  private HttpResponse executePrivilegeRequest(EntityId entityId, HttpRequest request) throws FeatureDisabledException,
+  private HttpResponse executePrivilegeRequest(HttpRequest request) throws FeatureDisabledException,
     UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == httpResponse.getResponseCode()) {
-      throw new NotFoundException(entityId);
+      throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
     return httpResponse;
   }

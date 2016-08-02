@@ -315,7 +315,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
         @Override
         public void killed() {
-          LOG.debug("Program {} killed.", programId.getNamespaceId());
+          LOG.debug("Program {} killed.", programId);
           store.setStop(programId.toId(), runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.KILLED.getRunStatus());
         }

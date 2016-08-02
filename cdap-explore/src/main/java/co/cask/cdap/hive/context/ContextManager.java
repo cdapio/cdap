@@ -19,6 +19,7 @@ package co.cask.cdap.hive.context;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -48,6 +49,8 @@ import co.cask.cdap.hive.stream.StreamSerDe;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
@@ -134,6 +137,9 @@ public class ContextManager {
       new NotificationFeedClientModule(),
       new KafkaClientModule(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
+      new SecureStoreModules().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override

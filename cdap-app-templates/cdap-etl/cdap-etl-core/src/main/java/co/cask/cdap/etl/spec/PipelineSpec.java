@@ -39,10 +39,10 @@ public class PipelineSpec {
   private final Resources resources;
   private final boolean stageLoggingEnabled;
 
-  public PipelineSpec(Set<StageSpec> stages,
-                      Set<Connection> connections,
-                      Resources resources,
-                      boolean stageLoggingEnabled) {
+  protected PipelineSpec(Set<StageSpec> stages,
+                         Set<Connection> connections,
+                         Resources resources,
+                         boolean stageLoggingEnabled) {
     this.stages = ImmutableSet.copyOf(stages);
     this.connections = ImmutableSet.copyOf(connections);
     this.resources = resources;
@@ -98,10 +98,17 @@ public class PipelineSpec {
   }
 
   /**
+   * @return builder to create a spec.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
    * Base builder for creating pipeline specs.
    */
   @SuppressWarnings("unchecked")
-  protected static class Builder<T extends Builder> {
+  public static class Builder<T extends Builder> {
     protected Set<StageSpec> stages;
     protected Set<Connection> connections;
     protected Resources resources;
@@ -116,6 +123,11 @@ public class PipelineSpec {
 
     public T addStage(StageSpec stage) {
       stages.add(stage);
+      return (T) this;
+    }
+
+    public T addStages(Collection<StageSpec> stages) {
+      this.stages.addAll(stages);
       return (T) this;
     }
 
@@ -137,6 +149,10 @@ public class PipelineSpec {
     public T setStageLoggingEnabled(boolean stageLoggingEnabled) {
       this.stageLoggingEnabled = stageLoggingEnabled;
       return (T) this;
+    }
+
+    public PipelineSpec build() {
+      return new PipelineSpec(stages, connections, resources, stageLoggingEnabled);
     }
   }
 }

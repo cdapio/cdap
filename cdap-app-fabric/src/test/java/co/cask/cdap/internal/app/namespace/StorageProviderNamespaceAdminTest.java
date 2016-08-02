@@ -126,12 +126,25 @@ public class StorageProviderNamespaceAdminTest {
     }
     // delete the content of the custom location and retry creating the namespace
     Assert.assertTrue(dir1.delete());
+
     storageProviderNamespaceAdmin.create(customSpaceMeta);
+    // create some directories and files inside the custom mapped location
+    dir1 = new File(custom, "dir1");
+    Assert.assertTrue(dir1.mkdir());
+    File dir2 = new File(custom, "dir2");
+    Assert.assertTrue(dir2.mkdir());
+    File file1 = new File(dir1, "file1");
+    Assert.assertTrue(file1.createNewFile());
+
+    // delete the namespace
     storageProviderNamespaceAdmin.delete(customSpace);
     namespaceStore.delete(customSpace.toId());
-    // custom namespace location should still exists
+    // the data inside the custom location should have been deleted
+    Assert.assertFalse("Data inside the custom location still exists.", (dir1.exists() || dir2.exists() ||
+      file1.exists()));
+    // but custom namespace location should still exists
     Assert.assertTrue(custom.exists());
-    custom.delete();
+    Assert.assertTrue(custom.delete());
   }
 
   @AfterClass

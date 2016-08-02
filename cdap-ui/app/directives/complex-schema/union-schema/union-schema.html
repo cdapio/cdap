@@ -26,12 +26,14 @@
       <div class="clearfix">
         <div class="input-column select-only no-type"
              ng-class="{ 'tab-header': item.nested }">
-          <div class="select-wrapper">
-            <select class="form-control"
-                    ng-model="item.displayType"
-                    ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
-                    ng-change="UnionSchema.changeType(item)">
-            </select>
+          <div class="tab-header-inner">
+            <div class="select-wrapper">
+              <select class="form-control"
+                      ng-model="item.displayType"
+                      ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
+                      ng-change="UnionSchema.changeType(item)">
+              </select>
+            </div>
           </div>
         </div>
 
@@ -44,7 +46,8 @@
 
           <div class="actions-buttons text-right" ng-if="!UnionSchema.isDisabled">
             <button class="btn btn-link"
-                    ng-click="UnionSchema.removeType($index)">
+                    ng-click="UnionSchema.removeType($index)"
+                    ng-if="UnionSchema.types.length > 1">
               <i class="text-danger fa fa-trash"></i>
             </button>
             <button class="btn btn-link"

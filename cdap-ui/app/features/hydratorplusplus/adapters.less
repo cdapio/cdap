@@ -47,9 +47,6 @@ body.theme-cdap {
       height: ~"-webkit-calc(100vh - 142px)";
       height: ~"calc(100vh - 142px)";
 
-      @media (min-height: 800px) {
-        height: 40vh;
-      }
     }
 
     .my-js-dag {
@@ -81,6 +78,9 @@ body.theme-cdap {
     .col-xs-12.text-right {
       > .btn.btn-default { margin-bottom: 20px; }
     }
+
+    // Complex Schema styling
+    .tab-header-inner { background-color: white; }
 
   }
 
@@ -130,9 +130,6 @@ body.theme-cdap {
     .detail-canvas-container {
       position: relative;
     }
-    my-dag-plus {
-      height: 61.5vh;
-    }
     my-program-history {
       ul.pagination {
         margin-right: 15px;
@@ -156,12 +153,11 @@ body.theme-cdap {
   &.state-hydratorplusplus-create {
     .alerts {
       top: 50px;
-      z-index: 1029;
+      z-index: 1030;
     }
   }
   &.state-hydratorplusplus-detail {
     .alerts {
-      top: 120px;
       z-index: 1028;
     }
 

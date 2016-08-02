@@ -47,8 +47,7 @@ CDAP currently requires Internet access on the CDAP service nodes (or until the 
 
 For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
 
-.. |cdh-version|       replace:: 5.0.0 through 5.7.0
-.. |cdh-version-hbase| replace:: 5.0.0 through 5.7.0 (1.2-cdh5.7.0)
+.. |cdh-version|       replace:: 5.1 through 5.8
 .. |hdp-version|       replace:: 2.0 through 2.4
 .. |mapr-version|      replace:: 4.1 through 5.1
 
@@ -57,9 +56,9 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +================+=================================+=======================================+
 | **Hadoop**     | *various*                       | 2.0 and higher                        |
 +----------------+---------------------------------+---------------------------------------+
-| **HBase**      | Apache                          | 0.96.x, 0.98.x, and 1.0               |
+| **HBase**      | Apache                          | 0.98.x and 1.0                        |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | |cdh-version-hbase|                   |
+|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+

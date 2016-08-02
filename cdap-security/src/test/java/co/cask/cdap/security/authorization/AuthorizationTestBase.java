@@ -41,6 +41,7 @@ public class AuthorizationTestBase {
     CCONF.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     CCONF.setBoolean(Constants.Security.ENABLED, true);
     CCONF.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    CCONF.set(Constants.Security.Authorization.SUPERUSERS, "hulk");
     locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
   }
 }

@@ -41,7 +41,11 @@ body.state-streams-detail {
         margin-right: 10px;
       }
     }
-
+    // fixes issue with datepicker/timepicker being partially covered by other elements
+    .panel-explore .collapse {
+      overflow: inherit;
+      animation-duration: 0.1s;
+    }
     .panel-body > form {
       margin-bottom: 2em;
     }

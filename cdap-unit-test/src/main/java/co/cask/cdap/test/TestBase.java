@@ -88,6 +88,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -159,7 +160,8 @@ public class TestBase {
   public static TemporaryFolder tmpFolder = TMP_FOLDER;
 
   private static CConfiguration cConf;
-  private static int startCount;
+  private static int nestedStartCount;
+  private static boolean firstInit = true;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static SchedulerService schedulerService;
@@ -175,13 +177,14 @@ public class TestBase {
   private static AuthorizerInstantiator authorizerInstantiator;
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
+  private static AuthorizationEnforcementService authorizationEnforcementService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
 
   @BeforeClass
   public static void initialize() throws Exception {
-    if (startCount++ > 0) {
+    if (nestedStartCount++ > 0) {
       return;
     }
     File localDataDir = TMP_FOLDER.newFolder();
@@ -259,6 +262,8 @@ public class TestBase {
       }
     );
 
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    authorizationEnforcementService.startAndWait();
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -281,6 +286,7 @@ public class TestBase {
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+
     // This is needed so the logged-in user can successfully create the default namespace
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       String user = System.getProperty("user.name");
@@ -291,9 +297,16 @@ public class TestBase {
       authorizerInstantiator.get().grant(NamespaceId.DEFAULT, principal, ImmutableSet.of(Action.ADMIN));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.create(NamespaceMeta.DEFAULT);
+    if (firstInit) {
+      // only create the default namespace on first test. if multiple tests are run in the same JVM,
+      // then any time after the first time, the default namespace already exists. That is because
+      // the namespaceAdmin.delete(Id.Namespace.DEFAULT) in finish() only clears the default namespace
+      // but does not remove it entirely
+      namespaceAdmin.create(NamespaceMeta.DEFAULT);
+    }
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
+    firstInit = false;
   }
 
   private static TestManager getTestManager() {
@@ -400,7 +413,7 @@ public class TestBase {
 
   @AfterClass
   public static void finish() throws Exception {
-    if (--startCount != 0) {
+    if (--nestedStartCount != 0) {
       return;
     }
 
@@ -426,6 +439,7 @@ public class TestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
+    authorizationEnforcementService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

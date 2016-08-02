@@ -31,7 +31,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         .state('hydratorplusplus.create', {
           url: '/studio?artifactType&draftId',
           params: {
-            data: null
+            data: null,
+            isClone: null
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
@@ -59,7 +60,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             },
             rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, GLOBALS, $rootScope) {
               var defer = $q.defer();
-              let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline];
+              let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams];
               let isArtifactValid = (backendArtifacts, artifact) => {
                 return backendArtifacts.filter( a =>
                   (a.name === artifact && a.version === $rootScope.cdapVersion)
@@ -134,7 +135,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                 if (!res.length) {
                   return;
                 } else {
-                  let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline];
+                  let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams];
                   let filteredRes = res
                     .filter( artifact => artifact.version === $rootScope.cdapVersion)
                     .filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
@@ -240,11 +241,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               templateUrl: '/assets/features/hydratorplusplus/templates/detail/top-panel.html',
               controller: 'HydratorDetailTopPanelController',
               controllerAs: 'TopPanelCtrl'
-            },
-            'bottompanel@hydratorplusplus.detail': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/detail/bottom-panel.html',
-              controller: 'HydratorPlusPlusDetailBottomPanelCtrl',
-              controllerAs: 'BottomPanelCtrl'
             },
             'canvas@hydratorplusplus.detail': {
               templateUrl: '/assets/features/hydratorplusplus/templates/detail/canvas.html',

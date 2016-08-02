@@ -80,11 +80,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     return;
   }
   myLogsApi.getLogsMetadata({
-    'namespace' : this.namespaceId,
-    'appId' : this.appId,
-    'programType' : this.programType,
-    'programId' : this.programId,
-    'runId' : this.runId,
+    namespace : this.namespaceId,
+    appId : this.appId,
+    programType : this.programType,
+    programId : this.programId,
+    runId : this.runId,
   }).$promise.then(
     (res) => {
       apiSettings.metric.startTime = res.start;

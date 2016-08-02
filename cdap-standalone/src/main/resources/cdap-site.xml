@@ -197,4 +197,12 @@
     </description>
   </property>
 
+  <property>
+    <name>security.store.provider</name>
+    <value>file</value>
+    <description>
+      Backend provider for the secure store
+    </description>
+  </property>
+
 </configuration>

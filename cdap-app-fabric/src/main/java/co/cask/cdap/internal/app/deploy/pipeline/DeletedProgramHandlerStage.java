@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -33,6 +34,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -49,6 +51,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Deleted program handler stage. Figures out which programs are deleted and handles callback.
@@ -64,11 +67,13 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final MetricStore metricStore;
   private final MetadataStore metadataStore;
   private final Authorizer authorizer;
+  private final Impersonator impersonator;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     StreamConsumerFactory streamConsumerFactory,
                                     QueueAdmin queueAdmin, MetricStore metricStore,
-                                    MetadataStore metadataStore, Authorizer authorizer) {
+                                    MetadataStore metadataStore, Authorizer authorizer,
+                                    Impersonator impersonator) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
@@ -77,6 +82,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     this.metricStore = metricStore;
     this.metadataStore = metadataStore;
     this.authorizer = authorizer;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -90,7 +96,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
-      Id.Program programId = appSpec.getApplicationId().program(type, spec.getName()).toId();
+      final Id.Program programId = appSpec.getApplicationId().program(type, spec.getName()).toId();
       programTerminator.stop(programId);
       // revoke privileges
       authorizer.revoke(programId.toEntityId(), SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
@@ -101,7 +107,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
         FlowSpecification flowSpecification = (FlowSpecification) spec;
 
         // Collects stream name to all group ids consuming that stream
-        Multimap<String, Long> streamGroups = HashMultimap.create();
+        final Multimap<String, Long> streamGroups = HashMultimap.create();
         for (FlowletConnection connection : flowSpecification.getConnections()) {
           if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
             long groupId = FlowUtils.generateConsumerGroupId(programId, connection.getTargetName());
@@ -109,13 +115,20 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
           }
         }
         // Remove all process states and group states for each stream
-        String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
-        for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-          streamConsumerFactory.dropAll(appSpec.getApplicationId().getParent().stream(entry.getKey()).toId(),
-                                        namespace, entry.getValue());
-        }
+        final String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
 
-        queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
+        final NamespaceId namespaceId = appSpec.getApplicationId().getParent();
+        impersonator.doAs(namespaceId, new Callable<Void>() {
+
+          @Override
+          public Void call() throws Exception {
+            for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
+              streamConsumerFactory.dropAll(namespaceId.stream(entry.getKey()).toId(), namespace, entry.getValue());
+            }
+            queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
+            return null;
+          }
+        });
         deletedFlows.add(programId.getId());
       }
 

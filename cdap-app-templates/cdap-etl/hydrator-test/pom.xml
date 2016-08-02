@@ -38,6 +38,11 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-etl-api-spark</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-proto</artifactId>
       <version>${project.version}</version>
     </dependency>

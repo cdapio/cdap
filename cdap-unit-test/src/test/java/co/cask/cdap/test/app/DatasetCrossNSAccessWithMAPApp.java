@@ -29,12 +29,13 @@ import java.io.IOException;
 /**
  * App which copies data from one KVTable to another using a MapReduce program.
  */
-public class DatasetFromOtherSpaceWithMPApp extends AbstractApplication {
+public class DatasetCrossNSAccessWithMAPApp extends AbstractApplication {
 
   public static final String INPUT_KEY = "input";
   public static final String OUTPUT_KEY = "output";
   public static final String MAPREDUCE_PROGRAM = "copymr";
-  public static final String DATASETSPACE = "datasetSpace";
+  public static final String DATASET_INPUT_SPACE = "datasetInputSpace";
+  public static final String DATASET_OUTPUT_SPACE = "datasetOutputSpace";
 
   @Override
   public void configure() {
@@ -52,8 +53,10 @@ public class DatasetFromOtherSpaceWithMPApp extends AbstractApplication {
     @Override
     public void initialize() {
       MapReduceContext context = getContext();
-      context.addInput(Input.ofDataset(context.getRuntimeArguments().get(INPUT_KEY)).fromNamespace(DATASETSPACE));
-      context.addOutput(Output.ofDataset(context.getRuntimeArguments().get(OUTPUT_KEY)));
+      context.addInput(Input.ofDataset(context.getRuntimeArguments()
+                                         .get(INPUT_KEY)).fromNamespace(DATASET_INPUT_SPACE));
+      context.addOutput(Output.ofDataset(context.getRuntimeArguments()
+                                           .get(OUTPUT_KEY)).fromNamespace(DATASET_OUTPUT_SPACE));
       Job hadoopJob = context.getHadoopJob();
       hadoopJob.setMapperClass(IdentityMapper.class);
       hadoopJob.setNumReduceTasks(0);

@@ -118,6 +118,9 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.getPostActions = function() {
       return this.state.cloneConfig.config.postActions;
     };
+    this.getBatchInterval = function() {
+      return this.state.cloneConfig.config.batchInterval;
+    };
     this.getInstance = function() {
       return this.state.cloneConfig.config.instances;
     };
@@ -157,12 +160,13 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       // One of the worst cases of 2way binding where right now the app is super big that I have no f***ing clue where which one is modified.
       let appConfigClone = angular.copy(appConfig);
       appConfig.cloneConfig = {
-        name: app.name,
+        name: 'copy_' + app.name,
         artifact: app.artifact,
         description: appConfigClone.configJson.description,
         __ui__: appConfigClone.DAGConfig,
         config: {
           instances: appConfigClone.configJson.instances,
+          batchInterval: appConfigClone.configJson.batchInterval,
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,

@@ -49,20 +49,29 @@
   <div ng-if="AddTags.proceedToNextStep"
       class="text-left">
     <div class="valid-tags">
-      <p>{{ AddTags.tagList.validTags.length }} tags loaded.</p>
+      <p>
+        <span>{{ AddTags.tagList.validTags.length }}</span>
+        <ng-pluralize data-count="AddTags.tagList.validTags.length"
+                      data-when="{'one': ' tag ', 'other': ' tags '}"></ng-pluralize>
+        <span>loaded.</span>
+      </p>
       <span ng-repeat="(key, value) in AddTags.tagList.validTags track by $index"
             class="tag preferred">{{ value }}</a>
     </div>
     <div ng-if="AddTags.tagList.invalidTags.length"
         class="invalid-tags">
-      <p class="text-danger">{{ AddTags.tagList.invalidTags.length }} tags failed to load.</p>
+      <p class="text-danger">
+        <span>{{ AddTags.tagList.invalidTags.length }}</span>
+        <ng-pluralize data-count="AddTags.tagList.invalidTags.length"
+                      data-when="{'one': ' tag ', 'other': ' tags '}"></ng-pluralize>
+        <span>failed to load.</span></p>
       <span ng-repeat="(key, value) in AddTags.tagList.invalidTags track by $index">{{ value }}</span>
     </div>
   </div>
 </div>
 <div class="modal-footer text-right">
   <p class="pull-left text-danger"
-    ng-if="!AddTags.proceedToNextStep && AddTags.tagList.invalidTags.length">No special characters allowed in tags.</p>
+     ng-if="!AddTags.proceedToNextStep && AddTags.tagList.invalidTags.length">No special characters allowed in tags.</p>
   <button class="btn btn-default"
           ng-click="$dismiss('cancel')">Cancel</button>
   <button ng-if="!AddTags.proceedToNextStep"

@@ -153,6 +153,9 @@ function AddPreferredTagsModalCtrl (myTrackerApi, $scope, $state) {
       return parsedTags;
     }
     angular.forEach(tags.split('\n'), (line) => {
+      if (!line) {
+        return;
+      }
       parsedTags = parsedTags.concat(line.split(',').map((tag) => {
         return tag.trim();
       }));

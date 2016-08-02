@@ -18,6 +18,13 @@
  * This class is responsible for controlling the Metadata View in Tracker
  * entity detai page.
  **/
+
+ /*
+   TODO:
+     - Add support for Stream Views
+     - What to do with externalDataset type
+ */
+
 class TrackerMetadataController {
   constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout) {
     this.$state = $state;
@@ -142,16 +149,6 @@ class TrackerMetadataController {
   }
 
   /* METADATA PROPERTIES CONTROL */
-  /*
-    TODO:
-      - Add support for Stream Views
-      - What to do with externalDataset type
-  */
-  enableAddProperty() {
-    this.addPropertyEnable = true;
-    this.propertyFocus();
-  }
-
   deleteProperty(key) {
     let deleteParams = {
       namespace: this.$state.params.namespace,
@@ -206,8 +203,6 @@ class TrackerMetadataController {
       case 13: // Enter Key
         this.addProperty();
         break;
-      case 27: // Esc key
-        this.addPropertyEnable = false;
     }
   }
 
@@ -340,7 +335,7 @@ class TrackerMetadataController {
   }
 
   escapeInput() {
-    this.model = '';
+    this.newTag = '';
     this.inputOpen = false;
   }
 

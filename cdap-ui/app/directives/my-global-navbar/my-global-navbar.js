@@ -46,7 +46,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   // NAMESPACE
   vm.namespaces = [];
   function updateNamespaceList() {
-    myNamespace.getList()
+    myNamespace.getList(true)
       .then(function(list) {
         vm.namespaces = list;
       });

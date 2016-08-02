@@ -22,7 +22,7 @@
   placeholder="Enter new Tag"
   typeahead-show-hint="true"
   data-watch-options="true"
-  typeahead-select-on-exact="true"
+  typeahead-select-on-exact="false"
   typeahead-on-select="TypeaheadTrackerTagsCtrl.onTagsSelect($item, $model, $label, $event)"
-  uib-typeahead="data.label as data.label for data in TypeaheadTrackerTagsCtrl.list  | filter:{name:$viewValue}"
+  uib-typeahead="data.label as data.label for data in TypeaheadTrackerTagsCtrl.list | filter:{name:$viewValue}"
 />

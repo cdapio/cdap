@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -24,14 +25,20 @@ import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,13 +62,19 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   private final MetadataStore metadataStore;
   private final CConfiguration cConf;
   private final EntityExistenceVerifier entityExistenceVerifier;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   DefaultMetadataAdmin(MetadataStore metadataStore, CConfiguration cConf,
-                       EntityExistenceVerifier entityExistenceVerifier) {
+                       EntityExistenceVerifier entityExistenceVerifier,
+                       AuthorizationEnforcer authorizationEnforcer,
+                       AuthenticationContext authenticationContext) {
     this.metadataStore = metadataStore;
     this.cConf = cConf;
     this.entityExistenceVerifier = entityExistenceVerifier;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -147,14 +160,35 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                        Set<MetadataSearchTargetType> types) {
-    return metadataStore.searchMetadataOnType(namespaceId, searchQuery, types);
+                                                        Set<MetadataSearchTargetType> types) throws Exception {
+
+    return filterAuthorizedSearchResult(metadataStore.searchMetadataOnType(namespaceId, searchQuery, types));
   }
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery,
-                                                        Set<MetadataSearchTargetType> types) {
-    return metadataStore.searchMetadataOnType(scope, namespaceId, searchQuery, types);
+                                                        Set<MetadataSearchTargetType> types) throws Exception {
+    return filterAuthorizedSearchResult(metadataStore.searchMetadataOnType(scope, namespaceId, searchQuery, types));
+  }
+
+  /**
+   * Filter a list of {@link MetadataSearchResultRecord} that ensures the logged-in user has a privilege on
+   *
+   * @param results the {@link Set<MetadataSearchResultRecord>} to filter with
+   * @return filtered list of {@link MetadataSearchResultRecord}
+   */
+  private Set<MetadataSearchResultRecord> filterAuthorizedSearchResult(Set<MetadataSearchResultRecord> results)
+    throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    return ImmutableSet.copyOf(
+      Iterables.filter(results, new com.google.common.base.Predicate<MetadataSearchResultRecord>() {
+        @Override
+        public boolean apply(MetadataSearchResultRecord metadataSearchResultRecord) {
+          return filter.apply(metadataSearchResultRecord.getEntityId().toEntityId());
+        }
+      })
+    );
   }
 
   // Helper methods to validate the metadata entries.

@@ -33,6 +33,7 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -124,7 +125,8 @@ public class AuthorizationTest extends TestBase {
         Constants.Security.Authorization.ENABLED, "true",
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
         // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
-        Constants.Security.KERBEROS_ENABLED, "false"
+        Constants.Security.KERBEROS_ENABLED, "false",
+        Constants.Security.Authorization.SUPERUSERS, "hulk"
       };
     }
   }
@@ -199,6 +201,7 @@ public class AuthorizationTest extends TestBase {
       Ids.namespace(dummyAppId.getNamespace()).artifact(artifact.getName(), artifact.getVersion());
     ProgramId greetingServiceId = dummyAppId.service(DummyApp.Greeting.SERVICE_NAME);
     DatasetId dsId = AUTH_NAMESPACE.dataset("whom");
+    StreamId streamId = AUTH_NAMESPACE.stream("who");
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
@@ -206,7 +209,8 @@ public class AuthorizationTest extends TestBase {
         new Privilege(dummyAppId, Action.ALL),
         new Privilege(dummyArtifact, Action.ALL),
         new Privilege(greetingServiceId, Action.ALL),
-        new Privilege(dsId, Action.ALL)
+        new Privilege(dsId, Action.ALL),
+        new Privilege(streamId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
@@ -251,7 +255,8 @@ public class AuthorizationTest extends TestBase {
         new Privilege(instance, Action.ADMIN),
         new Privilege(AUTH_NAMESPACE, Action.ALL),
         new Privilege(dummyArtifact, Action.ALL),
-        new Privilege(dsId, Action.ALL)
+        new Privilege(dsId, Action.ALL),
+        new Privilege(streamId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
@@ -281,6 +286,7 @@ public class AuthorizationTest extends TestBase {
     DatasetId kvt2 = AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME2);
     DatasetId kvt3 = AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME3);
     DatasetId dsWithSchema = AUTH_NAMESPACE.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME);
+    StreamId sId = AUTH_NAMESPACE.stream(AllProgramsApp.STREAM_NAME);
 
     Assert.assertEquals(
       ImmutableSet.of(
@@ -290,6 +296,7 @@ public class AuthorizationTest extends TestBase {
         new Privilege(updatedDummyArtifact, Action.ALL),
         new Privilege(workflowArtifact, Action.ALL),
         new Privilege(dummyAppId, Action.ALL),
+        new Privilege(streamId, Action.ALL),
         new Privilege(workflowAppId, Action.ALL),
         new Privilege(greetingServiceId, Action.ALL),
         new Privilege(flowId, Action.ALL),
@@ -303,7 +310,8 @@ public class AuthorizationTest extends TestBase {
         new Privilege(kvt, Action.ALL),
         new Privilege(kvt2, Action.ALL),
         new Privilege(kvt3, Action.ALL),
-        new Privilege(dsWithSchema, Action.ALL)
+        new Privilege(dsWithSchema, Action.ALL),
+        new Privilege(sId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
@@ -326,12 +334,14 @@ public class AuthorizationTest extends TestBase {
         new Privilege(updatedDummyArtifact, Action.ALL),
         new Privilege(workflowArtifact, Action.ALL),
         new Privilege(dummyAppId, Action.ALL),
+        new Privilege(streamId, Action.ALL),
         new Privilege(greetingServiceId, Action.ALL),
         new Privilege(dsId, Action.ALL),
         new Privilege(kvt, Action.ALL),
         new Privilege(kvt2, Action.ALL),
         new Privilege(kvt3, Action.ALL),
-        new Privilege(dsWithSchema, Action.ALL)
+        new Privilege(dsWithSchema, Action.ALL),
+        new Privilege(sId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
@@ -352,13 +362,15 @@ public class AuthorizationTest extends TestBase {
         new Privilege(instance, Action.ADMIN),
         new Privilege(AUTH_NAMESPACE, Action.ALL),
         new Privilege(dummyArtifact, Action.ALL),
+        new Privilege(streamId, Action.ALL),
         new Privilege(updatedDummyArtifact, Action.ALL),
         new Privilege(workflowArtifact, Action.ALL),
         new Privilege(dsId, Action.ALL),
         new Privilege(kvt, Action.ALL),
         new Privilege(kvt2, Action.ALL),
         new Privilege(kvt3, Action.ALL),
-        new Privilege(dsWithSchema, Action.ALL)
+        new Privilege(dsWithSchema, Action.ALL),
+        new Privilege(sId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
@@ -465,6 +477,7 @@ public class AuthorizationTest extends TestBase {
     ApplicationId appId = AUTH_NAMESPACE.app(DummyApp.class.getSimpleName());
     final ProgramId serviceId = appId.service(DummyApp.Greeting.SERVICE_NAME);
     DatasetId dsId = AUTH_NAMESPACE.dataset("whom");
+    StreamId streamId = AUTH_NAMESPACE.stream("who");
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
@@ -472,7 +485,8 @@ public class AuthorizationTest extends TestBase {
         new Privilege(dummyArtifact, Action.ALL),
         new Privilege(appId, Action.ALL),
         new Privilege(serviceId, Action.ALL),
-        new Privilege(dsId, Action.ALL)
+        new Privilege(dsId, Action.ALL),
+        new Privilege(streamId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );

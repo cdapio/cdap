@@ -59,6 +59,9 @@ class HydratorPlusPlusConfigActions {
   setInstance(instance) {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
+  setBatchInterval(batchInterval) {
+    this.dispatcher.dispatch('onSetBatchInterval', batchInterval);
+  }
   addPostAction(config) {
     this.dispatcher.dispatch('onAddPostAction', config);
   }

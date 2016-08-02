@@ -16,12 +16,10 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ClassPathResources;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import com.google.common.annotations.VisibleForTesting;
@@ -81,6 +79,12 @@ public final class SparkRuntimeUtils {
       }
       if (resource.startsWith("org/apache/spark/")) {
         // Only allows the core Spark Streaming classes, but not any streaming extensions (like Kafka).
+        // cdh 5.5+ package streaming kafka and flume into their spark assembly jar, but they don't package their
+        // dependencies. For example, streaming kafka is packaged, but kafka is not.
+        if (resource.startsWith("org/apache/spark/streaming/kafka") ||
+          resource.startsWith("org/apache/spark/streaming/flume")) {
+          return false;
+        }
         if (resource.startsWith("org/apache/spark/streaming")) {
           return Iterables.any(getSparkStreamingResources(), new Predicate<ClassPath.ResourceInfo>() {
             @Override
@@ -108,8 +112,13 @@ public final class SparkRuntimeUtils {
       if (packageName.equals("akka") || packageName.startsWith("akka.")) {
         return true;
       }
+      // cdh 5.5 and on package kafka and flume streaming in their assembly jar
       if (packageName.equals("org.apache.spark") || packageName.startsWith("org.apache.spark.")) {
         // Only allows the core Spark Streaming classes, but not any streaming extensions (like Kafka).
+        if (packageName.startsWith("org.apache.spark.streaming.kafka") ||
+          packageName.startsWith("org.apache.spark.streaming.flume")) {
+          return false;
+        }
         if (packageName.equals("org.apache.spark.streaming") || packageName.startsWith("org.apache.spark.streaming.")) {
           return Iterables.any(
             Iterables.filter(getSparkStreamingResources(), ClassPath.ClassInfo.class),
