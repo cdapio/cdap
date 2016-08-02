@@ -33,7 +33,6 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -112,7 +111,6 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -131,6 +129,7 @@ public abstract class DatasetServiceTestBase {
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static Injector injector;
 
+  private static AuthorizationEnforcementService authEnforcementService;
   private static DiscoveryServiceClient discoveryServiceClient;
   private static DatasetOpExecutorService opExecutorService;
   private static DatasetService service;
@@ -144,7 +143,7 @@ public abstract class DatasetServiceTestBase {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    Services.chainStop(service, opExecutorService, txManager);
+    Services.chainStop(service, opExecutorService, txManager, authEnforcementService);
     namespaceAdmin.delete(Id.Namespace.DEFAULT);
     Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
   }
@@ -174,8 +173,9 @@ public abstract class DatasetServiceTestBase {
       });
 
     AuthorizationEnforcer authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
-    AuthorizationEnforcementService authEnforcementService =
-      injector.getInstance(AuthorizationEnforcementService.class);
+    authEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    authEnforcementService.startAndWait();
+
     AuthorizerInstantiator authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
 
@@ -239,8 +239,7 @@ public abstract class DatasetServiceTestBase {
       authenticationContext, cConf, impersonator
     );
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
-                                 opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService,
-                                 authEnforcementService);
+                                 opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();
@@ -372,16 +371,5 @@ public abstract class DatasetServiceTestBase {
   protected void assertNamespaceNotFound(HttpResponse response, Id.Namespace namespaceId) {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.toString()));
-  }
-
-  protected void ensureDefaultNamespace() throws Exception {
-    final NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return namespaceQueryAdmin.get(Id.Namespace.DEFAULT) != null;
-      }
-    }, 5, TimeUnit.SECONDS, "Could not ensure existence of default namespace in 5 seconds");
-    System.out.println("##### ensured default ########## " + namespaceQueryAdmin);
   }
 }

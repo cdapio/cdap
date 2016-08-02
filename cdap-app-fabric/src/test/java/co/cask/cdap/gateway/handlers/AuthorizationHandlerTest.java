@@ -34,6 +34,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -97,7 +98,7 @@ public class AuthorizationHandlerTest {
           public Authorizer get() {
             return auth;
           }
-        }, conf, entityExistenceVerifier)))
+        }, conf, new MasterAuthenticationContext(), entityExistenceVerifier)))
       .modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {
@@ -151,7 +152,7 @@ public class AuthorizationHandlerTest {
           public Authorizer get() {
             return new InMemoryAuthorizer();
           }
-        }, cConf, entityExistenceVerifier)))
+        }, cConf, new MasterAuthenticationContext(), entityExistenceVerifier)))
       .build();
     service.startAndWait();
     try {

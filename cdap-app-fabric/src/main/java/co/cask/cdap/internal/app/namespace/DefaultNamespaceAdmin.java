@@ -49,8 +49,8 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -85,7 +85,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
   private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final Authorizer authorizer;
+  private final AuthorizationEnforcer authorizationEnforcer;
   private final InstanceId instanceId;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final Impersonator impersonator;
@@ -114,7 +115,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     this.metricStore = metricStore;
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
-    this.authorizerInstantiator = authorizerInstantiator;
+    this.authorizer = authorizerInstantiator.get();
+    this.authorizationEnforcer = authorizationEnforcer;
     this.instanceId = createInstanceId(cConf);
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.impersonator = impersonator;
@@ -136,12 +138,12 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     }
 
     // Namespace can be created. Check if the user is authorized now.
-    Principal principal = SecurityRequestContext.toPrincipal();
+    Principal principal = authenticationContext.getPrincipal();
     // Skip authorization enforcement for the system user and the default namespace, so the DefaultNamespaceEnsurer
     // thread can successfully create the default namespace
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-      authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
-      authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
+      authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
+      authorizer.grant(namespace, principal, ImmutableSet.of(Action.ALL));
     }
 
     // store the meta first in the namespace store because namespacedlocationfactory need to look up location
@@ -160,7 +162,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       nsStore.delete(metadata.getNamespaceId().toId());
       if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-        authorizerInstantiator.get().revoke(namespace);
+        authorizer.revoke(namespace);
       }
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
@@ -189,7 +191,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                                                                 namespaceId));
     }
 
-    authorizerInstantiator.get().enforce(namespace, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(namespace, authenticationContext.getPrincipal(), Action.ADMIN);
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
@@ -237,7 +239,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
     } finally {
-      authorizerInstantiator.get().revoke(namespace);
+      authorizer.revoke(namespace);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
 
@@ -245,7 +247,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     // deletion fails, we may have a valid (or invalid) namespace in the system, that no one has privileges on,
     // so no one can clean up. This may result in orphaned privileges, which will be cleaned up by the create API
     // if the same namespace is successfully re-created.
-    authorizerInstantiator.get().revoke(namespace);
+    authorizer.revoke(namespace);
   }
 
   private void deleteMetrics(NamespaceId namespaceId) throws Exception {
@@ -272,8 +274,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     }
 
     // Namespace data can be deleted. Revoke all privileges first
-    authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+    authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     try {
       dsFramework.deleteAllInstances(namespaceId);
     } catch (DatasetManagementException | IOException e) {
@@ -288,10 +289,11 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                         Action.ADMIN);
+    authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
 
     NamespaceMeta existingMeta = nsStore.get(namespaceId);
+    // Already ensured that namespace exists, so namespace meta should not be null
+    Preconditions.checkNotNull(existingMeta);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
 
     if (namespaceMeta.getDescription() != null) {

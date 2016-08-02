@@ -65,6 +65,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -131,6 +132,7 @@ public class StandaloneMain {
   private final TrackerAppCreationService trackerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
+  private final AuthorizationEnforcementService authorizationEnforcementService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -167,9 +169,9 @@ public class StandaloneMain {
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
@@ -251,6 +253,7 @@ public class StandaloneMain {
 
     txService.startAndWait();
     metricsCollectionService.startAndWait();
+    authorizationEnforcementService.startAndWait();
     datasetService.startAndWait();
     serviceStore.startAndWait();
     streamService.startAndWait();
@@ -325,6 +328,7 @@ public class StandaloneMain {
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
+      authorizationEnforcementService.stopAndWait();
       metricsQueryService.stopAndWait();
       txService.stopAndWait();
 
@@ -424,11 +428,13 @@ public class StandaloneMain {
   /**
    * The root of all goodness!
    */
-  public static StandaloneMain create() {
+  @VisibleForTesting
+  static StandaloneMain create() {
     return create(CConfiguration.create(), new Configuration());
   }
 
-  public static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");

@@ -26,7 +26,6 @@ import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -62,7 +61,6 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DatasetOpExecutor opExecutorClient;
   private final Set<DatasetMetricsReporter> metricReporters;
   private final DatasetTypeManager typeManager;
-  private final AuthorizationEnforcementService authorizationEnforcementService;
 
   private Cancellable cancelDiscovery;
   private Cancellable opExecutorServiceWatch;
@@ -78,10 +76,8 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DatasetOpExecutor opExecutorClient,
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetTypeService datasetTypeService,
-                        DatasetInstanceService datasetInstanceService,
-                        AuthorizationEnforcementService authorizationEnforcementService) throws Exception {
+                        DatasetInstanceService datasetInstanceService) throws Exception {
     this.typeManager = typeManager;
-    this.authorizationEnforcementService = authorizationEnforcementService;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(datasetTypeService);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
@@ -116,7 +112,6 @@ public class DatasetService extends AbstractExecutionThreadService {
     typeManager.startAndWait();
     opExecutorClient.startAndWait();
     httpService.startAndWait();
-    authorizationEnforcementService.startAndWait();
 
     // setting watch for ops executor service that we need to be running to operate correctly
     ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_EXECUTOR);
@@ -208,8 +203,6 @@ public class DatasetService extends AbstractExecutionThreadService {
     for (DatasetMetricsReporter metricsReporter : metricReporters) {
       metricsReporter.stop();
     }
-
-    authorizationEnforcementService.stopAndWait();
 
     if (opExecutorServiceWatch != null) {
       opExecutorServiceWatch.cancel();
