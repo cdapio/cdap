@@ -88,7 +88,7 @@ class DatasetServiceClient {
   private final boolean securityEnabled;
   private final boolean kerberosEnabled;
   private final AuthenticationContext authenticationContext;
-  private final String masterPrincipalShortName;
+  private final String masterPrincipal;
 
   DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
                        CConfiguration cConf, AuthenticationContext authenticationContext) {
@@ -104,12 +104,7 @@ class DatasetServiceClient {
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.authenticationContext = authenticationContext;
-    try {
-      this.masterPrincipalShortName =
-        new KerberosName(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL)).getShortName();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    this.masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
   }
 
   @Nullable
@@ -333,10 +328,11 @@ class DatasetServiceClient {
       return builder;
     }
     String userId;
+    String currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
     if (NamespaceId.SYSTEM.equals(namespaceId) &&
       // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
       // configured principal
-      (!kerberosEnabled || UserGroupInformation.getCurrentUser().getShortUserName().equals(masterPrincipalShortName))) {
+      (!kerberosEnabled || currUserShortName.equals(new KerberosName(masterPrincipal).getShortName()))) {
       // For getting a system dataset like MDS, use the system principal, if the current user is the same as the
       // CDAP kerberos principal. If a user tries to access a system dataset from an app, either:
       // 1. The request will go through if the user is impersonating as the cdap principal - which means that
@@ -345,7 +341,7 @@ class DatasetServiceClient {
       // 3. The request will go through, if kerberos is disabled
       LOG.debug("Acessing dataset in system namespace using the system principal because the current user's " +
                   "kerberos principal {} is the same as the CDAP master's kerberos principal {}.",
-                masterPrincipalShortName, UserGroupInformation.getCurrentUser().getShortUserName());
+                masterPrincipal, currUserShortName);
       userId = Principal.SYSTEM.getName();
     } else {
       // If the request originated from the router and was forwarded to any service other than dataset service, before
