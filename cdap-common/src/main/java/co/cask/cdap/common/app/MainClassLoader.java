@@ -35,7 +35,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -131,26 +130,21 @@ public final class MainClassLoader extends InterceptableClassLoader {
   }
 
   /**
-   * Returns the list of {@link URL} for the system ClassLoader.
+   * Returns an array of {@link URL} based on the system classpath.
    */
   private static URL[] getClassPath() {
     List<URL> urls = new ArrayList<>();
-    ClassLoader sysClassLoader = ClassLoader.getSystemClassLoader();
 
-    if (sysClassLoader instanceof URLClassLoader) {
-      urls.addAll(Arrays.asList(((URLClassLoader) sysClassLoader).getURLs()));
-    } else {
-      String wildcardSuffix = File.pathSeparator + "*";
-      // In case the system classloader is not a URLClassLoader, use the classpath property (maybe from non Oracle JDK)
-      for (String path : Splitter.on(File.pathSeparatorChar).split(System.getProperty("java.class.path"))) {
-        if ("*".equals(path) || path.endsWith(wildcardSuffix)) {
-          for (File jarFile : DirUtils.listFiles(new File(path), "jar")) {
-            try {
-              urls.add(jarFile.toURI().toURL());
-            } catch (MalformedURLException e) {
-              // Shouldn't happen. Propagate the exception.
-              throw Throwables.propagate(e);
-            }
+    String wildcardSuffix = File.pathSeparator + "*";
+    // In case the system classloader is not a URLClassLoader, use the classpath property (maybe from non Oracle JDK)
+    for (String path : Splitter.on(File.pathSeparatorChar).split(System.getProperty("java.class.path"))) {
+      if ("*".equals(path) || path.endsWith(wildcardSuffix)) {
+        for (File jarFile : DirUtils.listFiles(new File(path), "jar")) {
+          try {
+            urls.add(jarFile.toURI().toURL());
+          } catch (MalformedURLException e) {
+            // Shouldn't happen. Propagate the exception.
+            throw Throwables.propagate(e);
           }
         }
       }

@@ -73,7 +73,7 @@ public final class ContainerLauncherGenerator {
   }
 
   /**
-   * Generates a JAR file that contains a class with a static main method.
+   * Generates a JAR file that contains zero or more classes with a static main method.
    *
    * @param mainClassNames List of main class names to generate
    * @param mainDelegatorClass the actual class that the main method will delegate to

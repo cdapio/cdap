@@ -20,7 +20,6 @@ import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.common.lang.ClassRewriter;
 import co.cask.cdap.internal.asm.FinallyAdapter;
 import co.cask.cdap.internal.dataset.DatasetRuntimeContext;
@@ -39,8 +38,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -71,26 +68,6 @@ public final class DatasetClassRewriter implements ClassRewriter {
 
   private static final Type DATASET_RUNTIME_CONTEXT_TYPE = Type.getType(DatasetRuntimeContext.class);
   private static final Type CLASS_TYPE = Type.getType(Class.class);
-
-  private static final Set<Method> IGNORE_METHODS;
-
-  static {
-    // Collects the set of methods that doesn't need rewriting
-    Set<Method> ignoreMethods = new HashSet<>();
-
-    // Should ignore all methods in Object.
-    for (java.lang.reflect.Method method : Object.class.getDeclaredMethods()) {
-      ignoreMethods.add(Method.getMethod(method));
-    }
-
-    // Ignore methods in interface that Dataset implements, which are not part of dataset operation
-    for (Class<?> cls : Arrays.asList(TransactionAware.class, Closeable.class, MeteredDataset.class)) {
-      for (java.lang.reflect.Method method : cls.getMethods()) {
-        ignoreMethods.add(Method.getMethod(method));
-      }
-    }
-    IGNORE_METHODS = Collections.unmodifiableSet(ignoreMethods);
-  }
 
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
@@ -137,8 +114,8 @@ public final class DatasetClassRewriter implements ClassRewriter {
                                      String desc, String signature, String[] exceptions) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
-      // No need to if the class is an interface, the method is static or the method should be ignored
-      if (interfaceClass || Modifier.isStatic(access) || IGNORE_METHODS.contains(new Method(name, desc))) {
+      // No need to if the class is an interface or the method is static
+      if (interfaceClass || Modifier.isStatic(access)) {
         return mv;
       }
 

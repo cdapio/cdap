@@ -134,6 +134,6 @@ public abstract class ForwardingLocation implements Location {
 
   @Override
   public String toString() {
-    return toURI().toString();
+    return delegate.toString();
   }
 }
