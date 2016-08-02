@@ -233,6 +233,10 @@ body.theme-cdap {
       max-height: ~"-moz-calc(100vh - 143px)";
       max-height: ~"-webkit-calc(100vh - 143px)";
       overflow: auto;
+      > div {
+        width: 100%;
+        padding: 10px;
+      }
     }
     div.side-panel.top,
     .pipeline-settings {
@@ -422,7 +426,8 @@ body.theme-cdap {
         .hydrator-detail-metadata {
           display: flex;
           overflow: hidden;
-          padding: 2px 10px;
+          padding: 6px 10px;
+          padding-bottom: 0;
 
           /*
             - Two buttons for schedule & start now
@@ -471,6 +476,7 @@ body.theme-cdap {
             font-size: 12px;
             font-weight: 400;
             margin: 0;
+            margin-top: -4px;
             line-height: 1.1;
           }
         }
@@ -560,6 +566,10 @@ body.theme-cdap {
       }
       .pipeline-settings {
         width: 100%;
+        > div {
+          width: 100%;
+          padding: 10px;
+        }
         &.pipeline-run-section {
           position: absolute;
           left: 0;
