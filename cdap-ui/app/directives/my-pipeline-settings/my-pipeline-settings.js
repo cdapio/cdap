@@ -27,22 +27,19 @@ angular.module(PKG.name + '.commons')
       replace: false,
       link: function (scope, element) {
         var angularElement,
-            widget,
-            divElement;
+            widget;
         element.removeAttr('my-pipeline-settings');
         widget = MyPipelineSettingsFactory[scope.templateType];
         if (!widget) {
           return;
         }
 
-        divElement = angular.element('<div></div>');
         angularElement = angular.element(widget.element);
         angular.forEach(widget.attributes, function(value, key) {
           angularElement.attr(key, value);
         });
 
-        divElement.append(angularElement);
-        var content = $compile(divElement)(scope);
+        var content = $compile(angularElement)(scope);
         element.append(content);
       }
 

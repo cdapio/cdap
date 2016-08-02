@@ -37,17 +37,17 @@
     <tr ng-repeat="action in MyPostRunActionsCtrl.actions">
       <td>{{action.plugin.name}}</td>
       <td>{{action.plugin.properties.runCondition}}</td>
-      <td ng-if="!MyPostRunActionsCtrl._isDisabled">
+      <td ng-if="!MyPostRunActionsCtrl._isDisabled" class="text-center">
         <a href="" ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'edit', action)">
-          Edit
+          <span class="fa fa-pencil"></span>
         </a>
       </td>
-      <td ng-if="!MyPostRunActionsCtrl._isDisabled">
+      <td ng-if="!MyPostRunActionsCtrl._isDisabled" class="text-center">
         <a href ng-click="MyPostRunActionsCtrl.deletePostRunAction(action)">
           <span class="fa text-danger fa-trash"></span>
         </a>
       </td>
-      <td ng-if="MyPostRunActionsCtrl._isDisabled">
+      <td ng-if="MyPostRunActionsCtrl._isDisabled" class="text-center">
         <a href ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'view', action)">
           View
         </a>
