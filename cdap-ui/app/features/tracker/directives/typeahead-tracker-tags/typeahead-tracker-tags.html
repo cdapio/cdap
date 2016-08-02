@@ -17,6 +17,7 @@
   type="text"
   ng-model="TypeaheadTrackerTagsCtrl.model"
   ng-model-options="{ debounce: 500 }"
+  ng-click="$event.stopPropagation()"
   typeahead-popup-template-url="/assets/features/tracker/directives/typeahead-tracker-tags/popup.html"
   typeahead-min-length="0"
   class="form-control"

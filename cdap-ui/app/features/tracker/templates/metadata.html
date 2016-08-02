@@ -65,7 +65,7 @@
           </div>
 
           <div class="add-tag" ng-if="!MetadataController.inputOpen">
-            <a class="btn add" ng-click="MetadataController.inputOpen = true">
+            <a class="btn add" ng-click="MetadataController.openTagInput($event)">
               <span class="fa fa-plus"></span>
             </a>
           </div>
@@ -74,8 +74,10 @@
               ng-class="{'invalid': MetadataController.invalidFormat}">
             <div my-escape-close="MetadataController.escapeInput()"
                 ng-keypress="$event.keyCode === 13 && MetadataController.addTag()">
-              <my-typeahead-tracker-tags list="MetadataController.tags.availableTags"
-                                        model="MetadataController.newTag"></my-typeahead-tracker-tags>
+              <my-typeahead-tracker-tags
+                list="MetadataController.tags.availableTags"
+                model="MetadataController.newTag">
+              </my-typeahead-tracker-tags>
             </div>
           </div>
           <p ng-if="MetadataController.invalidFormat"
