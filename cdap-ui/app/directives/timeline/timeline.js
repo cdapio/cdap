@@ -51,7 +51,7 @@ function link (scope, element) {
 
     //If chart already exists, remove it
     if(timescaleSvg){
-      d3.selectAll('svg > *').remove();
+      d3.selectAll('.timeline-container svg > *').remove();
       timescaleSvg.remove();
     }
 
