@@ -63,7 +63,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
     Preconditions.checkArgument(
       !superUsers.isEmpty(), "No super users specified. Without this setting, it may be impossible to bootstrap CDAP " +
         "with authorization enabled. Please set %s to a comma separated list of superusers who can bypass " +
-        "authorization policies in CDAP.");
+        "authorization policies in CDAP.", Constants.Security.Authorization.SUPERUSERS);
   }
 
   @Override
