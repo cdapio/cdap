@@ -87,6 +87,10 @@ class HydratorPlusPlusTopPanelCtrl{
     this.invalidName = false;
 
     this.$timeout.cancel(this.focusTimeout);
+    if (!this.$stateParams.isClone) {
+      return;
+    }
+    this.$stateParams.isClone = null;
     this.focusTimeout = this.$timeout(() => {
       document.getElementById('pipeline-name-input').focus();
     });
