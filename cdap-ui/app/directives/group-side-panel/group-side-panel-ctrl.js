@@ -15,16 +15,20 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MySidePanel', function ($scope) {
+  .controller('MySidePanel', function ($scope, myHelpers) {
     this.groups = $scope.panelGroups;
     this.groupGenericName = $scope.groupGenericName || 'group';
     this.itemGenericName = $scope.itemGenericName || 'item';
 
     this.view = $scope.view || 'icon';
     $scope.$watch('MySidePanel.groups.length', function() {
-
+      var getDefaultGroup = (groups) => {
+        return groups.find(group => {
+          return angular.isObject(group) && angular.isString(group.name);
+        });
+      };
       if (this.groups.length) {
-        this.openedGroup = this.groups[0].name;
+        this.openedGroup = myHelpers.objectQuery(getDefaultGroup(this.groups), 'name') || 'No ' + this.groupGenericName +' available';
       }
       /*
         42 = height of the each group's header
