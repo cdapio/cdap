@@ -23,6 +23,7 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
@@ -31,8 +32,10 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -115,14 +118,12 @@ public final class InMemoryConfigurator implements Configurator {
     }
   }
 
-  private ConfigResponse createResponse(Application app)
-    throws InstantiationException, IllegalAccessException, IOException {
+  private ConfigResponse createResponse(Application app) throws Exception {
     String specJson = getSpecJson(app);
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private <T extends Config> String getSpecJson(Application<T> app) throws IllegalAccessException,
-                                                                           InstantiationException, IOException {
+  private <T extends Config> String getSpecJson(Application<T> app) throws Exception {
     // This Gson cannot be static since it is used to deserialize user class.
     // Gson will keep a static map to class, hence will leak the classloader
     Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
@@ -148,7 +149,42 @@ public final class InMemoryConfigurator implements Configurator {
         }
       }
 
-      app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+      try {
+        app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+      } catch (Throwable t) {
+        Throwable rootCause = Throwables.getRootCause(t);
+        if (rootCause instanceof ClassNotFoundException) {
+          // Heuristic to provide better error message
+          String missingClass = rootCause.getMessage();
+
+          // If the missing class has "spark" in the name, try to see if Spark is available
+          if (missingClass.startsWith("org.apache.spark.") || missingClass.startsWith("co.cask.cdap.api.spark.")) {
+            File sparkAssemblyJar;
+            try {
+              sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
+            } catch (Exception e) {
+              // Spark is not available, it is most likely caused by missing Spark in the platform
+              throw new IllegalStateException(
+                "Missing Spark related class " + missingClass +
+                  ". It may be caused by unavailability of Spark in the platform.", t);
+            }
+
+            // Spark is available, can be caused by incompatible Spark version
+            throw new InvalidArtifactException(
+              "Missing Spark related class " + missingClass +
+                ". Configured to use Spark assembly jar located at " + sparkAssemblyJar +
+                ", which may be incompatible with the one required by the application", t);
+
+          }
+          // If Spark is available or the missing class is not a spark related class,
+          // then the missing class is most lifely due to some missing library in the artifact jar
+          throw new InvalidArtifactException(
+            "Missing class " + missingClass +
+              ". It may be caused by missing dependency jar(s) in the artifact jar.", t);
+
+        }
+        throw t;
+      }
     } finally {
       try {
         DirUtils.deleteDirectoryContents(tempDir);
