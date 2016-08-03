@@ -98,11 +98,15 @@ public class RESTClient {
 
     int currentTry = 0;
     HttpResponse response;
+    int responseCode;
+    boolean allowUnavailable = ArrayUtils.contains(allowedErrorCodes, HttpURLConnection.HTTP_UNAVAILABLE);
+
     do {
       onRequest(request, currentTry);
       response = HttpRequests.execute(request, clientConfig.getDefaultRequestConfig());
+      responseCode = response.getResponseCode();
 
-      if (response.getResponseCode() != HttpURLConnection.HTTP_UNAVAILABLE) {
+      if (responseCode != HttpURLConnection.HTTP_UNAVAILABLE || allowUnavailable) {
         // only retry if unavailable
         break;
       }
@@ -117,7 +121,6 @@ public class RESTClient {
 
     onResponse(request, response, currentTry);
 
-    int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
       throw new UnauthenticatedException("Unauthorized status code received from the server.");
     }

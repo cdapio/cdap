@@ -27,6 +27,9 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -43,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.Manifest;
@@ -53,11 +57,38 @@ import java.util.jar.Manifest;
 public abstract class AbstractClientTest {
 
   @ClassRule
-  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder() {
+
+    private int refCount;
+
+    @Override
+    protected void before() throws Throwable {
+      if (refCount++ == 0) {
+        super.before();
+      }
+    }
+
+    @Override
+    protected void after() {
+      if (--refCount == 0) {
+        super.after();
+      }
+    }
+  };
 
   protected ClientConfig clientConfig;
 
   protected abstract StandaloneTester getStandaloneTester();
+
+  private static final LoadingCache<ArtifactJarInfo, Location> ARTIFACT_CACHE =
+    CacheBuilder.newBuilder().build(new CacheLoader<ArtifactJarInfo, Location>() {
+      @Override
+      public Location load(ArtifactJarInfo key) throws Exception {
+        File tmpJarFolder = TMP_FOLDER.newFolder();
+        LocationFactory locationFactory = new LocalLocationFactory(tmpJarFolder);
+        return AppJarHelper.createDeploymentJar(locationFactory, key.getAppClass(), key.getManifest());
+      }
+    });
 
   @Before
   public void setUp() throws Throwable {
@@ -136,17 +167,50 @@ public abstract class AbstractClientTest {
 
   protected File createArtifactJarFile(Class<?> cls, String name,
                                        String version, Manifest manifest) throws IOException {
+    Location deploymentJar = ARTIFACT_CACHE.getUnchecked(new ArtifactJarInfo(cls, manifest));
 
-    File tmpJarFolder = TMP_FOLDER.newFolder();
-    LocationFactory locationFactory = new LocalLocationFactory(tmpJarFolder);
-    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
-
-    File appJarFile = new File(tmpJarFolder, String.format("%s-%s.jar", name, version));
+    File appJarFile = new File(TMP_FOLDER.newFolder(), String.format("%s-%s.jar", name, version));
     try {
       Files.createLink(appJarFile.toPath(), Paths.get(deploymentJar.toURI()));
     } catch (Exception e) {
       Files.copy(appJarFile.toPath(), Paths.get(deploymentJar.toURI()));
     }
     return appJarFile;
+  }
+
+  private static final class ArtifactJarInfo {
+    private final Class<?> appClass;
+    private final Manifest manifest;
+
+    private ArtifactJarInfo(Class<?> appClass, Manifest manifest) {
+      this.appClass = appClass;
+      this.manifest = manifest;
+    }
+
+    Class<?> getAppClass() {
+      return appClass;
+    }
+
+    Manifest getManifest() {
+      return manifest;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      ArtifactJarInfo that = (ArtifactJarInfo) o;
+      return Objects.equals(appClass, that.appClass) &&
+        Objects.equals(manifest, that.manifest);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(appClass, manifest);
+    }
   }
 }
