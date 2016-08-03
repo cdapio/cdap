@@ -63,7 +63,8 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
     @Override
     public void run() {
       try {
-        impersonator.doAs(new NamespaceId(opInfo.getNamespace()), new Callable<Void>() {
+        // TODO: use namespace, instead of hive db
+        impersonator.doAs(new NamespaceId(opInfo.getHiveDatabase()), new Callable<Void>() {
           @Override
           public Void call() throws Exception {
             try {

@@ -70,7 +70,8 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
                      Callable<T> callable) throws HandleNotFoundException, ExploreException, SQLException {
     OperationInfo operationInfo = exploreService.getOperationInfo(queryHandle);
     try {
-      return impersonator.doAs(new NamespaceId(operationInfo.getNamespace()), callable);
+//      TODO: use namespace, instead of hive db
+      return impersonator.doAs(new NamespaceId(operationInfo.getHiveDatabase()), callable);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, HandleNotFoundException.class);
       Throwables.propagateIfInstanceOf(e, SQLException.class);
