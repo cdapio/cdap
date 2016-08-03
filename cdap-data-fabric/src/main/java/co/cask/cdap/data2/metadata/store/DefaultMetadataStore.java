@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
@@ -45,7 +44,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,8 +88,7 @@ public class DefaultMetadataStore implements MetadataStore {
   private AuditPublisher auditPublisher;
 
   @Inject
-  DefaultMetadataStore(TransactionExecutorFactory txExecutorFactory,
-                       @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework dsFramework,
+  DefaultMetadataStore(TransactionExecutorFactory txExecutorFactory, DatasetFramework dsFramework,
                        MetadataChangePublisher changePublisher) {
     this.txExecutorFactory = txExecutorFactory;
     this.dsFramework = dsFramework;

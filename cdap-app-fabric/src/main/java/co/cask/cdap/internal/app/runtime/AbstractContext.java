@@ -22,7 +22,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
@@ -47,18 +46,10 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRangeCodec;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -76,13 +67,6 @@ import javax.annotation.Nullable;
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, DatasetContext, RuntimeContext, PluginContext {
 
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
-
-  private final ArtifactId artifactId;
-  private final ArtifactMeta artifactMeta;
   private final Program program;
   private final ProgramOptions programOptions;
   private final RunId runId;
@@ -96,7 +80,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Admin admin;
   private final long logicalStartTime;
   private final SecureStore secureStore;
-  private final SecureStoreManager secureStoreManager;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -122,8 +105,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program.getId().toEntityId());
 
-    this.artifactId = createArtifactId(programOptions);
-    this.artifactMeta = createArtifactMeta(programOptions);
     this.program = program;
     this.programOptions = programOptions;
     this.runId = ProgramRunners.getRunId(programOptions);
@@ -152,30 +133,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId(), secureStoreManager);
     this.secureStore = secureStore;
-    this.secureStoreManager = secureStoreManager;
-  }
-
-  /**
-   * Extracts {@link ArtifactId} from the system arguments.
-   */
-  private ArtifactId createArtifactId(ProgramOptions programOptions) {
-    String id = programOptions.getArguments().getOption(ProgramOptionConstants.ARTIFACT_ID);
-    Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.ARTIFACT_ID + " in program options");
-    return GSON.fromJson(id, ArtifactId.class);
-  }
-
-  /**
-   * Extracts {@link ArtifactMeta} from the system arguments.
-   */
-  private ArtifactMeta createArtifactMeta(ProgramOptions programOptions) {
-    String meta = programOptions.getArguments().getOption(ProgramOptionConstants.ARTIFACT_META);
-    Preconditions.checkArgument(meta != null,
-                                "Missing " + ProgramOptionConstants.ARTIFACT_META + " in program options");
-    return GSON.fromJson(meta, ArtifactMeta.class);
   }
 
   private Iterable<? extends Id> createOwners(Id.Program programId) {
-    return Collections.unmodifiableList(Collections.singletonList(programId));
+    return Collections.singletonList(programId);
   }
 
   /**
@@ -324,20 +285,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    */
   public void close() {
     datasetCache.close();
-  }
-
-  /**
-   * Returns the {@link ArtifactId} which contains the program that this context represents.
-   */
-  public ArtifactId getArtifactId() {
-    return artifactId;
-  }
-
-  /**
-   * Returns the {@link ArtifactMeta} which contains the program that this context represents.
-   */
-  public ArtifactMeta getArtifactMeta() {
-    return artifactMeta;
   }
 
   /**

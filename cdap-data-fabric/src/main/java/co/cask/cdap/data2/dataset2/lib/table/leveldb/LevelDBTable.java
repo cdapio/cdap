@@ -16,10 +16,13 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -61,10 +64,11 @@ public class LevelDBTable extends BufferingTable {
     this.tx = tx;
   }
 
+  @WriteOnly
   @Override
   public void increment(byte[] row, byte[][] columns, long[] amounts) {
     // for local operation with leveldb, we don't worry about the cost of reads
-    incrementAndGet(row, columns, amounts);
+    internalIncrementAndGet(row, columns, amounts);
   }
 
   @Override
@@ -93,6 +97,14 @@ public class LevelDBTable extends BufferingTable {
         }
       }
     }
+    if (!increments.isEmpty() || !puts.isEmpty()) {
+      persist(increments, puts);
+    }
+  }
+
+  @WriteOnly
+  private void persist(NavigableMap<byte[], NavigableMap<byte[], Long>> increments,
+                       NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts) throws IOException {
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> incEntry : increments.entrySet()) {
       core.increment(incEntry.getKey(), incEntry.getValue());
     }
@@ -101,20 +113,31 @@ public class LevelDBTable extends BufferingTable {
 
   @Override
   protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
+    if (persisted.isEmpty()) {
+      return;
+    }
+    undoPersisted(persisted);
+  }
+
+  @WriteOnly
+  private void undoPersisted(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws IOException {
     core.undo(persisted, persistedVersion);
   }
 
+  @ReadOnly
   @Override
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
     return core.getRow(row, columns, null, null, -1, tx);
   }
 
+  @ReadOnly
   @Override
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
     throws Exception {
     return core.getRow(row, null, startColumn, stopColumn, limit, tx);
   }
 
+  @ReadOnly
   @Override
   protected Scanner scanPersisted(Scan scan) throws Exception {
 
@@ -124,9 +147,28 @@ public class LevelDBTable extends BufferingTable {
       if (scan.getFilter() instanceof FuzzyRowFilter) {
         filter = (FuzzyRowFilter) scan.getFilter();
       } else {
-        throw new DataSetException("Unknown filter type: " + filter);
+        throw new DataSetException("Unknown filter type: " + scan.getFilter());
       }
     }
-    return core.scan(scan.getStartRow(), scan.getStopRow(), filter, null, tx);
+    final Scanner scanner = core.scan(scan.getStartRow(), scan.getStopRow(), filter, null, tx);
+    return new Scanner() {
+      @Nullable
+      @Override
+      public Row next() {
+        return LevelDBTable.this.next(scanner);
+      }
+
+      @Override
+      public void close() {
+        scanner.close();
+      }
+    };
+  }
+
+  // Helper methods to help operate on the Scanner with authroization
+
+  @ReadOnly
+  private Row next(Scanner scanner) {
+    return scanner.next();
   }
 }

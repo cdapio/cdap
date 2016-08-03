@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.lib.kv;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
@@ -111,6 +113,7 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
       this.tableName = tableName;
     }
 
+    @WriteOnly
     @Override
     public void put(byte[] key, @Nullable byte[] value) {
       if (value == null) {
@@ -120,6 +123,7 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
       }
     }
 
+    @ReadOnly
     @Nullable
     @Override
     public byte[] get(byte[] key) {

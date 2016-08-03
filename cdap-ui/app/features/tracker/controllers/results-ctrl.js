@@ -130,7 +130,9 @@ class TrackerResultsController {
       .then( (res) => {
         this.fullResults = res.map(this.parseResult.bind(this));
         this.searchResults = angular.copy(this.fullResults);
-        this.fetchTruthMeter();
+        if (this.searchResults.length) {
+          this.fetchTruthMeter();
+        }
         this.loading = false;
       }, (err) => {
         console.log('error', err);

@@ -19,6 +19,7 @@ package co.cask.cdap.test.base;
 import co.cask.cdap.admin.AdminAppTestRun;
 import co.cask.cdap.batch.stream.BatchStreamIntegrationTestRun;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.test.TestSuite;
 import co.cask.cdap.flow.stream.FlowStreamIntegrationTestRun;
 import co.cask.cdap.mapreduce.MapReduceStreamInputTestRun;
 import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
@@ -43,7 +44,7 @@ import org.junit.runners.Suite;
  * This avoid starting/stopping app-fabric per test.
  */
 @Category(XSlowTests.class)
-@RunWith(Suite.class)
+@RunWith(TestSuite.class)
 @Suite.SuiteClasses({
   AdminAppTestRun.class,
   BatchStreamIntegrationTestRun.class,

@@ -31,6 +31,8 @@ import co.cask.cdap.data2.transaction.queue.QueueEvictor;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
@@ -61,10 +63,12 @@ public class LevelDBQueueTest extends QueueTest {
       new ConfigModule(conf),
       new NonCustomLocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule(),
-      new AuthenticationContextModules().getMasterModule());
+      new TransactionMetricsModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();

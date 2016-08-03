@@ -1777,7 +1777,7 @@
 
   <property>
     <name>security.store.provider</name>
-    <value>kms</value>
+    <value>none</value>
     <description>
       Backend provider for the secure store
     </description>

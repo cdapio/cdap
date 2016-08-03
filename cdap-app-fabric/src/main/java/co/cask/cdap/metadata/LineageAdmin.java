@@ -22,6 +22,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
+import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
@@ -64,15 +65,15 @@ public class LineageAdmin {
       }
     };
 
-  private final LineageStore lineageStore;
+  private final LineageStoreReader lineageStoreReader;
   private final Store store;
   private final MetadataStore metadataStore;
   private final EntityExistenceVerifier entityExistenceVerifier;
 
   @Inject
-  LineageAdmin(LineageStore lineageStore, Store store, MetadataStore metadataStore,
+  LineageAdmin(LineageStoreReader lineageStoreReader, Store store, MetadataStore metadataStore,
                EntityExistenceVerifier entityExistenceVerifier) {
-    this.lineageStore = lineageStore;
+    this.lineageStoreReader = lineageStoreReader;
     this.store = store;
     this.metadataStore = metadataStore;
     this.entityExistenceVerifier = entityExistenceVerifier;
@@ -112,7 +113,7 @@ public class LineageAdmin {
   public Set<MetadataRecord> getMetadataForRun(Id.Run run) throws NotFoundException {
     entityExistenceVerifier.ensureExists(run.toEntityId());
 
-    Set<Id.NamespacedId> runEntities = new HashSet<>(lineageStore.getEntitiesForRun(run));
+    Set<Id.NamespacedId> runEntities = new HashSet<>(lineageStoreReader.getEntitiesForRun(run));
     // No entities associated with the run, but run exists.
     if (runEntities.isEmpty()) {
       return ImmutableSet.of();
@@ -173,8 +174,9 @@ public class LineageAdmin {
           LOG.trace("Visiting program {}", p);
           visitedPrograms.add(p);
           // Fetch related datasets
-          Iterable<Relation> datasetRelations = lineageStore.getRelations(p, scanRange.getStart(), scanRange.getEnd(),
-                                                                          scanRange.getFilter());
+          Iterable<Relation> datasetRelations = lineageStoreReader.getRelations(p, scanRange.getStart(),
+                                                                                scanRange.getEnd(),
+                                                                                scanRange.getFilter());
           LOG.trace("Got data relations {}", datasetRelations);
           Iterables.addAll(relations, datasetRelations);
           Iterables.addAll(toVisitDatasets,
@@ -191,11 +193,11 @@ public class LineageAdmin {
   private Iterable<Relation> getProgramRelations(Id.NamespacedId data, long start, long end,
                                                  Predicate<Relation> filter) {
     if (data instanceof Id.DatasetInstance) {
-      return lineageStore.getRelations((Id.DatasetInstance) data, start, end, filter);
+      return lineageStoreReader.getRelations((Id.DatasetInstance) data, start, end, filter);
     }
 
     if (data instanceof Id.Stream) {
-      return lineageStore.getRelations((Id.Stream) data, start, end, filter);
+      return lineageStoreReader.getRelations((Id.Stream) data, start, end, filter);
     }
 
     throw new IllegalStateException("Unknown data type " + data);
@@ -241,7 +243,7 @@ public class LineageAdmin {
     private final long end;
     private final Predicate<Relation> filter;
 
-    public ScanRangeWithFilter(long start, long end, Predicate<Relation> filter) {
+    ScanRangeWithFilter(long start, long end, Predicate<Relation> filter) {
       this.start = start;
       this.end = end;
       this.filter = filter;

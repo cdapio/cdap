@@ -21,8 +21,8 @@
 # Stop SDK
 /etc/init.d/cdap-sdk stop
 
-# Remove conf, data, and logs directories
-rm -rf /opt/cdap/sdk/conf /opt/cdap/sdk/data /opt/cdap/sdk/logs
+# Remove data and logs directories
+rm -rf /opt/cdap/sdk/data /opt/cdap/sdk/logs
 
 # Make cdap own /opt/cdap
 chown -R cdap:cdap /opt/cdap

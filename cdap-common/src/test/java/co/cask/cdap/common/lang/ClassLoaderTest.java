@@ -41,6 +41,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 
 /**
  * Unit test for ClassLoader.
@@ -147,7 +148,7 @@ public class ClassLoaderTest {
 
     // Create a DirectoryClassLoader using guava dir as the main directory, with the gson dir in the extra classpath
     String extraClassPath = gsonDir.getAbsolutePath() + File.pathSeparatorChar + gsonDir.getAbsolutePath() + "/lib/*";
-    ClassLoader cl = new DirectoryClassLoader(guavaDir, extraClassPath, null, "lib");
+    ClassLoader cl = new DirectoryClassLoader(guavaDir, extraClassPath, null, Arrays.asList("lib"));
 
     // Should be able to load both guava and gson class from the class loader
     cl.loadClass(ImmutableList.class.getName());

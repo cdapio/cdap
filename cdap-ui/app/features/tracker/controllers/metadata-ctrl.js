@@ -213,6 +213,8 @@ class TrackerMetadataController {
     });
   }
 
+  /* TAGS CONTROL */
+
   fetchEntityTags() {
     let params = {
       namespace: this.$state.params.namespace,
@@ -285,6 +287,7 @@ class TrackerMetadataController {
   }
 
   addTag() {
+    this.invalidFormat = false;
     if (!this.newTag) {
       return;
     }
@@ -303,7 +306,9 @@ class TrackerMetadataController {
         this.newTag = '';
 
       }, (err) => {
-        console.log('Error', err);
+        if (err.statusCode === 500) {
+          this.invalidFormat = true;
+        }
       });
   }
 
@@ -331,12 +336,25 @@ class TrackerMetadataController {
 
   goToTag(event, tag) {
     event.stopPropagation();
-    this.$state.go('search.objectswithtags', {tag: tag});
+    this.$state.go('tracker.detail.result', {searchQuery: tag});
+  }
+
+  openTagInput(event) {
+    event.stopPropagation();
+    this.inputOpen = true;
+
+    this.eventFunction = () => {
+      this.escapeInput();
+    };
+    document.body.addEventListener('click', this.eventFunction, false);
   }
 
   escapeInput() {
     this.newTag = '';
+    this.invalidFormat = false;
     this.inputOpen = false;
+    document.body.removeEventListener('click', this.eventFunction, false);
+    this.eventFunction = null;
   }
 
 }

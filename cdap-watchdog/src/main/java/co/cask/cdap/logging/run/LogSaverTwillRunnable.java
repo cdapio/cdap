@@ -38,6 +38,7 @@ import co.cask.cdap.logging.save.KafkaLogSaverService;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -201,12 +202,14 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new LogSaverServiceModule(),
       new LoggingModules().getDistributedModules(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
         }
-      });
+      }
+    );
   }
 }
