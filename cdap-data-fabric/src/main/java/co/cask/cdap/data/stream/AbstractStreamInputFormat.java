@@ -28,6 +28,10 @@ import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
 import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -82,7 +86,7 @@ import javax.annotation.Nullable;
  * @param <K> Key type of input
  * @param <V> Value type of input
  */
-public class StreamInputFormat<K, V> extends InputFormat<K, V> {
+public abstract class AbstractStreamInputFormat<K, V> extends InputFormat<K, V> {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -103,6 +107,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   private static final String MIN_SPLIT_SIZE = "input.streaminputformat.min.splits.size";
   private static final String DECODER_TYPE = "input.streaminputformat.decoder.type";
   private static final String BODY_FORMAT = "input.streaminputformat.stream.body.format";
+  private static final String STREAM_ID = "input.streaminputformat.stream.id";
 
   /**
    * Sets the TTL for the stream events.
@@ -128,6 +133,16 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
 
     conf.setLong(EVENT_START_TIME, startTime);
     conf.setLong(EVENT_END_TIME, endTime);
+  }
+
+  /**
+   * Sets the stream id of the stream.
+   *
+   * @param conf The conf to modify.
+   * @param streamId {@link StreamId} id of the stream.
+   */
+  public static void setStreamId(Configuration conf, StreamId streamId) {
+    conf.set(STREAM_ID, GSON.toJson(streamId));
   }
 
   /**
@@ -193,7 +208,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   }
 
   /**
-   * Tries to set the {@link StreamInputFormat#DECODER_TYPE} depending upon the supplied value class
+   * Tries to set the {@link AbstractStreamInputFormat#DECODER_TYPE} depending upon the supplied value class
    *
    * @param conf   the conf to modify
    * @param vClass the value class Type
@@ -220,6 +235,16 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
                                          "StreamEventData if no decoder type is provided");
   }
 
+  /**
+   * Return {@link AuthorizationEnforcer} to enforce authorization permissions.
+   */
+  public abstract AuthorizationEnforcer getAuthorizationEnforcer(TaskAttemptContext context);
+
+  /**
+   * Return {@link AuthenticationContext} to determine the {@link Principal}.
+   */
+  public abstract AuthenticationContext getAuthenticationContext(TaskAttemptContext context);
+
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
@@ -228,7 +253,8 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     long startTime = Math.max(conf.getLong(EVENT_START_TIME, 0L), getCurrentTime() - ttl);
     long maxSplitSize = conf.getLong(MAX_SPLIT_SIZE, Long.MAX_VALUE);
     long minSplitSize = Math.min(conf.getLong(MIN_SPLIT_SIZE, 1L), maxSplitSize);
-    StreamInputSplitFinder<InputSplit> splitFinder = StreamInputSplitFinder.builder(URI.create(conf.get(STREAM_PATH)))
+    StreamInputSplitFinder<InputSplit> splitFinder = StreamInputSplitFinder
+      .builder(URI.create(conf.get(STREAM_PATH)))
       .setStartTime(startTime)
       .setEndTime(endTime)
       .setMinSplitSize(minSplitSize)
@@ -240,7 +266,10 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split,
                                                TaskAttemptContext context) throws IOException, InterruptedException {
-    return new StreamRecordReader<>(createStreamEventDecoder(context.getConfiguration()));
+    return new StreamRecordReader<>(createStreamEventDecoder(context.getConfiguration()),
+                                    getAuthorizationEnforcer(context),
+                                    getAuthenticationContext(context),
+                                    GSON.fromJson(context.getConfiguration().get(STREAM_ID), StreamId.class));
   }
 
   protected long getCurrentTime() {

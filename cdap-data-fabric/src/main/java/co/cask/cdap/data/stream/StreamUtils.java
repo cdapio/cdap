@@ -90,7 +90,7 @@ public final class StreamUtils {
    *
    * @param eventLocation Location to the event file.
    * @return The partition name.
-   * @see StreamInputFormat
+   * @see AbstractStreamInputFormat
    */
   public static String getPartitionName(Location eventLocation) {
     URI uri = eventLocation.toURI();
@@ -110,7 +110,7 @@ public final class StreamUtils {
    * Returns the name of the event bucket based on the file name.
    *
    * @param name Name of the file.
-   * @see StreamInputFormat
+   * @see AbstractStreamInputFormat
    */
   public static String getBucketName(String name) {
     // Strip off the file extension
@@ -123,7 +123,7 @@ public final class StreamUtils {
    *
    * @param name Name of the file.
    * @return The prefix part of the stream file.
-   * @see StreamInputFormat
+   * @see AbstractStreamInputFormat
    */
   public static String getNamePrefix(String name) {
     String bucketName = getBucketName(name);
@@ -137,7 +137,7 @@ public final class StreamUtils {
    *
    * @param name Name of the file.
    * @return The sequence number of the stream file.
-   * @see StreamInputFormat
+   * @see AbstractStreamInputFormat
    */
   public static int getSequenceId(String name) {
     String bucketName = getBucketName(name);
@@ -152,7 +152,7 @@ public final class StreamUtils {
    *
    * @return The partition start timestamp in milliseconds.
    *
-   * @see StreamInputFormat
+   * @see AbstractStreamInputFormat
    */
   public static long getPartitionStartTime(String partitionName) {
     int idx = partitionName.indexOf('.');
@@ -191,7 +191,7 @@ public final class StreamUtils {
    *
    * @return the partition end timestamp in milliseconds.
    *
-   * @see StreamInputFormat
+   * @see AbstractStreamInputFormat
    */
   public static long getPartitionEndTime(String partitionName) {
     int idx = partitionName.indexOf('.');
@@ -210,7 +210,7 @@ public final class StreamUtils {
    * @param generation generation id
    * @return Location for the given generation
    *
-   * @see StreamInputFormat
+   * @see AbstractStreamInputFormat
    */
   public static Location createGenerationLocation(Location streamBaseLocation, int generation) throws IOException {
     // 0 padding generation is just for sorted view in ls. Not carry any special meaning.
@@ -244,7 +244,7 @@ public final class StreamUtils {
    * @param type Type of the stream file.
    * @return The location of the stream file.
    *
-   * @see StreamInputFormat for naming convention.
+   * @see AbstractStreamInputFormat for naming convention.
    */
   public static Location createStreamLocation(Location partitionLocation, String prefix,
                                               int seqId, StreamFileType type) throws IOException {

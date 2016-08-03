@@ -35,6 +35,8 @@ import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -59,6 +61,8 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final StreamAdmin streamAdmin;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final LoggingContext loggingContext;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   SparkRuntimeContext(Configuration hConf, Program program, ProgramOptions programOptions,
                       TransactionSystemClient txClient,
@@ -69,7 +73,9 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       @Nullable WorkflowProgramInfo workflowProgramInfo,
                       @Nullable PluginInstantiator pluginInstantiator,
                       SecureStore secureStore,
-                      SecureStoreManager secureStoreManager) {
+                      SecureStoreManager secureStoreManager,
+                      AuthorizationEnforcer authorizationEnforcer,
+                      AuthenticationContext authenticationContext) {
     super(program, programOptions, Collections.<String>emptySet(), datasetFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
           pluginInstantiator);
@@ -79,6 +85,8 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.streamAdmin = streamAdmin;
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId().toEntityId(), getRunId(), workflowProgramInfo);
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
@@ -150,6 +158,20 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   StreamAdmin getStreamAdmin() {
     return streamAdmin;
+  }
+
+  /**
+   * Returns the {@link AuthorizationEnforcer} that can be used for this program.
+   */
+  public AuthorizationEnforcer getAuthorizationEnforcer() {
+    return authorizationEnforcer;
+  }
+
+  /**
+   * Returns the {@link AuthenticationContext} that can be used for this program.
+   */
+  public AuthenticationContext getAuthenticationContext() {
+    return authenticationContext;
   }
 
   @Override

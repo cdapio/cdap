@@ -34,7 +34,7 @@ import java.util.List;
  * TODO: support multiple time ranges instead of just a single start and end.
  *
  * @param <T> Type of input split to find. Expected to be either mapred.InputSplit or mapreduce.InputSplit.
- * @see StreamInputFormat for details on stream file layout.
+ * @see AbstractStreamInputFormat for details on stream file layout.
  */
 public class StreamInputSplitFinder<T> {
   private final long startTime;

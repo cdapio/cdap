@@ -18,11 +18,15 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -43,11 +47,18 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ArtifactManager;
+import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.FlowManager;
+import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.SparkManager;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
+import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.app.DummyApp;
+import co.cask.cdap.test.app.StreamAuthApp;
 import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -76,6 +87,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Unit tests with authorization enabled.
@@ -143,7 +155,7 @@ public class AuthorizationTest extends TestBase {
 
   @Before
   public void setupTest() throws Exception {
-    Assert.assertEquals(ImmutableSet.of(), getAuthorizer().listPrivileges(ALICE));
+    Assert.assertEquals(ImmutableSet.<Privilege>of(), getAuthorizer().listPrivileges(ALICE));
   }
 
   @Test
@@ -179,6 +191,277 @@ public class AuthorizationTest extends TestBase {
     );
     NamespaceMeta updated = new NamespaceMeta.Builder(AUTH_NAMESPACE_META).setDescription("new desc").build();
     namespaceAdmin.updateProperties(AUTH_NAMESPACE.toId(), updated);
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testFlowStreamAuth() throws Exception {
+    createAuthNamespace();
+    Authorizer authorizer = getAuthorizer();
+    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamAuthApp.class);
+    final FlowManager flowManager = appManager.getFlowManager(StreamAuthApp.FLOW);
+    StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
+    StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.toId(), StreamAuthApp.STREAM);
+    StreamManager streamManager2 = getStreamManager(AUTH_NAMESPACE.toId(), StreamAuthApp.STREAM2);
+    streamManager.send("Auth");
+    flowManager.start();
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> kvTable = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+        return kvTable.get().read("Auth") != null;
+      }
+    }, 5, TimeUnit.SECONDS);
+    flowManager.stop();
+    flowManager.waitForFinish(5, TimeUnit.SECONDS);
+
+    // Now revoke read permission for Alice on that stream (revoke ALL and then grant everything other than READ)
+    authorizer.revoke(streamId, ALICE, ImmutableSet.of(Action.ALL));
+    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
+    streamManager.send("Security");
+    streamManager2.send("Safety");
+    flowManager.start();
+    try {
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          DataSetManager<KeyValueTable> kvTable = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+          return kvTable.get().read("Security") != null;
+        }
+      }, 3, TimeUnit.SECONDS);
+      Assert.fail("'Security' StreamEvent should not have been processed.");
+    } catch (TimeoutException ex) {
+      // expected
+    }
+    // wait for the stream event from stream2 to which Alice has all access
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> kvTable = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+        return kvTable.get().read("Safety") != null;
+      }
+    }, 3, TimeUnit.SECONDS);
+    flowManager.stop();
+    flowManager.waitForFinish(5, TimeUnit.SECONDS);
+
+    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.READ));
+    flowManager.start();
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> kvTable = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+        return kvTable.get().read("Security") != null;
+      }
+    }, 5, TimeUnit.SECONDS);
+    flowManager.stop();
+    flowManager.waitForFinish(5, TimeUnit.SECONDS);
+    appManager.delete();
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testWorkerStreamAuth() throws Exception {
+    createAuthNamespace();
+    Authorizer authorizer = getAuthorizer();
+    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamAuthApp.class);
+    WorkerManager workerManager = appManager.getWorkerManager(StreamAuthApp.WORKER);
+    workerManager.start();
+    workerManager.waitForFinish(5, TimeUnit.SECONDS);
+    try {
+      workerManager.stop();
+    } catch (Exception e) {
+      // workaround since we want worker job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+    StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
+    StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.toId(), StreamAuthApp.STREAM);
+    Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
+
+    // Now revoke write permission for Alice on that stream (revoke ALL and then grant everything other than WRITE)
+    authorizer.revoke(streamId, ALICE, ImmutableSet.of(Action.ALL));
+    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.READ, Action.ADMIN, Action.EXECUTE));
+    workerManager.start();
+    workerManager.waitForFinish(5, TimeUnit.SECONDS);
+    try {
+      workerManager.stop();
+    } catch (Exception e) {
+      // workaround since we want worker job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+    // Give permissions back so that we can fetch the stream events
+    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.ALL));
+    Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
+    appManager.delete();
+    assertNoAccess(AUTH_NAMESPACE.app(StreamAuthApp.APP));
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testSparkStreamAuth() throws Exception {
+    createAuthNamespace();
+    Authorizer authorizer = getAuthorizer();
+    StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
+    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamAuthApp.class);
+    StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.toId(), StreamAuthApp.STREAM);
+    streamManager.send("Hello");
+    final SparkManager sparkManager = appManager.getSparkManager(StreamAuthApp.SPARK);
+    sparkManager.start();
+    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    try {
+      sparkManager.stop();
+    } catch (Exception e) {
+      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+    DataSetManager<KeyValueTable> kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+    try (KeyValueTable kvTable = kvManager.get()) {
+      byte[] value = kvTable.read("Hello");
+      Assert.assertArrayEquals(Bytes.toBytes("Hello"), value);
+    }
+
+    streamManager.send("World");
+    // Revoke READ permission on STREAM for Alice
+    authorizer.revoke(streamId, ALICE, ImmutableSet.of(Action.ALL));
+    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
+    sparkManager.start();
+    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    try {
+      sparkManager.stop();
+    } catch (Exception e) {
+      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return sparkManager.getHistory(ProgramRunStatus.FAILED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+    kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+    try (KeyValueTable kvTable = kvManager.get()) {
+      byte[] value = kvTable.read("World");
+      Assert.assertNull(value);
+    }
+
+    // Grant ALICE, READ permission on STREAM and now Spark job should run successfully
+    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.READ));
+    sparkManager.start();
+    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    try {
+      sparkManager.stop();
+    } catch (Exception e) {
+      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+
+    // so far there should be 2 successful runs of spark program
+    Tasks.waitFor(2, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return sparkManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+    kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+    try (KeyValueTable kvTable = kvManager.get()) {
+      byte[] value = kvTable.read("World");
+      Assert.assertArrayEquals(Bytes.toBytes("World"), value);
+    }
+    appManager.delete();
+    assertNoAccess(AUTH_NAMESPACE.app(StreamAuthApp.APP));
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testMRStreamAuth() throws Exception {
+    createAuthNamespace();
+    Authorizer authorizer = getAuthorizer();
+    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamAuthApp.class);
+    StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.toId(), StreamAuthApp.STREAM);
+    streamManager.send("Hello");
+    final MapReduceManager mrManager = appManager.getMapReduceManager(StreamAuthApp.MAPREDUCE);
+    mrManager.start();
+    mrManager.waitForFinish(1, TimeUnit.MINUTES);
+    try {
+      mrManager.stop();
+    } catch (Exception e) {
+      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+    DataSetManager<KeyValueTable> kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+    try (KeyValueTable kvTable = kvManager.get()) {
+      byte[] value = kvTable.read("Hello");
+      Assert.assertArrayEquals(Bytes.toBytes("Hello"), value);
+    }
+    // Since Alice had full permissions, she should be able to execute the MR job successfully
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return mrManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+
+    ProgramId mrId = AUTH_NAMESPACE.app(StreamAuthApp.APP).mr(StreamAuthApp.MAPREDUCE);
+    authorizer.grant(mrId.getNamespaceId(), BOB, ImmutableSet.of(Action.ALL));
+    ArtifactSummary artifactSummary = appManager.getInfo().getArtifact();
+
+    ArtifactId artifactId = AUTH_NAMESPACE.artifact(artifactSummary.getName(), artifactSummary.getVersion());
+    authorizer.grant(artifactId, BOB, ImmutableSet.of(Action.ALL));
+    authorizer.grant(mrId.getParent(), BOB, ImmutableSet.of(Action.ALL));
+    authorizer.grant(mrId, BOB, ImmutableSet.of(Action.ALL));
+    authorizer.grant(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), BOB, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE), BOB, ImmutableSet.of(Action.ALL));
+    streamManager.send("World");
+
+    // Switch user to Bob. Note that he doesn't have READ access on the stream.
+    SecurityRequestContext.setUserId(BOB.getName());
+    mrManager.start();
+    mrManager.waitForFinish(1, TimeUnit.MINUTES);
+    try {
+      mrManager.stop();
+    } catch (Exception e) {
+      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return mrManager.getHistory(ProgramRunStatus.FAILED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+    kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+    try (KeyValueTable kvTable = kvManager.get()) {
+      byte[] value = kvTable.read("World");
+      Assert.assertNull(value);
+    }
+
+    // Now grant Bob, READ access on the stream. MR job should execute successfully now.
+    authorizer.grant(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), BOB, ImmutableSet.of(Action.READ));
+    mrManager.start();
+    mrManager.waitForFinish(1, TimeUnit.MINUTES);
+    try {
+      mrManager.stop();
+    } catch (Exception e) {
+      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
+      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    }
+
+    Tasks.waitFor(2, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return mrManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+    kvManager = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
+    try (KeyValueTable kvTable = kvManager.get()) {
+      byte[] value = kvTable.read("World");
+      Assert.assertEquals("World", Bytes.toString(value));
+    }
+
+    SecurityRequestContext.setUserId(ALICE.getName());
+    appManager.delete();
+    assertNoAccess(AUTH_NAMESPACE.app(StreamAuthApp.APP));
   }
 
   @Test
@@ -402,10 +685,9 @@ public class AuthorizationTest extends TestBase {
     createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
     // artifact deployment in this namespace should now succeed, and alice should have ALL privileges on the artifacts
-    ArtifactId appArtifactId = new ArtifactId(AUTH_NAMESPACE.getNamespace(), appArtifactName, appArtifactVersion);
+    ArtifactId appArtifactId = AUTH_NAMESPACE.artifact(appArtifactName, appArtifactVersion);
     ArtifactManager appArtifactManager = addAppArtifact(appArtifactId, ConfigTestApp.class);
-    ArtifactId pluginArtifactId =
-      new ArtifactId(AUTH_NAMESPACE.getNamespace(), pluginArtifactName, pluginArtifactVersion);
+    ArtifactId pluginArtifactId = AUTH_NAMESPACE.artifact(pluginArtifactName, pluginArtifactVersion);
     ArtifactManager pluginArtifactManager = addPluginArtifact(pluginArtifactId, appArtifactId, ToStringPlugin.class);
     Assert.assertEquals(
       ImmutableSet.of(

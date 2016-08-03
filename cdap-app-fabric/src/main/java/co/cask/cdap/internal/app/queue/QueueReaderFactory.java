@@ -20,6 +20,8 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.queue.QueueReader;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 
@@ -36,7 +38,10 @@ public final class QueueReaderFactory {
   }
 
   public <T> QueueReader<T> createStreamReader(Supplier<StreamConsumer> consumerSupplier,
-                                               int batchSize, Function<StreamEvent, T> transformer) {
-    return new StreamQueueReader<>(consumerSupplier, batchSize, transformer);
+                                               int batchSize, Function<StreamEvent, T> transformer,
+                                               AuthenticationContext authenticationContext,
+                                               AuthorizationEnforcer authorizationEnforcer) {
+    return new StreamQueueReader<>(consumerSupplier, batchSize, transformer, authenticationContext,
+                                   authorizationEnforcer);
   }
 }

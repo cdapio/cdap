@@ -136,7 +136,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
 
   @Override
   protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-    // We Won't define the class with this ClassLoader for the following classes since they should
+    // We won't define the class with this ClassLoader for the following classes since they should
     // come from the parent ClassLoader
     // cdap-api-classes
     // Any class that is not from cdap-api-spark or cdap-spark-core

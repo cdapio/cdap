@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.data.stream.StreamInputFormat;
+import co.cask.cdap.data.stream.AbstractStreamInputFormat;
 import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
 import com.google.common.reflect.TypeToken;
@@ -41,24 +41,24 @@ public class StreamDecoderDetectionTest {
     Configuration hConf = new Configuration();
 
     hConf.setClass(Job.MAP_CLASS_ATTR, IdentityMapper.class, Mapper.class);
-    StreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(hConf, Void.class,
-                                                                                         getMapperTypeToken(hConf)));
-    Assert.assertSame(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
+    AbstractStreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(
+      hConf, Void.class, getMapperTypeToken(hConf)));
+    Assert.assertSame(IdentityStreamEventDecoder.class, AbstractStreamInputFormat.getDecoderClass(hConf));
 
     hConf.setClass(Job.MAP_CLASS_ATTR, NoTypeMapper.class, Mapper.class);
-    StreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(hConf, StreamEvent.class,
-                                                                                         getMapperTypeToken(hConf)));
-    Assert.assertSame(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
+    AbstractStreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(
+      hConf, StreamEvent.class, getMapperTypeToken(hConf)));
+    Assert.assertSame(IdentityStreamEventDecoder.class, AbstractStreamInputFormat.getDecoderClass(hConf));
 
     hConf.setClass(Job.MAP_CLASS_ATTR, TextMapper.class, Mapper.class);
-    StreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(hConf, Void.class,
-                                                                                         getMapperTypeToken(hConf)));
-    Assert.assertSame(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
+    AbstractStreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(
+      hConf, Void.class, getMapperTypeToken(hConf)));
+    Assert.assertSame(TextStreamEventDecoder.class, AbstractStreamInputFormat.getDecoderClass(hConf));
 
     try {
       hConf.setClass(Job.MAP_CLASS_ATTR, InvalidTypeMapper.class, Mapper.class);
-      StreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(hConf, Void.class,
-                                                                                           getMapperTypeToken(hConf)));
+      AbstractStreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(
+        hConf, Void.class, getMapperTypeToken(hConf)));
       Assert.fail("Expected Exception");
     } catch (IllegalArgumentException e) {
       // Expected
