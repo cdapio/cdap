@@ -22,5 +22,11 @@
     <value>false</value>
     <description>Determines if the CDAP Explore Service (ad-hoc SQL queries) is enabled</description>
   </property>
-
+  <property>
+    <name>security.store.provider</name>
+    <value>file</value>
+    <description>
+      Backend provider for the secure store
+    </description>
+  </property>
 </configuration>
