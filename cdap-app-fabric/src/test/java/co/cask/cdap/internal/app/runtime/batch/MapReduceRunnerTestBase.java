@@ -202,7 +202,7 @@ public class MapReduceRunnerTestBase {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     // MR tests can run for long time.
-    completion.await(5, TimeUnit.MINUTES);
+    completion.await(10, TimeUnit.MINUTES);
     return success.get();
   }
 }
