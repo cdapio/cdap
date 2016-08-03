@@ -138,10 +138,9 @@ class TrackerMetadataController {
     this.myTrackerApi.getDatasetDetail(datasetParams)
       .$promise
       .then( (res) => {
-        let datasetProperties = res.spec.properties;
+        this.externalDatasetProperties = res.spec.properties;
 
-        angular.extend(this.properties.user, datasetProperties);
-        if (Object.keys(this.properties.user).length > 0) {
+        if (Object.keys(this.externalDatasetProperties).length > 0) {
           this.activePropertyTab = 0;
           this.properties.isUserEmpty = false;
         }

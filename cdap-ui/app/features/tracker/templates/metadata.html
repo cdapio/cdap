@@ -164,6 +164,12 @@
            ng-if="MetadataController.activePropertyTab === 0">
         <table class="table table-bordered">
           <tbody>
+            <tr ng-repeat="(key, value) in MetadataController.externalDatasetProperties">
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+              <td></td>
+            </tr>
+
             <tr ng-repeat="(key, value) in MetadataController.properties.user">
               <td>{{ key }}</td>
               <td>{{ value }}</td>
@@ -188,7 +194,7 @@
                        placeholder="Value">
               </td>
               <td class="action text-center">
-                <button class="btn btn-default"
+                <button class="btn btn-default plus"
                         ng-click="MetadataController.addProperty()">
                   <i class="fa fa-plus"></i>
                 </button>
