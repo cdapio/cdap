@@ -54,6 +54,7 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -184,7 +185,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
 
     for (final Location location : locations) {
-      doDrop(StreamUtils.getStreamIdFromLocation(location), location, ugi);
+      doDrop(new StreamId(namespace.getId(), StreamUtils.getStreamNameFromLocation(location)).toId(), location, ugi);
     }
 
     // Also drop the state table
@@ -623,7 +624,8 @@ public class FileStreamAdmin implements StreamAdmin {
           if (configLocation == null) {
             return;
           }
-          alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false, null);
+          alterExploreStream(new StreamId(streamId.getNamespaceId(),
+                                          StreamUtils.getStreamNameFromLocation(streamLocation)).toId(), false, null);
 
           // Drop the associated views
           List<Id.Stream.View> views = viewAdmin.list(streamId);
