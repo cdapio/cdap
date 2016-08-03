@@ -268,41 +268,51 @@ function link (scope, element) {
 
   scope.updateSlider = updateSlider;
 
-  var generateEventCircles = function (){
-    let circleClass;
+  const generateEventCircles = () => {
+    timelineData = scope.metadata;
+    timelineStack = {};
+    let errorMap = {};
+    let warningMap = {};
+
+    //Subroutine
+    const mapEvents = (typeMap, data) => {
+      for(let k = 0; k < data.length; k++){
+        let currentItem = data[k];
+        let xVal = Math.floor(xScale(currentItem.time * 1000));
+        typeMap[xVal] = currentItem.value;
+        timelineStack[xVal] += currentItem.value;
+      }
+    };
 
     if(timelineData.qid.series.length > 0){
       for(let i = 0; i < timelineData.qid.series.length; i++){
-
         switch(timelineData.qid.series[i].metricName){
           case 'system.app.log.error':
-            circleClass = 'red-circle';
+            mapEvents(errorMap, timelineData.qid.series[i].data);
             break;
           case 'system.app.log.warn':
-            circleClass = 'yellow-circle';
+            mapEvents(warningMap, timelineData.qid.series[i].data);
             break;
           default:
-            circleClass = 'other-circle';
             break;
         }
+      }
+    }
 
-        for(let j = 0; j < timelineData.qid.series[i].data.length; j++){
-          let currentItem = timelineData.qid.series[i].data[j];
-          let xVal = Math.floor(xScale(currentItem.time));
-          let numEvents = currentItem.value;
+    for(var key in timelineStack) {
+      if(timelineStack.hasOwnProperty(key)){
+        let maxCount = 5;
 
-          if(timelineStack[xVal] === undefined) {
-            timelineStack[xVal] = 0;
+        if(errorMap[key] !== undefined){
+          for(let n = 0 ; n < errorMap[key] && maxCount > 0; n++, maxCount--){
+            //render
+            timescaleSvg.append('circle').attr('cx', key).attr('cy', (5 - maxCount)* 7).attr('class', 'red-circle');
           }
-
-          //plot events until vertical limit (5)
-          for(var k = 0; k < numEvents && timelineStack[xVal] < 5; k++){
-            timelineStack[xVal]++;
-
-            //Append the circle
-            if(currentItem){
-              timescaleSvg.append('circle').attr('cx', xScale(currentItem.time *1000)).attr('cy', (timelineStack[xVal])*7).attr('r', 2).attr('class', circleClass);
-            }
+        }
+        if(warningMap[key] !== undefined){
+          for(let m = 0 ; m < warningMap[key] && maxCount > 0; m++, maxCount--){
+            //render
+            timescaleSvg.append('circle').attr('cx', key).attr('cy', (5 - maxCount)* 7).attr('class', 'yellow-circle');
           }
         }
       }

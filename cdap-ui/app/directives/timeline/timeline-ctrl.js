@@ -32,13 +32,14 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 
   var apiSettings = {
     metric : {
-      context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.run.${this.runId}`,
+      context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.runid.${this.runId}`,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
       startTime : '',
       endTime : '',
       resolution: '1m'
     }
   };
+
   this.setDefaultTimeWindow = () => {
     apiSettings.metric.startTime = '';
     apiSettings.metric.endTime = '';
@@ -75,6 +76,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     this.setDefaultTimeWindow();
     return;
   }
+
   myLogsApi.getLogsMetadata({
     namespace : this.namespaceId,
     appId : this.appId,
@@ -83,6 +85,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     runId : this.runId,
   }).$promise.then(
     (res) => {
+      $scope.metadata = res;
       apiSettings.metric.startTime = res.start;
       apiSettings.metric.endTime = 'now';
       pollForMetadata();
