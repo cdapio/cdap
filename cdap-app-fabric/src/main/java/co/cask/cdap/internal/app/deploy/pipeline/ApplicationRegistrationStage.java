@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -91,6 +92,13 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
       if (inputDatasetName != null && inputDatasetName.startsWith(Constants.Stream.URL_PREFIX)) {
         StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDatasetName));
         usageRegistry.register(programId, namespaceId.stream(stream.getStreamName()).toId());
+      }
+    }
+
+    for (SparkSpecification sparkSpec : appSpec.getSpark().values()) {
+      Id.Program programId = appId.spark(sparkSpec.getName()).toId();
+      for (String dataset : sparkSpec.getDatasets()) {
+        usageRegistry.register(programId, namespaceId.dataset(dataset).toId());
       }
     }
 

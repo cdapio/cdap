@@ -174,12 +174,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       Spark spark;
       try {
         spark = new InstantiatorFactory(false).get(TypeToken.of(program.<Spark>getMainClass())).create();
-
-        // Fields injection
-        Reflections.visit(spark, spark.getClass(),
-                          new PropertyFieldSetter(spec.getProperties()),
-                          new DataSetFieldSetter(runtimeContext.getDatasetCache()),
-                          new MetricsFieldSetter(runtimeContext));
       } catch (Exception e) {
         LOG.error("Failed to instantiate Spark class for {}", spec.getClassName(), e);
         throw Throwables.propagate(e);

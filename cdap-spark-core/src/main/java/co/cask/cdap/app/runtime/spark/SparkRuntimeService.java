@@ -24,16 +24,20 @@ import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
+import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
+import co.cask.cdap.internal.lang.Reflections;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
@@ -135,7 +139,16 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     // additional spark job initialization at run-time
     // This context is for calling beforeSubmit and onFinish on the Spark program
-    // TODO: Refactor the ClientSparkContext class to reduce it's complexity
+
+    // Fields injection for the Spark program
+    // It has to be done in here instead of in SparkProgramRunner for the @UseDataset injection
+    // since the dataset cache being used in Spark is a MultiThreadDatasetCache
+    // The AbstractExecutionThreadService guarantees that startUp(), run() and shutDown() all happens in the same thread
+    Reflections.visit(spark, spark.getClass(),
+                      new PropertyFieldSetter(runtimeContext.getSparkSpecification().getProperties()),
+                      new DataSetFieldSetter(runtimeContext.getDatasetCache()),
+                      new MetricsFieldSetter(runtimeContext));
+
     BasicSparkClientContext context = new BasicSparkClientContext(runtimeContext);
     beforeSubmit(context);
 
@@ -304,7 +317,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           }
         });
         t.setDaemon(true);
-        t.setName(getServiceName());
+        t.setName("SparkRunner" + runtimeContext.getProgramName());
         t.start();
       }
     };
