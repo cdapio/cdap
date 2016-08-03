@@ -73,12 +73,12 @@ angular.module(PKG.name + '.services')
       'batchaggregator': pluginLabels['transform'],
       'realtimesink': pluginLabels['sink'],
       'realtimesource': pluginLabels['source'],
-      'sparksink': pluginLabels['transform'],
+      'sparksink': pluginLabels['sink'],
       'sparkcompute': pluginLabels['transform'],
       'batchjoiner': pluginLabels['transform'],
       'action': 'Action',
       'streamingsource': pluginLabels['source'],
-      'windower': pluginLabels['transform']
+      'windower': pluginLabels['sink']
     },
     pluginLabels: pluginLabels,
     // understand what plugin type is what.

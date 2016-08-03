@@ -33,17 +33,17 @@ if (!String.prototype.includes) {
   };
 }
 // 'assign' function of Object is not available in older version of chromium browsers.
-if (typeof Object.assign != 'function') {
+if (typeof Object.assign !== 'function') {
   Object.assign = function(target) {
     'use strict';
-    if (target == null) {
+    if (target === null) {
       throw new TypeError('Cannot convert undefined or null to object');
     }
 
     target = Object(target);
     for (var index = 1; index < arguments.length; index++) {
       var source = arguments[index];
-      if (source != null) {
+      if (source !== null) {
         for (var key in source) {
           if (Object.prototype.hasOwnProperty.call(source, key)) {
             target[key] = source[key];
