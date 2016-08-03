@@ -52,10 +52,8 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -77,9 +75,6 @@ public class ArtifactClientTestRun extends ClientTestBase {
       return new ByteArrayInputStream(new byte[]{});
     }
   };
-
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private ArtifactClient artifactClient;
 
@@ -185,7 +180,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
     // add 2 versions of an artifact with an application
     Id.Artifact myapp1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "1.0.0");
     Id.Artifact myapp2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "2.0.0");
-    LocalLocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
+    LocalLocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, "2.0.0");
     final Location appJarLoc = AppJarHelper.createDeploymentJar(locationFactory, MyApp.class, manifest);
