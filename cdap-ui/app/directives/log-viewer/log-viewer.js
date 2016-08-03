@@ -55,6 +55,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         break;
     }
   };
+  this.page = angular.element(window);
 
   this.setDefault = () => {
     this.textFile = null;
@@ -191,6 +192,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
 
     this.logStartTime = LogViewerStore.getState().startTime;
+
+    if(this.startTimeSec === Math.floor(this.logStartTime.getTime()/1000)){
+      return;
+    }
+
     if (typeof this.logStartTime !== 'object') {
       this.setDefault();
       return;
@@ -201,6 +207,32 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
     startTimeRequest();
   });
+
+  let proximityVal = Number.MAX_VALUE;
+  let newTime;
+
+  this.inViewScrollUpdate = (index, isInview, event) => {
+
+      if(isInview) {
+        let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
+        let pageScrollPosition = this.page[0].scrollY;
+        let rowTopVal = event.inViewTarget.offsetTop;
+        let adjustedVal = topOfTable + pageScrollPosition + rowTopVal;
+        let difference = adjustedVal - $scope.tableEl[0].offsetTop;
+
+        if(this.fullScreen){
+          difference-=70;
+        }
+
+        if(difference > 0 && (proximityVal > difference || proximityVal < 0)){
+          index++;
+          newTime = this.displayData[index].log.timestamp;
+          this.updateScrollPositionInStore(newTime);
+        }
+        proximityVal = difference;
+    }
+  };
+
 
   if (this.runId) {
     //Get Initial Status
@@ -523,10 +555,20 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         if(res.length === 0){
           this.renderData();
           getStatus();
+          if(!this.applicationIsRunning){
+            this.loading = false;
+            this.displayData = [];
+          }
           return;
         }
 
         this.renderData();
+        //Update the scroll needle to be positioned at the first element in the rendered data
+        if(this.displayData.length > 0){
+          this.updateScrollPositionInStore(this.displayData[0].log.timestamp);
+        }
+
+        this.cacheSize = res.length - this.cacheDecrement;
 
         if(res.length < this.viewLimit){
           getStatus();
@@ -658,6 +700,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   });
 }
 
+const link = (scope) => {
+  scope.tableEl = document.getElementsByClassName('logs-table');
+};
+
 angular.module(PKG.name + '.commons')
   .directive('myLogViewer', function () {
     return {
@@ -674,6 +720,7 @@ angular.module(PKG.name + '.commons')
         getDownloadFilename: '&',
         entityName: '@'
       },
+      link: link,
       bindToController: true
     };
   });

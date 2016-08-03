@@ -13,9 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
 <div class="log-viewer-container" ng-class="{'full-screen': LogViewer.fullScreen}">
-
   <!-- LOGS HEADERBAR -->
   <div class="logs-headerbar">
     <div class="log-stats-container">
@@ -83,7 +81,8 @@
   </my-timeline>
 
   <!-- LOGS TABLE -->
-  <div class="logs-table">
+  <div class="logs-table"
+       in-view-container>
     <table class="table table-bordered scroll scroll-table">
       <thead>
         <th class="time time-header log-header"
@@ -133,7 +132,9 @@
 
         <tr ng-class="{'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace, 'row-expanded' : !entry.stackTrace && entry.selected }"
             ng-repeat="entry in LogViewer.displayData track by $index"
-            ng-click="LogViewer.toggleStackTrace($index)">
+            ng-click="LogViewer.toggleStackTrace($index)"
+            in-view="LogViewer.inViewScrollUpdate($index, $inview, $event)"
+            in-view-options="{ debounce : 500}">
 
           <td class="time time-stack-trace"
               ng-if="!entry.stackTrace && entry.log.stackTrace.length > 0 && LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">

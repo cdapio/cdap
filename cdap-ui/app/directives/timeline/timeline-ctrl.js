@@ -20,6 +20,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   this.pinScrollPosition = 0;
   $scope.moment = moment;
   let screenSize;
+  $scope.pinScrollingPosition = 0;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -92,6 +93,10 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
+      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED') {
+        dataSrc.stopPoll(pollPromise.__pollId__);
+        pollPromise = null;
+      }
     }, (err) => {
       // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
       $scope.initialize();
@@ -107,9 +112,9 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     }
 
     this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
-
-    if($scope.updatePinScale !== undefined){
-      $scope.updatePinScale(this.pinScrollPosition);
+    if(typeof $scope.updatePin !== 'undefined'){
+      $scope.pinScrollingPosition = this.pinScrollPosition;
+      $scope.updatePin();
     }
 
     if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
@@ -134,8 +139,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   }).$promise.then(
     (res) => {
       $scope.metadata = res;
+      if(res.start === res.end){
+        res.end++;
+      }
       apiSettings.metric.startTime = res.start;
-      apiSettings.metric.endTime = 'now';
+      apiSettings.metric.endTime = res.end;
       $scope.renderSearchCircles([]);
       pollForMetadata();
     },
