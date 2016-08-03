@@ -15,11 +15,12 @@
 # the License.
 
 #
-# Install and configure fluxbox
+# Install and configure lxde
 #
 
 # Install
 apt-get install -y --no-install-recommends lxde
+apt-get install -y --no-install-recommends chromium-browser
 
 # Symlink idea
 ln -sf /opt/idea* /opt/idea || (echo "Unable to symlink IDEA" && exit 1)
