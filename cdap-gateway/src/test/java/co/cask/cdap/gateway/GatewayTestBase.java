@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -45,6 +44,8 @@ import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
+import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -174,6 +175,7 @@ public abstract class GatewayTestBase {
           bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
+          bind(PrivilegesManager.class).to(NoOpAuthorizer.class);
         }
       })
     );

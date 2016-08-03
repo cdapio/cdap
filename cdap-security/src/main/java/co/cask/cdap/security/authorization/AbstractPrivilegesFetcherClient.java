@@ -25,11 +25,9 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.common.http.HttpResponse;
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,9 +57,6 @@ abstract class AbstractPrivilegesFetcherClient extends RemoteOpsClient implement
     LOG.trace("Making list privileges request for principal {} to service {}", principal, privilegeFetcherServiceName);
     HttpResponse httpResponse = executeRequest("listPrivileges", principal);
     String responseBody = httpResponse.getResponseBodyAsString();
-    Preconditions.checkArgument(httpResponse.getResponseCode() == HttpResponseStatus.OK.getCode(),
-                                "Error listing privileges for %s: Code - %s; Message - %s", principal,
-                                httpResponse.getResponseCode(), responseBody);
     LOG.debug("List privileges response for principal {}: {} from service: {}",
               principal, responseBody, privilegeFetcherServiceName);
     return GSON.fromJson(responseBody, SET_PRIVILEGES_TYPE);

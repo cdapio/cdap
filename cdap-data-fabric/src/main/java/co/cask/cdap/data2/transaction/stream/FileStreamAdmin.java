@@ -56,10 +56,9 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -112,7 +111,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final ViewAdmin viewAdmin;
   private final MetadataStore metadataStore;
   private final Impersonator impersonator;
-  private final Authorizer authorizer;
+  private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
@@ -132,12 +131,13 @@ public class FileStreamAdmin implements StreamAdmin {
                          MetadataStore metadataStore,
                          ViewAdmin viewAdmin,
                          Impersonator impersonator,
-                         AuthorizerInstantiator authorizerInstantiator,
+                         PrivilegesManager privilegesManager,
                          AuthenticationContext authenticationContext,
                          AuthorizationEnforcer authorizationEnforcer) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
+    this.privilegesManager = privilegesManager;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
@@ -148,7 +148,6 @@ public class FileStreamAdmin implements StreamAdmin {
     this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
     this.impersonator = impersonator;
-    this.authorizer = authorizerInstantiator.get();
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
   }
@@ -388,10 +387,10 @@ public class FileStreamAdmin implements StreamAdmin {
     // User should have write access to the namespace
     ensureAccess(streamId.getNamespace().toEntityId(), Action.WRITE);
     // revoke privleges to make sure there is no orphaned privleges
-    authorizer.revoke(streamId.toEntityId());
+    privilegesManager.revoke(streamId.toEntityId());
     try {
       // Grant All access to the stream created to the User
-      authorizer.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
+      privilegesManager.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
       final UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
       final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
         @Override
@@ -449,7 +448,7 @@ public class FileStreamAdmin implements StreamAdmin {
       });
     } catch (Exception e) {
       // there was a problem creating the stream. so revoke privilege.
-      authorizer.revoke(streamId.toEntityId());
+      privilegesManager.revoke(streamId.toEntityId());
       throw e;
     }
   }
@@ -653,7 +652,7 @@ public class FileStreamAdmin implements StreamAdmin {
           streamMetaStore.removeStream(streamId);
           metadataStore.removeMetadata(streamId);
           // revoke all privileges on the stream
-          authorizer.revoke(streamId.toEntityId());
+          privilegesManager.revoke(streamId.toEntityId());
           publishAudit(streamId, AuditType.DELETE);
         } catch (Exception e) {
           throw Throwables.propagate(e);

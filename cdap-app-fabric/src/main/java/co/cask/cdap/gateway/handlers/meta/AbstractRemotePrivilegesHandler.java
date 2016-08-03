@@ -32,12 +32,12 @@ import java.util.Set;
 /**
  * An {@link AbstractRemoteSystemOpsHandler} for serving HTTP requests to list privileges of a user.
  */
-public class AbstractRemotePrivilegesFetcherHandler extends AbstractRemoteSystemOpsHandler {
+public class AbstractRemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesFetcherProxyHandler.class);
 
   private final PrivilegesFetcher privilegesFetcher;
 
-  protected AbstractRemotePrivilegesFetcherHandler(PrivilegesFetcher privilegesFetcher) {
+  protected AbstractRemotePrivilegesHandler(PrivilegesFetcher privilegesFetcher) {
     this.privilegesFetcher = privilegesFetcher;
   }
 

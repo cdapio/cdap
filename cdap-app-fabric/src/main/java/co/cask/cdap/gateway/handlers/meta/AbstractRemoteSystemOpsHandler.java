@@ -49,6 +49,12 @@ class AbstractRemoteSystemOpsHandler extends AbstractHttpHandler {
 
   @Nullable
   <T> T deserializeNext(Iterator<MethodArgument> arguments) throws ClassNotFoundException, BadRequestException {
+    return deserializeNext(arguments, null);
+  }
+
+    @Nullable
+  <T> T deserializeNext(Iterator<MethodArgument> arguments,
+                        @Nullable Type typeOfT) throws ClassNotFoundException, BadRequestException {
     if (!arguments.hasNext()) {
       throw new BadRequestException("Expected additional elements.");
     }
@@ -60,6 +66,9 @@ class AbstractRemoteSystemOpsHandler extends AbstractHttpHandler {
     JsonElement value = argument.getValue();
     if (value == null) {
       return null;
+    }
+    if (typeOfT != null) {
+      return GSON.fromJson(value, typeOfT);
     }
     return GSON.<T>fromJson(value, Class.forName(argument.getType()));
   }
