@@ -17,14 +17,23 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneTester;
+import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.common.http.HttpMethod;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.ResultSet;
 
 /**
  * Test for {@link IntegrationTestBase}.
@@ -71,5 +80,47 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     Assert.assertEquals(applicationManager.getFlowManager(TestFlow.NAME).getFlowletInstances(TestFlowlet.NAME),
                         testApplicationManager.getFlowManager(TestFlow.NAME).getFlowletInstances(TestFlowlet.NAME));
 
+  }
+
+  @Test
+  public void testSQLQuery() throws Exception {
+    Id.Namespace testSpace = Id.Namespace.DEFAULT;
+
+    getTestManager().deployDatasetModule(testSpace, "my-kv", AppUsingCustomModule.Module.class);
+
+    DatasetAdmin dsAdmin = getTestManager().addDatasetInstance(testSpace, "myKeyValueTable", "myTable");
+    Assert.assertTrue(dsAdmin.exists());
+
+    ApplicationManager appManager = deployApplication(testSpace, AppUsingCustomModule.class);
+    ServiceManager serviceManager = appManager.getServiceManager("MyService").start();
+    serviceManager.waitForStatus(true);
+
+    put(serviceManager, "a", "1");
+    put(serviceManager, "b", "2");
+    put(serviceManager, "c", "1");
+
+    try (
+      Connection connection = getTestManager().getQueryClient(testSpace);
+      // the value (character) "1" corresponds to the decimal 49. In hex, that is 31.
+      ResultSet results = connection.prepareStatement("select key from dataset_mytable where hex(value) = '31'")
+        .executeQuery()
+    ) {
+      // run a query over the dataset
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+    }
+
+    dsAdmin.drop();
+    Assert.assertFalse(dsAdmin.exists());
+  }
+
+  private void put(ServiceManager serviceManager, String key,
+                   String value) throws IOException, UnauthenticatedException {
+    URL url = new URL(serviceManager.getServiceURL(), key);
+    getRestClient().execute(HttpMethod.PUT, url, value,
+                            ImmutableMap.<String, String>of(), getClientConfig().getAccessToken());
   }
 }

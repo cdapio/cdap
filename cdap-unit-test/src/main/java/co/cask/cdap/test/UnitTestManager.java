@@ -238,9 +238,7 @@ public class UnitTestManager implements TestManager {
     if (exportPackages.length > 0) {
       manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
     }
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR);
-    addArtifact(artifactId, appJar);
-    return artifactManagerFactory.create(artifactId);
+    return addAppArtifact(artifactId, appClass, manifest);
   }
 
   @Override

@@ -42,6 +42,9 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
@@ -76,6 +79,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Transaction transaction;
   private final TaskLocalizationContext taskLocalizationContext;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
@@ -98,7 +103,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             @Nullable PluginInstantiator pluginInstantiator,
                             Map<String, File> localizedResources,
                             SecureStore secureStore,
-                            SecureStoreManager secureStoreManager) {
+                            SecureStoreManager secureStoreManager,
+                            AuthorizationEnforcer authorizationEnforcer,
+                            AuthenticationContext authenticationContext) {
     super(program, programOptions, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, pluginInstantiator);
@@ -106,7 +113,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.transaction = transaction;
     this.spec = spec;
     this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
-
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
     initializeTransactionAwares();
   }
 
@@ -254,6 +262,20 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     for (TransactionAware txAware : txAwares) {
       txAware.commitTx();
     }
+  }
+
+  /**
+   * Return {@link AuthorizationEnforcer} to enforce authorization checks in MR tasks.
+   */
+  public AuthorizationEnforcer getAuthorizationEnforcer() {
+    return authorizationEnforcer;
+  }
+
+  /**
+   * Return {@link AuthenticationContext} to determine the {@link Principal} for authorization check.
+   * */
+  public AuthenticationContext getAuthenticationContext() {
+    return authenticationContext;
   }
 
   @Override
