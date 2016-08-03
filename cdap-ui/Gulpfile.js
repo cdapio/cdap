@@ -242,7 +242,8 @@ function getEs6Directives(isNegate) {
     'my-pipeline-summary',
     'widget-container',
     'plugin-functions',
-    'my-link-button'
+    'my-link-button',
+    'group-side-panel'
   ];
 
   return es6directives.map(function (directive) {

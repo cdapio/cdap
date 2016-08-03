@@ -37,9 +37,15 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
     let joiner = pluginsMap.filter( p => { return p.name === 'Join'; });
     let action = pluginsMap.filter( p => { return p.name === 'Action'; });
 
-    orderedTypes.push(source[0]);
-    orderedTypes.push(transform[0]);
-    orderedTypes.push(sink[0]);
+    if (source.length) {
+      orderedTypes.push(source[0]);
+    }
+    if (transform.length) {
+      orderedTypes.push(transform[0]);
+    }
+    if (sink.length) {
+      orderedTypes.push(sink[0]);
+    }
     if (aggregator.length) {
       orderedTypes.push(aggregator[0]);
     }
