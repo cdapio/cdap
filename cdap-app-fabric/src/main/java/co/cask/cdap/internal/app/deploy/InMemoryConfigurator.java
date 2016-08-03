@@ -166,7 +166,8 @@ public final class InMemoryConfigurator implements Configurator {
               // Spark is not available, it is most likely caused by missing Spark in the platform
               throw new IllegalStateException(
                 "Missing Spark related class " + missingClass +
-                  ". It may be caused by unavailability of Spark in the platform.", t);
+                  ". It may be caused by unavailability of Spark. " +
+                  "Please verify environment variable " + SparkUtils.SPARK_HOME + " is set correctly", t);
             }
 
             // Spark is available, can be caused by incompatible Spark version
@@ -177,7 +178,7 @@ public final class InMemoryConfigurator implements Configurator {
 
           }
           // If Spark is available or the missing class is not a spark related class,
-          // then the missing class is most lifely due to some missing library in the artifact jar
+          // then the missing class is most likely due to some missing library in the artifact jar
           throw new InvalidArtifactException(
             "Missing class " + missingClass +
               ". It may be caused by missing dependency jar(s) in the artifact jar.", t);
