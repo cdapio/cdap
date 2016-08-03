@@ -39,6 +39,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.distributed.TransactionService;
 import co.cask.tephra.persist.TransactionStateStorage;
@@ -131,6 +132,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       new LoggingModules().getDistributedModules(),
       new AuditModule().getDistributedModules(),
       // needed by RemoteDatasetFramework while making an HTTP call to DatasetService
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule()
     );
   }

@@ -14,18 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package co.cask.cdap.data2.dataset2.customds;
 
 /**
- * A provider for for program classloading creation.
+ * A top level dataset class.
  */
-public interface ProgramClassLoaderProvider {
+public class TopLevelDataset extends TopLevelDirectDataset {
 
-  /**
-   * Creates a {@link ClassLoader} that will be used as the parent {@link ClassLoader} of
-   * {@link ProgramClassLoader}.
-   *
-   * @return an instance of {@link ClassLoader}
-   */
-  ClassLoader createProgramClassLoaderParent();
 }

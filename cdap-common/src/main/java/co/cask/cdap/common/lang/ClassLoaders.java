@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.lang;
 
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
 
 import java.net.URL;
@@ -100,5 +101,22 @@ public final class ClassLoaders {
       urls.addAll(Arrays.asList(((URLClassLoader) classLoader).getURLs()));
     }
     return urls;
+  }
+
+  /**
+   * Creates a {@link Function} that perform class name to class resource lookup.
+   *
+   * @param classLoader the {@link ClassLoader} to use for the resource lookup.
+   * @return the {@link URL} contains the class file or {@code null} if the resource is not found.
+   */
+  @Nullable
+  public static Function<String, URL> createClassResourceLookup(final ClassLoader classLoader) {
+    return new Function<String, URL>() {
+      @Nullable
+      @Override
+      public URL apply(String className) {
+        return classLoader.getResource(className.replace('.', '/') + ".class");
+      }
+    };
   }
 }

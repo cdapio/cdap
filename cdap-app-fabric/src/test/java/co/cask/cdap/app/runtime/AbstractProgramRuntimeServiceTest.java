@@ -83,7 +83,7 @@ public class AbstractProgramRuntimeServiceTest {
       @Override
       protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                       ProgramDescriptor programDescriptor,
-                                      Location programJarLocation, File tempDir) throws IOException {
+                                      ArtifactDetail artifactDetail, File tempDir) throws IOException {
         return program;
       }
 

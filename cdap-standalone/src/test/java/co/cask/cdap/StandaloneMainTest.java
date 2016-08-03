@@ -16,6 +16,8 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 
 /**
@@ -25,6 +27,6 @@ public class StandaloneMainTest {
 
   @Test
   public void testInjector() {
-    StandaloneMain.create();
+    StandaloneMain.create(CConfiguration.create(), new Configuration());
   }
 }

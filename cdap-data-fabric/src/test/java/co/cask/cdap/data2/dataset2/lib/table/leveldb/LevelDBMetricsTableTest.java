@@ -31,6 +31,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -54,6 +57,9 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
       new NonCustomLocationUnitTestModule().getModule(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),

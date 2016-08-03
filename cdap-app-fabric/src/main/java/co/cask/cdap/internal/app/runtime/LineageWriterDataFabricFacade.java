@@ -20,6 +20,10 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.ProgramContext;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
@@ -33,29 +37,54 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 import java.io.IOException;
 
 /**
  * Abstract base class for implementing DataFabricFacade.
  */
-public abstract class AbstractDataFabricFacade implements DataFabricFacade {
+public final class LineageWriterDataFabricFacade implements DataFabricFacade, ProgramContextAware {
 
   private final DynamicDatasetCache datasetCache;
   private final QueueClientFactory queueClientFactory;
   private final StreamConsumerFactory streamConsumerFactory;
   private final TransactionExecutorFactory txExecutorFactory;
   private final Id.Program programId;
+  private final LineageWriter lineageWriter;
+  private final ProgramContext programContext;
 
-  public AbstractDataFabricFacade(TransactionExecutorFactory txExecutorFactory,
-                                  QueueClientFactory queueClientFactory,
-                                  StreamConsumerFactory streamConsumerFactory,
-                                  Program program, DynamicDatasetCache datasetCache) {
+  @Inject
+  public LineageWriterDataFabricFacade(TransactionExecutorFactory txExecutorFactory,
+                                       QueueClientFactory queueClientFactory,
+                                       StreamConsumerFactory streamConsumerFactory,
+                                       LineageWriter lineageWriter,
+                                       @Assisted Program program,
+                                       @Assisted DynamicDatasetCache datasetCache) {
     this.queueClientFactory = queueClientFactory;
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
     this.datasetCache = datasetCache;
     this.programId = program.getId();
+    this.programContext = new ProgramContext();
+    this.lineageWriter = lineageWriter;
+  }
+
+  @Override
+  public void initContext(Id.Run run) {
+    programContext.initContext(run);
+    if (queueClientFactory instanceof ProgramContextAware) {
+      ((ProgramContextAware) queueClientFactory).initContext(run);
+    }
+  }
+
+  @Override
+  public void initContext(Id.Run run, Id.NamespacedId componentId) {
+    programContext.initContext(run, componentId);
+    if (queueClientFactory instanceof ProgramContextAware) {
+      ((ProgramContextAware) queueClientFactory).initContext(run, componentId);
+    }
   }
 
   @Override
@@ -105,11 +134,15 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
 
     datasetCache.addExtraTransactionAware(consumer);
 
+    if (programContext.getRun() != null) {
+      lineageWriter.addAccess(programContext.getRun(), streamName, AccessType.READ, programContext.getComponentId());
+    }
+
     return new ForwardingStreamConsumer(consumer) {
       @Override
       public void close() throws IOException {
         super.close();
-          datasetCache.removeExtraTransactionAware(consumer);
+        datasetCache.removeExtraTransactionAware(consumer);
       }
     };
   }

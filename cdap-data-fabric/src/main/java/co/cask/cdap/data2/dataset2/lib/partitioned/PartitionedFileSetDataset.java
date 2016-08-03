@@ -17,6 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
@@ -222,11 +225,13 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return partitioning;
   }
 
+  @WriteOnly
   @Override
   public void addPartition(PartitionKey key, String path) {
     addPartition(key, path, Collections.<String, String>emptyMap());
   }
 
+  @WriteOnly
   @Override
   public void addPartition(PartitionKey key, String path, Map<String, String> metadata) {
     addPartition(key, path, true, metadata);
@@ -272,13 +277,13 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     partitionsAddedInSameTx.put(path, key);
     operationsInThisTx.add(new PathOperation(path, PathOperation.OperationType.CREATE));
 
-
     if (explorable) {
       addPartitionToExplore(key, path);
       // TODO: make DDL operations transactional [CDAP-1393]
     }
   }
 
+  @ReadWrite
   @Override
   public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState) {
     return consumePartitions(partitionConsumerState, Integer.MAX_VALUE, new Predicate<PartitionDetail>() {
@@ -343,6 +348,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   //   2) A transaction ID from which to start scanning for new partitions. This is an exclusive end range that the
   //      previous call stopped scanning partitions at.
   //   Note that each of the transactions IDs in (1) will be smaller than the transactionId in (2).
+  @ReadWrite
   @Override
   public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState, int limit,
                                                    Predicate<PartitionDetail> predicate) {
@@ -406,11 +412,13 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return oldLongsSet;
   }
 
+  @WriteOnly
   @Override
   public void addMetadata(PartitionKey key, String metadataKey, String metadataValue) {
     addMetadata(key, ImmutableMap.of(metadataKey, metadataValue));
   }
 
+  @WriteOnly
   @Override
   public void addMetadata(PartitionKey key, Map<String, String> metadata) {
     final byte[] rowKey = generateRowKey(key, partitioning);
@@ -454,6 +462,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  @WriteOnly
   @Override
   public void dropPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
@@ -503,6 +512,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  @ReadOnly
   @Override
   public PartitionOutput getPartitionOutput(PartitionKey key) {
     if (isExternal) {
@@ -512,6 +522,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return new BasicPartitionOutput(this, getOutputPath(key), key);
   }
 
+  @ReadOnly
   @Override
   public PartitionDetail getPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
@@ -528,6 +539,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return new BasicPartitionDetail(this, Bytes.toString(pathBytes), key, metadataFromRow(row));
   }
 
+  @ReadOnly
   @Override
   public Set<PartitionDetail> getPartitions(@Nullable PartitionFilter filter) {
     final Set<PartitionDetail> partitionDetails = Sets.newHashSet();
@@ -784,7 +796,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   //------ private helpers below here --------------------------------------------------------------
-
   @VisibleForTesting
   static byte[] generateRowKey(PartitionKey key, Partitioning partitioning) {
     // validate partition key, convert values, and compute size of output

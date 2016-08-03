@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
@@ -93,6 +95,7 @@ public class PurchaseHistoryStore
     return Scannables.valueRecordScanner(store.createSplitReader(split));
   }
 
+  @WriteOnly
   @Override // BatchWritable
   public void write(String key, PurchaseHistory history) {
     store.write(key, history);
@@ -103,6 +106,7 @@ public class PurchaseHistoryStore
    *
    * @param history The purchase history to store.
    */
+  @WriteOnly
   public void write(PurchaseHistory history) {
     store.write(history.getCustomer(), history);
   }
@@ -111,6 +115,7 @@ public class PurchaseHistoryStore
    * @param customer the customer in question
    * @return the purchase history of the given customer
    */
+  @ReadOnly
   public PurchaseHistory read(String customer) {
     return store.read(customer);
   }

@@ -23,6 +23,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.ServiceBindException;
+import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -396,8 +397,24 @@ public class StandaloneMain {
     }
   }
 
-  public static void main(String[] args) {
-    StandaloneMain main = create();
+  public static void main(String[] args) throws Exception {
+    ClassLoader classLoader = MainClassLoader.createFromContext();
+    if (classLoader == null) {
+      LOG.warn("Failed to create CDAP system ClassLoader. Lineage record and Audit Log will not be updated.");
+      doMain(args);
+    } else {
+      Thread.currentThread().setContextClassLoader(classLoader);
+      Class<?> cls = classLoader.loadClass(StandaloneMain.class.getName());
+      cls.getDeclaredMethod("doMain", String[].class).invoke(null, new Object[]{args});
+    }
+  }
+
+  /**
+   * The actual main method. It is called using reflection from {@link #main(String[])}.
+   */
+  @SuppressWarnings("unused")
+  public static void doMain(String[] args) {
+    StandaloneMain main = create(CConfiguration.create(), new Configuration());
     try {
       if (args.length > 0) {
         System.out.printf("%s takes no arguments\n", StandaloneMain.class.getSimpleName());
@@ -423,14 +440,6 @@ public class StandaloneMain {
       main.stopExternalProcesses();
       Runtime.getRuntime().halt(-2);
     }
-  }
-
-  /**
-   * The root of all goodness!
-   */
-  @VisibleForTesting
-  static StandaloneMain create() {
-    return create(CConfiguration.create(), new Configuration());
   }
 
   @VisibleForTesting

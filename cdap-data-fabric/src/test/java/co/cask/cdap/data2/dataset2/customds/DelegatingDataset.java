@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.customds;
+package co.cask.cdap.data2.dataset2.customds;
 
 import co.cask.cdap.api.dataset.Dataset;
 
@@ -23,7 +23,38 @@ import java.io.IOException;
 /**
  *
  */
-public class TopLevelDirectDataset implements Dataset {
+public class DelegatingDataset implements Dataset, CustomOperations {
+
+  private final CustomOperations delegate;
+
+  public DelegatingDataset(CustomOperations delegate) {
+    this.delegate = delegate;
+  }
+
+  @Override
+  public void read() {
+    delegate.read();
+  }
+
+  @Override
+  public void write() {
+    delegate.write();
+  }
+
+  @Override
+  public void readWrite() {
+    delegate.readWrite();
+  }
+
+  @Override
+  public void lineageWriteActualReadWrite() {
+    delegate.lineageWriteActualReadWrite();
+  }
+
+  @Override
+  public void noDataOp() {
+    delegate.noDataOp();
+  }
 
   @Override
   public void close() throws IOException {

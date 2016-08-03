@@ -35,6 +35,8 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -107,7 +109,9 @@ public class TransactionServiceTest {
             bind(MetadataStore.class).to(NoOpMetadataStore.class);
           }
         }),
-        new AuthenticationContextModules().getMasterModule()
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule()
       );
 
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
@@ -220,7 +224,10 @@ public class TransactionServiceTest {
                            },
                            new DataFabricModules().getDistributedModules(),
                            new SystemDatasetRuntimeModule().getInMemoryModules(),
-                           new DataSetsModules().getInMemoryModules());
+                           new DataSetsModules().getInMemoryModules(),
+                           new AuthorizationTestModule(),
+                           new AuthorizationEnforcementModule().getInMemoryModules(),
+                           new AuthenticationContextModules().getNoOpModule());
     injector.getInstance(ZKClientService.class).startAndWait();
 
     return injector.getInstance(TransactionService.class);

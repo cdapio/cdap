@@ -17,6 +17,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
@@ -31,6 +32,7 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -58,7 +60,7 @@ import java.util.concurrent.Callable;
 /**
  * Factory for creating HBase queue producer and consumer instances.
  */
-public class HBaseQueueClientFactory implements QueueClientFactory {
+public class HBaseQueueClientFactory implements QueueClientFactory, ProgramContextAware {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueClientFactory.class);
 
@@ -81,6 +83,16 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
     this.queueUtil = new HBaseQueueUtilFactory().get();
     this.hBaseTableUtil = hBaseTableUtil;
     this.txExecutorFactory = txExecutorFactory;
+  }
+
+  @Override
+  public void initContext(Id.Run run) {
+    queueAdmin.initContext(run);
+  }
+
+  @Override
+  public void initContext(Id.Run run, Id.NamespacedId componentId) {
+    queueAdmin.initContext(run, componentId);
   }
 
   @Override

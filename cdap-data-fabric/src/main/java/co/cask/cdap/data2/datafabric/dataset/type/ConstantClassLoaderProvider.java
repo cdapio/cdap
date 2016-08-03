@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.datafabric.dataset.type;
 
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import com.google.common.base.Objects;
 
@@ -26,7 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Simply returns the same {@link ClassLoader} for every dataset module. The assumption is that the
  * classloader has access to any dataset module that may be created.
- * This is true for a {@link ProgramClassLoader} for example. Closing the given classloader is left to the caller.
+ * This is true for a Program {@link ClassLoader} for example. Closing the given classloader is left to the caller.
  * It will not be closed when this class is closed.
  */
 public class ConstantClassLoaderProvider implements DatasetClassLoaderProvider {
@@ -51,7 +50,7 @@ public class ConstantClassLoaderProvider implements DatasetClassLoaderProvider {
   public void close() throws IOException {
     // no-op
     // closing the given classloader is left to the caller instead of this class
-    // consider the case when a ProgramClassLoader is being used, and this provider is used to instantiate
+    // consider the case when a Program ClassLoader is being used, and this provider is used to instantiate
     // a dataset. Even though this provider can be closed, the program may not be finished and may still need
     // the classloader to load new classes later on.
   }

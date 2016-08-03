@@ -17,8 +17,8 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Property;
+import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
@@ -212,6 +212,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
    *        NOTE: using tags returns entries containing all tags that were providing during writing
    * @return an iterator over entries that satisfy provided conditions
    */
+  @ReadOnly
   final Iterator<Entry> readInternal(byte[] key, long startTime, long endTime, byte[]... tags) {
     // validating params
     if (startTime > endTime) {
@@ -395,7 +396,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
      * @param timestamp timestamp of the entry
      * @param tags optional list of tags associated with the entry
      */
-    public Entry(final byte[] key, final byte[] value, final long timestamp, final byte[]... tags) {
+    Entry(final byte[] key, final byte[] value, final long timestamp, final byte[]... tags) {
       this.key = key;
       this.value = value;
       this.timestamp = timestamp;

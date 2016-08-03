@@ -17,15 +17,18 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
+
+import java.util.Set;
 
 /**
  * A module that contains bindings for {@link AuthorizationEnforcementService} and {@link PrivilegesFetcher}.
@@ -45,7 +48,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
           .in(Scopes.SINGLETON);
         // bind AuthorizationEnforcer to AuthorizationEnforcementService
         bind(AuthorizationEnforcer.class).to(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
-        bind(PrivilegesFetcher.class).toProvider(AuthorizerAsPrivilegesFetcherProvider.class).in(Scopes.SINGLETON);
+        bind(PrivilegesFetcher.class).to(AuthorizerAsPrivilegesFetcher.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -111,7 +114,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
         bind(AuthorizationEnforcer.class).to(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
 
         // Master should have access to authorization backends, so no need to fetch privileges remotely
-        bind(PrivilegesFetcher.class).toProvider(AuthorizerAsPrivilegesFetcherProvider.class);
+        bind(PrivilegesFetcher.class).to(AuthorizerAsPrivilegesFetcher.class);
 
         // Master is expected to have (kerberos) credentials to communicate with authorization backends. Hence, it
         // doesn't need to start a proxy to fetch privileges from authorization backends, so no need to bind
@@ -161,17 +164,17 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
   /**
    * Provides {@link Authorizer} as the binding for {@link PrivilegesFetcher}.
    */
-  private static class AuthorizerAsPrivilegesFetcherProvider implements Provider<PrivilegesFetcher> {
+  private static class AuthorizerAsPrivilegesFetcher implements PrivilegesFetcher {
     private final AuthorizerInstantiator authorizerInstantiator;
 
     @Inject
-    private AuthorizerAsPrivilegesFetcherProvider(AuthorizerInstantiator authorizerInstantiator) {
+    private AuthorizerAsPrivilegesFetcher(AuthorizerInstantiator authorizerInstantiator) {
       this.authorizerInstantiator = authorizerInstantiator;
     }
 
     @Override
-    public PrivilegesFetcher get() {
-      return authorizerInstantiator.get();
+    public Set<Privilege> listPrivileges(Principal principal) throws Exception {
+      return authorizerInstantiator.get().listPrivileges(principal);
     }
   }
 }

@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.lineage;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -30,7 +29,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 import java.io.IOException;
 import java.util.List;
@@ -40,7 +38,7 @@ import javax.annotation.Nullable;
 /**
  * Store for storing/retrieving lineage information for a Dataset.
  */
-public class LineageStore {
+public class LineageStore implements LineageStoreReader, LineageStoreWriter {
   private static final Id.DatasetInstance LINEAGE_DATASET_ID = Id.DatasetInstance.from(Id.Namespace.SYSTEM, "lineage");
 
   private final TransactionExecutorFactory executorFactory;
@@ -48,8 +46,7 @@ public class LineageStore {
   private final Id.DatasetInstance lineageDatasetId;
 
   @Inject
-  public LineageStore(TransactionExecutorFactory executorFactory,
-                      @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework) {
+  public LineageStore(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework) {
     this(executorFactory, datasetFramework, LINEAGE_DATASET_ID);
   }
 
@@ -69,6 +66,7 @@ public class LineageStore {
    * @param accessType access type
    * @param accessTimeMillis time of access
    */
+  @Override
   public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
                         long accessTimeMillis) {
     addAccess(run, datasetInstance, accessType, accessTimeMillis, null);
@@ -83,6 +81,7 @@ public class LineageStore {
    * @param accessTimeMillis time of access
    * @param component program component such as flowlet id, etc.
    */
+  @Override
   public void addAccess(final Id.Run run, final Id.DatasetInstance datasetInstance,
                         final AccessType accessType, final long accessTimeMillis,
                         @Nullable final Id.NamespacedId component) {
@@ -102,6 +101,7 @@ public class LineageStore {
    * @param accessType access type
    * @param accessTimeMillis time of access
    */
+  @Override
   public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, long accessTimeMillis) {
     addAccess(run, stream, accessType, accessTimeMillis, null);
   }
@@ -115,6 +115,7 @@ public class LineageStore {
    * @param accessTimeMillis time of access
    * @param component program component such as flowlet id, etc.
    */
+  @Override
   public void addAccess(final Id.Run run, final Id.Stream stream,
                         final AccessType accessType, final long accessTimeMillis,
                         @Nullable final Id.NamespacedId component) {
@@ -129,6 +130,7 @@ public class LineageStore {
   /**
    * @return a set of entities (program and data it accesses) associated with a program run.
    */
+  @Override
   public Set<Id.NamespacedId> getEntitiesForRun(final Id.Run run) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Id.NamespacedId>>() {
       @Override
@@ -147,6 +149,7 @@ public class LineageStore {
    * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
+  @Override
   public Set<Relation> getRelations(final Id.DatasetInstance datasetInstance, final long start, final long end,
                                     final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
@@ -166,6 +169,7 @@ public class LineageStore {
    * @param filter filter to be applied on result set
    * @return program-stream access information
    */
+  @Override
   public Set<Relation> getRelations(final Id.Stream stream, final long start, final long end,
                                     final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
@@ -185,6 +189,7 @@ public class LineageStore {
    * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
+  @Override
   public Set<Relation> getRelations(final Id.Program program, final long start, final long end,
                                     final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {

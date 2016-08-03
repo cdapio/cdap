@@ -35,6 +35,9 @@ import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Function;
@@ -95,6 +98,9 @@ public class LogCleanupTest {
       new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getNoOpModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
