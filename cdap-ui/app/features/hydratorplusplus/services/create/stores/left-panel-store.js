@@ -69,7 +69,7 @@ const getPluginsWithAddedInfo = (plugins = [], pluginToArtifactArrayMap = {}, ex
   if ([plugins.length, extension.length].indexOf(0) !== -1) {
     return plugins;
   }
-  const getExtaProperties = (plugin = {}, extension = '') => {
+  const getExtraProperties = (plugin = {}, extension = '') => {
     return Object.assign({}, {
       type: extension,
       icon: _DAGPlusPlusFactory.getIcon(plugin.name || plugin.pluginName),
@@ -85,7 +85,7 @@ const getPluginsWithAddedInfo = (plugins = [], pluginToArtifactArrayMap = {}, ex
       return [];
     }
     return [..._pluginArtifacts]
-           .map( plug => Object.assign({}, plug, getExtaProperties(plug, extension)));
+           .map( plug => Object.assign({}, plug, getExtraProperties(plug, extension)));
   };
   const getArtifact = (_pluginToArtifactArrayMap = {}, plugin = {}) => {
     if(!Object.keys(plugin).length) { return {}; }
@@ -93,7 +93,7 @@ const getPluginsWithAddedInfo = (plugins = [], pluginToArtifactArrayMap = {}, ex
   };
   return Object.keys(pluginToArtifactArrayMap).map( pluginName => {
     let plugin = pluginToArtifactArrayMap[pluginName][0];
-    return Object.assign({}, plugin, getExtaProperties(plugin, extension), {
+    return Object.assign({}, plugin, getExtraProperties(plugin, extension), {
       artifact: getArtifact(pluginToArtifactArrayMap, plugin),
       allArtifacts: getAllArtifacts(pluginToArtifactArrayMap, plugin, extension)
     });

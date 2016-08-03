@@ -59,7 +59,7 @@
                content-data="plugin"
                data-popover-context="MySidePanel"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
-            <span ng-if="::plugin.icon" class="text-center fa {{::plugin.icon}}"></span>
+            <span ng-if="::plugin.icon" class="text-center fa {{plugin.icon}}"></span>
             <span class="name">{{ plugin.name }}</span>
             <span class="plugin-badge">T</span>
           </div>
@@ -70,7 +70,7 @@
                ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText} | orderBy: 'pluginTemplate || name') track by $index"
                class="plugin-item {{plugin.nodeClass}}"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
-            <span ng-if="::plugin.icon" class="text-center fa {{::plugin.icon}}"></span>
+            <span ng-if="::plugin.icon" class="text-center fa {{plugin.icon}}"></span>
             <span class="name"
                   my-popover
                   data-placement="right"
