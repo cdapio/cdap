@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminService;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -151,7 +152,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
       // For non-system dataset, always perform authorization and lineage.
       AuthorizationEnforcer enforcer;
       DefaultDatasetRuntimeContext.DatasetAccessRecorder accessRecorder;
-      if (Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace())) {
+      if (!DatasetAdminService.isUserDataset(datasetInstanceId)) {
         enforcer = SYSTEM_NAMESPACE_ENFORCER;
         accessRecorder = SYSTEM_NAMESPACE_ACCESS_RECORDER;
       } else {
