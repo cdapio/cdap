@@ -16,10 +16,9 @@
 
 package co.cask.cdap.explore.service.hive;
 
-import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.common.security.ImpersonationUtils;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import org.slf4j.Logger;
@@ -36,13 +35,10 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
 
   private final BaseHiveExploreService exploreService;
   private final ExecutorService executorService;
-  private final Impersonator impersonator;
 
-  public ActiveOperationRemovalHandler(BaseHiveExploreService exploreService, ExecutorService executorService,
-                                       Impersonator impersonator) {
+  public ActiveOperationRemovalHandler(BaseHiveExploreService exploreService, ExecutorService executorService) {
     this.exploreService = exploreService;
     this.executorService = executorService;
-    this.impersonator = impersonator;
   }
 
   @Override
@@ -63,8 +59,7 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
     @Override
     public void run() {
       try {
-        // TODO: use namespace, instead of hive db
-        impersonator.doAs(new NamespaceId(opInfo.getHiveDatabase()), new Callable<Void>() {
+        ImpersonationUtils.doAs(opInfo.getUGI(), new Callable<Void>() {
           @Override
           public Void call() throws Exception {
             try {

@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.security.ImpersonationUtils;
 import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
@@ -58,20 +59,17 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
 
   private final ExploreService exploreService;
-  private final Impersonator impersonator;
 
   @Inject
-  QueryExecutorHttpHandler(ExploreService exploreService, Impersonator impersonator) {
+  QueryExecutorHttpHandler(ExploreService exploreService) {
     this.exploreService = exploreService;
-    this.impersonator = impersonator;
   }
 
   private <T> T doAs(QueryHandle queryHandle,
                      Callable<T> callable) throws HandleNotFoundException, ExploreException, SQLException {
     OperationInfo operationInfo = exploreService.getOperationInfo(queryHandle);
     try {
-//      TODO: use namespace, instead of hive db
-      return impersonator.doAs(new NamespaceId(operationInfo.getHiveDatabase()), callable);
+      return ImpersonationUtils.doAs(operationInfo.getUGI(), callable);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, HandleNotFoundException.class);
       Throwables.propagateIfInstanceOf(e, SQLException.class);

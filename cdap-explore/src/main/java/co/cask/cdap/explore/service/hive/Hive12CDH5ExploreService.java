@@ -70,11 +70,10 @@ public class Hive12CDH5ExploreService extends BaseHiveExploreService {
                                      SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                                      AuthorizationEnforcementService authorizationEnforcementService,
                                      AuthorizationEnforcer authorizationEnforcer,
-                                     AuthenticationContext authenticationContext,
-                                     Impersonator impersonator) {
+                                     AuthenticationContext authenticationContext) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir, credentialsDir, streamAdmin, namespaceQueryAdmin,
           datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer,
-          authenticationContext, impersonator);
+          authenticationContext);
   }
 
   @Override
