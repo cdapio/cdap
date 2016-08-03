@@ -1469,6 +1469,7 @@
             </includes>
             <excludes>
               <exclude>**/*TestRun.java</exclude>
+              <exclude>**/*TestBase.java</exclude>
             </excludes>
           </configuration>
           <dependencies>

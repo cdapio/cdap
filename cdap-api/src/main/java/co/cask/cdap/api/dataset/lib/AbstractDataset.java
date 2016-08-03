@@ -62,7 +62,6 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
   }
 
   // metering stuff
-
   @Override
   public void setMetricsCollector(MetricsCollector metricsCollector) {
     for (Dataset dataset : underlying) {
@@ -73,7 +72,6 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
   }
 
   // transaction stuff
-
   @Override
   public void startTx(Transaction tx) {
     txAwares.startTx(tx);

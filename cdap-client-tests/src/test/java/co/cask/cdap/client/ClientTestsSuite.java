@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.test.TestSuite;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -26,7 +27,7 @@ import org.junit.runners.Suite;
  * Test suite for all client tests.
  */
 @Category(XSlowTests.class)
-@RunWith(Suite.class)
+@RunWith(TestSuite.class)
 @Suite.SuiteClasses({
   ApplicationClientTestRun.class,
   ArtifactClientTestRun.class,

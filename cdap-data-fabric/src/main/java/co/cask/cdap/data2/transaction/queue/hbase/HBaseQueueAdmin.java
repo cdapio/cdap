@@ -27,6 +27,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
@@ -72,7 +73,7 @@ import java.util.Set;
  * admin for queues in hbase.
  */
 @Singleton
-public class HBaseQueueAdmin extends AbstractQueueAdmin {
+public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContextAware {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueAdmin.class);
 
@@ -117,6 +118,20 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     this.txExecutorFactory = txExecutorFactory;
     this.datasetFramework = datasetFramework;
     this.type = type;
+  }
+
+  @Override
+  public void initContext(Id.Run run) {
+    if (datasetFramework instanceof ProgramContextAware) {
+      ((ProgramContextAware) datasetFramework).initContext(run);
+    }
+  }
+
+  @Override
+  public void initContext(Id.Run run, Id.NamespacedId componentId) {
+    if (datasetFramework instanceof ProgramContextAware) {
+      ((ProgramContextAware) datasetFramework).initContext(run, componentId);
+    }
   }
 
   public static String getConfigTableName() {

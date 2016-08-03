@@ -38,6 +38,9 @@ import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.base.Function;
@@ -78,6 +81,9 @@ public class MetadataStoreTest {
   public static final KafkaTester KAFKA_TESTER = new KafkaTester(
     ImmutableMap.of(Constants.Metadata.UPDATES_PUBLISH_ENABLED, "true"),
     ImmutableList.of(
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       Modules.override(
         new DataSetsModules().getInMemoryModules()).with(new AbstractModule() {
         @Override

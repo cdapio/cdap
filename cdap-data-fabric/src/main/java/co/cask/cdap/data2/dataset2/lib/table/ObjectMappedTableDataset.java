@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
@@ -106,11 +108,13 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
     return null;
   }
 
+  @WriteOnly
   @Override
   public void write(String key, T object) {
     write(Bytes.toBytes(key), object);
   }
 
+  @WriteOnly
   @Override
   public void write(byte[] key, T object) {
     Put put = new Put(key);
@@ -123,31 +127,37 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
     }
   }
 
+  @ReadOnly
   @Override
   public T read(String key) {
     return read(Bytes.toBytes(key));
   }
 
+  @ReadOnly
   @Override
   public T read(byte[] key) {
     return readRow(table.get(key));
   }
 
+  @ReadOnly
   @Override
   public CloseableIterator<KeyValue<byte[], T>> scan(@Nullable String startRow, @Nullable String stopRow) {
     return scan(startRow == null ? null : Bytes.toBytes(startRow), stopRow == null ? null : Bytes.toBytes(stopRow));
   }
 
+  @ReadOnly
   @Override
   public CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
     return new ObjectIterator(table.scan(startRow, stopRow));
   }
 
+  @WriteOnly
   @Override
   public void delete(String key) {
     delete(Bytes.toBytes(key));
   }
 
+  @WriteOnly
   @Override
   public void delete(byte[] key) {
     table.delete(key);
@@ -168,11 +178,13 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
     return table.getSplits(numSplits, start, stop);
   }
 
+  @ReadOnly
   @Override
   public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
     return table.createSplitRecordScanner(split);
   }
 
+  @ReadOnly
   @Override
   public SplitReader<byte[], T> createSplitReader(Split split) {
     return new ObjectSplitReader(table.createSplitReader(split));
@@ -213,7 +225,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
     // the underlying Table's split reader
     private SplitReader<byte[], Row> reader;
 
-    public ObjectSplitReader(SplitReader<byte[], Row> reader) {
+    ObjectSplitReader(SplitReader<byte[], Row> reader) {
       this.reader = reader;
     }
 

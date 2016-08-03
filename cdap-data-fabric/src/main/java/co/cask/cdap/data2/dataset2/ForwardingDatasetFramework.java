@@ -145,27 +145,9 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   @Nullable
   @Override
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader, @Nullable Iterable<? extends Id> owners)
-    throws DatasetManagementException, IOException {
-    return delegate.getDataset(datasetInstanceId, arguments, classLoader, owners);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
     return delegate.getDataset(datasetInstanceId, arguments, classLoader);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader,
-                                          DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends Id> owners)
-    throws DatasetManagementException, IOException {
-    return delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
   }
 
   @Nullable

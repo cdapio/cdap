@@ -198,9 +198,14 @@ function AddPreferredTagsModalCtrl (myTrackerApi, $scope, $state) {
     document.getElementById('file-select').click();
   };
   this.importFiles = (files) => {
+    if (files[0].name.indexOf('.txt') === -1 && files[0].name.indexOf('.csv') === -1) {
+      this.invalidFormat = true;
+      return;
+    }
+
     let reader = new FileReader();
     reader.readAsText(files[0], 'UTF-8');
-
+    this.invalidFormat = false;
     reader.onload = (evt) => {
       let data = evt.target.result;
       this.tags = data;

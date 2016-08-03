@@ -16,6 +16,8 @@
 
 package co.cask.cdap.examples.webanalytics;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
@@ -57,6 +59,7 @@ public class UniqueVisitCount extends AbstractDataset implements RecordScannable
    * @param ip The IP to increment
    * @param amount The amount to increment
    */
+  @WriteOnly
   public void increment(String ip, long amount) {
     // Delegates to the system KeyValueTable for actual storage operation
     keyValueTable.increment(Bytes.toBytes(ip), amount);
@@ -68,6 +71,7 @@ public class UniqueVisitCount extends AbstractDataset implements RecordScannable
    * @param ip The IP to lookup
    * @return the number of visits
    */
+  @ReadOnly
   public long getCount(String ip) {
     byte[] value = keyValueTable.read(Bytes.toBytes(ip));
     return (value == null) ? 0L : Bytes.toLong(value);

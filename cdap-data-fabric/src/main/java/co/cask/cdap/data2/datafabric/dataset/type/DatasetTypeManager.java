@@ -23,8 +23,8 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -196,13 +196,13 @@ public class DatasetTypeManager extends AbstractIdleService {
           // 2. unpack jar and create class loader
           File unpackedLocation = Files.createTempDirectory(Files.createDirectories(systemTempPath),
                                                             datasetModuleId.getId()).toFile();
-          ProgramClassLoader cl = null;
+          DirectoryClassLoader cl = null;
           try {
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
             if (jarLocation != null) {
               BundleJarUtil.unJar(jarLocation, unpackedLocation);
-              cl = new ProgramClassLoader(cConf, unpackedLocation,
-                                          FilterClassLoader.create(getClass().getClassLoader()));
+              cl = new DirectoryClassLoader(cConf, unpackedLocation,
+                                            FilterClassLoader.create(getClass().getClassLoader()), "lib");
             }
             reg = new DependencyTrackingRegistry(datasetModuleId, datasetTypeMDS, cl, force);
 

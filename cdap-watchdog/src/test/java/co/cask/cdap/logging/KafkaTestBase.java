@@ -33,6 +33,9 @@ import co.cask.cdap.logging.save.LogMetricsPluginFactory;
 import co.cask.cdap.logging.save.LogSaverFactory;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -69,6 +72,9 @@ public abstract class KafkaTestBase {
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getNoOpModule(),
       Modules.override(new LoggingModules().getDistributedModules())
         .with(new Module() {
           @Override

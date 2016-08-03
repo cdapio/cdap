@@ -145,10 +145,17 @@ public class AppFabricTestHelper {
     ensureNamespaceExists(namespace, CConfiguration.create());
   }
 
-  public static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
+  private static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
     NamespaceAdmin namespaceAdmin = getInjector(cConf).getInstance(NamespaceAdmin.class);
-    if (!namespaceAdmin.exists(namespace)) {
-      namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+    try {
+      if (!namespaceAdmin.exists(namespace)) {
+        namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+      }
+    } catch (NamespaceAlreadyExistsException e) {
+      // There can be race between exists() and create() call.
+      if (!namespaceAdmin.exists(namespace)) {
+        throw new IllegalStateException("Failed to create namespace " + namespace, e);
+      }
     }
   }
 
@@ -206,12 +213,8 @@ public class AppFabricTestHelper {
 
     Assert.assertNotNull(program);
 
-    co.cask.cdap.proto.id.ArtifactId artifactId = app.getArtifactId();
-    ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
       ProgramOptionConstants.RUN_ID, RunIds.generate().getId(),
-      ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(artifactId),
-      ProgramOptionConstants.ARTIFACT_META, GSON.toJson(artifactRepository.getArtifact(artifactId.toId()).getMeta()),
       ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
     ));
 

@@ -114,8 +114,6 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       }),
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
@@ -132,6 +130,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
           bind(NamespaceStore.class).to(InMemoryNamespaceStore.class);
         }
       },
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule()
     );
 

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.base;
 
+import co.cask.cdap.common.test.TestSuite;
 import co.cask.cdap.partitioned.PartitionConsumingTestRun;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.DummyBaseCloneTestRun;
@@ -30,7 +31,7 @@ import org.junit.runners.Suite;
  * This avoid starting/stopping app-fabric per test.
  */
 @Category(XSlowTests.class)
-@RunWith(Suite.class)
+@RunWith(TestSuite.class)
 @Suite.SuiteClasses({
   DummyBaseTestRun.class,
   DummyBaseCloneTestRun.class,
