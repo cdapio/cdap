@@ -29,7 +29,6 @@ import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.tephra.TransactionFailureException;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -123,12 +122,12 @@ public class NoOpAuthorizationContextFactory implements AuthorizationContextFact
 
     @Override
     public void putSecureData(String namespace, String name, byte[] data, String description,
-                              Map<String, String> properties) throws IOException {
+                              Map<String, String> properties) throws Exception {
       // no-op
     }
 
     @Override
-    public void deleteSecureData(String namespace, String name) throws IOException {
+    public void deleteSecureData(String namespace, String name) throws Exception {
       // no-op
     }
   }
