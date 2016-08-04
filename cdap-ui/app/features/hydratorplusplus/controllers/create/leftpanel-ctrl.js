@@ -63,6 +63,7 @@ class HydratorPlusPlusLeftPanelCtrl {
       this.leftpanelActions.fetchDefaultVersion()
     );
 
+    // FIXME: We need to refactor this subscriber to be more efficient. Perform less computation in controller & more in store.
     var sub = this.leftpanelStore.subscribe( () => {
       let extensions = this.leftpanelStore.getState().extensions;
       extensions.forEach( (ext) => {
