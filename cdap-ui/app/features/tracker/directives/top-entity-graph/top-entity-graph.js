@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.tracker')
           namespace: $state.params.namespace,
           entity: scope.type,
           scope: scope,
-          limit: 5
+          limit: scope.limit
         };
 
         if ($state.params.entityType) {
@@ -73,7 +73,7 @@ angular.module(PKG.name + '.feature.tracker')
 
       function renderEntityGraph () {
         let margin = {
-          top: 20,
+          top: 10,
           right: 30,
           bottom: 30,
           left: 130
@@ -84,6 +84,7 @@ angular.module(PKG.name + '.feature.tracker')
         let container = d3.select(element[0].parentNode).node().getBoundingClientRect();
         let width = container.width - margin.left - margin.right;
         let height = parentHeight - margin.top - margin.bottom;
+        let barHeight = ((height * 0.7) / scope.limit);
 
         let y = d3.scale.ordinal()
           .rangeRoundBands([0, height], 0.3);
@@ -148,11 +149,11 @@ angular.module(PKG.name + '.feature.tracker')
             .data(scope.model.results)
           .enter().append('rect')
             .attr('class', 'bar')
-            .attr('y', (d, i) => { return y(i); })
+            .attr('y', (d, i) => { return y(i) + ((y.rangeBand() - barHeight) / 2); })
             .attr('x', -3)
             .attr('rx', 3)
             .attr('ry', 3)
-            .attr('height', y.rangeBand())
+            .attr('height', barHeight)
             .attr('width', (d) => { return Math.abs(x(d.value)) + 3; });
 
         addEntityLinks();
@@ -204,7 +205,8 @@ angular.module(PKG.name + '.feature.tracker')
       scope: {
         type: '@',
         start: '=?',
-        end: '=?'
+        end: '=?',
+        limit: '='
       },
       templateUrl: '/assets/features/tracker/directives/top-entity-graph/top-entity-graph.html',
       link: EntityGraphLink
