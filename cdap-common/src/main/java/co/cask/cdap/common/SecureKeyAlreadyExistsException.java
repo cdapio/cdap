@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,27 +16,20 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.SecureKeyId;
 
 /**
- * Thrown when an element already exists.
+ * Thrown when the user tries to create a secure key that already exists.
  */
-public class AlreadyExistsException extends ConflictException {
+public class SecureKeyAlreadyExistsException extends AlreadyExistsException {
+  private final SecureKeyId secureKeyId;
 
-  private final Object objectId;
-
-  public AlreadyExistsException(Id id) {
-    super(String.format("'%s' already exists", id));
-    this.objectId = id;
+  public SecureKeyAlreadyExistsException(SecureKeyId secureKeyId) {
+    super(secureKeyId);
+    this.secureKeyId = secureKeyId;
   }
 
-  public AlreadyExistsException(EntityId entityId) {
-    super(String.format("'%s' already exists", entityId));
-    this.objectId = entityId;
-  }
-
-  public Object getObjectId() {
-    return objectId;
+  public SecureKeyId getId() {
+    return secureKeyId;
   }
 }

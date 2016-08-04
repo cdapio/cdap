@@ -126,7 +126,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
     writeLock.lock();
     try {
       if (keyStore.containsAlias(keyName)) {
-        throw new AlreadyExistsException((new SecureKeyId(namespace, name)).toId());
+        throw new AlreadyExistsException(new SecureKeyId(namespace, name));
       }
       keyStore.setKeyEntry(keyName, new KeyStoreEntry(secureStoreData, meta), password, null);
       // Attempt to persist the store.
