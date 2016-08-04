@@ -47,25 +47,18 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
 
   /**
    * Add a partition for a given time, stored at a given path (relative to the file set's base path).
-   *
-   * @param time the partition time in milliseconds since the Epoch
    */
   void addPartition(long time, String path);
 
   /**
    * Add a partition for a given time, stored at a given path (relative to the file set's base path),
    * with given metadata.
-   *
-   * @param time the partition time in milliseconds since the Epoch
    */
   void addPartition(long time, String path, Map<String, String> metadata);
 
   /**
    * Adds a new metadata entry for a particular partition.
    * Note that existing entries can not be updated.
-   *
-   * @param time the partition time in milliseconds since the Epoch
-   *
    * @throws DataSetException in case an attempt is made to update existing entries.
    */
   void addMetadata(long time, String metadataKey, String metadataValue);
@@ -73,25 +66,18 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
   /**
    * Adds a set of new metadata entries for a particular partition
    * Note that existing entries can not be updated.
-   *
-   * @param time the partition time in milliseconds since the Epoch
-   *
-   * @throws DataSetException in case an attempt is made to update existing entries.
+   * * @throws DataSetException in case an attempt is made to update existing entries.
    */
   void addMetadata(long time, Map<String, String> metadata);
 
   /**
    * Remove a partition for a given time.
-   *
-   * @param time the partition time in milliseconds since the Epoch
    */
   void dropPartition(long time);
 
   /**
    * Return the partition associated with the given time, rounded to the minute;
    * or null if no such partition exists.
-   *
-   * @param time the partition time in milliseconds since the Epoch
    */
   @Nullable
   TimePartitionDetail getPartitionByTime(long time);
@@ -99,9 +85,6 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
   /**
    * Return all partitions within the time range given by startTime (inclusive) and endTime (exclusive),
    * both rounded to the full minute.
-   *
-   * @param startTime the inclusive lower bound for the partition time in milliseconds since the Epoch
-   * @param endTime the exclusive upper bound for the partition time in milliseconds since the Epoch
    */
   Set<TimePartitionDetail> getPartitionsByTime(long startTime, long endTime);
 
@@ -109,8 +92,6 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * Return a partition output for a specific time, rounded to the minute, in preparation for creating a new partition.
    * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
    * to add the partition to this dataset.
-   *
-   * @param time the partition time in milliseconds since the Epoch
    */
   TimePartitionOutput getPartitionOutput(long time);
 }
