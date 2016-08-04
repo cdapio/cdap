@@ -18,9 +18,6 @@ class MyBatchPipelineSettingsCtrl {
   constructor(GLOBALS, $scope, MY_CONFIG) {
     this.GLOBALS = GLOBALS;
     this.isDistributed = MY_CONFIG.isEnterprise ? true : false;
-    this.memoryMb = this.store.getMemoryMb();
-    this.virtualCores = this.store.getVirtualCores();
-    this.showResources = (this.memoryMb || this.virtualCores) ? true : false;
     this._isDisabled = this.isDisabled === 'true';
     this.templateType = this.store.getArtifact().name;
     this.scheduleWidget = {
@@ -39,16 +36,6 @@ class MyBatchPipelineSettingsCtrl {
       $scope.$on('$destroy', unsub);
     }
   }
-  showResourcesView() {
-    this.showResources = !this.showResources;
-  }
-  onMemoryMbChange() {
-    this.actionCreator.setMemoryMb(this.memoryMb);
-  }
-  onVirtualCoresChange() {
-    this.actionCreator.setVirtualCores(this.virtualCores);
-  }
-
   checkCron(cron) {
     var pattern = /^[0-9\*\s]*$/g;
     var parse = cron.split('');

@@ -70,31 +70,40 @@
           </label>
         </form>
         <div class="form-horizontal resource-container">
-          <div ng-click="MyBatchPipelineSettingsCtrl.showResourcesView()">
-            <i class="fa fa-info-circle"
-               uib-tooltip="Resources don't take any effect in standalone environment."
-               ng-if="!MyBatchPipelineSettingsCtrl.isDistributed"></i>
-            <span class="title">
-              Resources
-            </span>
-            <span class="fa fa-caret-down" ng-if="MyBatchPipelineSettingsCtrl.showResources"></span>
-            <span class="fa fa-caret-right" ng-if="!MyBatchPipelineSettingsCtrl.showResources"></span>
-          </div>
-          <div class="resource-holder" ng-if="MyBatchPipelineSettingsCtrl.showResources">
-            <div class="resource-group">
-              <label class="control-label"> Virtual Cores </label>
-              <input class="form-control"
-                     type="number"
-                     ng-model="MyBatchPipelineSettingsCtrl.virtualCores"
-                     ng-change="MyBatchPipelineSettingsCtrl.onVirtualCoresChange()">
+          <div>
+            <div>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Resources don't take any effect in standalone environment."
+                 ng-if="!MyBatchPipelineSettingsCtrl.isDistributed"></i>
+              <span class="title">
+                Executor Resource
+              </span>
             </div>
-            <div class="resource-group">
-              <label class="control-label"> Memory </label>
-              <input class="form-control"
-                     type="number"
-                     ng-model="MyBatchPipelineSettingsCtrl.memoryMb"
-                     ng-change="MyBatchPipelineSettingsCtrl.onMemoryMbChange()">
-              <label class="control-label">MB</span>
+            <div class="resource-holder">
+              <div
+                action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
+                store="MyBatchPipelineSettingsCtrl.store"
+                resource-type="executorResource"
+                my-pipeline-resource-factory
+              ></div>
+            </div>
+          </div>
+          <div>
+            <div>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Resources don't take any effect in standalone environment."
+                 ng-if="!MyBatchPipelineSettingsCtrl.isDistributed"></i>
+              <span class="title">
+                Driver Resource
+              </span>
+            </div>
+            <div class="resource-holder">
+              <div
+                action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
+                store="MyBatchPipelineSettingsCtrl.store"
+                resource-type="driverResource"
+                my-pipeline-resource-factory
+              ></div>
             </div>
           </div>
         </div>

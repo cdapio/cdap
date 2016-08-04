@@ -24,13 +24,17 @@ my-batch-pipeline-settings {
     }
     my-card {
       &.engine {
-        flex: 0.3;
+        flex: 0.5;
         label {
           font-weight: 500;
           color: gray;
           display: block;
         }
         .resource-container {
+          display: flex;
+          > div {
+            flex: 0.5;
+          }
           .title {
             font-weight: 500;
             color: gray;
@@ -68,7 +72,7 @@ my-batch-pipeline-settings {
         }
       }
       &.schedule {
-        flex: 0.7;
+        flex: 0.5;
         margin-right: 10px;
         label {
           font-weight: 500;
