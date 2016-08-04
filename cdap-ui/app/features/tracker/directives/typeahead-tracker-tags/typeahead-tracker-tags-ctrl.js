@@ -29,10 +29,5 @@ angular.module(PKG.name + '.feature.tracker')
       this.list.splice(this.list.indexOf(item), 1);
     };
 
-    this.onEnter = function () {
-      this.onSelect({tag: this.model});
-      this.model = '';
-    };
-
     caskFocusManager.focus('tagInput');
   });
