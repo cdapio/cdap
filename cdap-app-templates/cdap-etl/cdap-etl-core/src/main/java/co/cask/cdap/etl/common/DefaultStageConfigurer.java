@@ -19,19 +19,23 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.etl.api.MultiInputStageConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 
 /**
- * This stores the input schema that is passed to this stage from other stages in the pipeline and
+ * This stores the input schemas that is passed to this stage from other stages in the pipeline and
  * the output schema that could be sent to the next stages from this stage.
- * Currently we only allow a single input/output schema per stage.
+ * Currently we only allow multiple input/output schema per stage except for {@link co.cask.cdap.etl.api.Joiner}
+ * where we allow multiple input schemas
  */
-public class DefaultStageConfigurer implements StageConfigurer {
+public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer {
   private Schema outputSchema;
   private final String stageName;
   private Map<String, Schema> inputSchemas;
@@ -63,8 +67,28 @@ public class DefaultStageConfigurer implements StageConfigurer {
     this.outputSchema = outputSchema;
   }
 
-  public void addInputSchema(@Nullable String stageName, @Nullable Schema inputSchema) {
-    inputSchemas.put(stageName, inputSchema);
+  public void addInputSchema(String stageType, String inputStageName, @Nullable Schema inputSchema) {
+    // Do not allow null input schema for Joiner
+    if (stageType.equalsIgnoreCase(BatchJoiner.PLUGIN_TYPE) && inputSchema == null) {
+        throw new IllegalArgumentException(String.format("Joiner cannot have any null input schemas, but stage %s " +
+                                                           "outputs a null schema.", inputStageName));
+    }
+
+    // Do not allow more than one input schema for stages other than Joiner
+    if (!stageType.equalsIgnoreCase(BatchJoiner.PLUGIN_TYPE) && !hasSameSchema(inputSchema)) {
+      throw new IllegalArgumentException("Two different input schema were set for the stage " + this.stageName);
+    }
+
+    inputSchemas.put(inputStageName, inputSchema);
+  }
+
+  private boolean hasSameSchema(Schema inputSchema) {
+    if (!inputSchemas.isEmpty()) {
+      if (!Objects.equals(inputSchemas.values().iterator().next(), inputSchema)) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 

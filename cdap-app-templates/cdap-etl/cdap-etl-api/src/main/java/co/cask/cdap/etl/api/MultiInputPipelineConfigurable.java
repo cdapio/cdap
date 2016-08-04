@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,30 +17,17 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.schema.Schema;
-
-import javax.annotation.Nullable;
 
 /**
- * This stores the input schema that is passed to this stage from other stages in the pipeline and
- * the output schema that could be sent to the next stages from this stage.
+ * Allows the stage with multiple inputs to configure pipeline.
  */
 @Beta
-public interface StageConfigurer {
-
+public interface MultiInputPipelineConfigurable {
   /**
-   * get the input schema for this stage, or null if its unknown
+   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
    *
-   * @return input schema
+   * @param multiInputPipelineConfigurer the configurer used to add required datasets and streams
+   * @throws IllegalArgumentException if the given config is invalid
    */
-  @Nullable
-  Schema getInputSchema();
-
-  /**
-   * set output schema for this stage, or null if its unknown
-   *
-   * @param outputSchema output schema for this stage
-   */
-  void setOutputSchema(@Nullable Schema outputSchema);
-
+  void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) throws IllegalArgumentException;
 }
