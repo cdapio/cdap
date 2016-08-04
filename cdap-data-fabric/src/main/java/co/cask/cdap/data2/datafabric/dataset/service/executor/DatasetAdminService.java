@@ -257,7 +257,7 @@ public class DatasetAdminService {
   }
 
   //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
-  public static boolean isUserDataset(Id.DatasetInstance datasetInstanceId) {
+  private boolean isUserDataset(Id.DatasetInstance datasetInstanceId) {
     return !Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace()) &&
       !"system.queue.config".equals(datasetInstanceId.getId()) &&
       !datasetInstanceId.getId().startsWith("system.sharded.queue") &&
