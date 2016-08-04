@@ -73,8 +73,14 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       try {
         exploreFacade.createNamespace(namespaceMeta);
       } catch (ExploreException | SQLException e) {
-        // if we failed to create a namespace in explore then delete the earlier created location for the namespace
-        deleteLocation(namespaceMeta.getNamespaceId());
+        LOG.error("ERROR!!!!!", e);
+        LOG.error("0-----------------------");
+        try {
+          // if we failed to create a namespace in explore then delete the earlier created location for the namespace
+          deleteLocation(namespaceMeta.getNamespaceId());
+        } catch (Exception e2) {
+          e.addSuppressed(e2);
+        }
         throw e;
       }
     }

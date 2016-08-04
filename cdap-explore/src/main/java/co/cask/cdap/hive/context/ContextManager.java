@@ -43,6 +43,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.explore.service.hive.BaseHiveExploreService;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.stream.StreamSerDe;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
@@ -61,8 +62,12 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import jodd.io.StringOutputStream;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -90,6 +95,8 @@ import javax.annotation.Nullable;
  * on whether the Context has been cached to determine whether to create a new Context.
  */
 public class ContextManager {
+  private static final Logger LOG = LoggerFactory.getLogger(ContextManager.class);
+
   private static Context savedContext;
 
   /**
@@ -150,7 +157,7 @@ public class ContextManager {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
+          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           // bind PrivilegesManager to a remote implementation, so it does not need to instantiate the authorizer
           bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
@@ -161,6 +168,12 @@ public class ContextManager {
 
   // this method is called by the mappers/reducers of jobs launched by Hive.
   private static Context createContext(Configuration conf) throws IOException {
+    StringOutputStream stringOutputString = new StringOutputStream();
+    conf.writeXml(stringOutputString);
+    LOG.info("conf: {}", stringOutputString.toString());
+
+    LOG.info("currentUser: {}", UserGroupInformation.getCurrentUser());
+
     // Create context needs to happen only when running in as a MapReduce job.
     // In other cases, ContextManager will be initialized using saveContext method.
 

@@ -93,9 +93,13 @@ public class LocalMapreduceClasspathSetter {
     fileBuilder.append("  export HADOOP_USER_CLASSPATH_FIRST=true\n");
     fileBuilder.append("  export HADOOP_CLASSPATH\n");
     fileBuilder.append("  echo \"Explore modified HADOOP_CLASSPATH = $HADOOP_CLASSPATH\" 1>&2\n");
+    fileBuilder.append("  echo \"Explore UNmodified HADOOP_TOKEN_FILE_LOCATION = $HADOOP_TOKEN_FILE_LOCATION\" 1>&2\n");
+    fileBuilder.append("  unset HADOOP_TOKEN_FILE_LOCATION\n");
+    fileBuilder.append("  echo \"Explore modified HADOOP_TOKEN_FILE_LOCATION = $HADOOP_TOKEN_FILE_LOCATION\" 1>&2\n");
     fileBuilder.append("fi\n");
     fileBuilder.append("\n");
     fileBuilder.append("exec ").append(hadoopBin).append(" \"$@\"\n");
+    LOG.info("unset HADOOP_TOKEN_FILE_LOCATION");
 
     Files.write(fileBuilder.toString(), exploreHadoopBin, Charsets.UTF_8);
 

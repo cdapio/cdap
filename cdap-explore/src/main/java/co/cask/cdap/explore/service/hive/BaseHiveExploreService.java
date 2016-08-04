@@ -66,10 +66,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
+import jodd.io.StringOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -80,10 +82,13 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
@@ -744,7 +749,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       OperationHandle operationHandle = null;
 
       try {
-        sessionHandle = cliService.openSession("", "", sessionConf);
+        sessionHandle = openHiveSession(sessionConf);
         QueryHandle handle;
         if (Strings.isNullOrEmpty(namespaceMeta.getConfig().getHiveDatabase())) {
           // if no custom hive database was provided get the hive database according to cdap format and create it
@@ -1216,8 +1221,26 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return sessionHandle;
   }
 
+  // no new methods should use this directly. Instead, use openHiveSession
   protected SessionHandle doOpenHiveSession(Map<String, String> sessionConf) throws HiveSQLException {
-    return cliService.openSession("", "", sessionConf);
+    try {
+      Token<? extends TokenIdentifier> hs2ClientToken =
+        UserGroupInformation.getCurrentUser().getCredentials().getToken(new Text(HiveAuthFactory.HS2_CLIENT_TOKEN));
+
+      LOG.info("hs2ClientToken1: {}", hs2ClientToken);
+      LOG.info("hs2ClientToken2: {}", hs2ClientToken.encodeToUrlString());
+      UserGroupInformation oldLoginUser = UserGroupInformation.getLoginUser();
+      try {
+        UserGroupInformation.setLoginUser(UserGroupInformation.getCurrentUser());
+        LOG.info("loginUser: {}", UserGroupInformation.getLoginUser());
+        return cliService.openSessionWithImpersonation(UserGroupInformation.getCurrentUser().getUserName(), "",
+                                                       sessionConf, hs2ClientToken.encodeToUrlString());
+      } finally {
+        UserGroupInformation.setLoginUser(oldLoginUser);
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private void closeHiveSession(SessionHandle sessionHandle) {
@@ -1359,7 +1382,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     Files.createFile(credentialsFile.toPath(), ownerOnlyAttrs);
 
-    LOG.debug("Writing credentials to file: {}", credentialsFile);
+    LOG.info("Writing credentials to file: {}", credentialsFile);
     try (DataOutputStream os = new DataOutputStream(Files.newOutputStream(credentialsFile.toPath()))) {
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
       credentials.writeTokenStorageToStream(os);
