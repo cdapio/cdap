@@ -235,14 +235,15 @@ function getEs6Directives(isNegate) {
     'log-viewer',
     'complex-schema',
     'my-pipeline-settings',
+    'my-pipeline-summary',
+    'my-pipeline-resource',
     'my-post-run-action-wizard',
     'my-post-run-actions',
     'widget-container/widget-complex-schema-editor',
     'timeline',
-    'my-pipeline-summary',
     'widget-container',
     'plugin-functions',
-    'my-link-button'
+    'my-link-button',
   ];
 
   return es6directives.map(function (directive) {
