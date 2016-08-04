@@ -87,6 +87,8 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     if (isUnitTest) {
       Integer numSources = Integer.valueOf(programProperties.get("cask.hydrator.num.sources"));
       sparkConf.setMaster(String.format("local[%d]", numSources + 1));
+      // without this, stopping will hang on machines with few cores.
+      sparkConf.set("spark.rpc.netty.dispatcher.numThreads", String.valueOf(numSources + 2));
     }
     context.setSparkConf(sparkConf);
   }
