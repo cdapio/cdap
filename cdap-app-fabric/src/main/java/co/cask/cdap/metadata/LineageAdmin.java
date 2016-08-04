@@ -20,6 +20,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
@@ -32,14 +33,20 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -62,6 +69,25 @@ public class LineageAdmin {
       @Override
       public Id.NamespacedId apply(Relation input) {
         return input.getData();
+      }
+    };
+
+  private static final Predicate<Relation> UNKNOWN_TYPE_FILTER = new Predicate<Relation>() {
+    @Override
+    public boolean apply(Relation relation) {
+      return relation.getAccess() != AccessType.UNKNOWN;
+    }
+  };
+
+  private static final Function<Collection<Relation>, Collection<Relation>> COLLAPSE_UNKNOWN_TYPE_FUNCTION =
+    new Function<Collection<Relation>, Collection<Relation>>() {
+      @Override
+      public Collection<Relation> apply(Collection<Relation> relations) {
+        if (relations.size() <= 1) {
+          return relations;
+        }
+        // If the size is > 1, then we can safely filter out the UNKNOWN
+        return Collections2.filter(relations, UNKNOWN_TYPE_FILTER);
       }
     };
 
@@ -128,7 +154,7 @@ public class LineageAdmin {
                                                RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }
 
-  Lineage doComputeLineage(final Id.NamespacedId sourceData, long startMillis, long endMillis, int levels)
+  private Lineage doComputeLineage(final Id.NamespacedId sourceData, long startMillis, long endMillis, int levels)
     throws NotFoundException {
     LOG.trace("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
               sourceData, startMillis, endMillis, levels);
@@ -145,7 +171,7 @@ public class LineageAdmin {
     ScanRangeWithFilter scanRange = getScanRange(runningInRange);
     LOG.trace("Using scan start = {}, scan end = {}", scanRange.getStart(), scanRange.getEnd());
 
-    Set<Relation> relations = new HashSet<>();
+    Multimap<RelationKey, Relation> relations = HashMultimap.create();
     Set<Id.NamespacedId> visitedDatasets = new HashSet<>();
     Set<Id.NamespacedId> toVisitDatasets = new HashSet<>();
     Set<Id.Program> visitedPrograms = new HashSet<>();
@@ -156,36 +182,40 @@ public class LineageAdmin {
       LOG.trace("Level {}", i);
       toVisitPrograms.clear();
       for (Id.NamespacedId d : toVisitDatasets) {
-        if (!visitedDatasets.contains(d)) {
+        if (visitedDatasets.add(d)) {
           LOG.trace("Visiting dataset {}", d);
-          visitedDatasets.add(d);
           // Fetch related programs
           Iterable<Relation> programRelations = getProgramRelations(d, scanRange.getStart(), scanRange.getEnd(),
                                                                     scanRange.getFilter());
           LOG.trace("Got program relations {}", programRelations);
-          Iterables.addAll(relations, programRelations);
+          for (Relation relation : programRelations) {
+            relations.put(new RelationKey(relation), relation);
+          }
           Iterables.addAll(toVisitPrograms, Iterables.transform(programRelations, RELATION_TO_PROGRAM_FUNCTION));
         }
       }
 
       toVisitDatasets.clear();
       for (Id.Program p : toVisitPrograms) {
-        if (!visitedPrograms.contains(p)) {
+        if (visitedPrograms.add(p)) {
           LOG.trace("Visiting program {}", p);
-          visitedPrograms.add(p);
           // Fetch related datasets
           Iterable<Relation> datasetRelations = lineageStoreReader.getRelations(p, scanRange.getStart(),
                                                                                 scanRange.getEnd(),
                                                                                 scanRange.getFilter());
           LOG.trace("Got data relations {}", datasetRelations);
-          Iterables.addAll(relations, datasetRelations);
+          for (Relation relation : datasetRelations) {
+            relations.put(new RelationKey(relation), relation);
+          }
           Iterables.addAll(toVisitDatasets,
                            Iterables.transform(datasetRelations, RELATION_TO_DATA_FUNCTION));
         }
       }
     }
 
-    Lineage lineage = new Lineage(relations);
+    Lineage lineage = new Lineage(
+      Iterables.concat(Maps.transformValues(relations.asMap(), COLLAPSE_UNKNOWN_TYPE_FUNCTION).values()));
+
     LOG.trace("Got lineage {}", lineage);
     return lineage;
   }
@@ -259,6 +289,43 @@ public class LineageAdmin {
 
     public Predicate<Relation> getFilter() {
       return filter;
+    }
+  }
+
+  /**
+   * This class helps collapsing access type of {@link Relation} by ignoring the access type in equals and hashCode
+   * so that it can be used as the map key for Relations of different access types.
+   */
+  private static final class RelationKey {
+    private final Relation relation;
+    private final int hashCode;
+
+    private RelationKey(Relation relation) {
+      this.relation = relation;
+      this.hashCode = Objects.hash(relation.getData(), relation.getProgram(),
+                                   relation.getRun(), relation.getComponents());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      // Don't use AccessType for equals (same for hashCode)
+      RelationKey other = (RelationKey) o;
+      return Objects.equals(relation.getData(), other.relation.getData()) &&
+        Objects.equals(relation.getProgram(), other.relation.getProgram()) &&
+        Objects.equals(relation.getRun(), other.relation.getRun()) &&
+        Objects.equals(relation.getComponents(), other.relation.getComponents());
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
     }
   }
 }
