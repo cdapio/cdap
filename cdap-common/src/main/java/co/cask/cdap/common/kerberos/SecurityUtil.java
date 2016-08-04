@@ -30,6 +30,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -79,9 +82,12 @@ public final class SecurityUtil {
                                 "Kerberos authentication is enabled, but " +
                                 Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH + " is not configured");
 
-    File keyTabFile = validateKeytabPath(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
 
-    LOG.info("Using Kerberos principal {} and keytab {}", principal, keyTabFile.getAbsolutePath());
+    File keytabFile = new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
+    Preconditions.checkArgument(Files.isReadable(keytabFile.toPath()),
+                                "Keytab file is not a readable file: {}", keytabFile);
+
+    LOG.info("Using Kerberos principal {} and keytab {}", principal, keytabFile.getAbsolutePath());
 
     System.setProperty(Constants.External.Zookeeper.ENV_AUTH_PROVIDER_1,
                        "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
@@ -93,7 +99,7 @@ public final class SecurityUtil {
     properties.put("useKeyTab", "true");
     properties.put("useTicketCache", "false");
     properties.put("principal", principal);
-    properties.put("keyTab", keyTabFile.getAbsolutePath());
+    properties.put("keyTab", keytabFile.getAbsolutePath());
 
     final AppConfigurationEntry configurationEntry = new AppConfigurationEntry(
       KerberosUtil.getKrb5LoginModuleName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, properties);
@@ -107,18 +113,6 @@ public final class SecurityUtil {
 
     // apply the configuration
     Configuration.setConfiguration(configuration);
-  }
-
-  // validates that the path specified exists and is a readable file
-  private static File validateKeytabPath(String keytabPath) {
-    File keytabFile = new File(keytabPath);
-    Preconditions.checkArgument(keytabFile.exists(),
-                                "Kerberos keytab file does not exist: " + keytabFile.getAbsolutePath());
-    Preconditions.checkArgument(keytabFile.isFile(),
-                                "Kerberos keytab file should be a file: " + keytabFile.getAbsolutePath());
-    Preconditions.checkArgument(keytabFile.canRead(),
-                                "Kerberos keytab file cannot be read: " + keytabFile.getAbsolutePath());
-    return keytabFile;
   }
 
   /**
@@ -152,7 +146,9 @@ public final class SecurityUtil {
     String keytabPath = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
 
     if (UserGroupInformation.isSecurityEnabled()) {
-      validateKeytabPath(keytabPath);
+      Path keytabFile = Paths.get(keytabPath);
+      Preconditions.checkArgument(Files.isReadable(keytabFile),
+                                  "Keytab file is not a readable file: {}", keytabFile);
       String expandedPrincipal = expandPrincipal(principal);
       LOG.info("Logging in as: principal={}, keytab={}", principal, keytabPath);
       UserGroupInformation.loginUserFromKeytab(expandedPrincipal, keytabPath);
