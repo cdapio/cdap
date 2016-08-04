@@ -78,7 +78,7 @@ angular.module(PKG.name + '.services')
       'batchjoiner': pluginLabels['transform'],
       'action': 'Action',
       'streamingsource': pluginLabels['source'],
-      'windower': pluginLabels['sink']
+      'windower': pluginLabels['transform']
     },
     pluginLabels: pluginLabels,
     // understand what plugin type is what.
@@ -86,7 +86,7 @@ angular.module(PKG.name + '.services')
     pluginConvert: {
       'batchaggregator': 'transform',
       'streamingsource': 'source',
-      'windower': 'sink',
+      'windower': 'transform',
       'batchsource': 'source',
       'realtimesource': 'source',
       'batchsink': 'sink',
