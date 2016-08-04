@@ -25,11 +25,17 @@ function RangeController ($scope) {
   vm.openStartTime = () => {
     vm.startTimeOpen = true;
     vm.endTimeOpen = false;
+
+    document.body.removeEventListener('click', vm.close, false);
+    document.body.addEventListener('click', vm.close, false);
   };
 
   vm.openEndTime = () => {
     vm.startTimeOpen = false;
     vm.endTimeOpen = true;
+
+    document.body.removeEventListener('click', vm.close, false);
+    document.body.addEventListener('click', vm.close, false);
   };
 
   vm.done = () => {
@@ -41,6 +47,8 @@ function RangeController ($scope) {
   vm.close = () => {
     vm.startTimeOpen = false;
     vm.endTimeOpen = false;
+
+    document.body.removeEventListener('click', vm.close, false);
   };
 
   let keydownListener = (event) => {
@@ -52,6 +60,7 @@ function RangeController ($scope) {
 
   $scope.$on('$destroy', () => {
     document.removeEventListener('keydown', keydownListener);
+    document.body.removeEventListener('click', vm.close, false);
   });
 }
 

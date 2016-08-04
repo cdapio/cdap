@@ -26,7 +26,7 @@
         </button>
         <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
           <li role="menuitem">
-            <a href="" ng-click="UsageController.isCustom = true">Custom</a>
+            <a href="" ng-click="UsageController.selectCustom()">Custom</a>
           </li>
           <li role="menuitem" ng-repeat="time in UsageController.timeRangeOptions">
             <a ui-sref="tracker.detail.entity.usage({ start: time.start, end: time.end })">{{ time.label }}</a>

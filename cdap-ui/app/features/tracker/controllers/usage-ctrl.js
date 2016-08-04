@@ -95,6 +95,11 @@ class TrackerUsageController {
     this.$state.go('tracker.detail.entity.usage', { start: startTime, end: endTime });
   }
 
+  selectCustom() {
+    this.isCustom = true;
+    this.selectedTimeRange.label = 'Custom';
+  }
+
   fetchAuditHistogram() {
     let params = {
       namespace: this.$state.params.namespace,
