@@ -31,7 +31,6 @@ class TrackerMetadataController {
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
-    this.newTag = '';
     this.$timeout = $timeout;
 
     this.propertyInput = {
@@ -233,6 +232,8 @@ class TrackerMetadataController {
         };
         this.tags.preferredTags = getTags(response.preferredTags);
         this.tags.userTags = getTags(response.userTags);
+
+        this.updateAvailableTags();
       }, (err) => {
         console.log('Error', err);
       });
@@ -285,7 +286,7 @@ class TrackerMetadataController {
     return this.tags.availableTags;
   }
 
-  addTag() {
+  addTag(tag) {
     this.invalidFormat = false;
     this.duplicateTag = false;
     if (!this.newTag) {
@@ -365,7 +366,6 @@ class TrackerMetadataController {
   }
 
   escapeInput() {
-    this.newTag = '';
     this.invalidFormat = false;
     this.duplicateTag = false;
     this.inputOpen = false;

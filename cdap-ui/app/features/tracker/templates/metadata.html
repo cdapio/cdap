@@ -76,6 +76,7 @@
                 ng-keypress="$event.keyCode === 13 && MetadataController.addTag()">
               <my-typeahead-tracker-tags
                 list="MetadataController.tags.availableTags"
+                on-select="MetadataController.addTag(tag)"
                 model="MetadataController.newTag"
                 on-change="MetadataController.invalidFormat = false; MetadataController.duplicateTag = false">
               </my-typeahead-tracker-tags>

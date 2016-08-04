@@ -29,4 +29,5 @@
   max-length="50"
   cask-focus="tagInput"
   ng-change="TypeaheadTrackerTagsCtrl.onChange()"
+  ng-keypress="$event.keyCode === 13 && TypeaheadTrackerTagsCtrl.onEnter()"
 />
