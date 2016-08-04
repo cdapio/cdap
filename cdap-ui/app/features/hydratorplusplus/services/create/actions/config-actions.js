@@ -65,14 +65,14 @@ class HydratorPlusPlusConfigActions {
   setVirtualCores(virtualCores) {
     this.dispatcher.dispatch('onSetVirtualCores', virtualCores);
   }
-  setMemoryMb(memoryMb) {
-    this.dispatcher.dispatch('onSetMemoryMb', memoryMb);
+  setMemoryMB(memoryMB) {
+    this.dispatcher.dispatch('onSetMemoryMB', memoryMB);
   }
   setDriverVirtualCores(virtualCores) {
     this.dispatcher.dispatch('onSetDriverVirtualCores', virtualCores);
   }
-  setDriverMemoryMb(memoryMb) {
-    this.dispatcher.dispatch('onSetDriverMemoryMb', memoryMb);
+  setDriverMemoryMB(memoryMB) {
+    this.dispatcher.dispatch('onSetDriverMemoryMB', memoryMB);
   }
   addPostAction(config) {
     this.dispatcher.dispatch('onAddPostAction', config);

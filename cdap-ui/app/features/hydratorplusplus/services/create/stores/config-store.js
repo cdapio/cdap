@@ -41,7 +41,7 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onSetInstance', this.setInstance.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetBatchInterval', this.setBatchInterval.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetVirtualCores', this.setVirtualCores.bind(this));
-    this.hydratorPlusPlusConfigDispatcher.register('onsetMemoryMB', this.setMemoryMB.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetMemoryMB', this.setMemoryMB.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetDriverVirtualCores', this.setDriverVirtualCores.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetDriverMemoryMB', this.setDriverMemoryMB.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
@@ -94,8 +94,8 @@ class HydratorPlusPlusConfigStore {
   }
   getDefaultConfig() {
     return {
-      resources: this.HYDRATOR_DEFAULT_VALUES.resources,
-      driverResources: this.HYDRATOR_DEFAULT_VALUES.resources,
+      resources: angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
+      driverResources: angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
       connections: [],
       comments: [],
       postActions: []
@@ -215,18 +215,14 @@ class HydratorPlusPlusConfigStore {
       if (this.GLOBALS.etlDataStreams) {
         config.batchInterval = this.getBatchInterval();
       }
-      if (this.getMemoryMB() || this.getVirtualCores()) {
-        config.resources = {
-          memoryMB: this.getMemoryMB(),
-          virtualCores: this.getVirtualCores()
-        };
-      }
-      if (this.getDriverMemoryMB() || this.getDriverVirtualCores()) {
-        config.driverResources = {
-          memoryMB: this.getDriverMemoryMB(),
-          virtualCores: this.getDriverVirtualCores()
-        };
-      }
+      config.resources = {
+        memoryMB: this.getMemoryMB(),
+        virtualCores: this.getVirtualCores()
+      };
+      config.driverResources = {
+        memoryMB: this.getDriverMemoryMB(),
+        virtualCores: this.getDriverVirtualCores()
+      };
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instances = this.getInstance();
     }
