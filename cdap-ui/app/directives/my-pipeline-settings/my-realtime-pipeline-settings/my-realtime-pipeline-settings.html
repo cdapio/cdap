@@ -24,28 +24,5 @@
         <label class="control-label">Instances</label>
       </div>
     </my-card>
-    <my-card data-title="Resources"
-             data-tooltip="MyRealtimePipelineSettingsCtrl.isStandaloneMessage"
-             class="resources">
-      <div class="resource-holder">
-        <div class="resource-group">
-          <label class="control-label"> Virtual Cores </label>
-          <input class="form-control"
-                 type="number"
-                 ng-model="MyRealtimePipelineSettingsCtrl.virtualCores"
-                 min="1"
-                 ng-change="MyRealtimePipelineSettingsCtrl.onVirtualCoresChange()">
-        </div>
-        <div class="resource-group">
-          <label class="control-label"> Memory </label>
-          <input class="form-control"
-                 type="number"
-                 min="1"
-                 ng-model="MyRealtimePipelineSettingsCtrl.memoryMb"
-                 ng-change="MyRealtimePipelineSettingsCtrl.onMemoryMbChange()">
-          <label class="control-label">MB</span>
-        </div>
-      </div>
-    </my-card>
   </div>
 </fieldset>

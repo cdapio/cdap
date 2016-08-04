@@ -15,15 +15,9 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyRealtimePipelineSettingsCtrl', function($scope, MY_CONFIG) {
+  .controller('MyRealtimePipelineSettingsCtrl', function($scope) {
     this.instance = this.store.getInstance();
     this._isDisabled = this.isDisabled === 'true';
-    this.isDistributed = MY_CONFIG.isEnterprise ? true : false;
-    if (!this.isDistributed) {
-      this.isStandaloneMessage = 'Resources don\'t take any effect in standalone environment.';
-    }
-    this.memoryMb = this.store.getMemoryMb();
-    this.virtualCores = this.store.getVirtualCores();
     if (!this._isDisabled) {
       // Debounce method for setting instance
       const setInstance = _.debounce( () => {
@@ -32,10 +26,4 @@ angular.module(PKG.name + '.commons')
       var unsub = $scope.$watch('MyRealtimePipelineSettingsCtrl.instance' , setInstance);
       $scope.$on('$destroy', unsub);
     }
-    this.onMemoryMbChange = () => {
-      this.actionCreator.setMemoryMb(this.memoryMb);
-    };
-    this.onVirtualCoresChange = () => {
-      this.actionCreator.setVirtualCores(this.virtualCores);
-    };
   });
