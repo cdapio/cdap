@@ -70,7 +70,7 @@ public class PluginService extends AbstractIdleService {
   private final ArtifactRepository artifactRepository;
   private final File tmpDir;
   private final CConfiguration cConf;
-  private final LoadingCache<ArtifactDescriptor, Instantiators> instantiators;
+  private final LoadingCache<NamespacedArtifactDescriptor, Instantiators> instantiators;
   private final Impersonator impersonator;
 
   private File stageDir;
@@ -84,9 +84,9 @@ public class PluginService extends AbstractIdleService {
     this.instantiators = CacheBuilder.newBuilder()
       .removalListener(new InstantiatorsRemovalListener())
       .maximumWeight(100)
-      .weigher(new Weigher<ArtifactDescriptor, Instantiators>() {
+      .weigher(new Weigher<NamespacedArtifactDescriptor, Instantiators>() {
         @Override
-        public int weigh(ArtifactDescriptor key, Instantiators value) {
+        public int weigh(NamespacedArtifactDescriptor key, Instantiators value) {
           return value.size();
         }
       })
@@ -160,13 +160,34 @@ public class PluginService extends AbstractIdleService {
   }
 
   /**
+   * class to include namespace and artifactDescriptor
+   */
+  private class NamespacedArtifactDescriptor {
+    private final NamespaceId namespaceId;
+    private final ArtifactDescriptor artifactDescriptor;
+
+    private NamespacedArtifactDescriptor(NamespaceId namespaceId, ArtifactDescriptor artifactDescriptor) {
+      this.namespaceId = namespaceId;
+      this.artifactDescriptor = artifactDescriptor;
+    }
+
+    private NamespaceId getNamespaceId() {
+      return namespaceId;
+    }
+
+    private ArtifactDescriptor getArtifactDescriptor() {
+      return artifactDescriptor;
+    }
+  }
+
+  /**
    * A RemovalListener for closing classloader and plugin instantiators.
    */
   private static final class InstantiatorsRemovalListener implements
-    RemovalListener<ArtifactDescriptor, Instantiators> {
+    RemovalListener<NamespacedArtifactDescriptor, Instantiators> {
 
     @Override
-    public void onRemoval(RemovalNotification<ArtifactDescriptor, Instantiators> notification) {
+    public void onRemoval(RemovalNotification<NamespacedArtifactDescriptor, Instantiators> notification) {
       Closeables.closeQuietly(notification.getValue());
     }
   }
@@ -176,13 +197,14 @@ public class PluginService extends AbstractIdleService {
     private final Map<ArtifactDescriptor, InstantiatorInfo> instantiatorInfoMap;
     private final File pluginDir;
 
-    private Instantiators(ArtifactDescriptor parentArtifactDescriptor) throws IOException {
+    private Instantiators(NamespacedArtifactDescriptor parentArtifactDescriptor) throws IOException {
       // todo : shouldn't pass null, should use ArtifactId instead of ArtifactDescriptor so we have namespace.
       this.parentClassLoader =
         artifactRepository.createArtifactClassLoader(
           // todo : should not pass null to namespaceId, (Temporary)
           // change Instantiators to accept ArtifactId instead of ArtifactDescriptor
-          parentArtifactDescriptor.getLocation(), new NamespacedImpersonator(null, impersonator));
+          parentArtifactDescriptor.getArtifactDescriptor().getLocation(),
+          new NamespacedImpersonator(parentArtifactDescriptor.getNamespaceId(), impersonator));
       this.instantiatorInfoMap = new ConcurrentHashMap<>();
       this.pluginDir = DirUtils.createTempDir(stageDir);
     }
@@ -249,10 +271,10 @@ public class PluginService extends AbstractIdleService {
   /**
    * A CacheLoader for creating Instantiators.
    */
-  private final class InstantiatorsCacheLoader extends CacheLoader<ArtifactDescriptor, Instantiators> {
+  private final class InstantiatorsCacheLoader extends CacheLoader<NamespacedArtifactDescriptor, Instantiators> {
 
     @Override
-    public Instantiators load(ArtifactDescriptor parentArtifactDescriptor) throws Exception {
+    public Instantiators load(NamespacedArtifactDescriptor parentArtifactDescriptor) throws Exception {
       return new Instantiators(parentArtifactDescriptor);
     }
   }
@@ -285,7 +307,8 @@ public class PluginService extends AbstractIdleService {
     }
 
     // initialize parent classloader and plugin instantiator
-    Instantiators instantiators = this.instantiators.getUnchecked(parentArtifactDescriptor);
+    Instantiators instantiators =
+      this.instantiators.getUnchecked(new NamespacedArtifactDescriptor(namespace, parentArtifactDescriptor));
     PluginInstantiator pluginInstantiator = instantiators.getPluginInstantiator(artifactDetail,
                                                                                 artifactId.toArtifactId());
 
