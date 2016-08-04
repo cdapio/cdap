@@ -47,7 +47,7 @@ class ApplicationPermissionCollection extends PermissionCollection {
   /**
    * Constructor that defines some predefined {@link Permission}
    */
-  public ApplicationPermissionCollection() {
+  ApplicationPermissionCollection() {
     perms.add(new RuntimePermission("getenv.*"));
     perms.add(new RuntimePermission("setContextClassLoader"));
   }

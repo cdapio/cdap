@@ -191,7 +191,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
     private final ScheduleClient scheduleClient;
 
     @Inject
-    public ListWorkflowSchedulesCommand(CLIConfig cliConfig, ScheduleClient scheduleClient) {
+    ListWorkflowSchedulesCommand(CLIConfig cliConfig, ScheduleClient scheduleClient) {
       super(cliConfig);
       this.scheduleClient = scheduleClient;
     }

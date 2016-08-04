@@ -210,7 +210,7 @@ public class QueueEntryRow {
   /**
    * Defines if queue entry can be consumed
    */
-  public static enum CanConsume {
+  public enum CanConsume {
     YES,
     NO,
     NO_INCLUDING_ALL_OLDER

@@ -95,7 +95,7 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
     private final URI uri;
     private final ClassLoader parentClassLoader;
 
-    public CacheKey(URI uri, ClassLoader parentClassLoader) {
+    CacheKey(URI uri, ClassLoader parentClassLoader) {
       this.uri = uri;
       this.parentClassLoader = parentClassLoader;
     }

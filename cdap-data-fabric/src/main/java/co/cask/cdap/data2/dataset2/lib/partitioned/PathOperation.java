@@ -28,7 +28,7 @@ final class PathOperation {
     CREATE, DROP
   }
 
-  public PathOperation(String relativePath, OperationType operationType) {
+  PathOperation(String relativePath, OperationType operationType) {
     this.relativePath = relativePath;
     this.operationType = operationType;
   }

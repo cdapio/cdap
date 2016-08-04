@@ -167,6 +167,8 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
   /**
    * Builder for creating configs.
+   *
+   * @param <T> The actual builder type
    */
   @SuppressWarnings("unchecked")
   public abstract static class Builder<T extends Builder> {

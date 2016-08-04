@@ -67,7 +67,7 @@ public class DataMigration {
 
     private final String description;
 
-    private Action(String description) {
+    Action(String description) {
       this.description = description;
     }
 
@@ -175,7 +175,7 @@ public class DataMigration {
 
     boolean keepOldMetricsData;
 
-    public MetricsMigration(boolean keepOldMetricsData) {
+    MetricsMigration(boolean keepOldMetricsData) {
       this.keepOldMetricsData = keepOldMetricsData;
     }
 

@@ -525,7 +525,7 @@ public class LineageDataset extends AbstractDataset {
     private final Id.NamespacedId data;
     private final RunId runId;
 
-    public RowKey(Id.Program program, Id.NamespacedId data, RunId runId) {
+    RowKey(Id.Program program, Id.NamespacedId data, RunId runId) {
       this.program = program;
       this.data = data;
       this.runId = runId;

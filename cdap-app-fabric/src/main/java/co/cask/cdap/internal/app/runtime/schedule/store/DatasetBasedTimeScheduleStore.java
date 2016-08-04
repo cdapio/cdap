@@ -350,7 +350,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       this.state = state;
     }
 
-    public TriggerStatusV2() {
+    TriggerStatusV2() {
       // no-op
     }
 

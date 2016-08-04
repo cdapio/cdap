@@ -89,6 +89,8 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   /**
    * Represents the core execution of an endpoint.
+   *
+   * @param <T> type of result object from the {@link #execute(HttpRequest, HttpResponder)} method
    */
   protected interface EndpointCoreExecution<T> {
     T execute(HttpRequest request, HttpResponder responder)

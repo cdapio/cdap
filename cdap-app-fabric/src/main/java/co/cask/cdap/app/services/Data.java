@@ -26,7 +26,7 @@ public enum Data {
   private final int dataType;
   private final String name;
 
-  private Data(int type, String prettyName) {
+  Data(int type, String prettyName) {
     this.dataType = type;
     this.name = prettyName;
   }

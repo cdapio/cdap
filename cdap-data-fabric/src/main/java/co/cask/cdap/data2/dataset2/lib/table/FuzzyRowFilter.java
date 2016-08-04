@@ -146,7 +146,7 @@ public final class FuzzyRowFilter implements Filter {
 
   // Utility methods
 
-  static enum SatisfiesCode {
+  enum SatisfiesCode {
     // row satisfies fuzzy rule
     YES,
     // row doesn't satisfy fuzzy rule, but there's possible greater row that does

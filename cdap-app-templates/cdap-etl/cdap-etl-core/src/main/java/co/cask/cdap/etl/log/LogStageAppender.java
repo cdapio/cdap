@@ -74,7 +74,7 @@ public class LogStageAppender extends AppenderBase<ILoggingEvent> {
     private final String eventMessage;
     private final String formattedMessage;
 
-    public StageEvent(ILoggingEvent event) {
+    StageEvent(ILoggingEvent event) {
       this.event = event;
       Map<String, String> mdcMap = event.getMDCPropertyMap();
       String stage = mdcMap.get(LogContext.STAGE);

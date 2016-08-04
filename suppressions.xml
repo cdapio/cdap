@@ -30,6 +30,8 @@
   <suppress checks="JavadocStyle" files=".*[/\\]src[/\\](main|integration)[/\\]java[/\\].*" />
   <suppress checks="JavadocStyle" files=".*[/\\]src[/\\].*[/\\]internal[/\\].*" />
 
+  <suppress checks="RedundantModifier" files=".*[/\\]src[/\\]test[/\\]java[/\\].*" />
+
 
   <!-- copied from apache hadoop, won't fix style to keep diff minimal -->
   <suppress checks=".*" files=".*[/\\]LocalJobRunnerWithFix.java" />

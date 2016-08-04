@@ -36,7 +36,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   // specifies if the metric type is gauge or counter
   private final AtomicBoolean gaugeUsed;
 
-  public AggregatedMetricsEmitter(String name) {
+  AggregatedMetricsEmitter(String name) {
     if (name == null || name.isEmpty()) {
       LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, ");
     }

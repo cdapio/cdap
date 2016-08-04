@@ -135,7 +135,7 @@ final class AvroStreamBodyConsumer extends BodyConsumer {
     private final ContentWriterFactory contentWriterFactory;
     private volatile Throwable failure;
 
-    public ContentWriterThread(InputStream contentStream, ContentWriterFactory contentWriterFactory) {
+    ContentWriterThread(InputStream contentStream, ContentWriterFactory contentWriterFactory) {
       super("avro-uploader-" + contentWriterFactory.getStream() + "-" + id.getAndIncrement());
       this.contentStream = contentStream;
       this.contentWriterFactory = contentWriterFactory;
