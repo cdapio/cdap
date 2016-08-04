@@ -88,7 +88,7 @@ public class DatasetOutputFormat implements OutputFormat<Void, Text> {
     private final Type recordType;
     private Schema recordSchema;
 
-    public DatasetRecordWriter(DatasetAccessor datasetAccessor) {
+    DatasetRecordWriter(DatasetAccessor datasetAccessor) {
       this.datasetAccessor = datasetAccessor;
       this.recordWritable = datasetAccessor.getDataset();
       this.recordType = recordWritable.getRecordType();

@@ -377,7 +377,7 @@ public class PluginInstantiator implements Closeable {
     private final ArtifactId artifactId;
     private final Set<String> macroFields;
 
-    public ConfigFieldSetter(PluginClass pluginClass, ArtifactId artifactId,
+    ConfigFieldSetter(PluginClass pluginClass, ArtifactId artifactId,
                              PluginProperties properties, Set<String> macroFields) {
       this.pluginClass = pluginClass;
       this.artifactId = artifactId;

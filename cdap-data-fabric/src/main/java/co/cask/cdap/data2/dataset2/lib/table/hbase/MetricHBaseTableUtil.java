@@ -35,7 +35,7 @@ public class MetricHBaseTableUtil {
   /**
    * Denotes version of Metric System's HBase table.
    */
-  public static enum Version {
+  public enum Version {
     VERSION_2_6_OR_LOWER,
     VERSION_2_7,
     VERSION_2_8_OR_HIGHER

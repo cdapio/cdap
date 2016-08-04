@@ -24,7 +24,7 @@ public interface LogMessage {
   /**
    *
    */
-  public static enum LogLevel {
+  enum LogLevel {
     TRACE,
     DEBUG,
     INFO,

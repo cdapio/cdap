@@ -26,7 +26,7 @@ class KafkaMessage {
   private final String messageKey;
   private final JsonElement notificationJson;
 
-  public KafkaMessage(String messageKey, JsonElement notificationJson) {
+  KafkaMessage(String messageKey, JsonElement notificationJson) {
     this.messageKey = messageKey;
     this.notificationJson = notificationJson;
   }

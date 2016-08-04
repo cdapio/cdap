@@ -76,7 +76,7 @@ public class MetaDataInfo {
 
     private final MetaDataInfo defaultValue;
 
-    private InfoType(MetaDataInfo defaultValue) {
+    InfoType(MetaDataInfo defaultValue) {
       this.defaultValue = defaultValue;
     }
 

@@ -90,7 +90,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     private final String streamName;
     private final String datasetName;
 
-    public SimpleFlow(String streamName, String datasetName) {
+    SimpleFlow(String streamName, String datasetName) {
       this.streamName = streamName;
       this.datasetName = datasetName;
     }
@@ -108,7 +108,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     @Property
     private final String datasetName;
 
-    public SimpleFlowlet(String datasetName) {
+    SimpleFlowlet(String datasetName) {
       this.datasetName = datasetName;
     }
 
@@ -124,7 +124,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     private final String streamName;
     private volatile boolean stopped;
 
-    public DefaultWorker(String streamName) {
+    DefaultWorker(String streamName) {
       this.streamName = streamName;
     }
 

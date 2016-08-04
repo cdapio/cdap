@@ -61,7 +61,7 @@ public class JoinOnFunction implements PairFlatMapFunction<Object, Object, Objec
     private final BatchJoiner<JOIN_KEY, INPUT, ?> joiner;
     private final String inputStageName;
 
-    public JoinOnTransform(BatchJoiner<JOIN_KEY, INPUT, ?> joiner, String inputStageName) {
+    JoinOnTransform(BatchJoiner<JOIN_KEY, INPUT, ?> joiner, String inputStageName) {
       this.joiner = joiner;
       this.inputStageName = inputStageName;
     }

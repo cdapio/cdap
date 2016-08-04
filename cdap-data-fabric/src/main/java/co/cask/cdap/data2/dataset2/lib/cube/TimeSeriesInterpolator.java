@@ -53,8 +53,7 @@ class TimeSeriesInterpolator implements Iterable<TimeValue> {
   private final Interpolator interpolator;
   private final int resolution;
 
-  public TimeSeriesInterpolator(Collection<TimeValue> timeValues,
-                                @Nullable Interpolator interpolator, int resolution) {
+  TimeSeriesInterpolator(Collection<TimeValue> timeValues, @Nullable Interpolator interpolator, int resolution) {
     this.timeSeries = ImmutableList.copyOf(timeValues);
     this.interpolator = interpolator;
     this.resolution = resolution;
@@ -110,7 +109,7 @@ class TimeSeriesInterpolator implements Iterable<TimeValue> {
       PeekingIterator<TimeValue> iter;
       TimeValue lastValue;
 
-      public BiDirectionalPeekingIterator(PeekingIterator<TimeValue> iter) {
+      BiDirectionalPeekingIterator(PeekingIterator<TimeValue> iter) {
         this.iter = iter;
         this.lastValue = null;
       }

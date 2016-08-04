@@ -153,7 +153,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     private RecordScannable recordScannable;
     private RecordScanner recordScanner;
 
-    public DatasetRecordReader(Configuration conf, DatasetInputSplit datasetInputSplit) throws IOException {
+    DatasetRecordReader(Configuration conf, DatasetInputSplit datasetInputSplit) throws IOException {
       this.initialized = new AtomicBoolean(false);
       this.datasetAccessor = new DatasetAccessor(conf);
       this.datasetInputSplit = datasetInputSplit;

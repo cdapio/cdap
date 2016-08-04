@@ -115,7 +115,7 @@ public class TimeParser {
   private static class ValueNode implements MathNode {
     private long value;
 
-    public ValueNode(long value) {
+    ValueNode(long value) {
       this.value = value;
     }
 
@@ -128,7 +128,7 @@ public class TimeParser {
     private final MathNode left;
     private final MathNode right;
 
-    public AddNode(MathNode left, MathNode right) {
+    AddNode(MathNode left, MathNode right) {
       this.left = left;
       this.right = right;
     }
@@ -143,7 +143,7 @@ public class TimeParser {
     private final MathNode left;
     private final MathNode right;
 
-    public SubtractNode(MathNode left, MathNode right) {
+    SubtractNode(MathNode left, MathNode right) {
       this.left = left;
       this.right = right;
     }
