@@ -145,6 +145,10 @@ body.theme-cdap {
       background: lightgray;
       position: fixed;
       top: 93px;
+      max-height: ~"calc(100vh - 143px)";
+      max-height: ~"-moz-calc(100vh - 143px)";
+      max-height: ~"-webkit-calc(100vh - 143px)";
+      overflow: auto;
       right: 0;
       z-index: 1039;
       @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
