@@ -160,7 +160,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       // One of the worst cases of 2way binding where right now the app is super big that I have no f***ing clue where which one is modified.
       let appConfigClone = angular.copy(appConfig);
       appConfig.cloneConfig = {
-        name: 'copy_' + app.name,
+        name: app.name + '_copy',
         artifact: app.artifact,
         description: appConfigClone.configJson.description,
         __ui__: appConfigClone.DAGConfig,
