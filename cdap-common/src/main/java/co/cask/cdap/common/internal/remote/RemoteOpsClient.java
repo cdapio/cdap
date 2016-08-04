@@ -37,7 +37,6 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -66,7 +65,6 @@ public class RemoteOpsClient {
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
 
-  @Inject
   protected RemoteOpsClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
                             final String discoverableServiceName) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {

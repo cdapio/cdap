@@ -27,11 +27,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * An {@link AbstractRemotePrivilegesFetcherHandler} that runs in the {@link RemoteSystemOperationsService}
+ * An {@link AbstractRemotePrivilegesHandler} that runs in the {@link RemoteSystemOperationsService}
  * and proxies list privileges requests to the master.
  */
 @Path(AbstractRemoteSystemOpsHandler.VERSION + "/execute")
-public class RemotePrivilegesFetcherProxyHandler extends AbstractRemotePrivilegesFetcherHandler {
+public class RemotePrivilegesFetcherProxyHandler extends AbstractRemotePrivilegesHandler {
 
   @Inject
   RemotePrivilegesFetcherProxyHandler(
