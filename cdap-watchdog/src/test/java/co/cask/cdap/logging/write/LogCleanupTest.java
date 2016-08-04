@@ -31,6 +31,7 @@ import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -38,6 +39,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -51,7 +53,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
+import java.util.NavigableMap;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -64,6 +69,7 @@ public class LogCleanupTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final int RETENTION_DURATION_MS = 100000;
+  private static final Random RANDOM = new Random(System.currentTimeMillis());
 
   private static Injector injector;
   private static TransactionManager txManager;
@@ -79,7 +85,8 @@ public class LogCleanupTest {
     namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new LocationRuntimeModule().getInMemoryModules(),
+      // use HDFS modules to simulate error cases (local module does not throw the same exceptions as HDFS)
+      new LocationRuntimeModule().getDistributedModules(),
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),
@@ -152,6 +159,14 @@ public class LogCleanupTest {
     Assert.assertEquals(locationListsToString(toDelete, notDelete),
       toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
 
+    // Randomly pick one file from toDelete list and delete it before running log cleanup
+    // This is to make sure that when a file is not present, but its metadata is present,
+    // log cleanup ignores the absence of the file and cleans up the metadata for the deleted file.
+    // Since the file deletion and its metadata clean up are not transactional, we can delete a file but
+    // fail to clean up its metadata.
+    int index = RANDOM.nextInt(toDelete.size());
+    toDelete.get(index).delete();
+
     LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, baseDir, namespacesDir, RETENTION_DURATION_MS);
     logCleanup.run();
     logCleanup.run();
@@ -168,6 +183,12 @@ public class LogCleanupTest {
       Location delDir = contextDir.append("2012-12-1" + i);
       Assert.assertFalse("Location " + delDir + " is not deleted!", delDir.exists());
     }
+
+    // Assert metadata for all deleted files is gone
+    NavigableMap<Long, Location> remainingFilesMap = fileMetaDataManager.listFiles(dummyContext);
+    Set<Location> metadataForDeletedFiles =
+      Sets.intersection(new HashSet<>(remainingFilesMap.values()), new HashSet<>(toDelete)).immutableCopy();
+    Assert.assertEquals(ImmutableSet.of(), metadataForDeletedFiles);
   }
 
   @Test
@@ -237,7 +258,7 @@ public class LogCleanupTest {
   @Test
   public void testDeleteEmptyDir2() throws Exception {
     // Create base dir
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    LocationFactory locationFactory = injector.getInstance(LocalLocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
     LogCleanup logCleanup = new LogCleanup(null, baseDir, namespacesDir, RETENTION_DURATION_MS);
