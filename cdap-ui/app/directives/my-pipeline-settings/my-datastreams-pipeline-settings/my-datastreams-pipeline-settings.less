@@ -19,15 +19,66 @@ my-datastreams-pipeline-settings {
     justify-content: flex-start;
 
     my-card {
-      flex: 0.2;
-      .batchinterval-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      flex: 0.5;
+      label {
+        font-weight: 500;
+        color: gray;
+        display: block;
+      }
 
-        > input,
-        label {
-          margin: 0 10px;
+      &.batch-interval {
+        .batchinterval-wrapper {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          > input,
+          label {
+            margin: 0 10px;
+          }
+        }
+      }
+
+      &.resources {
+        .resource-container {
+          display: flex;
+          > div {
+            flex: 0.5;
+          }
+          .title {
+            font-weight: 500;
+            color: gray;
+          }
+          .title,
+          .fa.fa-caret-down,
+          .fa.fa-caret-right {
+            cursor: pointer;
+            margin: 10px 0;
+            color: gray;
+          }
+          .resource-holder {
+            display: flex;
+            flex-direction: column;
+            .resource-group {
+              display: flex;
+              &:last-child {
+                margin: 10px 0;
+              }
+              .control-label {
+                &:first-child {
+                  width: 80px;
+                }
+              }
+              .control-label {
+                display: inline-block;
+                text-align: right;
+              }
+              .form-control {
+                width: 80px;
+                margin: 0 10px;
+              }
+            }
+          }
         }
       }
     }
