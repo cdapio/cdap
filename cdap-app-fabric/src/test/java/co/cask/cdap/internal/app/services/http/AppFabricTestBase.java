@@ -28,6 +28,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
@@ -160,15 +161,12 @@ public abstract class AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    CConfiguration conf = CConfiguration.create();
+    initializeAndStartServices(createBasicCConf(), null);
+  }
 
-    conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
-    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
-    conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-
-    injector = Guice.createInjector(new AppFabricTestModule(conf));
+  protected static void initializeAndStartServices(CConfiguration cConf,
+                                                   @Nullable SConfiguration sConf) throws Exception {
+    injector = Guice.createInjector(new AppFabricTestModule(cConf, sConf));
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -215,6 +213,16 @@ public abstract class AppFabricTestBase {
     txManager.stopAndWait();
     serviceStore.stopAndWait();
     metadataService.stopAndWait();
+  }
+
+  protected static CConfiguration createBasicCConf() throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
+    cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
+    cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    return cConf;
   }
 
   protected static Injector getInjector() {
