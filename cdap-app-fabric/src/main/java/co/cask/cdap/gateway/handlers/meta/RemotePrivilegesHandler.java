@@ -20,10 +20,14 @@ import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.http.HttpResponder;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -37,26 +41,34 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * An {@link AbstractRemotePrivilegesHandler} that runs inside the master and communicates directly with
- * an authorization backend to fetch privileges.
+ * An HTTP Handler that runs inside the master and communicates directly with an authorization backend to list and
+ * manage privileges.
  */
 @Path(AbstractRemoteSystemOpsHandler.VERSION + "/execute")
-public class RemotePrivilegesHandler extends AbstractRemotePrivilegesHandler {
+public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesHandler.class);
   private static final Type SET_OF_ACTIONS = new TypeLiteral<Set<Action>>() { }.getType();
 
   private final Authorizer authorizer;
+  private final PrivilegesFetcher privilegesFetcher;
 
   @Inject
-  RemotePrivilegesHandler(AuthorizerInstantiator authorizerInstantiator) {
-    super(authorizerInstantiator.get());
+  RemotePrivilegesHandler(
+    AuthorizerInstantiator authorizerInstantiator,
+    @Named(AuthorizationEnforcementModule.PRIVILEGES_FETCHER_PROXY_CACHE) PrivilegesFetcher privilegesFetcher) {
     this.authorizer = authorizerInstantiator.get();
+    this.privilegesFetcher = privilegesFetcher;
   }
 
   @POST
   @Path("/listPrivileges")
   public void listPrivileges(HttpRequest request, HttpResponder responder) throws Exception {
-    doListPrivileges(request, responder);
+    Iterator<MethodArgument> arguments = parseArguments(request);
+    Principal principal = deserializeNext(arguments);
+    LOG.trace("Listing privileges for principal {}", principal);
+    Set<Privilege> privileges = privilegesFetcher.listPrivileges(principal);
+    LOG.debug("Returning privileges for principal {} as {} via {}", principal, privileges, authorizer);
+    responder.sendJson(HttpResponseStatus.OK, privileges);
   }
 
   @POST

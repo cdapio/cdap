@@ -54,6 +54,7 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
@@ -122,7 +123,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new EntityVerifierModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getProxyModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getProgramContainerModule(),
       new AbstractModule() {
         @Override
@@ -141,5 +142,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(RemoteSystemOperationsService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
   }
 }

@@ -21,6 +21,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
@@ -35,7 +36,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link PrivilegesFetcherProxyService}. It maintains a cache of privileges fetched from
  * the master so every request for privileges does not have to go through the master. The cache is updated periodically
- * using {@link PrivilegesFetcherProxyClient}.
+ * using {@link Authorizer}.
  */
 @Singleton
 public class DefaultPrivilegesFetcherProxyService extends AbstractAuthorizationService
@@ -44,7 +45,7 @@ public class DefaultPrivilegesFetcherProxyService extends AbstractAuthorizationS
 
   @Inject
   DefaultPrivilegesFetcherProxyService(
-    @Named(AuthorizationEnforcementModule.PRIVILEGES_FETCHER_PROXY_CLIENT) PrivilegesFetcher privilegeFetcher,
+    @Named(AuthorizationEnforcementModule.PRIVILEGES_FETCHER_PROXY) PrivilegesFetcher privilegeFetcher,
     CConfiguration cConf) {
     super(privilegeFetcher, cConf, "privileges-fetcher-proxy");
   }

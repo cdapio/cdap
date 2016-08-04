@@ -208,7 +208,7 @@ public class UpgradeTool {
       new NamespaceStoreModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

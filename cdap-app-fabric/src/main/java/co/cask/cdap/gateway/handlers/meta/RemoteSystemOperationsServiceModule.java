@@ -39,7 +39,6 @@ public class RemoteSystemOperationsServiceModule extends PrivateModule {
 
     CommonHandlers.add(handlerBinder);
     handlerBinder.addBinding().to(RemoteLineageWriterHandler.class);
-    handlerBinder.addBinding().to(RemotePrivilegesFetcherProxyHandler.class);
     handlerBinder.addBinding().to(RemoteRuntimeStoreHandler.class);
     handlerBinder.addBinding().to(RemoteUsageRegistryHandler.class);
     handlerBinder.addBinding().to(RemoteNamespaceQueryHandler.class);

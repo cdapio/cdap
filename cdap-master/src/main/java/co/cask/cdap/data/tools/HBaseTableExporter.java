@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -22,22 +23,28 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.security.RemoteUGIProvider;
+import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.TransactionService;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -96,7 +103,8 @@ public class HBaseTableExporter {
 
   }
 
-  private static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -112,8 +120,17 @@ public class HBaseTableExporter {
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule()
+      new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getMasterModule(),
+      new AuthenticationContextModules().getMasterModule(),
+      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new SecureStoreModules().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(UGIProvider.class).to(RemoteUGIProvider.class);
+        }
+      }
     );
   }
 

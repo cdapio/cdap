@@ -35,7 +35,7 @@ import java.util.Set;
  */
 public class AuthorizationEnforcementModule extends RuntimeModule {
   public static final String PRIVILEGES_FETCHER_PROXY_CACHE = "privileges-fetcher-proxy-cache";
-  public static final String PRIVILEGES_FETCHER_PROXY_CLIENT = "privileges-fetcher-proxy-client";
+  public static final String PRIVILEGES_FETCHER_PROXY = "privileges-fetcher-proxy";
 
   @Override
   public Module getInMemoryModules() {
@@ -48,7 +48,16 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
           .in(Scopes.SINGLETON);
         // bind AuthorizationEnforcer to AuthorizationEnforcementService
         bind(AuthorizationEnforcer.class).to(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
+
+        bind(PrivilegesFetcherProxyService.class).to(DefaultPrivilegesFetcherProxyService.class)
+          .in(Scopes.SINGLETON);
         bind(PrivilegesFetcher.class).to(AuthorizerAsPrivilegesFetcher.class).in(Scopes.SINGLETON);
+        bind(PrivilegesFetcher.class)
+          .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY_CACHE))
+          .to(PrivilegesFetcherProxyService.class);
+        bind(PrivilegesFetcher.class)
+          .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY))
+          .to(AuthorizerAsPrivilegesFetcher.class);
       }
     };
   }
@@ -72,8 +81,8 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
           .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY_CACHE))
           .to(PrivilegesFetcherProxyService.class);
         bind(PrivilegesFetcher.class)
-          .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY_CLIENT))
-          .to(PrivilegesFetcherProxyClient.class);
+          .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY))
+          .to(AuthorizerAsPrivilegesFetcher.class);
       }
     };
   }
@@ -116,26 +125,10 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
         // Master should have access to authorization backends, so no need to fetch privileges remotely
         bind(PrivilegesFetcher.class).to(AuthorizerAsPrivilegesFetcher.class);
 
-        // Master is expected to have (kerberos) credentials to communicate with authorization backends. Hence, it
-        // doesn't need to start a proxy to fetch privileges from authorization backends, so no need to bind
-        // PrivilegesFetcherProxyService
-      }
-    };
-  }
-
-  public AbstractModule getProxyModule() {
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        // bind AuthorizationEnforcementService as a singleton. This binding is used while starting/stopping
-        // the service itself.
-        bind(AuthorizationEnforcementService.class).to(DefaultAuthorizationEnforcementService.class)
-          .in(Scopes.SINGLETON);
-        // bind AuthorizationEnforcer to AuthorizationEnforcementService
-        bind(AuthorizationEnforcer.class).to(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
-
-        // The RemoteSystemOperations service acts as a proxy to Master for fetching privileges from authorization
-        // backends, since it does not have access to make requests to authorization backends.
+        // Master runs a proxy caching service for privileges for system services and program containers to fetch
+        // privileges from authorization backends.
+        // The Master service acts as a proxy for system services and program containers to authorization backends
+        // for fetching privileges, since they may not have access to make requests to authorization backends.
         // e.g. Apache Sentry currently does not support proxy authentication or issue delegation tokens. As a result,
         // all requests to Sentry need to be proxied via Master, which is whitelisted.
         // Hence, bind PrivilegesFetcher to a proxy implementation, that makes a proxy call to master for fetching
@@ -144,19 +137,15 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
         // the service itself.
         bind(PrivilegesFetcherProxyService.class).to(DefaultPrivilegesFetcherProxyService.class)
           .in(Scopes.SINGLETON);
-        // inside program containers, for enforcing privileges, bind PrivilegeFetcher to a remote implementation
-        // that can make a call to a dedicated proxy service
-        bind(PrivilegesFetcher.class).to(RemotePrivilegesFetcher.class);
-        // bind PrivilegesFetcher to the PrivilegesFetcherProxyService, so privileges can be fetched from a cache
-        // inside the proxy if caching is enabled.
         bind(PrivilegesFetcher.class)
           .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY_CACHE))
           .to(PrivilegesFetcherProxyService.class);
-        // The PrivilegesFetcherProxyService itself uses a PrivilegesFetcher that proxies requests to master to
-        // refresh cached privileges periodically.
+        // Master is expected to have (kerberos) credentials to communicate with authorization backends. Hence, bind
+        // PrivilegesFetcher to the configured Authorizer
         bind(PrivilegesFetcher.class)
-          .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY_CLIENT))
-          .to(PrivilegesFetcherProxyClient.class);
+          .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY))
+          .to(AuthorizerAsPrivilegesFetcher.class);
+
       }
     };
   }
