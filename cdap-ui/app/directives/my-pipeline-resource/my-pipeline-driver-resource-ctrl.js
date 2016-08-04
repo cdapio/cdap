@@ -16,11 +16,11 @@
 function MyPipelineDriverResourceCtrl($scope) {
   'ngInject';
   $scope.virtualCores = $scope.store.getDriverVirtualCores();
-  $scope.memoryMb = $scope.store.getDriverMemoryMb();
+  $scope.memoryMB = $scope.store.getDriverMemoryMB();
   $scope.cores = Array.apply(null, {length: 21}).map(Number.call, Number).filter(a => a > 0);
 
-  $scope.onMemoryMbChange = function() {
-    $scope.actionCreator.setDriverMemoryMb($scope.memoryMb);
+  $scope.onMemoryMBChange = function() {
+    $scope.actionCreator.setDriverMemoryMB($scope.memoryMB);
   };
   $scope.onVirtualCoresChange = function() {
     $scope.actionCreator.setDriverVirtualCores($scope.virtualCores);

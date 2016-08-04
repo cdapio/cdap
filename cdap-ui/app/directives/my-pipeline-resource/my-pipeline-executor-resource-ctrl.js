@@ -16,10 +16,10 @@
 function MyPipelineExecutorResourceCtrl($scope) {
   'ngInject';
   $scope.virtualCores = $scope.store.getVirtualCores();
-  $scope.memoryMb = $scope.store.getMemoryMb();
+  $scope.memoryMB = $scope.store.getMemoryMB();
   $scope.cores = Array.apply(null, {length: 21}).map(Number.call, Number).filter(a => a > 0);
-  $scope.onMemoryMbChange = function() {
-    $scope.actionCreator.setMemoryMb($scope.memoryMb);
+  $scope.onMemoryMBChange = function() {
+    $scope.actionCreator.setMemoryMB($scope.memoryMB);
   };
   $scope.onVirtualCoresChange = function() {
     $scope.actionCreator.setVirtualCores($scope.virtualCores);
