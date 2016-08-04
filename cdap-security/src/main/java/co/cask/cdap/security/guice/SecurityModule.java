@@ -121,7 +121,7 @@ public abstract class SecurityModule extends PrivateModule {
     private final Map<String, Object> handlerMap;
 
     @Inject
-    public AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Object> handlers) {
+    AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Object> handlers) {
       handlerMap = new HashMap<>(handlers);
     }
 

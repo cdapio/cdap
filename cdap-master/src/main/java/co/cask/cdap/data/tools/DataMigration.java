@@ -18,9 +18,10 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -35,14 +36,20 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Command line tool to migrate data between different versions of CDAP.
@@ -60,7 +67,7 @@ public class DataMigration {
 
     private final String description;
 
-    private Action(String description) {
+    Action(String description) {
       this.description = description;
     }
 
@@ -86,9 +93,6 @@ public class DataMigration {
 
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      //  having a namespaced location factory which does not look up  namespace meta here is fine since this data
-      // migration tool does not perform namespace specific operations
-      new NonCustomLocationUnitTestModule().getModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -96,7 +100,11 @@ public class DataMigration {
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
+
+          // having a namespaced location factory which does not look up namespace meta here is fine since this data
+          // migration tool does not perform user namespace specific operations
           bind(NamespaceQueryAdmin.class).to(NoOpNamespaceQueryAdmin.class);
+          bind(NamespacedLocationFactory.class).to(SystemNamespacedLocationFactory.class).in(Scopes.SINGLETON);
         }
       });
   }
@@ -167,7 +175,7 @@ public class DataMigration {
 
     boolean keepOldMetricsData;
 
-    public MetricsMigration(boolean keepOldMetricsData) {
+    MetricsMigration(boolean keepOldMetricsData) {
       this.keepOldMetricsData = keepOldMetricsData;
     }
 
@@ -219,5 +227,47 @@ public class DataMigration {
     datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "core"), new CoreDatasetsModule());
     datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "fileSet"), new FileSetModule());
     return datasetFramework;
+  }
+
+  private static final class SystemNamespacedLocationFactory implements NamespacedLocationFactory {
+
+    private final LocationFactory locationFactory;
+    private final String namespaceDir;
+
+    @Inject
+    SystemNamespacedLocationFactory(CConfiguration cConf, LocationFactory locationFactory) {
+      this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+      this.locationFactory = locationFactory;
+    }
+
+    @Override
+    public Location get(Id.Namespace namespaceId) throws IOException {
+      return get(namespaceId, null);
+    }
+
+    @Override
+    public Location get(NamespaceMeta namespaceMeta) throws IOException {
+      return get(namespaceMeta.getNamespaceId().toId(), null);
+    }
+
+    @Override
+    public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
+      // Only allow operates on system namespace
+      if (!Id.Namespace.SYSTEM.equals(namespaceId)) {
+        throw new IllegalArgumentException("Location operation on namespace " + namespaceId +
+                                             " is not allowed. Only SYSTEM namespace is supported.");
+      }
+
+      Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
+      if (subPath != null) {
+        namespaceLocation = namespaceLocation.append(subPath);
+      }
+      return namespaceLocation;
+    }
+
+    @Override
+    public Location getBaseLocation() throws IOException {
+      return locationFactory.create("/");
+    }
   }
 }

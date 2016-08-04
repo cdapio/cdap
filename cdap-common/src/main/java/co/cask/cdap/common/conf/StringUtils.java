@@ -107,7 +107,7 @@ public class StringUtils {
    * which can be represented by a 64-bit integer.
    * TraditionalBinaryPrefix symbol are case insensitive.
    */
-  public static enum TraditionalBinaryPrefix {
+  public enum TraditionalBinaryPrefix {
     KILO(1024),
     MEGA(KILO.value << 10),
     GIGA(MEGA.value << 10),

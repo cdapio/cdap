@@ -272,7 +272,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     private static final int BUCKET_SIZE = 100;
     private final CLIConfig cliConfig;
 
-    public HistogramProcessor(CLIConfig cliConfig) {
+    HistogramProcessor(CLIConfig cliConfig) {
       this.cliConfig = cliConfig;
     }
 

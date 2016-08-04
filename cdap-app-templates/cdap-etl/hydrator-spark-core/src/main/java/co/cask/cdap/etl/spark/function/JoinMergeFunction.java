@@ -62,7 +62,7 @@ public class JoinMergeFunction implements FlatMapFunction<Tuple2<Object, List<Jo
     implements Transformation<Tuple2<JOIN_KEY, List<JoinElement<INPUT>>>, OUT> {
     private final BatchJoiner<JOIN_KEY, INPUT, OUT> joiner;
 
-    public JoinOnTransform(BatchJoiner<JOIN_KEY, INPUT, OUT> joiner) {
+    JoinOnTransform(BatchJoiner<JOIN_KEY, INPUT, OUT> joiner) {
       this.joiner = joiner;
     }
 

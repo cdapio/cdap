@@ -56,7 +56,7 @@ public class RouterModules extends RuntimeModule {
       @Provides
       @Named(Constants.Router.ADDRESS)
       @SuppressWarnings("unused")
-      public final InetAddress providesHostname(CConfiguration cConf) {
+      public InetAddress providesHostname(CConfiguration cConf) {
         return Networks.resolve(cConf.get(Constants.Router.ADDRESS),
                                 new InetSocketAddress("localhost", 0).getAddress());
       }

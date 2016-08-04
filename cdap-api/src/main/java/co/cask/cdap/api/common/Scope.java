@@ -32,7 +32,7 @@ public enum Scope {
   /**
    * Private constructor to force using the enum values.
    */
-  private Scope(String name) {
+  Scope(String name) {
     displayName = name;
   }
 

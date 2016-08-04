@@ -76,7 +76,7 @@ public class KeyValue {
    * Has space for other key types to be added later.  Cannot rely on
    * enum ordinals . They change if item is removed or moved.  Do our own codes.
    */
-  public static enum Type {
+  public enum Type {
     Minimum((byte) 0),
     Put((byte) 4),
 

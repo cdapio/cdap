@@ -34,7 +34,10 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -52,19 +55,30 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 /**
- * Tests for RemotePrivilegesFetcher. These are in app-fabric, because we need to start app-fabric in these tests.
+ * Tests for remote implementations of {@link PrivilegesFetcher} and {@link PrivilegesManager}.
+ * These are in app-fabric, because we need to start app-fabric in these tests.
  */
-public class RemotePrivilegesFetcherTest {
+public class RemotePrivilegesTest {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
-  private static AuthorizerInstantiator authorizerInstantiator;
+  private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
+  private static final NamespaceId NS = new NamespaceId("ns");
+  private static final ApplicationId APP = NS.app("app");
+  private static final ProgramId PROGRAM = APP.program(ProgramType.FLOW, "flo");
+
+  private static Authorizer authorizer;
   private static PrivilegesFetcher privilegesFetcher;
+  private static PrivilegesManager privilegesManager;
+  private static DiscoveryServiceClient discoveryService;
   private static TransactionManager txManager;
   private static DatasetService datasetService;
   private static AppFabricServer appFabricServer;
@@ -77,58 +91,90 @@ public class RemotePrivilegesFetcherTest {
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAuthorizer.class.getName());
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class, manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
+    discoveryService = injector.getInstance(DiscoveryServiceClient.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+    waitForService(Constants.Service.DATASET_MANAGER);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    waitForService(Constants.Service.APP_FABRIC_HTTP);
     remoteSysOpService = injector.getInstance(RemoteSystemOperationsService.class);
-    remoteSysOpService.startAndWait();
-    waitForServices(injector.getInstance(DiscoveryServiceClient.class));
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     privilegesFetcher = injector.getInstance(PrivilegesFetcher.class);
+    privilegesManager = injector.getInstance(PrivilegesManager.class);
   }
 
-  private static void waitForServices(DiscoveryServiceClient discoveryService) throws InterruptedException {
-    waitForService(discoveryService, Constants.Service.DATASET_MANAGER);
-    waitForService(discoveryService, Constants.Service.APP_FABRIC_HTTP);
-    waitForService(discoveryService, Constants.Service.REMOTE_SYSTEM_OPERATION);
-  }
-
-  private static void waitForService(DiscoveryServiceClient discoveryService, String name) throws InterruptedException {
+  private static void waitForService(String name) throws InterruptedException {
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryService.discover(name));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", name);
   }
 
   @Test
-  public void test() throws Exception {
-    Principal alice = new Principal("alice", Principal.PrincipalType.USER);
-    NamespaceId ns = new NamespaceId("ns");
-    ApplicationId app = ns.app("app");
-    ProgramId program = app.program(ProgramType.FLOW, "flo");
-    authorizerInstantiator.get().grant(ns, alice, ImmutableSet.of(Action.WRITE));
-    authorizerInstantiator.get().grant(app, alice, ImmutableSet.of(Action.ADMIN));
-    authorizerInstantiator.get().grant(program, alice, ImmutableSet.of(Action.EXECUTE));
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(ns, Action.WRITE),
-        new Privilege(app, Action.ADMIN),
-        new Privilege(program, Action.EXECUTE)
-      ),
-      privilegesFetcher.listPrivileges(alice));
+  public void testPrivilegesFetcher() throws Exception {
+    // In this test, grants and revokes happen via authorizer, whereas privilege listing happens via PrivilegeFetcher
+    authorizer.grant(NS, ALICE, ImmutableSet.of(Action.WRITE));
+    authorizer.grant(APP, ALICE, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(PROGRAM, ALICE, ImmutableSet.of(Action.EXECUTE));
+    // RemoteSystemOpsService is only required for PrivilegeFetcher, since all requests from PrivilegeManager always
+    // go to master directly.
+    remoteSysOpService.startAndWait();
+    waitForService(Constants.Service.REMOTE_SYSTEM_OPERATION);
+    try {
+      Assert.assertEquals(
+        ImmutableSet.of(
+          new Privilege(NS, Action.WRITE),
+          new Privilege(APP, Action.ADMIN),
+          new Privilege(PROGRAM, Action.EXECUTE)
+        ),
+        privilegesFetcher.listPrivileges(ALICE));
+      authorizer.revoke(NS);
+      authorizer.revoke(APP);
+      authorizer.revoke(PROGRAM);
+      Set<Privilege> privileges = privilegesFetcher.listPrivileges(ALICE);
+      Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
+                        privileges.isEmpty());
+    } finally {
+      remoteSysOpService.stopAndWait();
+    }
+  }
+
+  @Test
+  public void testPrivilegesManager() throws Exception {
+    // In this test, grants and revokes happen via PrivilegesManager, privilege listing and enforcement happens via
+    // Authorizer. Also, since grants and revokes go directly to master and don't need a proxy, the
+    // RemoteSystemOperationsService does not need to be started in this release.
+    privilegesManager.grant(NS, ALICE, Collections.singleton(Action.ALL));
+    privilegesManager.grant(APP, ALICE, Collections.singleton(Action.ADMIN));
+    privilegesManager.grant(PROGRAM, ALICE, Collections.singleton(Action.EXECUTE));
+    authorizer.enforce(NS, ALICE, Action.ALL);
+    authorizer.enforce(APP, ALICE, Action.ADMIN);
+    authorizer.enforce(PROGRAM, ALICE, Action.EXECUTE);
+    try {
+      authorizer.enforce(APP, ALICE, Action.ALL);
+      Assert.fail("Expected alice to not have all privileges on the app");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+    privilegesManager.revoke(PROGRAM);
+    privilegesManager.revoke(APP, ALICE, EnumSet.allOf(Action.class));
+    privilegesManager.revoke(NS, ALICE, Collections.singleton(Action.ALL));
+    Set<Privilege> privileges = authorizer.listPrivileges(ALICE);
+    Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
+                      privileges.isEmpty());
   }
 
   @AfterClass
   public static void tearDown() {
-    remoteSysOpService.stopAndWait();
     appFabricServer.stopAndWait();
     datasetService.stopAndWait();
     txManager.stopAndWait();

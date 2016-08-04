@@ -295,7 +295,7 @@ public class WorkflowDataset extends AbstractDataset {
     private final ProgramType programType;
     private final List<Long> programRunList;
 
-    public ProgramRunDetails(String name, ProgramType programType, List<Long> programRunList) {
+    ProgramRunDetails(String name, ProgramType programType, List<Long> programRunList) {
       this.name = name;
       this.programType = programType;
       this.programRunList = programRunList;

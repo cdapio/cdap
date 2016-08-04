@@ -96,7 +96,7 @@ public final class LineageCollapser {
     private RunId run;
     private Set<Id.NamespacedId> components;
 
-    public CollapseKeyBuilder(Id.NamespacedId data, Id.Program program) {
+    CollapseKeyBuilder(Id.NamespacedId data, Id.Program program) {
       this.data = data;
       this.program = program;
     }
@@ -136,8 +136,8 @@ public final class LineageCollapser {
     private final RunId run;
     private final Set<? extends Id.NamespacedId> components;
 
-    public CollapseKey(Id.NamespacedId data, Id.Program program, AccessType access, RunId run,
-                       Set<? extends Id.NamespacedId> components) {
+    CollapseKey(Id.NamespacedId data, Id.Program program, AccessType access, RunId run,
+                Set<? extends Id.NamespacedId> components) {
       this.data = data;
       this.program = program;
       this.access = access;

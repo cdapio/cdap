@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,7 +59,7 @@ public class ASMDatumCodecTest {
   /**
    *
    */
-  public static enum TestEnum {
+  public enum TestEnum {
     VALUE1, VALUE2, VALUE3, VALUE4
   }
 
@@ -252,7 +252,7 @@ public class ASMDatumCodecTest {
     private List<String> list;
     private TestEnum e;
 
-    public Record(int i, String s, List<String> list, TestEnum e) {
+    Record(int i, String s, List<String> list, TestEnum e) {
       this.i = i;
       this.s = s;
       this.list = list;
@@ -333,12 +333,14 @@ public class ASMDatumCodecTest {
    *
    */
   public static final class Node {
-    public int data;
+    public short data;
+    public Short boxedData;
     public Node left;
     public Node right;
 
-    public Node(int data, Node left, Node right) {
+    public Node(short data, Node left, Node right) {
       this.data = data;
+      this.boxedData = data;
       this.left = left;
       this.right = right;
     }
@@ -372,7 +374,11 @@ public class ASMDatumCodecTest {
     PipedInputStream is = new PipedInputStream(os);
 
     DatumWriter<Node> writer = getWriter(type);
-    Node root = new Node(1, new Node(2, null, new Node(3, null, null)), new Node(4, new Node(5, null, null), null));
+    Node root = new Node((short) 1,
+                         new Node((short) 2, null,
+                                  new Node((short) 3, null, null)),
+                         new Node((short) 4,
+                                  new Node((short) 5, null, null), null));
     writer.encode(root, new BinaryEncoder(os));
 
     ReflectionDatumReader<Node> reader = new ReflectionDatumReader<>(getSchema(type), type);
@@ -408,8 +414,8 @@ public class ASMDatumCodecTest {
     long startTime;
     long endTime;
 
-    Node writeValue = new Node(1, new Node(2, null, new Node(3, null, null)),
-                               new Node(4, new Node(5, null, null), null));
+    Node writeValue = new Node((short) 1, new Node((short) 2, null, new Node((short) 3, null, null)),
+                               new Node((short) 4, new Node((short) 5, null, null), null));
 
     DatumWriter<Node> writer = getWriter(type);
     startTime = System.nanoTime();

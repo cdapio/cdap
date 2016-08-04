@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,10 +27,9 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,9 +38,7 @@ import java.util.Set;
  */
 public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements WorkerConfigurer {
 
-  private final String className;
-  private final Map<String, String> propertyFields;
-
+  private final Worker worker;
   private String name;
   private String description;
   private Resources resource;
@@ -53,17 +50,13 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
                                  ArtifactRepository artifactRepository,
                                  PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+    this.worker = worker;
     this.name = worker.getClass().getSimpleName();
-    this.className = worker.getClass().getName();
-    this.propertyFields = Maps.newHashMap();
     this.description = "";
     this.resource = new Resources();
     this.instances = 1;
-    this.properties = ImmutableMap.of();
+    this.properties = new HashMap<>();
     this.datasets = Sets.newHashSet();
-
-    // Grab all @Property fields
-    Reflections.visit(worker, worker.getClass(), new PropertyFieldExtractor(propertyFields));
   }
 
   @Override
@@ -90,12 +83,13 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
 
   @Override
   public void setProperties(Map<String, String> properties) {
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = new HashMap<>(properties);
   }
 
   public WorkerSpecification createSpecification() {
-    Map<String, String> properties = Maps.newHashMap(this.properties);
-    properties.putAll(propertyFields);
-    return new WorkerSpecification(className, name, description, properties, datasets, resource, instances);
+    // Grab all @Property fields
+    Reflections.visit(worker, worker.getClass(), new PropertyFieldExtractor(properties));
+    return new WorkerSpecification(worker.getClass().getName(), name, description,
+                                   properties, datasets, resource, instances);
   }
 }

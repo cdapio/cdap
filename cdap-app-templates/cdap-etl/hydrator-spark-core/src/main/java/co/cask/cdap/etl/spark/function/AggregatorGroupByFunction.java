@@ -58,7 +58,7 @@ public class AggregatorGroupByFunction implements PairFlatMapFunction<Object, Ob
     private final BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
     private final DefaultEmitter<GROUP_KEY> keyEmitter;
 
-    public GroupByTransform(BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator) {
+    GroupByTransform(BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator) {
       this.aggregator = aggregator;
       this.keyEmitter = new DefaultEmitter<>();
     }

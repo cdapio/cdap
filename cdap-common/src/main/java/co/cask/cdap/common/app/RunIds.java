@@ -135,7 +135,7 @@ public final class RunIds {
   private static class RunIdImpl implements RunId {
     private final UUID id;
 
-    public RunIdImpl(UUID id) {
+    RunIdImpl(UUID id) {
       this.id = id;
     }
 

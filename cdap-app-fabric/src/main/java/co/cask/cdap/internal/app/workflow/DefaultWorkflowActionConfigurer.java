@@ -39,27 +39,18 @@ import java.util.Set;
 @Deprecated
 public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer {
 
-  private final String className;
-  private final Map<String, String> propertyFields;
-  private final Set<String> datasetFields;
-
+  private final WorkflowAction workflowAction;
   private String name;
   private String description;
   private Map<String, String> properties;
   private Set<String> datasets;
 
   private DefaultWorkflowActionConfigurer(WorkflowAction workflowAction) {
+    this.workflowAction = workflowAction;
     this.name = workflowAction.getClass().getSimpleName();
     this.description = "";
-    this.className = workflowAction.getClass().getName();
-    this.propertyFields = new HashMap<>();
-    this.datasetFields = new HashSet<>();
     this.properties = new HashMap<>();
     this.datasets = new HashSet<>();
-
-    Reflections.visit(workflowAction, workflowAction.getClass(),
-                      new PropertyFieldExtractor(propertyFields),
-                      new DataSetFieldExtractor(datasetFields));
   }
 
   @Override
@@ -89,11 +80,11 @@ public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer
   }
 
   private DefaultWorkflowActionSpecification createSpecification() {
-    Map<String, String> properties = new HashMap<>(this.properties);
-    properties.putAll(propertyFields);
-    Set<String> datasets = new HashSet<>(this.datasets);
-    datasets.addAll(datasetFields);
-    return new DefaultWorkflowActionSpecification(className, name, description, properties, datasets);
+    Reflections.visit(workflowAction, workflowAction.getClass(),
+                      new PropertyFieldExtractor(properties),
+                      new DataSetFieldExtractor(datasets));
+    return new DefaultWorkflowActionSpecification(workflowAction.getClass().getName(), name,
+                                                  description, properties, datasets);
   }
 
   public static WorkflowActionSpecification configureAction(WorkflowAction action) {

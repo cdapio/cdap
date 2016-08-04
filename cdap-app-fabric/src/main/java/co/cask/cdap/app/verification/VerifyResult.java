@@ -25,7 +25,7 @@ public final class VerifyResult {
   /**
    * Status of verification.
    */
-  public static enum Status {
+  public enum Status {
     SUCCESS,
     FAILED
   }

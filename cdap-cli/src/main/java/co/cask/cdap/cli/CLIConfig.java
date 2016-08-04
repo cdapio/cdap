@@ -89,7 +89,7 @@ public class CLIConfig implements TableRendererConfig {
     private final AccessToken accessToken;
     private final String username;
 
-    public UserAccessToken(AccessToken accessToken, String username) {
+    UserAccessToken(AccessToken accessToken, String username) {
       this.accessToken = accessToken;
       this.username = username;
     }

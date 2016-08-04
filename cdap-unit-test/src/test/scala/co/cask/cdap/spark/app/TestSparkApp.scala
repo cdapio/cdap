@@ -16,10 +16,12 @@
 
 package co.cask.cdap.spark.app
 
+import co.cask.cdap.api.annotation.{Property, UseDataSet}
 import co.cask.cdap.api.app.AbstractApplication
+import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib.{FileSet, FileSetProperties, KeyValueTable, ObjectMappedTable, ObjectMappedTableProperties, TimeseriesTable}
-import co.cask.cdap.api.spark.AbstractSpark
+import co.cask.cdap.api.spark.{AbstractSpark, SparkClientContext}
 import co.cask.cdap.api.workflow.{AbstractWorkflow, AbstractWorkflowAction}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
@@ -33,6 +35,7 @@ class TestSparkApp extends AbstractApplication {
   override def configure() = {
     addStream(new Stream("SparkStream"))
     addStream(new Stream("PeopleStream"))
+    createDataset("ResultTable", classOf[KeyValueTable])
     createDataset("KeyValueTable", classOf[KeyValueTable])
     createDataset("SparkResult", classOf[KeyValueTable])
     createDataset("SparkThresholdResult", classOf[KeyValueTable])
@@ -60,14 +63,34 @@ class TestSparkApp extends AbstractApplication {
   }
 
   final class ClassicSpark extends AbstractSpark {
+
+    @UseDataSet("ResultTable")
+    var resultTable: KeyValueTable = _
+    @Property
+    val mainClassName = classOf[ClassicSparkProgram].getName
+
     override protected def configure {
-      setMainClass(classOf[ClassicSparkProgram])
+      setMainClassName(mainClassName)
+    }
+
+    override def onFinish(succeeded: Boolean, context: SparkClientContext) {
+      resultTable.increment(Bytes.toBytes(mainClassName), if (succeeded) 1 else 0)
     }
   }
 
   final class ScalaClassicSpark extends AbstractSpark {
+
+    @UseDataSet("ResultTable")
+    var resultTable: KeyValueTable = _
+    @Property
+    val mainClassName = "co.cask.cdap.spark.app.ScalaClassicSparkProgram"
+
     override protected def configure {
-      setMainClassName("co.cask.cdap.spark.app.ScalaClassicSparkProgram")
+      setMainClassName(mainClassName)
+    }
+
+    override def onFinish(succeeded: Boolean, context: SparkClientContext) {
+      resultTable.increment(Bytes.toBytes(mainClassName), if (succeeded) 1 else 0)
     }
   }
 

@@ -181,8 +181,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
 
       if (callbackHandlerClass == null) {
         callbackHandler = new CallbackHandler() {
-          public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException
-          {
+          public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
             for (Callback callback: callbacks) {
               if (callback instanceof NameCallback) {
                 ((NameCallback) callback).setName(username);

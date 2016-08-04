@@ -38,7 +38,7 @@ final class HBaseQueueScanner implements QueueScanner {
   private final int numRows;
   private final Function<byte[], byte[]> rowKeyConverter;
 
-  public HBaseQueueScanner(ResultScanner scanner, int numRows, Function<byte[], byte[]> rowKeyConverter) {
+  HBaseQueueScanner(ResultScanner scanner, int numRows, Function<byte[], byte[]> rowKeyConverter) {
     this.scanner = scanner;
     this.numRows = numRows;
     this.rowKeyConverter = rowKeyConverter;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -404,9 +404,15 @@ final class DatumWriterGenerator {
     TypeToken<?> encodeType = type;
     mg.loadArg(encoder);
     mg.loadArg(value);
-    if (Primitives.isWrapperType(encodeType.getRawType())) {
+
+    boolean isPrimitiveBoxType = Primitives.isWrapperType(encodeType.getRawType());
+    if (encodeType.getRawType().isPrimitive() || isPrimitiveBoxType) {
+      // Unwrap it if it is boxed type, otherwise it won't change the encodeType.
       encodeType = TypeToken.of(Primitives.unwrap(encodeType.getRawType()));
-      mg.unbox(Type.getType(encodeType.getRawType()));
+
+      if (isPrimitiveBoxType) {
+        mg.unbox(Type.getType(encodeType.getRawType()));
+      }
       // A special case since INT type represents (byte, char, short and int).
       if (schema.getType() == Schema.Type.INT && !int.class.equals(encodeType.getRawType())) {
         encodeType = TypeToken.of(int.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,10 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.PropertyProvider;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -35,18 +38,20 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   private final String name;
   private final String description;
   private final String mainClassName;
+  private final Set<String> datasets;
   private final Map<String, String> properties;
   private final Resources driverResources;
   private final Resources executorResources;
 
   public SparkSpecification(String className, String name, String description,
-                            String mainClassName, Map<String, String> properties,
+                            String mainClassName, Set<String> datasets, Map<String, String> properties,
                             @Nullable Resources driverResources, @Nullable Resources executorResources) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.mainClassName = mainClassName;
-    this.properties = Collections.unmodifiableMap(properties);
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.driverResources = driverResources;
     this.executorResources = executorResources;
   }
@@ -76,6 +81,13 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   @Override
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  /**
+   * Returns the set of static datasets used by the Spark program.
+   */
+  public Set<String> getDatasets() {
+    return datasets;
   }
 
   @Override

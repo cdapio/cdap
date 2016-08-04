@@ -266,7 +266,7 @@ public class MultipleOutputs implements Closeable {
     private final String counterName;
     private final TaskInputOutputContext context;
 
-    public MeteredRecordWriter(RecordWriter<K, V> writer, TaskInputOutputContext context) {
+    MeteredRecordWriter(RecordWriter<K, V> writer, TaskInputOutputContext context) {
       this.writer = writer;
       this.context = context;
       this.groupName = TaskCounter.class.getName();
@@ -299,7 +299,7 @@ public class MultipleOutputs implements Closeable {
 
     TaskAttemptContext context;
 
-    public WrappedStatusReporter(TaskAttemptContext context) {
+    WrappedStatusReporter(TaskAttemptContext context) {
       this.context = context;
     }
 

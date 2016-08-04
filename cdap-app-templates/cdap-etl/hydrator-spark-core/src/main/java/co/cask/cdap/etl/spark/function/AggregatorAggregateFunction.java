@@ -57,7 +57,7 @@ public class AggregatorAggregateFunction implements FlatMapFunction<Tuple2<Objec
     implements Transformation<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, OUT_VAL> {
     private final BatchAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator;
 
-    public AggregateTransform(BatchAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator) {
+    AggregateTransform(BatchAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator) {
       this.aggregator = aggregator;
     }
 

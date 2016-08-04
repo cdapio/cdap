@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,12 +27,11 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,12 +41,10 @@ import java.util.Set;
  */
 public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer implements HttpServiceConfigurer {
 
-  private final Map<String, String> propertyFields;
-  private final String className;
+  private final HttpServiceHandler handler;
   private final String name;
   private Map<String, String> properties;
   private Set<String> datasets;
-  private final List<ServiceHttpEndpoint> endpoints;
 
   /**
    * Instantiates the class with the given {@link HttpServiceHandler}.
@@ -61,18 +58,10 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
                                              ArtifactRepository artifactRepository,
                                              PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
-    this.propertyFields = Maps.newHashMap();
-    this.className = handler.getClass().getName();
+    this.handler = handler;
     this.name = handler.getClass().getSimpleName();
-    this.properties = ImmutableMap.of();
-    this.datasets = Sets.newHashSet();
-    this.endpoints = Lists.newArrayList();
-
-    // Inspect the handler to grab all @UseDataset, @Property and endpoints.
-    Reflections.visit(handler, handler.getClass(),
-                      new DataSetFieldExtractor(datasets),
-                      new PropertyFieldExtractor(propertyFields),
-                      new ServiceEndpointExtractor(endpoints));
+    this.properties = new HashMap<>();
+    this.datasets = new HashSet<>();
   }
 
   /**
@@ -82,7 +71,7 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
    */
   @Override
   public void setProperties(Map<String, String> properties) {
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = new HashMap<>(properties);
   }
 
   @Override
@@ -96,8 +85,13 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
    * @return a new specification from the parameters stored in this instance
    */
   public HttpServiceHandlerSpecification createSpecification() {
-    Map<String, String> properties = Maps.newHashMap(this.properties);
-    properties.putAll(propertyFields);
-    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints);
+    List<ServiceHttpEndpoint> endpoints = new ArrayList<>();
+    // Inspect the handler to grab all @UseDataset, @Property and endpoints.
+    Reflections.visit(handler, handler.getClass(),
+                      new DataSetFieldExtractor(datasets),
+                      new PropertyFieldExtractor(properties),
+                      new ServiceEndpointExtractor(endpoints));
+
+    return new HttpServiceHandlerSpecification(handler.getClass().getName(), name, "", properties, datasets, endpoints);
   }
 }

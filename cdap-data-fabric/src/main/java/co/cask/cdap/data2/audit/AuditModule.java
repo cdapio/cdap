@@ -72,7 +72,7 @@ public class AuditModule extends RuntimeModule {
     private final CConfiguration cConf;
 
     @Inject
-    public KafkaAuditPublisherProvider(Injector injector, CConfiguration cConf) {
+    KafkaAuditPublisherProvider(Injector injector, CConfiguration cConf) {
       this.injector = injector;
       this.cConf = cConf;
     }

@@ -31,7 +31,7 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 abstract class OutputWriter<KEY_OUT, VAL_OUT> {
   protected final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
 
-  public OutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
+  OutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
     this.context = context;
   }
 

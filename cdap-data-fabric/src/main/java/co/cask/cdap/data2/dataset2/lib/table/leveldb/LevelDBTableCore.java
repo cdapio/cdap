@@ -491,8 +491,8 @@ public class LevelDBTableCore {
     private final byte[][] columns;
     private final FuzzyRowFilter filter;
 
-    public LevelDBScanner(DBIterator iterator, byte[] endKey,
-                          @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx) {
+    LevelDBScanner(DBIterator iterator, byte[] endKey,
+                   @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx) {
       this.tx = tx;
       this.endKey = endKey;
       this.iterator = iterator;

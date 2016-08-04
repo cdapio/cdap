@@ -29,10 +29,12 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
+import co.cask.cdap.security.authorization.AuthorizerAsPrivilegesManager;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -95,6 +97,9 @@ public class AuthorizationModule extends PrivateModule {
 
     bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
     expose(AuthorizerInstantiator.class);
+
+    bind(PrivilegesManager.class).to(AuthorizerAsPrivilegesManager.class);
+    expose(PrivilegesManager.class);
   }
 
   @Singleton

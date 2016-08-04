@@ -51,7 +51,7 @@ import java.util.jar.Attributes;
  * </ul>
  */
 @Beta
-public interface Authorizer extends PrivilegesFetcher, AuthorizationEnforcer {
+public interface Authorizer extends PrivilegesFetcher, PrivilegesManager, AuthorizationEnforcer {
   /**
    * Initialize the {@link Authorizer}. Authorization extensions can use this method to access an
    * {@link AuthorizationContext} that allows them to interact with CDAP for operations such as creating and accessing
@@ -61,34 +61,6 @@ public interface Authorizer extends PrivilegesFetcher, AuthorizationEnforcer {
    */
   void initialize(AuthorizationContext context) throws Exception;
 
-  /**
-   * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on an {@link EntityId}.
-   *
-   * @param entity the {@link EntityId} to whom {@link Action actions} are to be granted
-   * @param principal the {@link Principal} that performs the actions. This could be a user, or role
-   * @param actions the set of {@link Action actions} to grant.
-   */
-  void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
-
-  /**
-   * Revokes a {@link Principal principal's} authorization to perform a set of {@link Action actions} on
-   * an {@link EntityId}.
-   *
-   * @param entity the {@link EntityId} whose {@link Action actions} are to be revoked
-   * @param principal the {@link Principal} that performs the actions. This could be a user, group or role
-   * @param actions the set of {@link Action actions} to revoke
-   */
-  void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
-
-  /**
-   * Revokes all {@link Principal principals'} authorization to perform any {@link Action} on the given
-   * {@link EntityId}.
-   *
-   * @param entity the {@link EntityId} on which all {@link Action actions} are to be revoked
-   */
-  void revoke(EntityId entity) throws Exception;
-
-  /********************************* Role Management: APIs for Role Based Access Control ******************************/
   /**
    * Create a role.
    *
