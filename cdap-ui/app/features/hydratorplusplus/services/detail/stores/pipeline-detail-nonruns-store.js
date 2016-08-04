@@ -15,8 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers) {
+  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers, HYDRATOR_DEFAULT_VALUES) {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
+    this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
     this.myHelpers = myHelpers;
     this.setDefaults = function(app) {
       this.state = {
@@ -125,8 +126,14 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.getInstance = function() {
       return this.state.cloneConfig.config.instances;
     };
-    this.getMemoryMb = function() {
-      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'memoryMb');
+    this.getDriverMemoryMB = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'driverResources', 'memoryMB');
+    };
+    this.getDriverVirtualCores = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'driverResources', 'virtualCores');
+    };
+    this.getMemoryMB = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'memoryMB');
     };
     this.getVirtualCores = function() {
       return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'virtualCores');
@@ -174,7 +181,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         config: {
           instances: appConfigClone.configJson.instances,
           batchInterval: appConfigClone.configJson.batchInterval,
-          resources: appConfigClone.configJson.resources,
+          resources: appConfigClone.configJson.resources || this.HYDRATOR_DEFAULT_VALUES.resources,
+          driverResources: appConfigClone.configJson.driverResources || this.HYDRATOR_DEFAULT_VALUES.resources,
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,

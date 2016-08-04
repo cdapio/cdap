@@ -41,7 +41,9 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onSetInstance', this.setInstance.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetBatchInterval', this.setBatchInterval.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetVirtualCores', this.setVirtualCores.bind(this));
-    this.hydratorPlusPlusConfigDispatcher.register('onSetMemoryMb', this.setMemoryMb.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onsetMemoryMB', this.setMemoryMB.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetDriverVirtualCores', this.setDriverVirtualCores.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetDriverMemoryMB', this.setDriverMemoryMB.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
@@ -74,7 +76,7 @@ class HydratorPlusPlusConfigStore {
       description: '',
       name: '',
     };
-    angular.extend(this.state, {config: this.getDefaultConfig()});
+    Object.assign(this.state, { config: this.getDefaultConfig() });
 
     // This will be eventually used when we just pass on a config to the store to draw the dag.
     if (config) {
@@ -92,6 +94,8 @@ class HydratorPlusPlusConfigStore {
   }
   getDefaultConfig() {
     return {
+      resources: this.HYDRATOR_DEFAULT_VALUES.resources,
+      driverResources: this.HYDRATOR_DEFAULT_VALUES.resources,
       connections: [],
       comments: [],
       postActions: []
@@ -208,19 +212,25 @@ class HydratorPlusPlusConfigStore {
     if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
-      if (this.getMemoryMb() || this.getVirtualCores()) {
+      if (this.GLOBALS.etlDataStreams) {
+        config.batchInterval = this.getBatchInterval();
+      }
+      if (this.getMemoryMB() || this.getVirtualCores()) {
         config.resources = {
-          memoryMb: this.getMemoryMb(),
+          memoryMB: this.getMemoryMB(),
           virtualCores: this.getVirtualCores()
         };
       }
-      if (this.GLOBALS.etlDataStreams) {
-        config.batchInterval = this.getBatchInterval();
+      if (this.getDriverMemoryMB() || this.getDriverVirtualCores()) {
+        config.driverResources = {
+          memoryMB: this.getDriverMemoryMB(),
+          virtualCores: this.getDriverVirtualCores()
+        };
       }
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instances = this.getInstance();
     }
-    
+
     if (this.state.description) {
       config.description = this.state.description;
     }
@@ -623,6 +633,20 @@ class HydratorPlusPlusConfigStore {
   setInstance(instances) {
     this.state.config.instances = instances;
   }
+  setDriverVirtualCores(virtualCores) {
+    this.state.config.driverResources = this.state.config.driverResources || {};
+    this.state.config.driverResources.virtualCores = virtualCores;
+  }
+  getDriverVirtualCores() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'driverResources', 'virtualCores');
+  }
+  getDriverMemoryMB() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'driverResources', 'memoryMB');
+  }
+  setDriverMemoryMB(memoryMB) {
+    this.state.config.driverResources = this.state.config.driverResources || {};
+    this.state.config.driverResources.memoryMB = memoryMB;
+  }
   setVirtualCores(virtualCores) {
     this.state.config.resources = this.state.config.resources || {};
     this.state.config.resources.virtualCores = virtualCores;
@@ -630,12 +654,12 @@ class HydratorPlusPlusConfigStore {
   getVirtualCores() {
     return this.myHelpers.objectQuery(this.state, 'config', 'resources', 'virtualCores');
   }
-  getMemoryMb() {
-    return this.myHelpers.objectQuery(this.state, 'config', 'resources', 'memoryMb');
+  getMemoryMB() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'resources', 'memoryMB');
   }
-  setMemoryMb(memoryMb) {
+  setMemoryMB(memoryMB) {
     this.state.config.resources = this.state.config.resources || {};
-    this.state.config.resources.memoryMb = memoryMb;
+    this.state.config.resources.memoryMB = memoryMB;
   }
 
   setComments(comments) {
