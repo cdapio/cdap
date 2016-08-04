@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,13 +24,15 @@ import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Default implementation of {@link SparkConfigurer}.
@@ -51,7 +53,7 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
     this.spark = spark;
     this.name = spark.getClass().getSimpleName();
     this.description = "";
-    this.properties = Collections.emptyMap();
+    this.properties = new HashMap<>();
   }
 
   @Override
@@ -72,7 +74,7 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
   @Override
   public void setProperties(Map<String, String> properties) {
     Preconditions.checkNotNull(properties, "Properties is null");
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = new HashMap<>(properties);
   }
 
   @Override
@@ -88,9 +90,12 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
   public SparkSpecification createSpecification() {
     Preconditions.checkArgument(mainClassName != null,
                                 "Spark main class is not set. Make sure setMainClass or setMainClassName is called.");
-    // Grab all @Property fields
-    Reflections.visit(spark, spark.getClass(), new PropertyFieldExtractor(properties));
+
+    Set<String> datasets = new HashSet<>();
+    // Grab all @Property and @Dataset fields
+    Reflections.visit(spark, spark.getClass(), new PropertyFieldExtractor(properties),
+                      new DataSetFieldExtractor(datasets));
     return new SparkSpecification(spark.getClass().getName(), name, description,
-                                  mainClassName, properties, driverResources, executorResources);
+                                  mainClassName, datasets, properties, driverResources, executorResources);
   }
 }

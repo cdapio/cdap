@@ -38,9 +38,11 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spark.app.CharCountProgram;
+import co.cask.cdap.spark.app.ClassicSparkProgram;
 import co.cask.cdap.spark.app.DatasetSQLSpark;
 import co.cask.cdap.spark.app.Person;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
+import co.cask.cdap.spark.app.ScalaClassicSparkProgram;
 import co.cask.cdap.spark.app.ScalaCrossNSDatasetProgram;
 import co.cask.cdap.spark.app.ScalaCrossNSStreamProgram;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
@@ -169,6 +171,10 @@ public class SparkTestRun extends TestFrameworkTestBase {
         }
       }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     }
+
+    KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
+    Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ClassicSparkProgram.class.getName())));
+    Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ScalaClassicSparkProgram.class.getName())));
   }
 
   @Test

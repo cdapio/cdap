@@ -46,7 +46,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Closeable;
-import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -76,9 +75,9 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       SecureStoreManager secureStoreManager,
                       AuthorizationEnforcer authorizationEnforcer,
                       AuthenticationContext authenticationContext) {
-    super(program, programOptions, Collections.<String>emptySet(), datasetFramework, txClient, discoveryServiceClient,
-          true, metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          pluginInstantiator);
+    super(program, programOptions, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
+          discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
+          secureStore, secureStoreManager, pluginInstantiator);
 
     this.hConf = hConf;
     this.txClient = txClient;
@@ -118,9 +117,13 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    * Returns the {@link SparkSpecification} of the spark program of this context.
    */
   public SparkSpecification getSparkSpecification() {
-    SparkSpecification spec = getApplicationSpecification().getSpark().get(getProgram().getName());
+    return getSparkSpecification(getProgram());
+  }
+
+  private static SparkSpecification getSparkSpecification(Program program) {
+    SparkSpecification spec = program.getApplicationSpecification().getSpark().get(program.getName());
     // Spec shouldn't be null, otherwise the spark program won't even get started
-    Preconditions.checkState(spec != null, "SparkSpecification not found for %s", getProgram().getId());
+    Preconditions.checkState(spec != null, "SparkSpecification not found for %s", program.getId());
     return spec;
   }
 

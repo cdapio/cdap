@@ -102,7 +102,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         @Nullable PluginInstantiator pluginInstantiator,
                         SecureStore secureStore,
                         SecureStoreManager secureStoreManager) {
-    super(program, programOptions, Collections.<String>emptySet(), dsFramework, txClient, discoveryServiceClient, false,
+    super(program, programOptions, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
           pluginInstantiator);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -42,6 +43,7 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("mainClassName", new JsonPrimitive(src.getMainClassName()));
+    jsonObj.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
 
     if (src.getDriverResources() != null) {
@@ -63,13 +65,14 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     String mainClassName = jsonObj.get("mainClassName").getAsString();
+    Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
     Resources driverResources = deserializeResources(jsonObj, "driver", context);
     Resources executorResources = deserializeResources(jsonObj, "executor", context);
 
     return new SparkSpecification(className, name, description, mainClassName,
-                                  properties, driverResources, executorResources);
+                                  datasets, properties, driverResources, executorResources);
   }
 
   /**
