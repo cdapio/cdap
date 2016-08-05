@@ -143,7 +143,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
     return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
                                              workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
-                                             ProgramType.MAPREDUCE, programId.getId());
+                                             ProgramType.MAPREDUCE, programId.getId(), runId.getId());
   }
 
   @Override

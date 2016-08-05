@@ -162,7 +162,8 @@ public class MockLogReader implements LogReader {
                                                                               workflowId.getApplication(),
                                                                               workflowId.getProgram(),
                                                                               workflowRunId.getId(),
-                                                                              ProgramType.MAPREDUCE, SOME_MAPREDUCE);
+                                                                              ProgramType.MAPREDUCE, SOME_MAPREDUCE,
+                                                                              mapReduceRunId.getId());
     generateWorkflowRunLogs(context);
 
     // Generate logs for Spark program started by Workflow run above
@@ -178,7 +179,7 @@ public class MockLogReader implements LogReader {
     runRecordMap.put(sparkId.toId(), store.getRun(sparkId.toId(), sparkRunId.getId()));
     context = new WorkflowProgramLoggingContext(workflowId.getNamespace(), workflowId.getApplication(),
                                                 workflowId.getProgram(), workflowRunId.getId(), ProgramType.SPARK,
-                                                SOME_SPARK);
+                                                SOME_SPARK, sparkRunId.getId());
     generateWorkflowRunLogs(context);
 
     // Generate some more logs for Workflow
