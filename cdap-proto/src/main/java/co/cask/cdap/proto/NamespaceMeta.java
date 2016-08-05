@@ -106,7 +106,7 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setHBaseDatabase(final String hbaseNamespace) {
+    public Builder setHBaseNamespace(final String hbaseNamespace) {
       this.hbaseNamespace = hbaseNamespace;
       return this;
     }
