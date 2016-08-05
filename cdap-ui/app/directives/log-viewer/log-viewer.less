@@ -92,6 +92,21 @@ my-log-viewer {
     display: none;
   }
 
+  .row-expanded {
+    td,
+    span {
+      white-space: normal;
+    }
+
+    td.source {
+      white-space: normal;
+      word-break: break-all;
+      text-overflow: inherit;
+    }
+
+    background-color: @selected-row-color;
+  }
+
   .dropdown-menu {
     min-width: 80px;
   }
@@ -378,9 +393,15 @@ my-log-viewer {
           position: relative;
         }
 
-        td {
+        td,
+        span {
           white-space: normal;
           border-bottom: none;
+
+          .source {
+            word-break: break-all;
+            text-overflow: inherit;
+          }
         }
       }
       tr.well i {

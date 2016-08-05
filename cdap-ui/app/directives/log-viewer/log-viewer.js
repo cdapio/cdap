@@ -105,15 +105,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   };
 
-  this.showStackTrace = (index) => {
-    //If the stack trace is showing, remove it
+  this.toggleStackTrace = (index) => {
+    //If the currently clicked row is a stack trace itself, do nothing
+    if(this.displayData[index].stackTrace){
+      return;
+    }
+
+    //If this log's stack trace is showing, remove it
     if( (index+1 < this.displayData.length) && this.displayData[index+1].stackTrace){
       this.displayData.splice(index+1, 1);
       this.displayData[index].selected = false;
-      return;
-    }
-    //If the currently clicked row is a stack trace itself, do nothing
-    else if(this.displayData[index].stackTrace && (index - 1) > 0){
       return;
     }
 
@@ -122,6 +123,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[index]));
       stackTraceObj.stackTrace = true;
       this.displayData.splice(index+1, 0, stackTraceObj);
+    } else {
+      //otherwise, it does not have stack trace but has been selected
+      this.displayData[index].selected = !this.displayData[index].selected;
     }
   };
 
