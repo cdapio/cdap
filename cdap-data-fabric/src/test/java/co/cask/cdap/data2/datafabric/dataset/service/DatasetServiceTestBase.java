@@ -65,9 +65,9 @@ import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -176,7 +176,6 @@ public abstract class DatasetServiceTestBase {
     authEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     authEnforcementService.startAndWait();
 
-    AuthorizerInstantiator authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
 
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
@@ -229,15 +228,14 @@ public abstract class DatasetServiceTestBase {
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
     DatasetInstanceManager instanceManager =
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
-    instanceService = new DatasetInstanceService(
-      typeManager, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authEnforcer,
-      authorizerInstantiator, authenticationContext
-    );
+    PrivilegesManager privilegesManager = injector.getInstance(PrivilegesManager.class);
+    instanceService = new DatasetInstanceService(typeManager, instanceManager, opExecutor, exploreFacade,
+                                                 namespaceQueryAdmin, authEnforcer, privilegesManager,
+                                                 authenticationContext);
 
-    DatasetTypeService typeService = new DatasetTypeService(
-      typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, authorizerInstantiator,
-      authenticationContext, cConf, impersonator
-    );
+    DatasetTypeService typeService = new DatasetTypeService(typeManager, namespaceAdmin, namespacedLocationFactory,
+                                                            authEnforcer, privilegesManager, authenticationContext,
+                                                            cConf, impersonator);
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
                                  opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService);
 

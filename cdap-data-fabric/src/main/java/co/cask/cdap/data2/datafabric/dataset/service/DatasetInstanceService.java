@@ -42,16 +42,14 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
@@ -85,7 +83,7 @@ public class DatasetInstanceService {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final LoadingCache<Id.DatasetInstance, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
-  private final Authorizer authorizer;
+  private final PrivilegesManager privilegesManager;
   private final AuthenticationContext authenticationContext;
 
   private AuditPublisher auditPublisher;
@@ -94,8 +92,7 @@ public class DatasetInstanceService {
   public DatasetInstanceService(DatasetTypeManager typeManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin,
-                                AuthorizationEnforcer authorizationEnforcer,
-                                AuthorizerInstantiator authorizerInstantiator,
+                                AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
                                 AuthenticationContext authenticationContext) {
     this.opExecutorClient = opExecutorClient;
     this.typeManager = typeManager;
@@ -111,7 +108,7 @@ public class DatasetInstanceService {
       }
     );
     this.authorizationEnforcer = authorizationEnforcer;
-    this.authorizer = authorizerInstantiator.get();
+    this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
   }
 
@@ -250,9 +247,9 @@ public class DatasetInstanceService {
     DatasetId datasetId = newInstance.toEntityId();
     // If the dataset previously existed and was deleted, but revoking privileges somehow failed, there may be orphaned
     // privileges for the dataset. Revoke them first, so no users unintentionally get privileges on the dataset.
-    authorizer.revoke(datasetId);
+    privilegesManager.revoke(datasetId);
     // grant all privileges on the dataset to be created
-    authorizer.grant(datasetId, principal, ImmutableSet.of(Action.ALL));
+    privilegesManager.grant(datasetId, principal, ImmutableSet.of(Action.ALL));
 
     LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
              namespaceId, name, props.getTypeName(), props.getProperties());
@@ -272,7 +269,7 @@ public class DatasetInstanceService {
       enableExplore(newInstance, spec, props);
     } catch (Exception e) {
       // there was a problem in creating the dataset instance. so revoke the privileges.
-      authorizer.revoke(datasetId);
+      privilegesManager.revoke(datasetId);
       throw e;
     }
   }
@@ -345,7 +342,7 @@ public class DatasetInstanceService {
     // deletion fails, we may have a valid (or invalid) dataset in the system, that no one has privileges on, so no one
     // can clean up. This may result in orphaned privileges, which will be cleaned up by the create API if the same
     // dataset is successfully re-created.
-    authorizer.revoke(datasetId);
+    privilegesManager.revoke(datasetId);
   }
 
   /**
@@ -422,7 +419,7 @@ public class DatasetInstanceService {
       // not using a system dataset type. ensure that the user has access to it before returning
       DatasetTypeId typeId = datasetTypeId.toEntityId();
       Principal principal = authenticationContext.getPrincipal();
-      Predicate<EntityId> filter = authorizer.createFilter(principal);
+      Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
       if (!Principal.SYSTEM.equals(principal) && !filter.apply(typeId)) {
         throw new UnauthorizedException(principal, typeId);
       }
