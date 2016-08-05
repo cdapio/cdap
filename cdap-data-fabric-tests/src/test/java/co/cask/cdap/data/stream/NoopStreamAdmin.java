@@ -16,12 +16,15 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,6 +51,11 @@ public class NoopStreamAdmin implements StreamAdmin {
 
   @Override
   public void upgrade() throws Exception {
+  }
+
+  @Override
+  public List<StreamSpecification> listStreams(NamespaceId namespaceId) throws Exception {
+    return ImmutableList.of();
   }
 
   @Override

@@ -16,10 +16,12 @@
 
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
 import java.util.List;
@@ -56,6 +58,13 @@ public interface StreamAdmin {
    * Performs upgrade action for all streams.
    */
   void upgrade() throws Exception;
+
+  /**
+   * List all the streams in a namespace.
+   * @param namespaceId namespace id
+   * @return a list of {@link StreamSpecification}
+   */
+  List<StreamSpecification> listStreams(NamespaceId namespaceId) throws Exception;
 
   /**
    * Returns the configuration of the given stream.
