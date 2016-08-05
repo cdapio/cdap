@@ -243,7 +243,7 @@ function getEs6Directives(isNegate) {
     'timeline',
     'widget-container',
     'plugin-functions',
-    'my-link-button',
+    'my-link-button'
   ];
 
   return es6directives.map(function (directive) {

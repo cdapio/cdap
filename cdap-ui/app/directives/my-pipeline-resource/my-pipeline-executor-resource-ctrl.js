@@ -17,7 +17,7 @@ function MyPipelineExecutorResourceCtrl($scope) {
   'ngInject';
   $scope.virtualCores = $scope.store.getVirtualCores();
   $scope.memoryMB = $scope.store.getMemoryMB();
-  $scope.cores = Array.apply(null, {length: 21}).map(Number.call, Number).filter(a => a > 0);
+  $scope.cores = Array.apply(null, {length: 20}).map((ele, index) => index+1);
   $scope.onMemoryMBChange = function() {
     $scope.actionCreator.setMemoryMB($scope.memoryMB);
   };
