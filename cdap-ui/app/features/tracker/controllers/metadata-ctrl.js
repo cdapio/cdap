@@ -26,12 +26,14 @@
  */
 
 class TrackerMetadataController {
-  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout, $q) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
     this.$timeout = $timeout;
+    this.$q = $q;
+    this.duplicateTag = false;
 
     this.propertyInput = {
       key: '',
@@ -286,22 +288,20 @@ class TrackerMetadataController {
     return this.tags.availableTags;
   }
 
-  addTag(tag) {
+  addTag(input) {
     this.invalidFormat = false;
     this.duplicateTag = false;
-    if (!this.newTag) {
+
+    if (!input) {
       return;
     }
-    angular.forEach(this.tags.allPreferredTags, (tag) => {
-      if (this.newTag === tag.name) {
-        this.duplicateTag = true;
-      }
-    });
+
+    let defer = this.$q.defer();
 
     let userTagCheck = this.tags.userTags
-              .filter(tag => this.newTag === tag.name).length > 0 ? true : false;
+              .filter(tag => input === tag.name).length > 0 ? true : false;
     let preferredTagCheck = this.tags.preferredTags
-              .filter(tag => this.newTag === tag.name).length > 0 ? true : false;
+              .filter(tag => input === tag.name).length > 0 ? true : false;
 
     this.duplicateTag = userTagCheck || preferredTagCheck;
 
@@ -313,19 +313,24 @@ class TrackerMetadataController {
         scope: this.$scope
       };
 
-      this.myTrackerApi.addEntityTag(addParams, [this.newTag])
+      this.myTrackerApi.addEntityTag(addParams, [input])
         .$promise
         .then(() => {
           this.fetchEntityTags()
             .then(this.updateAvailableTags.bind(this));
-          this.newTag = '';
 
+          defer.resolve('success');
         }, (err) => {
           if (err.statusCode === 500) {
             this.invalidFormat = true;
           }
+          defer.reject('error');
         });
+    } else {
+      defer.reject('duplicate');
     }
+
+    return defer.promise;
   }
 
   deleteTag(tag) {
@@ -375,7 +380,7 @@ class TrackerMetadataController {
 
 }
 
-TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout'];
+TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout', '$q'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerMetadataController', TrackerMetadataController);

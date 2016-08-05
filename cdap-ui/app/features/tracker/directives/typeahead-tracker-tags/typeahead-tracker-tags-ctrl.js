@@ -24,9 +24,11 @@ angular.module(PKG.name + '.feature.tracker')
     });
 
     this.onTagsSelect = function(item) {
-      this.onSelect({tag: item.name});
-      this.model = '';
-      this.list.splice(this.list.indexOf(item), 1);
+      this.onSelect({input: item.name})
+        .then(() => {
+          this.model = '';
+          this.list.splice(this.list.indexOf(item), 1);
+        });
     };
 
     caskFocusManager.focus('tagInput');
