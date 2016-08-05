@@ -220,5 +220,7 @@ final class FileContextLocation implements Location {
   }
 
   @Override
-  public String toString() { return toURI().toString(); }
+  public String toString() {
+    return toURI().toString();
+  }
 }

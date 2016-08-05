@@ -99,6 +99,8 @@ public class PipelineSpec {
 
   /**
    * Base builder for creating pipeline specs.
+   *
+   * @param <T> The actual builder type
    */
   @SuppressWarnings("unchecked")
   protected static class Builder<T extends Builder> {
