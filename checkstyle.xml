@@ -317,13 +317,15 @@ page at http://checkstyle.sourceforge.net/config.html -->
         -->
     </module>
 
+    <!-- Commented per Terence since there will be very little new code in this branch
     <module name="RedundantModifier">
-      <!-- Checks for redundant modifiers in:
+      <!- Checks for redundant modifiers in:
            - interface and annotation definitions,
            - the final modifier on methods of final classes, and
            - inner interface declarations that are declared as static.
-        -->
+        ->
     </module>
+    -->
 
 
     <!--
@@ -386,8 +388,14 @@ page at http://checkstyle.sourceforge.net/config.html -->
 
   </module>
 
+  <!--
+    Optional suppression filter. It is optional because when running with Maven, it should be the
+     checkstyle plugin who provides it. It is only used when this file is used in IntelliJ.
+    -->
+
   <module name="SuppressionFilter">
     <property name="file" value="suppressions.xml"/>
+    <property name="optional" value="true"/>
   </module>
 
   <module name="SuppressionCommentFilter">
