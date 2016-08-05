@@ -297,6 +297,14 @@ class TrackerMetadataController {
         this.duplicateTag = true;
       }
     });
+
+    let userTagCheck = this.tags.userTags
+              .filter(tag => this.newTag === tag.name).length > 0 ? true : false;
+    let preferredTagCheck = this.tags.preferredTags
+              .filter(tag => this.newTag === tag.name).length > 0 ? true : false;
+
+    this.duplicateTag = userTagCheck || preferredTagCheck;
+
     if (!this.duplicateTag) {
       let addParams = {
         namespace: this.$state.params.namespace,
