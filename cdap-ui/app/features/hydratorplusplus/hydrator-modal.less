@@ -130,7 +130,7 @@
       }
       a.btn {
         background: transparent;
-        border: 1px solid transparent;
+        border: 0;
         border-radius: 0;
         background-clip: padding-box;
         color: @cdap-header;
@@ -142,10 +142,10 @@
         width: 60px;
         height: 60px;
         line-height: 60px;
-
+        &:last-child { margin-right: -1px; }
         &:hover {
           background-color: @cdap-header;
-          border: 1px solid @cdap-header;
+          border: 0;
           color: white;
           background-clip: padding-box;
         }
