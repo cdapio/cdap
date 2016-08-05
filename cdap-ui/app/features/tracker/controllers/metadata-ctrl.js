@@ -288,28 +288,44 @@ class TrackerMetadataController {
 
   addTag() {
     this.invalidFormat = false;
+    this.duplicateTag = false;
     if (!this.newTag) {
       return;
     }
-    let addParams = {
-      namespace: this.$state.params.namespace,
-      entityId: this.$state.params.entityId,
-      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
-      scope: this.$scope
-    };
+    angular.forEach(this.tags.allPreferredTags, (tag) => {
+      if (this.newTag === tag.name) {
+        this.duplicateTag = true;
+      }
+    });
 
-    this.myTrackerApi.addEntityTag(addParams, [this.newTag])
-      .$promise
-      .then(() => {
-        this.fetchEntityTags()
-          .then(this.updateAvailableTags.bind(this));
-        this.newTag = '';
+    let userTagCheck = this.tags.userTags
+              .filter(tag => this.newTag === tag.name).length > 0 ? true : false;
+    let preferredTagCheck = this.tags.preferredTags
+              .filter(tag => this.newTag === tag.name).length > 0 ? true : false;
 
-      }, (err) => {
-        if (err.statusCode === 500) {
-          this.invalidFormat = true;
-        }
-      });
+    this.duplicateTag = userTagCheck || preferredTagCheck;
+
+    if (!this.duplicateTag) {
+      let addParams = {
+        namespace: this.$state.params.namespace,
+        entityId: this.$state.params.entityId,
+        entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+        scope: this.$scope
+      };
+
+      this.myTrackerApi.addEntityTag(addParams, [this.newTag])
+        .$promise
+        .then(() => {
+          this.fetchEntityTags()
+            .then(this.updateAvailableTags.bind(this));
+          this.newTag = '';
+
+        }, (err) => {
+          if (err.statusCode === 500) {
+            this.invalidFormat = true;
+          }
+        });
+    }
   }
 
   deleteTag(tag) {
@@ -352,6 +368,7 @@ class TrackerMetadataController {
   escapeInput() {
     this.newTag = '';
     this.invalidFormat = false;
+    this.duplicateTag = false;
     this.inputOpen = false;
     document.body.removeEventListener('click', this.eventFunction, false);
     this.eventFunction = null;

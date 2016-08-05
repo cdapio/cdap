@@ -71,19 +71,23 @@
           </div>
           <div class="tag-input"
               ng-if="MetadataController.inputOpen"
-              ng-class="{'invalid': MetadataController.invalidFormat}">
+              ng-class="{'invalid': MetadataController.invalidFormat || MetadataController.duplicateTag}">
             <div my-escape-close="MetadataController.escapeInput()"
                 ng-keypress="$event.keyCode === 13 && MetadataController.addTag()">
               <my-typeahead-tracker-tags
                 list="MetadataController.tags.availableTags"
                 model="MetadataController.newTag"
-                on-change="MetadataController.invalidFormat = false">
+                on-change="MetadataController.invalidFormat = false; MetadataController.duplicateTag = false">
               </my-typeahead-tracker-tags>
             </div>
           </div>
           <p ng-if="MetadataController.invalidFormat"
             class="text-danger">
             <span class="fa fa-exclamation-triangle"></span> No special characters allowed.
+          </p>
+          <p ng-if="MetadataController.duplicateTag"
+            class="text-danger">
+            <span class="fa fa-exclamation-triangle"></span> Tag already exist.
           </p>
         </div>
 
