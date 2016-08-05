@@ -41,6 +41,7 @@ import org.junit.runners.Suite;
   PreferencesClientTestRun.class,
   ProgramClientTestRun.class,
   ScheduleClientTestRun.class,
+  SecureStoreClientTestRun.class,
   ServiceClientTestRun.class,
   StreamClientTestRun.class,
   UsageHandlerTestRun.class,
