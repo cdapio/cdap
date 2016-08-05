@@ -22,6 +22,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -29,12 +30,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,11 +61,12 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
   private final int cacheRefreshIntervalSecs;
   private final LoadingCache<Principal, Map<EntityId, Set<Action>>> authPolicyCache;
   private final String serviceName;
+  private final AuthenticationContext authenticationContext;
 
   private ScheduledExecutorService executor;
 
-  protected AbstractAuthorizationService(PrivilegesFetcher privilegesFetcher, CConfiguration cConf,
-                                         String serviceName) {
+  protected AbstractAuthorizationService(CConfiguration cConf, PrivilegesFetcher privilegesFetcher,
+                                         AuthenticationContext authenticationContext, String serviceName) {
     this.privilegesFetcher = privilegesFetcher;
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
@@ -74,6 +74,7 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
     this.cacheTtlSecs = cConf.getInt(Constants.Security.Authorization.CACHE_TTL_SECS);
     this.cacheRefreshIntervalSecs = cConf.getInt(Constants.Security.Authorization.CACHE_REFRESH_INTERVAL_SECS);
     this.serviceName = serviceName;
+    this.authenticationContext = authenticationContext;
     validateCacheConfig();
     this.authPolicyCache = CacheBuilder.newBuilder()
       .expireAfterWrite(cacheTtlSecs, TimeUnit.SECONDS)
@@ -106,7 +107,7 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
                securityEnabled, authorizationEnabled, cacheEnabled);
       return;
     }
-    LOG.info("Running authorization {} service iteration...", serviceName);
+    LOG.trace("Running authorization {} service iteration...", serviceName);
     for (Principal principal : authPolicyCache.asMap().keySet()) {
       try {
         updatePrivileges(principal);
@@ -180,18 +181,10 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
    * {@link AuthorizationEnforcementService} with the privileges of the user running the program.
    */
   private void updatePrivilegesOfCurrentUser() {
-    String userName;
-    try {
-      userName = UserGroupInformation.getCurrentUser().getShortUserName();
-    } catch (IOException e) {
-      LOG.warn("Error while determining the currently logged in user. Skipping pre-population of authorization cache.",
-               e);
-      return;
-    }
-    Principal principal = new Principal(userName, Principal.PrincipalType.USER);
+    Principal principal = authenticationContext.getPrincipal();
     try {
       updatePrivileges(principal);
-      LOG.info("Updated privileges for current user {}", principal);
+      LOG.debug("Updated privileges for current user {}", principal);
     } catch (Exception e) {
       LOG.warn("Error while updating privileges for {}. Authorization cache will not be pre-populated for this user.",
                 principal, e);

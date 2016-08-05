@@ -88,6 +88,7 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -181,6 +182,7 @@ public class TestBase {
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static AuthorizationEnforcementService authorizationEnforcementService;
+  private static AuthorizationBootstrapper authorizationBootstrapper;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -265,6 +267,8 @@ public class TestBase {
       }
     );
 
+    authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
+    authorizationBootstrapper.run();
     authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     authorizationEnforcementService.startAndWait();
     txService = injector.getInstance(TransactionManager.class);

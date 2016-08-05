@@ -204,7 +204,7 @@ public class DatasetTypeService extends AbstractIdleService {
     }
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetModuleId)) {
+    if (!filter.apply(datasetModuleId)) {
       throw new UnauthorizedException(principal, datasetModuleId);
     }
     return moduleMeta;
@@ -343,6 +343,7 @@ public class DatasetTypeService extends AbstractIdleService {
     }
 
     // All principals can access system dataset types
+    // TODO: Test if this can be removed
     if (NamespaceId.SYSTEM.equals(datasetTypeId.getParent())) {
       return typeMeta;
     }
@@ -350,7 +351,7 @@ public class DatasetTypeService extends AbstractIdleService {
     // only return the type if the user has some privileges on it
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> authFilter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !authFilter.apply(datasetTypeId)) {
+    if (!authFilter.apply(datasetTypeId)) {
       throw new UnauthorizedException(principal, datasetTypeId);
     }
     return typeMeta;

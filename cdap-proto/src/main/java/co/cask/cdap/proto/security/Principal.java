@@ -26,7 +26,6 @@ import java.util.Objects;
  */
 @Beta
 public class Principal {
-  public static final Principal SYSTEM = new Principal(".cdap", PrincipalType.USER);
   /**
    * Identifies the type of {@link Principal}.
    */

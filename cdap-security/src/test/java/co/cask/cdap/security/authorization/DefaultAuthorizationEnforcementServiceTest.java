@@ -19,14 +19,17 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.auth.context.AuthenticationTestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -42,7 +45,9 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -54,6 +59,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
   private static final NamespaceId NS = new NamespaceId("ns");
+  private static final AuthenticationContext AUTH_CONTEXT = new AuthenticationTestContext();
 
   @BeforeClass
   public static void setupClass() throws IOException {
@@ -83,7 +89,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     cConfCopy.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
+        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy, AUTH_CONTEXT);
       authEnforcementService.startAndWait();
       try {
         authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
@@ -100,7 +106,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setInt(Constants.Security.Authorization.CACHE_TTL_SECS, -1);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
+      new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy, AUTH_CONTEXT);
     }
   }
 
@@ -109,7 +115,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setInt(Constants.Security.Authorization.CACHE_REFRESH_INTERVAL_SECS, -1);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy);
+      new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConfCopy, AUTH_CONTEXT);
     }
   }
 
@@ -118,7 +124,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
       DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizer, CCONF);
+        new DefaultAuthorizationEnforcementService(authorizer, CCONF, AUTH_CONTEXT);
       authEnforcementService.startAndWait();
       try {
         // update privileges for alice. Currently alice has not been granted any privileges.
@@ -186,7 +192,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
       authorizer.grant(ds23, ALICE, Collections.singleton(Action.ADMIN));
       authorizer.grant(ds22, BOB, Collections.singleton(Action.ADMIN));
       DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizer, CCONF);
+        new DefaultAuthorizationEnforcementService(authorizer, CCONF, AUTH_CONTEXT);
       authEnforcementService.startAndWait();
       try {
         Predicate<EntityId> aliceFilter = authEnforcementService.createFilter(ALICE);
@@ -221,7 +227,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     cConfCopy.setInt(Constants.Security.Authorization.CACHE_REFRESH_INTERVAL_SECS, 1);
     CountDownLatch countDownLatch = new CountDownLatch(10);
     DefaultAuthorizationEnforcementService authorizationEnforcementService =
-      new DefaultAuthorizationEnforcementService(new FailingPrivilegesFetcher(countDownLatch), cConfCopy);
+      new DefaultAuthorizationEnforcementService(new FailingPrivilegesFetcher(countDownLatch), cConfCopy, AUTH_CONTEXT);
     Map<Principal, Map<EntityId, Set<Action>>> cache = authorizationEnforcementService.getCache();
     cache.put(new Principal("bob", Principal.PrincipalType.USER), Collections.<EntityId, Set<Action>>emptyMap());
     cache.put(new Principal("tom", Principal.PrincipalType.USER), Collections.<EntityId, Set<Action>>emptyMap());
@@ -241,46 +247,49 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testNoSuperUsers() throws Exception {
-    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
-    cConfCopy.unset(Constants.Security.Authorization.SUPERUSERS);
-    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      Authorizer authorizer = authorizerInstantiator.get();
-      new DefaultAuthorizationEnforcementService(authorizer, cConfCopy);
-    }
-  }
-
   @Test
-  public void testSuperUsers() throws Exception {
+  public void testSystemUser() throws Exception {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
-    Principal superUser = new Principal("tom", Principal.PrincipalType.USER);
-    cConfCopy.set(Constants.Security.Authorization.SUPERUSERS, superUser.getName());
+    Principal systemUser = AUTH_CONTEXT.getPrincipal();
+    cConfCopy.set(Constants.Security.Authorization.SYSTEM_USER, systemUser.getName());
+    cConfCopy.setInt(Constants.Security.Authorization.CACHE_REFRESH_INTERVAL_SECS, 1);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
       DefaultAuthorizationEnforcementService authorizationEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizer, cConfCopy);
+        new DefaultAuthorizationEnforcementService(authorizer, cConfCopy, AUTH_CONTEXT);
       NamespaceId ns1 = new NamespaceId("ns1");
-      DatasetId ds1 = ns1.dataset("ds1");
-      StreamId s1 = ns1.stream("s1");
+      InstanceId instanceId = new InstanceId(cConfCopy.get(Constants.INSTANCE_NAME));
+      AuthorizationBootstrapper bootstrapper = new AuthorizationBootstrapper(cConfCopy, authorizer);
+      bootstrapper.run();
       authorizationEnforcementService.startAndWait();
       try {
-        authorizationEnforcementService.enforce(ns1, superUser, Action.ALL);
-        authorizationEnforcementService.enforce(ds1, superUser, ImmutableSet.of(Action.WRITE, Action.READ));
-        Predicate<EntityId> filter = authorizationEnforcementService.createFilter(superUser);
-        Assert.assertTrue(filter.apply(ns1));
-        Assert.assertTrue(filter.apply(ds1));
-        Assert.assertTrue(filter.apply(s1));
+        waitForBootstrap(authorizationEnforcementService);
+        authorizationEnforcementService.enforce(instanceId, systemUser, Action.ADMIN);
+        authorizationEnforcementService.enforce(NamespaceId.SYSTEM, systemUser, Action.ALL);
+        Predicate<EntityId> filter = authorizationEnforcementService.createFilter(systemUser);
+        Assert.assertFalse(filter.apply(ns1));
+        Assert.assertTrue(filter.apply(instanceId));
+        Assert.assertTrue(filter.apply(NamespaceId.SYSTEM));
       } finally {
         authorizationEnforcementService.stopAndWait();
       }
     }
   }
 
+  private void waitForBootstrap(
+    final DefaultAuthorizationEnforcementService authorizationEnforcementService) throws Exception {
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return authorizationEnforcementService.getCache().get(AUTH_CONTEXT.getPrincipal()).isEmpty();
+      }
+    }, 5, TimeUnit.SECONDS);
+  }
+
   private void verifyDisabled(CConfiguration cConf) throws Exception {
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConf, AUTH_CONTEXT_FACTORY)) {
       DefaultAuthorizationEnforcementService authEnforcementService =
-        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConf);
+        new DefaultAuthorizationEnforcementService(authorizerInstantiator.get(), cConf, AUTH_CONTEXT);
       authEnforcementService.startAndWait();
       try {
         DatasetId ds = NS.dataset("ds");

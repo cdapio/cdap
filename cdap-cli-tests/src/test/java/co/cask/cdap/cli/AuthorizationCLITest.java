@@ -25,6 +25,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.server.BasicAuthenticationHandler;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -92,6 +93,7 @@ public class AuthorizationCLITest extends CLITestBase {
         Constants.Security.Authorization.ENABLED, "true",
         Constants.Security.Authorization.CACHE_ENABLED, "false",
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
+        Constants.Security.Authorization.SYSTEM_USER, new MasterAuthenticationContext().getPrincipal().getName(),
         // Bypass authorization enforcement for grant/revoke operations in this test. Authorization enforcement for
         // grant/revoke is tested in AuthorizationHandlerTest
         Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers", "*",

@@ -20,9 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -31,16 +30,15 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -78,8 +76,6 @@ public class RemotePrivilegesTest {
   private static PrivilegesFetcher privilegesFetcher;
   private static PrivilegesManager privilegesManager;
   private static DiscoveryServiceClient discoveryService;
-  private static TransactionManager txManager;
-  private static DatasetService datasetService;
   private static AppFabricServer appFabricServer;
 
   @BeforeClass
@@ -90,18 +86,14 @@ public class RemotePrivilegesTest {
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
+    cConf.set(Constants.Security.Authorization.SYSTEM_USER, new MasterAuthenticationContext().getPrincipal().getName());
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAuthorizer.class.getName());
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class, manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
+    Injector injector = AppFabricTestHelper.getInjector(cConf);
     discoveryService = injector.getInstance(DiscoveryServiceClient.class);
-    txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
-    waitForService(Constants.Service.DATASET_MANAGER);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     waitForService(Constants.Service.APP_FABRIC_HTTP);
@@ -165,7 +157,5 @@ public class RemotePrivilegesTest {
   @AfterClass
   public static void tearDown() {
     appFabricServer.stopAndWait();
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
   }
 }

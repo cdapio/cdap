@@ -89,7 +89,7 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
     }
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(namespaceId.toEntityId())) {
+    if (!filter.apply(namespaceId.toEntityId())) {
       throw new UnauthorizedException(principal, namespaceId.toEntityId());
     }
     return ns;

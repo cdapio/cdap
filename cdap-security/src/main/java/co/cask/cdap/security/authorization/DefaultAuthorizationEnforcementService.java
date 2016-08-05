@@ -18,16 +18,13 @@ package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.ParentedId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -38,7 +35,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link AuthorizationEnforcementService}.
@@ -55,16 +51,10 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
     }
   };
 
-  private final Set<Principal> superUsers;
-
   @Inject
-  DefaultAuthorizationEnforcementService(PrivilegesFetcher privilegesFetcher, CConfiguration cConf) {
-    super(privilegesFetcher, cConf, "enforcement");
-    this.superUsers = getSuperUsers(cConf.get(Constants.Security.Authorization.SUPERUSERS));
-    Preconditions.checkArgument(
-      !superUsers.isEmpty(), "No super users specified. Without this setting, it may be impossible to bootstrap CDAP " +
-        "with authorization enabled. Please set %s to a comma separated list of superusers who can bypass " +
-        "authorization policies in CDAP.", Constants.Security.Authorization.SUPERUSERS);
+  DefaultAuthorizationEnforcementService(PrivilegesFetcher privilegesFetcher, CConfiguration cConf,
+                                         AuthenticationContext authenticationContext) {
+    super(cConf, privilegesFetcher, authenticationContext, "enforcement");
   }
 
   @Override
@@ -77,14 +67,6 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    // For accessing system datasets for internal operations like recording metadata, usage, lineage, etc
-    if (Principal.SYSTEM.equals(principal)) {
-      return;
-    }
-    // If the principal is a superuser, allow access
-    if (isSuperUser(principal)) {
-      return;
-    }
 
     doEnforce(entity, principal, actions, true);
   }
@@ -92,14 +74,6 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
   @Override
   public Predicate<EntityId> createFilter(Principal principal) throws Exception {
     if (!isSecurityAuthorizationEnabled()) {
-      return ALLOW_ALL;
-    }
-    // For accessing system datasets for internal operations like recording metadata, usage, lineage, etc
-    if (Principal.SYSTEM.equals(principal)) {
-      return ALLOW_ALL;
-    }
-    // If the principal is a super user, do not filter
-    if (isSuperUser(principal)) {
       return ALLOW_ALL;
     }
     Map<EntityId, Set<Action>> privileges = getPrivileges(principal);
@@ -115,20 +89,6 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
         return (parentPassed || allowedEntities.contains(entityId));
       }
     };
-  }
-
-  private Set<Principal> getSuperUsers(@Nullable String superUsers) {
-    ImmutableSet.Builder<Principal> result = new ImmutableSet.Builder<>();
-    if (superUsers != null) {
-      for (String curUser : Splitter.on(",").trimResults().split(superUsers)) {
-        result.add(new Principal(curUser, Principal.PrincipalType.USER));
-      }
-    }
-    return result.build();
-  }
-
-  private boolean isSuperUser(Principal principal) {
-    return superUsers.contains(principal) || superUsers.contains(new Principal("*", Principal.PrincipalType.USER));
   }
 
   protected boolean isSecurityAuthorizationEnabled() {

@@ -31,7 +31,6 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -86,7 +85,6 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   private static final Map<String, String> headers = ImmutableMap.of("header1", "val1", "header2", "val2");
   private static final Type headerType = new TypeToken<Map<String, String>>() { }.getType();
 
-  private static AuthorizationEnforcementService authorizationEnforcementService;
   private static Authorizer authorizer;
 
   @BeforeClass
@@ -95,8 +93,6 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     // to determine input splits. also enable authorization.
     initialize(CConfiguration.create(), tmpFolder, true, true);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
-    authorizationEnforcementService.startAndWait();
     SecurityRequestContext.setUserId(USER.getName());
     grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, ImmutableSet.of(Action.ALL));
 
@@ -111,9 +107,6 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   public static void finish() throws Exception {
     dropStream(Id.Stream.from(NAMESPACE_ID, streamName));
     revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, ImmutableSet.of(Action.ALL));
-    if (authorizationEnforcementService != null) {
-      authorizationEnforcementService.stopAndWait();
-    }
   }
 
   @Test

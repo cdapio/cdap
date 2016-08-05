@@ -27,7 +27,6 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -58,7 +57,6 @@ public class ProgramLifecycleServiceAuthorizationTest {
 
   private static CConfiguration cConf;
   private static Authorizer authorizer;
-  private static AuthorizationEnforcementService authorizationEnforcementService;
   private static AppFabricServer appFabricServer;
   private static ProgramLifecycleService programLifecycleService;
 
@@ -67,9 +65,6 @@ public class ProgramLifecycleServiceAuthorizationTest {
     cConf = createCConf();
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-    authorizer.grant(new InstanceId(cConf.get(Constants.INSTANCE_NAME)), ALICE, Collections.singleton(Action.ADMIN));
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
-    authorizationEnforcementService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
@@ -78,6 +73,8 @@ public class ProgramLifecycleServiceAuthorizationTest {
   @Test
   public void testProgramList() throws Exception {
     SecurityRequestContext.setUserId(ALICE.getName());
+    // AppFabricTestHelper tries to create a namespace if it does not already exist
+    authorizer.grant(new InstanceId(cConf.get(Constants.INSTANCE_NAME)), ALICE, Collections.singleton(Action.ADMIN));
     authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.WRITE));
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, null, cConf);
     for (ProgramType type : ProgramType.values()) {
@@ -95,7 +92,6 @@ public class ProgramLifecycleServiceAuthorizationTest {
   @AfterClass
   public static void tearDown() {
     appFabricServer.stopAndWait();
-    authorizationEnforcementService.stopAndWait();
   }
 
   private static CConfiguration createCConf() throws IOException {
@@ -108,7 +104,6 @@ public class ProgramLifecycleServiceAuthorizationTest {
     LocationFactory locationFactory = new LocalLocationFactory(new File(TEMPORARY_FOLDER.newFolder().toURI()));
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
-    cConf.set(Constants.Security.Authorization.SUPERUSERS, "hulk");
     return cConf;
   }
 }

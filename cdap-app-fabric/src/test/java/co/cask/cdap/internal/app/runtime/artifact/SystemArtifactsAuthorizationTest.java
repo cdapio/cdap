@@ -34,12 +34,14 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -75,25 +77,27 @@ public class SystemArtifactsAuthorizationTest {
   private static AuthorizationEnforcementService authEnforcerService;
   private static InstanceId instance;
   private static NamespaceAdmin namespaceAdmin;
+  private static String systemUser;
 
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Security.ENABLED, true);
-    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
-    cConf.set(Constants.Security.Authorization.SUPERUSERS, "hulk");
+
     // Add a system artifact
     File systemArtifactsDir = TMP_FOLDER.newFolder();
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, systemArtifactsDir.getAbsolutePath());
     createSystemArtifact(systemArtifactsDir);
-
-    Injector injector =  AppFabricTestHelper.getInjector(cConf);
+    systemUser = new AuthenticationTestContext().getPrincipal().getName();
+    cConf.set(Constants.Security.Authorization.SYSTEM_USER, systemUser);
+    Injector injector = AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     AuthorizerInstantiator instantiatorService = injector.getInstance(AuthorizerInstantiator.class);
     authorizer = instantiatorService.get();
@@ -106,7 +110,7 @@ public class SystemArtifactsAuthorizationTest {
   @Test
   public void testAuthorizationForSystemArtifacts() throws Exception {
     // the system user must be able to add system artifacts
-    SecurityRequestContext.setUserId(Principal.SYSTEM.getName());
+    SecurityRequestContext.setUserId(systemUser);
     artifactRepository.addSystemArtifacts();
     // alice should not be able to refresh system artifacts because she does not have write privileges on the
     // CDAP instance
@@ -119,11 +123,15 @@ public class SystemArtifactsAuthorizationTest {
       // expected
     }
     // grant alice write privileges on the CDAP instance
-    authorizer.grant(instance, ALICE, Collections.singleton(Action.WRITE));
-    Assert.assertEquals(Collections.singleton(new Privilege(instance, Action.WRITE)), authorizer.listPrivileges(ALICE));
+    authorizer.grant(NamespaceId.SYSTEM, ALICE, Collections.singleton(Action.WRITE));
+    Assert.assertEquals(
+      Collections.singleton(new Privilege(NamespaceId.SYSTEM, Action.WRITE)),
+      authorizer.listPrivileges(ALICE)
+    );
     // refreshing system artifacts should succeed now
     artifactRepository.addSystemArtifacts();
-    // deleting a system artifact should still fail because alice does not have admin privileges on the CDAP instance
+    SecurityRequestContext.setUserId("bob");
+    // deleting a system artifact should fail because bob does not have admin privileges on the artifact
     try {
       artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
       Assert.fail("Deleting a system artifact should have failed because alice does not have admin privileges on " +
@@ -133,6 +141,7 @@ public class SystemArtifactsAuthorizationTest {
     }
 
     // grant alice admin privileges on the CDAP instance, so she can create a namespace
+    SecurityRequestContext.setUserId(ALICE.getName());
     authorizer.grant(instance, ALICE, Collections.singleton(Action.ADMIN));
     NamespaceId namespaceId = new NamespaceId("test");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId.getNamespace()).build());
@@ -154,19 +163,25 @@ public class SystemArtifactsAuthorizationTest {
     Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactId.getScope().name().toLowerCase());
 
     namespaceAdmin.delete(namespaceId.toId());
-    Assert.assertEquals(Collections.emptySet(), authorizer.listPrivileges(ALICE));
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new Privilege(SYSTEM_ARTIFACT, Action.ALL),
+        new Privilege(NamespaceId.SYSTEM, Action.WRITE)
+      ),
+      authorizer.listPrivileges(ALICE)
+    );
 
-    // grant alice admin privileges on the CDAP instance, so she can delete a system artifact
-    authorizer.grant(instance, ALICE, Collections.singleton(Action.ADMIN));
-    // deleting system artifact should succeed now
+    // deleting system artifact should succeed as alice, because alice added the artifacts, so she should have all
+    // privileges on it
     artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
   }
 
   @AfterClass
   public static void cleanup() throws Exception {
     authorizer.revoke(instance);
-    authEnforcerService.stopAndWait();
+    authorizer.revoke(NamespaceId.SYSTEM);
     Assert.assertEquals(Collections.emptySet(), authorizer.listPrivileges(ALICE));
+    authEnforcerService.stopAndWait();
     SecurityRequestContext.setUserId(OLD_USER_ID);
   }
 
