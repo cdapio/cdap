@@ -16,9 +16,9 @@
 
 // One place to edit the group label.
 var pluginLabels = {
-  'source': 'Acquisition',
-  'transform': 'Transformation and Science',
-  'sink': 'Publish',
+  'source': 'Source',
+  'transform': 'Transform and Science',
+  'sink': 'Sink',
   'action': 'Action'
 };
 angular.module(PKG.name + '.services')
@@ -100,9 +100,9 @@ angular.module(PKG.name + '.services')
 
     artifactConvert: {
       'cdap-etl-batch': 'Batch (Deprecated)',
-      'cdap-etl-realtime': 'Realtime',
-      'cdap-data-pipeline': 'Data Pipeline',
-      'cdap-data-streams': 'Spark Streams'
+      'cdap-etl-realtime': 'Realtime (Deprecated)',
+      'cdap-data-pipeline': 'Data Pipeline - Batch',
+      'cdap-data-streams': 'Data Pipeline - Realtime'
     },
 
     iconArtifact: {
