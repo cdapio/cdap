@@ -28,6 +28,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
@@ -93,7 +94,8 @@ public final class StreamFileJanitor {
       Iterable<Location> streamLocations = StreamUtils.listAllStreams(streamBaseLocation);
 
       for (final Location streamLocation : streamLocations) {
-        Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
+        Id.Stream streamId = new StreamId(namespace.getNamespaceId().getNamespace(),
+                                          StreamUtils.getStreamNameFromLocation(streamLocation)).toId();
         final AtomicLong ttl = new AtomicLong(0);
         if (isStreamExists(streamId)) {
           ttl.set(streamAdmin.getConfig(streamId).getTTL());

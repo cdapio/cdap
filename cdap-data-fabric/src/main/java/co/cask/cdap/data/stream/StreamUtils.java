@@ -441,24 +441,18 @@ public final class StreamUtils {
   }
 
   /**
-   * Gets a {@link Id.Stream} given a stream's base directory.
+   * Gets the stream name given a stream's base directory.
    * @param streamBaseLocation the location of the stream's directory
-   * @return Id of the stream associated with the location
+   * @return name of the stream associated with the location
    */
-  public static Id.Stream getStreamIdFromLocation(Location streamBaseLocation) {
+  public static String getStreamNameFromLocation(Location streamBaseLocation) {
     // streamBaseLocation = /.../<namespace>/streams/<streamName>,
+    // or /customLocation/streams/<streamname>
     // as constructed by FileStreamAdmin#getStreamConfigLocation
     Location streamsDir = Locations.getParent(streamBaseLocation);
     Preconditions.checkNotNull(streamsDir,
                                "Streams directory of stream base location %s was null.", streamBaseLocation);
-
-    Location namespaceDir = Locations.getParent(streamsDir);
-    Preconditions.checkNotNull(namespaceDir,
-                               "Namespace directory of stream base location %s was null.", streamBaseLocation);
-
-    String namespace = namespaceDir.getName();
-    String streamName = streamBaseLocation.getName();
-    return Id.Stream.from(namespace, streamName);
+    return streamBaseLocation.getName();
   }
 
   /**
