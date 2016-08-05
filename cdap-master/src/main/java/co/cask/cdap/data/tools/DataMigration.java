@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -41,8 +41,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.Location;
@@ -93,18 +95,19 @@ public class DataMigration {
 
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      Modules.override(new LocationRuntimeModule().getDistributedModules()).with(new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(NamespacedLocationFactory.class).to(SystemNamespacedLocationFactory.class).in(Scopes.SINGLETON);
+          expose(NamespacedLocationFactory.class);
+        }
+      }),
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
-
-          // having a namespaced location factory which does not look up namespace meta here is fine since this data
-          // migration tool does not perform user namespace specific operations
-          bind(NamespaceQueryAdmin.class).to(NoOpNamespaceQueryAdmin.class);
-          bind(NamespacedLocationFactory.class).to(SystemNamespacedLocationFactory.class).in(Scopes.SINGLETON);
         }
       });
   }
@@ -188,7 +191,7 @@ public class DataMigration {
         DatasetFramework framework = createRegisteredDatasetFramework(injector);
         // migrate metrics data
         DefaultMetricDatasetFactory.migrateData(cConf, hConf, framework, keepOldMetricsData,
-                                                injector.getInstance(HBaseTableUtil.class));
+                                                new HBaseTableUtilFactory(cConf).get());
       } catch (DataMigrationException e) {
         System.out.println(
           String.format("Exception encountered during metrics migration : %s , Aborting metrics data migration",
