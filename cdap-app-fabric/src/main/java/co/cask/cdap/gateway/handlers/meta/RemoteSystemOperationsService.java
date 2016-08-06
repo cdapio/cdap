@@ -25,7 +25,6 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.authorization.PrivilegesFetcherProxyService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -51,17 +50,14 @@ public class RemoteSystemOperationsService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final PrivilegesFetcherProxyService privilegesFetcherProxyService;
 
   private Cancellable cancellable;
 
   @Inject
   RemoteSystemOperationsService(CConfiguration cConf, DiscoveryService discoveryService,
                                 MetricsCollectionService metricsCollectionService,
-                                @Named(Constants.RemoteSystemOpService.HANDLERS_NAME) Set<HttpHandler> handlers,
-                                PrivilegesFetcherProxyService privilegesFetcherProxyService) {
+                                @Named(Constants.RemoteSystemOpService.HANDLERS_NAME) Set<HttpHandler> handlers) {
     this.discoveryService = discoveryService;
-    this.privilegesFetcherProxyService = privilegesFetcherProxyService;
 
     int workerThreads = cConf.getInt(Constants.RemoteSystemOpService.WORKER_THREADS);
     int execThreads = cConf.getInt(Constants.RemoteSystemOpService.EXEC_THREADS);
@@ -97,16 +93,12 @@ public class RemoteSystemOperationsService extends AbstractIdleService {
       }
     }));
 
-    privilegesFetcherProxyService.startAndWait();
-
     LOG.info("RemoteSystemOperationService started successfully on {}", httpService.getBindAddress());
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping RemoteSystemOperationService...");
-
-    privilegesFetcherProxyService.stopAndWait();
 
     try {
       if (cancellable != null) {
