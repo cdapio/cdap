@@ -44,10 +44,9 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
@@ -82,7 +81,7 @@ public class DatasetTypeService {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final AuthorizationEnforcer authorizationEnforcer;
-  private final Authorizer authorizer;
+  private final PrivilegesManager privilegesManager;
   private final AuthenticationContext authenticationContext;
   private final CConfiguration cConf;
   private final Impersonator impersonator;
@@ -91,14 +90,14 @@ public class DatasetTypeService {
   @VisibleForTesting
   public DatasetTypeService(DatasetTypeManager typeManager, NamespaceQueryAdmin namespaceQueryAdmin,
                             NamespacedLocationFactory namespacedLocationFactory,
-                            AuthorizationEnforcer authorizationEnforcer,
-                            AuthorizerInstantiator authorizerInstantiator, AuthenticationContext authenticationContext,
+                            AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
+                            AuthenticationContext authenticationContext,
                             CConfiguration cConf, Impersonator impersonator) {
     this.typeManager = typeManager;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.authorizationEnforcer = authorizationEnforcer;
-    this.authorizer = authorizerInstantiator.get();
+    this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
     this.cConf = cConf;
     this.impersonator = impersonator;
@@ -233,7 +232,7 @@ public class DatasetTypeService {
     // revoke all privileges on all modules
     Id.Namespace namespace = namespaceId.toId();
     for (DatasetModuleMeta meta : typeManager.getModules(namespace)) {
-      authorizer.revoke(namespaceId.datasetModule(meta.getName()));
+      privilegesManager.revoke(namespaceId.datasetModule(meta.getName()));
     }
     try {
       typeManager.deleteModules(namespace);
@@ -390,7 +389,7 @@ public class DatasetTypeService {
 
   private void grantAllPrivilegesOnModule(DatasetModuleId moduleId, Principal principal) throws Exception {
     Set<Action> allActions = ImmutableSet.of(Action.ALL);
-    authorizer.grant(moduleId, principal, allActions);
+    privilegesManager.grant(moduleId, principal, allActions);
     DatasetModuleMeta moduleMeta = typeManager.getModule(moduleId.toId());
     if (moduleMeta == null) {
       LOG.debug("Could not find metadata for module {}. Not granting privileges for its types.", moduleId);
@@ -398,7 +397,7 @@ public class DatasetTypeService {
     }
     for (String type : moduleMeta.getTypes()) {
       DatasetTypeId datasetTypeId = moduleId.getParent().datasetType(type);
-      authorizer.grant(datasetTypeId, principal, allActions);
+      privilegesManager.grant(datasetTypeId, principal, allActions);
     }
   }
 
@@ -408,7 +407,7 @@ public class DatasetTypeService {
 
   private void revokeAllPrivilegesOnModule(DatasetModuleId moduleId,
                                            @Nullable DatasetModuleMeta moduleMeta) throws Exception {
-    authorizer.revoke(moduleId);
+    privilegesManager.revoke(moduleId);
     moduleMeta = moduleMeta == null ? typeManager.getModule(moduleId.toId()) : moduleMeta;
     if (moduleMeta == null) {
       LOG.debug("Could not find metadata for module {}. Will not revoke privileges for its types.", moduleId);
@@ -416,7 +415,7 @@ public class DatasetTypeService {
     }
     for (String type : moduleMeta.getTypes()) {
       DatasetTypeId datasetTypeId = moduleId.getParent().datasetType(type);
-      authorizer.revoke(datasetTypeId);
+      privilegesManager.revoke(datasetTypeId);
     }
   }
 
