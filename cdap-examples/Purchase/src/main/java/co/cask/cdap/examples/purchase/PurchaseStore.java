@@ -45,15 +45,6 @@ public class PurchaseStore extends AbstractFlowlet {
 
   @ProcessInput
   public void process(Purchase purchase) {
-    // Discover the CatalogLookup service via discovery service
-    // the service name is the same as the one provided in the Application configure method
-    URL serviceURL = getContext().getServiceURL(PurchaseApp.APP_NAME, CatalogLookupService.SERVICE_NAME);
-    if (serviceURL != null) {
-      String catalog = getCatalogId(serviceURL, purchase.getProduct());
-      if (catalog != null) {
-        purchase.setCatalogId(catalog);
-      }
-    }
     metrics.count("purchases." + purchase.getCustomer(), 1);
 
     LOG.info("Purchase info: Customer {}, ProductId {}, CatalogId {}",

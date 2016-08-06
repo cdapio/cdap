@@ -19,11 +19,8 @@ package co.cask.cdap.examples.purchase;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
-import co.cask.cdap.api.schedule.Schedules;
 
 /**
  * This implements a simple purchase history application via a scheduled MapReduce Workflow --
@@ -31,59 +28,19 @@ import co.cask.cdap.api.schedule.Schedules;
  */
 public class PurchaseApp extends AbstractApplication {
 
-  public static final String APP_NAME = "PurchaseHistory";
+  public static final String APP_NAME = "PurchaseFlow";
 
   @Override
   public void configure() {
     setName(APP_NAME);
-    setDescription("Purchase history application");
+    setDescription("Purchase flow application");
 
     // Ingest data into the Application via a Stream
     addStream(new Stream("purchaseStream"));
 
-    // Store processed data in a Dataset
-    createDataset("frequentCustomers", KeyValueTable.class,
-                  DatasetProperties.builder().setDescription("Store frequent customers").build());
-
-    // Store user profiles in a Dataset
-    createDataset("userProfiles", KeyValueTable.class,
-                  DatasetProperties.builder().setDescription("Store user profiles").build());
-
     // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
 
-    // Specify a MapReduce to run on the acquired data
-    addMapReduce(new PurchaseHistoryBuilder());
-
-    // Run a Workflow that uses the MapReduce to run on the acquired data
-    addWorkflow(new PurchaseHistoryWorkflow());
-
-    // Retrieve the processed data using a Service
-    addService(new PurchaseHistoryService());
-
-    // Store and retrieve user profile data using a Service
-    addService(UserProfileServiceHandler.SERVICE_NAME, new UserProfileServiceHandler());
-
-    // Provide a Service to Application components
-    addService(new CatalogLookupService());
-
-    // Schedule the workflow
-    scheduleWorkflow(
-      Schedules.builder("DailySchedule")
-        .setMaxConcurrentRuns(1)
-        .createTimeSchedule("0 4 * * *"),
-      "PurchaseHistoryWorkflow");
-
-    // Schedule the workflow based on the data coming in the purchaseStream stream
-    scheduleWorkflow(
-      Schedules.builder("DataSchedule")
-        .setDescription("Schedule execution when 1 MB or more of data is ingested in the purchaseStream")
-        .setMaxConcurrentRuns(1)
-        .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
-      "PurchaseHistoryWorkflow"
-    );
-
-    createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties("History dataset"));
     try {
       createDataset("purchases", ObjectMappedTable.class, ObjectMappedTableProperties.builder().setType(Purchase.class)
         .setDescription("Store purchases").build());
