@@ -14,6 +14,13 @@
  * the License.
  */
 
+// One place to edit the group label.
+var pluginLabels = {
+  'source': 'Source',
+  'transform': 'Transform and Science',
+  'sink': 'Sink',
+  'action': 'Action'
+};
 angular.module(PKG.name + '.services')
   .constant('GLOBALS', {
     // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
@@ -22,6 +29,7 @@ angular.module(PKG.name + '.services')
     etlDataStreams: 'cdap-data-streams',
     etlDataPipeline: 'cdap-data-pipeline',
     etlBatchPipelines: ['cdap-etl-batch', 'cdap-data-pipeline'],
+    // Map defines what plugin types to surface for each artifact in UI.
     pluginTypes: {
       'cdap-etl-batch': {
         'source': 'batchsource',
@@ -59,23 +67,26 @@ angular.module(PKG.name + '.services')
       }
     },
     'pluginTypeToLabel': {
-      'transform': 'Transform',
-      'batchsource': 'Source',
-      'batchsink': 'Sink',
-      'batchaggregator': 'Aggregate',
-      'realtimesink': 'Sink',
-      'realtimesource': 'Source',
-      'sparksink': 'Model',
-      'sparkcompute': 'Compute',
-      'batchjoiner': 'Join',
+      'transform': pluginLabels['transform'],
+      'batchsource': pluginLabels['source'],
+      'batchsink': pluginLabels['sink'],
+      'batchaggregator': pluginLabels['transform'],
+      'realtimesink': pluginLabels['sink'],
+      'realtimesource': pluginLabels['source'],
+      'sparksink': pluginLabels['sink'],
+      'sparkcompute': pluginLabels['transform'],
+      'batchjoiner': pluginLabels['transform'],
       'action': 'Action',
-      'streamingsource': 'Streaming Source',
-      'windower': 'Windower'
+      'streamingsource': pluginLabels['source'],
+      'windower': pluginLabels['transform']
     },
+    pluginLabels: pluginLabels,
+    // understand what plugin type is what.
+    // if we get batchaggregator from backend it is marked as transform here.
     pluginConvert: {
       'batchaggregator': 'transform',
       'streamingsource': 'source',
-      'windower': 'sink',
+      'windower': 'transform',
       'batchsource': 'source',
       'realtimesource': 'source',
       'batchsink': 'sink',
@@ -89,9 +100,9 @@ angular.module(PKG.name + '.services')
 
     artifactConvert: {
       'cdap-etl-batch': 'Batch (Deprecated)',
-      'cdap-etl-realtime': 'Realtime',
-      'cdap-data-pipeline': 'Data Pipeline',
-      'cdap-data-streams': 'Spark Streams'
+      'cdap-etl-realtime': 'Realtime (Deprecated)',
+      'cdap-data-pipeline': 'Data Pipeline - Batch',
+      'cdap-data-streams': 'Data Pipeline - Realtime'
     },
 
     iconArtifact: {

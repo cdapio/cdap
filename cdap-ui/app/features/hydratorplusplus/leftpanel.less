@@ -126,6 +126,7 @@ body.theme-cdap.state-hydratorplusplus-create {
               .item-body,
               .item-heading {
                 .name {
+                  width: auto;
                   display: inline-block;
                   vertical-align: top;
                   overflow-x: hidden;
@@ -372,6 +373,13 @@ body.theme-cdap.state-hydratorplusplus-create {
             span.name {
               font-size: 13px;
               line-height: inherit;
+              width: 90px;
+              display: inline-block;
+              vertical-align: top;
+              overflow-x: hidden;
+              text-overflow: ellipsis; // Add ellipsis for 'Transform and Science' in minimized mode.
+              white-space: nowrap;
+              font-weight: 500;
             }
             .badge {
               padding: 0;
