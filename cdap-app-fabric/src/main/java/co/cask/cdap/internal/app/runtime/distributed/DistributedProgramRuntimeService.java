@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -78,8 +79,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 import static co.cask.cdap.proto.Containers.ContainerInfo;
@@ -91,9 +90,6 @@ import static co.cask.cdap.proto.Containers.ContainerType.FLOWLET;
 public final class DistributedProgramRuntimeService extends AbstractProgramRuntimeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRuntimeService.class);
-
-  // Pattern to split a Twill App name into [type].[accountId].[appName].[programName]
-  private static final Pattern APP_NAME_PATTERN = Pattern.compile("^(\\S+)\\.(\\S+)\\.(\\S+)\\.(\\S+)$");
 
   private final TwillRunner twillRunner;
 
@@ -150,14 +146,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     // Goes through all live application and fill the twillProgramInfo table
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
       String appName = liveInfo.getApplicationName();
-      Matcher matcher = APP_NAME_PATTERN.matcher(appName);
-      if (!matcher.matches()) {
+      ProgramId id = TwillAppNames.fromTwillAppName(appName, false);
+      if (id == null) {
         continue;
       }
 
-      ProgramType type = getType(matcher.group(1));
-      Id.Program id = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
-      if (!id.equals(programId)) {
+      if (!id.toId().equals(programId)) {
         continue;
       }
 
@@ -200,11 +194,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     // Goes through all live application and fill the twillProgramInfo table
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
       String appName = liveInfo.getApplicationName();
-      Matcher matcher = APP_NAME_PATTERN.matcher(appName);
-      if (!matcher.matches()) {
+      ProgramId programId = TwillAppNames.fromTwillAppName(appName, false);
+      if (programId == null) {
         continue;
       }
-      if (!type.equals(getType(matcher.group(1)))) {
+      if (!type.equals(programId.getType())) {
         continue;
       }
 
@@ -214,8 +208,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           continue;
         }
 
-        Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
-        twillProgramInfo.put(programId, twillRunId, controller);
+        twillProgramInfo.put(programId.toId(), twillRunId, controller);
       }
     }
 
@@ -301,14 +294,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return programController == null ? null : programController.startListen();
   }
 
-  private ProgramType getType(String typeName) {
-    try {
-      return ProgramType.valueOf(typeName.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      return null;
-    }
-  }
-
   // TODO (terence) : This method is part of the hack mentioned above. It should be removed when
   // FlowProgramRunner moved to run in AM.
   private Multimap<String, QueueName> getFlowletQueues(ApplicationId appId, FlowSpecification flowSpec) {
@@ -332,8 +317,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   @Override
   public ProgramLiveInfo getLiveInfo(Id.Program program) {
-    String twillAppName = String.format("%s.%s.%s.%s", program.getType().name().toLowerCase(),
-                                        program.getNamespaceId(), program.getApplicationId(), program.getId());
+    String twillAppName = TwillAppNames.toTwillAppName(program.toEntityId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
     // this will return an empty Json if there is no live instance
     if (controllers.hasNext()) {
@@ -460,18 +444,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     private Map<String, String> getMetricContext(TwillRunner.LiveInfo info) {
-      Matcher matcher = APP_NAME_PATTERN.matcher(info.getApplicationName());
-      if (!matcher.matches()) {
+      ProgramId programId = TwillAppNames.fromTwillAppName(info.getApplicationName(), false);
+      if (programId == null) {
         return null;
       }
 
-      ProgramType type = getType(matcher.group(1));
-      if (type == null) {
-        return null;
-      }
-
-      Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
-      return getMetricsContext(type, programId);
+      return getMetricsContext(programId.getType(), programId.toId());
     }
   }
 

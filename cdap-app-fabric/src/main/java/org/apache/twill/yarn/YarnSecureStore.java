@@ -17,26 +17,46 @@
  */
 package org.apache.twill.yarn;
 
+import com.google.common.base.Throwables;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.SecureStore;
+
+import java.io.IOException;
 
 /**
  * A {@link SecureStore} for hadoop credentials.
+ * TODO: Copied from Twill 0.7 for CDAP-CDAP-6609.
+ * TODO: Remove this after the fix is moved to Twill (TWILL-189).
  */
 public final class YarnSecureStore implements SecureStore {
 
   private final Credentials credentials;
+  private final UserGroupInformation ugi;
 
   public static SecureStore create(Credentials credentials) {
-    return new YarnSecureStore(credentials);
+    try {
+      return create(credentials, UserGroupInformation.getCurrentUser());
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
-  private YarnSecureStore(Credentials credentials) {
+  public static SecureStore create(Credentials credentials, UserGroupInformation userGroupInformation) {
+    return new YarnSecureStore(credentials, userGroupInformation);
+  }
+
+  private YarnSecureStore(Credentials credentials, UserGroupInformation ugi) {
     this.credentials = credentials;
+    this.ugi = ugi;
   }
 
   @Override
   public Credentials getStore() {
     return credentials;
+  }
+
+  public UserGroupInformation getUgi() {
+    return ugi;
   }
 }

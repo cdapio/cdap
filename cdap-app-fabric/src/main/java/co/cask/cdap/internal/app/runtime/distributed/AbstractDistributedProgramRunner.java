@@ -259,7 +259,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               // Add secure tokens
               if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
                 // TokenSecureStoreUpdater.update() ignores parameters
-                twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
+                twillPreparer.addSecureStore(secureStoreUpdater.update());
               }
 
               Iterable<Class<?>> dependencies = Iterables.concat(
