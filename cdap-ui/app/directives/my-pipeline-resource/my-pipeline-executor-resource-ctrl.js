@@ -18,12 +18,23 @@ function MyPipelineExecutorResourceCtrl($scope) {
   $scope.virtualCores = $scope.store.getVirtualCores();
   $scope.memoryMB = $scope.store.getMemoryMB();
   $scope.cores = Array.apply(null, {length: 20}).map((ele, index) => index+1);
-  $scope.onMemoryMBChange = function() {
-    $scope.actionCreator.setMemoryMB($scope.memoryMB);
+  $scope.isDisabled = $scope.isDisabled === 'false' ? false : true;
+  $scope.numberConfig = {
+    'widget-attributes': {
+      min: 0,
+      default: $scope.memoryMB,
+      showErrorMessage: false,
+      convertToInteger: true
+    }
   };
-  $scope.onVirtualCoresChange = function() {
-    $scope.actionCreator.setVirtualCores($scope.virtualCores);
-  };
+  if (!$scope.isDisabled) {
+    $scope.$watch('memoryMB', function() {
+      $scope.actionCreator.setMemoryMB($scope.memoryMB);
+    });
+    $scope.onVirtualCoresChange = function() {
+      $scope.actionCreator.setVirtualCores($scope.virtualCores);
+    };
+  }
 }
 angular.module(PKG.name + '.commons')
   .controller('MyPipelineExecutorResourceCtrl', MyPipelineExecutorResourceCtrl);

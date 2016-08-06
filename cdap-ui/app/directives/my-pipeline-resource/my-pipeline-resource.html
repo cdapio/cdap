@@ -24,9 +24,9 @@
 </div>
 <div class="resource-group">
   <label class="control-label"> Memory </label>
-  <input class="form-control"
-         type="number"
-         ng-model="memoryMB"
-         ng-change="onMemoryMBChange()">
+  <my-number-widget
+    ng-model="memoryMB"
+    config="numberConfig"
+  ></my-number-widget>
   <label class="control-label">MB</span>
 </div>

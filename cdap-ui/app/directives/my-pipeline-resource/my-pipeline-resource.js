@@ -51,7 +51,8 @@ angular.module(PKG.name + '.commons')
     restrict: 'E',
     scope: {
       actionCreator: '=',
-      store: '='
+      store: '=',
+      isDisabled: '@'
     },
     templateUrl: 'my-pipeline-resource/my-pipeline-resource.html',
     controller: 'MyPipelineDriverResourceCtrl'
@@ -62,7 +63,8 @@ angular.module(PKG.name + '.commons')
     restrict: 'E',
     scope: {
       actionCreator: '=',
-      store: '='
+      store: '=',
+      isDisabled: '@'
     },
     templateUrl: 'my-pipeline-resource/my-pipeline-resource.html',
     controller: 'MyPipelineExecutorResourceCtrl'

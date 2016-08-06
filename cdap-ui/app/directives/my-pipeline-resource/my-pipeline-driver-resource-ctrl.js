@@ -18,13 +18,23 @@ function MyPipelineDriverResourceCtrl($scope) {
   $scope.virtualCores = $scope.store.getDriverVirtualCores();
   $scope.memoryMB = $scope.store.getDriverMemoryMB();
   $scope.cores = Array.apply(null, {length: 20}).map((ele, index) => index+1);
-
-  $scope.onMemoryMBChange = function() {
-    $scope.actionCreator.setDriverMemoryMB($scope.memoryMB);
+  $scope.isDisabled = $scope.isDisabled === 'false' ? false : true;
+  $scope.numberConfig = {
+    'widget-attributes': {
+      min: 0,
+      default: $scope.memoryMB,
+      showErrorMessage: false,
+      convertToInteger: true
+    }
   };
-  $scope.onVirtualCoresChange = function() {
-    $scope.actionCreator.setDriverVirtualCores($scope.virtualCores);
-  };
+  if (!$scope.isDisabled){
+    $scope.$watch('memoryMB', function() {
+      $scope.actionCreator.setDriverMemoryMB($scope.memoryMB);
+    });
+    $scope.onVirtualCoresChange = function() {
+      $scope.actionCreator.setDriverVirtualCores($scope.virtualCores);
+    };
+  }
 }
 angular.module(PKG.name + '.commons')
   .controller('MyPipelineDriverResourceCtrl', MyPipelineDriverResourceCtrl);

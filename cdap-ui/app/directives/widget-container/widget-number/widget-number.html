@@ -14,9 +14,14 @@
   the License.
 -->
 <div>
-  <span class="text-danger" ng-bind="error"></span>
+  <span class="text-danger"
+    ng-if="showErrorMessage"
+    ng-bind="error"></span>
   <input type="number"
+         uib-tooltip="{{error}}"
+         tooltip-class="error-tooltip"
+         ng-class="{'invalid-number': error.length}"
+         tooltip-enable="!showErrorMessage"
          class="form-control"
-         ng-class="{'invalid': error.length}"
-         ng-model="internalModel" />
+         ng-model="internalModel"/>
 </div>

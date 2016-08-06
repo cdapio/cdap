@@ -83,6 +83,8 @@ class HydratorPlusPlusConfigStore {
       angular.extend(this.state, config);
       this.setArtifact(this.state.artifact);
       this.setEngine(this.state.config.engine);
+      this.setDriverResources(this.state.config.driverResources);
+      this.setResources(this.state.config.resources);
     }
     this.__defaultState = angular.copy(this.state);
   }
@@ -612,6 +614,25 @@ class HydratorPlusPlusConfigStore {
       });
     }
 
+    errorFactory.hasValidResources(this.state.config, (err) => {
+      if (err) {
+        isStateValid = false;
+        errors.push({
+          type: 'error',
+          content: this.GLOBALS.en.hydrator.studio.error[err]
+        });
+      }
+    });
+    errorFactory.hasValidDriverResources(this.state.config, (err) => {
+      if (err) {
+        isStateValid = false;
+        errors.push({
+          type: 'error',
+          content: this.GLOBALS.en.hydrator.studio.error[err]
+        });
+      }
+    });
+
     if (errors.length && isShowConsoleMessage) {
       this.HydratorPlusPlusConsoleActions.addMessage(errors);
     }
@@ -628,6 +649,12 @@ class HydratorPlusPlusConfigStore {
   }
   setInstance(instances) {
     this.state.config.instances = instances;
+  }
+  setDriverResources(driverResources) {
+    this.state.config.driverResources = driverResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
+  }
+  setResources(resources) {
+    this.state.config.resources = resources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
   }
   setDriverVirtualCores(virtualCores) {
     this.state.config.driverResources = this.state.config.driverResources || {};

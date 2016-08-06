@@ -272,7 +272,33 @@ let hasValidNodesConnections = (importConfig) => {
   });
   return isValid;
 };
-
+let isPipelineResourcesPositive = (resources) => {
+  let isPositive = (num) => num > 0;
+  return (isPositive(resources.virtualCores) && isPositive(resources.memoryMB));
+};
+let isInvalidResource = (resources) => {
+  return (
+    !resources ||
+    !resources.virtualCores ||
+    !resources.memoryMB
+  );
+};
+let hasValidResources = (config, cb) => {
+  let {resources} = config;
+  if (isInvalidResource(resources)) {
+    cb('MISSING-RESOURCES');
+  } else if (!isPipelineResourcesPositive(resources)) {
+    cb('INVALID-RESOURCES');
+  }
+};
+let hasValidDriverResources = (config, cb) => {
+  let {driverResources} = config;
+  if (isInvalidResource(driverResources)) {
+    cb('MISSING-DRIVERRESOURCES');
+  } else if (!isPipelineResourcesPositive(driverResources)) {
+    cb('INVALID-DRIVERRESOURCES');
+  }
+};
 let validateImportJSON = (myHelpers, GLOBALS, config) => {
   let errorPath = ['en', 'hydrator', 'studio', 'error', 'IMPORT-JSON'];
   let validations = [
@@ -299,6 +325,8 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     isRequiredFieldsFilled: isRequiredFieldsFilled.bind(null, myHelpers),
     countUnFilledRequiredFields: countUnFilledRequiredFields,
     hasValidName: hasValidName,
+    hasValidResources: hasValidResources,
+    hasValidDriverResources: hasValidDriverResources,
     hasAtleastOneSource: hasAtleastOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),

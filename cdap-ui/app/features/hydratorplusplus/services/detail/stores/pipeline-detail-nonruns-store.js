@@ -181,8 +181,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         config: {
           instances: appConfigClone.configJson.instances,
           batchInterval: appConfigClone.configJson.batchInterval,
-          resources: appConfigClone.configJson.resources || this.HYDRATOR_DEFAULT_VALUES.resources,
-          driverResources: appConfigClone.configJson.driverResources || this.HYDRATOR_DEFAULT_VALUES.resources,
+          resources: appConfigClone.configJson.resources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
+          driverResources: appConfigClone.configJson.driverResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,
