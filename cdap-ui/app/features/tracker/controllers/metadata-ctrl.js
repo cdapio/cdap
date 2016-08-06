@@ -292,11 +292,12 @@ class TrackerMetadataController {
     this.invalidFormat = false;
     this.duplicateTag = false;
 
-    if (!input) {
-      return;
-    }
-
     let defer = this.$q.defer();
+
+    if (!input) {
+      defer.reject();
+      return defer.promise;
+    }
 
     let userTagCheck = this.tags.userTags
               .filter(tag => input === tag.name).length > 0 ? true : false;
