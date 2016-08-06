@@ -174,23 +174,33 @@ public final class FileMetaDataManager {
                                                                  namespaceId);
               }
             });
+
             for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
-              byte[] colName = entry.getKey();
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),
-                          Bytes.toLong(colName));
-              }
-              Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
-                @Override
-                public Location call() throws Exception {
-                  return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+              try {
+                byte[] colName = entry.getKey();
+                URI file = new URI(Bytes.toString(entry.getValue()));
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
                 }
-              });
-              // Delete if file last modified time is less than tillTime
-              if (fileLocation.lastModified() < tillTime) {
-                callback.handle(namespaceId, fileLocation, namespacedLogDir);
-                table.delete(rowKey, colName);
-                deletedColumns++;
+
+                Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
+                  @Override
+                  public Location call() throws Exception {
+                    return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+                  }
+                });
+                if (!fileLocation.exists()) {
+                  LOG.warn("Log file {} does not exist, but metadata is present", file);
+                  table.delete(rowKey, colName);
+                  deletedColumns++;
+                } else if (fileLocation.lastModified() < tillTime) {
+                  // Delete if file last modified time is less than tillTime
+                  callback.handle(namespaceId, fileLocation, namespacedLogDir);
+                  table.delete(rowKey, colName);
+                  deletedColumns++;
+                }
+              } catch (Exception e) {
+                LOG.error("Got exception deleting file {}", Bytes.toString(entry.getValue()), e);
               }
             }
           }

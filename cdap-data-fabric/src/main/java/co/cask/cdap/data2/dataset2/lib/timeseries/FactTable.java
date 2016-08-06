@@ -36,8 +36,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -146,16 +150,47 @@ public final class FactTable implements Closeable {
     }
   }
 
+  private class MeasureNameComparator implements Comparator<String> {
+    private final Map<String, Long> measureNameToEntityIdMap;
+
+    private MeasureNameComparator(Map<String, Long> measureNameToEntityIdMap) {
+      this.measureNameToEntityIdMap = measureNameToEntityIdMap;
+    }
+
+    @Override
+    public int compare(String first, String second) {
+      return Long.compare(measureNameToEntityIdMap.get(first), measureNameToEntityIdMap.get(second));
+    }
+  }
+
   public FactScanner scan(FactScan scan) {
     return new FactScanner(getScanner(scan), codec, scan.getStartTs(), scan.getEndTs(), scan.getMeasureNames());
   }
 
-  private Scanner getScanner(FactScan scan) {
-    // use null if no metrics or more than one metrics are provided in the scan
-    String measureName = scan.getMeasureNames().size() == 1 ? scan.getMeasureNames().iterator().next() : null;
+  private List<String> getSortedMeasures(Collection<String> measures) {
+    Map<String, Long> measureToEntityMap = new HashMap<>();
+    List<String> measureNames = new ArrayList<>();
 
-    byte[] startRow = codec.createStartRowKey(scan.getDimensionValues(), measureName, scan.getStartTs(), false);
-    byte[] endRow = codec.createEndRowKey(scan.getDimensionValues(), measureName, scan.getEndTs(), false);
+    for (String measureName : measures) {
+      measureNames.add(measureName);
+      measureToEntityMap.put(measureName, codec.getMeasureEntityId(measureName));
+    }
+    // sort the list
+    Collections.sort(measureNames, new MeasureNameComparator(measureToEntityMap));
+    return measureNames;
+  }
+
+  private Scanner getScanner(FactScan scan) {
+
+    // sort the measures based on their entity ids and based on that get the start and end row key metric names
+    List<String> measureNames = getSortedMeasures(scan.getMeasureNames());
+
+    byte[] startRow = codec.createStartRowKey(scan.getDimensionValues(),
+                                              measureNames.isEmpty() ? null : measureNames.get(0),
+                                              scan.getStartTs(), false);
+    byte[] endRow = codec.createEndRowKey(scan.getDimensionValues(),
+                                          measureNames.isEmpty() ? null : measureNames.get(measureNames.size() - 1),
+                                          scan.getEndTs(), false);
     byte[][] columns;
     if (Arrays.equals(startRow, endRow)) {
       // If on the same timebase, we only need subset of columns
@@ -168,7 +203,8 @@ public final class FactTable implements Closeable {
       }
     }
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow);
+    FuzzyRowFilter fuzzyRowFilter =
+      measureNames.isEmpty() ? createFuzzyRowFilter(scan, startRow) : createFuzzyRowFilter(scan, measureNames);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Scanning fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
@@ -374,7 +410,7 @@ public final class FactTable implements Closeable {
       }
     }
 
-    LOG.trace("search for metrics completed, scanned records: {}", scannedRecords);
+    LOG.trace("search for measures completed, scanned records: {}", scannedRecords);
 
     return measureNames;
   }
@@ -389,12 +425,23 @@ public final class FactTable implements Closeable {
     return FactCodec.getSplits(aggGroupsCount);
   }
 
-  @Nullable
+  private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, List<String> measureNames) {
+    List<ImmutablePair<byte[], byte[]>> fuzzyPairsList = new ArrayList<>();
+    for (String measureName : measureNames) {
+      // add exact fuzzy keys for all the measure names provided in the scan, when constructing fuzzy row filter
+      // its okay to use startTs as timebase part of rowKey is always fuzzy in fuzzy filter
+      byte[] startRow = codec.createStartRowKey(scan.getDimensionValues(), measureName, scan.getStartTs(), false);
+      byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getDimensionValues(), measureName);
+      fuzzyPairsList.add(new ImmutablePair<>(startRow, fuzzyRowMask));
+    }
+    return new FuzzyRowFilter(fuzzyPairsList);
+  }
+
   private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow) {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values
 
-    // if we are querying only one metric, we will use fixed metricName for filter,
-    // if there are no metrics or more than one metrics to query we use `ANY` fuzzy filter.
+    // if we are querying only one measure, we will use fixed measureName for filter,
+    // if there are no measures or more than one measures to query we use `ANY` fuzzy filter.
     String measureName = (scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().iterator().next() : null;
     byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getDimensionValues(), measureName);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
