@@ -85,7 +85,7 @@ public final class SecurityUtil {
 
     File keytabFile = new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
     Preconditions.checkArgument(Files.isReadable(keytabFile.toPath()),
-                                "Keytab file is not a readable file: {}", keytabFile);
+                                "Keytab file is not a readable file: %s", keytabFile);
 
     LOG.info("Using Kerberos principal {} and keytab {}", principal, keytabFile.getAbsolutePath());
 
@@ -148,7 +148,7 @@ public final class SecurityUtil {
     if (UserGroupInformation.isSecurityEnabled()) {
       Path keytabFile = Paths.get(keytabPath);
       Preconditions.checkArgument(Files.isReadable(keytabFile),
-                                  "Keytab file is not a readable file: {}", keytabFile);
+                                  "Keytab file is not a readable file: %s", keytabFile);
       String expandedPrincipal = expandPrincipal(principal);
       LOG.info("Logging in as: principal={}, keytab={}", principal, keytabPath);
       UserGroupInformation.loginUserFromKeytab(expandedPrincipal, keytabPath);
