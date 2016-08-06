@@ -17,12 +17,8 @@
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.schedule.Schedules;
 
 /**
@@ -38,9 +34,6 @@ public class PurchaseApp extends AbstractApplication {
     setName(APP_NAME);
     setDescription("Purchase history application");
 
-    // Ingest data into the Application via a Stream
-    addStream(new Stream("purchaseStream"));
-
     // Store processed data in a Dataset
     createDataset("frequentCustomers", KeyValueTable.class,
                   DatasetProperties.builder().setDescription("Store frequent customers").build());
@@ -48,9 +41,6 @@ public class PurchaseApp extends AbstractApplication {
     // Store user profiles in a Dataset
     createDataset("userProfiles", KeyValueTable.class,
                   DatasetProperties.builder().setDescription("Store user profiles").build());
-
-    // Process events in realtime using a Flow
-    addFlow(new PurchaseFlow());
 
     // Specify a MapReduce to run on the acquired data
     addMapReduce(new PurchaseHistoryBuilder());
@@ -64,9 +54,6 @@ public class PurchaseApp extends AbstractApplication {
     // Store and retrieve user profile data using a Service
     addService(UserProfileServiceHandler.SERVICE_NAME, new UserProfileServiceHandler());
 
-    // Provide a Service to Application components
-    addService(new CatalogLookupService());
-
     // Schedule the workflow
     scheduleWorkflow(
       Schedules.builder("DailySchedule")
@@ -74,25 +61,6 @@ public class PurchaseApp extends AbstractApplication {
         .createTimeSchedule("0 4 * * *"),
       "PurchaseHistoryWorkflow");
 
-    // Schedule the workflow based on the data coming in the purchaseStream stream
-    scheduleWorkflow(
-      Schedules.builder("DataSchedule")
-        .setDescription("Schedule execution when 1 MB or more of data is ingested in the purchaseStream")
-        .setMaxConcurrentRuns(1)
-        .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
-      "PurchaseHistoryWorkflow"
-    );
-
     createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties("History dataset"));
-    try {
-      createDataset("purchases", ObjectMappedTable.class, ObjectMappedTableProperties.builder().setType(Purchase.class)
-        .setDescription("Store purchases").build());
-    } catch (UnsupportedTypeException e) {
-      // This exception is thrown by ObjectMappedTable if its parameter type cannot be
-      // (de)serialized (for example, if it is an interface and not a class, then there is
-      // no auto-magic way deserialize an object.) In this case that will not happen
-      // because PurchaseHistory and Purchase are actual classes.
-      throw new RuntimeException(e);
-    }
   }
 }

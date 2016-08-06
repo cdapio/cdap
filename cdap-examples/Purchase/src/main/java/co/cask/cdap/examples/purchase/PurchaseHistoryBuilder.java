@@ -61,8 +61,9 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     MapReduceContext context = getContext();
     Job job = context.getHadoopJob();
     job.setReducerClass(PerUserReducer.class);
-
-    context.addInput(Input.ofDataset("purchases"), PurchaseMapper.class);
+    String purchasesNamespace = context.getRuntimeArguments().get("dataset.namespace");
+    String purchasesDataset = context.getRuntimeArguments().get("dataset.name");
+    context.addInput(Input.ofDataset(purchasesDataset).fromNamespace(purchasesNamespace), PurchaseMapper.class);
     context.addOutput(Output.ofDataset("history"));
 
     // override default memory usage if the corresponding runtime arguments are set.
