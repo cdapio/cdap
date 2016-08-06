@@ -41,7 +41,6 @@ import co.cask.cdap.data2.datafabric.dataset.RemoteSystemOperationServiceManager
 import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.service.ExploreServiceManager;
-import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
@@ -328,7 +327,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
-      handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(UsageHandler.class);
