@@ -72,9 +72,11 @@ public class SparkPageRankProgram implements JavaSparkMain {
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     JavaSparkContext jsc = new JavaSparkContext();
+    String streamNamespace = sec.getRuntimeArguments().get("stream.namespace");
+    String streamName = sec.getRuntimeArguments().get("stream.name");
 
     LOG.info("Processing backlinkURLs data");
-    JavaPairRDD<Long, String> backlinkURLs = sec.fromStream("backlinkURLStream", String.class);
+    JavaPairRDD<Long, String> backlinkURLs = sec.fromStream(streamNamespace, streamName, String.class);
     int iterationCount = getIterationCount(sec);
 
     LOG.info("Grouping data by key");
