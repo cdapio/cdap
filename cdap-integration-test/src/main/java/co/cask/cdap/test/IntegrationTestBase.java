@@ -25,7 +25,6 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.MonitorClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.SecureStoreClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
@@ -41,8 +40,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
@@ -65,7 +62,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -239,7 +235,6 @@ public abstract class IntegrationTestBase {
     assertNoApps(namespace);
     assertNoUserDatasets(namespace);
     assertNoStreams(namespace);
-    assertNoSecureKeys(namespace.toEntityId());
     // TODO: check metrics, etc.
   }
 
@@ -297,10 +292,6 @@ public abstract class IntegrationTestBase {
 
   protected StreamClient getStreamClient() {
     return new StreamClient(getClientConfig(), getRestClient());
-  }
-
-  protected SecureStoreClient getSecureStoreClient() {
-    return new SecureStoreClient(getClientConfig(), getRestClient());
   }
 
   protected DatasetClient getDatasetClient() {
@@ -377,15 +368,5 @@ public abstract class IntegrationTestBase {
     }
     Assert.assertTrue("Must have no streams, but found the following streams: "
                         + Joiner.on(", ").join(streamNames), streamNames.isEmpty());
-  }
-
-  private void assertNoSecureKeys(NamespaceId namespaceId) throws Exception {
-    List<SecureKeyListEntry> secureKeys = getSecureStoreClient().listKeys(namespaceId);
-    List<String> keyNames = new ArrayList<>(secureKeys.size());
-    for (SecureKeyListEntry entry : secureKeys) {
-      keyNames.add(entry.getName());
-    }
-    Assert.assertTrue(String.format("Must have no secure keys, but found the following keys: %s",
-                                    Joiner.on(", ").join(keyNames)), keyNames.isEmpty());
   }
 }
