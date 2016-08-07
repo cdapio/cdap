@@ -16,14 +16,12 @@
 
 package co.cask.cdap.examples.sparkpagerank;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
@@ -33,22 +31,16 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.spark.SparkConf;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -57,33 +49,21 @@ import javax.ws.rs.PathParam;
  */
 public class SparkPageRankApp extends AbstractApplication {
 
-  public static final String SERVICE_HANDLERS = "SparkPageRankService";
-  public static final String BACKLINK_URL_STREAM = "backlinkURLStream";
+  public static final String SERVICE_HANDLERS = "RanksCounterService";
 
   @Override
   public void configure() {
-    setName("SparkPageRank");
-    setDescription("Spark page rank application.");
-
-    // Ingest data into the Application via a Stream
-    addStream(new Stream(BACKLINK_URL_STREAM));
-
-    // Run a Spark program on the acquired data
-    addSpark(new PageRankSpark());
+    setName("PageRankCounter");
+    setDescription("Page rank application.");
 
     // Runs MapReduce program on data emitted by Spark program
     addMapReduce(new RanksCounter());
-
-    // Runs Spark followed by a MapReduce in a Workflow
-    addWorkflow(new PageRankWorkflow());
 
     // Service to retrieve process data
     addService(SERVICE_HANDLERS, new SparkPageRankServiceHandler());
 
     // Store input and processed data in ObjectStore Datasets
     try {
-      ObjectStores.createObjectStore(getConfigurer(), "ranks", Integer.class,
-                                     DatasetProperties.builder().setDescription("Ranks Dataset").build());
       ObjectStores.createObjectStore(getConfigurer(), "rankscount", Integer.class,
                                      DatasetProperties.builder().setDescription("Ranks Count Dataset").build());
     } catch (UnsupportedTypeException e) {
@@ -95,37 +75,6 @@ public class SparkPageRankApp extends AbstractApplication {
     }
   }
 
-  /**
-   * PageRankWorkflow which connect a Spark program followed by a MapReduce
-   */
-  public static class PageRankWorkflow extends AbstractWorkflow {
-
-    @Override
-    public void configure() {
-      setDescription("Runs PageRankSpark program followed by RanksCounter MapReduce program");
-      addSpark(PageRankSpark.class.getSimpleName());
-      addMapReduce(RanksCounter.class.getSimpleName());
-    }
-  }
-
-  /**
-   * A Spark program that calculates page rank.
-   */
-  public static final class PageRankSpark extends AbstractSpark {
-
-    @Override
-    public void configure() {
-      setDescription("Spark page rank program");
-      setMainClass(SparkPageRankProgram.class);
-      setDriverResources(new Resources(1024));
-      setExecutorResources(new Resources(1024));
-    }
-
-    @Override
-    public void beforeSubmit(SparkClientContext context) throws Exception {
-      context.setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
-    }
-  }
 
   /**
    * A {@link Service} with handlers to get rank of a url, total number of pages for a given rank and transform a page
@@ -142,29 +91,6 @@ public class SparkPageRankApp extends AbstractApplication {
     @UseDataSet("rankscount")
     private ObjectStore<Integer> store;
 
-    @UseDataSet("ranks")
-    private ObjectStore<Integer> ranks;
-
-    @Path(RANKS_PATH)
-    @POST
-    public void getRank(HttpServiceRequest request, HttpServiceResponder responder) {
-      String urlRequest = Charsets.UTF_8.decode(request.getContent()).toString();
-
-      String url = GSON.fromJson(urlRequest, JsonObject.class).get(URL_KEY).getAsString();
-      if (url == null) {
-        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
-                            "The url must be specified with \"url\" as key in JSON.");
-        return;
-      }
-
-      // Get the rank from the ranks dataset
-      Integer rank = ranks.read(url.getBytes(Charsets.UTF_8));
-      if (rank == null) {
-        responder.sendError(HttpURLConnection.HTTP_NO_CONTENT, String.format("No rank found of %s", url));
-      } else {
-        responder.sendString(rank.toString());
-      }
-    }
 
     @Path(TOTAL_PAGES_PATH + "/{pr}")
     @GET
@@ -178,12 +104,6 @@ public class SparkPageRankApp extends AbstractApplication {
       } else {
         responder.sendString(HttpURLConnection.HTTP_OK, totalPages.toString(), Charsets.UTF_8);
       }
-    }
-
-    @Path(TRANSFORM_PATH + "/{pr}")
-    @GET
-    public void transform(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("pr") String pr) {
-      responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
     }
   }
 
@@ -199,7 +119,9 @@ public class SparkPageRankApp extends AbstractApplication {
       job.setMapperClass(Emitter.class);
       job.setReducerClass(Counter.class);
       job.setNumReduceTasks(1);
-      context.addInput(Input.ofDataset("ranks"));
+      String datasetNamespace = context.getRuntimeArguments().get("dataset.namespace");
+      String datasetName = context.getRuntimeArguments().get("dataset.name");
+      context.addInput(Input.ofDataset(datasetName).fromNamespace(datasetNamespace));
       context.addOutput(Output.ofDataset("rankscount"));
     }
 
