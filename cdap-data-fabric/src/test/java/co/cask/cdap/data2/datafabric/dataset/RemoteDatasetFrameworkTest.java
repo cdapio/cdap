@@ -168,21 +168,22 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
 
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
-                                                            txExecutorFactory, mdsFramework, DEFAULT_MODULES,
-                                                            impersonator);
+                                                            txExecutorFactory, mdsFramework, impersonator);
     DatasetInstanceManager instanceManager = new DatasetInstanceManager(txSystemClientService, txExecutorFactory,
                                                                         mdsFramework);
     PrivilegesManager privilegesManager = injector.getInstance(PrivilegesManager.class);
     DatasetTypeService typeService = new DatasetTypeService(typeManager, namespaceQueryAdmin, namespacedLocationFactory,
                                                             authorizationEnforcer, privilegesManager,
-                                                            authenticationContext, cConf, impersonator);
+                                                            authenticationContext, cConf, impersonator,
+                                                            txSystemClientService, mdsFramework, txExecutorFactory,
+                                                            DEFAULT_MODULES);
     DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       typeManager, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
       privilegesManager, authenticationContext);
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
-    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
+    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework), new HashSet<DatasetMetricsReporter>(),
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable
