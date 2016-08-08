@@ -69,10 +69,12 @@ angular.module(PKG.name + '.feature.tracker')
 
         let timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60;
         let xDomain = getXaxisDomain(scope.startTime, scope.endTime);
-        xDomain.startTime -= (timezoneOffsetInSeconds * 1000);
-        console.log('xD', xDomain.startTime);
 
-        let durationAsDays = moment.duration(xDomain.endTime - xDomain.startTime).asDays();
+        let durationAsDays = moment.duration(xDomain.endTime - xDomain.startTime).asDays() + 1;
+
+        xDomain.startTime -= (timezoneOffsetInSeconds * 1000);
+        xDomain.endTime -= (timezoneOffsetInSeconds * 1000);
+
 
         // 0.2 is the total padding for all the bars
         let barPadding = (width * 0.2) / durationAsDays;
@@ -90,7 +92,7 @@ angular.module(PKG.name + '.feature.tracker')
         });
 
         let x = d3.time.scale()
-          .range([((barWidth/2) + (barPadding/2) + margin.left ), width - margin.right ]);
+          .range([( (barWidth/2) + (barPadding/2) ), width - ( barWidth/2 ) ]);
 
         let y = d3.scale.linear()
           .range([height, 0]);
@@ -107,7 +109,7 @@ angular.module(PKG.name + '.feature.tracker')
             .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
 
         /* CREATE GRAPH */
-        x.domain([ xDomain.startTime,xDomain.endTime ]);
+        x.domain([ xDomain.startTime,xDomain.endTime ]).nice();
         y.domain([0, d3.max(data, (d) => { return d.count; })]).nice();
 
         /* X AXIS */
