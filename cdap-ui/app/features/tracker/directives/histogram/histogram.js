@@ -67,10 +67,21 @@ angular.module(PKG.name + '.feature.tracker')
         let width = container.width - margin.left - margin.right;
         let height = parentHeight - margin.top - margin.bottom;
 
+        let timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60;
+        let xDomain = getXaxisDomain(scope.startTime, scope.endTime);
+        xDomain.startTime -= (timezoneOffsetInSeconds * 1000);
+        console.log('xD', xDomain.startTime);
+
+        let durationAsDays = moment.duration(xDomain.endTime - xDomain.startTime).asDays();
+
+        // 0.2 is the total padding for all the bars
+        let barPadding = (width * 0.2) / durationAsDays;
+        let barWidth = (width / durationAsDays) - barPadding;
+
         /* FORMATTING TIME */
         // We are getting the time in GMT from backend, therefore the graph can
         // be off by +- 1 day. That is why we are offsetting the time by timezone offset.
-        let timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60;
+
         let data = scope.model.results.map((d) => {
           return {
             time: new Date((d.timestamp + timezoneOffsetInSeconds) * 1000),
@@ -79,7 +90,7 @@ angular.module(PKG.name + '.feature.tracker')
         });
 
         let x = d3.time.scale()
-          .range([0, width]);
+          .range([((barWidth/2) + (barPadding/2) + margin.left ), width - margin.right ]);
 
         let y = d3.scale.linear()
           .range([height, 0]);
@@ -96,7 +107,6 @@ angular.module(PKG.name + '.feature.tracker')
             .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
 
         /* CREATE GRAPH */
-        let xDomain = getXaxisDomain(scope.startTime, scope.endTime);
         x.domain([ xDomain.startTime,xDomain.endTime ]);
         y.domain([0, d3.max(data, (d) => { return d.count; })]).nice();
 
@@ -108,7 +118,6 @@ angular.module(PKG.name + '.feature.tracker')
           .tickFormat(timeFormat)
           .outerTickSize(0);
 
-        let durationAsDays = moment.duration(xDomain.endTime - xDomain.startTime).asDays();
         if (durationAsDays >= 179) { // 6 months
           xAxis.ticks(d3.time.months, 1).tickFormat(d3.time.format('%b %Y'));
         } else if ( durationAsDays >= 30 && durationAsDays < 179) {
@@ -142,10 +151,6 @@ angular.module(PKG.name + '.feature.tracker')
             return '<strong>' + timeFormat(d.time) + ' - ' + d.count +  '</strong>';
           });
         svg.call(tip);
-
-        // 0.2 is the total padding for all the bars
-        let barPadding = (width * 0.2) / durationAsDays;
-        let barWidth = (width / durationAsDays) - barPadding;
 
         /* BARS */
         svg.selectAll('.bar')
