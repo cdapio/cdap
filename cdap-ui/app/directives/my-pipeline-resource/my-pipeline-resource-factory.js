@@ -12,20 +12,26 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 angular.module(PKG.name + '.commons')
-  .directive('myCard', function() {
+  .factory('MyPipelineResourceFactory', function() {
     return {
-      restrict: 'E',
-      scope: {
-        'title': '@',
-        'tooltip': '=?'
+      'driverResource': {
+        'element': '<my-pipeline-driver-resource></my-pipeline-driver-resource>',
+        'attributes': {
+          store: 'store',
+          'action-creator': 'actionCreator',
+          'data-is-disabled': '{{::isDisabled}}'
+        }
       },
-      transclude: true,
-      bindToController: true,
-      templateUrl: 'my-card/my-card.html',
-      controller: 'MyCardCtrl',
-      controllerAs: 'MyCardCtrl'
+      'executorResource': {
+        'element': '<my-pipeline-executor-resource></my-pipeline-executor-resource>',
+        'attributes': {
+          store: 'store',
+          'action-creator': 'actionCreator',
+          'data-is-disabled': '{{::isDisabled}}'
+        }
+      }
     };
   });

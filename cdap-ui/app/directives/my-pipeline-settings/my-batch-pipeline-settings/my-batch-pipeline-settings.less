@@ -24,15 +24,55 @@ my-batch-pipeline-settings {
     }
     my-card {
       &.engine {
-        flex: 0.3;
+        flex: 0.5;
         label {
           font-weight: 500;
           color: gray;
           display: block;
         }
+        .resource-container {
+          display: flex;
+          > div {
+            flex: 0.5;
+          }
+          .title {
+            font-weight: 500;
+            color: gray;
+          }
+          .title,
+          .fa.fa-caret-down,
+          .fa.fa-caret-right {
+            cursor: pointer;
+            margin: 10px 0;
+            color: gray;
+          }
+          .resource-holder {
+            display: flex;
+            flex-direction: column;
+            .resource-group {
+              display: flex;
+              &:last-child {
+                margin: 10px 0;
+              }
+              .control-label {
+                &:first-child {
+                  width: 80px;
+                }
+              }
+              .control-label {
+                display: inline-block;
+                text-align: right;
+              }
+              .form-control {
+                width: 80px;
+                margin: 0 10px;
+              }
+            }
+          }
+        }
       }
       &.schedule {
-        flex: 0.7;
+        flex: 0.5;
         margin-right: 10px;
         label {
           font-weight: 500;

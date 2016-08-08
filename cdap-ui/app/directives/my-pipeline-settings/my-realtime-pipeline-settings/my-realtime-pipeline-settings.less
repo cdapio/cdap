@@ -20,6 +20,10 @@ my-realtime-pipeline-settings {
 
     my-card {
       flex: 0.3;
+      margin-right: 10px;
+      label {
+        color: gray;
+      }
       .instance-wrapper {
         display: flex;
         justify-content: space-between;
@@ -28,6 +32,31 @@ my-realtime-pipeline-settings {
         > input,
         label {
           margin: 0 10px;
+        }
+      }
+      &.resources {
+        .resource-holder {
+          display: flex;
+          flex-direction: column;
+          .resource-group {
+            display: flex;
+            &:last-child {
+              margin: 10px 0;
+            }
+            .control-label {
+              &:first-child {
+                width: 80px;
+              }
+            }
+            .control-label {
+              display: inline-block;
+              text-align: right;
+            }
+            .form-control {
+              margin: 0 10px;
+              width: 80px;
+            }
+          }
         }
       }
     }

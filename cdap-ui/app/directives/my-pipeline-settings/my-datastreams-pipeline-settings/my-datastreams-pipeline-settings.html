@@ -15,12 +15,52 @@
 -->
 <fieldset ng-disabled="MyDataStreamsPipelineSettingsCtrl._isDisabled">
   <div class="pipeline-settings-content">
-    <my-card title="Batch Interval">
+    <my-card title="Batch Interval" class="batch-interval">
       <div class="batchinterval-wrapper">
         <input type="text"
                ng-model="MyDataStreamsPipelineSettingsCtrl.batchInterval"
                class="form-control"
                min="1">
+      </div>
+    </my-card>
+    <my-card title="Resources" class="resources">
+      <div class="form-horizontal resource-container">
+        <div>
+          <div>
+            <i class="fa fa-info-circle"
+               uib-tooltip="Resources don't take any effect in standalone environment."
+               ng-if="!MyDataStreamsPipelineSettingsCtrl.isDistributed"></i>
+            <span class="title">
+              Executor Resource
+            </span>
+          </div>
+          <div class="resource-holder">
+            <div
+              action-creator="MyDataStreamsPipelineSettingsCtrl.actionCreator"
+              store="MyDataStreamsPipelineSettingsCtrl.store"
+              resource-type="executorResource"
+              my-pipeline-resource-factory
+            ></div>
+          </div>
+        </div>
+        <div>
+          <div>
+            <i class="fa fa-info-circle"
+               uib-tooltip="Resources don't take any effect in standalone environment."
+               ng-if="!MyDataStreamsPipelineSettingsCtrl.isDistributed"></i>
+            <span class="title">
+              Driver Resource
+            </span>
+          </div>
+          <div class="resource-holder">
+            <div
+              action-creator="MyDataStreamsPipelineSettingsCtrl.actionCreator"
+              store="MyDataStreamsPipelineSettingsCtrl.store"
+              resource-type="driverResource"
+              my-pipeline-resource-factory
+            ></div>
+          </div>
+        </div>
       </div>
     </my-card>
   </div>
