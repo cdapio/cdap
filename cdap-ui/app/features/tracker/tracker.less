@@ -1156,8 +1156,20 @@ body.state-tracker-detail-entity-usage {
       color: @cdap-header;
       margin-top: 20px;
     }
-    div.btn-group { margin: 14px 0 9px 15px; }
+    div.btn-group { margin: 10px 0 9px 15px; }
   }
+
+  .datetime-usage {
+    display: inline-block;
+    position: relative;
+    padding-top: 5px;
+
+    .datetime-picker-container {
+      display: inline-block;
+      .datetime-range.open { top: 17px; }
+    }
+  }
+
   div.usage-container > div.well { height: 100px; }
   div.tracker-metrics {
     table.table {
