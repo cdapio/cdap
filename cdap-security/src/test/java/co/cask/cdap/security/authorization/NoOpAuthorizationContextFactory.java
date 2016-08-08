@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
+import co.cask.cdap.security.store.DummyKMSStore;
 import co.cask.tephra.TransactionFailureException;
 
 import java.util.Map;
@@ -39,7 +40,8 @@ public class NoOpAuthorizationContextFactory implements AuthorizationContextFact
   @Override
   public AuthorizationContext create(Properties extensionProperties) {
     return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(),
-                                           new NoOpTransactional(), new AuthenticationTestContext());
+                                           new NoOpTransactional(), new AuthenticationTestContext(),
+                                           new DummyKMSStore());
   }
 
   private static final class NoOpTransactional implements Transactional {
