@@ -30,8 +30,6 @@ import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -49,7 +47,6 @@ import javax.ws.rs.QueryParam;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetInstanceHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
 
   private final DatasetInstanceService instanceService;
 

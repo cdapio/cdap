@@ -24,7 +24,6 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -60,7 +59,7 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetOpExecutor opExecutorClient;
   private final Set<DatasetMetricsReporter> metricReporters;
-  private final DatasetTypeManager typeManager;
+  private final DatasetTypeService typeService;
 
   private Cancellable cancelDiscovery;
   private Cancellable opExecutorServiceWatch;
@@ -71,13 +70,12 @@ public class DatasetService extends AbstractExecutionThreadService {
   public DatasetService(CConfiguration cConf,
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
-                        DatasetTypeManager typeManager,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetTypeService datasetTypeService,
                         DatasetInstanceService datasetInstanceService) throws Exception {
-    this.typeManager = typeManager;
+    this.typeService = datasetTypeService;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(datasetTypeService);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
@@ -109,7 +107,7 @@ public class DatasetService extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     LOG.info("Starting DatasetService...");
 
-    typeManager.startAndWait();
+    typeService.startAndWait();
     opExecutorClient.startAndWait();
     httpService.startAndWait();
 
@@ -208,7 +206,7 @@ public class DatasetService extends AbstractExecutionThreadService {
       opExecutorServiceWatch.cancel();
     }
 
-    typeManager.stopAndWait();
+    typeService.stopAndWait();
 
     if (cancelDiscovery != null) {
       cancelDiscovery.cancel();

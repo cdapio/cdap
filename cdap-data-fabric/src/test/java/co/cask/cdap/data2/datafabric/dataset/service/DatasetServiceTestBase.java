@@ -222,9 +222,7 @@ public abstract class DatasetServiceTestBase {
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
-                                                            txExecutorFactory,
-                                                            inMemoryDatasetFramework, defaultModules,
-                                                            impersonator);
+                                                            txExecutorFactory, inMemoryDatasetFramework, impersonator);
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
     DatasetInstanceManager instanceManager =
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
@@ -233,10 +231,10 @@ public abstract class DatasetServiceTestBase {
                                                  namespaceQueryAdmin, authEnforcer, privilegesManager,
                                                  authenticationContext);
 
-    DatasetTypeService typeService = new DatasetTypeService(typeManager, namespaceAdmin, namespacedLocationFactory,
-                                                            authEnforcer, privilegesManager, authenticationContext,
-                                                            cConf, impersonator);
-    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
+    DatasetTypeService typeService = new DatasetTypeService(
+      typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, privilegesManager, authenticationContext,
+      cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, txExecutorFactory, defaultModules);
+    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
                                  opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
