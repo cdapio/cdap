@@ -26,7 +26,7 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'widget-container/widget-number/widget-number.html',
       controller: function($scope, myHelpers) {
         var defaultValue = myHelpers.objectQuery($scope.config, 'widget-attributes', 'default');
-        $scope.model = $scope.model || defaultValue;
+        $scope.model = $scope.model || angular.copy(defaultValue);
         $scope.internalModel = $scope.model;
         var minValueFromWidgetJSON = myHelpers.objectQuery($scope.config, 'widget-attributes', 'min');
         var maxValueFromWidgetJSON = myHelpers.objectQuery($scope.config, 'widget-attributes', 'max');

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-function MyPipelineExecutorResourceCtrl($scope) {
+function MyPipelineExecutorResourceCtrl($scope, HYDRATOR_DEFAULT_VALUES) {
   'ngInject';
   $scope.virtualCores = $scope.store.getVirtualCores();
   $scope.memoryMB = $scope.store.getMemoryMB();
@@ -22,7 +22,7 @@ function MyPipelineExecutorResourceCtrl($scope) {
   $scope.numberConfig = {
     'widget-attributes': {
       min: 0,
-      default: $scope.memoryMB,
+      default: HYDRATOR_DEFAULT_VALUES.resources.memoryMB,
       showErrorMessage: false,
       convertToInteger: true
     }
