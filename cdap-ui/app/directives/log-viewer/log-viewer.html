@@ -75,7 +75,7 @@
   </my-timeline>
 
   <!-- LOGS TABLE -->
-  <div class="logs-table">
+  <div class="logs-table" ng-class="{'navigator-fullscreen-log-table' : LogViewer.entityName === 'Cloudera Navigator' }">
     <table class="table table-bordered scroll scroll-table">
       <thead>
         <th class="time time-header log-header"

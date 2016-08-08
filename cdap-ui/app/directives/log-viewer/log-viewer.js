@@ -27,7 +27,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.setProgramMetadata = (status) => {
     this.programStatus = status;
 
-    if(this.entityName) {
+    if(!this.entityName) {
       this.entityName = this.programId;
     }
 
