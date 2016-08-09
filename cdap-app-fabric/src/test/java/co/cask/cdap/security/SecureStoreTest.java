@@ -16,6 +16,9 @@
 
 package co.cask.cdap.security;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
@@ -24,8 +27,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +47,15 @@ public class SecureStoreTest extends AppFabricTestBase {
   private static final String DESCRIPTION2 = "This is Key2";
   private static final String DATA2 = "Secret2";
   private static final Map<String, String> PROPERTIES2 = ImmutableMap.of("Prop1", "Val1", "Prop2", "Val2");
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    CConfiguration cConf = createBasicCConf();
+    cConf.set(Constants.Security.Store.PROVIDER, "file");
+    SConfiguration sConf = SConfiguration.create();
+    sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
+    initializeAndStartServices(cConf, sConf);
+  }
 
   @Test
   public void testCreate() throws Exception {
