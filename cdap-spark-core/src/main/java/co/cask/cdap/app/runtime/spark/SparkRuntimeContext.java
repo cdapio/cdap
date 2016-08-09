@@ -100,7 +100,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
 
     return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
                                              workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
-                                             ProgramType.SPARK, programId.getProgram());
+                                             ProgramType.SPARK, programId.getProgram(), runId.getId());
   }
 
   @Override
