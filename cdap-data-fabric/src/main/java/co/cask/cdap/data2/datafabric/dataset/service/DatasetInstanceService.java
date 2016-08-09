@@ -33,7 +33,6 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -76,7 +75,7 @@ import javax.annotation.Nullable;
 public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
-  private final DatasetTypeManager typeManager;
+  private final DatasetTypeService typeService;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
@@ -88,14 +87,15 @@ public class DatasetInstanceService {
 
   private AuditPublisher auditPublisher;
 
+  @VisibleForTesting
   @Inject
-  public DatasetInstanceService(DatasetTypeManager typeManager, DatasetInstanceManager instanceManager,
+  public DatasetInstanceService(DatasetTypeService typeService, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin,
                                 AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
                                 AuthenticationContext authenticationContext) {
     this.opExecutorClient = opExecutorClient;
-    this.typeManager = typeManager;
+    this.typeService = typeService;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -409,22 +409,14 @@ public class DatasetInstanceService {
    */
   @Nullable
   private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) throws Exception {
-    Id.DatasetType datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName);
-    DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetTypeId);
-    if (typeMeta == null) {
+    DatasetTypeId datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName).toEntityId();
+    try {
+      return typeService.getType(datasetTypeId);
+    } catch (DatasetTypeNotFoundException e) {
       // Type not found in the instance's namespace. Now try finding it in the system namespace
-      Id.DatasetType systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(Id.Namespace.SYSTEM, typeName);
-      typeMeta = typeManager.getTypeInfo(systemDatasetTypeId);
-    } else {
-      // not using a system dataset type. ensure that the user has access to it before returning
-      DatasetTypeId typeId = datasetTypeId.toEntityId();
-      Principal principal = authenticationContext.getPrincipal();
-      Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-      if (!Principal.SYSTEM.equals(principal) && !filter.apply(typeId)) {
-        throw new UnauthorizedException(principal, typeId);
-      }
+      DatasetTypeId systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(Id.Namespace.SYSTEM, typeName).toEntityId();
+      return typeService.getType(systemDatasetTypeId);
     }
-    return typeMeta;
   }
 
   /**
