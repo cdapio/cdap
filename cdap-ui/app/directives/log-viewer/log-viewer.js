@@ -425,6 +425,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           this.displayData[key].selected = false;
           this.displayData.splice(key+1, 1);
         }
+      } else {
+        this.displayData[key].selected = this.toggleExpandAll;
       }
     });
   };
