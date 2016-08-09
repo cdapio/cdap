@@ -63,6 +63,7 @@ public class NamespaceConfig {
     return schedulerQueueName;
   }
 
+  @Nullable
   public String getRootDirectory() {
     return rootDirectory;
   }

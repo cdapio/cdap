@@ -30,7 +30,6 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
@@ -145,14 +144,6 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   }
 
   private void validateCustomLocation(NamespaceMeta namespaceMeta) throws IOException {
-    // a custom location was provided
-    // check that its an absolute path
-    File customLocation = new File(namespaceMeta.getConfig().getRootDirectory());
-    if (!customLocation.isAbsolute()) {
-      throw new IOException(String.format(
-        "Cannot create the namespace '%s' with the given custom location %s. Custom location must be absolute path.",
-        namespaceMeta.getName(), customLocation));
-    }
     // since this is a custom location we expect it to exist. Get the custom location for the namespace from
     // namespaceLocationFactory since the location needs to be aware of local/distributed fs.
     Location customNamespacedLocation = namespacedLocationFactory.get(namespaceMeta);
@@ -160,6 +151,13 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       throw new IOException(String.format(
         "The provided home directory '%s' for namespace '%s' does not exist. Please create it on filesystem " +
           "with sufficient privileges for the user %s and then try creating a namespace.",
+        customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
+        namespaceMeta.getConfig().getPrincipal()));
+    }
+    if (!customNamespacedLocation.isDirectory()) {
+      throw new IOException(String.format(
+        "The provided home directory '%s' for namespace '%s' is not a directory. Please specify a directory for the " +
+          "namespace with sufficient privileges for the user %s and then try creating a namespace.",
         customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
         namespaceMeta.getConfig().getPrincipal()));
     }
