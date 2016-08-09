@@ -39,6 +39,14 @@ class TrackerResultsController {
       {
         name: 'Z-A',
         sort: '-name'
+      },
+      {
+        name: 'Tracker Meter (asc)',
+        sort: 'meter'
+      },
+      {
+        name: 'Tracker Meter (desc)',
+        sort: '-meter'
       }
     ];
 
@@ -326,6 +334,10 @@ class TrackerResultsController {
       .$promise
       .then((response) => {
         this.truthMeterMap = response;
+        angular.forEach(this.fullResults, (entity) => {
+          entity.meter = response[entity.entityTypeState][entity.name];
+        });
+        this.filterResults();
       }, (err) => {
         console.log('error', err);
       });
