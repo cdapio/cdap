@@ -71,10 +71,11 @@ let isUniqueNodeNames = (myHelpers, nodes, cb) => {
   }
   let nodesIdMap = {};
   angular.forEach(nodes, function (node) {
-    if (!nodesIdMap[node.plugin.label]) {
-      nodesIdMap[node.plugin.label] = [];
+    let nodeName = node.plugin.label || node.name;
+    if (!nodesIdMap[nodeName]) {
+      nodesIdMap[nodeName] = [];
     }
-    nodesIdMap[node.plugin.label].push(node);
+    nodesIdMap[nodeName].push(node);
   });
   angular.forEach(nodesIdMap, function(nodeArray) {
     if(nodeArray.length > 1) {
@@ -113,7 +114,8 @@ let isNodeNameUnique = (myHelpers, nodeName, nodes, cb) => {
   }
   let error;
   let filteredNames = nodes.filter( node => {
-    return node.plugin.label === nodeName;
+    let name = node.plugin.label || node.name;
+    return name === nodeName;
   });
   if (filteredNames.length > 1) {
     error = 'DUPLICATE-NAME';
