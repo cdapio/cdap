@@ -18,7 +18,7 @@ function MyPipelineExecutorResourceCtrl($scope, HYDRATOR_DEFAULT_VALUES) {
   $scope.virtualCores = $scope.store.getVirtualCores();
   $scope.memoryMB = $scope.store.getMemoryMB();
   $scope.cores = Array.apply(null, {length: 20}).map((ele, index) => index+1);
-  $scope.isDisabled = $scope.isDisabled === 'false' ? false : true;
+  $scope.isDisabled = $scope.isDisabled === 'true' ? true : false;
   $scope.numberConfig = {
     'widget-attributes': {
       min: 0,
