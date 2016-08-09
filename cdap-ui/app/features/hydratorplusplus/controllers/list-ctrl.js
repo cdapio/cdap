@@ -33,15 +33,16 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       } else {
         vm.currentPage = 1;
       }
+      vm.goToPage();
     };
 
-    $scope.$watch('ListController.currentPage', function() {
+    vm.goToPage = function () {
       if (!vm.currentPage) {
         return;
       }
       $stateParams.page = vm.currentPage;
       $state.go('hydratorplusplus.list', $stateParams, {notify: false});
-    });
+    };
 
     vm.statusCount = {
       running: 0,
