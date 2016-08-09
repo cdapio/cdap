@@ -24,6 +24,9 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
@@ -32,6 +35,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -45,17 +49,20 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   private final Admin delegateAdmin;
   private final Transactional delegateTxnl;
   private final AuthenticationContext delegateAuthenticationContext;
+  private final SecureStore delegateSecureStore;
 
   @Inject
   @VisibleForTesting
   public DefaultAuthorizationContext(@Assisted("extension-properties") Properties extensionProperties,
                                      DatasetContext delegateDatasetContext, Admin delegateAdmin,
-                                     Transactional delegateTxnl, AuthenticationContext delegateAuthenticationContext) {
+                                     Transactional delegateTxnl, AuthenticationContext delegateAuthenticationContext,
+                                     SecureStore delegateSecureStore) {
     this.extensionProperties = extensionProperties;
     this.delegateDatasetContext = delegateDatasetContext;
     this.delegateAdmin = delegateAdmin;
     this.delegateTxnl = delegateTxnl;
     this.delegateAuthenticationContext = delegateAuthenticationContext;
+    this.delegateSecureStore = delegateSecureStore;
   }
 
   @Override
@@ -148,5 +155,15 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
 
   public Principal getPrincipal() {
     return delegateAuthenticationContext.getPrincipal();
+  }
+
+  @Override
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+    return delegateSecureStore.listSecureData(namespace);
+  }
+
+  @Override
+  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+    return delegateSecureStore.getSecureData(namespace, name);
   }
 }
