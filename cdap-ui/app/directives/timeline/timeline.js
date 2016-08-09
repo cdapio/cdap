@@ -269,6 +269,9 @@ function link (scope, element) {
   scope.updateSlider = updateSlider;
 
   const generateEventCircles = () => {
+
+    console.log('generating event circles!');
+
     timelineData = scope.metadata;
     timelineStack = {};
     let errorMap = {};
@@ -303,13 +306,13 @@ function link (scope, element) {
       if(timelineStack.hasOwnProperty(key)){
         let maxCount = 5;
 
-        if(errorMap[key] !== undefined){
+        if(typeof errorMap[key] !== 'undefined'){
           for(let n = 0 ; n < errorMap[key] && maxCount > 0; n++, maxCount--){
             //render
             timescaleSvg.append('circle').attr('cx', key).attr('cy', (5 - maxCount)* 7).attr('class', 'red-circle');
           }
         }
-        if(warningMap[key] !== undefined){
+        if(typeof warningMap[key] !== 'undefined'){
           for(let m = 0 ; m < warningMap[key] && maxCount > 0; m++, maxCount--){
             //render
             timescaleSvg.append('circle').attr('cx', key).attr('cy', (5 - maxCount)* 7).attr('class', 'yellow-circle');
