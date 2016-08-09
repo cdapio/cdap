@@ -158,7 +158,7 @@ class HydratorPlusPlusConfigStore {
       node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
 
       let configObj = {
-        name: node.name || node.plugin.label || node.plugin.name,
+        name: node.plugin.label || node.name || node.plugin.name,
         plugin: {
           // Solely adding id and _backendProperties for validation.
           // Should be removed while saving it to backend.
@@ -190,20 +190,24 @@ class HydratorPlusPlusConfigStore {
 
     connections.forEach( connection => {
       let fromConnectionName, toConnectionName;
+      let fromPluginName, toPluginName;
 
       if (nodesMap[connection.from]) {
-        fromConnectionName = nodesMap[connection.from].name;
+        fromPluginName = nodesMap[connection.from].plugin.label || nodesMap[connection.from].name;
+        fromConnectionName = fromPluginName;
         addPluginToConfig(nodesMap[connection.from], connection.from);
       } else {
         fromConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.from)[0];
-        fromConnectionName = fromConnectionName.name;
+        fromPluginName = fromConnectionName.plugin.label || fromConnectionName.name;
+        fromConnectionName = fromPluginName;
       }
       if (nodesMap[connection.to]) {
-        toConnectionName = nodesMap[connection.to].name;
+        toConnectionName = nodesMap[connection.to].plugin.label || nodesMap[connection.to].name;
         addPluginToConfig(nodesMap[connection.to], connection.to);
       } else {
         toConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.to)[0];
-        toConnectionName = toConnectionName.name;
+        toPluginName = toConnectionName.plugin.label || toConnectionName.name;
+        toConnectionName = toPluginName;
       }
       connection.from = fromConnectionName;
       connection.to = toConnectionName;
@@ -214,9 +218,6 @@ class HydratorPlusPlusConfigStore {
     if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
-      if (this.GLOBALS.etlDataStreams) {
-        config.batchInterval = this.getBatchInterval();
-      }
       config.resources = {
         memoryMB: this.getMemoryMB(),
         virtualCores: this.getVirtualCores()
@@ -227,6 +228,16 @@ class HydratorPlusPlusConfigStore {
       };
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instances = this.getInstance();
+    } else if (this.GLOBALS.etlDataStreams) {
+      config.batchInterval = this.getBatchInterval();
+      config.resources = {
+        memoryMB: this.getMemoryMB(),
+        virtualCores: this.getVirtualCores()
+      };
+      config.driverResources = {
+        memoryMB: this.getDriverMemoryMB(),
+        virtualCores: this.getDriverVirtualCores()
+      };
     }
 
     if (this.state.description) {
