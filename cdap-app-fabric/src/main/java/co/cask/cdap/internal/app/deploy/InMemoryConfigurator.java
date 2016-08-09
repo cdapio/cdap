@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -70,12 +72,13 @@ public final class InMemoryConfigurator implements Configurator {
 
   private final ArtifactRepository artifactRepository;
   private final ClassLoader artifactClassLoader;
+  private final Impersonator impersonator;
   private final String appClassName;
   private final Id.Artifact artifactId;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
                               String appClassName, ArtifactRepository artifactRepository,
-                              ClassLoader artifactClassLoader,
+                              ClassLoader artifactClassLoader, Impersonator impersonator,
                               @Nullable String applicationName, @Nullable String configString) {
     this.cConf = cConf;
     this.appNamespace = appNamespace;
@@ -85,6 +88,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.configString = configString == null ? "" : configString;
     this.artifactRepository = artifactRepository;
     this.artifactClassLoader = artifactClassLoader;
+    this.impersonator = impersonator;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -102,7 +106,12 @@ public final class InMemoryConfigurator implements Configurator {
     SettableFuture<ConfigResponse> result = SettableFuture.create();
 
     try {
-      Object appMain = artifactClassLoader.loadClass(appClassName).newInstance();
+      Object appMain = impersonator.doAs(appNamespace.toEntityId(), new Callable<Object>() {
+        @Override
+        public Object call() throws Exception {
+          return artifactClassLoader.loadClass(appClassName).newInstance();
+        }
+      });
       if (!(appMain instanceof Application)) {
         throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
           appMain.getClass().getName()));
@@ -123,12 +132,12 @@ public final class InMemoryConfigurator implements Configurator {
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private <T extends Config> String getSpecJson(Application<T> app) throws Exception {
+  private <T extends Config> String getSpecJson(final Application<T> app) throws Exception {
     // This Gson cannot be static since it is used to deserialize user class.
     // Gson will keep a static map to class, hence will leak the classloader
     Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
     // Now, we call configure, which returns application specification.
-    DefaultAppConfigurer configurer;
+    final DefaultAppConfigurer configurer;
 
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
     try (
@@ -136,7 +145,7 @@ public final class InMemoryConfigurator implements Configurator {
     ) {
       configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
                                             configString, artifactRepository, pluginInstantiator);
-      T appConfig;
+      final T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (configString.isEmpty()) {
         //noinspection unchecked
@@ -150,7 +159,13 @@ public final class InMemoryConfigurator implements Configurator {
       }
 
       try {
-        app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+        impersonator.doAs(appNamespace.toEntityId(), new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+            return null;
+          }
+        });
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof ClassNotFoundException) {

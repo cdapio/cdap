@@ -89,20 +89,20 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
+    Impersonator impersonator = new Impersonator(CConfiguration.create(), null, null);
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizerInstantiator,
                                                              new DummyProgramRunnerFactory(),
-                                                             new Impersonator(CConfiguration.create(), null, null),
+                                                             impersonator,
                                                              authEnforcer, authenticationContext);
 
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(appJar,
                                                   new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                                             new Impersonator(CConfiguration.create(),
-                                                                                              null, null)))) {
+                                                                             impersonator))) {
       Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
                                                            WordCountApp.class.getName(), artifactRepo,
-                                                           artifactClassLoader, null, "");
+                                                           artifactClassLoader, impersonator, null, "");
       // Extract response from the configurator.
       ListenableFuture<ConfigResponse> result = configurator.config();
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -122,9 +122,10 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
+    Impersonator impersonator = new Impersonator(CConfiguration.create(), null, null);
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizerInstantiator,
                                                              new DummyProgramRunnerFactory(),
-                                                             new Impersonator(CConfiguration.create(), null, null),
+                                                             impersonator,
                                                              authEnforcer, authenticationContext);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
@@ -132,11 +133,10 @@ public class ConfiguratorTest {
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(appJar,
                                                   new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                                             new Impersonator(CConfiguration.create(),
-                                                                                              null, null)))) {
+                                                                             impersonator))) {
       Configurator configuratorWithConfig =
         new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-                                 artifactRepo, artifactClassLoader, null, new Gson().toJson(config));
+                                 artifactRepo, artifactClassLoader, impersonator, null, new Gson().toJson(config));
 
       ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -152,7 +152,7 @@ public class ConfiguratorTest {
 
       Configurator configuratorWithoutConfig = new InMemoryConfigurator(
         conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-        artifactRepo, artifactClassLoader, null, null);
+        artifactRepo, artifactClassLoader, impersonator, null, null);
       result = configuratorWithoutConfig.config();
       response = result.get(10, TimeUnit.SECONDS);
       Assert.assertNotNull(response);
