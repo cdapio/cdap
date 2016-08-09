@@ -29,25 +29,23 @@ import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Splitter;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import javax.annotation.concurrent.NotThreadSafe;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * In-memory implementation of {@link Authorizer}.
  */
-@NotThreadSafe
 public class InMemoryAuthorizer extends AbstractAuthorizer {
 
-  private final Table<EntityId, Principal, Set<Action>> table = HashBasedTable.create();
-  private final Map<Role, Set<Principal>> roleToPrincipals = new HashMap<>();
+  private final ConcurrentMap<EntityId, ConcurrentMap<Principal, Set<Action>>> privileges = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Role, Set<Principal>> roleToPrincipals = new ConcurrentHashMap<>();
   private final Set<Principal> superUsers = new HashSet<>();
   // Bypass enforcement for tests that want to simulate every user as a super user
   private final Principal allSuperUsers = new Principal("*", Principal.PrincipalType.USER);
@@ -69,15 +67,19 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
       return;
     }
-    // actions allowed to this principal
-    Set<Action> allowed = Sets.newHashSet(getActions(entity, principal));
-    // actions allowed to any of the roles to which this principal belongs if its not a role
+    // actions allowed for this principal
+    Set<Action> allowed = getActions(entity, principal);
+    if (allowed.contains(Action.ALL) || allowed.containsAll(actions)) {
+      return;
+    }
+    Set<Action> allowedForRoles = new HashSet<>();
+    // actions allowed for any of the roles to which this principal belongs if its not a role
     if (principal.getType() != Principal.PrincipalType.ROLE) {
-      for (Role role : listRoles(principal)) {
-        allowed.addAll(getActions(entity, role));
+      for (Role role : getRoles(principal)) {
+        allowedForRoles.addAll(getActions(entity, role));
       }
     }
-    if (!(allowed.contains(Action.ALL) || allowed.containsAll(actions))) {
+    if (!(allowedForRoles.contains(Action.ALL) || allowedForRoles.containsAll(actions))) {
       throw new UnauthorizedException(principal, Sets.difference(actions, allowed), entity);
     }
   }
@@ -103,9 +105,7 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
 
   @Override
   public void revoke(EntityId entity) {
-    for (Principal principal : table.row(entity).keySet()) {
-      getActions(entity, principal).clear();
-    }
+    privileges.remove(entity);
   }
 
   @Override
@@ -113,47 +113,47 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
     if (roleToPrincipals.containsKey(role)) {
       throw new RoleAlreadyExistsException(role);
     }
-    roleToPrincipals.put(role, new HashSet<Principal>());
+    // NOTE: A concurrent put might happen, hence it should still result as RoleAlreadyExistsException.
+    Set<Principal> principals = Collections.newSetFromMap(new ConcurrentHashMap<Principal, Boolean>());
+    if (roleToPrincipals.putIfAbsent(role, principals) != null) {
+      throw new RoleAlreadyExistsException(role);
+    }
   }
 
   @Override
   public void dropRole(Role role) throws RoleNotFoundException {
-    if (!roleToPrincipals.containsKey(role)) {
+    Set<Principal> removed = roleToPrincipals.remove(role);
+    if (removed == null) {
       throw new RoleNotFoundException(role);
     }
-    roleToPrincipals.remove(role);
   }
 
   @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
-    if (!roleToPrincipals.containsKey(role)) {
+    Set<Principal> principals = roleToPrincipals.get(role);
+    if (principals == null) {
       throw new RoleNotFoundException(role);
     }
-    roleToPrincipals.get(role).add(principal);
+    principals.add(principal);
   }
 
   @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
-    if (!roleToPrincipals.containsKey(role)) {
+    Set<Principal> principals = roleToPrincipals.get(role);
+    if (principals == null) {
       throw new RoleNotFoundException(role);
     }
-    roleToPrincipals.get(role).remove(principal);
+    principals.remove(principal);
   }
 
   @Override
   public Set<Role> listRoles(Principal principal) {
-    Set<Role> roles = new HashSet<>();
-    for (Map.Entry<Role, Set<Principal>> roleSetEntry : roleToPrincipals.entrySet()) {
-      if (roleSetEntry.getValue().contains(principal)) {
-        roles.add(roleSetEntry.getKey());
-      }
-    }
-    return roles;
+    return Collections.unmodifiableSet(getRoles(principal));
   }
 
   @Override
   public Set<Role> listAllRoles() {
-    return roleToPrincipals.keySet();
+    return Collections.unmodifiableSet(roleToPrincipals.keySet());
   }
 
   @Override
@@ -164,28 +164,49 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
 
     // privileges for the role to which this principal belongs to if its not a role
     if (principal.getType() != Principal.PrincipalType.ROLE) {
-      for (Role role : listRoles(principal)) {
+      for (Role role : roleToPrincipals.keySet()) {
         privileges.addAll(getPrivileges(role));
       }
     }
-    return privileges;
+    return Collections.unmodifiableSet(privileges);
   }
 
   private Set<Privilege> getPrivileges(Principal principal) {
-    Set<Privilege> privileges = new HashSet<>();
-    Set<Map.Entry<EntityId, Set<Action>>> entries = table.column(principal).entrySet();
-    for (Map.Entry<EntityId, Set<Action>> entry : entries) {
-      for (Action action : entry.getValue()) {
-        privileges.add(new Privilege(entry.getKey(), action));
+    Set<Privilege> result = new HashSet<>();
+    for (Map.Entry<EntityId, ConcurrentMap<Principal, Set<Action>>> entry : privileges.entrySet()) {
+      EntityId entityId = entry.getKey();
+      Set<Action> actions = getActions(entityId, principal);
+      for (Action action : actions) {
+        result.add(new Privilege(entityId, action));
       }
     }
-    return privileges;
+    return Collections.unmodifiableSet(result);
   }
 
   private Set<Action> getActions(EntityId entity, Principal principal) {
-    if (!table.contains(entity, principal)) {
-      table.put(entity, principal, new HashSet<Action>());
+    ConcurrentMap<Principal, Set<Action>> allActions = privileges.get(entity);
+    if (allActions == null) {
+      allActions = new ConcurrentHashMap<>();
+      ConcurrentMap<Principal, Set<Action>> existingAllActions = privileges.putIfAbsent(entity, allActions);
+      allActions = (existingAllActions == null) ? allActions : existingAllActions;
     }
-    return table.get(entity, principal);
+    Set<Action> actions = allActions.get(principal);
+    if (actions != null) {
+      return actions;
+    }
+
+    actions = Collections.newSetFromMap(new ConcurrentHashMap<Action, Boolean>());
+    Set<Action> existingActions = allActions.putIfAbsent(principal, actions);
+    return existingActions == null ? actions : existingActions;
+  }
+
+  private Set<Role> getRoles(Principal principal) {
+    Set<Role> roles = new HashSet<>();
+    for (Map.Entry<Role, Set<Principal>> roleSetEntry : roleToPrincipals.entrySet()) {
+      if (roleSetEntry.getValue().contains(principal)) {
+        roles.add(roleSetEntry.getKey());
+      }
+    }
+    return roles;
   }
 }
