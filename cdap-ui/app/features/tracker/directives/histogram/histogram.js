@@ -70,29 +70,10 @@ angular.module(PKG.name + '.feature.tracker')
         let timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60;
         let xDomain = getXaxisDomain(scope.startTime, scope.endTime);
 
-        let durationAsDays = moment.duration(xDomain.endTime - xDomain.startTime).asDays() + 1;
-
-        xDomain.startTime -= (timezoneOffsetInSeconds * 1000);
-        xDomain.endTime -= (timezoneOffsetInSeconds * 1000);
-
-
-        // 0.2 is the total padding for all the bars
-        let barPadding = (width * 0.2) / durationAsDays;
-        let barWidth = (width / durationAsDays) - barPadding;
-
-        /* FORMATTING TIME */
-        // We are getting the time in GMT from backend, therefore the graph can
-        // be off by +- 1 day. That is why we are offsetting the time by timezone offset.
-
-        let data = scope.model.results.map((d) => {
-          return {
-            time: new Date((d.timestamp + timezoneOffsetInSeconds) * 1000),
-            count: d.value
-          };
-        });
+        let numBars = moment.duration(xDomain.endTime - xDomain.startTime).asDays();
 
         let x = d3.time.scale()
-          .range([( (barWidth/2) + (barPadding/2) ), width - ( barWidth/2 ) ]);
+          .range([0, width]);
 
         let y = d3.scale.linear()
           .range([height, 0]);
@@ -110,7 +91,6 @@ angular.module(PKG.name + '.feature.tracker')
 
         /* CREATE GRAPH */
         x.domain([ xDomain.startTime,xDomain.endTime ]).nice();
-        y.domain([0, d3.max(data, (d) => { return d.count; })]).nice();
 
         /* X AXIS */
         let timeFormat = d3.time.format('%b %d, %Y');
@@ -120,13 +100,61 @@ angular.module(PKG.name + '.feature.tracker')
           .tickFormat(timeFormat)
           .outerTickSize(0);
 
-        if (durationAsDays >= 179) { // 6 months
+        let offsetTime = true;
+
+        if (numBars >= 179) { // 6 months
           xAxis.ticks(d3.time.months, 1).tickFormat(d3.time.format('%b %Y'));
-        } else if ( durationAsDays >= 30 && durationAsDays < 179) {
-          xAxis.ticks(d3.time.weeks, 1).tickFormat(d3.time.format('%b-%e'));
+        } else if ( numBars >= 30 && numBars < 179) {
+          xAxis.ticks(d3.time.weeks, 1).tickFormat(d3.time.format('%b-%d'));
+        } else if (numBars > 7 && numBars < 30) {
+          xAxis.ticks(d3.time.days, 1).tickFormat(d3.time.format('%b-%d'));
+        } else if ( numBars <= 7 && numBars > 4 ) {
+          xAxis.ticks(d3.time.days, 1).tickFormat(d3.time.format('%b-%d'));
+          timeFormat = d3.time.format('%b %d, %Y %I:%M %p');
+          numBars = numBars * 24;
+          offsetTime = false;
+        } else if ( numBars <= 4 && numBars > 2) {
+          xAxis.ticks(d3.time.hours, 12).tickFormat(d3.time.format('%b-%d %H:%M'));
+          timeFormat = d3.time.format('%b %d, %Y %I:%M %p');
+          numBars = numBars * 24;
+          offsetTime = false;
+        } else if ( numBars > 1) {
+          xAxis.ticks(d3.time.hours, 6).tickFormat(d3.time.format('%b-%d %H:%M'));
+          timeFormat = d3.time.format('%b %d, %Y %I:%M %p');
+          numBars = numBars * 24;
+          offsetTime = false;
         } else {
-          xAxis.ticks(d3.time.days, 1).tickFormat(d3.time.format('%b-%e'));
+          numBars = numBars * 24;
+
+          if (numBars > 12) {
+            xAxis.ticks(d3.time.hours, 3).tickFormat(d3.time.format('%b-%d %H:%M'));
+          } else if (numBars > 6) {
+            xAxis.ticks(d3.time.hours, 2).tickFormat(d3.time.format('%b-%d %H:%M'));
+          } else {
+            xAxis.ticks(d3.time.hours, 1).tickFormat(d3.time.format('%b-%d %H:%M'));
+          }
+
+          timeFormat = d3.time.format('%b %d, %Y %I:%M %p');
+          offsetTime = false;
         }
+
+        /* FORMATTING TIME */
+        // We are getting the time in GMT from backend, therefore the graph can
+        // be off by +- 1 day. That is why we are offsetting the time by timezone offset.
+
+        let data = scope.model.results.map((d) => {
+          let time = offsetTime ? d.timestamp + timezoneOffsetInSeconds : d.timestamp;
+          return {
+            time: new Date(time * 1000),
+            count: d.value
+          };
+        });
+        y.domain([0, d3.max(data, (d) => { return d.count; })]).nice();
+
+        // 0.2 is the total padding for all the bars
+        let barPadding = (width * 0.2) / numBars;
+        let barWidth = (width / numBars) - barPadding;
+
         svg.append('g')
           .attr('class', 'x axis')
           .attr('transform', 'translate(0, ' + height + ')')

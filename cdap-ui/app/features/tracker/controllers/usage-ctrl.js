@@ -28,34 +28,34 @@ class TrackerUsageController {
     this.timeRangeOptions = [
       {
         label: 'Last 7 days',
-        start: 'now-7d',
-        end: 'now'
+        startTime: 'now-7d',
+        endTime: 'now'
       },
       {
         label: 'Last 14 days',
-        start: 'now-14d',
-        end: 'now'
+        startTime: 'now-14d',
+        endTime: 'now'
       },
       {
         label: 'Last month',
-        start: 'now-30d',
-        end: 'now'
+        startTime: 'now-30d',
+        endTime: 'now'
       },
       {
         label: 'Last 6 months',
-        start: 'now-180d',
-        end: 'now'
+        startTime: 'now-180d',
+        endTime: 'now'
       },
       {
         label: 'Last 12 months',
-        start: 'now-365d',
-        end: 'now'
+        startTime: 'now-365d',
+        endTime: 'now'
       }
     ];
 
     this.timeRange = {
-      start: $state.params.start || 'now-7d',
-      end: $state.params.end || 'now'
+      startTime: $state.params.startTime || 'now-7d',
+      endTime: $state.params.endTime || 'now'
     };
 
     this.customTimeRange = {
@@ -72,19 +72,13 @@ class TrackerUsageController {
 
   findTimeRange() {
     let match = this.timeRangeOptions.filter( (option) => {
-      return option.start === this.timeRange.start && option.end === this.timeRange.end;
+      return option.startTime === this.timeRange.startTime && option.endTime === this.timeRange.endTime;
     });
 
     if (match.length === 0) {
       this.isCustom = true;
-      // if (this.$state.params.start && typeof this.$state.params.start === 'number' && this.$state.params.start !== null) {
-
-      // }
-      // if (this.$state.params.end && typeof this.$state.params.end === 'number' && this.$state.params.end !== null) {
-
-      // }
-      this.customTimeRange.startTime = new Date(parseInt(this.$state.params.start, 10) * 1000);
-      this.customTimeRange.endTime = new Date(parseInt(this.$state.params.end, 10) * 1000);
+      this.customTimeRange.startTime = new Date(parseInt(this.$state.params.startTime, 10) * 1000);
+      this.customTimeRange.endTime = new Date(parseInt(this.$state.params.endTime, 10) * 1000);
     }
 
     return match.length > 0 ? match[0] : { label: 'Custom' };
@@ -94,7 +88,7 @@ class TrackerUsageController {
     let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000, 10);
     let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000, 10);
 
-    this.$state.go('tracker.detail.entity.usage', { start: startTime, end: endTime });
+    this.$state.go('tracker.detail.entity.usage', { startTime: startTime, endTime: endTime });
   }
 
   selectCustom() {
@@ -105,8 +99,8 @@ class TrackerUsageController {
   fetchAuditHistogram() {
     let params = {
       namespace: this.$state.params.namespace,
-      start: this.timeRange.start,
-      end: this.timeRange.end,
+      startTime: this.timeRange.startTime,
+      endTime: this.timeRange.endTime,
       scope: this.$scope,
       entityName: this.$state.params.entityId,
       entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset'

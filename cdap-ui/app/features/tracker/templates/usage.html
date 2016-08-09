@@ -32,7 +32,7 @@
               <a href="" ng-click="UsageController.selectCustom()">Custom</a>
             </li>
             <li role="menuitem" ng-repeat="time in UsageController.timeRangeOptions">
-              <a ui-sref="tracker.detail.entity.usage({ start: time.start, end: time.end })">{{ time.label }}</a>
+              <a ui-sref="tracker.detail.entity.usage({ startTime: time.startTime, endTime: time.endTime })">{{ time.label }}</a>
             </li>
           </ul>
         </div>
@@ -51,8 +51,8 @@
   <div ng-if="UsageController.serviceUnavailable === false"
       class="histogram-container">
     <my-histogram
-      start-time="{{UsageController.timeRange.start}}"
-      end-time="{{UsageController.timeRange.end}}"
+      start-time="{{UsageController.timeRange.startTime}}"
+      end-time="{{UsageController.timeRange.endTime}}"
       model="UsageController.auditHistogram">
     </my-histogram>
   </div>
