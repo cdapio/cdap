@@ -64,8 +64,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -334,15 +336,34 @@ public class DatasetInstanceService {
     }
 
     authorizationEnforcer.enforce(datasetId, authenticationContext.getPrincipal(), Action.ADMIN);
-    LOG.info("Deleting dataset {}.{}", instance.getNamespaceId(), instance.getId());
-    // Drop the dataset first, so that it can never be returned by a subsequent list or get call.
     dropDataset(instance, spec);
-    publishAudit(instance, AuditType.DELETE);
-    // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion, and
-    // deletion fails, we may have a valid (or invalid) dataset in the system, that no one has privileges on, so no one
-    // can clean up. This may result in orphaned privileges, which will be cleaned up by the create API if the same
-    // dataset is successfully re-created.
-    privilegesManager.revoke(datasetId);
+  }
+
+  /**
+   * Drops all datasets in the given namespace. If authorization is turned on, only datasets that the current
+   * principal that has {@link Action#ADMIN} privilege will be deleted
+   *
+   * @param namespaceId namespace to operate on
+   * @throws Exception if it fails to delete dataset
+   * @return the set of {@link DatasetId} that get deleted
+   */
+  Set<DatasetId> dropAll(NamespaceId namespaceId) throws Exception {
+    ensureNamespaceExists(namespaceId.toId());
+    Principal principal = authenticationContext.getPrincipal();
+
+    Set<DatasetId> datasets = new HashSet<>();
+    for (DatasetSpecification spec : instanceManager.getAll(namespaceId.toId())) {
+      try {
+        DatasetId datasetId = namespaceId.dataset(spec.getName());
+        authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
+        dropDataset(datasetId.toId(), spec);
+        datasets.add(datasetId);
+      } catch (UnauthorizedException e) {
+        // It's ok to be not authorized. Just skip the deletion.
+      }
+    }
+
+    return datasets;
   }
 
   /**
@@ -426,6 +447,8 @@ public class DatasetInstanceService {
    * @throws Exception on error.
    */
   private void dropDataset(Id.DatasetInstance instance, DatasetSpecification spec) throws Exception {
+    LOG.info("Deleting dataset {}.{}", instance.getNamespaceId(), instance.getId());
+
     disableExplore(instance);
 
     if (!instanceManager.delete(instance)) {
@@ -438,6 +461,13 @@ public class DatasetInstanceService {
       throw new DatasetNotFoundException(instance);
     }
     opExecutorClient.drop(instance, typeMeta, spec);
+
+    publishAudit(instance, AuditType.DELETE);
+    // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion, and
+    // deletion fails, we may have a valid (or invalid) dataset in the system, that no one has privileges on, so no one
+    // can clean up. This may result in orphaned privileges, which will be cleaned up by the create API if the same
+    // dataset is successfully re-created.
+    privilegesManager.revoke(instance.toEntityId());
   }
 
   private void disableExplore(Id.DatasetInstance datasetInstance) {
