@@ -46,6 +46,7 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
@@ -664,7 +665,7 @@ public class CLIMainTest extends CLITestBase {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String status;
     int numTries = 0;
@@ -681,7 +682,7 @@ public class CLIMainTest extends CLITestBase {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     assertProgramStatus(programClient, programId, programStatus, 180);
   }

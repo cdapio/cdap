@@ -27,6 +27,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -67,7 +68,7 @@ public class ServiceClient {
    * @throws NotFoundException if the app or service could not be found
    */
   public ServiceSpecification get(Id.Service service)
-    throws IOException, UnauthenticatedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),
                                             String.format("apps/%s/services/%s",
@@ -91,7 +92,7 @@ public class ServiceClient {
    * @throws NotFoundException if the app or service could not be found
    */
   public List<ServiceHttpEndpoint> getEndpoints(Id.Service service)
-    throws IOException, UnauthenticatedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     ServiceSpecification specification = get(service);
     ImmutableList.Builder<ServiceHttpEndpoint> builder = new ImmutableList.Builder<>();
@@ -112,7 +113,7 @@ public class ServiceClient {
    * @throws ServiceUnavailableException if the service has started but is not available right now
    */
   public String getAvailability(Id.Service service) throws IOException, UnauthenticatedException, NotFoundException,
-    ServiceUnavailableException {
+    ServiceUnavailableException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),
                                             String.format("apps/%s/services/%s/available",
                                                           service.getApplicationId(), service.getId()));
@@ -130,7 +131,7 @@ public class ServiceClient {
   }
 
   public URL getServiceURL(Id.Service service)
-    throws NotFoundException, IOException, UnauthenticatedException {
+    throws NotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     // Make sure the service actually exists
     get(service);
     return config.resolveNamespacedURLV3(service.getNamespace(),

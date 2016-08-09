@@ -25,6 +25,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
@@ -71,7 +72,7 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.DatasetInstance datasetInstance, long startTime, long endTime,
                                   @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime), levels);
   }
 
@@ -86,7 +87,7 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.DatasetInstance datasetInstance, String startTime, String endTime,
                                   @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(datasetInstance, startTime, endTime, Collections.<CollapseType>emptySet(), levels);
   }
 
@@ -102,7 +103,7 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.DatasetInstance datasetInstance, long startTime, long endTime,
                                   Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime), collapseTypes, levels);
   }
 
@@ -118,7 +119,7 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.DatasetInstance datasetInstance, String startTime, String endTime,
                                   Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     String path = String.format("datasets/%s/lineage?start=%s&end=%s", datasetInstance.getId(),
                                 URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
     for (CollapseType collapseType : collapseTypes) {
@@ -140,7 +141,7 @@ public class LineageClient {
    * @return {@link LineageRecord} for the specified stream.
    */
   public LineageRecord getLineage(Id.Stream streamId, long startTime, long endTime, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(streamId, Long.toString(startTime), Long.toString(endTime), levels);
   }
 
@@ -156,7 +157,7 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.Stream streamId, long startTime, long endTime,
                                   Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(streamId, Long.toString(startTime), Long.toString(endTime), collapseTypes, levels);
   }
 
@@ -170,7 +171,7 @@ public class LineageClient {
    * @return {@link LineageRecord} for the specified stream.
    */
   public LineageRecord getLineage(Id.Stream streamId, String startTime, String endTime, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(streamId, startTime, endTime, Collections.<CollapseType>emptySet(), levels);
   }
 
@@ -186,7 +187,7 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.Stream streamId, String startTime, String endTime,
                                   Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     String path = String.format("streams/%s/lineage?start=%s&end=%s", streamId.getId(),
                                 URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
     for (CollapseType collapseType : collapseTypes) {
@@ -199,7 +200,7 @@ public class LineageClient {
   }
 
   private LineageRecord getLineage(Id.NamespacedId namespacedId, String path)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     URL lineageURL = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
     HttpResponse response = restClient.execute(HttpRequest.get(lineageURL).build(),
                                                config.getAccessToken(),

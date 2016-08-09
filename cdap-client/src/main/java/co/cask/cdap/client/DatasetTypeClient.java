@@ -24,6 +24,7 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -66,7 +67,8 @@ public class DatasetTypeClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetTypeMeta> list(Id.Namespace namespace) throws IOException, UnauthenticatedException {
+  public List<DatasetTypeMeta> list(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "data/types");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetTypeMeta>>() { }).getResponseObject();
@@ -82,7 +84,7 @@ public class DatasetTypeClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public DatasetTypeMeta get(Id.DatasetType type)
-    throws DatasetTypeNotFoundException, IOException, UnauthenticatedException {
+    throws DatasetTypeNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(type.getNamespace(), String.format("data/types/%s", type.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -103,7 +105,7 @@ public class DatasetTypeClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public boolean exists(Id.DatasetType type)
-    throws DatasetTypeNotFoundException, IOException, UnauthenticatedException {
+    throws DatasetTypeNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(type.getNamespace(), String.format("data/types/%s", type.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);

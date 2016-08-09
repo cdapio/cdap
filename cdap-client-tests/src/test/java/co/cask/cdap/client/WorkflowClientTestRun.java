@@ -24,7 +24,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -107,7 +106,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
     // Invalid test scenarios
     try {
-      ProgramId nonExistentWorkflowId = new ProgramId(Id.Namespace.DEFAULT.getId(), AppWithWorkflow.NAME,
+      ProgramId nonExistentWorkflowId = new ProgramId(NamespaceId.DEFAULT.getNamespace(), AppWithWorkflow.NAME,
                                                       ProgramType.WORKFLOW, "NonExistentWorkflow");
       ProgramRunId nonExistentWorkflowRun = nonExistentWorkflowId.run(runId);
       workflowClient.getWorkflowToken(nonExistentWorkflowRun.toId());

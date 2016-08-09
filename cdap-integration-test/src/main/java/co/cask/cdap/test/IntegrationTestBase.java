@@ -43,6 +43,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -186,7 +187,7 @@ public abstract class IntegrationTestBase {
     throw new TimeoutException(exceptionMessage);
   }
 
-  private void assertUnrecoverableResetEnabled() throws IOException, UnauthenticatedException {
+  private void assertUnrecoverableResetEnabled() throws IOException, UnauthenticatedException, UnauthorizedException {
     ConfigEntry configEntry = getMetaClient().getCDAPConfig().get(Constants.Dangerous.UNRECOVERABLE_RESET);
     Preconditions.checkNotNull(configEntry,
                                "Missing key from CDAP Configuration: {}", Constants.Dangerous.UNRECOVERABLE_RESET);

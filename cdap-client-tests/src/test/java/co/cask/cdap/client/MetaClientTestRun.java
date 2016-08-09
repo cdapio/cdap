@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -38,7 +39,7 @@ import java.util.Map;
 public class MetaClientTestRun extends ClientTestBase {
 
   @Test
-  public void testAll() throws IOException, UnauthenticatedException {
+  public void testAll() throws IOException, UnauthenticatedException, UnauthorizedException {
     MetaClient metaClient = new MetaClient(clientConfig);
     metaClient.ping();
 
