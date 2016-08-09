@@ -62,9 +62,9 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -168,21 +168,22 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
 
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
-                                                            txExecutorFactory, mdsFramework, DEFAULT_MODULES,
-                                                            impersonator);
+                                                            txExecutorFactory, mdsFramework, impersonator);
     DatasetInstanceManager instanceManager = new DatasetInstanceManager(txSystemClientService, txExecutorFactory,
                                                                         mdsFramework);
-    AuthorizerInstantiator authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    PrivilegesManager privilegesManager = injector.getInstance(PrivilegesManager.class);
     DatasetTypeService typeService = new DatasetTypeService(typeManager, namespaceQueryAdmin, namespacedLocationFactory,
-                                                            authorizationEnforcer, authorizerInstantiator,
-                                                            authenticationContext, cConf, impersonator);
+                                                            authorizationEnforcer, privilegesManager,
+                                                            authenticationContext, cConf, impersonator,
+                                                            txSystemClientService, mdsFramework, txExecutorFactory,
+                                                            DEFAULT_MODULES);
     DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       typeManager, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
-      authorizerInstantiator, authenticationContext);
+      privilegesManager, authenticationContext);
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
-    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
+    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework), new HashSet<DatasetMetricsReporter>(),
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable

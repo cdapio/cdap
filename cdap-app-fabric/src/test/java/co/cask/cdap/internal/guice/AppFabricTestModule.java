@@ -24,6 +24,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -61,6 +62,7 @@ import org.apache.hadoop.conf.Configuration;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -69,9 +71,14 @@ public final class AppFabricTestModule extends AbstractModule {
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final SConfiguration sConf;
 
   public AppFabricTestModule(CConfiguration configuration) {
-    this.cConf = configuration;
+    this(configuration, null);
+  }
+
+  public AppFabricTestModule(CConfiguration cConf, @Nullable SConfiguration sConf) {
+    this.cConf = cConf;
 
     File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
 
@@ -81,6 +88,8 @@ public final class AppFabricTestModule extends AbstractModule {
     hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
+
+    this.sConf = sConf == null ? SConfiguration.create() : sConf;
   }
 
   @Override
@@ -89,7 +98,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new DataSetsModules().getStandaloneModules());
     install(new TransactionExecutorModule());
     install(new DataSetServiceModules().getInMemoryModules());
-    install(new ConfigModule(cConf, hConf));
+    install(new ConfigModule(cConf, hConf, sConf));
     install(new IOModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());

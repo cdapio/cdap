@@ -241,6 +241,9 @@ class HydratorPlusPlusNodeConfigCtrl {
             if (!this.state.node.outputSchema) {
               this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || '';
             }
+            if (!this.state.node.plugin.label) {
+              this.state.node.plugin.label = this.state.node.name;
+            }
             // Mark the configfetched to show that configurations have been received.
             this.state.configfetched = true;
             this.state.config = res;

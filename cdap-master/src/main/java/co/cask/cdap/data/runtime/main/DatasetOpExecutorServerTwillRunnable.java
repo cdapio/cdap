@@ -17,7 +17,6 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.EntityVerifierModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -54,7 +53,10 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.authorization.RemotePrivilegesManager;
 import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
@@ -121,14 +123,14 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new AuditModule().getDistributedModules(),
       new EntityVerifierModule(),
       new SecureStoreModules().getDistributedModules(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getProxyModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getProgramContainerModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+          bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
         }
       });
   }
@@ -141,5 +143,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(RemoteSystemOperationsService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
   }
 }

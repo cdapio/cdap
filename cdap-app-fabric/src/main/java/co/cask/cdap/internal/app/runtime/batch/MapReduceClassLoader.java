@@ -166,7 +166,8 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     String workflowId = workflowProgramInfo.getName();
     String workflowRunId = workflowProgramInfo.getRunId().getId();
     return new WorkflowProgramLoggingContext(programId.getNamespace(), programId.getApplication(), workflowId,
-                                             workflowRunId, ProgramType.MAPREDUCE, programId.getProgram());
+                                             workflowRunId, ProgramType.MAPREDUCE, programId.getProgram(),
+                                             runId.getId());
   }
 
   /**

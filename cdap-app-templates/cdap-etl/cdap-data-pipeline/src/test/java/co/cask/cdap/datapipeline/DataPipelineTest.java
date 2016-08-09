@@ -42,12 +42,14 @@ import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
+import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -107,6 +109,46 @@ public class DataPipelineTest extends HydratorTestBase {
   public void cleanupTest() throws Exception {
     getMetricsManager().resetAll();
   }
+
+  @Test
+  public void testMacroActionPipelines() throws Exception {
+    testMacroEvaluationActionPipeline(Engine.MAPREDUCE);
+    testMacroEvaluationActionPipeline(Engine.SPARK);
+  }
+
+  public void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
+
+      ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
+                                                                               "${value}"));
+      ETLStage action2 = new ETLStage("action2", MockAction.getPlugin("actionTable", "action2.row", "action2.column",
+                                                                     "action2.value"));
+
+      ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
+        .addStage(action1)
+        .addStage(action2)
+        .addConnection(new Connection(action1.getName(), action2.getName()))
+        .setEngine(engine)
+        .build();
+
+      // set runtime arguments for macro substitution
+      Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("value", "macroValue");
+
+      AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
+        new AppRequest<>(APP_ARTIFACT, etlConfig);
+      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "macroActionTest");
+      ApplicationManager appManager = deployApplication(appId, appRequest);
+      WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      manager.setRuntimeArgs(runtimeArguments);
+      manager.start(ImmutableMap.of("logical.start.time", "0"));
+      manager.waitForFinish(3, TimeUnit.MINUTES);
+
+      DataSetManager<Table> actionTableDS = getDataset("actionTable");
+      Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
+
+      List<RunRecord> history = appManager.getHistory(new Id.Program(appId, ProgramType.WORKFLOW, SmartWorkflow.NAME),
+                                                      ProgramRunStatus.FAILED);
+  }
+
 
   @Test
   public void testPipelineWithAllActions() throws Exception {
@@ -1242,9 +1284,9 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     // place dataset names into secure storage
-    getSecureStoreManager().putSecureData("default", prefix + "Source", (prefix + "MockSecureSourceDataset").getBytes(),
+    getSecureStoreManager().putSecureData("default", prefix + "Source", prefix + "MockSecureSourceDataset",
                                           "secure source dataset name", new HashMap<String, String>());
-    getSecureStoreManager().putSecureData("default", prefix + "Sink", (prefix + "MockSecureSinkDataset").getBytes(),
+    getSecureStoreManager().putSecureData("default", prefix + "Sink", prefix + "MockSecureSinkDataset",
                                           "secure dataset name", new HashMap<String, String>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);

@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -82,7 +81,6 @@ public class RemotePrivilegesTest {
   private static TransactionManager txManager;
   private static DatasetService datasetService;
   private static AppFabricServer appFabricServer;
-  private static RemoteSystemOperationsService remoteSysOpService;
 
   @BeforeClass
   public static void setup() throws IOException, InterruptedException {
@@ -107,7 +105,6 @@ public class RemotePrivilegesTest {
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     waitForService(Constants.Service.APP_FABRIC_HTTP);
-    remoteSysOpService = injector.getInstance(RemoteSystemOperationsService.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     privilegesFetcher = injector.getInstance(PrivilegesFetcher.class);
     privilegesManager = injector.getInstance(PrivilegesManager.class);
@@ -125,27 +122,19 @@ public class RemotePrivilegesTest {
     authorizer.grant(NS, ALICE, ImmutableSet.of(Action.WRITE));
     authorizer.grant(APP, ALICE, ImmutableSet.of(Action.ADMIN));
     authorizer.grant(PROGRAM, ALICE, ImmutableSet.of(Action.EXECUTE));
-    // RemoteSystemOpsService is only required for PrivilegeFetcher, since all requests from PrivilegeManager always
-    // go to master directly.
-    remoteSysOpService.startAndWait();
-    waitForService(Constants.Service.REMOTE_SYSTEM_OPERATION);
-    try {
-      Assert.assertEquals(
-        ImmutableSet.of(
-          new Privilege(NS, Action.WRITE),
-          new Privilege(APP, Action.ADMIN),
-          new Privilege(PROGRAM, Action.EXECUTE)
-        ),
-        privilegesFetcher.listPrivileges(ALICE));
-      authorizer.revoke(NS);
-      authorizer.revoke(APP);
-      authorizer.revoke(PROGRAM);
-      Set<Privilege> privileges = privilegesFetcher.listPrivileges(ALICE);
-      Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
-                        privileges.isEmpty());
-    } finally {
-      remoteSysOpService.stopAndWait();
-    }
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new Privilege(NS, Action.WRITE),
+        new Privilege(APP, Action.ADMIN),
+        new Privilege(PROGRAM, Action.EXECUTE)
+      ),
+      privilegesFetcher.listPrivileges(ALICE));
+    authorizer.revoke(NS);
+    authorizer.revoke(APP);
+    authorizer.revoke(PROGRAM);
+    Set<Privilege> privileges = privilegesFetcher.listPrivileges(ALICE);
+    Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
+                      privileges.isEmpty());
   }
 
   @Test

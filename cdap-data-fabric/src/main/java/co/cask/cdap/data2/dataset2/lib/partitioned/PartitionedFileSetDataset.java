@@ -17,6 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
@@ -52,6 +55,8 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionConflictException;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -72,6 +77,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -578,8 +584,14 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer, boolean decodeMetadata) {
     byte[] startKey = generateStartKey(filter);
     byte[] endKey = generateStopKey(filter);
+    getPartitions(filter, consumer, decodeMetadata, startKey, endKey, Long.MAX_VALUE);
+  }
+
+  private void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer, boolean decodeMetadata,
+                             @Nullable byte[] startKey, @Nullable byte[] endKey, long limit) {
+    long count = 0L;
     try (Scanner scanner = partitionsTable.scan(startKey, endKey)) {
-      while (true) {
+      while (count < limit) {
         Row row = scanner.next();
         if (row == null) {
           break;
@@ -601,6 +613,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         if (pathBytes != null) {
           consumer.consume(key, Bytes.toString(pathBytes), decodeMetadata ? metadataFromRow(row) : null);
         }
+        count++;
       }
     }
   }
@@ -793,6 +806,123 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArguments;
+  }
+
+  private void enableExplore() {
+    ExploreFacade exploreFacade = exploreFacadeProvider.get();
+    if (exploreFacade != null) {
+      try {
+        exploreFacade.enableExploreDataset(datasetInstanceId, spec);
+      } catch (Exception e) {
+        throw new DataSetException("Unable to enable explore", e);
+      }
+    }
+  }
+
+  private void disableExplore() {
+    ExploreFacade exploreFacade = exploreFacadeProvider.get();
+    if (exploreFacade != null) {
+      try {
+        exploreFacade.disableExploreDataset(datasetInstanceId);
+      } catch (Exception e) {
+        throw new DataSetException("Unable to enable explore", e);
+      }
+    }
+  }
+
+  /**
+   * This method can bring a partitioned file set in sync with explore. It scans the partition table and adds
+   * every partition to explore. It will start multiple transactions, processing a batch of partitions in each
+   * transaction. Optionally, it can disable and re-enable explore first, that is, drop and recreate the Hive table.
+   * @param transactional the Transactional for executing transactions
+   * @param datasetName the name of the dataset to fix
+   * @param doDisable whether to disable and re-enable explore first
+   * @param partitionsPerTx how many partitions to process per transaction
+   * @param verbose whether to log verbosely. If true, this will log a message for every partition; otherwise it
+   *                will only log a report of how many partitions were added / could not be added.
+   */
+  @Beta
+  @SuppressWarnings("unused")
+  public static void fixPartitions(Transactional transactional, final String datasetName,
+                                   boolean doDisable, final int partitionsPerTx, final boolean verbose) {
+
+    if (doDisable) {
+      try {
+        transactional.execute(new TxRunnable() {
+          @Override
+          public void run(co.cask.cdap.api.data.DatasetContext context) throws Exception {
+            PartitionedFileSetDataset pfs = context.getDataset(datasetName);
+            pfs.disableExplore();
+            pfs.enableExplore();
+          }
+        });
+      } catch (TransactionFailureException e) {
+        throw new DataSetException("Unable to disable and enable Explore", e.getCause());
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof TransactionFailureException) {
+          throw new DataSetException("Unable to disable and enable Explore", e.getCause().getCause());
+        }
+        throw e;
+      }
+    }
+    final AtomicReference<PartitionKey> startKey = new AtomicReference<>();
+    final AtomicLong errorCount = new AtomicLong(0L);
+    final AtomicLong successCount = new AtomicLong(0L);
+    do {
+      try {
+        transactional.execute(new TxRunnable() {
+          @Override
+          public void run(co.cask.cdap.api.data.DatasetContext context) throws Exception {
+            final PartitionedFileSetDataset pfs = context.getDataset(datasetName);
+            // compute start row for the scan, reset remembered start key to null
+            byte[] startRow = startKey.get() == null ? null : generateRowKey(startKey.get(), pfs.getPartitioning());
+            startKey.set(null);
+            PartitionConsumer consumer = new PartitionConsumer() {
+              int count = 0;
+
+              @Override
+              public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
+                if (count >= partitionsPerTx) {
+                  // reached the limit: remember this key as the start for the next round
+                  startKey.set(key);
+                  return;
+                }
+                try {
+                  pfs.addPartitionToExplore(key, path);
+                  successCount.incrementAndGet();
+                  if (verbose) {
+                    LOG.info("Added partition {} with path {}", key, path);
+                  }
+                } catch (DataSetException e) {
+                  errorCount.incrementAndGet();
+                  if (verbose) {
+                    LOG.warn(e.getMessage(), e);
+                  }
+                }
+                count++;
+              }
+            };
+            pfs.getPartitions(null, consumer, false, startRow, null, partitionsPerTx + 1);
+          }
+        });
+      } catch (TransactionConflictException e) {
+        throw new DataSetException("Transaction conflict while reading partitions. This should never happen. " +
+                                     "Make sure that no other programs are using this dataset at the same time.");
+      } catch (TransactionFailureException e) {
+        throw new DataSetException("Transaction failure: " + e.getMessage(), e.getCause());
+      } catch (RuntimeException e) {
+        // this looks like duplication but is needed in case this is run from a worker: see CDAP-6837
+        if (e.getCause() instanceof TransactionConflictException) {
+          throw new DataSetException("Transaction conflict while reading partitions. This should never happen. " +
+                                       "Make sure that no other programs are using this dataset at the same time.");
+        } else if (e.getCause() instanceof TransactionFailureException) {
+          throw new DataSetException("Transaction failure: " + e.getMessage(), e.getCause().getCause());
+        } else {
+          throw e;
+        }
+      }
+    } while (startKey.get() != null); // if it is null, then we consumed less than the limit in this round -> done
+    LOG.info("Added {} partitions, failed to add {} partitions.", successCount.get(), errorCount.get());
   }
 
   //------ private helpers below here --------------------------------------------------------------

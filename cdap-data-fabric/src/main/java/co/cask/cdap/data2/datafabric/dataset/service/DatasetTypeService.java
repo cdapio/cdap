@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.module.DatasetType;
 import co.cask.cdap.common.ConflictException;
@@ -32,9 +33,19 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -44,20 +55,25 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -65,9 +81,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -75,33 +94,76 @@ import javax.annotation.Nullable;
 /**
  * Manages lifecycle of dataset {@link DatasetType types} and {@link DatasetModule modules}.
  */
-public class DatasetTypeService {
+public class DatasetTypeService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeService.class);
 
   private final DatasetTypeManager typeManager;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final AuthorizationEnforcer authorizationEnforcer;
-  private final Authorizer authorizer;
+  private final PrivilegesManager privilegesManager;
   private final AuthenticationContext authenticationContext;
   private final CConfiguration cConf;
   private final Impersonator impersonator;
+  private final TransactionSystemClientService txClientService;
+  private final DatasetFramework datasetFramework;
+  private final TransactionExecutorFactory txExecutorFactory;
+  private final DynamicDatasetCache datasetCache;
+  private final Map<String, DatasetModule> defaultModules;
+  private final Map<String, DatasetModule> extensionModules;
 
   @Inject
   @VisibleForTesting
   public DatasetTypeService(DatasetTypeManager typeManager, NamespaceQueryAdmin namespaceQueryAdmin,
                             NamespacedLocationFactory namespacedLocationFactory,
-                            AuthorizationEnforcer authorizationEnforcer,
-                            AuthorizerInstantiator authorizerInstantiator, AuthenticationContext authenticationContext,
-                            CConfiguration cConf, Impersonator impersonator) {
+                            AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
+                            AuthenticationContext authenticationContext,
+                            CConfiguration cConf, Impersonator impersonator,
+                            TransactionSystemClientService txClientService,
+                            @Named("datasetMDS") DatasetFramework datasetFramework,
+                            TransactionExecutorFactory txExecutorFactory,
+                            @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
     this.typeManager = typeManager;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.authorizationEnforcer = authorizationEnforcer;
-    this.authorizer = authorizerInstantiator.get();
+    this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
     this.cConf = cConf;
     this.impersonator = impersonator;
+    this.txClientService = txClientService;
+    this.datasetFramework = datasetFramework;
+    this.txExecutorFactory = txExecutorFactory;
+    Map<String, String> emptyArgs = Collections.emptyMap();
+    this.datasetCache = new MultiThreadDatasetCache(
+      new SystemDatasetInstantiator(datasetFramework, null, null), txClientService, NamespaceId.SYSTEM, emptyArgs, null,
+      ImmutableMap.of(
+        DatasetMetaTableUtil.META_TABLE_NAME, emptyArgs,
+        DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
+      ));
+    this.defaultModules = new LinkedHashMap<>(defaultModules);
+    this.extensionModules = getExtensionModules(cConf);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    txClientService.startAndWait();
+
+    // Bootstrap the meta and instance tables. Make sure the underlying table exists.
+    DatasetsUtil.createIfNotExists(datasetFramework, DatasetMetaTableUtil.META_TABLE_INSTANCE_ID,
+                                   DatasetTypeMDS.class.getName(), DatasetProperties.EMPTY);
+    DatasetsUtil.createIfNotExists(datasetFramework, DatasetMetaTableUtil.INSTANCE_TABLE_INSTANCE_ID,
+                                   DatasetInstanceMDS.class.getName(), DatasetProperties.EMPTY);
+    deleteSystemModules();
+    deployDefaultModules();
+    if (!extensionModules.isEmpty()) {
+      deployExtensionModules();
+    }
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    txClientService.stopAndWait();
   }
 
   /**
@@ -233,7 +295,7 @@ public class DatasetTypeService {
     // revoke all privileges on all modules
     Id.Namespace namespace = namespaceId.toId();
     for (DatasetModuleMeta meta : typeManager.getModules(namespace)) {
-      authorizer.revoke(namespaceId.datasetModule(meta.getName()));
+      privilegesManager.revoke(namespaceId.datasetModule(meta.getName()));
     }
     try {
       typeManager.deleteModules(namespace);
@@ -388,17 +450,98 @@ public class DatasetTypeService {
     };
   }
 
+  private void deleteSystemModules() throws InterruptedException, TransactionFailureException {
+    final DatasetTypeMDS datasetTypeMDS = datasetCache.getDataset(DatasetMetaTableUtil.META_TABLE_NAME);
+    txExecutorFactory.createExecutor(datasetCache).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Collection<DatasetModuleMeta> allDatasets = datasetTypeMDS.getModules(Id.Namespace.SYSTEM);
+        for (DatasetModuleMeta ds : allDatasets) {
+          if (ds.getJarLocation() == null) {
+            LOG.debug("Deleting system dataset module: {}", ds.toString());
+            Id.DatasetModule moduleId = Id.DatasetModule.from(Id.Namespace.SYSTEM, ds.getName());
+            datasetTypeMDS.deleteModule(moduleId);
+            revokeAllPrivilegesOnModule(moduleId.toEntityId(), ds);
+          }
+        }
+      }
+    });
+  }
+
+  private void deployDefaultModules() {
+    // adding default modules to be available in dataset manager service
+    for (Map.Entry<String, DatasetModule> module : defaultModules.entrySet()) {
+      try {
+        // NOTE: we assume default modules are always in classpath, hence passing null for jar location
+        // NOTE: we add default modules in the system namespace
+        Id.DatasetModule defaultModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
+        typeManager.addModule(defaultModule, module.getValue().getClass().getName(), null, false);
+        grantAllPrivilegesOnModule(defaultModule.toEntityId(), authenticationContext.getPrincipal());
+      } catch (DatasetModuleConflictException e) {
+        // perfectly fine: we need to add default modules only the very first time service is started
+        LOG.debug("Not adding {} module: it already exists", module.getKey());
+      } catch (Throwable th) {
+        LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
+        throw Throwables.propagate(th);
+      }
+    }
+  }
+
+  private Map<String, DatasetModule> getExtensionModules(CConfiguration cConf) {
+    Map<String, DatasetModule> modules = new LinkedHashMap<String, DatasetModule>();
+    String moduleStr = cConf.get(Constants.Dataset.Extensions.MODULES);
+    if (moduleStr != null) {
+      for (String moduleName : Splitter.on(',').omitEmptyStrings().split(moduleStr)) {
+        // create DatasetModule object
+        try {
+          Class tableModuleClass = Class.forName(moduleName);
+          DatasetModule module = (DatasetModule) tableModuleClass.newInstance();
+          modules.put(moduleName, module);
+        } catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+          LOG.error("Failed to add {} extension module: {}", moduleName, ex.toString());
+        }
+      }
+    }
+    return modules;
+  }
+
+  private void deployExtensionModules() {
+    // adding any defined extension modules to be available in dataset manager service
+    for (Map.Entry<String, DatasetModule> module : extensionModules.entrySet()) {
+      try {
+        // NOTE: we assume extension modules are always in classpath, hence passing null for jar location
+        // NOTE: we add extension modules in the system namespace
+        Id.DatasetModule theModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
+        typeManager.addModule(theModule, module.getValue().getClass().getName(), null, false);
+        grantAllPrivilegesOnModule(theModule.toEntityId(), authenticationContext.getPrincipal());
+      } catch (DatasetModuleConflictException e) {
+        // perfectly fine: we need to add the modules only the very first time service is started
+        LOG.debug("Not adding {} extension module: it already exists", module.getKey());
+      } catch (Throwable th) {
+        LOG.error("Failed to add {} extension module. Aborting.", module.getKey(), th);
+        throw Throwables.propagate(th);
+      }
+    }
+  }
+
   private void grantAllPrivilegesOnModule(DatasetModuleId moduleId, Principal principal) throws Exception {
+    grantAllPrivilegesOnModule(moduleId, principal, null);
+  }
+
+  private void grantAllPrivilegesOnModule(DatasetModuleId moduleId, Principal principal,
+                                          @Nullable DatasetModuleMeta moduleMeta) throws Exception {
     Set<Action> allActions = ImmutableSet.of(Action.ALL);
-    authorizer.grant(moduleId, principal, allActions);
-    DatasetModuleMeta moduleMeta = typeManager.getModule(moduleId.toId());
+    privilegesManager.grant(moduleId, principal, allActions);
+    if (moduleMeta == null) {
+      moduleMeta = typeManager.getModule(moduleId.toId());
+    }
     if (moduleMeta == null) {
       LOG.debug("Could not find metadata for module {}. Not granting privileges for its types.", moduleId);
       return;
     }
     for (String type : moduleMeta.getTypes()) {
       DatasetTypeId datasetTypeId = moduleId.getParent().datasetType(type);
-      authorizer.grant(datasetTypeId, principal, allActions);
+      privilegesManager.grant(datasetTypeId, principal, allActions);
     }
   }
 
@@ -408,7 +551,7 @@ public class DatasetTypeService {
 
   private void revokeAllPrivilegesOnModule(DatasetModuleId moduleId,
                                            @Nullable DatasetModuleMeta moduleMeta) throws Exception {
-    authorizer.revoke(moduleId);
+    privilegesManager.revoke(moduleId);
     moduleMeta = moduleMeta == null ? typeManager.getModule(moduleId.toId()) : moduleMeta;
     if (moduleMeta == null) {
       LOG.debug("Could not find metadata for module {}. Will not revoke privileges for its types.", moduleId);
@@ -416,7 +559,7 @@ public class DatasetTypeService {
     }
     for (String type : moduleMeta.getTypes()) {
       DatasetTypeId datasetTypeId = moduleId.getParent().datasetType(type);
-      authorizer.revoke(datasetTypeId);
+      privilegesManager.revoke(datasetTypeId);
     }
   }
 

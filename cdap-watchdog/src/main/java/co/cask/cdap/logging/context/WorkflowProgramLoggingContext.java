@@ -23,6 +23,7 @@ import co.cask.cdap.proto.ProgramType;
 public class WorkflowProgramLoggingContext extends WorkflowLoggingContext {
   public static final String TAG_WORKFLOW_MAP_REDUCE_ID = ".workflowMapReduceId";
   public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
+  public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
 
   /**
    * Constructs logging context.
@@ -33,10 +34,12 @@ public class WorkflowProgramLoggingContext extends WorkflowLoggingContext {
    * @param runId run id of the application
    * @param programType type of the program. Currently only MapReduce and Spark is supported.
    * @param programName name of the program
+   * @param programRunId run id of the program launched through workflow
    */
   public WorkflowProgramLoggingContext(String namespaceId, String applicationId, String workflowId, String runId,
-                                       ProgramType programType, String programName) {
+                                       ProgramType programType, String programName, String programRunId) {
     super(namespaceId, applicationId, workflowId, runId);
+    setSystemTag(TAG_WORKFLOW_PROGRAM_RUN_ID, programRunId);
     switch (programType) {
       case MAPREDUCE:
         setSystemTag(TAG_WORKFLOW_MAP_REDUCE_ID, programName);

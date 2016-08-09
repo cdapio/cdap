@@ -90,7 +90,7 @@ public class BasicActionContext implements ActionContext {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, byte[] data, String description,
+  public void putSecureData(String namespace, String name, String data, String description,
                             Map<String, String> properties) throws Exception {
     context.getAdmin().putSecureData(namespace, name, data, description, properties);
   }

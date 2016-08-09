@@ -37,9 +37,9 @@ public interface Containers {
   void addContainer(Containers.ContainerInfo container);
 
   /**
-   * ContainerTypes - System Service, Flowlet and Service
+   * ContainerTypes - System Service, and for various program types
    */
-  enum ContainerType { SYSTEM_SERVICE, FLOWLET, SERVICE }
+  enum ContainerType { SYSTEM_SERVICE, FLOWLET, SERVICE, MAPREDUCE, WORKFLOW, SPARK, WORKER }
 
   /**
    * POJO holding information about container running in YARN.
@@ -54,8 +54,9 @@ public interface Containers {
     private final Integer virtualCores;
     private final Integer debugPort;
 
-    public ContainerInfo(ContainerType type, String name, @Nullable Integer instance, @Nullable String container,
-                  String host, @Nullable Integer memory, @Nullable Integer virtualCores, @Nullable Integer debugPort) {
+    public ContainerInfo(ContainerType type, String name,
+                         @Nullable Integer instance, @Nullable String container, String host,
+                         @Nullable Integer memory, @Nullable Integer virtualCores, @Nullable Integer debugPort) {
       this.type = type.name().toLowerCase();
       this.name = name;
       this.instance = instance;

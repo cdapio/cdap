@@ -15,8 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService) {
+  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers, HYDRATOR_DEFAULT_VALUES) {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
+    this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
+    this.myHelpers = myHelpers;
     this.setDefaults = function(app) {
       this.state = {
         scheduleStatus: null,
@@ -124,6 +126,18 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.getInstance = function() {
       return this.state.cloneConfig.config.instances;
     };
+    this.getDriverMemoryMB = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'driverResources', 'memoryMB');
+    };
+    this.getDriverVirtualCores = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'driverResources', 'virtualCores');
+    };
+    this.getMemoryMB = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'memoryMB');
+    };
+    this.getVirtualCores = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'virtualCores');
+    };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
       var appConfig = {};
@@ -160,13 +174,15 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       // One of the worst cases of 2way binding where right now the app is super big that I have no f***ing clue where which one is modified.
       let appConfigClone = angular.copy(appConfig);
       appConfig.cloneConfig = {
-        name: 'copy_' + app.name,
+        name: app.name + '_copy',
         artifact: app.artifact,
         description: appConfigClone.configJson.description,
         __ui__: appConfigClone.DAGConfig,
         config: {
           instances: appConfigClone.configJson.instances,
           batchInterval: appConfigClone.configJson.batchInterval,
+          resources: appConfigClone.configJson.resources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
+          driverResources: appConfigClone.configJson.driverResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,

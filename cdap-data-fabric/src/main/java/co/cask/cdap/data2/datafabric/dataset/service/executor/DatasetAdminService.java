@@ -31,6 +31,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
@@ -159,7 +160,7 @@ public class DatasetAdminService {
                                    final DatasetContext context, boolean existing, UserGroupInformation ugi)
     throws IOException {
     // add system metadata for user datasets only
-    if (isUserDataset(datasetInstanceId)) {
+    if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
       Dataset dataset = null;
       try {
         try {
@@ -254,14 +255,5 @@ public class DatasetAdminService {
         throw Throwables.propagate(e);
       }
     }
-  }
-
-  //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
-  private boolean isUserDataset(Id.DatasetInstance datasetInstanceId) {
-    return !Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace()) &&
-      !"system.queue.config".equals(datasetInstanceId.getId()) &&
-      !datasetInstanceId.getId().startsWith("system.sharded.queue") &&
-      !datasetInstanceId.getId().startsWith("system.queue") &&
-      !datasetInstanceId.getId().startsWith("system.stream");
   }
 }

@@ -141,8 +141,7 @@ public class DatasetServiceManager extends AbstractIdleService {
       new RemoteSystemOperationsServiceModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
-      // we use the proxy module here because this class starts up dataset service
-      new AuthorizationEnforcementModule().getProxyModule(),
+      new AuthorizationEnforcementModule().getMasterModule(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override

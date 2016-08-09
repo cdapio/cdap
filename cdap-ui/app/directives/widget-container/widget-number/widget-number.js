@@ -25,10 +25,17 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'widget-container/widget-number/widget-number.html',
       controller: function($scope, myHelpers) {
-        $scope.model = $scope.model || myHelpers.objectQuery($scope.config, 'widget-attributes', 'default');
+        var defaultValue = myHelpers.objectQuery($scope.config, 'widget-attributes', 'default');
+        $scope.model = $scope.model || angular.copy(defaultValue);
         $scope.internalModel = $scope.model;
         var minValueFromWidgetJSON = myHelpers.objectQuery($scope.config, 'widget-attributes', 'min');
         var maxValueFromWidgetJSON = myHelpers.objectQuery($scope.config, 'widget-attributes', 'max');
+        $scope.showErrorMessage = myHelpers.objectQuery($scope.config, 'widget-attributes', 'showErrorMessage');
+        $scope.convertToInteger = myHelpers.objectQuery($scope.config, 'widget-attributes', 'convertToInteger') || false;
+        // The default is to show the message i.e., true
+        // We need to explicitly pass a false to hide it.
+        // Usually we don't pass this attribute and in that case undefined (or no value) means show the message. Hence the comparison.
+        $scope.showErrorMessage = $scope.showErrorMessage === false ? false: true;
         if (typeof minValueFromWidgetJSON === 'number') {
           minValueFromWidgetJSON = minValueFromWidgetJSON.toString();
         }
@@ -38,6 +45,13 @@ angular.module(PKG.name + '.commons')
         var checkForBounds = function(newValue) {
           if ($scope.disabled) {
             return true;
+          }
+          if (!newValue) {
+            $scope.error = 'Value cannot be empty';
+            if (defaultValue) {
+              $scope.error += '. Default value: ' + defaultValue;
+            }
+            return false;
           }
           if (newValue < $scope.min || newValue > $scope.max) {
             $scope.error = 'Value exceeds the limit [min: ' + $scope.min + ', max: ' + $scope.max + ']';
@@ -58,10 +72,16 @@ angular.module(PKG.name + '.commons')
         }
         $scope.$watch('internalModel', function(newValue, oldValue) {
           if (oldValue === newValue || !checkForBounds(newValue)) {
-            $scope.model = (typeof newValue === 'number' && !Number.isNaN(newValue) && newValue.toString()) || '';
+            $scope.model = (typeof newValue === 'number' && !Number.isNaN(newValue) && newValue) || '';
+            if (!$scope.convertToInteger) {
+              $scope.model = $scope.model.toString();
+            }
             return;
           }
-          $scope.model = (typeof $scope.internalModel === 'number' && !Number.isNaN($scope.internalModel) && $scope.internalModel.toString()) || '';
+          $scope.model = (typeof $scope.internalModel === 'number' && !Number.isNaN($scope.internalModel) && $scope.internalModel) || '';
+          if (!$scope.convertToInteger) {
+            $scope.model = $scope.internalModel.toString();
+          }
         });
 
         // This is needed when we hit reset in node configuration.

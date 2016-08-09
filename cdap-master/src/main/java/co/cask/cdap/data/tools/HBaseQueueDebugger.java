@@ -480,7 +480,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

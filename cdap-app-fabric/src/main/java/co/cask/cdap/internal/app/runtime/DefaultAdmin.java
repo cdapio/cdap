@@ -116,7 +116,7 @@ public class DefaultAdmin implements Admin {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, byte[] data,
+  public void putSecureData(String namespace, String name, String data,
                             String description, Map<String, String> properties) throws Exception {
     secureStoreManager.putSecureData(namespace, name, data, description, properties);
   }

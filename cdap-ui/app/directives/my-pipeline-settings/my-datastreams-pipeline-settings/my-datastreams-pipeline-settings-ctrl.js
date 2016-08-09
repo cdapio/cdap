@@ -14,9 +14,11 @@
  * the License.
  */
 angular.module(PKG.name + '.commons')
-  .controller('MyDataStreamsPipelineSettingsCtrl', function($scope) {
+  .controller('MyDataStreamsPipelineSettingsCtrl', function($scope, MY_CONFIG) {
     this.batchInterval = this.store.getBatchInterval();
+    this.isDistributed = MY_CONFIG.isEnterprise ? true : false;
     this._isDisabled = this.isDisabled === 'true';
+
     if (!this._isDisabled) {
       // Debounce method for setting instance
       const setBatchInterval = _.debounce( () => {

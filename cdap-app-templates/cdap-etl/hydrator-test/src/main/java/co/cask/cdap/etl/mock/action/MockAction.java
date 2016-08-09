@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.mock.action;
 
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
@@ -52,6 +53,7 @@ public class MockAction extends Action {
     private String tableName;
     private String rowKey;
     private String columnKey;
+    @Macro
     private String value;
   }
 
@@ -91,7 +93,7 @@ public class MockAction extends Action {
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
     properties.put("rowKey", new PluginPropertyField("rowKey", "", "string", true, false));
     properties.put("columnKey", new PluginPropertyField("columnKey", "", "string", true, false));
-    properties.put("value", new PluginPropertyField("value", "", "string", true, false));
+    properties.put("value", new PluginPropertyField("value", "", "string", true, true));
     return new PluginClass(Action.PLUGIN_TYPE, "TableWriterAction", "", MockAction.class.getName(),
                            "config", properties);
   }

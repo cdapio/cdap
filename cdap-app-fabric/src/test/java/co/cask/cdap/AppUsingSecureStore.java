@@ -62,7 +62,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     addSpark(new SparkSecureStoreProgram());
   }
 
-  public static class SecureStoreService extends AbstractService {
+  private static class SecureStoreService extends AbstractService {
     @Override
     protected void configure() {
       setName(SERVICE_NAME);
@@ -84,7 +84,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     public void put(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
       byte[] value = new byte[request.getContent().remaining()];
       request.getContent().get(value);
-      getContext().getAdmin().putSecureData(namespace, KEY, value, "", new HashMap<String, String>());
+      getContext().getAdmin().putSecureData(namespace, KEY, new String(value), "", new HashMap<String, String>());
       responder.sendStatus(200);
     }
 
@@ -127,7 +127,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     public void run(JavaSparkExecutionContext sec) throws Exception {
       final SecureStore secureStore = sec.getSecureStore();
       // Test secure store apis
-      sec.getAdmin().putSecureData(NAMESPACE, KEY, VALUE.getBytes(), "", new HashMap<String, String>());
+      sec.getAdmin().putSecureData(NAMESPACE, KEY, VALUE, "", new HashMap<String, String>());
       Assert.assertEquals(new String(sec.getSecureData(NAMESPACE, KEY).get()), VALUE);
       Assert.assertEquals(new String(secureStore.getSecureData(NAMESPACE, KEY).get()), VALUE);
       sec.listSecureData(NAMESPACE);

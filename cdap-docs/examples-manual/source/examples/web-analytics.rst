@@ -78,7 +78,7 @@ given IP. It exposes an ``increment`` method, implemented as:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
    :language: java
-   :lines: 63-66
+   :lines: 62-66
    :dedent: 2
 
 The complete source code of the ``UniqueVisitCount`` class can be found in the example in

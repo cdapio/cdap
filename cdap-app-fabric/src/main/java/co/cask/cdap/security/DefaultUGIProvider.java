@@ -22,8 +22,8 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.security.ImpersonationInfo;
-import co.cask.cdap.data2.security.ImpersonationUtils;
 import co.cask.cdap.data2.security.UGIProvider;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -86,6 +85,9 @@ public class DefaultUGIProvider implements UGIProvider {
 
       String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationInfo.getPrincipal());
       LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
+
+      Preconditions.checkArgument(java.nio.file.Files.isReadable(localKeytabFile.toPath()),
+                                  "Keytab file is not a readable file: {}", localKeytabFile);
 
       return UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
     } finally {

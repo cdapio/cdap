@@ -24,5 +24,9 @@ angular.module(PKG.name + '.feature.hydratorplusplus', [])
   })
   .constant('HYDRATOR_DEFAULT_VALUES', {
     instance: 1,
-    schedule: '0 * * * *'
+    schedule: '0 * * * *',
+    resources: {
+      virtualCores: 1,
+      memoryMB: 512
+    }
   });

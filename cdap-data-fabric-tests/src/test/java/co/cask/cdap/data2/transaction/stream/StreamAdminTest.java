@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -38,6 +39,7 @@ import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -239,6 +241,32 @@ public abstract class StreamAdminTest {
     streamAdmin.truncate(stream);
     Assert.assertEquals(0, getStreamSize(stream));
     streamAdmin.drop(stream);
+  }
+
+  @Test
+  public void testListStreams() throws Exception {
+    StreamAdmin streamAdmin = getStreamAdmin();
+    NamespaceId nsId = new NamespaceId(FOO_NAMESPACE);
+    grantAndAssertSuccess(nsId, USER, ImmutableSet.of(Action.ALL));
+    StreamId s1 = nsId.stream("s1");
+    StreamId s2 = nsId.stream("s2");
+    List<StreamSpecification> specifications = streamAdmin.listStreams(nsId);
+    Assert.assertTrue(specifications.isEmpty());
+    streamAdmin.create(s1.toId());
+    streamAdmin.create(s2.toId());
+    specifications = streamAdmin.listStreams(nsId);
+    Assert.assertEquals(2, specifications.size());
+    revokeAndAssertSuccess(s1, USER, ImmutableSet.of(Action.ALL));
+    specifications = streamAdmin.listStreams(nsId);
+    Assert.assertEquals(1, specifications.size());
+    Assert.assertEquals(s2.getStream(), specifications.get(0).getName());
+    revokeAndAssertSuccess(s2, USER, ImmutableSet.of(Action.ALL));
+    specifications = streamAdmin.listStreams(nsId);
+    Assert.assertTrue(specifications.isEmpty());
+    grantAndAssertSuccess(s1, USER, ImmutableSet.of(Action.ALL));
+    grantAndAssertSuccess(s2, USER, ImmutableSet.of(Action.ALL));
+    streamAdmin.drop(s1.toId());
+    streamAdmin.drop(s2.toId());
   }
 
   @Test
