@@ -350,21 +350,31 @@ my-dag-plus {
       svg {
         overflow: visible;
       }
+      rect {
+        fill: white;
+        stroke-width: 3px;
+      }
       circle {
         fill: white;
         r: 2px;
         stroke-width: 8px;
       }
-      &-anchor-sourceAnchor circle {
-        stroke: #48c038;
+      &-anchor-sourceAnchor {
+        circle,
+        rect {
+          stroke: #48c038;
+        }
       }
       &-anchor-transformAnchor circle {
         stroke: #4586f3;
       }
-      &-anchor-sinkAnchor circle {
-        stroke: #8367df;
+      &-anchor-sinkAnchor {
+        circle,
+        rect {
+          stroke: #8367df;
+        }
       }
-      &-anchor-actionAnchor circle {
+      &-anchor-actionAnchor rect {
         stroke: #988470;
       }
     }
