@@ -411,24 +411,29 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   }
 
   this.toggleLogExpansion = function() {
+    let len = this.displayData.length;
+
     this.toggleExpandAll = !this.toggleExpandAll;
-    angular.forEach(this.displayData, (entry, key) => {
+    for(var i = 0 ; i < len ; i++) {
+      let entry = this.displayData[i];
       if(!entry.stackTrace && entry.log.stackTrace.length > 0){
         entry.isStackTraceExpanded = this.toggleExpandAll;
 
-        if(this.toggleExpandAll && !this.displayData[key+1].stackTrace){
-          this.displayData[key].selected = true;
-          var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[key]));
+        if(i < this.displayData.length && this.toggleExpandAll && (i+1 === this.displayData.length || !this.displayData[i+1].stackTrace)){
+          this.displayData[i].selected = true;
+          var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[i]));
           stackTraceObj.stackTrace = true;
-          this.displayData.splice(key+1, 0, stackTraceObj);
-        } else if(!this.toggleExpandAll && !entry.stackTrace && key+1 < this.displayData.length && this.displayData[key+1].stackTrace){
-          this.displayData[key].selected = false;
-          this.displayData.splice(key+1, 1);
+          this.displayData.splice(i+1, 0, stackTraceObj);
+          len++;
+        } else if(!this.toggleExpandAll && !entry.stackTrace && i+1 < this.displayData.length && this.displayData[i+1].stackTrace){
+          this.displayData[i].selected = false;
+          this.displayData.splice(i+1, 1);
+          len--;
         }
       } else {
-        this.displayData[key].selected = this.toggleExpandAll;
+        this.displayData[i].selected = this.toggleExpandAll;
       }
-    });
+    }
   };
 
   this.includeEvent = function(eventType){
