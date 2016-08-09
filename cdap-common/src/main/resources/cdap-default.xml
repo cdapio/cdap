@@ -2001,7 +2001,15 @@
     <name>http.client.connection.timeout.ms</name>
     <value>60000</value>
     <description>
-      Timeout in milliseconds for internal HTTP requests
+      Connection timeout in milliseconds for internal HTTP requests
+    </description>
+  </property>
+
+  <property>
+    <name>http.client.read.timeout.ms</name>
+    <value>60000</value>
+    <description>
+      Read timeout in milliseconds for internal HTTP requests
     </description>
   </property>
 

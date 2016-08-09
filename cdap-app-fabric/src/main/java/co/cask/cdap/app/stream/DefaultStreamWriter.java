@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
@@ -113,7 +114,7 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig());
     int responseCode = response.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
       throw new IOException(String.format("Stream %s not found", stream));

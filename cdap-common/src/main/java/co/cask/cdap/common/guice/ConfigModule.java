@@ -17,7 +17,9 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -54,6 +56,12 @@ public final class ConfigModule extends AbstractModule {
     this.hConf = hConf;
     this.sConf = sConf;
     CConfigurationUtil.copyTxProperties(cConf, hConf);
+
+    // Set system properties for all HTTP requests
+    System.setProperty(DefaultHttpRequestConfig.CONNECTION_TIMEOUT_PROPERTY_NAME,
+                       cConf.get(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS));
+    System.setProperty(DefaultHttpRequestConfig.READ_TIMEOUT_PROPERTY_NAME,
+                       cConf.get(Constants.HTTP_CLIENT_READ_TIMEOUT_MS));
   }
 
   @Override

@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
@@ -100,8 +101,7 @@ class DatasetServiceClient {
       }
     });
     this.namespaceId = namespaceId;
-    int httpTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
-    this.httpRequestConfig = new HttpRequestConfig(httpTimeoutMs, httpTimeoutMs);
+    this.httpRequestConfig = new DefaultHttpRequestConfig();
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.authenticationContext = authenticationContext;
