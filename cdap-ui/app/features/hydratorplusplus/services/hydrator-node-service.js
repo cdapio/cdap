@@ -22,12 +22,12 @@ class HydratorPlusPlusNodeService {
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
     this.GLOBALS = GLOBALS;
   }
-  getPluginInfo(node, appType, sourceConn) {
+  getPluginInfo(node, appType, sourceConn, artifactVersion) {
     var promise;
     if (node._backendProperties) {
       promise = this.$q.when(node);
     } else {
-      promise = this.HydratorPlusPlusHydratorService.fetchBackendProperties(node, appType);
+      promise = this.HydratorPlusPlusHydratorService.fetchBackendProperties(node, appType, artifactVersion);
     }
     return promise.then((node) => this.configurePluginInfo(node, appType, sourceConn));
   }
