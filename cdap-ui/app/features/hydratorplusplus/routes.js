@@ -254,7 +254,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         })
 
         .state('hydratorplusplus.list', {
-          url: '',
+          url: '?page',
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'
