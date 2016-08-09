@@ -100,6 +100,11 @@ angular.module(PKG.name + '.feature.tracker')
           .tickFormat(timeFormat)
           .outerTickSize(0);
 
+
+        // TODO:
+        // Need to find a better way of handling the different bucket size
+        // and rendering the axis in a nice way
+
         let offsetTime = true;
 
         if (numBars >= 179) { // 6 months
