@@ -171,11 +171,28 @@ this set of directories are properties specified in the ``cdap-site.xml`` file, 
 described in the :ref:`appendix-cdap-site.xml`):
 
 - ``app.temp.dir`` (default: ``/tmp``)
-- ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)
+- ``kafka.server.log.dirs`` (default: ``/tmp/kafka-logs``)
+- ``local.data.dir`` (default: ``data``; if this is instead an absolute path, needs to be writable)
 - ``/var/cdap/run``
 - ``/var/log/cdap``
 - ``/var/run/cdap``
 - ``/var/tmp/cdap`` 
+
+In addition, the CDAP Master service is governed by environment variables, which set the
+directories it uses:
+
+- ``TEMP_DIR`` (default: ``/tmp``): The directory serving as the ``java.io.tmpdir``
+  directory
+
+- ``LOCAL_DIR`` (default: ``/var/tmp/cdap``): The directory serving as the user directory
+  for CDAP Master
+
+Note that ``local.data.dir`` |---| which defines the directory for program jar storage
+when deploying to YARN |---| is set in the ``cdap-site.xml`` and defaults to the relative
+path ``data``. If the value of ``local.data.dir`` is *relative,* it is put under
+``LOCAL_DIR``, such as ``/var/tmp/cdap/data``. However, if instead it is an *absolute*
+path, that alone is used as the value. This is desirable so you can easily configure this
+directory to be elsewhere.
 
 The CDAP user (the ``cdap`` system user) **must** be able to write to these directories, as they
 are used for deploying applications and for operating CDAP.
