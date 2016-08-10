@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService) {
+  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService, mySparkApi) {
     var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
     const checkForValidPage = (pageNumber) => {
@@ -99,6 +99,15 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           programType: 'Workflow',
           programId: workflowId
         });
+      } else if (app.artifact.name === GLOBALS.etlDataStreams) {
+        api = mySparkApi;
+
+        realtime.push({
+          appId: app.id,
+          programType: 'Spark',
+          programId: 'DataStreamsSparkStreaming'
+        });
+
       } else {
         api = myWorkersApi;
         params.workerId = 'ETLWorker';
