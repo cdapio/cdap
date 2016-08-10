@@ -19,11 +19,9 @@ package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.etl.api.Joiner;
-import co.cask.cdap.etl.api.PipelineConfigurable;
-import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.MultiInputPipelineConfigurable;
+import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
 import co.cask.cdap.etl.api.StageLifecycle;
-
-import java.util.List;
 
 /**
  * A {@link Joiner} used for batch programs.
@@ -43,8 +41,9 @@ import java.util.List;
  * @param <OUT> type of output object
  */
 @Beta
-public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchConfigurable<BatchJoinerContext>
-  implements Joiner<JOIN_KEY, INPUT_RECORD, OUT>, PipelineConfigurable, StageLifecycle<BatchJoinerRuntimeContext> {
+public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends MultiInputBatchConfigurable<BatchJoinerContext>
+  implements Joiner<JOIN_KEY, INPUT_RECORD, OUT>, MultiInputPipelineConfigurable,
+  StageLifecycle<BatchJoinerRuntimeContext> {
   public static final String PLUGIN_TYPE = "batchjoiner";
 
   /**
@@ -52,10 +51,10 @@ public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchConf
    * This is where you perform any static logic, like creating required datasets, performing schema validation,
    * setting output schema, and things of that nature.
    *
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   * @param multiInputPipelineConfigurer the configurer used to add required datasets and streams
    */
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) {
     // no-op
   }
 
@@ -74,7 +73,7 @@ public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchConf
 
   /**
    * Initialize the Batch Joiner. Executed inside the Batch Run. This method is guaranteed to be invoked
-   * before any calls to {@link #joinOn(String, Object)} and {@link #merge(Object, List)} are made.
+   * before any calls to {@link #joinOn(String, Object)} and {@link #merge(Object, Iterable)} are made.
    *
    * @param context runtime context for joiner which exposes input schemas and output schema for joiner
    * @throws Exception if there is any error during initialization

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,30 +17,19 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.schema.Schema;
-
-import javax.annotation.Nullable;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
- * This stores the input schema that is passed to this stage from other stages in the pipeline and
- * the output schema that could be sent to the next stages from this stage.
+ * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.
+ * Using this as a layer between plugins and CDAP's PluginConfigurer in case pipelines need etl specific methods.
+ * Similar to {@link PipelineConfigurer} except it exposes {@link MultiInputStageConfigurer}
  */
 @Beta
-public interface StageConfigurer {
+public interface MultiInputPipelineConfigurer extends PluginConfigurer {
 
   /**
-   * get the input schema for this stage, or null if its unknown
-   *
-   * @return input schema
+   * Get multi input stage configurer for the pipeline stage
+   * @return multi input stage configurer
    */
-  @Nullable
-  Schema getInputSchema();
-
-  /**
-   * set output schema for this stage, or null if its unknown
-   *
-   * @param outputSchema output schema for this stage
-   */
-  void setOutputSchema(@Nullable Schema outputSchema);
-
+  MultiInputStageConfigurer getMultiInputStageConfigurer();
 }
