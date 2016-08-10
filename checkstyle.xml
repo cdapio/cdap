@@ -380,6 +380,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
 
   <module name="SuppressionFilter">
     <property name="file" value="suppressions.xml"/>
+    <property name="optional" value="true"/>
   </module>
 
   <module name="SuppressionCommentFilter">
