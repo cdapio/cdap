@@ -111,9 +111,9 @@ angular.module(PKG.name + '.feature.tracker')
           xAxis.ticks(d3.time.months, 1).tickFormat(d3.time.format('%b %Y'));
         } else if ( numBars >= 30 && numBars < 179) {
           xAxis.ticks(d3.time.weeks, 1).tickFormat(d3.time.format('%b-%d'));
-        } else if (numBars > 7 && numBars < 30) {
+        } else if (numBars > 6 && numBars < 30) {
           xAxis.ticks(d3.time.days, 1).tickFormat(d3.time.format('%b-%d'));
-        } else if ( numBars <= 7 && numBars > 4 ) {
+        } else if ( numBars <= 6 && numBars > 4 ) {
           xAxis.ticks(d3.time.days, 1).tickFormat(d3.time.format('%b-%d'));
           timeFormat = d3.time.format('%b %d, %Y %I:%M %p');
           numBars = numBars * 24;
