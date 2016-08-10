@@ -44,6 +44,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -79,6 +80,7 @@ import javax.annotation.Nullable;
 /**
  * Manages dataset types and modules metadata
  */
+@VisibleForTesting
 public class DatasetTypeManager {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
 
@@ -89,6 +91,7 @@ public class DatasetTypeManager {
   private final Path systemTempPath;
   private final Impersonator impersonator;
 
+  @VisibleForTesting
   @Inject
   public DatasetTypeManager(CConfiguration cConf,
                             LocationFactory locationFactory,

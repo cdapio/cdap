@@ -342,6 +342,11 @@ public class DatasetTypeService extends AbstractIdleService {
       throw new DatasetTypeNotFoundException(datasetType);
     }
 
+    // All principals can access system dataset types
+    if (NamespaceId.SYSTEM.equals(datasetTypeId.getParent())) {
+      return typeMeta;
+    }
+
     // only return the type if the user has some privileges on it
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> authFilter = authorizationEnforcer.createFilter(principal);
