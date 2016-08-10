@@ -543,6 +543,45 @@ For Kerberos-enabled Hadoop clusters:
 
   Restart CDAP after removing the usercache(s).
 
+
+.. _cloudera-configuration-integration-sentry:
+
+Enabling Sentry
+---------------
+To use CDAP with Cloudera clusters using Sentry authorization, these properties need to be set:
+
+- Add the user ``cdap`` to the Hive property ``sentry.metastore.service.users``
+- Add the user ``cdap`` to the Sentry property ``sentry.service.admin.group``
+- Add the user ``cdap`` to the Sentry property ``sentry.service.allow.connect``
+
+The Hive properties are set in ``hive-site.xml``, while the Sentry properties are set in
+``sentry-site.xml``.
+
+These can be set from within Cloudera Manager by using the appropriate "safety valve":
+
+- For Hive, use the *Hive Service Advanced Configuration Snippet (Safety Valve) for
+  hive-site.xml* (API ``hive_service_config_safety_valve``), setting it as::
+
+    <property>
+        <name>sentry.metastore.service.users</name>
+        <value>hive,impala,hue,hdfs,cdap</value>
+    </property>
+  
+- For Sentry, use the *Hive Service Advanced Configuration Snippet (Safety Valve) for 
+  sentry-site.xml*  (API ``hive_server2_sentry_safety_valve``), setting it as::
+  
+    <property>
+        <name>sentry.service.admin.group</name>
+        <value>hive,impala,hue,cdap</value>
+    </property>
+    <property>
+        <name>sentry.service.allow.connect</name>
+        <value>hive,impala,hue,hdfs,cdap</value>
+    </property>
+
+**Note:** You must restart the cluster and HiveServer2 after setting these values.
+
+
 .. _cloudera-configuration-highly-available:
 
 Enabling CDAP HA
