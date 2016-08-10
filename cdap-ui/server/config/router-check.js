@@ -60,7 +60,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
   if (cdapConfig['ssl.enabled'] === "true") {
     url = 'https://' + url + ':' + cdapConfig['router.ssl.server.port'];
   } else {
-    url = 'http://' + url + ':' + cdapConfig['router.bind.port'];
+    url = 'http://' + url + ':' + cdapConfig['router.server.port'];
   }
   url += PING_PATH;
 
