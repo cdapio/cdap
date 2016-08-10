@@ -26,6 +26,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -58,6 +59,7 @@ public class SystemArtifactsAuthorizationTest {
 
   private static ArtifactRepository artifactRepository;
   private static Authorizer authorizer;
+  private static AuthorizationEnforcementService authEnforcerService;
   private static InstanceId instance;
 
   @BeforeClass
@@ -67,6 +69,7 @@ public class SystemArtifactsAuthorizationTest {
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
+    cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
@@ -75,6 +78,8 @@ public class SystemArtifactsAuthorizationTest {
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     AuthorizerInstantiator instantiatorService = injector.getInstance(AuthorizerInstantiator.class);
     authorizer = instantiatorService.get();
+    authEnforcerService = injector.getInstance(AuthorizationEnforcementService.class);
+    authEnforcerService.startAndWait();
     instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
   }
 
@@ -120,6 +125,7 @@ public class SystemArtifactsAuthorizationTest {
   @AfterClass
   public static void cleanup() throws Exception {
     authorizer.revoke(instance);
+    authEnforcerService.stopAndWait();
     Assert.assertEquals(ImmutableSet.<Privilege>of(), authorizer.listPrivileges(ALICE));
     SecurityRequestContext.setUserId(OLD_USER_ID);
   }

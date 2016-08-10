@@ -265,7 +265,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     // App exists. Check if the current user has admin privileges on it before updating. The user's write privileges on
     // the namespace will get enforced in the deployApp method.
-    authorizerInstantiator.get().enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     // if no artifact is given, use the current one.
@@ -534,7 +534,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail) throws Exception {
     // Enforce that the current principal has write access to the namespace the app is being deployed to
-    authorizerInstantiator.get().enforce(namespaceId, authenticationContext.getPrincipal(), Action.WRITE);
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.WRITE);
 
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
@@ -566,7 +566,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteApp(final Id.Application appId, ApplicationSpecification spec) throws Exception {
     // enfore ADMIN privileges on the app
-    authorizerInstantiator.get().enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     // first remove all privileges on the app
     revokePrivileges(appId.toEntityId(), spec);
 
