@@ -94,7 +94,7 @@ WARNING="${RED_BOLD}WARNING:${NO_COLOR}"
 SPHINX_BUILD="sphinx-build ${SPHINX_COLOR} -b html -d ${TARGET}/doctrees"
 
 # Hash of file with "Not Found"; returned by GitHub
-NOT_FOUND_HASH="9d1ead73e678fa2f51a70a933b0bf017"
+NOT_FOUND_HASHES=("9d1ead73e678fa2f51a70a933b0bf017" "6cb875b80d51f9a26eb05db7f9779011")
 
 ZIP_FILE_NAME=$HTML
 ZIP="${ZIP_FILE_NAME}.zip"
@@ -290,8 +290,11 @@ function test_an_include() {
     else
       new_md5_hash=$(md5sum ${target} | awk '{print $1}')
     fi
+    
+    # If the new_md5_hash is in the NOT_FOUND_HASHES, it will set as the not_found_hash
+    local not_found_hash=`echo ${NOT_FOUND_HASHES[@]} | grep -o "${new_md5_hash}"`
   
-    if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
+    if [[ "${new_md5_hash}" == "${not_found_hash}" ]]; then
       m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR}"
       m="${m}\nfile: ${target}"
     elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
@@ -366,7 +369,6 @@ function set_version() {
 }
 
 function display_version() {
-  set_version
   echo "PROJECT_PATH: ${PROJECT_PATH}"
   echo "PROJECT_VERSION: ${PROJECT_VERSION}"
   echo "PROJECT_LONG_VERSION: ${PROJECT_LONG_VERSION}"

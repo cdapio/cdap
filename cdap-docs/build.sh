@@ -149,7 +149,7 @@ function build_all() {
   stash_github_zip 
   run_command docs-web-part ${ARG_2} 
   restore_github_zip
-  display_version
+  set_display_version
   display_messages_file
   warnings=$?
   cleanup_messages_file
@@ -215,7 +215,7 @@ function build_docs() {
   elif [ "${doc_type}" == "${WEB}" -o "${doc_type}" == "${WEB_ONLY}" ]; then
     run_command docs-web-part ${source_path}
   fi
-  display_version
+  set_display_version
   display_messages_file
   warnings=$?
   cleanup_messages_file
@@ -492,6 +492,11 @@ function build_license_dependency_pdfs() {
 function print_version() {
   cd ${SCRIPT_PATH}/developers-manual
   ./build.sh display-version ${ARG_2} 
+}
+
+function set_display_version() {
+  set_version
+  display_version
 }
 
 function ring_bell() {

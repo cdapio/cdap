@@ -30,7 +30,8 @@ BUILD_RST_HASH="039fc5b9a1decc5c67f17c332413f5d9"
 
 # This needs to be explicitly set as Git has trouble identifying it
 GIT_BRANCH_PARENT="release/3.5"
-GIT_BRANCH_PARENT="develop"
+# Currently using develop until the additional branches have been created.
+# GIT_BRANCH_PARENT="develop"
 
 # Used by developers-manual
 GIT_BRANCH_CDAP_CLIENTS="1.2.0"
