@@ -333,8 +333,11 @@ class TrackerResultsController {
     })
       .$promise
       .then((response) => {
+        if (!response) { return; }
         this.truthMeterMap = response;
+
         angular.forEach(this.fullResults, (entity) => {
+          if (!response[entity.entityTypeState]) { return; }
           entity.meter = response[entity.entityTypeState][entity.name];
         });
         this.filterResults();
