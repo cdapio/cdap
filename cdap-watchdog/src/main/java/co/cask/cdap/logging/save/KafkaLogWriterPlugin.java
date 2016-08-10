@@ -96,11 +96,13 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
 
-    long maxLogFileSizeBytes = cConf.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024 * 1024);
+    // Keep max file size a little less than the default HDFS block size (128 MB)
+    long maxLogFileSizeBytes = cConf.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 100 * 1000 * 1000);
     Preconditions.checkArgument(maxLogFileSizeBytes > 0,
                                 "Max log file size is invalid: %s", maxLogFileSizeBytes);
 
-    int syncIntervalBytes = cConf.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 50 * 1024);
+    // Sync interval should be around 10 times smaller than file size as we use sync points to navigate
+    int syncIntervalBytes = cConf.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 10 * 1000 * 1000);
     Preconditions.checkArgument(syncIntervalBytes > 0,
                                 "Log file sync interval is invalid: %s", syncIntervalBytes);
 
