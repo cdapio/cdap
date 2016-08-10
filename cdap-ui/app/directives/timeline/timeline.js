@@ -29,6 +29,7 @@ function link (scope, element) {
       startTime,
       endTime,
       pinOffset,
+      circleTooltip,
       firstRun = true;
 
   //Components
@@ -63,11 +64,9 @@ function link (scope, element) {
     height = 50;
     paddingLeft = 15;
     paddingRight = 15;
-    // maxRange = width - paddingLeft - paddingRight;
     maxRange = width - paddingRight + 8;
     sliderLimit = maxRange;
     pinOffset = 13;
-    // sliderLimit = maxRange + 24;
     pinX = 0;
     sliderX = 0;
     timelineStack = {};
@@ -113,6 +112,11 @@ function link (scope, element) {
       ['%B', function(d) { return d.getMonth(); }],
       ['%Y', function() { return true; }]
     ]);
+
+    // Define the div for the circles-tooltip
+    circleTooltip = d3.select('body').append('div')
+        .attr('class', 'circle-tooltip')
+        .style('opacity', 0);
 
     xAxis = d3.svg.axis().scale(xScale)
       .orient('bottom')
@@ -270,31 +274,43 @@ function link (scope, element) {
 
   const generateEventCircles = () => {
 
-    console.log('generating event circles!');
+    //Clears the tooltip regularly
+    d3.selectAll('.circle-tooltip').remove();
 
-    timelineData = scope.metadata;
+    circleTooltip = d3.select('body').append('div')
+        .attr('class', 'circle-tooltip')
+        .style('opacity', 0);
+
     timelineStack = {};
     let errorMap = {};
     let warningMap = {};
+    timelineData = scope.metadata;
 
     //Subroutine
-    const mapEvents = (typeMap, data) => {
+    const mapEvents = (type, data) => {
+      let typeMap;
+      if(type === 'warn'){
+        typeMap = warningMap;
+      } else if(type === 'error'){
+        typeMap = errorMap;
+      }
+
       for(let k = 0; k < data.length; k++){
         let currentItem = data[k];
         let xVal = Math.floor(xScale(currentItem.time * 1000));
         typeMap[xVal] = currentItem.value;
-        timelineStack[xVal] += currentItem.value;
       }
+      return typeMap;
     };
 
     if(timelineData.qid.series.length > 0){
       for(let i = 0; i < timelineData.qid.series.length; i++){
         switch(timelineData.qid.series[i].metricName){
           case 'system.app.log.error':
-            mapEvents(errorMap, timelineData.qid.series[i].data);
+            errorMap = mapEvents('error', timelineData.qid.series[i].data);
             break;
           case 'system.app.log.warn':
-            mapEvents(warningMap, timelineData.qid.series[i].data);
+            warningMap = mapEvents('warn', timelineData.qid.series[i].data);
             break;
           default:
             break;
@@ -302,20 +318,87 @@ function link (scope, element) {
       }
     }
 
-    for(var key in timelineStack) {
-      if(timelineStack.hasOwnProperty(key)){
-        let maxCount = 5;
+    const circleTooltipHoverOn = function(position, errors, warnings) {
+      let date = xScale.invert(position).toString();
+      date = date.substring(0, date.length - 14);
 
-        if(typeof errorMap[key] !== 'undefined'){
-          for(let n = 0 ; n < errorMap[key] && maxCount > 0; n++, maxCount--){
-            //render
-            timescaleSvg.append('circle').attr('cx', key).attr('cy', (5 - maxCount)* 7).attr('class', 'red-circle');
-          }
+      circleTooltip.transition()
+          .duration(200)
+          .style('opacity', 0.9);
+      circleTooltip.html(date + '<br/>Errors: ' + errors + '<br/>Warnings: ' + warnings)
+         .style('left', (d3.event.pageX + 5) + 'px')
+         .style('top', (d3.event.pageY - 30) + 'px');
+    };
+
+    const circleTooltipHoverOff = () =>{
+      circleTooltip.transition()
+        .duration(500)
+        .style('opacity', 0);
+    };
+
+    let timelineHash = {};
+    for(var key in errorMap){
+      if(errorMap.hasOwnProperty(key)){
+        console.log('errorMap: ' + key + ' val: ' , errorMap[key]);
+        timelineHash[key] = {
+          'errors' : errorMap[key]
+        };
+      }
+    }
+    for(var keyTwo in warningMap){
+      if(warningMap.hasOwnProperty(keyTwo)){
+        console.log('warningMap: ' + keyTwo + ' val: ' , warningMap[keyTwo]);
+        if(!timelineHash[keyTwo]) {
+          timelineHash[keyTwo] = {
+            'warnings' : warningMap[keyTwo]
+          };
+        } else {
+          timelineHash[keyTwo].warnings = warningMap[keyTwo];
         }
-        if(typeof warningMap[key] !== 'undefined'){
-          for(let m = 0 ; m < warningMap[key] && maxCount > 0; m++, maxCount--){
-            //render
-            timescaleSvg.append('circle').attr('cx', key).attr('cy', (5 - maxCount)* 7).attr('class', 'yellow-circle');
+      }
+    }
+    for(var keyThree in timelineHash){
+      if(timelineHash.hasOwnProperty(keyThree)){
+        let errorCount = 0;
+        let warningCount = 0;
+
+        if(timelineHash[keyThree].errors){
+          errorCount = timelineHash[keyThree].errors;
+        }
+        if(timelineHash[keyThree].warnings){
+          warningCount = timelineHash[keyThree].warnings;
+        }
+
+        let eventCount = errorCount + warningCount;
+        let circleTooltipHover = circleTooltipHoverOn.bind(this, keyThree, !timelineHash[keyThree].errors ? 0 : timelineHash[keyThree].errors, !timelineHash[keyThree].warnings ? 0 : timelineHash[keyThree].warnings);
+
+        for(var num = 4; num >= 0 && (errorCount > 0 || warningCount > 0); num--){
+          if(errorCount > 0){
+            if(eventCount >= 5){
+              timescaleSvg.append('circle')
+                          .attr('cx', keyThree)
+                          .attr('cy', (num+1) * 7)
+                          .attr('r', 2)
+                          .attr('class', 'red-circle')
+                          .on('mouseover', circleTooltipHover)
+                          .on('mouseout', circleTooltipHoverOff);
+            } else {
+              timescaleSvg.append('circle').attr('cx', keyThree).attr('cy', (num+1) * 7).attr('r', 2).attr('class', 'red-circle');
+            }
+            errorCount--;
+          } else if(warningCount > 0){
+            if(eventCount >= 5){
+              timescaleSvg.append('circle')
+                          .attr('cx', keyThree)
+                          .attr('cy', (num+1) * 7)
+                          .attr('r', 2)
+                          .attr('class', 'yellow-circle')
+                          .on('mouseover', circleTooltipHover)
+                          .on('mouseout', circleTooltipHoverOff);
+            } else {
+              timescaleSvg.append('circle').attr('cx', keyThree).attr('cy', (num+1) * 7).attr('r', 2).attr('class', 'yellow-circle');
+            }
+            warningCount--;
           }
         }
       }
