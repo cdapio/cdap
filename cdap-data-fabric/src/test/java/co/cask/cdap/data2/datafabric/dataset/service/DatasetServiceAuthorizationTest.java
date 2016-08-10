@@ -141,13 +141,17 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     // since Bob now has some privileges on all datasets, the list API should return all datasets for him
     Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT.toId())));
-    // it should only return 1 dataset for Alice
+    // Since Alice has some privileges on the namespace, the list API should return all datasets under the namespace
     SecurityRequestContext.setUserId(ALICE.getName());
-    Assert.assertEquals(ImmutableSet.of(dsId),
+    Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT.toId())));
+
+    // Alice should only be able to delete datasets that she is the ADMIN
     dsFramework.deleteAllInstances(NamespaceId.DEFAULT.toId());
-    // alice should now not see any instances
-    Assert.assertTrue(dsFramework.getInstances(NamespaceId.DEFAULT.toId()).isEmpty());
+    // alice should now see instances that she can't delete, but have some privileges.
+    Assert.assertEquals(ImmutableSet.of(dsId1, dsId2),
+                        summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT.toId())));
+
     // should get an authorization error if alice tries to delete datasets that she does not have permissions on
     assertAuthorizationFailure(new DatasetOperationExecutor() {
       @Override
@@ -156,11 +160,15 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       }
     }, String.format("Alice should not be able to delete instance %s since she does not have privileges", dsId1));
     grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(Action.ADMIN));
-    Assert.assertEquals(ImmutableSet.of(dsId1),
+    Assert.assertEquals(ImmutableSet.of(dsId1, dsId2),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT.toId())));
     // since Alice now is ADMIN for dsId1, she should be able to delete it
     deleteAndAssertPrivileges(dsId1);
-    Assert.assertTrue(dsFramework.getInstances(NamespaceId.DEFAULT.toId()).isEmpty());
+
+    // Now Alice only see dsId2 from list.
+    Assert.assertEquals(ImmutableSet.of(dsId2),
+                        summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT.toId())));
+
     // Bob should still see 1 instance
     SecurityRequestContext.setUserId(BOB.getName());
     Assert.assertEquals(ImmutableSet.of(dsId2),
@@ -228,9 +236,8 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     Assert.assertNotNull(dsFramework.getTypeInfo(type1x.toId()));
     // should be able to use the type from the module to add an instance as well
     dsFramework.addInstance(type1x.getType(), NamespaceId.DEFAULT.dataset("succeed").toId(), DatasetProperties.EMPTY);
-    // but should fail as Bob, even after granting WRITE on the namespace
+    // but should fail as Bob
     SecurityRequestContext.setUserId(BOB.getName());
-    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.WRITE));
     assertAuthorizationFailure(new DatasetOperationExecutor() {
       @Override
       public void execute() throws Exception {
@@ -238,12 +245,18 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       }
     }, String.format(
       "Creating an instance of a type from %s should fail as %s does not have any privileges on it.", module1, BOB));
+
+    // granting WRITE on the namespace, BOB should now be able to create the dataset type
+    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.WRITE));
+
     // adding a module should now succeed as bob though, because bob has write privileges on the namespace
     dsFramework.addModule(module2.toId(), new TestModule2(), createModuleJar(TestModule2.class));
     // all operations on module2 should succeed as Bob
     Assert.assertNotNull(dsFramework.getTypeInfo(type2.toId()));
-    // but should fail as Alice
+
+    // but should fail as Alice after revoking Alice rights to the namespace
     SecurityRequestContext.setUserId(ALICE.getName());
+    authorizer.revoke(NamespaceId.DEFAULT, ALICE, EnumSet.allOf(Action.class));
     assertAuthorizationFailure(new DatasetOperationExecutor() {
       @Override
       public void execute() throws Exception {
@@ -271,6 +284,11 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       }
     }, String.format("Deleting all modules in %s should fail as %s does not have ADMIN privileges on it.",
                      NamespaceId.DEFAULT, BOB));
+
+    // Grant all permission for cleanup
+    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(Action.ALL));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.ALL));
+
     // delete all instances so modules can be deleted
     dsFramework.deleteAllInstances(NamespaceId.DEFAULT.toId());
     SecurityRequestContext.setUserId(ALICE.getName());
