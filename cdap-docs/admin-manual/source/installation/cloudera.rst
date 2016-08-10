@@ -548,36 +548,22 @@ For Kerberos-enabled Hadoop clusters:
 
 Enabling Sentry
 ---------------
-To use CDAP with Cloudera clusters using Sentry authorization, these properties need to be set:
+To use CDAP with Cloudera clusters using Sentry authorization, this property needs to be set:
 
-- Add the user ``cdap`` to the Hive property ``sentry.metastore.service.users``
-- Add the user ``cdap`` to the Sentry property ``sentry.service.admin.group``
 - Add the user ``cdap`` to the Sentry property ``sentry.service.allow.connect``
 
-The Hive properties are set in ``hive-site.xml``, while the Sentry properties are set in
-``sentry-site.xml``.
+We recommend setting these properties:
 
-These can be set from within Cloudera Manager by using the appropriate "safety valve":
+- Add the user ``cdap`` to the Sentry property ``sentry.service.admin.group``; this allows
+  the CDAP user to create roles, add roles to users, remove roles, list all roles, etc
 
-- For Hive, use the *Hive Service Advanced Configuration Snippet (Safety Valve) for
-  hive-site.xml* (API ``hive_service_config_safety_valve``), setting it as::
+- Add the user ``cdap`` to the Hive property ``sentry.metastore.service.users``; this
+  should be set if you want to allow CDAP to bypass Sentry authorization for Hive Metastore
+  queries, such as in the default case where all applications run as ``cdap`` and not
+  individual users
 
-    <property>
-        <name>sentry.metastore.service.users</name>
-        <value>hive,impala,hue,hdfs,cdap</value>
-    </property>
-  
-- For Sentry, use the *Hive Service Advanced Configuration Snippet (Safety Valve) for 
-  sentry-site.xml*  (API ``hive_server2_sentry_safety_valve``), setting it as::
-  
-    <property>
-        <name>sentry.service.admin.group</name>
-        <value>hive,impala,hue,cdap</value>
-    </property>
-    <property>
-        <name>sentry.service.allow.connect</name>
-        <value>hive,impala,hue,hdfs,cdap</value>
-    </property>
+These can be set from within Cloudera Manager by searching for these properties in the
+configuration for each component; in this case, Sentry and Hive.
 
 **Note:** You must restart the cluster and HiveServer2 after setting these values.
 
