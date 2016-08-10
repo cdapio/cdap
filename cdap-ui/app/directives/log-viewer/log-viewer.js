@@ -97,18 +97,23 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   this.openRaw = () => {
-    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec) {
-      var modalDataSrc = new MyCDAPDataSource($scope);
-
+    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec, rRawLogs) {
+      this.applicationName = rProgramId;
+      this.startTime = formatDate(new Date(rStartTimeSec*1000));
       this.rawIsLoaded = false;
       this.noRawData = false;
+      this.windowMode = 'regular';
 
       this.toggleMaximizedView = (isExpanded) => {
         this.windowMode = (isExpanded) ? 'expand' : 'regular';
       };
 
-      this.windowMode = 'regular';
-
+      if (rRawLogs && rRawLogs.startTime === rStartTimeSec && rRawLogs.log && rRawLogs.log.length > 0 ) {
+        this.rawDataResponse = rRawLogs.log;
+        this.rawIsLoaded = true;
+        return;
+      }
+      var modalDataSrc = new MyCDAPDataSource($scope);
       modalDataSrc.request({
         _cdapNsPath: `/apps/${rAppId}/${rProgramType}/${rProgramId}/runs/${rRunId}/logs?start=${rStartTimeSec}`
       }).then((res) => {
@@ -119,10 +124,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           this.rawIsLoaded = true;
         }
       });
-
-      this.applicationName = rProgramId;
-
-      this.startTime = formatDate(new Date(rStartTimeSec*1000));
     }
 
     this.$uibModal.open({
@@ -131,7 +132,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       templateUrl: 'log-viewer/raw.html',
       windowClass: 'node-config-modal raw-modal cdap-modal',
       animation: false,
-      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', RawLogsModalCtrl],
+      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', 'rRawLogs', RawLogsModalCtrl],
       controllerAs: 'RawLogsModalCtrl',
       resolve: {
         rAppId: () => {
@@ -148,6 +149,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         },
         rStartTimeSec: () => {
           return this.startTimeSec;
+        },
+        rRawLogs: () => {
+          return this.rawLogs;
         }
       }
     });
@@ -218,13 +222,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       return;
     }
 
-    //If this log's stack trace is showing, remove it
     if( (index+1 < this.displayData.length) && this.displayData[index+1].stackTrace){
       this.displayData.splice(index+1, 1);
       this.displayData[index].selected = false;
       return;
     }
-
     if(this.displayData[index].log.stackTrace){
       this.displayData[index].selected = true;
       let stackTraceObj = {
@@ -399,36 +401,46 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       programId : this.programId,
       runId : this.runId,
       start : this.startTimeSec
-    }).$promise.then(
-    (res) => {
-      this.downloadContent = res;
-    },
-    (err) => {
-      console.log('ERROR: ', err);
-    });
+    })
+      .$promise
+      .then(
+        (res) => {
+          this.rawLogs = {
+            log: res,
+            startTime: this.startTimeSec
+          };
+        },
+        (err) => {
+          this.isDownloading = false;
+          console.log('ERROR: ', err);
+        }
+      );
   };
 
   this.export = () => {
-    downloadLogs().then( () => {
-      var blob = new Blob([this.downloadContent], {type: 'text/plain'});
-        this.url = URL.createObjectURL(blob);
-        let filename = '';
-        if ('undefined' !== typeof this.getDownloadFilename()) {
-          filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeSec*1000), true);
-        } else {
-          filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeSec*1000), true);
-        }
-        this.exportFileName = filename;
-        $scope.$on('$destroy', () => {
-          URL.revokeObjectURL(this.url);
-          $timeout.cancel(exportTimeout);
-        });
-
+    this.isDownloading = true;
+    downloadLogs()
+    .then(() => {
+      var blob = new Blob([this.rawLogs.log], {type: 'text/plain'});
+      this.url = URL.createObjectURL(blob);
+      let filename = '';
+      if ('undefined' !== typeof this.getDownloadFilename()) {
+        filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+      } else {
+        filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+      }
+      this.exportFileName = filename;
+      $scope.$on('$destroy', () => {
+        URL.revokeObjectURL(this.url);
         $timeout.cancel(exportTimeout);
+      });
 
-        exportTimeout = $timeout(() => {
-          document.getElementById('logs-export-link').click();
-        });
+      $timeout.cancel(exportTimeout);
+
+      exportTimeout = $timeout(() => {
+        document.getElementById('logs-export-link').click();
+        this.isDownloading = false;
+      });
     });
   };
 
@@ -524,7 +536,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   this.toggleLogExpansion = function() {
     let len = this.displayData.length;
-
     this.toggleExpandAll = !this.toggleExpandAll;
     for(var i = 0 ; i < len ; i++) {
       let entry = this.displayData[i];
