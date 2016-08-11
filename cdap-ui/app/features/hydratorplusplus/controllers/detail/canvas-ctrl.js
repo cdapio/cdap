@@ -54,7 +54,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
             size: 'lg',
             backdrop: 'static',
-            windowTopClass: 'node-config-modal cdap-modal',
+            windowTopClass: 'node-config-modal hydrator-modal',
             controller: 'HydratorPlusPlusNodeConfigCtrl',
             controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
             resolve: {

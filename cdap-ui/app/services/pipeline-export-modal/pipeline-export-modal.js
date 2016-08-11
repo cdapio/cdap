@@ -25,7 +25,7 @@ angular.module(PKG.name + '.services')
         size: 'lg',
         keyboard: true,
         animation: false,
-        windowTopClass: 'node-config-modal cdap-modal',
+        windowTopClass: 'node-config-modal hydrator-modal',
         controller: ['$scope', 'config', '$timeout', 'exportConfig', function($scope, config, $timeout, exportConfig) {
           var exportTimeout = null;
 
