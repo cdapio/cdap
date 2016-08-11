@@ -198,6 +198,12 @@ public class AuthorizationCLITest extends CLITestBase {
                                                  principal.getName()),
                               String.format("Successfully removed role '%s' from %s '%s'", role.getName(),
                                             principal.getType(), principal.getName()));
+
+    // test remove role (which doesn't exist) from principal
+    Role nonexistentRole = new Role("nonexistent_role");
+    testCommandOutputContains(cli, String.format("remove role %s from %s %s", nonexistentRole.getName(),
+                                                 principal.getType(), principal.getName()),
+                              String.format("Error: %s not found", nonexistentRole));
   }
 
   @AfterClass
