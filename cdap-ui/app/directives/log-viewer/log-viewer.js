@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -394,6 +394,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var exportTimeout = null;
 
   const downloadLogs = () => {
+    if (this.rawLogs && this.rawLogs.startTime === this.startTimeSec) {
+      return $q.resolve();
+    }
     return myLogsApi.getLogsStartAsRaw({
       namespace : this.namespaceId,
       appId : this.appId,
@@ -488,13 +491,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
+        this.data = res;
         if(res.length === 0){
+          this.renderData();
           getStatus();
           return;
         }
 
         this.fromOffset = res[res.length-1].offset;
-        this.data = res;
         this.renderData();
         this.cacheSize = res.length - this.cacheDecrement;
 
@@ -622,13 +626,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       requestWithOffset();
     }
     this.viewLimit += this.cacheDecrement;
-  };
-
-  this.filterByStartDate = (entry) => {
-    if(this.logStartTime > entry.log.timestamp) {
-      return;
-    }
-    return entry;
   };
 
   $scope.$on('$destroy', function() {
