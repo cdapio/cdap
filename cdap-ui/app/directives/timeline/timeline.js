@@ -50,7 +50,7 @@ function link (scope, element) {
   //Initialize charting
   scope.initialize = () => {
 
-    //If chart already exists, remove it
+    // If chart already exists, remove it
     if(timescaleSvg){
       d3.selectAll('.timeline-container svg > *').filter((d) => {
         return (typeof d === 'undefined') || (d.attr('class') !== 'search-circle');
@@ -416,6 +416,8 @@ function link (scope, element) {
         }
       }
     }
+
+    scope.renderSearchCircles(scope.searchResultTimes);
   };
   scope.generateEventCircles = generateEventCircles;
 }

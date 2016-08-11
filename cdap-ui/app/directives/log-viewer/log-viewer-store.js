@@ -22,6 +22,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
           return state;
         }
         return action.payload.startTime;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return new Date();
       default:
         return state;
     }
@@ -35,6 +37,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
           return state;
         }
         return action.payload.scrollPosition;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return Date.now();
       default:
         return state;
     }
@@ -47,6 +51,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
           return state;
         }
         return action.payload.searchResults;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return [];
       default:
         return state;
     }
@@ -82,6 +88,7 @@ angular.module(`${PKG.name}.commons`)
   .constant('LOGVIEWERSTORE_ACTIONS', {
     'START_TIME' : 'START_TIME',
     'SCROLL_POSITION' : 'SCROLL_POSITION',
-    'SEARCH_RESULTS' : 'SEARCH_RESULTS'
+    'SEARCH_RESULTS' : 'SEARCH_RESULTS',
+    'RESET': 'RESET'
   })
   .factory('LogViewerStore', LogViewerStore);

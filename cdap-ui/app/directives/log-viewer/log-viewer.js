@@ -190,6 +190,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
 
     this.logStartTime = LogViewerStore.getState().startTime;
+
     if (typeof this.logStartTime !== 'object') {
       this.setDefault();
       return;
@@ -661,6 +662,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   $scope.$on('$destroy', function() {
+
+    LogViewerStore.dispatch({
+      type: 'RESET'
+    });
     if (unsub) {
       unsub();
     }

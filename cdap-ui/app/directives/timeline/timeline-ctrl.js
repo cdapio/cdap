@@ -72,9 +72,9 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.updatePinScale(this.pinScrollPosition);
     }
 
-    if(this.searchResultTimes !== LogViewerStore.getState().searchResults){
-      this.searchResultTimes = LogViewerStore.getState().searchResults;
-      $scope.renderSearchCircles(this.searchResultTimes);
+    if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
+      $scope.searchResultTimes = LogViewerStore.getState().searchResults;
+      $scope.renderSearchCircles($scope.searchResultTimes);
     }
   });
 
@@ -94,6 +94,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.metadata = res;
       apiSettings.metric.startTime = res.start;
       apiSettings.metric.endTime = 'now';
+      $scope.renderSearchCircles([]);
       pollForMetadata();
     },
     (err) => {
