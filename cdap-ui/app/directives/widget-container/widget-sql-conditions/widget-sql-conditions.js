@@ -24,8 +24,6 @@ function SqlConditionsController() {
   vm.mapInputSchema = {};
   vm.stageList = [];
 
-
-
   vm.formatOutput = () => {
     let outputArr = [];
 
@@ -59,7 +57,6 @@ function SqlConditionsController() {
       });
     });
 
-
     vm.rules.push(arr);
     vm.formatOutput();
   };
@@ -92,32 +89,40 @@ function SqlConditionsController() {
     });
 
     angular.forEach(modelSplit, (rule) => {
-      let ruleSplit = rule.split('=').map((field) => {
+      let rulesArr = [];
+
+      angular.forEach(rule.split('='), (field) => {
         let splitField = field.trim().split('.');
 
-        return {
+        // Not including rule if stage has been disconnected
+        if (vm.stageList.indexOf(splitField[0]) === -1) { return; }
+
+        rulesArr.push({
           stageName: splitField[0],
           fieldName: splitField[1]
-        };
+        });
       });
 
+      // Missed fields scenario will happen if the user connects more stages into the join node
+      // after they have configured join conditions previously
       let missedFields = vm.stageList.filter((stage) => {
-        let filteredRule = ruleSplit.filter((field) => {
+        let filteredRule = rulesArr.filter((field) => {
           return field.stageName === stage;
         });
         return filteredRule.length === 0 ? true : false;
       });
 
       angular.forEach(missedFields, (field) => {
-        ruleSplit.push({
+        rulesArr.push({
           stageName: field,
           fieldName: null
         });
       });
 
-      vm.rules.push(ruleSplit);
+      vm.rules.push(rulesArr);
     });
 
+    vm.formatOutput();
   }
 
   init();
