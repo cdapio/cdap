@@ -201,7 +201,6 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     *                  default is 0, which means reading from beginning of the stream.
     * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
     *                default is [[scala.Long.MaxValue]], which means reading till the last event.
-    * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
     * @tparam T value type
     * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
     * @throws co.cask.cdap.api.data.DatasetInstantiationException if the stream doesn't exist
@@ -226,7 +225,6 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     *                  default is 0, which means reading from beginning of the stream.
     * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
     *                default is [[scala.Long.MaxValue]], which means reading till the last event.
-    * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
     * @tparam T value type
     * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
     * @throws co.cask.cdap.api.data.DatasetInstantiationException if the stream doesn't exist
@@ -246,4 +244,17 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     */
   def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)],
                                               datasetName: String, arguments: Map[String, String]): Unit
+
+  /**
+    * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
+    * Using the implicit object [[co.cask.cdap.api.spark.SparkMain.SparkProgramRDDFunctions]] is preferred.
+    *
+    * @param rdd         the [[org.apache.spark.rdd.RDD]] to operate on
+    * @param namespace   namespace for the dataset
+    * @param datasetName name of the Dataset
+    * @param arguments   arguments for the Dataset
+    * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+    */
+  def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], namespace: String, datasetName: String,
+                                              arguments: Map[String, String]): Unit
 }

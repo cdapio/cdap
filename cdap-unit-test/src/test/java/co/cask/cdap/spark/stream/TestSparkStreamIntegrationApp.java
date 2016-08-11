@@ -23,13 +23,18 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import com.google.common.base.Strings;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
+import java.util.Map;
+
 /**
- * A dummy app with spark program which counts the characters in a string read from a Stream
+ * A dummy app with spark program which counts the characters in a string, reads from a Stream and writes to a Dataset.
+ * It can read from a stream from other namespace if one has been provided through runtime arguments else it will
+ * look for the stream in its own namespace.
  */
 public class TestSparkStreamIntegrationApp extends AbstractApplication {
   @Override
@@ -51,10 +56,20 @@ public class TestSparkStreamIntegrationApp extends AbstractApplication {
   }
 
   public static class SparkStreamProgram implements JavaSparkMain {
+
+    static final String INPUT_STREAM_NAMESPACE = "stream.namespace";
+    static final String INPUT_STREAM_NAME = "stream.name";
+
     @Override
     public void run(JavaSparkExecutionContext sec) throws Exception {
       JavaSparkContext jsc = new JavaSparkContext();
-      JavaPairRDD<Long, String> rdd = sec.fromStream("testStream", String.class);
+      Map<String, String> runtimeArguments = sec.getRuntimeArguments();
+      String streamNS = Strings.isNullOrEmpty(runtimeArguments.get(INPUT_STREAM_NAMESPACE)) ?
+        sec.getNamespace() : runtimeArguments.get(INPUT_STREAM_NAMESPACE);
+      String streamName = Strings.isNullOrEmpty(runtimeArguments.get(INPUT_STREAM_NAME)) ?
+        "testStream" : runtimeArguments.get(INPUT_STREAM_NAME);
+
+      JavaPairRDD<Long, String> rdd = sec.fromStream(streamNS, streamName, String.class);
       JavaPairRDD<byte[], byte[]> resultRDD = rdd.mapToPair(new PairFunction<Tuple2<Long, String>,
         byte[], byte[]>() {
         @Override
