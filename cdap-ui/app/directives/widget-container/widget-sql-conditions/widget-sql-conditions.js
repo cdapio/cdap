@@ -24,28 +24,22 @@ function SqlConditionsController() {
   vm.mapInputSchema = {};
   vm.stageList = [];
 
+
+
   vm.formatOutput = () => {
     let outputArr = [];
 
     angular.forEach(vm.rules, (rule) => {
-      if (!rule.left.stageName ||
-          !rule.left.fieldName ||
-          !rule.right.stageName ||
-          !rule.right.fieldName) {
-        return;
-      }
+      let ruleCheck = rule.filter((field) => {
+        return !field.fieldName;
+      });
+      if (ruleCheck.length > 0) { return; }
 
-      let output = '';
+      let ruleArr = rule.map((field) => {
+        return field.stageName + '.' + field.fieldName;
+      });
 
-      output += rule.left.stageName + '.' + rule.left.fieldName;
-
-      if (rule.isEqual) {
-        output += ' = ';
-      } else {
-        output += ' != ';
-      }
-
-      output += rule.right.stageName + '.' + rule.right.fieldName;
+      let output = ruleArr.join(' = ');
 
       outputArr.push(output);
     });
@@ -55,17 +49,18 @@ function SqlConditionsController() {
 
   vm.addRule = () => {
     if (vm.stageList.length === 0) { return; }
-    vm.rules.push({
-      left: {
-        stageName: vm.stageList[0],
-        fieldName: vm.mapInputSchema[vm.stageList[0]][0]
-      },
-      right: {
-        stageName: vm.stageList[0],
-        fieldName: vm.mapInputSchema[vm.stageList[0]][0]
-      },
-      isEqual: true
+
+    let arr = [];
+
+    angular.forEach(vm.stageList, (stage) => {
+      arr.push({
+        stageName: stage,
+        fieldName: vm.mapInputSchema[stage][0]
+      });
     });
+
+
+    vm.rules.push(arr);
     vm.formatOutput();
   };
 
@@ -98,22 +93,29 @@ function SqlConditionsController() {
 
     angular.forEach(modelSplit, (rule) => {
       let ruleSplit = rule.split('=').map((field) => {
-        return field.trim().split('.');
+        let splitField = field.trim().split('.');
+
+        return {
+          stageName: splitField[0],
+          fieldName: splitField[1]
+        };
       });
 
-      let ruleObj = {
-        left: {
-          stageName: ruleSplit[0][0],
-          fieldName: ruleSplit[0][1]
-        },
-        right: {
-          stageName: ruleSplit[1][0],
-          fieldName: ruleSplit[1][1]
-        },
-        isEqual: true
-      };
+      let missedFields = vm.stageList.filter((stage) => {
+        let filteredRule = ruleSplit.filter((field) => {
+          return field.stageName === stage;
+        });
+        return filteredRule.length === 0 ? true : false;
+      });
 
-      vm.rules.push(ruleObj);
+      angular.forEach(missedFields, (field) => {
+        ruleSplit.push({
+          stageName: field,
+          fieldName: null
+        });
+      });
+
+      vm.rules.push(ruleSplit);
     });
 
   }
