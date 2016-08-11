@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -76,6 +77,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -515,6 +517,59 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
   }
 
+  /**
+   * Lists all programs with the specified program type in a namespace. If perimeter security and authorization are
+   * enabled, only returns the programs that the current user has access to.
+   *
+   * @param namespaceId the namespace to list datasets for
+   * @return the programs in the provided namespace
+   */
+  public List<ProgramRecord> list(NamespaceId namespaceId, ProgramType type) throws Exception {
+    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId.toId());
+    List<ProgramRecord> programRecords = new ArrayList<>();
+    for (ApplicationSpecification appSpec : appSpecs) {
+      switch (type) {
+        case FLOW:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getFlows().values(), programRecords);
+          break;
+        case MAPREDUCE:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getMapReduce().values(), programRecords);
+          break;
+        case SPARK:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getSpark().values(), programRecords);
+          break;
+        case SERVICE:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getServices().values(), programRecords);
+          break;
+        case WORKER:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getWorkers().values(), programRecords);
+          break;
+        case WORKFLOW:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getWorkflows().values(), programRecords);
+          break;
+        default:
+          throw new Exception("Unknown program type: " + type.name());
+      }
+    }
+    return programRecords;
+  }
+
+  private void createProgramRecords(NamespaceId namespaceId, String appId, ProgramType type,
+                                    Iterable<? extends ProgramSpecification> programSpecs,
+                                    List<ProgramRecord> programRecords) throws Exception {
+    for (ProgramSpecification programSpec : programSpecs) {
+      if (hasAccess(namespaceId.app(appId).program(type, programSpec.getName()))) {
+        programRecords.add(new ProgramRecord(type, appId, programSpec.getName(), programSpec.getDescription()));
+      }
+    }
+  }
+
+  private boolean hasAccess(ProgramId programId) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    return Principal.SYSTEM.equals(principal) || filter.apply(programId);
+  }
+
   private void setWorkerInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
     int oldInstances = store.getWorkerInstances(programId.toId());
     if (oldInstances != instances) {
@@ -805,10 +860,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
   private void ensureAccess(ProgramId programId) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(programId)) {
-      throw new UnauthorizedException(principal, Action.READ, programId);
+    if (!hasAccess(programId)) {
+      throw new UnauthorizedException(authenticationContext.getPrincipal(), Action.READ, programId);
     }
   }
 
