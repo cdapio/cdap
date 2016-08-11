@@ -39,17 +39,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       case 'RUNNING':
       case 'STARTED':
         this.statusType = 0;
+        this.applicationIsRunning = true;
         break;
       case 'STOPPED':
       case 'KILLED':
       case 'FAILED':
       case 'SUSPENDED':
+        this.applicationIsRunning = false;
         this.statusType = 1;
         break;
       case 'COMPLETED':
+        this.applicationIsRunning = false;
         this.statusType = 2;
         break;
       default:
+        this.applicationIsRunning = false;
         this.statusType = 3;
         break;
     }
@@ -100,7 +104,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   this.openRaw = () => {
-    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec) {
+    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec, rIsApplicationRunning) {
       this.applicationName = rProgramId;
       this.startTime = formatDate(new Date(rStartTimeSec*1000));
       this.rawIsLoaded = false;
@@ -110,8 +114,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       this.toggleMaximizedView = (isExpanded) => {
         this.windowMode = (isExpanded) ? 'expand' : 'regular';
       };
-
-      if (rawLogs && rawLogs.startTime === rStartTimeSec && rawLogs.log && rawLogs.log.length > 0 ) {
+      let loadFromCache = !rIsApplicationRunning &&
+       rawLogs &&
+       rawLogs.startTime === rStartTimeSec &&
+       rawLogs.log &&
+       rawLogs.log.length > 0;
+      if (loadFromCache) {
         this.rawDataResponse = rawLogs.log;
         this.rawIsLoaded = true;
         return;
@@ -124,9 +132,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           this.noRawData = true;
         } else {
           this.rawDataResponse = res;
-          rawLogs = rawLogs || {};
-          rawLogs.log = res;
-          rawLogs.startTime = rStartTimeSec;
+          if (!rIsApplicationRunning) {
+            rawLogs = rawLogs || {};
+            rawLogs.log = res;
+            rawLogs.startTime = rStartTimeSec;
+          }
           this.rawIsLoaded = true;
         }
       });
@@ -138,7 +148,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       templateUrl: 'log-viewer/raw.html',
       windowClass: 'node-config-modal raw-modal cdap-modal',
       animation: false,
-      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', RawLogsModalCtrl],
+      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', 'rIsApplicationRunning', RawLogsModalCtrl],
       controllerAs: 'RawLogsModalCtrl',
       resolve: {
         rAppId: () => {
@@ -155,6 +165,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         },
         rStartTimeSec: () => {
           return this.startTimeSec;
+        },
+        rIsApplicationRunning: () => {
+          return this.applicationIsRunning;
         }
       }
     });
@@ -397,7 +410,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var exportTimeout = null;
 
   const downloadLogs = () => {
-    if (rawLogs && rawLogs.startTime === this.startTimeSec) {
+    if (!this.applicationIsRunning && rawLogs && rawLogs.startTime === this.startTimeSec) {
       return $q.resolve();
     }
     return myLogsApi.getLogsStartAsRaw({
@@ -411,10 +424,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       .$promise
       .then(
         (res) => {
-          rawLogs = {
-            log: res,
-            startTime: this.startTimeSec
-          };
+          if (!this.isApplicationRunning) {
+            rawLogs = {
+              log: res,
+              startTime: this.startTimeSec
+            };
+          }
+          return res;
         },
         (err) => {
           this.isDownloading = false;
@@ -426,8 +442,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.export = () => {
     this.isDownloading = true;
     downloadLogs()
-    .then(() => {
-      var blob = new Blob([rawLogs.log], {type: 'text/plain'});
+    .then((log) => {
+      var blob = new Blob([log], {type: 'text/plain'});
       this.url = URL.createObjectURL(blob);
       let filename = '';
       if ('undefined' !== typeof this.getDownloadFilename()) {
