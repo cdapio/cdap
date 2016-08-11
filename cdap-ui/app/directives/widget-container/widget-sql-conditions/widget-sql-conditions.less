@@ -20,21 +20,17 @@
 
 my-sql-conditions {
   .sql-conditions-container {
-    .select-fields-group,
-    .action-buttons {
-      height: 75px;
-    }
-
     .rule { margin-bottom: 10px; }
 
     .select-fields-group {
-      float: left;
+      position: relative;
+      left: 0;
       background-color: #eeeeee;
-      padding: 0 15px;
+      padding: 0 15px 5px;
+      display: inline-block;
       width: ~"-moz-calc(100% - 75px)";
       width: ~"-webkit-calc(100% - 75px)";
       width: ~"calc(100% - 75px)";
-      position: relative;
 
       .delete-field-button {
         color: white;
@@ -64,10 +60,9 @@ my-sql-conditions {
     }
 
     .action-buttons {
-      width: 75px;
-      line-height: 75px;
-      float: right;
       padding-left: 5px;
+      display: inline-block;
+      vertical-align: bottom;
 
       .btn.btn-field-actions {
         vertical-align: bottom;
