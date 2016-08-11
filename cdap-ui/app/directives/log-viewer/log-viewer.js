@@ -23,6 +23,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var columnsList = [];
   var collapseCount = 0;
   this.$uibModal = $uibModal;
+  var rawLogs = {
+    log: '',
+    startTime: ''
+  };
 
   this.setProgramMetadata = (status) => {
     this.programStatus = status;
@@ -65,7 +69,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.fullScreen = false;
     this.applicationIsRunning = false;
     this.programStatus = 'Not Started';
-
     this.configOptions = {
       time: true,
       level: true,
@@ -97,7 +100,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   this.openRaw = () => {
-    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec, rRawLogs) {
+    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec) {
       this.applicationName = rProgramId;
       this.startTime = formatDate(new Date(rStartTimeSec*1000));
       this.rawIsLoaded = false;
@@ -108,8 +111,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         this.windowMode = (isExpanded) ? 'expand' : 'regular';
       };
 
-      if (rRawLogs && rRawLogs.startTime === rStartTimeSec && rRawLogs.log && rRawLogs.log.length > 0 ) {
-        this.rawDataResponse = rRawLogs.log;
+      if (rawLogs && rawLogs.startTime === rStartTimeSec && rawLogs.log && rawLogs.log.length > 0 ) {
+        this.rawDataResponse = rawLogs.log;
         this.rawIsLoaded = true;
         return;
       }
@@ -121,6 +124,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           this.noRawData = true;
         } else {
           this.rawDataResponse = res;
+          rawLogs = rawLogs || {};
+          rawLogs.log = res;
+          rawLogs.startTime = rStartTimeSec;
           this.rawIsLoaded = true;
         }
       });
@@ -132,7 +138,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       templateUrl: 'log-viewer/raw.html',
       windowClass: 'node-config-modal raw-modal cdap-modal',
       animation: false,
-      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', 'rRawLogs', RawLogsModalCtrl],
+      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', RawLogsModalCtrl],
       controllerAs: 'RawLogsModalCtrl',
       resolve: {
         rAppId: () => {
@@ -149,9 +155,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         },
         rStartTimeSec: () => {
           return this.startTimeSec;
-        },
-        rRawLogs: () => {
-          return this.rawLogs;
         }
       }
     });
@@ -394,7 +397,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var exportTimeout = null;
 
   const downloadLogs = () => {
-    if (this.rawLogs && this.rawLogs.startTime === this.startTimeSec) {
+    if (rawLogs && rawLogs.startTime === this.startTimeSec) {
       return $q.resolve();
     }
     return myLogsApi.getLogsStartAsRaw({
@@ -408,7 +411,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       .$promise
       .then(
         (res) => {
-          this.rawLogs = {
+          rawLogs = {
             log: res,
             startTime: this.startTimeSec
           };
@@ -424,7 +427,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.isDownloading = true;
     downloadLogs()
     .then(() => {
-      var blob = new Blob([this.rawLogs.log], {type: 'text/plain'});
+      var blob = new Blob([rawLogs.log], {type: 'text/plain'});
       this.url = URL.createObjectURL(blob);
       let filename = '';
       if ('undefined' !== typeof this.getDownloadFilename()) {
