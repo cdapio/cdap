@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -103,11 +102,6 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
    */
   @Override
   public boolean exists(Id.Namespace namespaceId) throws Exception {
-    try {
-      get(namespaceId);
-    } catch (NotFoundException e) {
-      return false;
-    }
-    return true;
+    return nsStore.get(namespaceId) != null;
   }
 }

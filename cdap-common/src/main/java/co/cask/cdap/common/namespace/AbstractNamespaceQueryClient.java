@@ -76,6 +76,9 @@ public abstract class AbstractNamespaceQueryClient implements NamespaceQueryAdmi
       get(namespaceId);
     } catch (NamespaceNotFoundException e) {
       return false;
+    } catch (UnauthorizedException e) {
+      // get throws UnauthorizedException only after ensuring that the namespace exists. Ignoring since we have
+      // semantics that user can check for existence without having access
     }
     return true;
   }
