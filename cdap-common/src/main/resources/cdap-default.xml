@@ -1737,7 +1737,7 @@
 
   <property>
     <name>security.store.provider</name>
-    <value>none</value>
+    <value>file</value>
     <description>
       Backend provider for the secure store
     </description>

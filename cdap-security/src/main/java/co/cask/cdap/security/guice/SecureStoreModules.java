@@ -32,6 +32,8 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Guice bindings for security store related classes.
@@ -55,7 +57,7 @@ import com.google.inject.TypeLiteral;
  *
  */
 public class SecureStoreModules extends RuntimeModule {
-
+  private static final Logger LOG = LoggerFactory.getLogger(SecureStoreModules.class);
   private static final String KMS_BACKED = "kms";
   private static final String FILE_BACKED = "file";
 
@@ -125,7 +127,7 @@ public class SecureStoreModules extends RuntimeModule {
       }
 
       if (FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
-        throw new IllegalArgumentException("Only KMS based provider is supported in distributed mode. " +
+        LOG.warn("Only KMS based provider is supported in distributed mode. " +
                                              "To be able to use secure store in a distributed environment you" +
                                              "will need to use the Hadoop KMS based provider.");
       }
@@ -162,7 +164,7 @@ public class SecureStoreModules extends RuntimeModule {
     public T get() {
       boolean kmsBacked = KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
       boolean fileBacked = FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
-      boolean validPassword = !Strings.isNullOrEmpty(sConf.get(Constants.Security.Store.FILE_PASSWORD));
+      boolean validPassword = !Strings.isNullOrEmpty(cConf.get(Constants.Security.Store.FILE_PASSWORD));
 
       if (fileBacked && validPassword) {
         return (T) injector.getInstance(FileSecureStore.class);
