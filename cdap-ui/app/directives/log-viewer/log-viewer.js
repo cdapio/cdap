@@ -236,8 +236,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
 
     this.updateSearchResultsInStore(searchResults);
-    //render displayData across the timeline
-
   };
 
   this.toggleStackTrace = (index) => {
@@ -496,12 +494,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.rawUrl = url;
 
     myLogsApi.getLogsStartAsJson({
-        namespace : this.namespaceId,
-        appId : this.appId,
-        programType : this.programType,
-        programId : this.programId,
-        runId : this.runId,
-        start : this.startTimeSec
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId,
+      start : this.startTimeSec
     }).$promise.then(
       (res) => {
 

@@ -96,9 +96,9 @@ function link (scope, element) {
     endTime = timelineData.qid.endTime*1000;
 
     timescaleSvg = d3.select('.timeline-log-chart')
-                .append('svg')
-                .attr('width', width)
-                .attr('height', height);
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height);
 
     //Set the Range and Domain
     xScale = d3.time.scale().range([0, (maxRange)]);
@@ -117,8 +117,8 @@ function link (scope, element) {
 
     // Define the div for the circles-tooltip
     circleTooltip = d3.select('body').append('div')
-        .attr('class', 'circle-tooltip')
-        .style('opacity', 0);
+      .attr('class', 'circle-tooltip')
+      .style('opacity', 0);
 
     xAxis = d3.svg.axis().scale(xScale)
       .orient('bottom')
@@ -293,8 +293,8 @@ function link (scope, element) {
     d3.selectAll('.circle-tooltip').remove();
 
     circleTooltip = d3.select('body').append('div')
-        .attr('class', 'circle-tooltip')
-        .style('opacity', 0);
+      .attr('class', 'circle-tooltip')
+      .style('opacity', 0);
 
     timelineStack = {};
     let errorMap = {};
@@ -389,12 +389,12 @@ function link (scope, element) {
           if(errorCount > 0){
             if(eventCount >= 5){
               timescaleSvg.append('circle')
-                          .attr('cx', keyThree)
-                          .attr('cy', (num+1) * 7)
-                          .attr('r', 2)
-                          .attr('class', 'red-circle')
-                          .on('mouseover', circleTooltipHover)
-                          .on('mouseout', circleTooltipHoverOff);
+                .attr('cx', keyThree)
+                .attr('cy', (num+1) * 7)
+                .attr('r', 2)
+                .attr('class', 'red-circle')
+                .on('mouseover', circleTooltipHover)
+                .on('mouseout', circleTooltipHoverOff);
             } else {
               timescaleSvg.append('circle').attr('cx', keyThree).attr('cy', (num+1) * 7).attr('r', 2).attr('class', 'red-circle');
             }
@@ -402,12 +402,12 @@ function link (scope, element) {
           } else if(warningCount > 0){
             if(eventCount >= 5){
               timescaleSvg.append('circle')
-                          .attr('cx', keyThree)
-                          .attr('cy', (num+1) * 7)
-                          .attr('r', 2)
-                          .attr('class', 'yellow-circle')
-                          .on('mouseover', circleTooltipHover)
-                          .on('mouseout', circleTooltipHoverOff);
+                .attr('cx', keyThree)
+                .attr('cy', (num+1) * 7)
+                .attr('r', 2)
+                .attr('class', 'yellow-circle')
+                .on('mouseover', circleTooltipHover)
+                .on('mouseout', circleTooltipHoverOff);
             } else {
               timescaleSvg.append('circle').attr('cx', keyThree).attr('cy', (num+1) * 7).attr('r', 2).attr('class', 'yellow-circle');
             }
