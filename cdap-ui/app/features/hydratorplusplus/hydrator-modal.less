@@ -50,17 +50,21 @@
       background-color: white;
       border-bottom: 0;
       box-shadow: none;
-      height: inherit;
-
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       .modal-title {
         font-size: 18px;
         line-height: 1;
-        padding: 20px 20px 10px 20px;
-
-        .fa.fa-times {
-          cursor: pointer;
-          color: #999999;
-        }
+        padding: 0 0 0 20px;
+        margin-right: auto;
+      }
+      .fa.fa-times {
+        cursor: pointer;
+        color: #999999;
+        font-size: 18px;
+        margin-right: 20px;
+        margin-left: auto;
       }
     }
 
@@ -90,14 +94,19 @@
   &.node-config-modal,
   &.post-run-actions-modal {
     .modal-header {
-      > h4 {
-        line-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      > h4,
+      .modal-title {
+        line-height: 1;
         padding-left: 15px;
         width: 80%;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
         font-weight: 500;
+        margin-right: auto;
 
         @media(min-width: @screen-lg-min) {
           width: 60%;
@@ -109,7 +118,6 @@
 
         p {
           min-width: 100%;
-          line-height: 0;
           text-overflow: ellipsis;
           overflow-wrap: break-word;
           overflow: hidden;
@@ -127,6 +135,9 @@
         padding: 0;
         margin-top: 12px;
         margin-right: 10px;
+      }
+      div.btn-group {
+        margin-left: auto;
       }
       a.btn {
         background: transparent;
