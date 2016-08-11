@@ -34,6 +34,7 @@ import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Strings;
@@ -48,15 +49,18 @@ import java.util.List;
  * Default implementation of the service that manages access to the Secure Store,
  */
 public class DefaultSecureStoreService implements SecureStoreService {
+  private final AuthorizationEnforcer authorizationEnforcer;
   private final Authorizer authorizer;
   private final AuthenticationContext authenticationContext;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
 
   @Inject
-  DefaultSecureStoreService(AuthorizerInstantiator authorizerInstantiator, AuthenticationContext authenticationContext,
+  DefaultSecureStoreService(AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
+                            AuthenticationContext authenticationContext,
                             SecureStore secureStore, SecureStoreManager secureStoreManager) {
     this.authorizer = authorizerInstantiator.get();
+    this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
@@ -75,7 +79,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
   public List<SecureKeyListEntry> list(NamespaceId namespaceId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter;
-    filter = authorizer.createFilter(principal);
+    filter = authorizationEnforcer.createFilter(principal);
     List<SecureStoreMetadata> metadatas = secureStore.listSecureData(namespaceId.getNamespace());
     List<SecureKeyListEntry> result = new ArrayList<>(metadatas.size());
     String namespace = namespaceId.getNamespace();
@@ -102,7 +106,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
   public SecureStoreData get(SecureKeyId secureKeyId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter;
-    filter = authorizer.createFilter(principal);
+    filter = authorizationEnforcer.createFilter(principal);
 
     if (filter.apply(secureKeyId)) {
       return secureStore.getSecureData(secureKeyId.getNamespace(), secureKeyId.getName());
@@ -126,7 +130,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
                                SecureKeyCreateRequest secureKeyCreateRequest) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespaceId = new NamespaceId(secureKeyId.getNamespace());
-    authorizer.enforce(namespaceId, principal, Action.WRITE);
+    authorizationEnforcer.enforce(namespaceId, principal, Action.WRITE);
 
     String description = secureKeyCreateRequest.getDescription();
     String value = secureKeyCreateRequest.getData();
@@ -151,7 +155,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
   @Override
   public void delete(SecureKeyId secureKeyId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    authorizer.enforce(secureKeyId, principal, Action.ADMIN);
+    authorizationEnforcer.enforce(secureKeyId, principal, Action.ADMIN);
     secureStoreManager.deleteSecureData(secureKeyId.getNamespace(), secureKeyId.getName());
     authorizer.revoke(secureKeyId);
   }

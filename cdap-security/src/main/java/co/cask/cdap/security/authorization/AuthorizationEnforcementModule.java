@@ -76,7 +76,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
 
         bind(PrivilegesFetcherProxyService.class).to(DefaultPrivilegesFetcherProxyService.class)
           .in(Scopes.SINGLETON);
-        bind(PrivilegesFetcher.class).to(RemotePrivilegesFetcher.class);
+        bind(PrivilegesFetcher.class).to(AuthorizerAsPrivilegesFetcher.class).in(Scopes.SINGLETON);
         bind(PrivilegesFetcher.class)
           .annotatedWith(Names.named(PRIVILEGES_FETCHER_PROXY_CACHE))
           .to(PrivilegesFetcherProxyService.class);

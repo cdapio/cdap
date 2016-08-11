@@ -275,7 +275,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug) throws Exception {
-    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     ProgramDescriptor programDescriptor = store.loadProgram(programId.toId());
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -389,7 +389,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
   public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
-    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
     if (runtimeInfo == null) {
       if (!store.applicationExists(programId.toId().getApplication())) {
@@ -426,7 +426,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               {@link Action#ADMIN} privileges on the program.
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
-    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (!store.programExists(programId.toId())) {
       throw new NotFoundException(programId.toId());
     }
@@ -495,7 +495,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               To set instances for a program, a user needs {@link Action#ADMIN} on the program.
    */
   public void setInstances(ProgramId programId, int instances, @Nullable String component) throws Exception {
-    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (instances < 1) {
       throw new BadRequestException(String.format("Instance count should be greater than 0. Got %s.", instances));
     }

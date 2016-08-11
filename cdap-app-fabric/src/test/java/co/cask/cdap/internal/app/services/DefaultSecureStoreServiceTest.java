@@ -58,6 +58,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -84,7 +85,7 @@ public class DefaultSecureStoreServiceTest {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
-    final Injector injector = Guice.createInjector(new AppFabricTestModule(createCConf(), sConf));
+    final Injector injector = Guice.createInjector(new AppFabricTestModule(cConf, sConf));
     injector.getInstance(TransactionManager.class).startAndWait();
     injector.getInstance(DatasetOpExecutor.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
@@ -110,16 +111,16 @@ public class DefaultSecureStoreServiceTest {
   }
 
   private static CConfiguration createCConf() throws Exception {
-    LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
-    String secureStoreLocation = locationFactory.create("securestore").toURI().getPath();
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Security.Store.FILE_PATH, secureStoreLocation);
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
     cConf.set(Constants.Security.Authorization.SUPERUSERS, "hulk");
+
+    LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
 
@@ -141,25 +142,26 @@ public class DefaultSecureStoreServiceTest {
       // expected
     }
 
-
     // Grant ALICE write access to the namespace
-    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, ImmutableSet.of(Action.WRITE));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(Action.WRITE));
     // Write should succeed
     secureStoreService.put(secureKeyId1, createRequest);
     // Listing should return the value just written
     List<SecureKeyListEntry> secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
-    Assert.assertEquals(secureKeyListEntries.size(), 1);
-    Assert.assertEquals(secureKeyListEntries.get(0).getName(), KEY1);
-    Assert.assertEquals(secureKeyListEntries.get(0).getDescription(), DESCRIPTION1);
-    revokeAndAssertSuccess(secureKeyId1, ALICE, ImmutableSet.of(Action.ALL));
+    Assert.assertEquals(1, secureKeyListEntries.size());
+    Assert.assertEquals(KEY1, secureKeyListEntries.get(0).getName());
+    Assert.assertEquals(DESCRIPTION1, secureKeyListEntries.get(0).getDescription());
+    revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(Action.class));
+
+    // Should still be able to list the keys since ALICE has namespace access privilege
     secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
-    Assert.assertEquals(0, secureKeyListEntries.size());
+    Assert.assertEquals(1, secureKeyListEntries.size());
 
     // Give BOB read access and verify that he can read the stored data
     SecurityRequestContext.setUserId(BOB.getName());
-    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, ImmutableSet.of(Action.READ));
-    grantAndAssertSuccess(secureKeyId1, BOB, ImmutableSet.of(Action.READ));
-    Assert.assertArrayEquals(secureStoreService.get(secureKeyId1).get(), VALUE1.getBytes());
+    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.READ));
+    grantAndAssertSuccess(secureKeyId1, BOB, EnumSet.of(Action.READ));
+    Assert.assertArrayEquals(VALUE1.getBytes(), secureStoreService.get(secureKeyId1).get());
     secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
     Assert.assertEquals(1, secureKeyListEntries.size());
 

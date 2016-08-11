@@ -122,7 +122,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
       authEnforcementService.startAndWait();
       try {
         // update privileges for alice. Currently alice has not been granted any privileges.
-        assertAuthorizationFailure(authEnforcementService, new NamespaceId("ns"), ALICE, Action.ADMIN);
+        assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.ADMIN);
         Assert.assertTrue(authEnforcementService.getCache().get(ALICE).isEmpty());
 
         // grant some test privileges
@@ -138,8 +138,11 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
         // auth enforcement for alice should succeed on ns for actions read and write
         authEnforcementService.enforce(NS, ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
         assertAuthorizationFailure(authEnforcementService, NS, ALICE, EnumSet.allOf(Action.class));
-        // but it should fail for the dataset as well as for the admin action
-        assertAuthorizationFailure(authEnforcementService, ds, ALICE, Action.READ);
+        // since Alice has READ/WRITE on the NS, everything under that should have READ/WRITE as well.
+        authEnforcementService.enforce(ds, ALICE, Action.READ);
+        authEnforcementService.enforce(ds, ALICE, Action.WRITE);
+
+        // Alice don't have Admin right on NS, hence should fail.
         assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.ADMIN);
         // also, even though bob's privileges were never updated, auth enforcement for bob should not fail, because the
         // LoadingCache should make a blocking call to retrieve his privileges
@@ -198,7 +201,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
           Assert.assertTrue(aliceFilter.apply(datasetId));
         }
         for (DatasetId datasetId : ImmutableSet.of(ds12, ds22)) {
-          Assert.assertFalse(aliceFilter.apply(datasetId));
+          Assert.assertTrue(aliceFilter.apply(datasetId));
         }
         for (DatasetId datasetId : ImmutableSet.of(ds11, ds12, ds22)) {
           Assert.assertTrue(bobFilter.apply(datasetId));
