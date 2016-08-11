@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -764,7 +765,9 @@ public class ArtifactRepository {
       Iterables.filter(artifacts, new com.google.common.base.Predicate<ArtifactSummary>() {
         @Override
         public boolean apply(ArtifactSummary artifactSummary) {
-          return filter.apply(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
+          // no authorization on system artifacts
+          return ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ||
+            filter.apply(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
         }
       })
     );
