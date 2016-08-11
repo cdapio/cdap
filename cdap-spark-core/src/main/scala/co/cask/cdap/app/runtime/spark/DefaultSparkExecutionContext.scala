@@ -41,6 +41,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import co.cask.cdap.proto.Id
 import co.cask.cdap.proto.id.StreamId
+import co.cask.cdap.proto.security.Action
 import co.cask.tephra.TransactionAware
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
@@ -75,6 +76,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
   private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient, hostname)
   private val applicationEndLatch = new CountDownLatch(1)
+  private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
+  private val authenticationContext = runtimeContext.getAuthenticationContext
 
   // Start the Spark TX service
   sparkTxService.startAndWait()
@@ -223,6 +226,9 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     val rdd = sc.newAPIHadoopRDD(configuration, classOf[SparkStreamInputFormat[LongWritable, T]],
       classOf[LongWritable], valueClass)
     recordStreamUsage(streamId)
+    // check if user has READ permission on the stream to make sure we fail early. this is done after we record stream
+    // usage since we want to record the intent
+    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal, Action.READ)
     rdd.map(t => (t._1.get(), t._2))
   }
 

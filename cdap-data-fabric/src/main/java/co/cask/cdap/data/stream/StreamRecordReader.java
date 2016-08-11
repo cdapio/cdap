@@ -79,7 +79,6 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
-    events.clear();
     // Make sure that the user has read access to the stream.
     try {
       authorizationEnforcer.enforce(streamId, principal, Action.READ);
@@ -89,6 +88,7 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
       throw new IOException(e);
     }
 
+    events.clear();
     if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
       return false;
     }

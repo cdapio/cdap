@@ -119,6 +119,8 @@ public class DefaultStreamWriter implements StreamWriter {
       throw new IOException(String.format("Stream %s not found", stream));
     }
 
+    // Even though we might have UnauthorizedException (FORBIDDEN), we need to register the usage/lineage since
+    // the worker intended to write to the stream
     registerStream(stream);
 
     if (responseCode < 200 || responseCode >= 300) {
