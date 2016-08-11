@@ -185,6 +185,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.toggleExpandAll = false;
 
   let unsub = LogViewerStore.subscribe(() => {
+    if(this.logStartTime === LogViewerStore.getState().startTime){
+      return;
+    }
+
     this.logStartTime = LogViewerStore.getState().startTime;
     if (typeof this.logStartTime !== 'object') {
       this.setDefault();
@@ -217,12 +221,23 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.renderData();
     //If the search query is blank, otherwise filter
     if(this.searchText.length === 0){
+      this.updateSearchResultsInStore([]);
       return;
     }
 
+    let searchResults = [];
+
     this.displayData = this.displayData.filter( data => {
-      return data.log.message.toLowerCase().indexOf(this.searchText.toLowerCase()) !== -1;
+      if(data.log.message.toLowerCase().indexOf(this.searchText.toLowerCase()) !== -1){
+        searchResults.push(data.log.timestamp);
+        return true;
+      }
+      return false;
     });
+
+    this.updateSearchResultsInStore(searchResults);
+    //render displayData across the timeline
+
   };
 
   this.toggleStackTrace = (index) => {
@@ -271,11 +286,20 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
   };
 
-  this.updateScrollPositionInStore = function(val) {
+  this.updateScrollPositionInStore = (val) => {
     LogViewerStore.dispatch({
       type: LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION,
       payload: {
         scrollPosition: val
+      }
+    });
+  };
+
+  this.updateSearchResultsInStore = (results) => {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.SEARCH_RESULTS,
+      payload: {
+        searchResults: results
       }
     });
   };

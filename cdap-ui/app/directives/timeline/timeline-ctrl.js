@@ -67,8 +67,14 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 
   LogViewerStore.subscribe(() => {
     this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+
     if($scope.updatePinScale !== undefined){
       $scope.updatePinScale(this.pinScrollPosition);
+    }
+
+    if(this.searchResultTimes !== LogViewerStore.getState().searchResults){
+      this.searchResultTimes = LogViewerStore.getState().searchResults;
+      $scope.renderSearchCircles(this.searchResultTimes);
     }
   });
 

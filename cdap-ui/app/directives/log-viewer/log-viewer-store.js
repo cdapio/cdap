@@ -40,16 +40,30 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
     }
   };
 
+  const searchResults = (state = [], action = {}) => {
+    switch(action.type) {
+      case LOGVIEWERSTORE_ACTIONS.SEARCH_RESULTS:
+        if(!action.payload.searchResults) {
+          return state;
+        }
+        return action.payload.searchResults;
+      default:
+        return state;
+    }
+  };
+
   //Combine the reducers
   let {combineReducers, applyMiddleware} = Redux;
   let combinedReducers = combineReducers({
     startTime,
-    scrollPosition
+    scrollPosition,
+    searchResults
   });
   let getInitialState = () => {
     return {
       startTime: Date.now(),
-      scrollPosition: Date.now()
+      scrollPosition: Date.now(),
+      searchResults: []
     };
   };
 
@@ -67,6 +81,7 @@ LogViewerStore.$inject = ['LOGVIEWERSTORE_ACTIONS', 'Redux', 'ReduxThunk'];
 angular.module(`${PKG.name}.commons`)
   .constant('LOGVIEWERSTORE_ACTIONS', {
     'START_TIME' : 'START_TIME',
-    'SCROLL_POSITION' : 'SCROLL_POSITION'
+    'SCROLL_POSITION' : 'SCROLL_POSITION',
+    'SEARCH_RESULTS' : 'SEARCH_RESULTS'
   })
   .factory('LogViewerStore', LogViewerStore);

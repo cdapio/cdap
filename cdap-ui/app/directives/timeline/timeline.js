@@ -52,7 +52,9 @@ function link (scope, element) {
 
     //If chart already exists, remove it
     if(timescaleSvg){
-      d3.selectAll('.timeline-container svg > *').remove();
+      d3.selectAll('.timeline-container svg > *').filter((d) => {
+        return (typeof d === 'undefined') || (d.attr('class') !== 'search-circle');
+      }).remove();
       timescaleSvg.remove();
     }
 
@@ -256,6 +258,19 @@ function link (scope, element) {
     }
   };
 
+  scope.renderSearchCircles = (searchTimes) => {
+
+    d3.selectAll('.search-circle').remove();
+
+    angular.forEach(searchTimes, (value) => {
+      timescaleSvg.append('circle')
+        .attr('cx', xScale(value))
+        .attr('cy', 35)
+        .attr('r', 2)
+        .attr('class', 'search-circle');
+    });
+  };
+
   function updateSlider(val) {
     if(val < 0){
       val = 0;
@@ -339,7 +354,6 @@ function link (scope, element) {
     let timelineHash = {};
     for(var key in errorMap){
       if(errorMap.hasOwnProperty(key)){
-        console.log('errorMap: ' + key + ' val: ' , errorMap[key]);
         timelineHash[key] = {
           'errors' : errorMap[key]
         };
@@ -347,7 +361,6 @@ function link (scope, element) {
     }
     for(var keyTwo in warningMap){
       if(warningMap.hasOwnProperty(keyTwo)){
-        console.log('warningMap: ' + keyTwo + ' val: ' , warningMap[keyTwo]);
         if(!timelineHash[keyTwo]) {
           timelineHash[keyTwo] = {
             'warnings' : warningMap[keyTwo]
