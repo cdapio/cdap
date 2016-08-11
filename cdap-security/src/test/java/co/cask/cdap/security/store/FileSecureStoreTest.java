@@ -23,6 +23,7 @@ import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -72,6 +73,8 @@ public class FileSecureStoreTest {
   public void setUp() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.Security.Store.FILE_PATH, STORE_PATH);
+    SConfiguration sConf = SConfiguration.create();
+    sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
     InMemoryNamespaceClient namespaceClient = new InMemoryNamespaceClient();
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder()
       .setName(new Id.Namespace(NAMESPACE1))
@@ -81,7 +84,7 @@ public class FileSecureStoreTest {
       .setName(new Id.Namespace(NAMESPACE2))
       .build();
     namespaceClient.create(namespaceMeta);
-    FileSecureStore fileSecureStore = new FileSecureStore(conf, namespaceClient);
+    FileSecureStore fileSecureStore = new FileSecureStore(conf, sConf, namespaceClient);
     secureStoreManager = fileSecureStore;
     secureStore = fileSecureStore;
   }
