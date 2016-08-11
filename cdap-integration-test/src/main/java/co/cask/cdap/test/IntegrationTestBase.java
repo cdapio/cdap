@@ -189,7 +189,7 @@ public abstract class IntegrationTestBase {
   private void assertUnrecoverableResetEnabled() throws IOException, UnauthenticatedException {
     ConfigEntry configEntry = getMetaClient().getCDAPConfig().get(Constants.Dangerous.UNRECOVERABLE_RESET);
     Preconditions.checkNotNull(configEntry,
-                               "Missing key from CDAP Configuration: {}", Constants.Dangerous.UNRECOVERABLE_RESET);
+                               "Missing key from CDAP Configuration: %s", Constants.Dangerous.UNRECOVERABLE_RESET);
     Preconditions.checkState(Boolean.parseBoolean(configEntry.getValue()), "UnrecoverableReset not enabled.");
   }
 

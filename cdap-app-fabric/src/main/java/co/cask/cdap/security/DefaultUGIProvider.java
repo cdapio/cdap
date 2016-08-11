@@ -87,7 +87,7 @@ public class DefaultUGIProvider implements UGIProvider {
       LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
 
       Preconditions.checkArgument(java.nio.file.Files.isReadable(localKeytabFile.toPath()),
-                                  "Keytab file is not a readable file: {}", localKeytabFile);
+                                  "Keytab file is not a readable file: %s", localKeytabFile);
 
       return UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
     } finally {
