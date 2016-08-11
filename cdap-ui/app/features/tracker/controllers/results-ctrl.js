@@ -29,24 +29,28 @@ class TrackerResultsController {
     this.searchResults = [];
     this.sortByOptions = [
       {
-        name: 'Create Date',
+        name: 'Oldest First',
         sort: 'createDate'
       },
       {
-        name: 'A-Z',
+        name: 'Newest First',
+        sort: '-createDate'
+      },
+      {
+        name: 'A → Z',
         sort: 'name'
       },
       {
-        name: 'Z-A',
+        name: 'Z → A',
         sort: '-name'
       },
       {
-        name: 'Tracker Meter (asc)',
-        sort: 'meter'
+        name: 'Highest Score',
+        sort: '-meter'
       },
       {
-        name: 'Tracker Meter (desc)',
-        sort: '-meter'
+        name: 'Lowest Score',
+        sort: 'meter'
       }
     ];
 
