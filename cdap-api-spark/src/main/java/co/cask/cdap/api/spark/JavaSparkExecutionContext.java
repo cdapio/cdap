@@ -445,6 +445,18 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
   }
 
   /**
+   * Saves the given {@link JavaPairRDD} to the given {@link Dataset}.
+   *
+   * @param rdd the {@link JavaPairRDD} to be saved
+   * @param namespace the namespace for the dataset
+   * @param datasetName name of the Dataset
+   * @throws DatasetInstantiationException if the Dataset doesn't exist
+   */
+  public <K, V> void saveAsDataset(JavaPairRDD<K, V> rdd, String namespace, String datasetName) {
+    saveAsDataset(rdd, namespace, datasetName, Collections.<String, String>emptyMap());
+  }
+
+  /**
    * Saves the given {@link JavaPairRDD} to the given {@link Dataset} with the given set of Dataset arguments.
    *
    * @param rdd the {@link JavaPairRDD} to be saved
@@ -453,4 +465,16 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    * @throws DatasetInstantiationException if the Dataset doesn't exist
    */
   public abstract <K, V> void saveAsDataset(JavaPairRDD<K, V> rdd, String datasetName, Map<String, String> arguments);
+
+  /**
+   * Saves the given {@link JavaPairRDD} to the given {@link Dataset} with the given set of Dataset arguments.
+   *
+   * @param rdd the {@link JavaPairRDD} to be saved
+   * @param namespace the namespace for the Dataset
+   * @param datasetName name of the Dataset
+   * @param arguments arguments for the Dataset
+   * @throws DatasetInstantiationException if the Dataset doesn't exist
+   */
+  public abstract <K, V> void saveAsDataset(JavaPairRDD<K, V> rdd, String namespace, String datasetName,
+                                            Map<String, String> arguments);
 }

@@ -21,8 +21,12 @@ import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.collection.JavaConverters._
+
 /**
-  * A simple Spark program written in Scala which counts the number of characters
+  * A simple Spark program written in Scala which counts the number of characters. It reads from a dataset and writes
+  * to another dataset. These datasets can be another namespace and their names should be specified as runtime
+  * arguments. If no runtime arguments are given it will look for these dataset in its own namespace
   */
 class ScalaCharCountProgram extends AbstractSpark with SparkMain {
 
@@ -34,13 +38,25 @@ class ScalaCharCountProgram extends AbstractSpark with SparkMain {
 
   override def run(implicit sec: SparkExecutionContext) = {
     val sc = new SparkContext
+    val arguments = sec.getRuntimeArguments.asScala
+    val inputDSNamespace = arguments.getOrElse(ScalaCharCountProgram.INPUT_DATASET_NAMESPACE, sec.getNamespace)
+    val inputDSName = arguments.getOrElse(ScalaCharCountProgram.INPUT_DATASET_NAME, "keys")
+    val outputDSNamespace = arguments.getOrElse(ScalaCharCountProgram.OUTPUT_DATASET_NAMESPACE, sec.getNamespace)
+    val outputDSName = arguments.getOrElse(ScalaCharCountProgram.OUTPUT_DATASET_NAME, "count")
 
     // read the dataset
-    val inputData: RDD[(Array[Byte], String)] = sc.fromDataset("keys")
+    val inputData: RDD[(Array[Byte], String)] = sc.fromDataset(inputDSNamespace, inputDSName)
 
     // create a new RDD with the same key but the value is the length of the string
     inputData
       .map(str => (str._1, Bytes.toBytes(str._2.length)))
-      .saveAsDataset("count")
+      .saveAsDataset(outputDSNamespace, outputDSName)
   }
+}
+
+object ScalaCharCountProgram {
+  val INPUT_DATASET_NAMESPACE = "input.dataset.namespace"
+  val INPUT_DATASET_NAME = "input.dataset.name"
+  val OUTPUT_DATASET_NAMESPACE = "output.dataset.namespace"
+  val OUTPUT_DATASET_NAME = "output.dataset.name"
 }

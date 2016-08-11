@@ -17,48 +17,60 @@
 package co.cask.cdap.spark.stream;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import com.google.common.base.Strings;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.PairFunction;
-import scala.Tuple2;
+
+import java.util.Map;
 
 /**
- * A dummy app with spark program which simply read from a dataset from different namespace and write to a dataset in
- * the current namespace
+ * A dummy app with spark program which reads from a dataset in different namespace and write to a dataset in  a
+ * different namespace if they have been provided through runtime arguments else it defaults to its own namespace.
  */
 public class TestSparkCrossNSDatasetApp extends AbstractApplication {
-  public static final String SOURCE_DATA_NAMESPACE = "dataSpaceForSpark";
-
   @Override
   public void configure() {
     setName("TestSparkCrossNSDatasetApp");
     setDescription("App to test Spark with Datasets from other namespace");
-    addStream(new Stream("testStream"));
-    createDataset("result", KeyValueTable.class);
-    addSpark(new SparkStreamProgramSpec());
+    createDataset("outputDataset", KeyValueTable.class);
+    addSpark(new SparkCrossNSDatasetProgramSpec());
   }
 
-  public static class SparkStreamProgramSpec extends AbstractSpark {
+  public static class SparkCrossNSDatasetProgramSpec extends AbstractSpark {
     @Override
     public void configure() {
-      setName("SparkStreamProgram");
+      setName("SparkCrossNSDatasetProgram");
       setDescription("Test Spark with Datasets from other namespace");
-      setMainClass(SparkStreamProgram.class);
+      setMainClass(SparkCrossNSDatasetProgram.class);
     }
   }
 
-  public static class SparkStreamProgram implements JavaSparkMain {
+  public static class SparkCrossNSDatasetProgram implements JavaSparkMain {
+
+    public static final String INPUT_DATASET_NAMESPACE = "input.dataset.namespace";
+    public static final String INPUT_DATASET_NAME = "input.dataset.name";
+    public static final String OUTPUT_DATASET_NAMESPACE = "output.dataset.namespace";
+    public static final String OUTPUT_DATASET_NAME = "output.dataset.name";
+
     @Override
     public void run(JavaSparkExecutionContext sec) throws Exception {
       JavaSparkContext jsc = new JavaSparkContext();
-      JavaPairRDD<byte[], byte[]> rdd = sec.fromDataset(SOURCE_DATA_NAMESPACE, "result");
-      sec.saveAsDataset(rdd, "result");
+      Map<String, String> runtimeArguments = sec.getRuntimeArguments();
+      String inputDatasetNS = Strings.isNullOrEmpty(runtimeArguments.get(INPUT_DATASET_NAMESPACE)) ?
+        sec.getNamespace() : runtimeArguments.get(INPUT_DATASET_NAMESPACE);
+      String inputDatasetName = Strings.isNullOrEmpty(runtimeArguments.get(INPUT_DATASET_NAME)) ?
+        "inputDataset" : runtimeArguments.get(INPUT_DATASET_NAME);
+      String outputDatasetNS = Strings.isNullOrEmpty(runtimeArguments.get(OUTPUT_DATASET_NAMESPACE)) ?
+        sec.getNamespace() : runtimeArguments.get(OUTPUT_DATASET_NAMESPACE);
+      String outputDatasetName = Strings.isNullOrEmpty(runtimeArguments.get(OUTPUT_DATASET_NAME)) ?
+        "outputDataset" : runtimeArguments.get(OUTPUT_DATASET_NAME);
+
+      JavaPairRDD<byte[], byte[]> rdd = sec.fromDataset(inputDatasetNS, inputDatasetName);
+      sec.saveAsDataset(rdd, outputDatasetNS, outputDatasetName);
     }
   }
 }

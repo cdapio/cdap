@@ -16,7 +16,6 @@
 
 package co.cask.cdap.spark.stream;
 
-import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -27,6 +26,7 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -57,38 +57,58 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testSparkCrossNS() throws Exception {
-    // A series of test for cross namespace access here:
-    // Spark1 deployed at dataSpace:
-    //  reading a stream from streamSpace and write into dataset in the same ns (dataSpace)
-    // Spark2 deployed at DEFAULT:
-    //  reading from the dataset from dataSpace (created by spark1) and write into dataset in DEFAULT
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName(TestSparkCrossNSStreamApp.SOURCE_STREAM_NAMESPACE).build());
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName(TestSparkCrossNSDatasetApp.SOURCE_DATA_NAMESPACE).build());
+    // Test for reading stream cross namespace, reading and writing to dataset cross namespace
+    // TestSparkStreamIntegrationApp deployed in default namespace
+    // which reads a stream from streamNS and writes to a dataset in its own ns (default)
+    // TestSparkCrossNSDatasetApp deployed at crossNSDatasetAppNS:
+    //  reading from the dataset in default (created by TestSparkStreamIntegrationApp) and write to a dataset
+    // in outputDatasetNS
+    NamespaceMeta streamNSMeta = new NamespaceMeta.Builder().setName("streamNS").build();
+    NamespaceMeta crossNSDatasetAppNS = new NamespaceMeta.Builder().setName("crossNSDatasetAppNS").build();
+    NamespaceMeta outputDatasetNS = new NamespaceMeta.Builder().setName("outputDatasetNS").build();
+    getNamespaceAdmin().create(streamNSMeta);
+    getNamespaceAdmin().create(crossNSDatasetAppNS);
+    getNamespaceAdmin().create(outputDatasetNS);
+    addDatasetInstance(outputDatasetNS.getNamespaceId().toId(), "keyValueTable", "finalDataset");
 
-    NamespaceId streamSpace = new NamespaceId(TestSparkCrossNSStreamApp.SOURCE_STREAM_NAMESPACE);
-    NamespaceId dataSpace = new NamespaceId(TestSparkCrossNSDatasetApp.SOURCE_DATA_NAMESPACE);
-
-    StreamManager streamManager = getStreamManager(streamSpace.toId(), "testStream");
+    StreamManager streamManager = getStreamManager(streamNSMeta.getNamespaceId().toId(), "testStream");
     streamManager.createStream();
-
-    ApplicationManager spark1 = deployApplication(dataSpace.toId(), TestSparkCrossNSStreamApp.class);
     for (int i = 0; i < 50; i++) {
       streamManager.send(String.valueOf(i));
     }
 
-    SparkManager sparkManager = spark1.getSparkManager("SparkStreamProgram").start();
+    // deploy TestSparkStreamIntegrationApp in default namespace
+    ApplicationManager spark1 = deployApplication(TestSparkStreamIntegrationApp.class);
+
+    ImmutableMap<String, String> args = ImmutableMap.of(
+      TestSparkStreamIntegrationApp.SparkStreamProgram.INPUT_STREAM_NAMESPACE,
+      streamNSMeta.getNamespaceId().getNamespace(),
+      TestSparkStreamIntegrationApp.SparkStreamProgram.INPUT_STREAM_NAME,
+      "testStream"
+    );
+
+    SparkManager sparkManager = spark1.getSparkManager("SparkStreamProgram").start(args);
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
-    // Verify the results written in dataSpace by spark1
-    DataSetManager<KeyValueTable> datasetManager = getDataset(dataSpace.toId(), "result");
+    // Verify the results written in default namespace by spark1
+    DataSetManager<KeyValueTable> datasetManager = getDataset("result");
     verifyDatasetResult(datasetManager);
 
-    ApplicationManager spark2 = deployApplication(TestSparkCrossNSDatasetApp.class);
-    sparkManager = spark2.getSparkManager("SparkStreamProgram").start();
+    // deploy the cross  ns dataset app in datasetNS namespace
+    ApplicationManager spark2 = deployApplication(crossNSDatasetAppNS.getNamespaceId().toId(),
+                                                  TestSparkCrossNSDatasetApp.class);
+    args = ImmutableMap.of(
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAMESPACE,
+      NamespaceId.DEFAULT.getNamespace(),
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAME, "result",
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.OUTPUT_DATASET_NAMESPACE,
+      outputDatasetNS.getNamespaceId().getNamespace(),
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.OUTPUT_DATASET_NAME, "finalDataset"
+    );
+
+    sparkManager = spark2.getSparkManager("SparkCrossNSDatasetProgram").start(args);
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
     // Verify the results written in DEFAULT by spark2
-    datasetManager = getDataset("result");
+    datasetManager = getDataset(outputDatasetNS.getNamespaceId().toId(), "finalDataset");
     verifyDatasetResult(datasetManager);
   }
 

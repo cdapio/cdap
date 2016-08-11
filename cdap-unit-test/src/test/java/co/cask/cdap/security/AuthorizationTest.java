@@ -963,21 +963,25 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testCrossNSDatasetAccessWithAuthSpark() throws Exception {
     createAuthNamespace();
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName(TestSparkCrossNSDatasetApp.SOURCE_DATA_NAMESPACE).build());
-    NamespaceId dataSpace = new NamespaceId(TestSparkCrossNSDatasetApp.SOURCE_DATA_NAMESPACE);
-    addDatasetInstance(dataSpace.toId(), "keyValueTable", "result").create();
-    DataSetManager<KeyValueTable> inTableManager = getDataset(dataSpace.toId(), "result");
+    NamespaceMeta inputDatasetNSMeta = new NamespaceMeta.Builder().setName("inputDatasetNS").build();
+    getNamespaceAdmin().create(inputDatasetNSMeta);
+    addDatasetInstance(inputDatasetNSMeta.getNamespaceId().toId(), "keyValueTable", "input").create();
+    DataSetManager<KeyValueTable> inTableManager = getDataset(inputDatasetNSMeta.getNamespaceId().toId(), "input");
     inTableManager.get().write("hello", "world");
     inTableManager.flush();
 
     ApplicationManager spark = deployApplication(AUTH_NAMESPACE.toId(), TestSparkCrossNSDatasetApp.class);
-    SparkManager sparkManager = spark.getSparkManager("SparkStreamProgram");
+    SparkManager sparkManager = spark.getSparkManager("SparkCrossNSDatasetProgram");
 
     // Switch to Bob. Should fail as Bob do not have access to the dataset namespace
     SecurityRequestContext.setUserId(BOB.getName());
+    ImmutableMap<String, String> args = ImmutableMap.of(
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAMESPACE,
+      inputDatasetNSMeta.getNamespaceId().getNamespace(),
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAME, "input"
+    );
     try {
-      sparkManager.start();
+      sparkManager.start(args);
       sparkManager.waitForFinish(120, TimeUnit.SECONDS);
       Assert.fail("Should fail here since bob does not have the privileges on input dataspace.");
     } catch (Exception e) {
@@ -986,17 +990,17 @@ public class AuthorizationTest extends TestBase {
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    DataSetManager<KeyValueTable> datasetManager = getDataset(AUTH_NAMESPACE.toId(), "result");
+    DataSetManager<KeyValueTable> datasetManager = getDataset(AUTH_NAMESPACE.toId(), "outputDataset");
     Assert.assertNull(datasetManager.get().read("hello"));
 
     // Run again with Alice who has the privileges
-    sparkManager.start();
+    sparkManager.start(args);
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
     spark.stopAll();
     // Verify the results written in DEFAULT by spark2
-    datasetManager = getDataset(AUTH_NAMESPACE.toId(), "result");
+    datasetManager = getDataset(AUTH_NAMESPACE.toId(), "outputDataset");
     Assert.assertEquals("world", Bytes.toString(datasetManager.get().read("hello")));
-    getNamespaceAdmin().delete(dataSpace.toId());
+    getNamespaceAdmin().delete(inputDatasetNSMeta.getNamespaceId().toId());
   }
 
   @After
