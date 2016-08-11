@@ -1,3 +1,5 @@
+.. |my_username| replace:: ``my_username``
+
 .. _|distribution|-configuration:
 
 .. _|distribution|-configuration-central:
@@ -101,20 +103,28 @@ for CDAP to run successfully.
   
       #. Check that the default HDFS user |hdfs-user| owns that HDFS directory.
   
-   #. If you want to use **an HDFS user** other than |hdfs-user|:
+   #. If you want to use **an HDFS user** other than |hdfs-user|, such as |my_username|:
 
       1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
          in the cluster on which YARN is running (typically, all of the machines).
       #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
   
-           <property>
-             <name>hdfs.user</name>
-             <value>my_username</value>
-             <description>User for accessing HDFS</description>
-           </property>
+             <property>
+               <name>hdfs.user</name>
+               <value>my_username</value>
+               <description>User for accessing HDFS</description>
+             </property>
   
       #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
-      #. Check that there exists in HDFS a ``/user/`` directory for that HDFS user, as described above.
+      #. Check that there exists in HDFS a ``/user/`` directory for that HDFS user, as described above, such as:
+      
+         .. container:: highlight
+       
+           .. parsed-literal::
+         
+             |$| su hdfs
+             |$| hdfs dfs -mkdir -p /user/|my_username| && hadoop fs -chown |my_username| /user/|my_username| && hadoop fs -chgrp |my_username| /user/|my_username|
+      
    
    #. To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a
       compatible version of Hive installed. See the section on :ref:`Hadoop Compatibility
