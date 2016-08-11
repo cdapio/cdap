@@ -15,6 +15,11 @@
 -->
 
 <div class="sql-conditions-container">
+  <div class="text-danger"
+       ng-if="SqlConditions.error">
+    Please connect 2 or more stages
+  </div>
+
   <div class="rule clearfix"
        ng-if="SqlConditions.stageList.length > 0"
        ng-repeat="rule in SqlConditions.rules track by $index"

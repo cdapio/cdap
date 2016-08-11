@@ -25,6 +25,11 @@ function SqlConditionsController() {
   vm.stageList = [];
 
   vm.formatOutput = () => {
+    if (vm.stageList.length < 2) {
+      vm.model = '';
+      return;
+    }
+
     let outputArr = [];
 
     angular.forEach(vm.rules, (rule) => {
@@ -74,6 +79,10 @@ function SqlConditionsController() {
         return field.name;
       });
     });
+
+    if (vm.stageList.length < 2) {
+      vm.error = true;
+    }
   }
 
   function init() {
