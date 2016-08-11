@@ -75,13 +75,18 @@ function SqlConditionsController() {
     angular.forEach(vm.inputSchema, (input) => {
       vm.stageList.push(input.name);
 
-      vm.mapInputSchema[input.name] = JSON.parse(input.schema).fields.map((field) => {
-        return field.name;
-      });
+      try {
+        vm.mapInputSchema[input.name] = JSON.parse(input.schema).fields.map((field) => {
+          return field.name;
+        });
+      } catch (e) {
+        console.log('ERROR: ', e);
+        vm.error = 'Error parsing input schemas.';
+      }
     });
 
     if (vm.stageList.length < 2) {
-      vm.error = true;
+      vm.error = 'Please connect 2 or more stages.';
     }
   }
 
@@ -121,12 +126,16 @@ function SqlConditionsController() {
         return filteredRule.length === 0 ? true : false;
       });
 
-      angular.forEach(missedFields, (field) => {
-        rulesArr.push({
-          stageName: field,
-          fieldName: null
+      if (missedFields.length > 0) {
+        angular.forEach(missedFields, (field) => {
+          rulesArr.push({
+            stageName: field,
+            fieldName: vm.mapInputSchema[field][0]
+          });
         });
-      });
+
+        vm.warning = 'Input stages have changed since the last time you edit this node\'s configuration. Please verify the condition is still valid.';
+      }
 
       vm.rules.push(rulesArr);
     });
