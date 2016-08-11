@@ -125,6 +125,13 @@ for CDAP to run successfully.
              |$| su hdfs
              |$| hdfs dfs -mkdir -p /user/|my_username| && hadoop fs -chown |my_username| /user/|my_username| && hadoop fs -chgrp |my_username| /user/|my_username|
       
+      #. If you use an HDFS user other than |hdfs-user|, you must use either a secure
+         cluster or use the `LinuxContainerExecutor
+         <https://hadoop.apache.org/docs/stable/hadoop-yarn/hadoop-yarn-site/SecureContainer.html>`__ 
+         instead of the ``DefaultContainerExecutor``. (Because of how ``DefaultContainerExecutor``
+         works, other containers will launch as |hdfs-user| rather than the specified
+         ``hdfs.user``.) On Kerberos-enabled clusters, you must use ``LinuxContainerExecutor``
+         as the ``DefaultContainerExecutor`` will not work correctly.
    
    #. To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a
       compatible version of Hive installed. See the section on :ref:`Hadoop Compatibility
