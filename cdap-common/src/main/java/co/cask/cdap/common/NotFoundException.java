@@ -21,6 +21,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import javax.annotation.Nullable;
+
 /**
  * Thrown when an element is not found
  */
@@ -53,6 +55,16 @@ public class NotFoundException extends Exception implements HttpErrorStatusProvi
     this.object = object;
   }
 
+  public NotFoundException(String errorMessage) {
+    super(errorMessage);
+    this.object = null;
+  }
+
+  /**
+   * Return the object which could not be found. Returns null, if the entity is not known, such as when thrown from
+   * cdap-clients.
+   */
+  @Nullable
   public Object getObject() {
     return object;
   }
