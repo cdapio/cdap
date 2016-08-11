@@ -179,7 +179,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                             DEFAULT_MODULES);
     DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService);
     DatasetInstanceService instanceService = new DatasetInstanceService(
-      typeManager, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
+      typeService, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
       privilegesManager, authenticationContext);
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 

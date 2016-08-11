@@ -81,6 +81,7 @@ class DatasetServiceClient {
   private static final Gson GSON = new Gson();
   private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
   private static final Type MODULE_META_LIST_TYPE = new TypeToken<List<DatasetModuleMeta>>() { }.getType();
+  private static final Type DATASET_NAME_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final NamespaceId namespaceId;
@@ -245,6 +246,18 @@ class DatasetServiceClient {
     }
   }
 
+  /**
+   * Deletes all dataset instances inside the namespace of this client is operating in.
+   */
+  public Set<String> deleteInstances() throws DatasetManagementException {
+    HttpResponse response = doDelete("datasets");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to delete instances, details: %s", response));
+    }
+
+    return GSON.fromJson(response.getResponseBodyAsString(), DATASET_NAME_TYPE);
+  }
+
   public void addModule(String moduleName, String className, Location jarLocation) throws DatasetManagementException {
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
@@ -350,7 +363,7 @@ class DatasetServiceClient {
       // impersonation has specifically been configured in this namespace to use the cdap principal; or
       // 2. The request will fail, if kerberos is enabled and the user is impersonating as a non-cdap user; or
       // 3. The request will go through, if kerberos is disabled
-      LOG.debug("Acessing dataset in system namespace using the system principal because the current user's " +
+      LOG.trace("Acessing dataset in system namespace using the system principal because the current user's " +
                   "kerberos principal {} is the same as the CDAP master's kerberos principal {}.",
                 masterPrincipal, UserGroupInformation.getCurrentUser().getUserName());
       userId = Principal.SYSTEM.getName();

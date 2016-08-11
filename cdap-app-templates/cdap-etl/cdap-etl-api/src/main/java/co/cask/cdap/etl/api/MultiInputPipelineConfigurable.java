@@ -14,19 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.etl.tool.config;
+package co.cask.cdap.etl.api;
 
-import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.etl.tool.ETLVersion;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Uses an ArtifactClient to get the artifact for a specific plugin.
+ * Allows the stage with multiple inputs to configure pipeline.
  */
-public class RealtimeClientBasedUpgradeContext extends ClientBasedUpgradeContext {
-
-  public RealtimeClientBasedUpgradeContext(Id.Namespace namespace, ArtifactClient artifactClient) {
-    super(artifactClient, Id.Artifact.from(namespace, "cdap-etl-realtime", ETLVersion.getVersion()));
-  }
-
+@Beta
+public interface MultiInputPipelineConfigurable {
+  /**
+   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
+   *
+   * @param multiInputPipelineConfigurer the configurer used to add required datasets and streams
+   * @throws IllegalArgumentException if the given config is invalid
+   */
+  void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) throws IllegalArgumentException;
 }

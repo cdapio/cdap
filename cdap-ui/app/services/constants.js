@@ -17,7 +17,7 @@
 // One place to edit the group label.
 var pluginLabels = {
   'source': 'Source',
-  'transform': 'Transform and Science',
+  'transform': 'Transform',
   'sink': 'Sink',
   'action': 'Action'
 };

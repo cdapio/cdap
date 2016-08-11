@@ -30,6 +30,9 @@
   <artifactId>cdap-kms</artifactId>
   <name>CDAP KMS</name>
   <packaging>jar</packaging>
+  <build>
+    <finalName>co.cask.cdap.cdap-kms-${project.version}</finalName>
+  </build>
 
   <dependencies>
     <dependency>

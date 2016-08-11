@@ -27,13 +27,18 @@ import java.util.Objects;
  * Uniquely identifies a dataset.
  */
 public class DatasetId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+
   private final String namespace;
   private final String dataset;
   private transient Integer hashCode;
+  private final transient NamespaceId namespaceId;
 
   public DatasetId(String namespace, String dataset) {
     super(EntityType.DATASET);
+
     this.namespace = namespace;
+    // Preconstruct the parent since it will get used many times for authorization for each dataset op.
+    this.namespaceId = new NamespaceId(namespace);
     this.dataset = dataset;
 
     if (!isValidDatasetId(dataset)) {
@@ -53,7 +58,7 @@ public class DatasetId extends EntityId implements NamespacedId, ParentedId<Name
 
   @Override
   public NamespaceId getParent() {
-    return new NamespaceId(namespace);
+    return namespaceId;
   }
 
   @Override

@@ -20,9 +20,11 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.etl.api.MultiInputPipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.action.Action;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.proto.Connection;
@@ -112,7 +114,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
       // for each output, set their input schema to our output schema
       for (String outputStageName : stageConnections.getOutputs()) {
-        pluginConfigurers.get(outputStageName).getStageConfigurer().addInputSchema(stageName, outputSchema);
+        pluginConfigurers.get(outputStageName).getStageConfigurer().addInputSchema(pluginTypes.get(outputStageName),
+                                                                                   stageName,
+                                                                                   outputSchema);
       }
       specBuilder.addStage(stageSpec);
     }
@@ -156,32 +160,38 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    *
    * @param pluginId the unique plugin id
    * @param etlPlugin user provided configuration for the plugin
-   * @param pipelineConfigurer configurer used to configure the plugin
+   * @param pipelineConfigurer default pipeline configurere to configure the plugin
    * @return the spec for the plugin
    */
   protected PluginSpec configurePlugin(String pluginId, ETLPlugin etlPlugin,
-                                       PipelineConfigurer pipelineConfigurer) {
+                                       DefaultPipelineConfigurer pipelineConfigurer) {
     TrackedPluginSelector pluginSelector = new TrackedPluginSelector(etlPlugin.getPluginSelector());
-    PipelineConfigurable plugin = configurer.usePlugin(etlPlugin.getType(),
-                                                       etlPlugin.getName(),
-                                                       pluginId,
-                                                       etlPlugin.getPluginProperties(),
-                                                       pluginSelector);
+    String type = etlPlugin.getType();
+    Object plugin = configurer.usePlugin(etlPlugin.getType(),
+                                         etlPlugin.getName(),
+                                         pluginId,
+                                         etlPlugin.getPluginProperties(),
+                                         pluginSelector);
+
     if (plugin == null) {
       throw new IllegalArgumentException(
         String.format("No plugin of type %s and name %s could be found for stage %s.",
                       etlPlugin.getType(), etlPlugin.getName(), pluginId));
     }
-
     try {
-      plugin.configurePipeline(pipelineConfigurer);
+      if (type.equalsIgnoreCase(BatchJoiner.PLUGIN_TYPE)) {
+        MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
+        multiPlugin.configurePipeline(pipelineConfigurer);
+      } else {
+        PipelineConfigurable singlePlugin = (PipelineConfigurable) plugin;
+        singlePlugin.configurePipeline(pipelineConfigurer);
+      }
     } catch (Exception e) {
       throw new RuntimeException(
         String.format("Exception while configuring plugin of type %s and name %s for stage %s: %s",
                       etlPlugin.getType(), etlPlugin.getName(), pluginId, e.getMessage()),
         e);
     }
-
     return new PluginSpec(etlPlugin.getType(),
                           etlPlugin.getName(),
                           etlPlugin.getProperties(),

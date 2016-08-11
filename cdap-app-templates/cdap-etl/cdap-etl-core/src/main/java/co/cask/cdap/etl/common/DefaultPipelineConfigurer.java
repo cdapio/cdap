@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
+import co.cask.cdap.etl.api.MultiInputStageConfigurer;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 
 import javax.annotation.Nullable;
@@ -32,7 +34,7 @@ import javax.annotation.Nullable;
  * to provide isolation for each etl stage. For example, a source can use a plugin with id 'jdbcdriver' and
  * a sink can also use a plugin with id 'jdbcdriver' without clobbering each other.
  */
-public class DefaultPipelineConfigurer implements PipelineConfigurer {
+public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInputPipelineConfigurer {
   private final PluginConfigurer configurer;
   private final String stageName;
   private final DefaultStageConfigurer stageConfigurer;
@@ -116,6 +118,11 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer {
 
   @Override
   public DefaultStageConfigurer getStageConfigurer() {
+    return stageConfigurer;
+  }
+
+  @Override
+  public MultiInputStageConfigurer getMultiInputStageConfigurer() {
     return stageConfigurer;
   }
 }

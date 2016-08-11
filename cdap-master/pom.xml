@@ -351,7 +351,7 @@
                         ${project.parent.basedir}/cdap-kms/target/
                       </directory>
                       <includes>
-                        <include>co.cask.cdap.cdap-kms-${project.version}.jar</include>
+                        <include>*.jar</include>
                       </includes>
                     </resource>
                   </resources>

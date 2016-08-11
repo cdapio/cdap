@@ -426,7 +426,7 @@ public class ArtifactRepository {
     // This method is used to add user app artifacts, so enforce authorization on the specified, non-system namespace
     Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespace = artifactId.getNamespace().toEntityId();
-    authorizer.enforce(namespace, principal, Action.WRITE);
+    authorizationEnforcer.enforce(namespace, principal, Action.WRITE);
 
     ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
                                                 Collections.<String, String>emptyMap());
@@ -503,7 +503,7 @@ public class ArtifactRepository {
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
   public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
-    authorizer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -525,7 +525,7 @@ public class ArtifactRepository {
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
   public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
-    authorizer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -548,7 +548,7 @@ public class ArtifactRepository {
    *                               able to remove a property, users must have admin privileges on the artifact
    */
   public void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception {
-    authorizer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -573,7 +573,7 @@ public class ArtifactRepository {
    *                               able to remove properties, users must have admin privileges on the artifact
    */
   public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
-    authorizer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -615,7 +615,7 @@ public class ArtifactRepository {
       LOG.trace("Skipping authorization enforcement since it is being called with the system principal. This is " +
                   "so the SystemArtifactLoader can load system artifacts.");
     } else {
-      authorizer.enforce(instanceId, principal, Action.WRITE);
+      authorizationEnforcer.enforce(instanceId, principal, Action.WRITE);
     }
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
@@ -730,9 +730,9 @@ public class ArtifactRepository {
     // for deleting non-system artifacts, users need admin privileges on the artifact being deleted.
     Principal principal = authenticationContext.getPrincipal();
     if (NamespaceId.SYSTEM.equals(artifactId.getNamespace().toEntityId())) {
-      authorizer.enforce(instanceId, principal, Action.ADMIN);
+      authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
     } else {
-      authorizer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
+      authorizationEnforcer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
     }
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648

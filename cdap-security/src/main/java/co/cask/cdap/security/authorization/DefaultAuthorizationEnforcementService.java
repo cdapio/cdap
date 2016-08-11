@@ -20,6 +20,7 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.ParentedId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
@@ -85,17 +86,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
       return;
     }
 
-    Set<Action> allowedActions = getPrivileges(principal).get(entity);
-    LOG.trace("Enforcing actions {} on {} for {}. Allowed actions are {}", actions, entity, principal, allowedActions);
-    if (allowedActions == null) {
-      throw new UnauthorizedException(principal, actions, entity);
-    }
-
-    // If a principal has ALL privileges on the entity, authorization should succeed
-    // Otherwise check for the specific actions requested
-    if (!allowedActions.contains(Action.ALL) && !allowedActions.containsAll(actions)) {
-      throw new UnauthorizedException(principal, Sets.difference(actions, allowedActions), entity);
-    }
+    doEnforce(entity, principal, actions, true);
   }
 
   @Override
@@ -117,7 +108,11 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
     return new Predicate<EntityId>() {
       @Override
       public boolean apply(EntityId entityId) {
-        return allowedEntities.contains(entityId);
+        boolean parentPassed = false;
+        if (entityId instanceof ParentedId) {
+          parentPassed = apply(((ParentedId) entityId).getParent());
+        }
+        return (parentPassed || allowedEntities.contains(entityId));
       }
     };
   }
@@ -138,5 +133,33 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
 
   protected boolean isSecurityAuthorizationEnabled() {
     return securityEnabled && authorizationEnabled;
+  }
+
+  private boolean doEnforce(EntityId entity, Principal principal,
+                            Set<Action> actions, boolean exceptionOnFailure) throws Exception {
+    if (entity instanceof ParentedId) {
+      if (doEnforce(((ParentedId) entity).getParent(), principal, actions, false)) {
+        return true;
+      }
+    }
+
+    Set<Action> allowedActions = getPrivileges(principal).get(entity);
+    LOG.trace("Enforcing actions {} on {} for {}. Allowed actions are {}", actions, entity, principal, allowedActions);
+    if (allowedActions == null) {
+      if (exceptionOnFailure) {
+        throw new UnauthorizedException(principal, actions, entity);
+      }
+      return false;
+    }
+
+    // If a principal has ALL privileges on the entity, authorization should succeed
+    // Otherwise check for the specific actions requested
+    if (allowedActions.contains(Action.ALL) || allowedActions.containsAll(actions)) {
+      return true;
+    }
+    if (exceptionOnFailure) {
+      throw new UnauthorizedException(principal, Sets.difference(actions, allowedActions), entity);
+    }
+    return false;
   }
 }

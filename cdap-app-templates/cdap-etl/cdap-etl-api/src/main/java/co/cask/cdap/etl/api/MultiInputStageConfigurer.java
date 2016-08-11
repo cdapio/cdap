@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,22 +19,21 @@ package co.cask.cdap.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * This stores the input schema that is passed to this stage from other stages in the pipeline and
+ * This stores the input schemas that are passed to this stage from other stages in the pipeline and
  * the output schema that could be sent to the next stages from this stage.
  */
 @Beta
-public interface StageConfigurer {
-
+public interface MultiInputStageConfigurer {
   /**
-   * get the input schema for this stage, or null if its unknown
+   * get the map of input stageName to input schema for this stage, or return empty map if its unknown
    *
-   * @return input schema
+   * @return map of input schemas
    */
-  @Nullable
-  Schema getInputSchema();
+  Map<String, Schema> getInputSchemas();
 
   /**
    * set output schema for this stage, or null if its unknown
@@ -42,5 +41,4 @@ public interface StageConfigurer {
    * @param outputSchema output schema for this stage
    */
   void setOutputSchema(@Nullable Schema outputSchema);
-
 }

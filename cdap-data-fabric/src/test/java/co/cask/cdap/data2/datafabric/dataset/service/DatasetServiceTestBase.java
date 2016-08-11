@@ -227,13 +227,15 @@ public abstract class DatasetServiceTestBase {
     DatasetInstanceManager instanceManager =
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
     PrivilegesManager privilegesManager = injector.getInstance(PrivilegesManager.class);
-    instanceService = new DatasetInstanceService(typeManager, instanceManager, opExecutor, exploreFacade,
-                                                 namespaceQueryAdmin, authEnforcer, privilegesManager,
-                                                 authenticationContext);
 
     DatasetTypeService typeService = new DatasetTypeService(
       typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, privilegesManager, authenticationContext,
       cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, txExecutorFactory, defaultModules);
+
+    instanceService = new DatasetInstanceService(typeService, instanceManager, opExecutor, exploreFacade,
+                                                 namespaceQueryAdmin, authEnforcer, privilegesManager,
+                                                 authenticationContext);
+
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
                                  opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService);
 

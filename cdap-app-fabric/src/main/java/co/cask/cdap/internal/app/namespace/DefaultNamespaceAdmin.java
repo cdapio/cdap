@@ -62,11 +62,14 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Admin for managing namespaces.
@@ -137,6 +140,11 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       throw new NamespaceAlreadyExistsException(namespace.toId());
     }
 
+    // if this namespace has custom mapping then validate the given custom mapping
+    if (hasCustomMapping(metadata)) {
+      validateCustomMapping(metadata);
+    }
+
     // Namespace can be created. Check if the user is authorized now.
     Principal principal = authenticationContext.getPrincipal();
     // Skip authorization enforcement for the system user and the default namespace, so the DefaultNamespaceEnsurer
@@ -166,7 +174,70 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       }
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
+  }
 
+  private void validateCustomMapping(NamespaceMeta metadata) throws Exception {
+    for (NamespaceMeta existingNamespaceMeta : list()) {
+      NamespaceConfig existingConfig = existingNamespaceMeta.getConfig();
+      // if hbase namespace is provided validate no other existing namespace is mapped to it
+      if (!Strings.isNullOrEmpty(metadata.getConfig().getHbaseNamespace()) &&
+        metadata.getConfig().getHbaseNamespace().equals(existingConfig.getHbaseNamespace())) {
+        throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
+                                                  String.format("A namespace '%s' already exists with the given " +
+                                                                  "namespace mapping for hbase namespace '%s'",
+                                                                existingNamespaceMeta.getName(),
+                                                                existingConfig.getHbaseNamespace()));
+      }
+      // if hive database is provided validate no other existing namespace is mapped to it
+      if (!Strings.isNullOrEmpty(metadata.getConfig().getHiveDatabase()) &&
+        metadata.getConfig().getHiveDatabase().equals(existingConfig.getHiveDatabase())) {
+        throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
+                                                  String.format("A namespace '%s' already exists with the given " +
+                                                                  "namespace mapping for hive database '%s'",
+                                                                existingNamespaceMeta.getName(),
+                                                                existingConfig.getHiveDatabase()));
+      }
+      if (!Strings.isNullOrEmpty(metadata.getConfig().getRootDirectory())) {
+        // check that the given root directory path is an absolute path
+        validatePath(metadata);
+        // make sure that this new location is not same as some already mapped location or subdir of the existing
+        // location or vice versa.
+        if (hasSubDirRelationship(existingConfig.getRootDirectory(), metadata.getConfig().getRootDirectory())) {
+          throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
+                                                    String.format("Failed to create namespace %s with custom " +
+                                                                    "location %s. A namespace '%s' already exists " +
+                                                                    "with location '%s' and these two locations are " +
+                                                                    "have a subdirectory relationship.",
+                                                                  metadata.getName(),
+                                                                  metadata.getConfig().getRootDirectory(),
+                                                                  existingNamespaceMeta.getName(),
+                                                                  existingConfig.getRootDirectory()));
+        }
+      }
+    }
+  }
+
+  private boolean hasSubDirRelationship(@Nullable String existingDir, String newDir) {
+    // only check for subdir if the existing namespace dir is custom mapped in which case this will not be null
+    return !Strings.isNullOrEmpty(existingDir) &&
+      (Paths.get(newDir).startsWith(existingDir) || Paths.get(existingDir).startsWith(newDir));
+  }
+
+  private boolean hasCustomMapping(NamespaceMeta metadata) {
+    NamespaceConfig config = metadata.getConfig();
+    return !(Strings.isNullOrEmpty(config.getRootDirectory()) && Strings.isNullOrEmpty(config.getHbaseNamespace()) &&
+      Strings.isNullOrEmpty(config.getHiveDatabase()));
+  }
+
+  private void validatePath(NamespaceMeta namespaceMeta) throws IOException {
+    // a custom location was provided
+    // check that its an absolute path
+    File customLocation = new File(namespaceMeta.getConfig().getRootDirectory());
+    if (!customLocation.isAbsolute()) {
+      throw new IOException(String.format(
+        "Cannot create the namespace '%s' with the given custom location %s. Custom location must be absolute path.",
+        namespaceMeta.getName(), customLocation));
+    }
   }
 
   /**

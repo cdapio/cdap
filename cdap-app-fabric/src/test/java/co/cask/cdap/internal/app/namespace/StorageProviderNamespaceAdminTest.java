@@ -124,8 +124,22 @@ public class StorageProviderNamespaceAdminTest {
     } catch (IOException e) {
       // expected
     }
-    // delete the content of the custom location and retry creating the namespace
+    // delete the content of the custom location
     Assert.assertTrue(dir1.delete());
+
+    // test failure if custom location is a file
+    File randomFile = new File(custom, "file1");
+    Assert.assertTrue(randomFile.createNewFile());
+    try {
+      storageProviderNamespaceAdmin.create(new NamespaceMeta.Builder(customSpaceMeta)
+                                             .setRootDirectory(randomFile.toString()).build());
+      Assert.fail("Expected exception to be thrown while creating namespace with custom location since the custom " +
+                    "location is not a directory");
+    } catch (IOException e) {
+      // expected
+    }
+    // delete the file and retry creating the namespace
+    Assert.assertTrue(randomFile.delete());
 
     storageProviderNamespaceAdmin.create(customSpaceMeta);
     // create some directories and files inside the custom mapped location

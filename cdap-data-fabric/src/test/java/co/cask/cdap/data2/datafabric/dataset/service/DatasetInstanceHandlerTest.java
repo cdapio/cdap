@@ -489,7 +489,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       validateGet(getUrl("inval+d", "/data/datasets"), 400);
       validatePut(getUrl("/data/datasets"), "", 405);
       validatePost(getUrl("/data/datasets"), "", 405);
-      validateDelete(getUrl("/data/datasets"), 405);
 
       validateGet(getUrl("/data/datasets/nusuch"), 404);
       validateGet(getUrl("/data/datasets/nusüch"), 400);
@@ -536,6 +535,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       validatePut(getUrl("nosuchns", "/data/datasets/x/properties"), "{}", 404);
       validatePut(getUrl("nosuchns", "/data/datasets/x/properties"), "{", 400, 404);
       validatePut(getUrl("inval+dns", "/data/datasets/x/properties"), "{'x':'y'}", 400);
+
+      validateDelete(getUrl("/data/datasets"), 200);
     } finally {
       // cleanup
       deleteInstance("x");
