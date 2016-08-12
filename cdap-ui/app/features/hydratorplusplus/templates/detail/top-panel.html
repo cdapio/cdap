@@ -36,13 +36,15 @@
             tooltip-placement="bottom-left"
             tooltip-append-to-body="true"
             tooltip-class="toppanel-tooltip"
-            ng-bind="::TopPanelCtrl.app.name">
+            ng-bind="::TopPanelCtrl.app.name"
+            ng-class="{'name-only': !TopPanelCtrl.app.description}">
         </h1>
         <p tooltip-placement="bottom"
            tooltip-append-to-body="true"
            tooltip-class="toppanel-tooltip"
            uib-tooltip-html="TopPanelCtrl.tooltipDescription"
-           ng-bind="::TopPanelCtrl.app.description">
+           ng-bind="::TopPanelCtrl.app.description"
+           ng-if="TopPanelCtrl.app.description">
         </p>
       </div>
     </div>
