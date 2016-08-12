@@ -14,7 +14,7 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
@@ -29,10 +29,10 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   };
 
   var pollPromise = null;
-
+  var programType = ProgramsHelpers.getSingularName(this.programType);
   var apiSettings = {
     metric : {
-      context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.runid.${this.runId}`,
+      context: `namespace.${this.namespaceId}.app.${this.appId}.${programType}.${this.programId}.run.${this.runId}`,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
       startTime : '',
       endTime : '',
@@ -61,6 +61,8 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
     }, (err) => {
+      // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
+      $scope.initialize();
       console.log('ERROR: ', err);
     });
   };
