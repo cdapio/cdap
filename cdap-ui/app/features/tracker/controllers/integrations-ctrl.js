@@ -167,7 +167,7 @@ class TrackerIntegrationsController {
               appId: this.UI_CONFIG.navigator.appId,
               programType: 'flows',
               programId: this.UI_CONFIG.navigator.programId,
-              runId: res[0].runid
+              runId: res[0].runid.length ? res[0].runid : ''
             };
           } else {
             this.dataSrc.stopPoll(this.pollId.__pollId__);

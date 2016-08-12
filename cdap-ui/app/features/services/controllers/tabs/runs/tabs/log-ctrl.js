@@ -17,15 +17,11 @@
 angular.module(PKG.name + '.feature.services')
   .controller('ServicesRunDetailLogController', function($scope, $state) {
 
-    if (!$scope.RunsController.runs.length) {
-      return;
-    }
-
     this.params = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       programType: 'services',
       programId: $state.params.programId,
-      runId: $scope.RunsController.runs.selected.runid,
+      runId: $scope.RunsController.runs.length ? $scope.RunsController.runs.selected.runid : ''
     };
   });
