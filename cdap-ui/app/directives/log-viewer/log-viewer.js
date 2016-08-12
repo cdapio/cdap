@@ -426,8 +426,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         if(i < this.displayData.length && this.toggleExpandAll && (i+1 === this.displayData.length || !this.displayData[i+1].stackTrace)){
           this.displayData[i].selected = true;
-          var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[i]));
-          stackTraceObj.stackTrace = true;
+          let stackTraceObj = {
+            log: {
+              timestamp: this.displayData[i].log.timestamp,
+              stackTrace: this.displayData[i].log.stackTrace,
+            },
+            stackTrace: true
+          };
           this.displayData.splice(i+1, 0, stackTraceObj);
           len++;
         } else if(!this.toggleExpandAll && !entry.stackTrace && i+1 < this.displayData.length && this.displayData[i+1].stackTrace){
