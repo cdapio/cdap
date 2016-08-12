@@ -120,7 +120,7 @@ Installation
 
             $ ./bin/cdap-cli.sh
             
-            Successfully connected to CDAP instance at \http://localhost:10000/default
+            Successfully connected to CDAP instance at \http://localhost:11015/default
             |cdap >| 
 
 

@@ -109,7 +109,7 @@ There are three ways to start the Spark program:
    .. tabbed-parsed-literal::
 
      $ curl -w"\n" -X POST -d '{"kafka.brokers":"broker1-host:port", "kafka.topics":"topic1,topic2"}' \
-     "http://localhost:10000/v3/namespaces/default/apps/SpamClassifier/spark/SpamClassifierProgram/start"
+     "http://localhost:11015/v3/namespaces/default/apps/SpamClassifier/spark/SpamClassifierProgram/start"
 
 
 Injecting Prediction Data
@@ -141,7 +141,7 @@ To query the *messageClassificationStore* ObjectStore using the ``MessageClassif
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/SpamClassifier/services/MessageClassification/methods/status/1"
+    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/SpamClassifier/services/MessageClassification/methods/status/1"
     
     Ham
 

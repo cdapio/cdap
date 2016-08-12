@@ -107,5 +107,5 @@ with the arguments as a JSON string in the body::
   
 Example using the :ref:`CDAP Standalone SDK <standalone-index>` and ``curl`` (reformatted to fit)::
 
-  curl -w'\n' -X PUT 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances' \
+  curl -w'\n' -X PUT 'http://localhost:11015/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances' \
     -d '{ "instances" : 2 }'

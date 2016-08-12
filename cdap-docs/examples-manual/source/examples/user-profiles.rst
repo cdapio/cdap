@@ -225,7 +225,7 @@ or by making a ``curl`` call:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X DELETE "http://localhost:10000/v3/namespaces/default/data/datasets/profiles"
+  $ curl -w"\n" -X DELETE "http://localhost:11015/v3/namespaces/default/data/datasets/profiles"
   
 Then re-deploy the application.
 

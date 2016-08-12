@@ -126,10 +126,10 @@ To inject a single log event, you can use the ``curl`` command:
 .. tabbed-parsed-literal::
 
   $ curl -d "192.168.252.135 - - [14/Jan/2014:00:12:51 -0400] 'GET /products HTTP/1.1' 500 182 'http://www.example.org' 'Mozilla/5.0'" \
-  "http://localhost:10000/v3/namespaces/default/streams/log"
+  "http://localhost:11015/v3/namespaces/default/streams/log"
 
 This sends the log event (formatted in the Common Log Format or CLF) to the CDAP instance located at
-``localhost`` and listening on port ``10000``.
+``localhost`` and listening on port ``11015``.
 
 The application includes sample logs, located in ``examples/resources/accesslog.txt`` that you can inject 
 using the CDAP Commmand Line Interface:

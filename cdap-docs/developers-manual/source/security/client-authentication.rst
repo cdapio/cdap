@@ -149,7 +149,7 @@ The following request and response descriptions apply to all CDAP HTTP RESTful e
 
    GET <base-url>/<resource> HTTP/1.1
 
-The ``<base-url>`` is typically ``http://<host>:10000`` or
+The ``<base-url>`` is typically ``http://<host>:11015`` or
 ``https://<host>:10443``, as described in the :ref:`RESTful API Conventions
 <reference:http-restful-api-conventions-base-url>`.
 

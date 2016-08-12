@@ -44,7 +44,7 @@ collection and consumption of data.
 They can easily be created by using the CDAP Command Line Interface (CLI).
 First, connect to your CDAP instance using the CLI::
 
-  cdap > connect <hostname>:10000
+  cdap > connect <hostname>:11015
 
 Next, create a stream::
 
