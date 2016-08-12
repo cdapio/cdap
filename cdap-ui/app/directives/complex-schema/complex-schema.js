@@ -73,7 +73,8 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
       if (!schemaJson) {
         return true;
       }
-      if (angular.isObject(schemaJson) && !schemaJson.fields.length) {
+      // FIXME: The weird _fields was encountered when I used imported through plugin-functions. 
+      if (angular.isObject(schemaJson) && !(schemaJson.fields||schemaJson._fields).length) {
         return true;
       }
       return false;
@@ -86,6 +87,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     }
     if (isEmptySchema(strJson) && vm.isDisabled) {
       vm.emptySchema = true;
+      return;
     }
     let parsed = avsc.parse(strJson, { wrapUnions: true });
     recordName = vm.recordName || parsed._name;

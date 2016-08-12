@@ -142,12 +142,12 @@ angular.module(PKG.name + '.feature.admin')
       var arr = [];
       var inputJson;
       try {
-        inputJson = JSON.parse(angular.toJson(input);
+        inputJson = JSON.parse(angular.toJson(input));
       } catch(e) {
         console.log('ERROR: ', e);
         return arr;
       }
-      angular.forEach(), function(v, k) {
+      angular.forEach(inputJson, function(v, k) {
         arr.push({
           key: k,
           value: v
