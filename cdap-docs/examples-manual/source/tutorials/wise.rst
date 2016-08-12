@@ -605,7 +605,7 @@ With WISE, you can explore the datasets using SQL queries. The SQL interface on 
 called *Explore*, can be accessed through the CDAP UI:
 
 1. After deploying WISE in your Standalone CDAP instance, go to the *WISE* 
-   `overview page <http://localhost:9999/ns/default/apps/Wise/overview/status>`__:
+   `overview page <http://localhost:11011/ns/default/apps/Wise/overview/status>`__:
 
    .. image:: ../_images/wise_overview.png 
      :width: 8in

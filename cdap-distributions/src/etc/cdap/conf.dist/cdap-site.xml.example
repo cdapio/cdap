@@ -160,7 +160,7 @@
   
   <property>
     <name>dashboard.bind.port</name>
-    <value>9999</value>
+    <value>11011</value>
     <description>
       CDAP UI bind port
     </description>

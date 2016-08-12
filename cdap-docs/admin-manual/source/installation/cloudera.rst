@@ -483,7 +483,7 @@ show in the list for the cluster where you installed it. You can select it, and 
 Summary* should all turn green, showing completion of startup. 
 
 The *Quick Links* includes a link to the **CDAP UI**, which by default is running on
-port ``9999`` of the host where the UI role instance is running.
+port ``11011`` of the host where the UI role instance is running.
 
 .. figure:: ../_images/cloudera/cloudera-csd-09.png
    :figwidth: 100%

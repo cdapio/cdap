@@ -82,7 +82,7 @@ Installation
           
             Starting Standalone CDAP ................
             Standalone CDAP started successfully.
-            Connect to the CDAP UI at http://localhost:9999
+            Connect to the CDAP UI at http://localhost:11011
             
             .. Windows
             
@@ -92,7 +92,7 @@ Installation
           
             Starting Standalone CDAP ................
             Standalone CDAP started successfully.
-            Connect to the CDAP UI at http://localhost:9999
+            Connect to the CDAP UI at http://localhost:11011
             
 
 .. container:: table-block

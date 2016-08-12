@@ -61,7 +61,7 @@
       "uninstallScriptActions": [],
       "httpsEndpoints": [{
        "subDomainSuffix": "gui",
-       "destinationPort": 9999,
+       "destinationPort": 11011,
        "accessModes": ["webpage"]
       },
       {

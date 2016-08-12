@@ -12,16 +12,16 @@ Building and Running CDAP Applications
 .. |example-dir| replace:: <example-directory>
 
 .. |development| replace:: *Development Home*
-.. _development: http://localhost:9999/ns/default
+.. _development: http://localhost:11011/ns/default
 
 .. |all_apps| replace:: *All Applications*
-.. _all_apps: http://localhost:9999/ns/default/apps
+.. _all_apps: http://localhost:11011/ns/default/apps
 
 .. |management| replace:: *Management Applications*
-.. _management: http://localhost:9999/admin/namespace/detail/default/apps
+.. _management: http://localhost:11011/admin/namespace/detail/default/apps
 
 .. |datasets| replace:: *Management Datasets*
-.. _datasets: http://localhost:9999/admin/namespace/detail/default/data
+.. _datasets: http://localhost:11011/admin/namespace/detail/default/data
 
 
 .. highlight:: console
@@ -87,7 +87,7 @@ Starting CDAP
 Before running an example application, check that an instance of CDAP is running and available; if not,
 follow the instructions for :ref:`Starting and Stopping Standalone CDAP. <start-stop-cdap>`
 
-If you can reach the CDAP UI through a browser at `http://localhost:9999/ <http://localhost:9999/>`__, 
+If you can reach the CDAP UI through a browser at `http://localhost:11011/ <http://localhost:11011/>`__, 
 CDAP is running.
 
 .. _cdap-building-running-deploying:

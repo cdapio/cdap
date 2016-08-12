@@ -198,7 +198,7 @@ For example, such a conflict would show as (reformatted to fit)::
 
 (The log file is located at ``<CDAP-SDK-HOME>/logs/cdap-debug.log``. You should also see 
 error in the CDAP UI, in the `UserProfileService error log 
-<http://localhost:9999/ns/default/apps/UserProfiles/programs/services/UserProfileService/logs?filter=error>`__.)
+<http://localhost:11011/ns/default/apps/UserProfiles/programs/services/UserProfileService/logs?filter=error>`__.)
 
 Note that in order to see this happen (and to change from row- to column- and vice-versa),
 you need to :ref:`delete the existing dataset <user-profiles-delete-dataset>` ``profiles``

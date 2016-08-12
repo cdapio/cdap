@@ -86,7 +86,7 @@ Administrators can check the health of various services in the system.
 
 - To retrieve the **health check of the CDAP UI**, make a GET request to the URI::
 
-    http://<host>:9999/status
+    http://<host>:11011/status
 
 - To retrieve the **health check of the CDAP Router**, make a GET request to the URI::
 
