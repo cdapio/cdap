@@ -73,8 +73,9 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
       if (!schemaJson) {
         return true;
       }
-      // FIXME: The weird _fields was encountered when I used imported through plugin-functions. 
-      if (angular.isObject(schemaJson) && !(schemaJson.fields||schemaJson._fields).length) {
+      // we need to check if schemaJson has fields or is already returned by avsc parser in which case the fields will be
+      // accessed using getFields() function.
+      if (angular.isObject(schemaJson) && !(schemaJson.fields || ( schemaJson.getFields && schemaJson.getFields()) || []).length) {
         return true;
       }
       return false;

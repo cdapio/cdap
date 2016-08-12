@@ -48,9 +48,6 @@
           ng-model="inputschema.schema"
           is-disabled="true">
         </my-complex-schema>
-        <div ng-if="::(inputschema.schema.fields.length === 0 || !inputschema.schema)">
-          <p>There is no input schema</p>
-        </div>
       </div>
     </div>
     <div ng-if="!MyInputSchemaCtrl.inputSchemas.length">

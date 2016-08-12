@@ -122,9 +122,11 @@ function SqlSelectorController() {
         schema = JSON.parse(input.schema);
       } catch(e) {
         console.log('ERROR: ', e);
-        return;
+        schema = {
+          fields: []
+        };
       }
-      schema.fields
+      schema = schema.fields
         .map((field) => {
           if (initialModel[input.name] && initialModel[input.name][field.name]) {
             field.selected = true;

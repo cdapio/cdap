@@ -82,6 +82,7 @@ function SqlConditionsController() {
       } catch (e) {
         console.log('ERROR: ', e);
         vm.error = 'Error parsing input schemas.';
+        vm.mapInputSchema[input.name] = [];
       }
     });
 
