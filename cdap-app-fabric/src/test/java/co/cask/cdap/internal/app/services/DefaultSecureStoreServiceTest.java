@@ -59,6 +59,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -208,9 +209,10 @@ public class DefaultSecureStoreServiceTest {
   private void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
     authorizer.revoke(entityId, principal, actions);
+    Set<Privilege> revokedPrivileges = new HashSet<>();
     for (Action action : actions) {
-      existingPrivileges.remove(new Privilege(entityId, action));
+      revokedPrivileges.add(new Privilege(entityId, action));
     }
-    Assert.assertEquals(existingPrivileges, authorizer.listPrivileges(principal));
+    Assert.assertEquals(Sets.difference(existingPrivileges, revokedPrivileges), authorizer.listPrivileges(principal));
   }
 }
