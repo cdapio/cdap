@@ -120,8 +120,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     if(this.displayData[index].log.stackTrace){
       this.displayData[index].selected = true;
-      var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[index]));
-      stackTraceObj.stackTrace = true;
+      let stackTraceObj = {
+        log: {
+          timestamp: this.displayData[index].log.timestamp,
+          stackTrace: this.displayData[index].log.stackTrace,
+        },
+        stackTrace: true
+      };
       this.displayData.splice(index+1, 0, stackTraceObj);
     } else {
       //otherwise, it does not have stack trace but has been selected
