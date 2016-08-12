@@ -22,6 +22,7 @@ import co.cask.cdap.proto.RunRecord;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -70,6 +71,33 @@ public interface ProgramManager<T extends ProgramManager> {
    * @throws InterruptedException if the method is interrupted while waiting for the status.
    */
   void waitForStatus(boolean status) throws InterruptedException;
+
+  /**
+   * Blocks until at least the one run record is available with the given {@link ProgramRunStatus}.
+   *
+   * @param status the status of the run record
+   * @param timeout amount of time units to wait
+   * @param timeoutUnit time unit type
+   * @throws InterruptedException if method is interrupted while waiting for runs
+   * @throws TimeoutException if timeout reached
+   * @throws ExecutionException if error getting runs
+   */
+  void waitForRun(ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException;
+
+  /**
+   * Blocks until at least {@code runCount} number of run records with the given {@link ProgramRunStatus}.
+   *
+   * @param status the status of the run record
+   * @param runCount the number of run records to wait for
+   * @param timeout amount of time units to wait
+   * @param timeoutUnit time unit type
+   * @throws InterruptedException if method is interrupted while waiting for runs
+   * @throws TimeoutException if timeout reached
+   * @throws ExecutionException if error getting runs
+   */
+  void waitForRuns(ProgramRunStatus status, int runCount, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException;
 
   /**
    * Wait for the status of the program, retrying a given number of times with a timeout between attempts.

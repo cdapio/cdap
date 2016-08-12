@@ -356,7 +356,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(AppWithPlugin.WORKFLOW);
     workflowManager.start();
-    workflowManager.waitForFinish(10, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     List<RunRecord> runRecords = workflowManager.getHistory();
     Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
     DataSetManager<KeyValueTable> workflowTableManager = getDataset(AppWithPlugin.WORKFLOW_TABLE);
@@ -557,7 +557,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
                                           "action.success.file", actionSuccess.getAbsolutePath(),
                                           "throw.exception", "true"));
-    workflowManager.waitForFinish(1, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
 
     // Since action and workflow failed the files should not exist
     Assert.assertFalse(workflowSuccess.exists());
@@ -565,7 +565,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
                                           "action.success.file", actionSuccess.getAbsolutePath()));
-    workflowManager.waitForFinish(1, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
     Assert.assertTrue(workflowSuccess.exists());
     Assert.assertTrue(actionSuccess.exists());
 
@@ -576,7 +576,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                                           "test.killed", "true"));
     verifyFileExists(Lists.newArrayList(firstFile));
     workflowManager.stop();
-    workflowManager.waitForStatus(false);
+    workflowManager.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
     Assert.assertTrue(workflowKilled.exists());
   }
 
@@ -591,7 +591,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStatus(true);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(DatasetWithCustomActionApp.CUSTOM_WORKFLOW).start();
-    workflowManager.waitForFinish(2, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
     appManager.stopAll();
 
     DataSetManager<KeyValueTable> outTableManager = getDataset(DatasetWithCustomActionApp.CUSTOM_TABLE);

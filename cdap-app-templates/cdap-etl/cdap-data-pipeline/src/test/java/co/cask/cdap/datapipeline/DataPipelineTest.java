@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
@@ -80,7 +79,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -120,35 +118,34 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   public void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
+    ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
+                                                                    "${value}"));
+    ETLStage action2 = new ETLStage("action2", MockAction.getPlugin("actionTable", "action2.row", "action2.column",
+                                                                    "action2.value"));
 
-      ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
-                                                                               "${value}"));
-      ETLStage action2 = new ETLStage("action2", MockAction.getPlugin("actionTable", "action2.row", "action2.column",
-                                                                     "action2.value"));
+    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
+      .addStage(action1)
+      .addStage(action2)
+      .addConnection(new Connection(action1.getName(), action2.getName()))
+      .setEngine(engine)
+      .build();
 
-      ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
-        .addStage(action1)
-        .addStage(action2)
-        .addConnection(new Connection(action1.getName(), action2.getName()))
-        .setEngine(engine)
-        .build();
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.of("value", "macroValue");
 
-      // set runtime arguments for macro substitution
-      Map<String, String> runtimeArguments = ImmutableMap.of("value", "macroValue");
+    AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
+      new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("macroActionTest-" + engine);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+    WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    manager.setRuntimeArgs(runtimeArguments);
+    manager.start(ImmutableMap.of("logical.start.time", "0"));
+    manager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
-      AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
-        new AppRequest<>(APP_ARTIFACT, etlConfig);
-      ApplicationId appId = NamespaceId.DEFAULT.app("macroActionTest");
-      ApplicationManager appManager = deployApplication(appId, appRequest);
-      WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-      manager.setRuntimeArgs(runtimeArguments);
-      manager.start(ImmutableMap.of("logical.start.time", "0"));
-      manager.waitForFinish(3, TimeUnit.MINUTES);
+    DataSetManager<Table> actionTableDS = getDataset("actionTable");
+    Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
 
-      DataSetManager<Table> actionTableDS = getDataset("actionTable");
-      Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
-
-      appManager.getHistory(appId.workflow(SmartWorkflow.NAME).toId(), ProgramRunStatus.FAILED);
+    appManager.getHistory(appId.workflow(SmartWorkflow.NAME).toId(), ProgramRunStatus.FAILED);
   }
 
   @Test
@@ -182,7 +179,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> actionTableDS = getDataset(actionTable);
     Assert.assertEquals(action1Value, MockAction.readOutput(actionTableDS, action1RowKey, action1ColumnKey));
@@ -255,7 +252,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("MyApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("MyApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
 
@@ -272,7 +269,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // check sink
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
@@ -317,7 +314,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // check sink
     DataSetManager<Table> sinkManager = getDataset("singleOutput");
@@ -359,7 +356,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("SimpleMultiSourceApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("SimpleMultiSourceApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     // there should be only two programs - one workflow and one mapreduce/spark
@@ -379,7 +376,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // check sink
     DataSetManager<Table> sinkManager = getDataset(sinkName);
@@ -435,7 +432,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("MultiSourceApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("MultiSourceApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     // there should be only two programs - one workflow and one mapreduce/spark
@@ -459,7 +456,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // sink1 should get records from source1 and source2
     DataSetManager<Table> sinkManager = getDataset(sink1Name);
@@ -526,7 +523,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("LinearAggApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("LinearAggApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema schema = Schema.recordOf(
@@ -544,7 +541,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // check output
     DataSetManager<Table> sinkManager = getDataset(sinkName);
@@ -591,7 +588,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
     Schema inputSchema = Schema.recordOf(
       "testRecord",
@@ -613,7 +610,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     Schema outputSchema1 = Schema.recordOf(
       "user.count",
@@ -694,7 +691,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> tokenTableManager = getDataset(NamespaceId.DEFAULT.dataset("tokenTable"));
     Table tokenTable = tokenTableManager.get();
@@ -759,10 +756,9 @@ public class DataPipelineTest extends HydratorTestBase {
     textsToClassify.send("genuine report");
 
     // manually trigger the pipeline
-    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
-
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> classifiedTexts = getDataset(NaiveBayesTrainer.CLASSIFIED_TEXTS);
 
@@ -815,8 +811,7 @@ public class DataPipelineTest extends HydratorTestBase {
     // manually trigger the pipeline
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
-
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> classifiedTexts = getDataset(classifiedTextsTable);
     List<StructuredRecord> structuredRecords = MockSink.readOutput(classifiedTexts);
@@ -905,7 +900,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("InnerJoinApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema outSchema = Schema.recordOf(
@@ -948,8 +943,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
-
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema)
       .set("customer_id", "1").set("customer_name", "samuel")
@@ -1034,7 +1028,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("OuterJoinApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema outSchema = Schema.recordOf(
@@ -1080,8 +1074,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
-
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema)
       .set("customer_id", "1").set("customer_name", "samuel")
@@ -1205,7 +1198,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1).set("customer_id", "1")
@@ -1237,8 +1230,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
-
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema2)
       .set("customer_id", "1").set("customer_name", "samuel")
@@ -1291,7 +1283,7 @@ public class DataPipelineTest extends HydratorTestBase {
                                           "secure dataset name", new HashMap<String, String>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("App");
+    ApplicationId appId = NamespaceId.DEFAULT.app("App-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -1301,7 +1293,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertNull(getDataset(prefix + "MockSecureSinkDataset").get());
 
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // now the datasets should exist
     Assert.assertNotNull(getDataset(prefix + "MockSecureSourceDataset").get());
@@ -1379,16 +1371,9 @@ public class DataPipelineTest extends HydratorTestBase {
     // Create input files
     MockExternalSource.writeInput(new File(inputDir, inputFile).getAbsolutePath(), allInput);
 
-    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
-    // make sure the completed run record is stamped, before asserting it.
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workflowManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     List<RunRecord> history = workflowManager.getHistory();
     // there should be only one completed run
     Assert.assertEquals(1, history.size());
@@ -1436,7 +1421,7 @@ public class DataPipelineTest extends HydratorTestBase {
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.setRuntimeArgs(runtimeArguments);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // now the datasets should exist
     Assert.assertNotNull(getDataset("mockRuntimeMRSourceDataset").get());
@@ -1479,7 +1464,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertNull(getDataset("mockRuntimeSparkSinkDataset").get());
 
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // now the datasets should exist
     Assert.assertNotNull(getDataset("mockRuntimeSparkSourceDataset").get());
@@ -1521,7 +1506,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     workflowManager.setRuntimeArgs(runtimeArguments);
     workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
   }
 
   private void validateMetric(long expected, ApplicationId appId,

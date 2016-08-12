@@ -67,7 +67,7 @@ final class WorkflowProgramController extends AbstractProgramController {
   protected void doCommand(String name, Object value) throws Exception {
     LOG.info("Command ignored {}, {}", name, value);
   }
-  
+
   private void startListen(Service service) {
     // Forward state changes from the given service to this controller.
     service.addListener(new ServiceListenerAdapter() {
