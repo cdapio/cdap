@@ -15,12 +15,12 @@
 -->
 <div class="modal-header clearfix">
   <h3 class="modal-title pull-left">
-    <strong ng-if="!PluginTemplatesCtrl.isEdit">
+    <span ng-if="!PluginTemplatesCtrl.isEdit">
       Create {{PluginTemplatesCtrl.pluginType}} plugin template
-    </strong>
-    <strong ng-if="PluginTemplatesCtrl.isEdit">
+    </span>
+    <span ng-if="PluginTemplatesCtrl.isEdit">
       Edit {{PluginTemplatesCtrl.pluginConfig.pluginTemplate}} Template
-    </strong>
+    </span>
   </h3>
   <div class="btn-group pull-right">
     <a class="btn" ng-click="PluginTemplatesCtrl.cancel()">
