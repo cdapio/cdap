@@ -115,6 +115,10 @@ public class RemoteUGIProvider implements UGIProvider {
 
     Location location = locationFactory.create(URI.create(credentialsURI));
     Credentials credentials = readCredentials(location);
+    boolean deleted = location.delete();
+    if (!deleted) {
+      LOG.warn("Failed to delete location: {}", location);
+    }
     impersonatedUGI.addCredentials(credentials);
     return impersonatedUGI;
   }
