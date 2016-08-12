@@ -275,7 +275,7 @@ angular.module(PKG.name + '.feature.tracker')
             }
           })
           .state('tracker.detail.entity.usage', {
-            url: '/usage?start&end',
+            url: '/usage?startTime&endTime',
             templateUrl: '/assets/features/tracker/templates/usage.html',
             controller: 'TrackerUsageController',
             controllerAs: 'UsageController',

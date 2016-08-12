@@ -21,7 +21,7 @@ angular.module(PKG.name + '.feature.tracker')
       templateUrl: '/assets/features/tracker/directives/typeahead-tracker-tags/typeahead-tracker-tags.html',
       scope: {
         list: '=',
-        model: '=',
+        onSelect: '&',
         onChange: '&'
       },
       controller: 'TypeaheadTrackerTagsCtrl',

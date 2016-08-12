@@ -72,12 +72,11 @@
           <div class="tag-input"
               ng-if="MetadataController.inputOpen"
               ng-class="{'invalid': MetadataController.invalidFormat || MetadataController.duplicateTag}">
-            <div my-escape-close="MetadataController.escapeInput()"
-                ng-keypress="$event.keyCode === 13 && MetadataController.addTag()">
+            <div my-escape-close="MetadataController.escapeInput()">
               <my-typeahead-tracker-tags
                 list="MetadataController.tags.availableTags"
-                model="MetadataController.newTag"
-                on-change="MetadataController.invalidFormat = false; MetadataController.duplicateTag = false">
+                on-select="MetadataController.addTag(input)"
+                on-change="MetadataController.invalidFormat = false">
               </my-typeahead-tracker-tags>
             </div>
           </div>
@@ -164,6 +163,12 @@
            ng-if="MetadataController.activePropertyTab === 0">
         <table class="table table-bordered">
           <tbody>
+            <tr ng-repeat="(key, value) in MetadataController.externalDatasetProperties">
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+              <td></td>
+            </tr>
+
             <tr ng-repeat="(key, value) in MetadataController.properties.user">
               <td>{{ key }}</td>
               <td>{{ value }}</td>
@@ -188,7 +193,7 @@
                        placeholder="Value">
               </td>
               <td class="action text-center">
-                <button class="btn btn-default"
+                <button class="btn btn-default plus"
                         ng-click="MetadataController.addProperty()">
                   <i class="fa fa-plus"></i>
                 </button>
