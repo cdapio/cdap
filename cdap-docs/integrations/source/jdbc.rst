@@ -50,7 +50,7 @@ and executes a query over a CDAP dataset ``mydataset``::
 
   // If your CDAP instance requires an authentication token for connection, specify it here.
   // Replace <cdap-host> and <authentication_token> as appropriate to your installation.
-  String connectionUrl = "jdbc:cdap://<cdap-host>:10000" +
+  String connectionUrl = "jdbc:cdap://<cdap-host>:11015" +
     "?auth.token=<authentication_token>";
 
   // Connect to the CDAP instance

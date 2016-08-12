@@ -124,7 +124,7 @@ use ``3`` as the value.
   .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X POST -d '{spark.SparkPageRankProgram.args="3"}' \
-    "http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start"
+    "http://localhost:11015/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start"
     
 
 Querying the Results
@@ -144,7 +144,7 @@ You can also send a query via an HTTP request using the ``curl`` command. For ex
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST -d '{"url":"http://example.com/page1"}' \
-  "http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/rank"
+  "http://localhost:11015/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/rank"
   
   10  
 
@@ -163,7 +163,7 @@ Using ``curl``:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/total/10"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/total/10"
   
   48
 

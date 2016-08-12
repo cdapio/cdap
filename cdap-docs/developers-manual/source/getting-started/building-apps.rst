@@ -31,11 +31,11 @@ running on it as an *application*. We'll assume that you are running your applic
 the *default* :ref:`namespace <namespaces>`; if not, you will need to adjust commands
 accordingly. For example, in a URL such as::
 
-	http://localhost:10000/v3/namespaces/default/apps...
+	http://localhost:11015/v3/namespaces/default/apps...
 
 to use the namespace *my_namespace*, you would replace ``default`` with ``my_namespace``::
 
-	http://localhost:10000/v3/namespaces/my_namespace/apps...
+	http://localhost:11015/v3/namespaces/my_namespace/apps...
 
 
 Accessing CLI, curl, and the SDK bin
@@ -122,11 +122,11 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
   .. tabbed-parsed-literal::
   
-    $ curl -w"\n" localhost:10000/v3/namespaces/default/artifacts/|example| \
+    $ curl -w"\n" localhost:11015/v3/namespaces/default/artifacts/|example| \
       --data-binary @examples/|example-dir|/target/|example|-|release|.jar
     Artifact added successfully
 
-    $ curl -w"\n" -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/<app name> \
+    $ curl -w"\n" -X PUT -H "Content-Type: application/json" localhost:11015/v3/namespaces/default/apps/<app name> \
       -d '{ "artifact": { "name": "|example|", "version": "|release|", "scope": "user" }, "config": {} }'
     Deploy Complete
 

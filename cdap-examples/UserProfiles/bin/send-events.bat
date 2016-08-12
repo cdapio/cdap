@@ -73,7 +73,7 @@ for /L %%G IN (1 1 !$EVENTS!) DO (
     set /P "=Sending event %%G '!$BODY!' (press CTRL+C to cancel)!CR!" <nul
     set $AUTH=
     if DEFINED $ACCESS_TOKEN set $AUTH=-H "Authorization: Bearer !$ACCESS_TOKEN!"
-    curl !$AUTH! -X POST -d"!$BODY!" "http://!$GATEWAY!:10000/%$ENDPOINT%"
+    curl !$AUTH! -X POST -d"!$BODY!" "http://!$GATEWAY!:11015/%$ENDPOINT%"
     set /a $PING_DELAY=!$DELAY!+1
     ping -n !$PING_DELAY! localhost >nul
 )

@@ -58,7 +58,7 @@ The executable should bring you into a shell, with a prompt similar to:
 
   .. parsed-literal::
   
-    cdap (http://localhost:10000/namespace:default)>
+    cdap (http://localhost:11015/namespace:default)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
 
@@ -67,13 +67,13 @@ This indicates that the CLI is currently set to interact with the CDAP server at
 - To connect to an SSL-enabled CDAP server, run the CLI command ``connect https://example.com``.
 
 For example, with ``CDAP_HOST`` set to ``example.com``, the CLI would be interacting with
-a CDAP instance at ``example.com``, port ``10000``::
+a CDAP instance at ``example.com``, port ``11015``::
 
-  cdap (http://example.com:10000/namespace:default)>
+  cdap (http://example.com:11015/namespace:default)>
 
 To list all of the available commands, enter the CLI command ``help``::
 
-  cdap (http://localhost:10000/namespace:default)> help
+  cdap (http://localhost:11015/namespace:default)> help
   
 In this documentation, to save space, this prompt is abbreviated to:
 
@@ -125,7 +125,7 @@ The CLI can be started with command-line options:
    -u,--uri <arg>           CDAP instance URI to interact with in the format
                             "[http[s]://]<hostname>[:<port>[/<namespace>]]".
                             Defaults to
-                            "http://<hostname>.local:10000".
+                            "http://<hostname>.local:11015".
    -v,--verify-ssl <arg>    If "true", verify SSL certificate when making
                             requests. Defaults to "true".
 
@@ -144,7 +144,7 @@ The CLI can be started with command-line options:
    -u,--uri <arg>           CDAP instance URI to interact with in the format
                             "[http[s]://]<hostname>[:<port>[/<namespace>]]".
                             Defaults to
-                            "http://<hostname>.local:10000".
+                            "http://<hostname>.local:11015".
    -v,--verify-ssl <arg>    If "true", verify SSL certificate when making
                             requests. Defaults to "true".
 

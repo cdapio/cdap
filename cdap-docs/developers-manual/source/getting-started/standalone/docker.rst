@@ -84,7 +84,7 @@ started correctly.
      :dependent: linux-windows
      :languages: console,shell-session
  
-     $ docker run -d --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+     $ docker run -d --name cdap-standalone -p 9999:9999 -p 11015:11015 caskdata/cdap-standalone:|release|
      
    This will start the container, name it ``cdap-standalone``, and setup the proxying of ports.
 

@@ -104,7 +104,7 @@ There are three ways to start the Spark program:
    .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X POST -d '{args="3"}' \
-    "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
+    "http://localhost:11015/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
     
 
 Querying the Results
@@ -123,7 +123,7 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1"
+    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1"
     
     306.52261306532665,306.52261306532665,793.7956448911223
 

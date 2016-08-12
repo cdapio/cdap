@@ -58,7 +58,7 @@ format, the output would be similar to (showing the first portion, reformatted t
   {
     "security.enabled": "false",
     "app.output.dir": "\/programs",
-    "router.server.port": "10000",
+    "router.server.port": "11015",
     "metrics.kafka.partition.size": "10",
     "data.tx.snapshot.local.dir": "data\/tx.snapshot",
     "metrics.worker.threads": "10",

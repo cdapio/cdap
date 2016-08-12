@@ -179,7 +179,7 @@ CDAP SDK directory, using the Command Line Interface:
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
     '{"id":"Alice","firstName":"Alice","lastName":"Bernard","categories":["fruits"]}'
     
-  Successfully connected to CDAP instance at http://localhost:10000/default
+  Successfully connected to CDAP instance at http://localhost:11015/default
   < 200 OK
 
 Injecting Sentences
@@ -216,7 +216,7 @@ To query the *history* ``ObjectStore`` through the |example-service1-italic|, yo
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice"
+    $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice"
 
 The results will be in JSON::
 
@@ -276,12 +276,12 @@ First, submit the query for execution:
   .. Linux
 
   $ curl -w"\n" -X POST -d '{"query": "'"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')"'"}' \
-  "http://localhost:10000/v3/namespaces/default/data/explore/queries"
+  "http://localhost:11015/v3/namespaces/default/data/explore/queries"
 
   .. Windows
   
   > curl -X POST -d "{\"query\": \"SELECT * FROM dataset_history WHERE customer IN (\'Alice\',\'Bob\')\"}" ^
-  "http://localhost:10000/v3/namespaces/default/data/explore/queries"
+  "http://localhost:11015/v3/namespaces/default/data/explore/queries"
   
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::
@@ -293,7 +293,7 @@ status, issue a GET to the query's URL using the handle:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/status"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/status"
 
 Because a SQL query can run for several minutes, you may have to repeat the call until it returns a status of *finished*::
 
@@ -303,7 +303,7 @@ Once execution has finished, you can retrieve the results of the query using the
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/next"
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/next"
 
 This will return |---| up to a limited number |---| the results in JSON format::
 
@@ -318,7 +318,7 @@ retrieved all of the results and you can now close the query:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X DELETE "http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754"
+  $ curl -w"\n" -X DELETE "http://localhost:11015/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754"
 
 
 .. Stopping and Removing the Application

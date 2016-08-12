@@ -137,7 +137,7 @@ To query the ``RetrieveCounts`` service, either:
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP"
+    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP"
 
 .. highlight:: json
 

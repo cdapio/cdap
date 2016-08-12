@@ -401,7 +401,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/AuditLog/methods/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h'
+  $ curl -w'\n' -X GET 'http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/AuditLog/methods/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h'
 
 
 .. highlight:: json-ellipsis
