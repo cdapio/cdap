@@ -71,6 +71,7 @@ public class ExploreExecutorService extends AbstractIdleService {
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
         .addHttpHandlers(handlers)
         .setHost(cConf.get(Constants.Explore.SERVER_ADDRESS))
+        .setPort(cConf.getInt(Constants.Explore.SERVER_PORT))
         .setHandlerHooks(ImmutableList.of(
             new MetricsReporterHook(metricsCollectionService, Constants.Service.EXPLORE_HTTP_USER_SERVICE)))
         .setWorkerThreadPoolSize(workerThreads)
