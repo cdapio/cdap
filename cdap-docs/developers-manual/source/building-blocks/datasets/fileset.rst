@@ -478,10 +478,21 @@ A partitioned file set can be explored with ad-hoc queries if you enable it at c
       .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
       .build());
 
+The essential part (to enable exploration) of the above sample are these lines::
+
+      . . .
+      // Properties for Explore (to create a partitioned Hive table)
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("csv")
+      .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
+      . . .
+
 This results in the creation of an external table in Hive with the schema given in the
-``setExploreSchema()``. The supported format are ``text`` and ``csv``. Both mean that the
-format is text. For ``csv``, the field delimiter is a comma, whereas for ``text``, you can
-specify the field delimiter. For example, to use a colon as the field separator::
+``setExploreSchema()``. The supported formats (set by ``setExploreFormat()``) are ``csv``
+and ``text``. Both define that the format is text. For ``csv``, the field delimiter is a
+comma, whereas for ``text``, you can specify the field delimiter using ``setExploreFormatProperty()``.
+
+For example, to use a colon as the field separator::
 
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", ":");
