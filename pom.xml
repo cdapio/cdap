@@ -1771,7 +1771,7 @@
                 </bottom>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <links>
-                  <link>http://caskdata.github.io/documentation/jsr305-3.0.1-javadoc/</link>
+                  <link>http://caskdata.github.io/docs-site/hosted-javadocs/jsr305-3.0.1-javadoc/</link>
                   <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
                   <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
                   <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
@@ -2535,7 +2535,7 @@
           </bottom>
           <doctitle>${project.name} ${project.version}</doctitle>
           <links>
-            <link>http://caskdata.github.io/documentation/jsr305-3.0.1-javadoc/</link>
+            <link>http://caskdata.github.io/docs-site/hosted-javadocs/jsr305-3.0.1-javadoc/</link>
             <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
             <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
             <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
