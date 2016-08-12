@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
@@ -80,23 +81,18 @@ public class MetaClientAvailableTest {
   }
 
   @Test
-  public void testAvailable() throws IOException, UnauthenticatedException {
+  public void testAvailable() throws IOException, UnauthenticatedException, UnauthorizedException {
     handler.setResponse(HttpResponseStatus.OK, "OK.\n");
     metaClient.ping();
   }
 
-  @Test
-  public void testUnavailable() throws IOException, UnauthenticatedException {
-    try {
-      fakeMetaClient.ping();
-      Assert.fail();
-    } catch (ConnectException e) {
-      // expected
-    }
+  @Test(expected = ConnectException.class)
+  public void testUnavailable() throws IOException, UnauthenticatedException, UnauthorizedException {
+    fakeMetaClient.ping();
   }
 
   @Test
-  public void testWrongCode() throws UnauthenticatedException {
+  public void testWrongCode() throws UnauthenticatedException, UnauthorizedException {
     try {
       handler.setResponse(HttpResponseStatus.CONFLICT, "HI");
       metaClient.ping();
@@ -109,7 +105,7 @@ public class MetaClientAvailableTest {
   }
 
   @Test
-  public void testWrongBody() throws UnauthenticatedException {
+  public void testWrongBody() throws UnauthenticatedException, UnauthorizedException {
     try {
       handler.setResponse(HttpResponseStatus.OK, "???");
       metaClient.ping();

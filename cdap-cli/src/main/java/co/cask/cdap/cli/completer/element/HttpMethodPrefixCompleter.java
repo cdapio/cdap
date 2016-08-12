@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
 
@@ -76,7 +77,7 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
           httpMethods.add(method);
         }
       }
-    } catch (IOException | UnauthenticatedException | NotFoundException ignored) {
+    } catch (IOException | UnauthenticatedException | NotFoundException | UnauthorizedException ignored) {
     }
     return httpMethods;
   }

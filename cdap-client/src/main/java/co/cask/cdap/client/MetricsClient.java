@@ -26,6 +26,7 @@ import co.cask.cdap.common.metrics.MetricsTags;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -80,7 +81,7 @@ public class MetricsClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<MetricTagValue> searchTags(Map<String, String> tags)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     List<String> queryParts = Lists.newArrayList();
     queryParts.add("target=tag");
@@ -102,7 +103,7 @@ public class MetricsClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<String> searchMetrics(Map<String, String> tags)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     List<String> queryParts = Lists.newArrayList();
     queryParts.add("target=metric");
@@ -125,7 +126,7 @@ public class MetricsClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public MetricQueryResult query(Map<String, String> tags, String metric)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return query(tags, ImmutableList.of(metric), ImmutableList.<String>of(), ImmutableMap.<String, String>of());
   }
 
@@ -141,7 +142,7 @@ public class MetricsClient {
    */
   public MetricQueryResult query(Map<String, String> tags, List<String> metrics, List<String> groupBys,
                                  @Nullable String start, @Nullable String end)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     Map<String, String> timeRangeParams = Maps.newHashMap();
     if (start != null) {
@@ -166,7 +167,7 @@ public class MetricsClient {
   // TODO: take in query object shared by MetricsHandler
   public MetricQueryResult query(Map<String, String> tags, List<String> metrics, List<String> groupBys,
                                  @Nullable Map<String, String> timeRangeParams)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     List<String> queryParts = Lists.newArrayList();
     queryParts.add("target=tag");

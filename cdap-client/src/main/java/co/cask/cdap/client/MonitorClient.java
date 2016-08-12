@@ -27,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import co.cask.cdap.proto.SystemServiceMeta;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -71,7 +72,7 @@ public class MonitorClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public SystemServiceLiveInfo getSystemServiceLiveInfo(String serviceName)
-    throws IOException, UnauthenticatedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURLV3(String.format("system/services/%s/live-info", serviceName));
@@ -91,7 +92,8 @@ public class MonitorClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<SystemServiceMeta> listSystemServices() throws IOException, UnauthenticatedException {
+  public List<SystemServiceMeta> listSystemServices()
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveURL("system/services");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() { }).getResponseObject();
@@ -108,7 +110,7 @@ public class MonitorClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public String getSystemServiceStatus(String serviceName)
-    throws IOException, NotFoundException, BadRequestException, UnauthenticatedException {
+    throws IOException, NotFoundException, BadRequestException, UnauthenticatedException, UnauthorizedException {
 
     Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURL(String.format("system/services/%s/status", serviceName));
@@ -132,7 +134,8 @@ public class MonitorClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public Map<String, String> getAllSystemServiceStatus() throws IOException, UnauthenticatedException {
+  public Map<String, String> getAllSystemServiceStatus()
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveURL("system/services/status");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
@@ -143,7 +146,7 @@ public class MonitorClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public boolean allSystemServicesOk() throws IOException, UnauthenticatedException {
+  public boolean allSystemServicesOk() throws IOException, UnauthenticatedException, UnauthorizedException {
     for (String status : getAllSystemServiceStatus().values()) {
       if (!"OK".equals(status)) {
         return false;
@@ -162,7 +165,7 @@ public class MonitorClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void setSystemServiceInstances(String serviceName, int instances)
-    throws IOException, NotFoundException, BadRequestException, UnauthenticatedException {
+    throws IOException, NotFoundException, BadRequestException, UnauthenticatedException, UnauthorizedException {
 
     Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURL(String.format("system/services/%s/instances", serviceName));
@@ -188,7 +191,7 @@ public class MonitorClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public int getSystemServiceInstances(String serviceName)
-    throws IOException, NotFoundException, ServiceNotEnabledException, UnauthenticatedException {
+    throws IOException, NotFoundException, ServiceNotEnabledException, UnauthenticatedException, UnauthorizedException {
 
     Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURL(String.format("system/services/%s/instances", serviceName));

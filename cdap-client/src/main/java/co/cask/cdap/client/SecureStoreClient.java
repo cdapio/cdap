@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.proto.security.SecureKeyListEntry;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -71,7 +72,7 @@ public class SecureStoreClient {
    * @throws NamespaceNotFoundException if namespace is not found
    */
   public void createKey(SecureKeyId secureKeyId, SecureKeyCreateRequest keyCreateRequest) throws IOException,
-    UnauthenticatedException, AlreadyExistsException, NamespaceNotFoundException {
+    UnauthenticatedException, AlreadyExistsException, NamespaceNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(secureKeyId.getParent().toId(), getSecureKeyPath(secureKeyId));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(keyCreateRequest), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
@@ -94,7 +95,7 @@ public class SecureStoreClient {
    * @throws SecureKeyNotFoundException if secure key or the namespace is not found
    */
   public String getData(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
-    SecureKeyNotFoundException {
+    SecureKeyNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(secureKeyId.getParent().toId(), getSecureKeyPath(secureKeyId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -114,7 +115,7 @@ public class SecureStoreClient {
    * @throws SecureKeyNotFoundException if secure key or the namespace is not found
    */
   public SecureStoreMetadata getKeyMetadata(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
-    SecureKeyNotFoundException {
+    SecureKeyNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(secureKeyId.getParent().toId(),
                                             String.format("%s/metadata", getSecureKeyPath(secureKeyId)));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -133,7 +134,7 @@ public class SecureStoreClient {
    * @throws SecureKeyNotFoundException if secure key or the namespace is not found
    */
   public void deleteKey(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
-    SecureKeyNotFoundException {
+    SecureKeyNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(secureKeyId.getParent().toId(), getSecureKeyPath(secureKeyId));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -151,7 +152,7 @@ public class SecureStoreClient {
    * @throws NamespaceNotFoundException if the given namespace is not found
    */
   public List<SecureKeyListEntry> listKeys(NamespaceId namespaceId) throws IOException, UnauthenticatedException,
-    NamespaceNotFoundException {
+    NamespaceNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespaceId.toId(), SECURE_KEYS);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
