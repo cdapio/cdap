@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -74,8 +75,7 @@ public class RemoteOpsClient {
       }
     });
 
-    int httpClientTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
-    this.httpRequestConfig = new HttpRequestConfig(httpClientTimeoutMs, httpClientTimeoutMs);
+    this.httpRequestConfig = new DefaultHttpRequestConfig();
     this.discoverableServiceName = discoverableServiceName;
   }
 
