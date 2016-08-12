@@ -39,27 +39,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       case 'RUNNING':
       case 'STARTED':
         this.statusType = 0;
-        this.applicationIsRunning = true;
         break;
       case 'STOPPED':
       case 'KILLED':
       case 'FAILED':
       case 'SUSPENDED':
-        this.applicationIsRunning = false;
         this.statusType = 1;
         break;
       case 'COMPLETED':
-        this.applicationIsRunning = false;
         this.statusType = 2;
         break;
       default:
-        this.applicationIsRunning = false;
         this.statusType = 3;
         break;
     }
   };
-
-  this.setProgramMetadata();
 
   this.setDefault = () => {
     this.textFile = null;
@@ -71,7 +65,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.warningCount = 0;
     this.totalCount = 0;
     this.fullScreen = false;
-    this.applicationIsRunning = false;
     this.programStatus = 'Not Started';
     this.configOptions = {
       time: true,
@@ -167,7 +160,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           return this.startTimeSec;
         },
         rIsApplicationRunning: () => {
-          return this.applicationIsRunning;
+          return this.statusCode === 0;
         }
       }
     });
@@ -350,12 +343,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       (statusRes) => {
         this.setProgramMetadata(statusRes.status);
         if(this.statusType === 0){
-          this.applicationIsRunning = true;
           if (!pollPromise) {
             pollForNewLogs();
           }
         } else {
-          this.applicationIsRunning = false;
           if (pollPromise) {
             dataSrc.stopPoll(pollPromise.__pollId__);
           }
@@ -410,8 +401,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var exportTimeout = null;
 
   const downloadLogs = () => {
-    if (!this.applicationIsRunning && rawLogs && rawLogs.startTime === this.startTimeSec) {
-      return $q.resolve();
+    if (this.statusType !== 0 && rawLogs && rawLogs.startTime === this.startTimeSec) {
+      return $q.resolve(rawLogs.log);
     }
     return myLogsApi.getLogsStartAsRaw({
       namespace : this.namespaceId,
