@@ -142,9 +142,16 @@ public class SystemArtifactsAuthorizationTest {
     List<ArtifactSummary> artifacts = artifactRepository.getArtifacts(namespaceId, true);
     Assert.assertEquals(1, artifacts.size());
     ArtifactSummary artifactSummary = artifacts.get(0);
-    Assert.assertTrue(SYSTEM_ARTIFACT.getArtifact().equals(artifactSummary.getName()));
-    Assert.assertTrue(SYSTEM_ARTIFACT.getVersion().equals(artifactSummary.getVersion()));
-    Assert.assertTrue(SYSTEM_ARTIFACT.getNamespace().equals(artifactSummary.getScope().name().toLowerCase()));
+    Assert.assertEquals(SYSTEM_ARTIFACT.getArtifact(), artifactSummary.getName());
+    Assert.assertEquals(SYSTEM_ARTIFACT.getVersion(), artifactSummary.getVersion());
+    Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactSummary.getScope().name().toLowerCase());
+
+    // test the getArtifact API
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(SYSTEM_ARTIFACT.toId());
+    co.cask.cdap.api.artifact.ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
+    Assert.assertEquals(SYSTEM_ARTIFACT.getArtifact(), artifactId.getName());
+    Assert.assertEquals(SYSTEM_ARTIFACT.getVersion(), artifactId.getVersion().getVersion());
+    Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactId.getScope().name().toLowerCase());
 
     namespaceAdmin.delete(namespaceId.toId());
     Assert.assertEquals(Collections.emptySet(), authorizer.listPrivileges(ALICE));

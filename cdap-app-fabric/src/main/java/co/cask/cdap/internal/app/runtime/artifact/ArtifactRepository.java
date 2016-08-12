@@ -59,6 +59,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -782,7 +783,10 @@ public class ArtifactRepository {
   private void ensureAccess(co.cask.cdap.proto.id.ArtifactId artifactId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(artifactId)) {
+    if (Principal.SYSTEM.equals(principal) || NamespaceId.SYSTEM.equals(artifactId.getParent())) {
+      return;
+    }
+    if (!filter.apply(artifactId)) {
       throw new UnauthorizedException(principal, artifactId);
     }
   }
