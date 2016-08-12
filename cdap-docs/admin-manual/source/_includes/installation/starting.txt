@@ -32,3 +32,7 @@ can be created by setting these environment variables::
 such as::
 
   $ export AUTH_JAVA_HEAPMAX="-Xmx1024m"
+  
+Add any overriding settings to a file, usually ``/etc/cdap/conf/cdap-env.sh``. As
+described above (in :ref:`|distribution|-configuration`), the location of this file will
+depend on your particular configuration.
