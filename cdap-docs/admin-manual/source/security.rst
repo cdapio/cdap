@@ -142,7 +142,7 @@ Property                                          Default Value        Descripti
                                                                        HTTP Connections
 ``security.auth.server.bind.port``                ``10009``            Port number that the CDAP Authentication Server should
                                                                        bind to for HTTP Connections
-``dashboard.bind.port``                           ``9999``             Port number that the CDAP UI should
+``dashboard.bind.port``                           ``11011``             Port number that the CDAP UI should
                                                                        bind to for HTTP Connections
 ================================================= ==================== ======================================================
 

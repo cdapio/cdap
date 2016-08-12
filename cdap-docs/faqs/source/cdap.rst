@@ -126,7 +126,7 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
 ..
 
 - Check that the CDAP UI is accessible (by default, the URL will be
-  ``http://<host>:9999`` where ``<host>`` is the IP address of one of the machines where you
+  ``http://<host>:11011`` where ``<host>`` is the IP address of one of the machines where you
   installed the packages and started the services).
 
 

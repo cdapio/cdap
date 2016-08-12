@@ -90,7 +90,7 @@ Running the Spark Program
 There are three ways to start the Spark program:
 
 1. Go to the *SparkKMeans* `application overview page, programs tab 
-   <http://localhost:9999/ns/default/apps/SparkKMeans/overview/programs>`__,
+   <http://localhost:11011/ns/default/apps/SparkKMeans/overview/programs>`__,
    click ``CentersService`` to get to the service detail page, then click the *Start* button; or
    
 #. Use the Command Line Interface:

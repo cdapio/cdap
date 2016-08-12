@@ -198,7 +198,7 @@ ports which can be opened to provide external access:
 
    "CDAP Router listen port (HTTP RESTful)", "``router.bind.port``", "11015", "11015"
    "CDAP Router listen port (HTTP RESTful) (SSL)", "``router.ssl.bind.port``", "10443", "10443"
-   "CDAP UI listen port", "``dashboard.bind.port``", "9999", "9999"
+   "CDAP UI listen port", "``dashboard.bind.port``", "11011", "11011"
    "CDAP UI listen port (SSL)", "``dashboard.ssl.bind.port``", "9443", "9443"
    "CDAP Auth Server listen port", "``security.auth.server.bind.port``", "10009", "10009"
    "CDAP Auth Server listen port (SSL)", "``security.auth.server.ssl.bind.port``", "10010", "10010"

@@ -145,7 +145,7 @@ Query the Unique Visitor Page Views
 Once the log data has been processed by the ``WebAnalyticsFlow``, we can explore the
 dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
 datasets using the CDAP UI by going to the *Data* page showing `All Datasets 
-<http://localhost:9999/ns/default/data>`__, clicking on the **UniqueVisitCount**
+<http://localhost:11011/ns/default/data>`__, clicking on the **UniqueVisitCount**
 dataset:
 
 .. image:: _images/web-analytics-0.png
