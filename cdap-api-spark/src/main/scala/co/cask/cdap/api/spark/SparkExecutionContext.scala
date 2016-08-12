@@ -249,10 +249,10 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
     * Using the implicit object [[co.cask.cdap.api.spark.SparkMain.SparkProgramRDDFunctions]] is preferred.
     *
-    * @param rdd         the [[org.apache.spark.rdd.RDD]] to operate on
-    * @param namespace   namespace for the dataset
+    * @param rdd the [[org.apache.spark.rdd.RDD]] to operate on
+    * @param namespace namespace for the Dataset
     * @param datasetName name of the Dataset
-    * @param arguments   arguments for the Dataset
+    * @param arguments arguments for the Dataset
     * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
     */
   def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], namespace: String, datasetName: String,

@@ -25,7 +25,7 @@ import scala.collection.JavaConverters._
 
 /**
   * A simple Spark program written in Scala which counts the number of characters. It reads from a dataset and writes
-  * to another dataset. These datasets can be another namespace and their names should be specified as runtime
+  * to another dataset. These datasets can be in another namespace and their names should be specified as runtime
   * arguments. If no runtime arguments are given it will look for these dataset in its own namespace
   */
 class ScalaCharCountProgram extends AbstractSpark with SparkMain {

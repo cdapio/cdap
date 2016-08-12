@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -80,7 +81,7 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     // deploy TestSparkStreamIntegrationApp in default namespace
     ApplicationManager spark1 = deployApplication(TestSparkStreamIntegrationApp.class);
 
-    ImmutableMap<String, String> args = ImmutableMap.of(
+    Map<String, String> args = ImmutableMap.of(
       TestSparkStreamIntegrationApp.SparkStreamProgram.INPUT_STREAM_NAMESPACE,
       streamNSMeta.getNamespaceId().getNamespace(),
       TestSparkStreamIntegrationApp.SparkStreamProgram.INPUT_STREAM_NAME,
