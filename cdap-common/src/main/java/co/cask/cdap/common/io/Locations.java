@@ -67,7 +67,8 @@ public final class Locations {
     new FunctionWithException<FileStatus, LocationStatus, IOException>() {
       @Override
       public LocationStatus apply(FileStatus status) throws IOException {
-        return new LocationStatus(status.getPath().toUri(), status.getLen(), status.isDirectory());
+        return new LocationStatus(status.getPath().toUri(), status.getLen(),
+                                  status.isDirectory(), status.getModificationTime());
       }
     };
   // For converting Location to LocationStatus
@@ -75,7 +76,8 @@ public final class Locations {
     new FunctionWithException<Location, LocationStatus, IOException>() {
       @Override
       public LocationStatus apply(Location location) throws IOException {
-        return new LocationStatus(location.toURI(), location.length(), location.isDirectory());
+        return new LocationStatus(location.toURI(), location.length(), location.isDirectory(),
+                                  location.lastModified());
       }
     };
 

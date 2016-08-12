@@ -25,6 +25,8 @@ import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.hadoop.security.Credentials;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -96,6 +98,24 @@ public class SparkExecutionClient {
   }
 
   /**
+   * Sends a write credentials request to the execution service.
+   *
+   * @param location the location where the credentials will write to.
+   */
+  public void writeCredentials(Location location) throws Exception {
+    HttpURLConnection urlConn = openConnection("credentials");
+    try {
+      urlConn.setRequestMethod("POST");
+      try (Writer writer = new OutputStreamWriter(urlConn.getOutputStream(), Charsets.UTF_8)) {
+        GSON.toJson(new CredentialsRequest(location.toURI()), writer);
+      }
+      validateResponse(urlConn);
+    } finally {
+      urlConn.disconnect();
+    }
+  }
+
+  /**
    * Opens a {@link HttpURLConnection} to the execution service endpoint for the given action.
    */
   private HttpURLConnection openConnection(String action) throws IOException {
@@ -130,6 +150,6 @@ public class SparkExecutionClient {
     if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(errorMessage);
     }
-    throw new Exception("Heartbeat request failed: " + errorMessage);
+    throw new Exception("Spark execution service request failed: " + errorMessage);
   }
 }

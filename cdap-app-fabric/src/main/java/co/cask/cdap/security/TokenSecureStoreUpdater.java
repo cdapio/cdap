@@ -70,8 +70,8 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
 
   @Inject
   TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
-                                 LocationFactory locationFactory,
-                                 co.cask.cdap.api.security.store.SecureStore secureStore) {
+                          LocationFactory locationFactory,
+                          co.cask.cdap.api.security.store.SecureStore secureStore) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
