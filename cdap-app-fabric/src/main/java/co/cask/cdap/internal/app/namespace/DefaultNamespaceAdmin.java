@@ -16,11 +16,9 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeCreatedException;
@@ -32,19 +30,13 @@ import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.security.ImpersonationInfo;
 import co.cask.cdap.common.security.Impersonator;
-import co.cask.cdap.config.DashboardStore;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -52,13 +44,18 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
@@ -69,66 +66,65 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
  * Admin for managing namespaces.
  */
-public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin implements NamespaceAdmin {
+public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
+  private static final Pattern NAMESPACE_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
 
-  private final Store store;
-  private final PreferencesStore preferencesStore;
-  private final DashboardStore dashboardStore;
+  private final NamespaceStore nsStore;
   private final DatasetFramework dsFramework;
-  private final ProgramRuntimeService runtimeService;
-  private final QueueAdmin queueAdmin;
-  private final StreamAdmin streamAdmin;
-  private final MetricStore metricStore;
-  private final Scheduler scheduler;
-  private final ApplicationLifecycleService applicationLifecycleService;
-  private final ArtifactRepository artifactRepository;
+
+  // Cannot have direct dependency on the following three resources
+  // Otherwise there would be circular dependency
+  // Use Provider to abstract out
+  private final Provider<NamespaceResourceDeleter> resourceDeleter;
+  private final Provider<ProgramRuntimeService> runtimeService;
+  private final Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin;
   private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
   private final InstanceId instanceId;
-  private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final Impersonator impersonator;
-  private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   private final CConfiguration cConf;
+  private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
 
   @Inject
-  DefaultNamespaceAdmin(Store store, NamespaceStore nsStore, PreferencesStore preferencesStore,
-                        DashboardStore dashboardStore, DatasetFramework dsFramework,
-                        ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
-                        MetricStore metricStore, Scheduler scheduler,
-                        ApplicationLifecycleService applicationLifecycleService,
-                        ArtifactRepository artifactRepository,
+  DefaultNamespaceAdmin(NamespaceStore nsStore,
+                        DatasetFramework dsFramework,
+                        Provider<NamespaceResourceDeleter> resourceDeleter,
+                        Provider<ProgramRuntimeService> runtimeService,
+                        Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
                         PrivilegesManager privilegesManager,
-                        CConfiguration cConf, StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
+                        CConfiguration cConf,
                         Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
                         AuthenticationContext authenticationContext) {
-    super(nsStore, authorizationEnforcer, authenticationContext);
-    this.queueAdmin = queueAdmin;
-    this.streamAdmin = streamAdmin;
-    this.store = store;
-    this.preferencesStore = preferencesStore;
-    this.dashboardStore = dashboardStore;
+    this.resourceDeleter = resourceDeleter;
+    this.nsStore = nsStore;
     this.dsFramework = dsFramework;
     this.runtimeService = runtimeService;
-    this.scheduler = scheduler;
-    this.metricStore = metricStore;
-    this.applicationLifecycleService = applicationLifecycleService;
-    this.artifactRepository = artifactRepository;
     this.privilegesManager = privilegesManager;
+    this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
     this.instanceId = createInstanceId(cConf);
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.impersonator = impersonator;
     this.cConf = cConf;
+    this.namespaceMetaCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, NamespaceMeta>() {
+      @Override
+      public NamespaceMeta load(NamespaceId namespaceId) throws Exception {
+        return fetchNamespaceMeta(namespaceId);
+      }
+    });
   }
 
   /**
@@ -175,13 +171,13 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       impersonator.doAs(metadata, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          storageProviderNamespaceAdmin.create(metadata);
+          storageProviderNamespaceAdmin.get().create(metadata);
           return null;
         }
       });
     } catch (IOException | ExploreException | SQLException e) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
-      nsStore.delete(metadata.getNamespaceId().toId());
+      deleteNamespaceMeta(metadata.getNamespaceId());
       privilegesManager.revoke(namespace);
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
@@ -257,11 +253,9 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
    */
   @Override
   public synchronized void delete(final Id.Namespace namespaceId) throws Exception {
-    NamespaceId namespace = namespaceId.toEntityId();
+    final NamespaceId namespace = namespaceId.toEntityId();
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
-    if (!exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId);
-    }
+    NamespaceMeta namespaceMeta = get(namespaceId);
 
     if (checkProgramsRunning(namespaceId.toEntityId())) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
@@ -272,69 +266,31 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
 
     authorizationEnforcer.enforce(namespace, authenticationContext.getPrincipal(), Action.ADMIN);
 
-    LOG.info("Deleting namespace '{}'.", namespaceId);
+    LOG.info("Deleting namespace '{}'.", namespace);
     try {
-      // Delete Preferences associated with this namespace
-      preferencesStore.deleteProperties(namespaceId.getId());
-      // Delete all dashboards associated with this namespace
-      dashboardStore.delete(namespaceId.getId());
-      // Delete all applications
-      applicationLifecycleService.removeAll(namespaceId);
-      // Delete all the schedules
-      scheduler.deleteAllSchedules(namespaceId);
-      // Delete datasets and modules
-      dsFramework.deleteAllInstances(namespaceId);
-      dsFramework.deleteAllModules(namespaceId);
-      // Delete queues and streams data
-      queueAdmin.dropAllInNamespace(namespaceId);
-      streamAdmin.dropAllInNamespace(namespaceId);
-      // Delete all meta data
-      store.removeAll(namespaceId);
-
-      deleteMetrics(namespaceId.toEntityId());
-      // delete all artifacts in the namespace
-      artifactRepository.clear(namespaceId.toEntityId());
+      resourceDeleter.get().deleteResources(namespaceMeta);
 
       // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
       // create default namespace, and hence deleting it may cause undeterministic behavior.
       // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
-      if (!Id.Namespace.DEFAULT.equals(namespaceId)) {
-        try {
-          impersonator.doAs(namespace, new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-              // Delete namespace in storage providers
-              storageProviderNamespaceAdmin.delete(namespaceId.toEntityId());
-              return null;
-            }
-          });
-        } finally {
-          // Finally delete namespace from MDS
-          nsStore.delete(namespaceId);
-        }
+      if (!NamespaceId.DEFAULT.equals(namespace)) {
+        // Finally delete namespace from MDS and remove from cache
+        deleteNamespaceMeta(namespaceId.toEntityId());
+
+        // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion,
+        // and deletion fails, we may have a valid (or invalid) namespace in the system, that no one has privileges on,
+        // so no one can clean up. This may result in orphaned privileges, which will be cleaned up by the create API
+        // if the same namespace is successfully re-created.
+        privilegesManager.revoke(namespace);
+        LOG.info("Namespace '{}' deleted", namespace);
+      } else {
+        LOG.info("Keeping the '{}' namespace after removing all data.", NamespaceId.DEFAULT);
       }
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
-    } finally {
-      privilegesManager.revoke(namespace);
     }
-    LOG.info("All data for namespace '{}' deleted.", namespaceId);
-
-    // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion, and
-    // deletion fails, we may have a valid (or invalid) namespace in the system, that no one has privileges on,
-    // so no one can clean up. This may result in orphaned privileges, which will be cleaned up by the create API
-    // if the same namespace is successfully re-created.
-    privilegesManager.revoke(namespace);
-  }
-
-  private void deleteMetrics(NamespaceId namespaceId) throws Exception {
-    long endTs = System.currentTimeMillis() / 1000;
-    Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getNamespace());
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
-    metricStore.delete(deleteQuery);
   }
 
   @Override
@@ -390,26 +346,120 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                                                     "is created.", difference, namespaceId));
     }
     nsStore.update(builder.build());
+    // refresh the cache with new meta
+    namespaceMetaCache.refresh(namespaceId.toEntityId());
+  }
+
+  /**
+   * Lists all namespaces
+   *
+   * @return a list of {@link NamespaceMeta} for all namespaces
+   */
+  @Override
+  public List<NamespaceMeta> list() throws Exception {
+    List<NamespaceMeta> namespaces = nsStore.list();
+    Principal principal = authenticationContext.getPrincipal();
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    return Lists.newArrayList(
+      Iterables.filter(namespaces, new com.google.common.base.Predicate<NamespaceMeta>() {
+        @Override
+        public boolean apply(NamespaceMeta namespaceMeta) {
+          return filter.apply(namespaceMeta.getNamespaceId());
+        }
+      })
+    );
+  }
+
+  /**
+   * Gets details of a namespace
+   *
+   * @param namespaceId the {@link Id.Namespace} of the requested namespace
+   * @return the {@link NamespaceMeta} of the requested namespace
+   * @throws NamespaceNotFoundException if the requested namespace is not found
+   * @throws UnauthorizedException if the namespace is not authorized to the logged-user
+   */
+  @Override
+  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
+    NamespaceMeta namespaceMeta;
+    try {
+      namespaceMeta = namespaceMetaCache.get(namespaceId.toEntityId());
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
+        cause instanceof UnauthorizedException) {
+        throw (Exception) cause;
+      }
+      throw e;
+    }
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    if (!filter.apply(namespaceId.toEntityId())) {
+      throw new UnauthorizedException(principal, namespaceId.toEntityId());
+    }
+    return namespaceMeta;
+  }
+
+  /**
+   * Checks if the specified namespace exists
+   *
+   * @param namespaceId the {@link Id.Namespace} to check for existence
+   * @return true, if the specified namespace exists, false otherwise
+   */
+  @Override
+  public boolean exists(Id.Namespace namespaceId) throws Exception {
+    try {
+      // here we are not calling get(Id.Namespace namespaceId) method as we don't want authorization enforcement for
+      // exists
+      namespaceMetaCache.get(namespaceId.toEntityId());
+      return true;
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof NamespaceNotFoundException) {
+        return false;
+      }
+      throw e;
+    }
+  }
+
+  @VisibleForTesting
+  Map<NamespaceId, NamespaceMeta> getCache() {
+    return namespaceMetaCache.asMap();
+  }
+
+  private NamespaceMeta fetchNamespaceMeta(NamespaceId namespaceId) throws Exception {
+    NamespaceMeta ns = nsStore.get(namespaceId.toId());
+    if (ns == null) {
+      throw new NamespaceNotFoundException(namespaceId.toId());
+    }
+    return ns;
   }
 
   private boolean checkProgramsRunning(final NamespaceId namespaceId) {
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
-      @Override
-      public boolean apply(ProgramRuntimeService.RuntimeInfo info) {
-        return info.getProgramId().getNamespaceId().equals(namespaceId.getNamespace());
-      }
-    });
+      Iterables.filter(runtimeService.get().listAll(ProgramType.values()),
+                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
+                         @Override
+                         public boolean apply(ProgramRuntimeService.RuntimeInfo info) {
+                           return info.getProgramId().getNamespaceId().equals(namespaceId.getNamespace());
+                         }
+                       });
     return !Iterables.isEmpty(runtimeInfos);
   }
 
   private InstanceId createInstanceId(CConfiguration cConf) {
     String instanceName = cConf.get(Constants.INSTANCE_NAME);
-    Preconditions.checkArgument(namespacePattern.matcher(instanceName).matches(),
+    Preconditions.checkArgument(NAMESPACE_PATTERN.matcher(instanceName).matches(),
                                 "CDAP instance name specified by '%s' in cdap-site.xml should be alphanumeric " +
                                   "(underscores allowed). Its current invalid value is '%s'",
                                 Constants.INSTANCE_NAME, instanceName);
     return new InstanceId(instanceName);
+  }
+
+  /**
+   * Deletes the namespace meta and also invalidates the cache
+   * @param namespaceId of namespace whose meta needs to be deleted
+   */
+  private void deleteNamespaceMeta(NamespaceId namespaceId) {
+    nsStore.delete(namespaceId.toId());
+    namespaceMetaCache.invalidate(namespaceId);
   }
 }

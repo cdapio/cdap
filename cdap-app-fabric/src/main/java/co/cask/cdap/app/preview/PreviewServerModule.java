@@ -29,7 +29,11 @@ import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceQueryAdmin;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceResourceDeleter;
+import co.cask.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceResourceDeleter;
+import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.preview.DefaultPreviewManager;
 import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
@@ -82,8 +86,12 @@ public class PreviewServerModule extends PrivateModule {
     bind(RuntimeStore.class).to(DefaultStore.class);
     expose(RuntimeStore.class);
 
-    bind(NamespaceQueryAdmin.class).to(DefaultNamespaceQueryAdmin.class).in(Scopes.SINGLETON);
+    bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+    bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
     expose(NamespaceQueryAdmin.class);
+
+    bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+    expose(StorageProviderNamespaceAdmin.class);
 
     bind(PreviewServer.class).in(Scopes.SINGLETON);
     expose(PreviewServer.class);

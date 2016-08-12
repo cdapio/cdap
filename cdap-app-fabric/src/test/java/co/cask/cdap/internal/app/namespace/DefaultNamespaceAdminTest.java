@@ -26,6 +26,8 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
+import org.apache.avro.reflect.Nullable;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
@@ -48,6 +50,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // TEST_NAMESPACE_META1 is already created in AppFabricTestBase#beforeClass
     Assert.assertTrue(namespaceAdmin.exists(Id.Namespace.from(TEST_NAMESPACE1)));
+    // It should be present in cache too
+    Assert.assertNotNull(getFromCache(Id.Namespace.from(TEST_NAMESPACE1).toEntityId()));
     try {
       namespaceAdmin.create(TEST_NAMESPACE_META1);
       Assert.fail("Should not create duplicate namespace.");
@@ -87,12 +91,16 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     namespaceAdmin.create(builder.setName(namespace).build());
     Assert.assertEquals(initialCount + 1, namespaceAdmin.list().size());
     Assert.assertTrue(namespaceAdmin.exists(namespaceId));
+    // it should be loaded in cache too since exists calls get
+    Assert.assertNotNull(getFromCache(namespaceId.toEntityId()));
     try {
       NamespaceMeta namespaceMeta = namespaceAdmin.get(namespaceId);
       Assert.assertEquals(namespaceId.getId(), namespaceMeta.getName());
       Assert.assertEquals("", namespaceMeta.getDescription());
 
       namespaceAdmin.delete(namespaceId);
+      // it should be deleted from the cache too
+      Assert.assertNull(getFromCache(namespaceId.toEntityId()));
     } catch (NotFoundException e) {
       Assert.fail(String.format("Namespace '%s' should be found since it was just created.", namespaceId.getId()));
     }
@@ -103,10 +111,14 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     try {
       NamespaceMeta namespaceMeta = namespaceAdmin.get(namespaceId);
+      // it should be loaded in cache too
+      Assert.assertNotNull(getFromCache(namespaceId.toEntityId()));
       Assert.assertEquals(namespaceId.getId(), namespaceMeta.getName());
       Assert.assertEquals("describes " + namespaceId.getId(), namespaceMeta.getDescription());
 
       namespaceAdmin.delete(namespaceId);
+      // it should be deleted from the cache
+      Assert.assertNull(getFromCache(namespaceId.toEntityId()));
     } catch (NotFoundException e) {
       Assert.fail(String.format("Namespace '%s' should be found since it was just created.", namespaceId.getId()));
     }
@@ -231,6 +243,11 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // creating a new namespace with same hbase namespace should fail
     verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace").setHBaseNamespace("hbasens").build(),
                        namespaceId);
+  }
+
+  @Nullable
+  private NamespaceMeta getFromCache(NamespaceId namespaceId) {
+    return ((DefaultNamespaceAdmin) namespaceAdmin).getCache().get(namespaceId);
   }
 
   private static void verifyAlreadyExist(NamespaceMeta namespaceMeta, Id.Namespace existingNamespace)

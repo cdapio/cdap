@@ -21,16 +21,13 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.security.ImpersonationUtils;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,8 +67,7 @@ public final class StreamFileJanitor {
   public void cleanAll() throws Exception {
     List<NamespaceMeta> namespaces = namespaceQueryAdmin.list();
     for (final NamespaceMeta namespace : namespaces) {
-      UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(namespace.getName()));
-      final Location streamBaseLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+      final Location streamBaseLocation = impersonator.doAs(namespace, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
           return namespacedLocationFactory.get(Id.Namespace.from(namespace.getName())).append(streamBaseDirPath);

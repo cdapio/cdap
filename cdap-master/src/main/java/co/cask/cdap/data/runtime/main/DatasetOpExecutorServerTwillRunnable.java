@@ -57,7 +57,6 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -114,7 +113,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new LoggingModules().getDistributedModules(),
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new NamespaceStoreModule().getDistributedModules(),
       new MetadataServiceModule(),
       new RemoteSystemOperationsServiceModule(),
       new ViewAdminModules().getDistributedModules(),
@@ -124,7 +122,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new EntityVerifierModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getProgramContainerModule(),
+      new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
