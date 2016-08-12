@@ -19,6 +19,8 @@ package co.cask.cdap.security;
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
@@ -27,6 +29,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -51,6 +54,7 @@ import co.cask.cdap.test.ArtifactManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
+import co.cask.cdap.test.ProgramManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.SparkManager;
@@ -88,6 +92,7 @@ import org.junit.runners.model.Statement;
 import java.io.File;
 import java.io.IOException;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -876,36 +881,64 @@ public class AuthorizationTest extends TestBase {
     addDatasetInstance(datasetOutputSpace.toId(), "keyValueTable", "store");
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), CrossNsDatasetAccessApp.class);
 
-    // Send stream and run the flowlet as BOB. Should fail
+    // give BOB ALL permissions on the auth namespace so he can execute programs and also read the stream.
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.of(Action.ALL));
+
+    // switch to BOB
+    SecurityRequestContext.setUserId(BOB.getName());
+
+    // Send data to stream as BOB this ensures that BOB can do stuff in auth namespace
     StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.toId(), CrossNsDatasetAccessApp.STREAM_NAME);
     for (int i = 0; i < 10; i++) {
       streamManager.send(String.valueOf(i).getBytes());
     }
-    SecurityRequestContext.setUserId(BOB.getName());
-    try {
-      FlowManager flowManager = appManager.getFlowManager(CrossNsDatasetAccessApp.FLOW_NAME);
-      flowManager.start();
-      Assert.fail("Bob shouldn't have the privlege to write to the dataset");
-    } catch (Exception e) {
-      // Expected
-    }
 
-    // Switch back to ALICE. Should Success
-    SecurityRequestContext.setUserId(ALICE.getName());
-    FlowManager flowManager = appManager.getFlowManager(CrossNsDatasetAccessApp.FLOW_NAME);
+    // But trying to run a flow as BOB will fail since this flow writes to a dataset in another namespace in which
+    // is not accessible to BOB.
+    final FlowManager flowManager = appManager.getFlowManager(CrossNsDatasetAccessApp.FLOW_NAME);
     flowManager.start();
-    for (int i = 0; i < 10; i++) {
-      streamManager.send(String.valueOf(i).getBytes());
-    }
-    flowManager.getFlowletMetrics("saver").waitForProcessed(10, 30, TimeUnit.SECONDS);
+    // wait for flow to be running
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return flowManager.isRunning();
+      }
+    }, 120, TimeUnit.SECONDS);
+
+    // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
+    // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
+    // processing or not. So stop the flow and check that the output dataset is empty
+    flowManager.stop();
+    SecurityRequestContext.setUserId(ALICE.getName());
 
     DataSetManager<KeyValueTable> dataSetManager = getDataset(datasetOutputSpace.toId(), "store");
     KeyValueTable results = dataSetManager.get();
+
+    CloseableIterator<KeyValue<byte[], byte[]>> scan = results.scan(null, null);
+    Assert.assertFalse(scan.hasNext());
+
+    // Give BOB permission to write to the dataset in another namespace
+    grantAndAssertSuccess(new DatasetId(datasetOutputSpace.getNamespace(), "store"),
+                          BOB, EnumSet.of(Action.WRITE));
+
+    // switch back to BOB to run flow again
+    SecurityRequestContext.setUserId(BOB.getName());
+
+    // running the flow now should pass and write data in another namespace successfully
+    flowManager.start();
+    flowManager.getFlowletMetrics("saver").waitForProcessed(10, 30, TimeUnit.SECONDS);
+
+    // switch back to alice and verify the data its fine now to verify the run record here because if the flow failed
+    // to write we will not see any data
+    SecurityRequestContext.setUserId(ALICE.getName());
+
+    dataSetManager = getDataset(datasetOutputSpace.toId(), "store");
+    results = dataSetManager.get();
+
     for (int i = 0; i < 10; i++) {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
       Assert.assertArrayEquals(key, results.read(key));
     }
-
     flowManager.stop();
     getNamespaceAdmin().delete(datasetOutputSpace.toId());
   }
@@ -931,41 +964,63 @@ public class AuthorizationTest extends TestBase {
     Map<String, String> argsForMR = ImmutableMap.of(DatasetCrossNSAccessWithMAPApp.INPUT_KEY, "table1",
                                                     DatasetCrossNSAccessWithMAPApp.OUTPUT_KEY, "table2");
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM);
-    // Switch to Bob. Should fail as Bob do not have access to the dataset namespace
+
+    // give BOB ALL permission in the
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.of(Action.ALL));
+
+    // Switch to BOB and run the  mapreduce job. The job will fail at the runtime since BOB does not have permission
+    // on the input and output datasets in another namespaces.
     SecurityRequestContext.setUserId(BOB.getName());
-    try {
-      mrManager.start(argsForMR);
-      mrManager.waitForFinish(5, TimeUnit.MINUTES);
-      Assert.fail("Should fail here since bob does not have the privileges on input dataspace.");
-    } catch (Exception e) {
-      // Expected
-    }
+    verifyProgramFailure(argsForMR, mrManager);
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    DataSetManager<KeyValueTable> outTableManager = getDataset(datasetOutputSpace.toId(), "table2");
-    KeyValueTable outputTable = outTableManager.get();
-    Assert.assertNull(outputTable.read("hello"));
+    verifyDatasetIsEmpty(datasetOutputSpace, "table2");
 
-    // Run again with Alice who has the privileges
+    // give privilege to BOB on the input dataset
+    grantAndAssertSuccess(new DatasetId(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE, "table1"), BOB,
+                          EnumSet.of(Action.READ));
+
+    // switch back to bob and try running again. this will still fail since bob does not have access on the output
+    // dataset
+    SecurityRequestContext.setUserId(BOB.getName());
+    verifyProgramFailure(argsForMR, mrManager);
+
+    // Switch back to Alice
+    SecurityRequestContext.setUserId(ALICE.getName());
+    // Verify nothing write to the output dataset
+    verifyDatasetIsEmpty(datasetOutputSpace, "table2");
+
+    // give privilege to BOB on the output dataset
+    grantAndAssertSuccess(new DatasetId(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE, "table2"), BOB,
+                          EnumSet.of(Action.WRITE));
+
+    // switch back to BOB and run MR again. this should work
+    SecurityRequestContext.setUserId(BOB.getName());
     mrManager.start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
-    // Verify results
-    outTableManager = getDataset(datasetOutputSpace.toId(), "table2");
-    outputTable = outTableManager.get();
+    // Verify results as alice
+    SecurityRequestContext.setUserId(ALICE.getName());
+    DataSetManager<KeyValueTable> outTableManager = getDataset(datasetOutputSpace.toId(), "table2");
+    KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
     getNamespaceAdmin().delete(datasetInputSpace.toId());
     getNamespaceAdmin().delete(datasetOutputSpace.toId());
   }
 
+
   @Test
   public void testCrossNSDatasetAccessWithAuthSpark() throws Exception {
     createAuthNamespace();
     NamespaceMeta inputDatasetNSMeta = new NamespaceMeta.Builder().setName("inputDatasetNS").build();
+    NamespaceMeta outputDatasetNSMeta = new NamespaceMeta.Builder().setName("outputDatasetNS").build();
     getNamespaceAdmin().create(inputDatasetNSMeta);
+    getNamespaceAdmin().create(outputDatasetNSMeta);
     addDatasetInstance(inputDatasetNSMeta.getNamespaceId().toId(), "keyValueTable", "input").create();
+    addDatasetInstance(outputDatasetNSMeta.getNamespaceId().toId(), "keyValueTable", "output").create();
+    // write sample stuff in input dataset
     DataSetManager<KeyValueTable> inTableManager = getDataset(inputDatasetNSMeta.getNamespaceId().toId(), "input");
     inTableManager.get().write("hello", "world");
     inTableManager.flush();
@@ -973,34 +1028,58 @@ public class AuthorizationTest extends TestBase {
     ApplicationManager spark = deployApplication(AUTH_NAMESPACE.toId(), TestSparkCrossNSDatasetApp.class);
     SparkManager sparkManager = spark.getSparkManager("SparkCrossNSDatasetProgram");
 
-    // Switch to Bob. Should fail as Bob do not have access to the dataset namespace
+    // give BOB ALL permission on the auth namespace
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.of(Action.ALL));
+
+    // Switch to Bob and run the spark program. this will fail because bob does not have access to either input or
+    // output dataset
     SecurityRequestContext.setUserId(BOB.getName());
     ImmutableMap<String, String> args = ImmutableMap.of(
       TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAMESPACE,
       inputDatasetNSMeta.getNamespaceId().getNamespace(),
-      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAME, "input"
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAME, "input",
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.OUTPUT_DATASET_NAMESPACE,
+      outputDatasetNSMeta.getNamespaceId().getNamespace(),
+      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.OUTPUT_DATASET_NAME, "output"
     );
-    try {
-      sparkManager.start(args);
-      sparkManager.waitForFinish(120, TimeUnit.SECONDS);
-      Assert.fail("Should fail here since bob does not have the privileges on input dataspace.");
-    } catch (Exception e) {
-      // Expected
-    }
+
+    verifyProgramFailure(args, sparkManager);
+
+    SecurityRequestContext.setUserId(ALICE.getName());
+    // Verify nothing write to the output dataset
+    verifyDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
+
+    // give privilege to BOB on the input dataset
+    grantAndAssertSuccess(new DatasetId(inputDatasetNSMeta.getNamespaceId().getNamespace(), "input"), BOB,
+                          EnumSet.of(Action.READ));
+
+    // switch back to bob and try running again. this will still fail since bob does not have access on the output
+    // dataset
+    SecurityRequestContext.setUserId(BOB.getName());
+    verifyProgramFailure(args, sparkManager);
+
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    DataSetManager<KeyValueTable> datasetManager = getDataset(AUTH_NAMESPACE.toId(), "outputDataset");
-    Assert.assertNull(datasetManager.get().read("hello"));
+    verifyDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
 
-    // Run again with Alice who has the privileges
+    // give privilege to BOB on the output dataset
+    grantAndAssertSuccess(new DatasetId(outputDatasetNSMeta.getNamespaceId().getNamespace(), "output"), BOB,
+                          EnumSet.of(Action.WRITE));
+
+    // switch back to BOB and run spark again. this should work
+    SecurityRequestContext.setUserId(BOB.getName());
+
     sparkManager.start(args);
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
     spark.stopAll();
-    // Verify the results written in DEFAULT by spark2
-    datasetManager = getDataset(AUTH_NAMESPACE.toId(), "outputDataset");
+
+    // Verify the results as alice
+    SecurityRequestContext.setUserId(ALICE.getName());
+    DataSetManager<KeyValueTable> datasetManager = getDataset(outputDatasetNSMeta.getNamespaceId().toId(), "output");
     Assert.assertEquals("world", Bytes.toString(datasetManager.get().read("hello")));
     getNamespaceAdmin().delete(inputDatasetNSMeta.getNamespaceId().toId());
+    getNamespaceAdmin().delete(outputDatasetNSMeta.getNamespaceId().toId());
   }
 
   @After
@@ -1061,5 +1140,23 @@ public class AuthorizationTest extends TestBase {
     };
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(ALICE), entityFilter).isEmpty());
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), entityFilter).isEmpty());
+  }
+
+  private void verifyDatasetIsEmpty(NamespaceId namespaceId, String datasetName) throws Exception {
+    DataSetManager<KeyValueTable> outTableManager = getDataset(namespaceId.toId(), datasetName);
+    KeyValueTable outputTable = outTableManager.get();
+    Assert.assertFalse(outputTable.scan(null, null).hasNext());
+  }
+
+  private void verifyProgramFailure(Map<String, String> programArgs, ProgramManager programManager)
+    throws TimeoutException, InterruptedException {
+    programManager.start(programArgs);
+    programManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // verify program history just have failures
+    List<RunRecord> history = programManager.getHistory();
+    for (RunRecord runRecord : history) {
+      Assert.assertEquals(ProgramRunStatus.FAILED, runRecord.getStatus());
+    }
   }
 }
