@@ -36,7 +36,12 @@ angular.module(PKG.name + '.feature.tracker')
 
             myTrackerApi.getTrackerApp(params)
               .$promise
-              .then( () => {
+              .then( (appConfig) => {
+                if (appConfig.artifact.version !== UI_CONFIG.tracker.artifact.version) {
+                  defer.resolve(true);
+                  return;
+                }
+
                 let trackerServiceParams = {
                   namespace: $stateParams.namespace,
                   programType: 'services',
@@ -93,7 +98,12 @@ angular.module(PKG.name + '.feature.tracker')
 
             myTrackerApi.getTrackerApp(params)
               .$promise
-              .then( () => {
+              .then( (appConfig) => {
+                if (appConfig.artifact.version !== UI_CONFIG.tracker.artifact.version) {
+                  $state.go('tracker-enable', $stateParams);
+                  return;
+                }
+
                 let trackerServiceParams = {
                   namespace: $stateParams.namespace,
                   programType: 'services',
