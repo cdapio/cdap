@@ -17,11 +17,5 @@
   "hadoop": {
     "distribution": "hdp",
     "distribution_version": "{{HDP_VERSION}}"
-  },
-  "ntp": {
-    "servers": [
-      "time.windows.com",
-      "ntp.ubuntu.com"
-    ]
   }
 }
