@@ -306,8 +306,9 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
             }
           });
         } finally {
-          // Finally delete namespace from MDS
+          // Finally delete namespace from MDS and remove from cache
           nsStore.delete(namespaceId);
+          namespaceMetaCache.invalidate(namespaceId.toEntityId());
         }
       }
     } catch (Exception e) {
@@ -386,6 +387,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                                                     "is created.", difference, namespaceId));
     }
     nsStore.update(builder.build());
+    // refresh the cache with new meta
+    namespaceMetaCache.refresh(namespaceId.toEntityId());
   }
 
   private boolean checkProgramsRunning(final NamespaceId namespaceId) {

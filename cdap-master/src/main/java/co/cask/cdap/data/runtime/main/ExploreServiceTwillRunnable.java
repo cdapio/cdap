@@ -51,8 +51,6 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -143,7 +141,6 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
         @Override
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
-          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
           bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
         }

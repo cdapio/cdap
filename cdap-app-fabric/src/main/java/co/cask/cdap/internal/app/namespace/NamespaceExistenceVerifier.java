@@ -19,8 +19,9 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.store.NamespaceStore;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
 /**
@@ -28,19 +29,27 @@ import com.google.inject.Inject;
  */
 public class NamespaceExistenceVerifier implements EntityExistenceVerifier<NamespaceId> {
 
-  private final NamespaceStore nsStore;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  NamespaceExistenceVerifier(NamespaceStore nsStore) {
-    this.nsStore = nsStore;
+  NamespaceExistenceVerifier(NamespaceQueryAdmin namespaceQueryAdmin) {
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
 
   @Override
   public void ensureExists(NamespaceId namespaceId) throws NotFoundException {
     if (!NamespaceId.SYSTEM.equals(namespaceId)) {
-      if (nsStore.get(namespaceId.toId()) == null) {
-        throw new NamespaceNotFoundException(namespaceId.toId());
+      try {
+        if (namespaceQueryAdmin.get(namespaceId.toId()) == null) {
+          throw new NamespaceNotFoundException(namespaceId.toId());
+        }
+      } catch (Exception e) {
+        if (e instanceof NamespaceNotFoundException) {
+          throw (NamespaceNotFoundException) e;
+        } else {
+          Throwables.propagate(e);
+        }
       }
     }
   }

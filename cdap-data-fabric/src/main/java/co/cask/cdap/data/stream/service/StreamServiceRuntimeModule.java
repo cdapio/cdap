@@ -21,8 +21,6 @@ import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatPublisher;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractService;
@@ -82,8 +80,6 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         CommonHandlers.add(handlerBinder);
 
         bind(HeartbeatPublisher.class).to(NotificationHeartbeatPublisher.class).in(Scopes.SINGLETON);
-        bind(NamespaceStore.class).to(DefaultNamespaceStore.class).in(Scopes.SINGLETON);
-
         bind(StreamHttpService.class).in(Scopes.SINGLETON);
         bind(Key.get(new TypeLiteral<Supplier<Discoverable>>() { })).to(StreamHttpService.class);
       }
