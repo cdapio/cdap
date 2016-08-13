@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesListController', function ($scope, mySettings, $stateParams, myAlertOnValium, myHelpers, GLOBALS) {
+  .controller('NamespaceTemplatesListController', function ($scope, mySettings, $stateParams, myAlertOnValium, myHelpers, GLOBALS, myLoadingService) {
 
     var vm = this;
     vm.list = [];
@@ -57,21 +57,41 @@ angular.module(PKG.name + '.feature.admin')
     };
 
     vm.delete = function (template) {
-
+      myLoadingService.showLoadingIcon();
       mySettings.get('pluginTemplates')
-        .then(function (res) {
-          delete res[$stateParams.nsadmin][template.templateType][template.pluginType][template.pluginTemplate];
+        .then(
+          function (res) {
+            delete res[$stateParams.nsadmin][template.templateType][template.pluginType][template.pluginTemplate];
 
-          processResult(res);
+            processResult(res);
 
-          mySettings.set('pluginTemplates', res)
-            .then(function () {
-              myAlertOnValium.show({
-                type: 'success',
-                content: 'Successfully deleted template'
-              });
+            mySettings.set('pluginTemplates', res)
+              .then(
+                function () {
+                  myLoadingService.hideLoadingIcon();
+                  myAlertOnValium.show({
+                    type: 'success',
+                    content: 'Successfully deleted template'
+                  });
+                },
+                function error(err) {
+                  myLoadingService.hideLoadingIcon();
+                  myAlertOnValium.show({
+                    type: 'danger',
+                    title: 'Delete failed'
+                    content: err
+                  });
+                }
+              );
+          },
+          function error(err) {
+            myLoadingService.hideLoadingIcon();
+            myAlertOnValium.show({
+              type: 'danger',
+              title: 'User store acces failed'
             });
-        });
+          }
+        );
     };
 
   });

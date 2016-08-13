@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
-function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertOnValium, GLOBALS, myHydratorFactory) {
+function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertOnValium, GLOBALS, myHydratorFactory, myLoadingService) {
 
   $scope.apps = [];
   $scope.GLOBALS = GLOBALS;
@@ -32,18 +32,30 @@ function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertO
     });
 
   $scope.deleteApp = function deleteApp(id) {
+    myLoadingService.showLoadingIcon();
     myDataSrc.request({
       _cdapPath: path + '/' + id,
       method: 'DELETE'
     }, function() {
       $state.reload()
-        .then(function() {
-          myAlertOnValium.show({
-            type: 'success',
-            title: id,
-            content: 'Application deleted successfully'
-          });
-        });
+        .then(
+          function success() {
+            myLoadingService.hideLoadingIcon();
+            myAlertOnValium.show({
+              type: 'success',
+              title: id,
+              content: 'Application deleted successfully'
+            });
+          },
+          function error(err) {
+            myLoadingService.hideLoadingIcon();
+            myAlertOnValium.show({
+              type: 'danger',
+              title: 'Delete failed',
+              content: err
+            });
+          }
+        );
     });
   };
 
