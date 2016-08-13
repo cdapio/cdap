@@ -245,6 +245,8 @@ function build_javadocs() {
 function build_javadocs_api() {
   local javadoc_type=${1}
   set_mvn_environment
+  echo "CLASSPATH: ${CLASSPATH}"
+  echo "JAVA_HOME: ${JAVA_HOME}"
   local javadoc_run="mvn javadoc:aggregate -P release"
   if [ "${javadoc_type}" == "${DOCS}" ]; then
     javadoc_run="mvn clean site -P templates"
@@ -255,6 +257,7 @@ function build_javadocs_api() {
   fi
   local start=`date`
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
+  echo
   echo "Javadocs Build Start: ${start}"
   echo "                 End: `date`"
 }
