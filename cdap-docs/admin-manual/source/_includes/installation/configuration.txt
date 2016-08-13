@@ -162,45 +162,56 @@ Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
 .. highlight:: console
 
+.. _|distribution|-configuration-local-storage:
 .. _|distribution|-configuration-tmp-files:
 
-Writing to Temp Files
----------------------
-Temp directories, depending on the distribution, are utilized by CDAP (the first two of
-this set of directories are properties specified in the ``cdap-site.xml`` file, as
-described in the :ref:`appendix-cdap-site.xml`):
+Local Storage Configuration
+---------------------------
+Local storage and temp directories |---| depending on the distribution |---| are utilized
+by CDAP for deploying applications and operating CDAP.
 
-- ``app.temp.dir`` (default: ``/tmp``)
-- ``kafka.server.log.dirs`` (default: ``/tmp/kafka-logs``)
-- ``local.data.dir`` (default: ``data``; if this is instead an absolute path, needs to be writable)
-- ``/var/cdap/run``
-- ``/var/log/cdap``
-- ``/var/run/cdap``
-- ``/var/tmp/cdap`` 
+The CDAP user (the ``cdap`` system user) **must** be able to write to **all** of these
+directories, as they are used for deploying applications and for operating CDAP.
+  
+- List of local storage and temp directories:
 
-In addition, the CDAP Master service is governed by environment variables, which set the
-directories it uses:
+  - Properties specified in the ``cdap-site.xml`` file, as described in the :ref:`appendix-cdap-site.xml`:
 
-- ``TEMP_DIR`` (default: ``/tmp``): The directory serving as the ``java.io.tmpdir``
-  directory
+    - ``app.temp.dir`` (default: ``/tmp``)
+    - ``kafka.server.log.dirs`` (default: ``/tmp/kafka-logs``)
+    - ``local.data.dir`` (default: ``data``; if this is instead an absolute path, needs to be writable)
 
-- ``LOCAL_DIR`` (default: ``/var/tmp/cdap``): The directory serving as the user directory
-  for CDAP Master
+  - Temp directories:
 
-Note that ``local.data.dir`` |---| which defines the directory for program jar storage
-when deploying to YARN |---| is set in the ``cdap-site.xml`` and defaults to the relative
-path ``data``. If the value of ``local.data.dir`` is *relative,* it is put under
-``LOCAL_DIR``, such as ``/var/tmp/cdap/data``. However, if instead it is an *absolute*
-path, that alone is used as the value. This is desirable so you can easily configure this
-directory to be elsewhere.
+    - ``/var/cdap/run``
+    - ``/var/log/cdap``
+    - ``/var/run/cdap``
+    - ``/var/tmp/cdap`` 
 
-The CDAP user (the ``cdap`` system user) **must** be able to write to these directories, as they
-are used for deploying applications and for operating CDAP.
+- Note that ``local.data.dir`` |---| which defines the directory for program jar storage
+  when deploying to YARN |---| is set in the ``cdap-site.xml`` and defaults to the
+  relative path ``data``. If the value of ``local.data.dir`` is *relative,* it is put
+  under ``LOCAL_DIR``, such as ``/var/tmp/cdap/data``. However, if instead it is an
+  *absolute* path, that alone is used as the value. This is desirable so you can easily
+  configure this directory to be elsewhere.
 
-As in all installations, the ``kafka.log.dir`` may need to be created locally. If you
-configure ``kafka.log.dir`` (or any of the other settable parameters) to a particular
-directory, you need to make sure that **the directory exists** and that it **is writable**
-by the CDAP user.
+- The CDAP Master service is governed by environment variables, which set the
+  directories it uses:
+
+  - ``TEMP_DIR`` (default: ``/tmp``): The directory serving as the ``java.io.tmpdir``
+    directory
+
+  - ``LOCAL_DIR`` (default: ``/var/tmp/cdap``): The directory serving as the user directory
+    for CDAP Master
+
+  These variables can be set in a file ``/etc/cdap/conf/cdap-env.sh`` and will be used as
+  the environment when launching CDAP and programs. See :ref:`|distribution|-configuration-central` 
+  for details of the central configuration used by CDAP.
+
+- As in all installations, the ``kafka.server.log.dirs`` may need to be created locally.
+  If you configure ``kafka.server.log.dirs`` (or any of the other settable parameters) to
+  a particular directory or directories, you need to make sure that **the directories
+  exist** and that they **are writable** by the CDAP user.
 
 .. _|distribution|-configuration-hdp:
 
