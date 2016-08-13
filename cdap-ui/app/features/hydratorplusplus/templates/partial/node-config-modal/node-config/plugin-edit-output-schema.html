@@ -77,11 +77,6 @@
     </div>
   </fieldset>
 
-  <div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema && isDisabled && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties.format !== 'clf' && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties.format !== 'syslog'">
-    <div class="well well-lg">
-      <h4>There is no output schema</h4>
-    </div>
-  </div>
 </div>
 
 <my-file-select class="sr-only" id="schema-import-link" data-button-icon="fa-upload" on-file-select="HydratorPlusPlusNodeConfigCtrl.importFiles($files)" data-button-label="Import">

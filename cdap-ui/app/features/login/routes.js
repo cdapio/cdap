@@ -71,8 +71,14 @@ angular.module(PKG.name+'.feature.login')
             myAlert.clear();
             if(next) {
               console.log('After login, will redirect to:', next);
-
-              $state.go(next, JSON.parse(decodeURIComponent(nextParams)));
+              var nextState;
+              try {
+                nextState = JSON.parse(decodeURIComponent(nextParams));
+              } catch(e) {
+                console.warn('Unable to decode next state after login. Going to overview', e);
+                $state.go('overview');
+              }
+              $state.go(next, nextState);
 
             } else {
               $state.go('overview');

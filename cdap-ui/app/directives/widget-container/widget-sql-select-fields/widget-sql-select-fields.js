@@ -117,17 +117,27 @@ function SqlSelectorController() {
     }
 
     angular.forEach(vm.inputSchema, (input) => {
-      let schema = JSON.parse(input.schema).fields.map((field) => {
-        if (initialModel[input.name] && initialModel[input.name][field.name]) {
-          field.selected = true;
-          field.alias = initialModel[input.name][field.name] === true ? '' : initialModel[input.name][field.name];
-        } else {
-          field.selected = inputModel ? false : true;
-          field.alias = field.name;
-        }
+      let schema;
+      try {
+        schema = JSON.parse(input.schema);
+      } catch(e) {
+        console.log('ERROR: ', e);
+        schema = {
+          fields: []
+        };
+      }
+      schema = schema.fields
+        .map((field) => {
+          if (initialModel[input.name] && initialModel[input.name][field.name]) {
+            field.selected = true;
+            field.alias = initialModel[input.name][field.name] === true ? '' : initialModel[input.name][field.name];
+          } else {
+            field.selected = inputModel ? false : true;
+            field.alias = field.name;
+          }
 
-        return field;
-      });
+          return field;
+        });
 
       vm.parsedInputSchemas.push({
         name: input.name,

@@ -40,7 +40,12 @@ angular.module(PKG.name + '.feature.mapreduce')
         json: false
       }, function (res) {
         res = res.replace(/\bNaN\b/g, '"NaN"');
-        res = JSON.parse(res);
+        try {
+          res = JSON.parse(res);
+        } catch(e) {
+          console.warn('Unable parse response for Mapreduce program: ', params.mapreduceId);
+          res = {};
+        }
 
         this.info = res;
 
