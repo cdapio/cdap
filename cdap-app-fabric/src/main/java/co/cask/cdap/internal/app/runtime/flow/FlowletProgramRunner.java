@@ -82,8 +82,6 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Function;
@@ -141,8 +139,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final RuntimeUsageRegistry runtimeUsageRegistry;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
-  private final AuthenticationContext authenticationContext;
-  private final AuthorizationEnforcer authorizationEnforcer;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -156,9 +152,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DatasetFramework dsFramework,
                               RuntimeUsageRegistry runtimeUsageRegistry,
                               SecureStore secureStore,
-                              SecureStoreManager secureStoreManager,
-                              AuthenticationContext authenticationContext,
-                              AuthorizationEnforcer authorizationEnforcer) {
+                              SecureStoreManager secureStoreManager) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -171,8 +165,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
-    this.authenticationContext = authenticationContext;
-    this.authorizationEnforcer = authorizationEnforcer;
   }
 
   @SuppressWarnings("unused")
@@ -267,8 +259,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                    processMethodFactory(flowlet),
                                    processSpecificationFactory(flowletContext, dataFabricFacade, queueReaderFactory,
                                                                flowletName, queueSpecs, queueConsumerSupplierBuilder,
-                                                               createSchemaCache(program), authenticationContext,
-                                                               authorizationEnforcer),
+                                                               createSchemaCache(program)),
                                    Lists.<ProcessSpecification<?>>newLinkedList());
       List<ConsumerSupplier<?>> consumerSuppliers = queueConsumerSupplierBuilder.build();
 
@@ -314,7 +305,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private <T extends Collection<ProcessSpecification<?>>> T createProcessSpecification(
     BasicFlowletContext flowletContext, TypeToken<? extends Flowlet> flowletType,
     ProcessMethodFactory processMethodFactory, ProcessSpecificationFactory processSpecFactory, T result)
-    throws NoSuchMethodException {
+    throws Exception {
 
     Set<FlowletMethod> seenMethods = Sets.newHashSet();
 
@@ -534,14 +525,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final QueueReaderFactory queueReaderFactory, final String flowletName,
     final Table<Node, String, Set<QueueSpecification>> queueSpecs,
     final ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder,
-    final SchemaCache schemaCache, final AuthenticationContext authenticationContext,
-    final AuthorizationEnforcer authorizationEnforcer) {
+    final SchemaCache schemaCache) {
 
     return new ProcessSpecificationFactory() {
       @Override
       public <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
                                              ProcessMethod<T> method, ConsumerConfig consumerConfig, int batchSize,
-                                             Tick tickAnnotation) {
+                                             Tick tickAnnotation) throws Exception {
         List<QueueReader<T>> queueReaders = Lists.newLinkedList();
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
@@ -569,8 +559,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   }
                 });
 
-                queueReaders.add(queueReaderFactory.createStreamReader(consumerSupplier, batchSize, decoder,
-                                                                       authenticationContext, authorizationEnforcer));
+                queueReaders.add(queueReaderFactory.createStreamReader(queueName.toStreamId().toEntityId(),
+                                                                       consumerSupplier, batchSize, decoder));
 
               } else {
                 int numGroups = getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
@@ -710,7 +700,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
      */
     <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
                                     ProcessMethod<T> method, ConsumerConfig consumerConfig, int batchSize,
-                                    Tick tickAnnotation);
+                                    Tick tickAnnotation) throws Exception;
   }
 
   /**
