@@ -45,7 +45,6 @@
     "esprima": "2.0.0",
     "ngInfiniteScroll": "1.2.1",
     "d3-timeline": "0.0.5",
-    "inView": "1.0.0",
     "angular-inview": "1.5.7"
   },
   "resolutions": {

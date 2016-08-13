@@ -55,7 +55,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         break;
     }
   };
-  this.page = angular.element(window);
+  let page = angular.element(window);
 
   this.setDefault = () => {
     this.textFile = null;
@@ -214,21 +214,34 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.inViewScrollUpdate = (index, isInview, event) => {
 
       if(isInview) {
+
+        //tbody extends beyond the viewport when scrolling down the table
         let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
-        let pageScrollPosition = this.page[0].scrollY;
+
+        //measures the scroll position of the window within the viewport
+        let pageScrollPosition = page[0].scrollY;
+
+        //gives the offsetTop property for a row that is within the viewport
         let rowTopVal = event.inViewTarget.offsetTop;
+
+        //Adjusted val combines the tbody absolute offset that may extend beyond the viewport, with it's relatively positioned table row, giving us an absolute positioning for the row
         let adjustedVal = topOfTable + pageScrollPosition + rowTopVal;
+
+        //Difference accounts for the difference between the top of the logviewer table container and the table rows
         let difference = adjustedVal - $scope.tableEl[0].offsetTop;
 
+        //Offset the height of the bottom timeline and scrollpin row (55 + 15) if in full-screen
         if(this.fullScreen){
           difference-=70;
         }
 
+        //By taking the smallest non-negative value, we have found the top-most row
         if(difference > 0 && (proximityVal > difference || proximityVal < 0)){
           index++;
           newTime = this.displayData[index].log.timestamp;
           this.updateScrollPositionInStore(newTime);
         }
+
         proximityVal = difference;
     }
   };
@@ -555,7 +568,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         if(res.length === 0){
           this.renderData();
           getStatus();
-          if(!this.applicationIsRunning){
+          if(this.statusType !== 0){
             this.loading = false;
             this.displayData = [];
           }
