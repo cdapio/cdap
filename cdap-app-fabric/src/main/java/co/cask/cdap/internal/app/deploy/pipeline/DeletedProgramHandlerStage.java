@@ -99,7 +99,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       final Id.Program programId = appSpec.getApplicationId().program(type, spec.getName()).toId();
       programTerminator.stop(programId);
       // revoke privileges
-      authorizer.revoke(programId.toEntityId(), SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+      authorizer.revoke(programId.toEntityId());
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
       // drop all queues and stream states of a deleted flow
