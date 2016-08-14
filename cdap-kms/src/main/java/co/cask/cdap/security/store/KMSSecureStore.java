@@ -21,9 +21,11 @@ import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.DelegationTokensUpdater;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.SecureKeyId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -206,6 +208,10 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
     checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     KeyProvider.Metadata metadata = provider.getMetadata(keyName);
+    // Provider returns null if the key is not found.
+    if (metadata == null) {
+      throw new NotFoundException(new SecureKeyId(namespace, name));
+    }
     SecureStoreMetadata meta = SecureStoreMetadata.of(name, metadata.getDescription(), metadata.getAttributes());
     KeyProvider.KeyVersion keyVersion = provider.getCurrentKey(keyName);
     return new SecureStoreData(meta, keyVersion.getMaterial());
