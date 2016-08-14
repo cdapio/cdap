@@ -397,13 +397,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       String appAllRunningPrograms = Joiner.on(',')
         .join(runningPrograms);
       throw new CannotBeDeletedException(namespaceId,
-                                         "The following programs are still running: " + appAllRunningPrograms) {
-        //Keeping this for backward compatibility. Ideally this should return conflict, not forbidden.
-        @Override
-        public int getStatusCode() {
-          return HttpResponseStatus.FORBIDDEN.getCode();
-        }
-      };
+                                         "The following programs are still running: " + appAllRunningPrograms);
     }
     //All Apps are STOPPED, delete them
     for (ApplicationSpecification appSpec : allSpecs) {
@@ -438,13 +432,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       String appAllRunningPrograms = Joiner.on(',')
         .join(runningPrograms);
       throw new CannotBeDeletedException(appId,
-                                         "The following programs are still running: " + appAllRunningPrograms) {
-          //Keeping this for backward compatibility. Ideally this should return conflict, not forbidden.
-          @Override
-          public int getStatusCode() {
-            return HttpResponseStatus.FORBIDDEN.getCode();
-          }
-      };
+                                         "The following programs are still running: " + appAllRunningPrograms);
     }
 
     ApplicationSpecification spec = store.getApplication(appId);
