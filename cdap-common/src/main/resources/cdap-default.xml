@@ -1771,7 +1771,7 @@
     <name>security.store.provider</name>
     <value>none</value>
     <description>
-      Backend provider for the secure store
+      Backend provider for the secure store; use 'none' if no secure store
     </description>
   </property>
 
