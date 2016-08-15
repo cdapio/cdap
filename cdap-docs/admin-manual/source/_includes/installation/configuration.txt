@@ -167,13 +167,13 @@ Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
 Local Storage Configuration
 ---------------------------
-Local storage and temp directories |---| depending on the distribution |---| are utilized
+Local storage directories |---| depending on the distribution |---| are utilized
 by CDAP for deploying applications and operating CDAP.
 
 The CDAP user (the ``cdap`` system user) **must** be able to write to **all** of these
 directories, as they are used for deploying applications and for operating CDAP.
   
-- List of local storage and temp directories:
+- **List of local storage directories**
 
   - Properties specified in the ``cdap-site.xml`` file, as described in the :ref:`appendix-cdap-site.xml`:
 
@@ -181,12 +181,12 @@ directories, as they are used for deploying applications and for operating CDAP.
     - ``kafka.server.log.dirs`` (default: ``/tmp/kafka-logs``)
     - ``local.data.dir`` (default: ``data``; if this is instead an absolute path, needs to be writable)
 
-  - Temp directories:
+  - Additional directories:
 
-    - ``/var/cdap/run``
-    - ``/var/log/cdap``
-    - ``/var/run/cdap``
-    - ``/var/tmp/cdap`` 
+    - ``/var/cdap/run`` (used as a PID directory, created by the packages)
+    - ``/var/log/cdap`` (used as log directory, created by the packages)
+    - ``/var/run/cdap`` (default CDAP user's home directory, created by the packages)
+    - ``/var/tmp/cdap`` (default ``LOCAL_DIR`` |---| see below |---| defined and created in the CDAP init scripts)
 
 - Note that ``local.data.dir`` |---| which defines the directory for program jar storage
   when deploying to YARN |---| is set in the ``cdap-site.xml`` and defaults to the
