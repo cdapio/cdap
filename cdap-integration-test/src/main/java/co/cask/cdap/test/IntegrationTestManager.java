@@ -404,6 +404,12 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
+  public void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId.toId(), datasetInstanceName);
+    datasetClient.delete(datasetInstance);
+  }
+
+  @Override
   public <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
     throw new UnsupportedOperationException();
   }
