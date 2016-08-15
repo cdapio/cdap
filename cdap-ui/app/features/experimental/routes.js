@@ -88,6 +88,16 @@ angular.module(PKG.name+'.feature.experimental')
             label: 'Complex Schema',
             parent: 'experimental.home'
           }
+        })
+        .state('experimental.resourcecenter', {
+          url: '/resource-center',
+          templateUrl: '/assets/features/experimental/templates/resource-center.html',
+          controller: 'MyResourceCenterCtrl',
+          controllerAs: 'MyResourceCenterCtrl',
+          ncyBreadcrumb: {
+            label: 'Resource Center',
+            parent: 'experimental.home'
+          }
         });
 
   });
