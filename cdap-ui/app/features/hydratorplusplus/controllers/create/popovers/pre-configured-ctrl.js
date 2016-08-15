@@ -28,21 +28,7 @@ class HydratorPlusPlusPreConfiguredCtrl {
     this.myAlertOnValium = myAlertOnValium;
 
     this.typeFilter = rTemplateType;
-
-    switch(this.typeFilter) {
-      case 'cdap-data-pipeline':
-        this.templateContext = 'Data Pipeline';
-        break;
-      case 'cdap-data-streams':
-        this.templateContext = 'Data Pipeline';
-        break;
-      case 'cdap-etl-batch':
-        this.templateContext = 'ETL Batch';
-        break;
-      case 'cdap-etl-realtime':
-        this.templateContext = 'ETL Realtime';
-        break;
-    }
+    this.templateContext = this.GLOBALS.artifactConvert[rTemplateType];
 
     this.fetchTemplates().then((plugins) => {
       this.templates = plugins;
