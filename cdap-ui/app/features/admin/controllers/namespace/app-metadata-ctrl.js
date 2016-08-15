@@ -33,26 +33,25 @@ function ($scope, $state, myAlertOnValium, MyCDAPDataSource, myHydratorFactory, 
     data.request({
       _cdapPath: path,
       method: 'DELETE'
-    }).then(function() {
+    }).then(function success () {
+      myLoadingService.hideLoadingIconImmediate();
       $state.go('^.apps')
         .then(
-          function success() {
-            myLoadingService.hideLoadingIcon();
+          function () {
             myAlertOnValium.show({
               type: 'success',
               title: app,
               content: 'Application deleted successfully'
             });
-          },
-          function error(err) {
-            myLoadingService.hideLoadingIcon();
-            myAlertOnValium.show({
-              type: 'danger',
-              title: 'Delete failed',
-              content: err
-            });
           }
         );
+    }, function error(err) {
+      myLoadingService.hideLoadingIconImmediate();
+      myAlertOnValium.show({
+        type: 'danger',
+        title: 'Delete failed',
+        content: err
+      });
     });
   };
 

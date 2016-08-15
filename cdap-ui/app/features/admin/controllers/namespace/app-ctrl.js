@@ -36,26 +36,25 @@ function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertO
     myDataSrc.request({
       _cdapPath: path + '/' + id,
       method: 'DELETE'
-    }, function() {
+    }, function success () {
+      myLoadingService.hideLoadingIconImmediate();
       $state.reload()
         .then(
           function success() {
-            myLoadingService.hideLoadingIcon();
             myAlertOnValium.show({
               type: 'success',
               title: id,
               content: 'Application deleted successfully'
             });
-          },
-          function error(err) {
-            myLoadingService.hideLoadingIcon();
-            myAlertOnValium.show({
-              type: 'danger',
-              title: 'Delete failed',
-              content: err
-            });
           }
         );
+    }, function error(err) {
+      myLoadingService.hideLoadingIconImmediate();
+      myAlertOnValium.show({
+        type: 'danger',
+        title: 'Delete failed',
+        content: err
+      });
     });
   };
 

@@ -78,13 +78,13 @@ angular.module(PKG.name + '.feature.admin')
                   myLoadingService.hideLoadingIcon();
                   myAlertOnValium.show({
                     type: 'danger',
-                    title: 'Delete failed'
+                    title: 'Delete failed',
                     content: err
                   });
                 }
               );
           },
-          function error(err) {
+          function error() {
             myLoadingService.hideLoadingIcon();
             myAlertOnValium.show({
               type: 'danger',
