@@ -246,7 +246,8 @@ function build_javadocs_api() {
   local javadoc_type=${1}
   set_mvn_environment
   echo "JAVA_HOME: ${JAVA_HOME}"
-  echo "JAVA Version: `java -version`"
+  echo "JAVA Version:"
+  java -version
   local javadoc_run="mvn javadoc:aggregate -P release"
   if [ "${javadoc_type}" == "${DOCS}" ]; then
     javadoc_run="mvn clean site -P templates"
