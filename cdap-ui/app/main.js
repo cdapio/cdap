@@ -92,7 +92,8 @@ angular
       'angularjs-dropdown-multiselect',
       'hc.marked',
       'ngFileSaver',
-      'infinite-scroll'
+      'infinite-scroll',
+      'react'
     ]).name,
 
     'angular-loading-bar'
@@ -220,8 +221,7 @@ angular
     $compileProvider.aHrefSanitizationWhitelist(
       /^\s*(https?|ftp|mailto|tel|file|blob):/
     );
-
-    /* !! DISABLE DEBUG INFO !! */
+    $compileProvider.debugInfoEnabled(false);
   })
 
   .config(function (cfpLoadingBarProvider) {

@@ -30,19 +30,24 @@ var gulp = require('gulp'),
  */
 gulp.task('css:lib', ['fonts'], function() {
 
-  return gulp.src([
-      './app/styles/bootstrap.less',
-      './bower_components/angular/angular-csp.css',
-      './bower_components/angular-loading-bar/build/loading-bar.min.css',
-      './bower_components/angular-motion/dist/angular-motion.min.css',
-      './bower_components/font-awesome/css/font-awesome.min.css',
-      './bower_components/c3/c3.min.css',
-      './bower_components/angular-gridster/dist/angular-gridster.min.css',
-      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.css',
-    ].concat(mainBowerFiles({
-      filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
-    })))
-    .pipe(plug.if('*.less', plug.less()))
+  return merge(
+      gulp.src([
+        './bower_components/angular/angular-csp.css',
+        './bower_components/angular-loading-bar/build/loading-bar.min.css',
+        './bower_components/angular-motion/dist/angular-motion.min.css',
+        './bower_components/font-awesome/css/font-awesome.min.css',
+        './bower_components/c3/c3.min.css',
+        './bower_components/angular-gridster/dist/angular-gridster.min.css',
+        './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.css',
+      ].concat(mainBowerFiles({
+        filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
+      })))
+      ,
+      gulp.src([
+        './app/styles/bootstrap.less',
+      ])
+      .pipe(plug.less())
+    )
     .pipe(plug.concat('lib.css'))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
@@ -69,13 +74,19 @@ gulp.task('css:app', ['css:lint'], function() {
     autoprefixer({ browsers: ['> 1%'], cascade:true })
   ];
 
-  return gulp.src([
-      './app/styles/common.less',
-      './app/styles/themes/*.less',
-      './app/directives/**/*.{less,css}',
-      './app/features/**/*.{less,css}'
-    ])
-    .pipe(plug.if('*.less', plug.less()))
+  return merge(
+      gulp.src([
+        './app/directives/**/*.css',
+        './app/features/**/*.css'
+      ]),
+      gulp.src([
+        './app/styles/common.less',
+        './app/styles/themes/*.less',
+        './app/directives/**/*.less',
+        './app/features/**/*.less'
+      ])
+      .pipe(plug.less())
+    )
     .pipe(plug.concat('app.css'))
     .pipe(plug.postcss(processor))
     .pipe(gulp.dest('./dist/assets/bundle'))
@@ -183,7 +194,10 @@ gulp.task('js:lib', function() {
       './bower_components/d3-tip/index.js',
       './bower_components/esprima/esprima.js',
 
-      './app/lib/avsc-bundle.js'
+      './app/lib/avsc-bundle.js',
+      './node_modules/react/dist/react.min.js',
+      './node_modules/react-dom/dist/react-dom.min.js',
+      './node_modules/ngreact/ngReact.min.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({
@@ -292,21 +306,22 @@ gulp.task('watch:js:app:babel', function() {
   });
 
   var source = getEs6Features();
-  source = source.concat(getEs6Directives());
+  source = source
+    .concat(getEs6Directives());
 
-  return gulp.src(source)
-    .pipe(plug.plumber())
-    .pipe(plug.ngAnnotate())
-    // .pipe(plug.sourcemaps.init())
+  return merge(
+      gulp.src(source)
+        .pipe(plug.plumber())
+        .pipe(plug.ngAnnotate())
+      ,
+      gulp.src(['./app/**/*.jsx'])
+    )
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
-    .pipe(plug.babel({
-      presets: ['es2015']
-    }))
+    .pipe(plug.babel())
     .pipe(plug.concat('app.es6.js'))
-    // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'))
     .pipe(plug.livereload());
 });
@@ -316,28 +331,27 @@ gulp.task('js:app', function() {
     name: pkg.name,
     v: pkg.version
   });
-  return gulp.src([
-    './app/main.js',
-    '!./app/lib/c3.js',
-    '!./app/lib/avsc-bundle.js',
-    './app/features/*/module.js',
-    './app/**/*.js',
-    '!./app/**/*-test.js',
-    './app/lib/global-lib.js'
-  ])
+  return merge(
+    gulp.src([
+      './app/main.js',
+      '!./app/lib/c3.js',
+      '!./app/lib/avsc-bundle.js',
+      './app/features/*/module.js',
+      './app/**/*.js',
+      '!./app/**/*-test.js',
+      './app/lib/global-lib.js'
+    ])
     .pipe(plug.plumber())
-    .pipe(plug.replace('/* !! DISABLE DEBUG INFO !! */', '$compileProvider.debugInfoEnabled(false);'))
     .pipe(plug.ngAnnotate())
-    // .pipe(plug.sourcemaps.init())
+  ,
+    gulp.src(['./app/**/*.jsx'])
+  )
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
-    .pipe(plug.babel({
-      presets: ['es2015']
-    }))
+    .pipe(plug.babel())
     .pipe(plug.concat('app.js'))
-    // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
@@ -431,13 +445,25 @@ gulp.task('html.dev', ['html:main.dev', 'html:partials']);
   JS hint
  */
 gulp.task('lint', function() {
-  return gulp.src(['./app/**/*.js', './server/*.js'])
+  return gulp.src([
+      './app/**/*.js',
+      '!./app/lib/*.js',
+      './server/*.js'
+    ])
     .pipe(plug.plumber())
-    .pipe(plug.jshint())
-    .pipe(plug.jshint.reporter())
-    .pipe(plug.jshint.reporter('fail'));
+    .pipe(plug.eslint())
+    .pipe(plug.eslint.failAfterError())
+    .pipe(plug.eslint.result(result => {
+        // Called for each ESLint result.
+        if (result.errorCount) {
+          console.log(`ESLint result: ${result.filePath}`);
+          console.log(`# Messages: ${result.messages.length}`);
+          console.log(`# Warnings: ${result.warningCount}`);
+          console.log(`# Errors: ${result.errorCount}`);
+        }
+    }));;
 });
-gulp.task('jshint', ['lint']);
+gulp.task('jslint', ['lint']);
 gulp.task('hint', ['lint']);
 
 
@@ -517,7 +543,7 @@ gulp.task('default', ['lint', 'build']);
 /*
   watch
  */
-gulp.task('watch', ['jshint', 'watch:build'], function() {
+gulp.task('watch', ['jslint', 'watch:build'], function() {
   plug.livereload.listen();
 
   var jsAppSource = [
@@ -527,11 +553,13 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   jsAppSource = jsAppSource.concat(getEs6Features(true));
   jsAppSource = jsAppSource.concat(getEs6Directives(true));
 
-  gulp.watch(jsAppSource, ['jshint', 'watch:js:app']);
+  gulp.watch(jsAppSource, ['jslint', 'watch:js:app']);
 
   var jsAppBabelSource = getEs6Features(false);
-  jsAppBabelSource = jsAppBabelSource.concat(getEs6Directives(false));
-  gulp.watch(jsAppBabelSource, ['jshint', 'watch:js:app:babel']);
+  jsAppBabelSource = jsAppBabelSource
+    .concat(getEs6Directives(false))
+    .concat(['./app/**/*.jsx']);
+  gulp.watch(jsAppBabelSource, ['jslint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/services/**/*.html', './app/features/home/home.html'], ['tpl']);
