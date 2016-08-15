@@ -43,7 +43,7 @@ public class TestSparkCrossNSDatasetApp extends AbstractApplication {
   public static class SparkCrossNSDatasetProgramSpec extends AbstractSpark {
     @Override
     public void configure() {
-      setName("SparkCrossNSDatasetProgram");
+      setName(SparkCrossNSDatasetProgram.class.getSimpleName());
       setDescription("Test Spark with Datasets from other namespace");
       setMainClass(SparkCrossNSDatasetProgram.class);
     }

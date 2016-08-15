@@ -327,11 +327,11 @@ public class SparkTestRun extends TestFrameworkTestBase {
     // deploy the spark app in another namespace (default)
     ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
 
-    ImmutableMap<String, String> args = ImmutableMap.of(ScalaCrossNSProgram.STREAM_NAMESPACE(),
-                                                        crossNSStreamMeta.getNamespaceId().getNamespace(),
-                                                        ScalaCrossNSProgram.DATASET_NAMESPACE(),
-                                                        crossNSDatasetMeta.getNamespaceId().getNamespace(),
-                                                        ScalaCrossNSProgram.DATASET_NAME(), "count");
+    Map<String, String> args = ImmutableMap.of(ScalaCrossNSProgram.STREAM_NAMESPACE(),
+                                               crossNSStreamMeta.getNamespaceId().getNamespace(),
+                                               ScalaCrossNSProgram.DATASET_NAMESPACE(),
+                                               crossNSDatasetMeta.getNamespaceId().getNamespace(),
+                                               ScalaCrossNSProgram.DATASET_NAME(), "count");
     SparkManager sparkManager =
       applicationManager.getSparkManager(ScalaCrossNSProgram.class.getSimpleName()).start(args);
     sparkManager.waitForFinish(1, TimeUnit.MINUTES);
@@ -354,9 +354,9 @@ public class SparkTestRun extends TestFrameworkTestBase {
     DataSetManager<ObjectStore<String>> keysManager = getDataset(inputDSNSMeta.getNamespaceId().toId(), "keys");
     prepareInputData(keysManager);
 
-    ImmutableMap<String, String> args = ImmutableMap.of(ScalaCharCountProgram.INPUT_DATASET_NAMESPACE(),
-                                                        inputDSNSMeta.getNamespaceId().getNamespace(),
-                                                        ScalaCharCountProgram.INPUT_DATASET_NAME(), "keys");
+    Map<String, String> args = ImmutableMap.of(ScalaCharCountProgram.INPUT_DATASET_NAMESPACE(),
+                                               inputDSNSMeta.getNamespaceId().getNamespace(),
+                                               ScalaCharCountProgram.INPUT_DATASET_NAME(), "keys");
 
     ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
     SparkManager sparkManager =
