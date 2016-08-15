@@ -25,10 +25,12 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -58,8 +60,6 @@ import java.io.IOException;
  *
  */
 public class SecureStoreModules extends RuntimeModule {
-  private static final String KMS_BACKED = "kms";
-  private static final String FILE_BACKED = "file";
 
   @Override
   public final Module getInMemoryModules() {
@@ -108,15 +108,9 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     @SuppressWarnings("unchecked")
     public T get() {
-      boolean kmsBacked = KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
-      if (kmsBacked && isKMSCapable()) {
-        try {
-          return (T) injector.getInstance(Class.forName("co.cask.cdap.security.store.KMSSecureStore"));
-        } catch (ClassNotFoundException e) {
-          // KMSSecureStore could not be loaded
-          throw new RuntimeException("CDAP KMS classes could not be loaded. " +
-                                       "Please verify that CDAP is correctly installed");
-        }
+      boolean kmsBacked = SecureStoreUtils.isKMSBacked(cConf);
+      if (kmsBacked && SecureStoreUtils.isKMSCapable()) {
+        return (T) injector.getInstance(SecureStoreUtils.getKMSSecureStore());
       }
       if (kmsBacked) {
         throw new IllegalArgumentException("Could not find classes required for supporting KMS based secure store. " +
@@ -126,23 +120,12 @@ public class SecureStoreModules extends RuntimeModule {
                                              "distribution versions that are based on Apache Hadoop 2.6.0 and up.");
       }
 
-      if (FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER))) {
+      if (SecureStoreUtils.isFileBacked(cConf)) {
         throw new IllegalArgumentException("Only KMS based provider is supported in distributed mode. " +
                    "To be able to use secure store in a distributed environment you" +
                    "will need to use the Hadoop KMS based provider.");
       }
       return (T) injector.getInstance(DummySecureStore.class);
-    }
-
-    private static boolean isKMSCapable() {
-      try {
-        // Check if required KMS classes are present.
-        Class.forName("org.apache.hadoop.crypto.key.kms.KMSClientProvider");
-        return true;
-      } catch (ClassNotFoundException ex) {
-        // KMS is not supported.
-        return false;
-      }
     }
   }
 
@@ -162,8 +145,7 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     @SuppressWarnings("unchecked")
     public T get() {
-      boolean kmsBacked = KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
-      boolean fileBacked = FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
+      boolean fileBacked = SecureStoreUtils.isFileBacked(cConf);
       boolean validPassword = !Strings.isNullOrEmpty(sConf.get(Constants.Security.Store.FILE_PASSWORD));
 
       if (fileBacked && validPassword) {
@@ -174,7 +156,7 @@ public class SecureStoreModules extends RuntimeModule {
                                              "Please set the \"security.store.file.password\" property in your " +
                                              "cdap-security.xml.");
       }
-      if (kmsBacked) {
+      if (SecureStoreUtils.isKMSBacked(cConf)) {
         throw new IllegalArgumentException("Only file based secure store is supported in InMemory/Standalone modes. " +
                                              "Please set the \"security.store.provider\" property in cdap-site.xml " +
                                              "to file and set the \"security.store.file.password\" property in " +

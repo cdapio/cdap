@@ -23,15 +23,12 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.security.ImpersonationInfo;
-import co.cask.cdap.data2.security.ImpersonationUtils;
 import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -41,8 +38,8 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.DefaultUGIProvider;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -69,7 +66,6 @@ import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +79,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -266,8 +263,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               }
 
               Iterable<Class<?>> dependencies = Iterables.concat(
-                Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()), extraDependencies
-              );
+                Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()),
+                getKMSSecureStore(cConf), extraDependencies);
               twillPreparer
                 .withDependencies(dependencies)
                 .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
@@ -317,6 +314,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     } catch (Exception e) {
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
+    }
+  }
+
+  private static List<? extends Class<?>> getKMSSecureStore(CConfiguration cConf) {
+    if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
+      return Collections.singletonList(SecureStoreUtils.getKMSSecureStore());
+    } else {
+      return Collections.EMPTY_LIST;
     }
   }
 
