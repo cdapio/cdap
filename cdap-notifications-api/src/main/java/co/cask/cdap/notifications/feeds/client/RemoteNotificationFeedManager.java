@@ -19,6 +19,7 @@ package co.cask.cdap.notifications.feeds.client;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
@@ -143,7 +144,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
 
   private HttpResponse execute(HttpRequest request) throws NotificationFeedException {
     try {
-      return HttpRequests.execute(request);
+      return HttpRequests.execute(request, new DefaultHttpRequestConfig());
     } catch (IOException e) {
       throw new NotificationFeedException(
         String.format("Error connecting to Notification Feed Service at %s while doing %s",

@@ -52,6 +52,8 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -65,7 +67,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +96,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -104,7 +107,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore,
-                                SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                                SecureStore secureStore, SecureStoreManager secureStoreManager,
+                                AuthorizationEnforcer authorizationEnforcer,
+                                AuthenticationContext authenticationContext) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -118,6 +123,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Inject (optional = true)
@@ -188,7 +195,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       final Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                           context, program.getJarLocation(),
                                                                           locationFactory, streamAdmin,
-                                                                          txSystemClient);
+                                                                          txSystemClient, authorizationEnforcer,
+                                                                          authenticationContext);
       mapReduceRuntimeService.addListener(
         createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);

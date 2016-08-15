@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -85,7 +86,7 @@ abstract class ExploreHttpClient implements Explore {
   private static final Type ROW_LIST_TYPE = new TypeToken<List<QueryResult>>() { }.getType();
 
   protected HttpRequestConfig getHttpRequestConfig() {
-    return HttpRequestConfig.DEFAULT;
+    return new DefaultHttpRequestConfig();
   }
 
   protected abstract InetSocketAddress getExploreServiceAddress();

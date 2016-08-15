@@ -38,6 +38,7 @@ public abstract class Input {
   private final String name;
 
   private String alias;
+  private String namespace;
 
   private Input(String name) {
     this.name = name;
@@ -48,6 +49,25 @@ public abstract class Input {
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * Sets the namespace of the input.
+   *
+   * @param namespace the namespace of the input
+   * @return the Input being operated on
+   */
+  public Input fromNamespace(String namespace) {
+    this.namespace = namespace;
+    return this;
+  }
+
+  /**
+   * @return The namespace of the input.
+   */
+  @Nullable
+  public String getNamespace() {
+    return namespace;
   }
 
   /**
@@ -74,7 +94,7 @@ public abstract class Input {
    *
    * @param datasetName the name of the input dataset
    */
-  public static DatasetInput ofDataset(String datasetName) {
+  public static Input ofDataset(String datasetName) {
     return ofDataset(datasetName, RuntimeArguments.NO_ARGUMENTS);
   }
 
@@ -83,7 +103,7 @@ public abstract class Input {
    *  @param datasetName the name of the input dataset
    * @param arguments the arguments to use when instantiating the dataset
    */
-  public static DatasetInput ofDataset(String datasetName, Map<String, String> arguments) {
+  public static Input ofDataset(String datasetName, Map<String, String> arguments) {
     return ofDataset(datasetName, arguments, null);
   }
 
@@ -93,7 +113,7 @@ public abstract class Input {
    * @param splits the data selection splits. If null, will use the splits defined by the dataset. If the dataset
    *               type is not {@link BatchReadable}, splits will be ignored
    */
-  public static DatasetInput ofDataset(String datasetName, @Nullable Iterable<? extends Split> splits) {
+  public static Input ofDataset(String datasetName, @Nullable Iterable<? extends Split> splits) {
     return ofDataset(datasetName, RuntimeArguments.NO_ARGUMENTS, splits);
   }
 
@@ -102,10 +122,10 @@ public abstract class Input {
    *  @param datasetName the name of the input dataset
    * @param arguments the arguments to use when instantiating the dataset
    * @param splits the data selection splits. If null, will use the splits defined by the dataset. If the dataset
- *               type is not {@link BatchReadable}, splits will be ignored
+   *               type is not {@link BatchReadable}, splits will be ignored
    */
-  public static DatasetInput ofDataset(String datasetName, Map<String, String> arguments,
-                                       @Nullable Iterable<? extends Split> splits) {
+  public static Input ofDataset(String datasetName, Map<String, String> arguments,
+                                @Nullable Iterable<? extends Split> splits) {
     return new DatasetInput(datasetName, arguments, splits);
   }
 
@@ -123,7 +143,7 @@ public abstract class Input {
    *
    * @param streamName Name of the stream.
    */
-  public static StreamInput ofStream(String streamName) {
+  public static Input ofStream(String streamName) {
     return ofStream(new StreamBatchReadable(streamName, 0, Long.MAX_VALUE));
   }
 
@@ -133,7 +153,7 @@ public abstract class Input {
    * @param startTime Start timestamp in milliseconds.
    * @param endTime End timestamp in milliseconds.
    */
-  public static StreamInput ofStream(String streamName, long startTime, long endTime) {
+  public static Input ofStream(String streamName, long startTime, long endTime) {
     return ofStream(new StreamBatchReadable(streamName, startTime, endTime));
   }
 
@@ -144,8 +164,8 @@ public abstract class Input {
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    * @param decoderType The {@link StreamEventDecoder} class for decoding {@link StreamEvent}
    */
-  public static StreamInput ofStream(String streamName, long startTime,
-                                     long endTime, Class<? extends StreamEventDecoder> decoderType) {
+  public static Input ofStream(String streamName, long startTime,
+                               long endTime, Class<? extends StreamEventDecoder> decoderType) {
     return ofStream(new StreamBatchReadable(streamName, startTime, endTime, decoderType));
   }
 
@@ -157,8 +177,8 @@ public abstract class Input {
    * @param bodyFormatSpec The {@link FormatSpecification} class for decoding {@link StreamEvent}
    */
   @Beta
-  public static StreamInput ofStream(String streamName, long startTime,
-                                     long endTime, FormatSpecification bodyFormatSpec) {
+  public static Input ofStream(String streamName, long startTime,
+                               long endTime, FormatSpecification bodyFormatSpec) {
     return ofStream(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec));
   }
 
@@ -167,7 +187,7 @@ public abstract class Input {
    *
    * @param streamBatchReadable specifies the stream to be used as input
    */
-  private static StreamInput ofStream(StreamBatchReadable streamBatchReadable) {
+  private static Input ofStream(StreamBatchReadable streamBatchReadable) {
     return new StreamInput(streamBatchReadable);
   }
 
@@ -175,15 +195,19 @@ public abstract class Input {
    * An implementation of {@link Input}, which defines a {@link co.cask.cdap.api.dataset.Dataset} as an input.
    */
   public static class DatasetInput extends Input {
-
     private final Map<String, String> arguments;
     private final List<Split> splits;
-    private String namespace;
 
     private DatasetInput(String name, Map<String, String> arguments, @Nullable Iterable<? extends Split> splits) {
       super(name);
       this.arguments = Collections.unmodifiableMap(new HashMap<>(arguments));
       this.splits = copySplits(splits);
+    }
+
+    private DatasetInput(String name, Map<String, String> arguments, @Nullable Iterable<? extends Split> splits,
+                         String namespace) {
+      this(name, arguments, splits);
+      super.fromNamespace(namespace);
     }
 
     private List<Split> copySplits(@Nullable Iterable<? extends Split> splitsToCopy) {
@@ -202,21 +226,14 @@ public abstract class Input {
     }
 
     @Nullable
-    public String getNamespace() {
-      return namespace;
-    }
-
-    @Nullable
     public List<Split> getSplits() {
       return splits;
     }
 
+    @Override
     public DatasetInput fromNamespace(String namespace) {
-      DatasetInput datasetInput = new DatasetInput(super.name, arguments, splits);
-      datasetInput.namespace = namespace;
-      return datasetInput;
+      return new DatasetInput(super.name, arguments, splits, namespace);
     }
-
   }
 
   /**
@@ -225,22 +242,20 @@ public abstract class Input {
   public static class StreamInput extends Input {
 
     private final StreamBatchReadable streamBatchReadable;
-    private String namespace;
 
     private StreamInput(StreamBatchReadable streamBatchReadable) {
       super(streamBatchReadable.getStreamName());
       this.streamBatchReadable = streamBatchReadable;
     }
 
-    public StreamInput fromNamespace(String namespace) {
-      StreamInput streamInput = new StreamInput(streamBatchReadable);
-      streamInput.namespace = namespace;
-      return streamInput;
+    private StreamInput(StreamBatchReadable streamBatchReadable, String namespace) {
+      this(streamBatchReadable);
+      super.fromNamespace(namespace);
     }
 
-    @Nullable
-    public String getNamespace() {
-      return namespace;
+    @Override
+    public StreamInput fromNamespace(String namespace) {
+      return new StreamInput(streamBatchReadable, namespace);
     }
 
     @Deprecated
@@ -263,6 +278,11 @@ public abstract class Input {
 
     public InputFormatProvider getInputFormatProvider() {
       return inputFormatProvider;
+    }
+
+    @Override
+    public Input fromNamespace(String namespace) {
+      throw new UnsupportedOperationException("InputFormatProviderInput does not support setting namespace.");
     }
   }
 }

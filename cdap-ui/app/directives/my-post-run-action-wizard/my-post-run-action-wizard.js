@@ -41,7 +41,7 @@ angular.module(PKG.name + '.commons')
           rMode: () => mode
         },
         size: 'lg',
-        windowClass: 'post-run-actions-modal cdap-modal',
+        windowClass: 'post-run-actions-modal hydrator-modal',
         controller: ['$scope', 'rActionCreator', 'rStore', 'rMode', 'rAction', function($scope, rActionCreator, rStore, rMode, rAction) {
           $scope.actionCreator = rActionCreator;
           $scope.store = rStore;

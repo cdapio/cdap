@@ -20,6 +20,7 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -38,7 +39,8 @@ public abstract class AbstractNamespaceQueryClient implements NamespaceQueryAdmi
   /**
    * Executes an HTTP request.
    */
-  protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnauthenticatedException;
+  protected abstract HttpResponse execute(HttpRequest request)
+    throws IOException, UnauthenticatedException, UnauthorizedException;
 
   /**
    * Resolves the specified URL.

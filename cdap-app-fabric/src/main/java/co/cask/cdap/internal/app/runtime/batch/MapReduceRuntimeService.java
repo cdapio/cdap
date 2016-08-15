@@ -56,6 +56,9 @@ import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionContext;
@@ -152,6 +155,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final NamespacedLocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   private Job job;
   private Transaction transaction;
@@ -166,7 +171,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           MapReduce mapReduce, MapReduceSpecification specification,
                           BasicMapReduceContext context,
                           Location programJarLocation, NamespacedLocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient) {
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
+                          AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -177,6 +183,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.streamAdmin = streamAdmin;
     this.txClient = txClient;
     this.context = context;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -653,8 +661,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // A bit hacky for stream.
       if (provider instanceof StreamInputFormatProvider) {
         // pass in mapperInput.getMapper() instead of mapperClass, because mapperClass defaults to the Identity Mapper
-        setDecoderForStream((StreamInputFormatProvider) provider, job, inputFormatConfiguration,
-                            mapperInput.getMapper());
+        StreamInputFormatProvider inputFormatProvider = (StreamInputFormatProvider) provider;
+        setDecoderForStream(inputFormatProvider, job, inputFormatConfiguration, mapperInput.getMapper());
+        // Check if the MR job has read access to the stream, if not fail right away. Note that this is being done
+        // after lineage/usage registry since we want to track the intent of reading from there.
+        try {
+          authorizationEnforcer.enforce(inputFormatProvider.getStreamId().toEntityId(),
+                                        authenticationContext.getPrincipal(), Action.READ);
+        } catch (Exception e) {
+          Throwables.propagateIfPossible(e, IOException.class);
+          throw new IOException(e);
+        }
       }
 
       MultipleInputs.addInput(job, mapperInputEntry.getKey(),

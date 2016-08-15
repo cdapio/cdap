@@ -119,35 +119,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     return args;
   }
 
-  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,
-                                   Store store) throws Exception {
-    try {
-      NamespaceId namespace = Ids.namespace(namespaceId);
-      List<ProgramRecord> programRecords = listPrograms(namespace, type, store);
-
-      if (programRecords == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendJson(HttpResponseStatus.OK, programRecords);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    }
-  }
-
-  protected final List<ProgramRecord> listPrograms(NamespaceId namespaceId, ProgramType type, Store store)
-    throws Exception {
-    try {
-      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId.toId());
-      return listPrograms(appSpecs, type);
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      String errorMessage = String.format("Could not retrieve application spec for namespace '%s', reason: %s",
-                                           namespaceId.toString(), throwable.getMessage());
-      throw new Exception(errorMessage, throwable);
-    }
-  }
-
   @Nullable
   protected ProgramType getProgramType(String programType) {
     try {
@@ -155,48 +126,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     } catch (Exception e) {
       return null;
     }
-  }
-
-  protected final List<ProgramRecord> listPrograms(Collection<ApplicationSpecification> appSpecs,
-                                                   ProgramType type) throws Exception {
-    List<ProgramRecord> programRecords = new ArrayList<>();
-    for (ApplicationSpecification appSpec : appSpecs) {
-      switch (type) {
-        case FLOW:
-          createProgramRecords(appSpec.getName(), type, appSpec.getFlows().values(), programRecords);
-          break;
-        case MAPREDUCE:
-          createProgramRecords(appSpec.getName(), type, appSpec.getMapReduce().values(), programRecords);
-          break;
-        case SPARK:
-          createProgramRecords(appSpec.getName(), type, appSpec.getSpark().values(), programRecords);
-          break;
-        case SERVICE:
-          createProgramRecords(appSpec.getName(), type, appSpec.getServices().values(), programRecords);
-          break;
-        case WORKER:
-          createProgramRecords(appSpec.getName(), type, appSpec.getWorkers().values(), programRecords);
-          break;
-        case WORKFLOW:
-          createProgramRecords(appSpec.getName(), type, appSpec.getWorkflows().values(), programRecords);
-          break;
-        default:
-          throw new Exception("Unknown program type: " + type.name());
-      }
-    }
-    return programRecords;
-  }
-
-  private void createProgramRecords(String appId, ProgramType type,
-                                    Iterable<? extends ProgramSpecification> programSpecs,
-                                    List<ProgramRecord> programRecords) {
-    for (ProgramSpecification programSpec : programSpecs) {
-      programRecords.add(makeProgramRecord(appId, programSpec, type));
-    }
-  }
-
-  protected static ProgramRecord makeProgramRecord(String appId, ProgramSpecification spec, ProgramType type) {
-    return new ProgramRecord(type, appId, spec.getName(), spec.getDescription());
   }
 
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program programId,

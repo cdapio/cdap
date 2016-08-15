@@ -270,7 +270,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Try to delete an App while its flow is running
     response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
-    Assert.assertEquals(403, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
     Assert.assertEquals("'" + program.getApplication() +
                           "' could not be deleted. Reason: The following programs are still running: "
                           + program.getId(), readResponse(response));
@@ -283,7 +283,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Try to delete all Apps while flow is running
     response = doDelete(getVersionedAPIPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
-    Assert.assertEquals(403, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
     Assert.assertEquals("'" + program.getNamespace() +
                           "' could not be deleted. Reason: The following programs are still running: "
                           + program.getApplicationId() + ": " + program.getId(), readResponse(response));

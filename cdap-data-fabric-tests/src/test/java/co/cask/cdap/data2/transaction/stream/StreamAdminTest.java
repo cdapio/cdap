@@ -66,6 +66,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -421,9 +422,10 @@ public abstract class StreamAdminTest {
     Authorizer authorizer = getAuthorizer();
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
     authorizer.revoke(entityId, principal, actions);
+    Set<Privilege> revokedPrivileges = new HashSet<>();
     for (Action action : actions) {
-      existingPrivileges.remove(new Privilege(entityId, action));
+      revokedPrivileges.add(new Privilege(entityId, action));
     }
-    Assert.assertEquals(existingPrivileges, authorizer.listPrivileges(principal));
+    Assert.assertEquals(Sets.difference(existingPrivileges, revokedPrivileges), authorizer.listPrivileges(principal));
   }
 }

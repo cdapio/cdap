@@ -88,6 +88,11 @@ class TrackerLineageController{
     this.$state.go('tracker.detail.entity.lineage', { start: startTime, end: endTime });
   }
 
+  selectCustom() {
+    this.isCustom = true;
+    this.selectedTimeRange.label = 'Custom';
+  }
+
   getLineage(entityType, entityId) {
     this.loading = true;
     let params = {

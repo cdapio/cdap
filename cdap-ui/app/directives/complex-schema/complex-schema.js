@@ -24,6 +24,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
   let recordName;
   let timeout;
   let addFieldTimeout;
+  vm.emptySchema = false;
 
   vm.addField = (index) => {
     let placement = index === undefined ? 0 : index + 1;
@@ -68,13 +69,27 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
   };
 
   function init(strJson) {
-    if (!strJson || strJson === 'record') {
-      recordName = vm.recordName || 'a' + uuid.v4().split('-').join('');
+    const isEmptySchema = (schemaJson) => {
+      if (!schemaJson) {
+        return true;
+      }
+      // we need to check if schemaJson has fields or is already returned by avsc parser in which case the fields will be
+      // accessed using getFields() function.
+      if (angular.isObject(schemaJson) && !(schemaJson.fields || ( schemaJson.getFields && schemaJson.getFields()) || []).length) {
+        return true;
+      }
+      return false;
+    };
+    if ((!strJson || strJson === 'record') && !vm.isDisabled) {
       vm.addField();
+      recordName = vm.recordName || 'a' + uuid.v4().split('-').join('');
       vm.formatOutput();
       return;
     }
-
+    if (isEmptySchema(strJson) && vm.isDisabled) {
+      vm.emptySchema = true;
+      return;
+    }
     let parsed = avsc.parse(strJson, { wrapUnions: true });
     recordName = vm.recordName || parsed._name;
 

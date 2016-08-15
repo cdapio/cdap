@@ -200,6 +200,15 @@ public class EntityIdTest {
   }
 
   @Test
+  public void testDatasetIdGetParent() {
+    DatasetId datasetId = new NamespaceId("foo").dataset("testParent");
+    String datasetIdJson = GSON.toJson(datasetId);
+    Assert.assertEquals(
+      datasetId.getNamespace(), GSON.fromJson(datasetIdJson, DatasetId.class).getParent().getNamespace()
+    );
+  }
+
+  @Test
   public void testInvalidId() {
     try {
       ApplicationId.fromString("application:ns1");

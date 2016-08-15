@@ -404,7 +404,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private InputFormatProvider createInputFormatProvider(String datasetName,
                                                         Map<String, String> datasetArgs,
                                                         @Nullable List<Split> splits) {
-    return createInput(Input.ofDataset(datasetName, datasetArgs, splits)).getInputFormatProvider();
+    return createInput((Input.DatasetInput) Input.ofDataset(datasetName, datasetArgs, splits)).getInputFormatProvider();
   }
 
   /**

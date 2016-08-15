@@ -74,8 +74,8 @@ public class AuthorizationHandlerTest {
 
   private final Principal admin = new Principal("admin", Principal.PrincipalType.USER);
   private final Properties properties = new Properties();
-  private final EntityId ns1 = Ids.namespace("ns1");
-  private final EntityId ns2 = Ids.namespace("ns2");
+  private final EntityId ns1 = new NamespaceId("ns1");
+  private final EntityId ns2 = new NamespaceId("ns2");
   private final EntityExistenceVerifier entityExistenceVerifier = new InMemoryEntityExistenceVerifier(
     ImmutableSet.of(ns1, ns2)
   );

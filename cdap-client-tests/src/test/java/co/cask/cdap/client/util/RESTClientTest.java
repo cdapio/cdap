@@ -19,7 +19,11 @@ package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authentication.client.AccessToken;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -28,6 +32,7 @@ import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -163,6 +168,34 @@ public class RESTClientTest {
     Assert.assertEquals("0", response.getResponseBodyAsString());
   }
 
+  @Test(expected = UnauthorizedException.class)
+  public void testDeleteForbidden() throws Exception {
+    URL url = getBaseURI().resolve("/api/testDeleteForbidden").toURL();
+    HttpRequest request = HttpRequest.delete(url).build();
+    restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
+  }
+
+  @Test(expected = UnauthorizedException.class)
+  public void testGetForbidden() throws Exception {
+    URL url = getBaseURI().resolve("/api/testGetForbidden").toURL();
+    HttpRequest request = HttpRequest.get(url).build();
+    restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
+  }
+
+  @Test(expected = UnauthorizedException.class)
+  public void testPutForbidden() throws Exception {
+    URL url = getBaseURI().resolve("/api/testPutForbidden").toURL();
+    HttpRequest request = HttpRequest.put(url).build();
+    restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
+  }
+
+  @Test(expected = UnauthorizedException.class)
+  public void testPostForbidden() throws Exception {
+    URL url = getBaseURI().resolve("/api/testPostForbidden").toURL();
+    HttpRequest request = HttpRequest.post(url).build();
+    restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
+  }
+
   private void verifyResponse(HttpResponse response, Matcher<Object> expectedResponseCode,
                               Matcher<Object> expectedMessage, Matcher<Object> expectedBody) {
 
@@ -225,18 +258,28 @@ public class RESTClientTest {
     private int unavailEnpointCount = 0;
     private int integer = 0;
 
+    private final String message = new UnauthorizedException(
+      new Principal("test", Principal.PrincipalType.USER),
+      ImmutableSet.of(Action.READ, Action.WRITE),
+      NamespaceId.DEFAULT
+    ).getMessage();
+
     @POST
     @Path("/testCount")
     public void testIncrement(org.jboss.netty.handler.codec.http.HttpRequest request,
                               HttpResponder responder) throws Exception {
       Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
       String content = (new Gson()).fromJson(reader, String.class);
-      if (content.equals("increment")) {
-        responder.sendString(HttpResponseStatus.OK, String.valueOf(++integer));
-      } else if (content.equals("decrement")) {
-        responder.sendString(HttpResponseStatus.OK, String.valueOf(--integer));
-      } else {
-        responder.sendString(HttpResponseStatus.OK, String.valueOf(integer));
+      switch (content) {
+        case "increment":
+          responder.sendString(HttpResponseStatus.OK, String.valueOf(++integer));
+          break;
+        case "decrement":
+          responder.sendString(HttpResponseStatus.OK, String.valueOf(--integer));
+          break;
+        default:
+          responder.sendString(HttpResponseStatus.OK, String.valueOf(integer));
+          break;
       }
     }
 
@@ -290,6 +333,34 @@ public class RESTClientTest {
       } else {
         responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
       }
+    }
+
+    @PUT
+    @Path("/testPutForbidden")
+    public void testPutForbidden(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                 HttpResponder responder) throws Exception {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, message);
+    }
+
+    @POST
+    @Path("/testPostForbidden")
+    public void testPostForbidden(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                  HttpResponder responder) throws Exception {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, message);
+    }
+
+    @DELETE
+    @Path("/testDeleteForbidden")
+    public void testDeleteForbidden(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                    HttpResponder responder) throws Exception {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, message);
+    }
+
+    @GET
+    @Path("/testGetForbidden")
+    public void testGetForbidden(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                 HttpResponder responder) throws Exception {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, message);
     }
 
     @GET

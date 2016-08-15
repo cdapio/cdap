@@ -14,6 +14,13 @@
   the License.
 -->
 
-<div ng-controller="HydratorPlusPlusDetailLogCtrl as LogsCtrl">
-  <my-old-log-viewer data-params="LogsCtrl.logsParams"></my-old-log-viewer>
+<div class="modal"
+      ng-class="{in: animate}"
+      ng-style="{'z-index': 1050 + index*10, display: 'block'}"
+      data-ng-click="close($event)">
+  <div class="modal-dialog raw-modal-dialog modal-lg"
+       ng-class="{'expand': $parent.RawLogsModalCtrl.windowMode == 'expand'}">
+    <div class="modal-content" uib-modal-transclude>
+    </div>
+  </div>
 </div>

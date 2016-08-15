@@ -26,13 +26,14 @@
  */
 
 class TrackerMetadataController {
-  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout, $q) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
-    this.newTag = '';
     this.$timeout = $timeout;
+    this.$q = $q;
+    this.duplicateTag = false;
 
     this.propertyInput = {
       key: '',
@@ -138,10 +139,9 @@ class TrackerMetadataController {
     this.myTrackerApi.getDatasetDetail(datasetParams)
       .$promise
       .then( (res) => {
-        let datasetProperties = res.spec.properties;
+        this.externalDatasetProperties = res.spec.properties;
 
-        angular.extend(this.properties.user, datasetProperties);
-        if (Object.keys(this.properties.user).length > 0) {
+        if (Object.keys(this.externalDatasetProperties).length > 0) {
           this.activePropertyTab = 0;
           this.properties.isUserEmpty = false;
         }
@@ -234,6 +234,8 @@ class TrackerMetadataController {
         };
         this.tags.preferredTags = getTags(response.preferredTags);
         this.tags.userTags = getTags(response.userTags);
+
+        this.updateAvailableTags();
       }, (err) => {
         console.log('Error', err);
       });
@@ -286,22 +288,21 @@ class TrackerMetadataController {
     return this.tags.availableTags;
   }
 
-  addTag() {
+  addTag(input) {
     this.invalidFormat = false;
     this.duplicateTag = false;
-    if (!this.newTag) {
-      return;
+
+    let defer = this.$q.defer();
+
+    if (!input) {
+      defer.reject();
+      return defer.promise;
     }
-    angular.forEach(this.tags.allPreferredTags, (tag) => {
-      if (this.newTag === tag.name) {
-        this.duplicateTag = true;
-      }
-    });
 
     let userTagCheck = this.tags.userTags
-              .filter(tag => this.newTag === tag.name).length > 0 ? true : false;
+              .filter(tag => input === tag.name).length > 0 ? true : false;
     let preferredTagCheck = this.tags.preferredTags
-              .filter(tag => this.newTag === tag.name).length > 0 ? true : false;
+              .filter(tag => input === tag.name).length > 0 ? true : false;
 
     this.duplicateTag = userTagCheck || preferredTagCheck;
 
@@ -313,19 +314,24 @@ class TrackerMetadataController {
         scope: this.$scope
       };
 
-      this.myTrackerApi.addEntityTag(addParams, [this.newTag])
+      this.myTrackerApi.addEntityTag(addParams, [input])
         .$promise
         .then(() => {
           this.fetchEntityTags()
             .then(this.updateAvailableTags.bind(this));
-          this.newTag = '';
 
+          defer.resolve('success');
         }, (err) => {
           if (err.statusCode === 500) {
             this.invalidFormat = true;
           }
+          defer.reject('error');
         });
+    } else {
+      defer.reject('duplicate');
     }
+
+    return defer.promise;
   }
 
   deleteTag(tag) {
@@ -366,7 +372,6 @@ class TrackerMetadataController {
   }
 
   escapeInput() {
-    this.newTag = '';
     this.invalidFormat = false;
     this.duplicateTag = false;
     this.inputOpen = false;
@@ -376,7 +381,7 @@ class TrackerMetadataController {
 
 }
 
-TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout'];
+TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout', '$q'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerMetadataController', TrackerMetadataController);

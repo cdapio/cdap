@@ -91,8 +91,14 @@ angular.module(PKG.name+'.commons')
 
     function formatObj(input) {
       var arr = [];
-
-      angular.forEach(JSON.parse(angular.toJson(input)), function(v, k) {
+      var jsonInput;
+      try {
+        jsonInput = JSON.parse(angular.toJson(input));
+      } catch(e) {
+        console.log('ERROR: ', e);
+        return arr;
+      }
+      angular.forEach(jsonInput, function(v, k) {
         arr.push({
           key: k,
           value: v

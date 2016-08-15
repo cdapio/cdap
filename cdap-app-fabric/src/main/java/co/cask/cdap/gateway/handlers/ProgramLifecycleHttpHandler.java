@@ -776,7 +776,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-    programList(responder, namespaceId, ProgramType.FLOW, store);
+    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.FLOW));
   }
 
   /**
@@ -786,7 +786,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) throws Exception {
-    programList(responder, namespaceId, ProgramType.MAPREDUCE, store);
+    responder.sendJson(HttpResponseStatus.OK,
+                       lifecycleService.list(new NamespaceId(namespaceId), ProgramType.MAPREDUCE));
   }
 
   /**
@@ -796,7 +797,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-    programList(responder, namespaceId, ProgramType.SPARK, store);
+    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.SPARK));
   }
 
   /**
@@ -806,7 +807,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) throws Exception {
-    programList(responder, namespaceId, ProgramType.WORKFLOW, store);
+    responder.sendJson(HttpResponseStatus.OK,
+                       lifecycleService.list(new NamespaceId(namespaceId), ProgramType.WORKFLOW));
   }
 
   /**
@@ -816,14 +818,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId) throws Exception {
-    programList(responder, namespaceId, ProgramType.SERVICE, store);
+    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.SERVICE));
   }
 
   @GET
   @Path("/workers")
   public void getAllWorkers(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
-    programList(responder, namespaceId, ProgramType.WORKER, store);
+    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.WORKER));
   }
 
   /**
@@ -1059,7 +1061,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // This synchronization works in HA mode because even in HA mode there is only one leader at a time.
     NamespaceId namespace = Ids.namespace(namespaceId);
     try {
-      List<ProgramRecord> flows = listPrograms(namespace, ProgramType.FLOW, store);
+      List<ProgramRecord> flows = lifecycleService.list(new NamespaceId(namespaceId), ProgramType.FLOW);
       for (ProgramRecord flow : flows) {
         String appId = flow.getApp();
         String flowId = flow.getName();

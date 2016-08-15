@@ -33,6 +33,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -92,7 +93,8 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<ApplicationRecord> list(Id.Namespace namespace) throws IOException, UnauthenticatedException {
+  public List<ApplicationRecord> list(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(namespace, "apps"),
                                                config.getAccessToken());
@@ -110,9 +112,9 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<ApplicationRecord> list(Id.Namespace namespace,
-                                      @Nullable String artifactName,
-                                      @Nullable String artifactVersion) throws IOException, UnauthenticatedException {
+  public List<ApplicationRecord> list(
+    Id.Namespace namespace, @Nullable String artifactName,
+    @Nullable String artifactVersion) throws IOException, UnauthenticatedException, UnauthorizedException {
     Set<String> names = new HashSet<>();
     if (artifactName != null) {
       names.add(artifactName);
@@ -131,9 +133,9 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<ApplicationRecord> list(Id.Namespace namespace,
-                                      Set<String> artifactNames,
-                                      @Nullable String artifactVersion) throws IOException, UnauthenticatedException {
+  public List<ApplicationRecord> list(
+    Id.Namespace namespace, Set<String> artifactNames, @Nullable String artifactVersion)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     if (artifactNames.isEmpty() && artifactVersion == null) {
       return list(namespace);
     }
@@ -164,7 +166,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public ApplicationDetail get(Id.Application appId)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     HttpResponse response = restClient.execute(HttpMethod.GET,
       config.resolveNamespacedURLV3(appId.getNamespace(), "apps/" + appId.getId()),
@@ -186,7 +188,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<PluginInstanceDetail> getPlugins(ApplicationId appId)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(
@@ -208,7 +210,8 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void delete(Id.Application app) throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+  public void delete(Id.Application app)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.DELETE,
                                                config.resolveNamespacedURLV3(app.getNamespace(), "apps/" + app.getId()),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
@@ -223,7 +226,7 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void deleteAll(Id.Namespace namespace) throws IOException, UnauthenticatedException {
+  public void deleteAll(Id.Namespace namespace) throws IOException, UnauthenticatedException, UnauthorizedException {
     restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3(namespace, "apps"), config.getAccessToken());
   }
 
@@ -235,7 +238,7 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public boolean exists(Id.Application app) throws IOException, UnauthenticatedException {
+  public boolean exists(Id.Application app) throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(app.getNamespace(), "apps/" + app.getId()),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
@@ -364,7 +367,7 @@ public class ApplicationClient {
    * @throws BadRequestException if the request is invalid
    */
   public void update(Id.Application appId, AppRequest<?> updateRequest)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(appId.getNamespace(), String.format("apps/%s/update", appId.getId()));
     HttpRequest request = HttpRequest.post(url)
@@ -401,7 +404,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ProgramRecord> listAllPrograms(Id.Namespace namespace, ProgramType programType)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     Preconditions.checkArgument(programType.isListable());
 
@@ -423,7 +426,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public Map<ProgramType, List<ProgramRecord>> listAllPrograms(Id.Namespace namespace)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
     for (ProgramType programType : ProgramType.values()) {
@@ -447,7 +450,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ProgramRecord> listPrograms(Id.Application app, ProgramType programType)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     Preconditions.checkArgument(programType.isListable());
 
@@ -470,7 +473,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public Map<ProgramType, List<ProgramRecord>> listProgramsByType(Id.Application app)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     Map<ProgramType, List<ProgramRecord>> result = Maps.newHashMap();
     for (ProgramType type : ProgramType.values()) {
@@ -492,7 +495,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ProgramRecord> listPrograms(Id.Application app)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("apps/%s", app.getId());
     URL url = config.resolveNamespacedURLV3(app.getNamespace(), path);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.WorkflowManager;
@@ -73,7 +74,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
                                       @Nullable String key) throws NotFoundException {
     try {
       return workflowClient.getWorkflowToken(new Id.Run(workflowId, runId), scope, key);
-    } catch (IOException | UnauthenticatedException e) {
+    } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -83,7 +84,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
                                                 @Nullable String key) throws NotFoundException {
     try {
       return workflowClient.getWorkflowTokenAtNode(new Id.Run(workflowId, runId), nodeName, scope, key);
-    } catch (IOException | UnauthenticatedException e) {
+    } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -95,7 +96,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
       ProgramRunId programRunId = new ProgramRunId(workflowId.getNamespaceId(), workflowId.getApplicationId(),
                                                    workflowId.getType(), workflowId.getId(), workflowRunId);
       return workflowClient.getWorkflowNodeStates(programRunId);
-    } catch (IOException | UnauthenticatedException e) {
+    } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
       throw Throwables.propagate(e);
     }
   }

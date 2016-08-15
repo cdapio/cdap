@@ -25,6 +25,7 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.SecureKeyId;
@@ -89,13 +90,14 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   private final KeyStore keyStore;
 
   @Inject
-  FileSecureStore(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) throws IOException {
+  public FileSecureStore(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin)
+    throws IOException {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
     path = dir.resolve(cConf.get(Constants.Security.Store.FILE_NAME));
     // Get the keystore password
-    password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
+    password = sConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
     this.namespaceQueryAdmin = namespaceQueryAdmin;
 
     keyStore = locateKeystore(path, password);

@@ -21,6 +21,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 
@@ -49,7 +50,8 @@ public class NamespaceClient extends AbstractNamespaceClient {
   }
 
   @Override
-  protected HttpResponse execute(HttpRequest request) throws IOException, UnauthenticatedException {
+  protected HttpResponse execute(HttpRequest request)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     // the allowed codes are the ones that AbstractNamespaceClient expects to be able to handle
     return restClient.execute(request, config.getAccessToken(),
                               HttpURLConnection.HTTP_BAD_REQUEST,

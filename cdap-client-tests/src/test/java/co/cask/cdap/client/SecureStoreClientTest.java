@@ -16,19 +16,22 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.SecureKeyAlreadyExistsException;
 import co.cask.cdap.common.SecureKeyNotFoundException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.proto.security.SecureKeyListEntry;
+import co.cask.cdap.test.SingletonExternalResource;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -39,9 +42,18 @@ import java.util.Map;
  * Tests for {@link SecureStoreClient}
  */
 @Category(XSlowTests.class)
-public class SecureStoreClientTestRun extends ClientTestBase {
+public class SecureStoreClientTest extends AbstractClientTest {
 
   private SecureStoreClient client;
+
+  @ClassRule
+  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(
+    new StandaloneTester(Constants.Security.Store.PROVIDER, "file"));
+
+  @Override
+  protected StandaloneTester getStandaloneTester() {
+    return STANDALONE.get();
+  }
 
   @Before
   public void setUp() throws Throwable {
