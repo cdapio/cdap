@@ -20,6 +20,7 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -33,6 +34,11 @@ public abstract class PluginConfig extends Config implements Serializable {
   // below fields are set using reflection
   private PluginProperties properties;
   private Set<String> macroFields;
+
+  protected PluginConfig() {
+    this.properties = PluginProperties.builder().build();
+    this.macroFields = Collections.emptySet();
+  }
 
   /**
    * Returns the {@link PluginProperties}.
