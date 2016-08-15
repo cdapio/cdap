@@ -19,6 +19,7 @@ import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
@@ -43,6 +44,7 @@ public class PipelineAction extends AbstractCustomAction {
 
   // This is only visible during the configure time, not at runtime.
   private final BatchPhaseSpec phaseSpec;
+  private Metrics metrics;
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -78,7 +80,7 @@ public class PipelineAction extends AbstractCustomAction {
                                                           context.getLogicalStartTime(),
                                                           context,
                                                           context.getNamespace()));
-    ActionContext actionContext = new BasicActionContext(context);
+    ActionContext actionContext = new BasicActionContext(context, metrics, stageInfo.getName());
     action.run(actionContext);
     WorkflowToken token = context.getWorkflowToken();
     if (token == null) {

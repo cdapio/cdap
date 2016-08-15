@@ -54,7 +54,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
             size: 'lg',
             backdrop: 'static',
-            windowTopClass: 'node-config-modal cdap-modal',
+            windowTopClass: 'node-config-modal hydrator-modal',
             controller: 'HydratorPlusPlusNodeConfigCtrl',
             controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
             resolve: {
@@ -64,11 +64,12 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore, GLOBALS) {
                 let pluginId = pluginNode.name;
                 let appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
+                let artifactVersion = HydratorPlusPlusDetailNonRunsStore.getArtifact().version;
                 let sourceConn = HydratorPlusPlusDetailNonRunsStore
                   .getSourceNodes(pluginId)
                   .filter( node => typeof node.outputSchema === 'string');
                 return HydratorPlusPlusNodeService
-                  .getPluginInfo(pluginNode, appType, sourceConn)
+                  .getPluginInfo(pluginNode, appType, sourceConn, artifactVersion)
                   .then((nodeWithInfo) => (
                     {
                       node: nodeWithInfo,

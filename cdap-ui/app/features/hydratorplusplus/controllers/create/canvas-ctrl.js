@@ -58,7 +58,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
           windowTemplateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover-template.html',
           templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
           size: 'lg',
-          windowClass: 'node-config-modal cdap-modal',
+          windowClass: 'node-config-modal hydrator-modal',
           controller: 'HydratorPlusPlusNodeConfigCtrl',
           bindToController: true,
           controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
@@ -74,8 +74,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
               let sourceConn = HydratorPlusPlusConfigStore
                 .getSourceNodes(pluginId)
                 .filter( node => typeof node.outputSchema === 'string');
+              let artifactVersion = HydratorPlusPlusConfigStore.getArtifact().version;
               return HydratorPlusPlusNodeService
-                .getPluginInfo(pluginNode, appType, sourceConn)
+                .getPluginInfo(pluginNode, appType, sourceConn, artifactVersion)
                 .then((nodeWithInfo) => (
                   {
                     node: nodeWithInfo,

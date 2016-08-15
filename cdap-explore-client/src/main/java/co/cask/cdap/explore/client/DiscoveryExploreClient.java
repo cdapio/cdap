@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
@@ -50,8 +51,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
       }
     });
 
-    int httpClientTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
-    this.httpRequestConfig = new HttpRequestConfig(httpClientTimeoutMs, httpClientTimeoutMs);
+    this.httpRequestConfig = new DefaultHttpRequestConfig();
   }
 
   @Override

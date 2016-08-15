@@ -1760,14 +1760,6 @@
   </property>
 
   <property>
-    <name>security.store.file.password</name>
-    <value>cdapsecret</value>
-    <description>
-      Password to access the key store
-    </description>
-  </property>
-
-  <property>
     <name>security.store.file.path</name>
     <value>${local.data.dir}/store</value>
     <description>
@@ -1777,9 +1769,9 @@
 
   <property>
     <name>security.store.provider</name>
-    <value>kms</value>
+    <value>none</value>
     <description>
-      Backend provider for the secure store
+      Backend provider for the secure store; use 'none' if no secure store
     </description>
   </property>
 
@@ -2049,7 +2041,15 @@
     <name>http.client.connection.timeout.ms</name>
     <value>60000</value>
     <description>
-      Timeout in milliseconds for internal HTTP requests
+      Connection timeout in milliseconds for internal HTTP requests
+    </description>
+  </property>
+
+  <property>
+    <name>http.client.read.timeout.ms</name>
+    <value>60000</value>
+    <description>
+      Read timeout in milliseconds for internal HTTP requests
     </description>
   </property>
 

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -58,6 +59,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -764,7 +766,9 @@ public class ArtifactRepository {
       Iterables.filter(artifacts, new com.google.common.base.Predicate<ArtifactSummary>() {
         @Override
         public boolean apply(ArtifactSummary artifactSummary) {
-          return filter.apply(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
+          // no authorization on system artifacts
+          return ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ||
+            filter.apply(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
         }
       })
     );
@@ -779,7 +783,10 @@ public class ArtifactRepository {
   private void ensureAccess(co.cask.cdap.proto.id.ArtifactId artifactId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(artifactId)) {
+    if (Principal.SYSTEM.equals(principal) || NamespaceId.SYSTEM.equals(artifactId.getParent())) {
+      return;
+    }
+    if (!filter.apply(artifactId)) {
       throw new UnauthorizedException(principal, artifactId);
     }
   }

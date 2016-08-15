@@ -27,6 +27,7 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -116,7 +117,7 @@ public abstract class AbstractClientTest {
   }
 
   protected void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowlet, int numInstances)
-    throws IOException, NotFoundException, UnauthenticatedException {
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     int actualInstances;
     int numTries = 0;
@@ -129,19 +130,22 @@ public abstract class AbstractClientTest {
   }
 
   protected void assertProgramRunning(ProgramClient programClient, Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    InterruptedException, UnauthorizedException {
 
     assertProgramStatus(programClient, program, "RUNNING");
   }
 
   protected void assertProgramStopped(ProgramClient programClient, Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    InterruptedException, UnauthorizedException {
 
     assertProgramStatus(programClient, program, "STOPPED");
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program program, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    InterruptedException, UnauthorizedException {
 
     try {
       programClient.waitForStatus(program, programStatus, 60, TimeUnit.SECONDS);

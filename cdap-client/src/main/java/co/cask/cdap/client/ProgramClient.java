@@ -42,6 +42,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -110,7 +111,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void start(Id.Program program, boolean debug, @Nullable Map<String, String> runtimeArgs)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String action = debug ? "debug" : "start";
     String path = String.format("apps/%s/%s/%s/%s",
@@ -139,7 +140,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void start(Id.Program program, boolean debug)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     start(program, debug, null);
   }
@@ -152,7 +153,8 @@ public class ProgramClient {
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void start(Id.Program program) throws IOException, ProgramNotFoundException, UnauthenticatedException {
+  public void start(Id.Program program)
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
     start(program, false, null);
   }
 
@@ -166,7 +168,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<BatchProgramResult> start(Id.Namespace namespace, List<BatchProgramStart> programs)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "start");
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, url)
@@ -185,7 +187,8 @@ public class ProgramClient {
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void stop(Id.Program program) throws IOException, ProgramNotFoundException, UnauthenticatedException {
+  public void stop(Id.Program program)
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
     String path = String.format("apps/%s/%s/%s/stop",
                                 program.getApplicationId(), program.getType().getCategoryName(), program.getId());
     URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
@@ -206,7 +209,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<BatchProgramResult> stop(Id.Namespace namespace, List<BatchProgram> programs)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "stop");
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, url)
@@ -226,7 +229,7 @@ public class ProgramClient {
    * @throws TimeoutException
    */
   public void stopAll(Id.Namespace namespace)
-    throws IOException, UnauthenticatedException, InterruptedException, TimeoutException {
+    throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException {
 
     Map<ProgramType, List<ProgramRecord>> allPrograms = applicationClient.listAllPrograms(namespace);
     for (Map.Entry<ProgramType, List<ProgramRecord>> entry : allPrograms.entrySet()) {
@@ -258,7 +261,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public String getStatus(Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("apps/%s/%s/%s/status",
                                 program.getApplicationId(), program.getType().getCategoryName(), program.getId());
@@ -282,7 +285,7 @@ public class ProgramClient {
    * @return the status of each program
    */
   public List<BatchProgramStatus> getStatus(Id.Namespace namespace, List<BatchProgram> programs)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "status");
 
@@ -334,7 +337,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public DistributedProgramLiveInfo getLiveInfo(Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("apps/%s/%s/%s/live-info",
                                 program.getApplicationId(), program.getType().getCategoryName(), program.getId());
@@ -358,7 +361,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public int getFlowletInstances(Id.Flow.Flowlet flowlet)
-    throws IOException, NotFoundException, UnauthenticatedException {
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(flowlet.getNamespace(),
                                             String.format("apps/%s/flows/%s/flowlets/%s/instances",
@@ -384,7 +387,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void setFlowletInstances(Id.Flow.Flowlet flowlet, int instances)
-    throws IOException, NotFoundException, UnauthenticatedException {
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(flowlet.getNamespace(),
                                             String.format("apps/%s/flows/%s/flowlets/%s/instances",
@@ -409,7 +412,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public int getWorkerInstances(Id.Worker worker) throws IOException, NotFoundException,
-    UnauthenticatedException {
+    UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(worker.getNamespace(),
                                             String.format("apps/%s/workers/%s/instances",
                                                           worker.getApplicationId(), worker.getId()));
@@ -430,7 +433,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void setWorkerInstances(Id.Worker worker, int instances) throws IOException, NotFoundException,
-    UnauthenticatedException {
+    UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(worker.getNamespace(),
                                             String.format("apps/%s/workers/%s/instances",
@@ -452,7 +455,8 @@ public class ProgramClient {
    * @throws NotFoundException if the application or service could not found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public int getServiceInstances(Id.Service service) throws IOException, NotFoundException, UnauthenticatedException {
+  public int getServiceInstances(Id.Service service)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),
                                             String.format("apps/%s/services/%s/instances",
                                                           service.getApplicationId(),
@@ -475,7 +479,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void setServiceInstances(Id.Service service, int instances)
-    throws IOException, NotFoundException, UnauthenticatedException {
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),
                                             String.format("apps/%s/services/%s/instances",
@@ -499,7 +503,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<WorkflowActionNode> getWorkflowCurrent(Id.Application appId, String workflowId, String runId)
-    throws IOException, NotFoundException, UnauthenticatedException {
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
     String path = String.format("/apps/%s/workflows/%s/runs/%s/current", appId.getId(), workflowId, runId);
     URL url = config.resolveNamespacedURLV3(appId.getNamespace(), path);
 
@@ -528,7 +532,7 @@ public class ProgramClient {
    */
   public List<RunRecord> getProgramRuns(Id.Program program, String state,
                                         long startTime, long endTime, int limit)
-    throws IOException, NotFoundException, UnauthenticatedException {
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d",
                                        Constants.AppFabric.QUERY_PARAM_STATUS, state,
@@ -561,7 +565,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<RunRecord> getAllProgramRuns(Id.Program program, long startTime, long endTime, int limit)
-    throws IOException, NotFoundException, UnauthenticatedException {
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
     return getProgramRuns(program, ProgramRunStatus.ALL.name(), startTime, endTime, limit);
   }
 
@@ -578,7 +582,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public String getProgramLogs(Id.Program program, long start, long stop)
-    throws IOException, NotFoundException, UnauthenticatedException {
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
                                 program.getApplicationId(), program.getType().getCategoryName(),
@@ -602,7 +606,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public Map<String, String> getRuntimeArgs(Id.Program program)
-    throws IOException, UnauthenticatedException, ProgramNotFoundException {
+    throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
 
     String path = String.format("apps/%s/%s/%s/runtimeargs",
                                 program.getApplicationId(), program.getType().getCategoryName(), program.getId());
@@ -625,7 +629,7 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void setRuntimeArgs(Id.Program program, Map<String, String> runtimeArgs)
-    throws IOException, UnauthenticatedException, ProgramNotFoundException {
+    throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
 
     String path = String.format("apps/%s/%s/%s/runtimeargs",
                                 program.getApplicationId(), program.getType().getCategoryName(), program.getId());

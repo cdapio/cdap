@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2012-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,10 +22,11 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -42,15 +43,13 @@ public class ProgramIdCompleter extends StringsCompleter {
       public Collection<String> get() {
         try {
           List<ProgramRecord> programs = appClient.listAllPrograms(cliConfig.getCurrentNamespace(), programType);
-          List<String> programIds = Lists.newArrayList();
+          List<String> programIds = new ArrayList<>();
           for (ProgramRecord programRecord : programs) {
             programIds.add(programRecord.getApp() + "." + programRecord.getName());
           }
           return programIds;
-        } catch (IOException e) {
-          return Lists.newArrayList();
-        } catch (UnauthenticatedException e) {
-          return Lists.newArrayList();
+        } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
+          return new ArrayList<>();
         }
       }
     });

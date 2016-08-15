@@ -31,6 +31,7 @@ import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -171,9 +172,8 @@ public class CLIConfig implements TableRendererConfig {
     clientConfig.setAccessToken(newAccessToken.getAccessToken());
   }
 
-  private void checkConnection(ClientConfig baseClientConfig,
-                               ConnectionConfig connectionInfo,
-                               AccessToken accessToken) throws IOException, UnauthenticatedException {
+  private void checkConnection(ClientConfig baseClientConfig, ConnectionConfig connectionInfo, AccessToken accessToken)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     ClientConfig clientConfig = new ClientConfig.Builder(baseClientConfig)
       .setConnectionConfig(connectionInfo)
       .setAccessToken(accessToken)
@@ -192,8 +192,9 @@ public class CLIConfig implements TableRendererConfig {
   }
 
   @Nullable
-  private UserAccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionConfig connectionInfo,
-                                             PrintStream output, boolean debug) throws IOException {
+  private UserAccessToken acquireAccessToken(
+    ClientConfig clientConfig, ConnectionConfig connectionInfo, PrintStream output,
+    boolean debug) throws IOException, UnauthorizedException {
 
     if (!isAuthenticationEnabled(connectionInfo)) {
       return null;

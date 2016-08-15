@@ -25,7 +25,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.Service;
-import org.apache.commons.collections.functors.ExceptionClosure;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKOperations;
@@ -36,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -144,8 +142,9 @@ public class KafkaServerMain extends DaemonMain {
     Map<String, String> propConfigs = cConf.getValByRegex("^(kafka\\.server\\.)");
     for (Map.Entry<String, String> pair : propConfigs.entrySet()) {
       String key = pair.getKey();
+      String value = cConf.get(key);
       String trimmedKey = key.substring(13);
-      prop.setProperty(trimmedKey, pair.getValue());
+      prop.setProperty(trimmedKey, value);
     }
     return prop;
   }

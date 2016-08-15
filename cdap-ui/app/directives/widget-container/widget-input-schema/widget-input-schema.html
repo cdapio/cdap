@@ -32,7 +32,7 @@
 -->
 
 <!-- Section that shows input schema(s) -->
-<div ng-if="::(MyInputSchemaCtrl.inputSchemas.length > 0)">
+<div>
 
   <!-- Section that shows multiple inputs -->
   <div ng-if="::(MyInputSchemaCtrl.multipleInputs)">
@@ -48,11 +48,10 @@
           ng-model="inputschema.schema"
           is-disabled="true">
         </my-complex-schema>
-
-        <div ng-if="::(inputschema.schema.fields.length === 0 || !inputschema.schema)">
-          <p>There is no input schema</p>
-        </div>
       </div>
+    </div>
+    <div ng-if="!MyInputSchemaCtrl.inputSchemas.length">
+      No schema available
     </div>
   </div>
 
@@ -64,20 +63,12 @@
     <!-- Section that shows single input schema table-->
 
     <my-complex-schema
-      ng-if="::(!(MyInputSchemaCtrl.inputSchemas[0].schema.fields.length === 0 || !MyInputSchemaCtrl.inputSchemas[0].schema))"
       ng-model="MyInputSchemaCtrl.inputSchemas[0].schema"
       is-disabled="true">
     </my-complex-schema>
 
     <!-- End of section that shows single input schema table-->
 
-    <!-- Section that shows no input schema -->
-
-    <div ng-if="::(MyInputSchemaCtrl.inputSchemas[0].schema.fields.length === 0 || !MyInputSchemaCtrl.inputSchemas[0].schema)">
-      <p>There is no input schema</p>
-    </div>
-
-    <!-- End of section that shows no input schema-->
 
   </div>
 
@@ -86,11 +77,3 @@
 </div>
 
 <!-- End of section that shows input schema(s) -->
-
-<!-- Section that shows no input schema -->
-
-<div ng-if="::(MyInputSchemaCtrl.inputSchemas.length === 0)">
-  <p>There is no input schema</p>
-</div>
-
-<!-- End of section that shows no input schema -->

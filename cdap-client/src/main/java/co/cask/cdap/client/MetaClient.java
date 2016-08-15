@@ -22,6 +22,7 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -53,7 +54,7 @@ public class MetaClient {
     this(config, new RESTClient(config));
   }
 
-  public void ping() throws IOException, UnauthenticatedException {
+  public void ping() throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(
       HttpMethod.GET, config.resolveURLNoVersion("ping"), config.getAccessToken());
     if (!Objects.equals(response.getResponseBodyAsString(), "OK.\n")) {
@@ -61,20 +62,22 @@ public class MetaClient {
     }
   }
 
-  public Version getVersion() throws IOException, UnauthenticatedException {
+  public Version getVersion() throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("version"), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
   }
 
-  public Map<String, ConfigEntry> getCDAPConfig() throws IOException, UnauthenticatedException {
+  public Map<String, ConfigEntry> getCDAPConfig() throws IOException, UnauthenticatedException, UnauthorizedException {
     return getConfig("config/cdap");
   }
 
-  public Map<String, ConfigEntry> getHadoopConfig() throws IOException, UnauthenticatedException {
+  public Map<String, ConfigEntry> getHadoopConfig()
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return getConfig("config/hadoop");
   }
 
-  private Map<String, ConfigEntry> getConfig(String url) throws IOException, UnauthenticatedException {
+  private Map<String, ConfigEntry> getConfig(String url)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL(url), config.getAccessToken());
     List<ConfigEntry> responseObject =
       ObjectResponse.fromJsonBody(response, new TypeToken<List<ConfigEntry>>() { }).getResponseObject();

@@ -24,6 +24,7 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
@@ -118,7 +119,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
   }
 
   private void put(ServiceManager serviceManager, String key,
-                   String value) throws IOException, UnauthenticatedException {
+                   String value) throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = new URL(serviceManager.getServiceURL(), key);
     getRestClient().execute(HttpMethod.PUT, url, value,
                             ImmutableMap.<String, String>of(), getClientConfig().getAccessToken());

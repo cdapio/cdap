@@ -18,7 +18,6 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.FeatureDisabledException;
@@ -40,14 +39,11 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
@@ -223,18 +219,8 @@ public class AuthorizationClient extends AbstractAuthorizer {
     throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
     int[] allowedErrorCodes = new int[additionalAllowedErrorCodes.length + 2];
     System.arraycopy(additionalAllowedErrorCodes, 0, allowedErrorCodes, 0, additionalAllowedErrorCodes.length);
-    allowedErrorCodes[additionalAllowedErrorCodes.length] = HttpURLConnection.HTTP_FORBIDDEN;
-    allowedErrorCodes[additionalAllowedErrorCodes.length + 1] = HttpURLConnection.HTTP_NOT_IMPLEMENTED;
+    allowedErrorCodes[additionalAllowedErrorCodes.length] = HttpURLConnection.HTTP_NOT_IMPLEMENTED;
     HttpResponse response = restClient.execute(request, config.getAccessToken(), allowedErrorCodes);
-    if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      // TODO:(CDAP-5302) Include the logged in username here
-      InputSupplier<? extends InputStream> requestBody = request.getBody();
-      String msg = requestBody == null ?
-        String.format("Unauthorized to perform %s %s", request.getMethod(), request.getURL()) :
-        String.format("Unauthorized to perform %s %s with body %s",
-                      request.getMethod(), request.getURL(), Bytes.toString(ByteStreams.toByteArray(requestBody)));
-      throw new UnauthorizedException(msg);
-    }
     if (HttpURLConnection.HTTP_NOT_IMPLEMENTED == response.getResponseCode()) {
       FeatureDisabledException.Feature feature = FeatureDisabledException.Feature.AUTHORIZATION;
       String enableConfig = Constants.Security.Authorization.ENABLED;

@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.dataset2.lib.hbase;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -63,13 +64,16 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   protected final TableId tableId;
   protected final Configuration hConf;
+  protected final CConfiguration cConf;
   protected final HBaseTableUtil tableUtil;
 
   private HBaseAdmin admin;
 
-  protected AbstractHBaseDataSetAdmin(TableId tableId, Configuration hConf, HBaseTableUtil tableUtil) {
+  protected AbstractHBaseDataSetAdmin(TableId tableId, Configuration hConf, CConfiguration cConf,
+                                      HBaseTableUtil tableUtil) {
     this.tableId = tableId;
     this.hConf = hConf;
+    this.cConf = cConf;
     this.tableUtil = tableUtil;
   }
 
@@ -157,6 +161,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
 
     HBaseTableUtil.setVersion(newDescriptor);
+    HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
 
     LOG.info("Updating table '{}'...", tableId);
     boolean enableTable = false;

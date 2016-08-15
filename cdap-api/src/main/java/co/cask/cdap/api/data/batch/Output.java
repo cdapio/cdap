@@ -31,6 +31,7 @@ public abstract class Output {
   private final String name;
 
   private String alias;
+  private String namespace;
 
   private Output(String name) {
     this.name = name;
@@ -41,6 +42,25 @@ public abstract class Output {
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * Sets the namespace of the output.
+   *
+   * @param namespace the namespace of the output
+   * @return the Output being operated on
+   */
+  public Output fromNamespace(String namespace) {
+    this.namespace = namespace;
+    return this;
+  }
+
+  /**
+   * @return the namespace of the output.
+   */
+  @Nullable
+  public String getNamespace() {
+    return namespace;
   }
 
   /**
@@ -67,7 +87,7 @@ public abstract class Output {
    *
    * @param datasetName the name of the output dataset
    */
-  public static DatasetOutput ofDataset(String datasetName) {
+  public static Output ofDataset(String datasetName) {
     return ofDataset(datasetName, RuntimeArguments.NO_ARGUMENTS);
   }
 
@@ -76,7 +96,7 @@ public abstract class Output {
    *  @param datasetName the name of the output dataset
    * @param arguments the arguments to use when instantiating the dataset
    */
-  public static DatasetOutput ofDataset(String datasetName, Map<String, String> arguments) {
+  public static Output ofDataset(String datasetName, Map<String, String> arguments) {
     return new DatasetOutput(datasetName, arguments);
   }
 
@@ -95,26 +115,24 @@ public abstract class Output {
   public static class DatasetOutput extends Output {
 
     private final Map<String, String> arguments;
-    private String namespace;
 
     private DatasetOutput(String name, Map<String, String> arguments) {
       super(name);
       this.arguments = Collections.unmodifiableMap(new HashMap<>(arguments));
     }
 
+    private DatasetOutput(String name, Map<String, String> arguments, String namespace) {
+      this(name, arguments);
+      super.fromNamespace(namespace);
+    }
+
     public Map<String, String> getArguments() {
       return arguments;
     }
 
+    @Override
     public DatasetOutput fromNamespace(String namespace) {
-      DatasetOutput datasetOutput = new DatasetOutput(super.name, arguments);
-      datasetOutput.namespace = namespace;
-      return datasetOutput;
-    }
-
-    @Nullable
-    public String getNamespace() {
-      return namespace;
+      return new DatasetOutput(super.name, arguments, namespace);
     }
   }
 
@@ -132,6 +150,11 @@ public abstract class Output {
 
     public OutputFormatProvider getOutputFormatProvider() {
       return outputFormatProvider;
+    }
+
+    @Override
+    public Output fromNamespace(String namespace) {
+      throw new UnsupportedOperationException("OutputFormatProviderOutput does not support setting namespace.");
     }
   }
 }
