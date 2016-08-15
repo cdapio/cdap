@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.FileContextProvider;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -83,11 +84,11 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.ParentNotDirectoryException;
-import org.apache.hadoop.fs.UnsupportedFileSystemException;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -159,6 +160,7 @@ public class MasterServiceMain extends DaemonMain {
   private final ZKClientService zkClient;
   private final LeaderElection leaderElection;
   private final LogAppenderInitializer logAppenderInitializer;
+  private final FileContext fileContext;
 
   private volatile boolean stopped;
 
@@ -191,6 +193,7 @@ public class MasterServiceMain extends DaemonMain {
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     this.zkClient = injector.getInstance(ZKClientService.class);
     this.leaderElection = createLeaderElection();
+    this.fileContext = injector.getInstance(FileContext.class);
 
     // leader election will normally stay running. Will only stop if there was some issue starting up.
     this.leaderElection.addListener(new ServiceListenerAdapter() {
@@ -238,17 +241,13 @@ public class MasterServiceMain extends DaemonMain {
   /**
    * CDAP-6644 for secure impersonation to work,
    * we want other users to be able to write to the "path" directory,
-   * currently only cdap.user has read-write permissions while other users can only read the "/cdap/{path}" dir,
+   * currently only cdap.user has read-write permissions
+   * while other users can only read the "{hdfs.namespace}/{path}" dir,
    * we want to let others to be able to write to "path" directory, till we have a better solution.
    */
   private void createDirectory(String path) {
-    try {
-      String namespacedPath = String.format("/%s/%s", cConf.get(Constants.ROOT_NAMESPACE), path);
-      FileContext fileContext = FileContext.getFileContext(hConf);
-      createDirectory(fileContext, namespacedPath);
-    }  catch (UnsupportedFileSystemException e) {
-      LOG.error("Unsupported FileSystem Exception while trying to create directory", e);
-    }
+    String namespacedPath = String.format("%s/%s", cConf.get(Constants.CFG_HDFS_NAMESPACE), path);
+    createDirectory(fileContext, namespacedPath);
   }
 
   private void createDirectory(FileContext fileContext, String path) {
@@ -463,7 +462,13 @@ public class MasterServiceMain extends DaemonMain {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new LoggingModules().getDistributedModules()
+      new LoggingModules().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(FileContext.class).toProvider(FileContextProvider.class).in(Scopes.SINGLETON);
+        }
+      }
     );
   }
 
