@@ -98,7 +98,7 @@ To create this application, called *streamETLApp*, you can use either the HTTP R
 
 - Using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`::
 
-    $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp \
+    $ curl -w'\n' -X PUT localhost:11015/v3/namespaces/default/apps/streamETLApp \
         -H 'Content-Type: application/json' -d @config.json
 
 - Using the :ref:`CDAP CLI <cli>`:

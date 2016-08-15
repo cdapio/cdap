@@ -1430,7 +1430,7 @@
 
   <property>
     <name>router.bind.port</name>
-    <value>10000</value>
+    <value>11015</value>
     <description>
       CDAP Router service bind port
     </description>
@@ -2013,7 +2013,7 @@
 
   <property>
     <name>dashboard.bind.port</name>
-    <value>9999</value>
+    <value>11011</value>
     <description>
       CDAP UI bind port
     </description>

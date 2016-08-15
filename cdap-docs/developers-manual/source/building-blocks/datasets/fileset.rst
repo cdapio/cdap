@@ -111,7 +111,7 @@ this is only possible by specifying them as runtime arguments when the MapReduce
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://example.com:10000/v3/namespaces/default/apps/FileSetExample/mapreduce/WordCount/start" \
+  $ curl -w"\n" -X POST "http://example.com:11015/v3/namespaces/default/apps/FileSetExample/mapreduce/WordCount/start" \
   -d '{ "dataset.lines.input.paths": "monday/my.txt", "dataset.counts.output.path": "monday/counts.out" }'
           
 Using the CDAP CLI:

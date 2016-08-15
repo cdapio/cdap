@@ -79,7 +79,7 @@ Deploying the Application
 To deploy the application with the application configuration, issue a PUT curl call.
 In this example, the ``appconfig.json`` file contains the application configuration::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
+  $ curl -w'\n' localhost:11015/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
 
 Note that the ``cdap-data-quality`` artifact uses the same batch source plugins as the ``cdap-etl-batch`` artifact.
 See :ref:`Batch Sources <cdap-apps-etl-plugins-batchsources>` for more information about available plugins. 
@@ -126,28 +126,28 @@ We would create a Data Quality Application by creating a JSON file ``appconfig.j
 
 To deploy the application, issue this curl command::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
+  $ curl -w'\n' localhost:11015/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
 
 Next, resume the workflow schedule::
  
-  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/StreamDQ/schedules/aggregatorSchedule/resume 
+  $ curl -w'\n' -X POST localhost:11015/v3/namespaces/default/apps/StreamDQ/schedules/aggregatorSchedule/resume 
 
 This will resume the schedule so that it kicks off a workflow run every five minutes.
 Now, let's send some data to the stream. We can do this by using the RESTful API::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logStream \
+  $ curl -w'\n' localhost:11015/v3/namespaces/default/streams/logStream \
   -d '93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example1 HTTP/1.0" 200 1343488 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"'
   
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logStream \
+  $ curl -w'\n' localhost:11015/v3/namespaces/default/streams/logStream \
   -d '93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example2 HTTP/1.0" 404 34234 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"'
   
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logStream \
+  $ curl -w'\n' localhost:11015/v3/namespaces/default/streams/logStream \
   -d '93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example3 HTTP/1.0" 400 88234 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"'
 
 Once the MapReduce has completed, we can then query the aggregated data.
 In order to make queries, we need to start the service in the application::
 
-  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/start
+  $ curl -w'\n' -X POST localhost:11015/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/start
 
 There are four RESTful endpoints of the service which we can use:
 
@@ -162,7 +162,7 @@ There are four RESTful endpoints of the service which we can use:
 Suppose we want to query the aggregated data for the source ``logStream`` and the field ``status``. 
 We would make this request::
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/methods/v1/sources/logStream/fields/status/aggregations/DiscreteValuesHistogram/totals
+  $ curl -w'\n' http://localhost:11015/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/methods/v1/sources/logStream/fields/status/aggregations/DiscreteValuesHistogram/totals
 
 If you use the above sample Apache Access logs, your response should look like this: 
 

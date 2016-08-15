@@ -73,7 +73,7 @@ cat > /usr/share/applications/cdap-ui.desktop << EOF
 Encoding=UTF-8
 Name=CDAP UI
 Comment=CDAP UI Web Interface
-Exec=chromium-browser http://localhost:9999
+Exec=chromium-browser http://localhost:11011
 Type=Application
 Icon=cdap
 Categories=GNOME;GTK;Development;

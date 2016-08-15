@@ -86,11 +86,11 @@ Administrators can check the health of various services in the system.
 
 - To retrieve the **health check of the CDAP UI**, make a GET request to the URI::
 
-    http://<host>:9999/status
+    http://<host>:11011/status
 
 - To retrieve the **health check of the CDAP Router**, make a GET request to the URI::
 
-    http://<host>:10000/status
+    http://<host>:11015/status
 
 - To retrieve the **health check of the CDAP Authentication Server**, make a GET request to
   the URI::
@@ -102,7 +102,7 @@ On success, the calls return a valid HTTP response with a 200 code.
 - To retrieve the **health check of all the services running in YARN**, make a GET request
   to the URI::
   
-    http://<host>:10000/v3/system/services
+    http://<host>:11015/v3/system/services
 
   On success, the call returns a JSON string with component names and their corresponding 
   statuses (reformatted to fit)::

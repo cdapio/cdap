@@ -86,7 +86,7 @@ The Cask Tracker application consists of an application in CDAP with two program
 
 The Tracker UI is shipped with CDAP, started automatically as part of the CDAP UI, and is available at:
 
-  http://localhost:9999/ns/default/tracker/home
+  http://localhost:11011/ns/default/tracker/home
   
 or (Distributed CDAP):
 
@@ -129,7 +129,7 @@ As these are the default settings for these properties, they do not need to be i
 Enabling Tracker
 ----------------
 To enable Tracker, go to the **Tracker UI** at 
-(in the SDK) http://localhost:9999/ns/default/tracker/home or 
+(in the SDK) http://localhost:11011/ns/default/tracker/home or 
 (Distributed CDAP) http://host:dashboard-bind-port/ns/default/tracker/home 
 and press the ``"Enable Tracker"`` button to deploy and start Tracker.
 
@@ -401,7 +401,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/AuditLog/methods/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h'
+  $ curl -w'\n' -X GET 'http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/AuditLog/methods/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h'
 
 
 .. highlight:: json-ellipsis

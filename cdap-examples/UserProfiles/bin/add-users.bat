@@ -69,7 +69,7 @@ FOR /F "tokens=*" %%G IN (!$APP_HOME!resources\users.txt) DO (
     if /I "!$ACTION!"=="delete" call :SET_DELETE
     set $AUTH=
     if DEFINED $ACCESS_TOKEN set $AUTH=-H "Authorization: Bearer !$ACCESS_TOKEN!"
-    set $URL="http://!$GATEWAY!:10000/%$ENDPOINT%/!$USERID!"
+    set $URL="http://!$GATEWAY!:11015/%$ENDPOINT%/!$USERID!"
     set $COMMAND=curl -qfsw "%%{http_code}" !$AUTH! !$CURLX! !$URL!
     for /F "tokens=* USEBACKQ" %%F IN (`!$COMMAND!`) DO (
         set $RESULTS=%%F

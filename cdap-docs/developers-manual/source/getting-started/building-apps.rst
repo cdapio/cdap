@@ -12,16 +12,16 @@ Building and Running CDAP Applications
 .. |example-dir| replace:: <example-directory>
 
 .. |development| replace:: *Development Home*
-.. _development: http://localhost:9999/ns/default
+.. _development: http://localhost:11011/ns/default
 
 .. |all_apps| replace:: *All Applications*
-.. _all_apps: http://localhost:9999/ns/default/apps
+.. _all_apps: http://localhost:11011/ns/default/apps
 
 .. |management| replace:: *Management Applications*
-.. _management: http://localhost:9999/admin/namespace/detail/default/apps
+.. _management: http://localhost:11011/admin/namespace/detail/default/apps
 
 .. |datasets| replace:: *Management Datasets*
-.. _datasets: http://localhost:9999/admin/namespace/detail/default/data
+.. _datasets: http://localhost:11011/admin/namespace/detail/default/data
 
 
 .. highlight:: console
@@ -31,11 +31,11 @@ running on it as an *application*. We'll assume that you are running your applic
 the *default* :ref:`namespace <namespaces>`; if not, you will need to adjust commands
 accordingly. For example, in a URL such as::
 
-	http://localhost:10000/v3/namespaces/default/apps...
+	http://localhost:11015/v3/namespaces/default/apps...
 
 to use the namespace *my_namespace*, you would replace ``default`` with ``my_namespace``::
 
-	http://localhost:10000/v3/namespaces/my_namespace/apps...
+	http://localhost:11015/v3/namespaces/my_namespace/apps...
 
 
 Accessing CLI, curl, and the SDK bin
@@ -87,7 +87,7 @@ Starting CDAP
 Before running an example application, check that an instance of CDAP is running and available; if not,
 follow the instructions for :ref:`Starting and Stopping Standalone CDAP. <start-stop-cdap>`
 
-If you can reach the CDAP UI through a browser at `http://localhost:9999/ <http://localhost:9999/>`__, 
+If you can reach the CDAP UI through a browser at `http://localhost:11011/ <http://localhost:11011/>`__, 
 CDAP is running.
 
 .. _cdap-building-running-deploying:
@@ -122,11 +122,11 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
   .. tabbed-parsed-literal::
   
-    $ curl -w"\n" localhost:10000/v3/namespaces/default/artifacts/|example| \
+    $ curl -w"\n" localhost:11015/v3/namespaces/default/artifacts/|example| \
       --data-binary @examples/|example-dir|/target/|example|-|release|.jar
     Artifact added successfully
 
-    $ curl -w"\n" -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/<app name> \
+    $ curl -w"\n" -X PUT -H "Content-Type: application/json" localhost:11015/v3/namespaces/default/apps/<app name> \
       -d '{ "artifact": { "name": "|example|", "version": "|release|", "scope": "user" }, "config": {} }'
     Deploy Complete
 

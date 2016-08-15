@@ -17,7 +17,7 @@ Here's how to add the :ref:`CDAP JDBC driver <cdap-jdbc>` inside *SquirrelSQL*.
       :width: 4in
 
 #. Add a new Driver by entering a ``Name``, such as ``CDAP Driver``. The ``Example URL`` is of the form
-   ``jdbc:cdap://<host>:10000?auth.token=<token>``. The ``Website URL`` can be left blank. In the ``Class Name``
+   ``jdbc:cdap://<host>:11015?auth.token=<token>``. The ``Website URL`` can be left blank. In the ``Class Name``
    field, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
    Click on the ``Extra Class Path`` tab, then on ``Add``, and put the path to ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``.
 
@@ -30,7 +30,7 @@ Here's how to add the :ref:`CDAP JDBC driver <cdap-jdbc>` inside *SquirrelSQL*.
    the ``+`` icon to create a new alias.
 #. In this example, we are going to connect to a standalone CDAP from the SDK.
    The name of our alias will be ``CDAP Standalone``. Select the ``CDAP Driver`` in
-   the list of available drivers. Our URL will be ``jdbc:cdap://localhost:10000``. Our standalone instance
+   the list of available drivers. Our URL will be ``jdbc:cdap://localhost:11015``. Our standalone instance
    does not require an authentication token, but if yours requires one, HTML-encode your token
    and pass it as a parameter of the ``URL``. ``User Name`` and ``Password`` are left blank.
 

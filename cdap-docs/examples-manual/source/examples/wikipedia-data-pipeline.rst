@@ -202,7 +202,7 @@ You can also do this from a terminal:
   .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X POST -d '{"min.pages.threshold":"0", "mode":"online"}' \
-    "http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start"
+    "http://localhost:11015/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start"
 
 
 Once the pipeline has run through to the end (below), you can start the service and query the results.
@@ -228,7 +228,7 @@ The service exposes these REST APIs, which can be accessed either with the CDAP 
   
     $ cdap-cli.sh call service |example|.\ |example-service| GET /v1/functions/lda/topics
   
-    $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics"
+    $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics"
   
     [0,1,2,3,4,5,6,7,8,9]
 
@@ -238,7 +238,7 @@ The service exposes these REST APIs, which can be accessed either with the CDAP 
   
     $ cdap-cli.sh call service |example|.\ |example-service| GET /v1/functions/lda/topics/0
     
-    $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics/0"
+    $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics/0"
     
     [{"name":"and","weight":0.038682279584092004},{"name":"company","weight":0.011716155714206075},
     {"name":"facebook","weight":0.03279816812913312},{"name":"for","weight":0.0236260327332555},
@@ -252,7 +252,7 @@ The service exposes these REST APIs, which can be accessed either with the CDAP 
   
       $ cdap-cli.sh call service |example|.\ |example-service| GET /v1/functions/topn/words
       
-      $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/topn/words"
+      $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/topn/words"
 
       [{"The":627},{"a":1466},{"and":1844},{"in":1415},{"of":2076},{"on":604},{"that":644},{"the":3857},{"to":1620},{"was":740}]
       

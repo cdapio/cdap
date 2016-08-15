@@ -167,7 +167,7 @@ public class UpgradeTool {
     Options options = new Options()
       .addOption(new Option("h", "help", false, "Print this usage message."))
       .addOption(new Option("u", "uri", true, "CDAP instance URI to interact with in the format " +
-        "[http[s]://]<hostname>:<port>. Defaults to localhost:10000."))
+        "[http[s]://]<hostname>:<port>. Defaults to localhost:11015."))
       .addOption(new Option("a", "accesstoken", true, "File containing the access token to use when interacting " +
         "with a secure CDAP instance."))
       .addOption(new Option("t", "timeout", true, "Timeout in milliseconds to use when interacting with the " +
@@ -269,7 +269,7 @@ public class UpgradeTool {
   }
 
   private static ClientConfig getClientConfig(CommandLine commandLine) throws IOException {
-    String uriStr = commandLine.hasOption("u") ? commandLine.getOptionValue("u") : "localhost:10000";
+    String uriStr = commandLine.hasOption("u") ? commandLine.getOptionValue("u") : "localhost:11015";
     if (!uriStr.contains("://")) {
       uriStr = "http://" + uriStr;
     }

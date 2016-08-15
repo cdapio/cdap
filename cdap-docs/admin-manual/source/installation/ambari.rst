@@ -325,7 +325,7 @@ Service Checks in Apache Ambari
       **Ambari Dashboard:** *CDAP* Service Screen
 
 CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI at
-the address of the node running the CDAP UI service at port 9999.
+the address of the node running the CDAP UI service at port 11011.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
