@@ -31,11 +31,11 @@ import java.io.IOException;
  */
 public class DatasetCrossNSAccessWithMAPApp extends AbstractApplication {
 
-  public static final String INPUT_KEY = "input";
-  public static final String OUTPUT_KEY = "output";
   public static final String MAPREDUCE_PROGRAM = "copymr";
-  public static final String DATASET_INPUT_SPACE = "datasetInputSpace";
-  public static final String DATASET_OUTPUT_SPACE = "datasetOutputSpace";
+  public static final String INPUT_DATASET_NS = "input.dataset.namespace";
+  public static final String OUTPUT_DATASET_NS = "output.dataset.namespace";
+  public static final String INPUT_DATASET_NAME = "input.dataset.name";
+  public static final String OUTPUT_DATASET_NAME = "output.dataset.name";
 
   @Override
   public void configure() {
@@ -53,10 +53,10 @@ public class DatasetCrossNSAccessWithMAPApp extends AbstractApplication {
     @Override
     public void initialize() {
       MapReduceContext context = getContext();
-      context.addInput(Input.ofDataset(context.getRuntimeArguments()
-                                         .get(INPUT_KEY)).fromNamespace(DATASET_INPUT_SPACE));
-      context.addOutput(Output.ofDataset(context.getRuntimeArguments()
-                                           .get(OUTPUT_KEY)).fromNamespace(DATASET_OUTPUT_SPACE));
+      context.addInput(Input.ofDataset(context.getRuntimeArguments().get(INPUT_DATASET_NAME))
+                         .fromNamespace(context.getRuntimeArguments().get(INPUT_DATASET_NS)));
+      context.addOutput(Output.ofDataset(context.getRuntimeArguments().get(OUTPUT_DATASET_NAME))
+                          .fromNamespace(context.getRuntimeArguments().get(OUTPUT_DATASET_NS)));
       Job hadoopJob = context.getHadoopJob();
       hadoopJob.setMapperClass(IdentityMapper.class);
       hadoopJob.setNumReduceTasks(0);

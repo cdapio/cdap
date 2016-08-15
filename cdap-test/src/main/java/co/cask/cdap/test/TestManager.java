@@ -401,6 +401,16 @@ public interface TestManager {
                                                 String datasetTypeName, String datasetInstanceName) throws Exception;
 
   /**
+   * Deletes an instance of dataset
+   *
+   * @param namespaceId namespace of the dataset
+   * @param datasetInstanceName instance name
+   * @throws Exception
+   */
+  @Beta
+  void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception;
+
+  /**
    * Gets Dataset manager of Dataset instance of type {@literal <}T>.
    *
    * @param namespace namespace of the dataset

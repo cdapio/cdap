@@ -48,6 +48,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
@@ -230,6 +231,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   protected <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
                                              AccessType accessType) throws DatasetInstantiationException {
+    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+      throw new DatasetInstantiationException(String.format("Dataset %s cannot be instantiated from %s namespace. " +
+                                                              "Cannot access %s namespace.",
+                                                            name, NamespaceId.SYSTEM, NamespaceId.SYSTEM));
+    }
     return datasetCache.getDataset(namespace, name, arguments, accessType);
   }
 

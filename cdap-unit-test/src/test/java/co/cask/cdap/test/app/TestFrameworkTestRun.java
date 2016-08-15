@@ -50,7 +50,6 @@ import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -446,29 +445,30 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testCrossNSMapperDatasetAccess() throws Exception {
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE).build());
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE).build());
-    NamespaceId datasetInputSpace = new NamespaceId(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE);
-    NamespaceId datasetOutputSpace = new NamespaceId(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE);
+    NamespaceMeta inputNS = new NamespaceMeta.Builder().setName("inputNS").build();
+    NamespaceMeta outputNS = new NamespaceMeta.Builder().setName("outputNS").build();
+    getNamespaceAdmin().create(inputNS);
+    getNamespaceAdmin().create(outputNS);
 
-    addDatasetInstance(datasetInputSpace.toId(), "keyValueTable", "table1").create();
-    addDatasetInstance(datasetOutputSpace.toId(), "keyValueTable", "table2").create();
-    DataSetManager<KeyValueTable> tableManager = getDataset(datasetInputSpace.toId(), "table1");
+    addDatasetInstance(inputNS.getNamespaceId().toId(), "keyValueTable", "table1").create();
+    addDatasetInstance(outputNS.getNamespaceId().toId(), "keyValueTable", "table2").create();
+    DataSetManager<KeyValueTable> tableManager = getDataset(inputNS.getNamespaceId().toId(), "table1");
     KeyValueTable inputTable = tableManager.get();
     inputTable.write("hello", "world");
     tableManager.flush();
 
     ApplicationManager appManager = deployApplication(DatasetCrossNSAccessWithMAPApp.class);
-    Map<String, String> argsForMR = ImmutableMap.of(DatasetCrossNSAccessWithMAPApp.INPUT_KEY, "table1",
-                                                    DatasetCrossNSAccessWithMAPApp.OUTPUT_KEY, "table2");
+    Map<String, String> argsForMR = ImmutableMap.of(
+      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NS, inputNS.getName(),
+      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NAME, "table1",
+      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NS, outputNS.getName(),
+      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NAME, "table2");
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM)
       .start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
 
-    DataSetManager<KeyValueTable> outTableManager = getDataset(datasetOutputSpace.toId(), "table2");
+    DataSetManager<KeyValueTable> outTableManager = getDataset(outputNS.getNamespaceId().toId(), "table2");
     verifyMapperJobOutput(DatasetCrossNSAccessWithMAPApp.class, outTableManager);
   }
 

@@ -25,6 +25,7 @@ import co.cask.cdap.api.spark.SparkExecutionContext;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionFailureException;
@@ -326,6 +327,12 @@ final class SparkTransactional implements Transactional {
     @Override
     public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
                                             AccessType accessType) throws DatasetInstantiationException {
+
+      if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+        throw new DatasetInstantiationException(String.format("Dataset %s cannot be instantiated from %s namespace. " +
+                                                                "Cannot access %s namespace.",
+                                                              name, NamespaceId.SYSTEM, NamespaceId.SYSTEM));
+      }
       T dataset = datasetCache.getDataset(namespace, name, arguments, accessType);
 
       // Only call startTx if the dataset hasn't been seen before
