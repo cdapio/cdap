@@ -36,7 +36,6 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -89,9 +88,11 @@ class DatasetServiceClient {
   private final HttpRequestConfig httpRequestConfig;
   private final boolean securityEnabled;
   private final boolean kerberosEnabled;
+  private final boolean authorizationEnabled;
   private final AuthenticationContext authenticationContext;
   private final String masterPrincipal;
   private final boolean isMasterUser;
+  private final String systemUser;
 
   DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
                        CConfiguration cConf, AuthenticationContext authenticationContext) {
@@ -105,9 +106,10 @@ class DatasetServiceClient {
     this.httpRequestConfig = new DefaultHttpRequestConfig();
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
+    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.authenticationContext = authenticationContext;
     this.masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-
+    this.systemUser = cConf.get(Constants.Security.Authorization.SYSTEM_USER);
     try {
       if (securityEnabled && kerberosEnabled) {
         // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
@@ -351,12 +353,11 @@ class DatasetServiceClient {
   }
 
   private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws IOException {
-    if (!securityEnabled) {
+    if (!securityEnabled || !authorizationEnabled) {
       return builder;
     }
     String userId;
-    if (NamespaceId.SYSTEM.equals(namespaceId) &&
-      (!kerberosEnabled || isMasterUser)) {
+    if (NamespaceId.SYSTEM.equals(namespaceId) && (!kerberosEnabled || isMasterUser)) {
       // For getting a system dataset like MDS, use the system principal, if the current user is the same as the
       // CDAP kerberos principal. If a user tries to access a system dataset from an app, either:
       // 1. The request will go through if the user is impersonating as the cdap principal - which means that
@@ -366,7 +367,7 @@ class DatasetServiceClient {
       LOG.trace("Acessing dataset in system namespace using the system principal because the current user's " +
                   "kerberos principal {} is the same as the CDAP master's kerberos principal {}.",
                 masterPrincipal, UserGroupInformation.getCurrentUser().getUserName());
-      userId = Principal.SYSTEM.getName();
+      userId = systemUser;
     } else {
       // If the request originated from the router and was forwarded to any service other than dataset service, before
       // going to dataset service via dataset service client, the userId could be set in the SecurityRequestContext.

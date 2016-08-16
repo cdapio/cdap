@@ -1634,6 +1634,17 @@
   </property>
 
   <property>
+    <name>security.authorization.admin.users</name>
+    <value></value>
+    <description>
+      Determines a comma-separated list of users for whom admin privileges are granted on the CDAP instance
+      during CDAP startup, so these users can create namespaces and in-effect bootstrap CDAP on an authorization
+      enabled cluster. Defaults to empty, in which case no users have access to create namespaces. In this scenario, it
+      may be impossible to bootstrap CDAP, so it is recommended that at least one user be provided as the admin user.
+    </description>
+  </property>
+
+  <property>
     <name>security.authorization.cache.enabled</name>
     <value>true</value>
     <description>
@@ -1690,12 +1701,14 @@
   </property>
 
   <property>
-    <name>security.authorization.extension.config.superusers</name>
-    <value>test</value>
+    <name>security.authorization.system.user</name>
+    <value>cdap</value>
     <description>
-      Determines a comma-separated list of users for whom authorization is bypassed.
-      This is necessary for bootstrapping authorization in CDAP, hence it is required
-      that at least one super user be defined.
+      Determines a user for whom specific privileges are granted during CDAP startup.
+      This is the user used for creating the default namespace, deploying system artifacts and deploying dataset
+      modules. This user is also granted ALL privileges on the system namespace, so it can access datasets and other
+      entities in the system namespace. This user does not get any other privileges on user namespaces. Defaults to
+      'cdap'. Please set this to the user that the CDAP Master runs as in a secure, authorization-enabled environment.
     </description>
   </property>
 

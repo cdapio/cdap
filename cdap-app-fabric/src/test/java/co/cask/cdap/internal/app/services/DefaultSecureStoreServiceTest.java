@@ -19,13 +19,9 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
@@ -36,20 +32,17 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.proto.security.SecureKeyListEntry;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.tephra.TransactionManager;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.inject.Guice;
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -77,9 +70,7 @@ public class DefaultSecureStoreServiceTest {
 
   private static SecureStoreService secureStoreService;
   private static Authorizer authorizer;
-  private static AuthorizationEnforcementService authorizationEnforcementService;
   private static AppFabricServer appFabricServer;
-  private static DiscoveryServiceClient discoveryServiceClient;
 
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
@@ -88,21 +79,16 @@ public class DefaultSecureStoreServiceTest {
   public static void setup() throws Exception {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
-    final Injector injector = Guice.createInjector(new AppFabricTestModule(createCConf(), sConf));
-    injector.getInstance(TransactionManager.class).startAndWait();
-    injector.getInstance(DatasetOpExecutor.class).startAndWait();
-    discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    DatasetService datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
-    waitForService(Constants.Service.DATASET_EXECUTOR);
+    final Injector injector = AppFabricTestHelper.getInjector(createCConf(), sConf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        // no overrides
+      }
+    });
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
-    authorizationEnforcementService.startAndWait();
     secureStoreService = injector.getInstance(SecureStoreService.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-    SecurityRequestContext.setUserId(ALICE.getName());
-
     secureStoreService = injector.getInstance(SecureStoreService.class);
     authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -117,7 +103,6 @@ public class DefaultSecureStoreServiceTest {
   @AfterClass
   public static void cleanup() {
     appFabricServer.stopAndWait();
-    authorizationEnforcementService.stopAndWait();
   }
 
   private static CConfiguration createCConf() throws Exception {
@@ -128,7 +113,7 @@ public class DefaultSecureStoreServiceTest {
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
-    cConf.set(Constants.Security.Authorization.SUPERUSERS, "hulk");
+    cConf.set(Constants.Security.Authorization.SYSTEM_USER, new MasterAuthenticationContext().getPrincipal().getName());
 
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
@@ -195,12 +180,6 @@ public class DefaultSecureStoreServiceTest {
     };
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(ALICE), secureKeyIdFilter).isEmpty());
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), secureKeyIdFilter).isEmpty());
-  }
-
-  private static void waitForService(String service) {
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(service));
-    Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
-                               "%s service is not up after 5 seconds", service);
   }
 
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {

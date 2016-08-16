@@ -34,7 +34,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -56,7 +55,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -108,16 +106,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final NamespaceStore nsStore;
   private final PropertiesResolver propertiesResolver;
   private final PreferencesStore preferencesStore;
-  private final AuthorizerInstantiator authorizerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
-                          NamespacedLocationFactory namespacedLocationFactory, PreferencesStore preferencesStore,
-                          AuthorizerInstantiator authorizerInstantiator,
-                          AuthorizationEnforcer authorizationEnforcer,
+                          PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext) {
     this.store = store;
     this.nsStore = nsStore;
@@ -126,7 +121,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
     this.cConf = cConf;
     this.preferencesStore = preferencesStore;
-    this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
   }
@@ -567,7 +561,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private boolean hasAccess(ProgramId programId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    return Principal.SYSTEM.equals(principal) || filter.apply(programId);
+    return filter.apply(programId);
   }
 
   private void setWorkerInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {

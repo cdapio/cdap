@@ -65,6 +65,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -134,6 +135,7 @@ public class StandaloneMain {
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
   private final AuthorizationEnforcementService authorizationEnforcementService;
+  private final AuthorizationBootstrapper authorizationBootstrapper;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -167,6 +169,8 @@ public class StandaloneMain {
       trackerAppCreationService = null;
     }
 
+    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -198,7 +202,6 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -252,6 +255,9 @@ public class StandaloneMain {
       kafkaClient.startAndWait();
     }
 
+    // Authorization bootstrapping is a blocking call, because CDAP will not start successfully if it does not
+    // succeed on an authorization-enabled cluster
+    authorizationBootstrapper.run();
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     authorizationEnforcementService.startAndWait();

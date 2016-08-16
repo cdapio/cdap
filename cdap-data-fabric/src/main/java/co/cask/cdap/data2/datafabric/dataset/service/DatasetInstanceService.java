@@ -542,7 +542,7 @@ public class DatasetInstanceService {
   private void ensureAccess(DatasetId datasetId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetId)) {
+    if (!filter.apply(datasetId)) {
       throw new UnauthorizedException(principal, datasetId);
     }
   }

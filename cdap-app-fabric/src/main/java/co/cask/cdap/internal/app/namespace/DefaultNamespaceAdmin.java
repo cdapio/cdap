@@ -147,12 +147,8 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
 
     // Namespace can be created. Check if the user is authorized now.
     Principal principal = authenticationContext.getPrincipal();
-    // Skip authorization enforcement for the system user and the default namespace, so the DefaultNamespaceEnsurer
-    // thread can successfully create the default namespace
-    if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-      authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
-      authorizer.grant(namespace, principal, ImmutableSet.of(Action.ALL));
-    }
+    authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
+    authorizer.grant(namespace, principal, ImmutableSet.of(Action.ALL));
 
     // store the meta first in the namespace store because namespacedlocationfactory need to look up location
     // mapping from namespace config
@@ -169,9 +165,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     } catch (IOException | ExploreException | SQLException e) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       nsStore.delete(metadata.getNamespaceId().toId());
-      if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-        authorizer.revoke(namespace);
-      }
+      authorizer.revoke(namespace);
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
   }

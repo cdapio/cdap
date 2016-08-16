@@ -41,6 +41,7 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -143,7 +144,7 @@ public class AuthorizationTest extends TestBase {
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
         // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
         Constants.Security.KERBEROS_ENABLED, "false",
-        Constants.Security.Authorization.SUPERUSERS, "hulk"
+        Constants.Security.Authorization.SYSTEM_USER, new MasterAuthenticationContext().getPrincipal().getName()
       };
     }
   }

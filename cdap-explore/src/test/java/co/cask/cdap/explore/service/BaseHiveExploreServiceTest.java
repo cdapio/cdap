@@ -67,7 +67,9 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.http.HttpHandler;
@@ -154,6 +156,7 @@ public class BaseHiveExploreServiceTest {
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
   private static NamespacedLocationFactory namespacedLocationFactory;
+  private static AuthorizationEnforcementService authorizationEnforcementService;
 
   protected static Injector injector;
 
@@ -185,6 +188,11 @@ public class BaseHiveExploreServiceTest {
     List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
       : createInMemoryModules(cConf, hConf, tmpFolder);
     injector = Guice.createInjector(modules);
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    if (enableAuthorization) {
+      injector.getInstance(AuthorizationBootstrapper.class).run();
+      authorizationEnforcementService.startAndWait();
+    }
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
@@ -245,6 +253,7 @@ public class BaseHiveExploreServiceTest {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     transactionManager.stopAndWait();
+    authorizationEnforcementService.stopAndWait();
   }
 
 

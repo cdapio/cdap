@@ -21,6 +21,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.common.collect.ImmutableSet;
@@ -46,8 +47,8 @@ public class DefaultPrivilegesFetcherProxyService extends AbstractAuthorizationS
   @Inject
   DefaultPrivilegesFetcherProxyService(
     @Named(AuthorizationEnforcementModule.PRIVILEGES_FETCHER_PROXY) PrivilegesFetcher privilegeFetcher,
-    CConfiguration cConf) {
-    super(privilegeFetcher, cConf, "privileges-fetcher-proxy");
+    CConfiguration cConf, AuthenticationContext authenticationContext) {
+    super(cConf, privilegeFetcher, authenticationContext, "privileges-fetcher-proxy");
   }
 
   @Override

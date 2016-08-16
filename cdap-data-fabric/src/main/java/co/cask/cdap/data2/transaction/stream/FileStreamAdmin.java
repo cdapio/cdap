@@ -806,7 +806,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private <T extends EntityId> void ensureAccess(T entityId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(entityId)) {
+    if (!filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
     }
   }

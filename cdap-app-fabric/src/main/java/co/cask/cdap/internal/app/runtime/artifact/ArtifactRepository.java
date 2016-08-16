@@ -607,18 +607,9 @@ public class ArtifactRepository {
    * @throws IOException if there was some IO error adding the system artifacts
    */
   public void addSystemArtifacts() throws Exception {
-    // this method is called from two places:
-    // 1. the SystemArtifactLoader calls it during master startup to load all system artifacts. There should not be any
-    // authorization enforcement for this step.
-    // 2. the refresh system artifacts API - POST /namespaces/system/artifacts calls this when a user hits that API. To
-    // perform this operation, a user must have write privileges on the cdap instance
+    // to add system artifacts, users should have write privileges on the system namespace
     Principal principal = authenticationContext.getPrincipal();
-    if (Principal.SYSTEM.equals(principal)) {
-      LOG.trace("Skipping authorization enforcement since it is being called with the system principal. This is " +
-                  "so the SystemArtifactLoader can load system artifacts.");
-    } else {
-      authorizationEnforcer.enforce(instanceId, principal, Action.WRITE);
-    }
+    authorizationEnforcer.enforce(NamespaceId.SYSTEM, principal, Action.WRITE);
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
     for (File systemArtifactDir : systemArtifactDirs) {
@@ -631,6 +622,12 @@ public class ArtifactRepository {
           LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ", e.getMessage()));
           continue;
         }
+
+        // first revoke any orphane privileges
+        co.cask.cdap.proto.id.ArtifactId artifact = artifactId.toEntityId();
+        authorizer.revoke(artifact);
+        // then grant all on the artifact
+        authorizer.grant(artifact, principal, Collections.singleton(Action.ALL));
 
         // check for a corresponding .json config file
         String artifactFileName = jarFile.getName();
@@ -647,6 +644,8 @@ public class ArtifactRepository {
           systemArtifacts.add(new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
         } catch (InvalidArtifactException e) {
           LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
+          // since adding artifact failed, revoke privileges, since they may be orphane now
+          authorizer.revoke(artifact);
         }
       }
     }
@@ -728,14 +727,9 @@ public class ArtifactRepository {
    *                               a user needs {@link Action#ADMIN} permission on the artifact.
    */
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
-    // for deleting system artifacts, users need admin privileges on the CDAP instance.
-    // for deleting non-system artifacts, users need admin privileges on the artifact being deleted.
+    // for deleting artifacts, users need admin privileges on the artifact being deleted.
     Principal principal = authenticationContext.getPrincipal();
-    if (NamespaceId.SYSTEM.equals(artifactId.getNamespace().toEntityId())) {
-      authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
-    } else {
-      authorizationEnforcer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
-    }
+    authorizationEnforcer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
@@ -781,11 +775,12 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
   private void ensureAccess(co.cask.cdap.proto.id.ArtifactId artifactId) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (Principal.SYSTEM.equals(principal) || NamespaceId.SYSTEM.equals(artifactId.getParent())) {
+    // No authorization for system artifacts
+    if (NamespaceId.SYSTEM.equals(artifactId.getParent())) {
       return;
     }
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!filter.apply(artifactId)) {
       throw new UnauthorizedException(principal, artifactId);
     }
