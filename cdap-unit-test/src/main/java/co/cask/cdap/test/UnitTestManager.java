@@ -365,6 +365,13 @@ public class UnitTestManager implements TestManager {
     return addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
   }
 
+  @Beta
+  @Override
+  public final void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId.toId(), datasetInstanceName);
+    datasetFramework.deleteInstance(datasetInstanceId);
+  }
+
   /**
    * Gets Dataset manager of Dataset instance of type <T>
    * @param datasetInstanceName - instance name of dataset
