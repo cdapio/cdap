@@ -151,7 +151,7 @@ parses them into separate fields, and writes them as individual records to a tab
 #. Connect the *Stream* to the *LogParser* by clicking on the green connection on the
    right-hand side of the *Stream* and dragging out to the left-side connection of the
    *CSVParser* and lifting the mouse-button when you reach it. Your canvas should now look like this:
- 
+
    .. figure:: /_images/hydrator-gs-1-2-connected.png
       :figwidth: 100%
       :width: 6in
@@ -172,12 +172,12 @@ parses them into separate fields, and writes them as individual records to a tab
  
       **Cask Hydrator Studio:** Showing connections
       
- #. To set these properties, click on each icon in turn. When you click an icon, a dialog box
-    comes up, showing the properties available for each plugin. Any **required** properties
-    are indicated with a red asterisk after the label. In this case, the *Stream* icon has
-    been clicked, and the *Stream Name* and *Duration* are showing as required properties:
+#. To set these properties, click on each icon in turn. When you click an icon, a dialog box
+   comes up, showing the properties available for each plugin. Any **required** properties
+   are indicated with a red asterisk after the label. In this case, the *Stream* icon has
+   been clicked, and the *Stream Name* and *Duration* are showing as required properties:
 
-    .. figure:: /_images/hydrator-gs-1-4-stream.png
+   .. figure:: /_images/hydrator-gs-1-4-stream.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -216,7 +216,7 @@ parses them into separate fields, and writes them as individual records to a tab
  
       **Cask Hydrator Studio:** Button labels, upper-right toolbar
       
-   Clicking the *Validate* button should produce a message in the console similar to this::
+   Clicking the *Validate* button should produce a message in the console similar to::
    
     xx/xx/xx xx:xx:xx am: Validation success! Pipeline demoPipeline is valid.
 
