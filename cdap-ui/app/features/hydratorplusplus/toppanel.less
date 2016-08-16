@@ -54,6 +54,10 @@ body.theme-cdap {
         span {
           line-height: 29px;
           &.icon-logview { font-size: 21px; }
+          &.icon-runtimestart,
+          &.icon-runtimestarttime,
+          &.icon-runtimestop,
+          &.icon-runtimestoptime { font-size: 19px; }
         }
         &:hover,
         &:focus,
@@ -392,6 +396,13 @@ body.theme-cdap {
               .opacity(1);
               .transition(all 0.2s ease);
               visibility: visible;
+              &:first-child {
+                background-color: @body-bg;
+                &:hover,
+                &:focus {
+                  background-color: darken(@body-bg, 10%);
+                }
+              }
               &:last-child {
                 margin-left: 5px;
               }
@@ -441,10 +452,10 @@ body.theme-cdap {
             but based on the browser size. We need to dynamically have more space for description
             and still be able to have run specific section stick to metadata section.
           */
-
-          max-width: ~"calc(100% - 410px)";
-          max-width: ~"-moz-calc(100% - 410px)";
-          max-width: ~"-webkit-calc(100% - 410px)";
+          min-width: 200px;
+          max-width: ~"calc(100% - 412px)";
+          max-width: ~"-moz-calc(100% - 412px)";
+          max-width: ~"-webkit-calc(100% - 412px)";
           div.pipeline-type {
             line-height: 1;
             text-decoration: none;
@@ -506,9 +517,9 @@ body.theme-cdap {
             }
           }
         }
-        .last-run {
-          margin-right: 1px solid #dddddd;
-        }
+        .app-status,
+        .last-run { background-color: #ebebeb; }
+
         .app-status {
           display: flex;
           align-items: center;
@@ -533,12 +544,7 @@ body.theme-cdap {
           display: flex;
           min-width: 400px;
           position: relative;
-          border-right: 1px solid #dddddd;
-          .btn {
-            &.log-viewer {
-              border-left: 0;
-            }
-          }
+          .btn.log-viewer { border-right: 1px solid #dddddd; }
         }
       }
       .btn {
@@ -547,6 +553,15 @@ body.theme-cdap {
           position: absolute;
           top: 17px;
           left: 18px;
+        }
+        .icon-double {
+          line-height: 31px;
+          span {
+            line-height: 31px;
+            position: relative;
+            &:first-child { left: 4px; }
+            &:last-child { right: 4px; }
+          }
         }
       }
       .pipeline-specific-section {
