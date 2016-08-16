@@ -35,6 +35,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
@@ -262,6 +263,12 @@ public interface Store extends RuntimeStore {
    * @param scheduleSpecification defines the schedule to be added for the program
    */
   void addSchedule(Id.Program program, ScheduleSpecification scheduleSpecification);
+
+  /**
+   * Deletes data for an application from the WorkflowDataset table
+   * @param id id of application to be deleted
+   */
+  void deleteWorkflowStats(final ApplicationId id);
 
   /**
    * Deletes a schedules from a particular program

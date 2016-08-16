@@ -54,6 +54,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TransactionAware;
@@ -342,6 +343,17 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(WorkflowDataset dataset) {
         dataset.write(id, run, programRunsList);
+        return null;
+      }
+    }, workflows.get());
+  }
+
+  @Override
+  public void deleteWorkflowStats(final ApplicationId id) {
+    workflowsTx.get().executeUnchecked(new TransactionExecutor.Function<WorkflowDataset, Void>() {
+      @Override
+      public Void apply(WorkflowDataset dataset) {
+        dataset.delete(id);
         return null;
       }
     }, workflows.get());
