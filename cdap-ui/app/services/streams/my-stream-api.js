@@ -35,7 +35,7 @@ angular.module(PKG.name + '.services')
       truncate: myHelpers.getConfig('POST', 'REQUEST', basepath + '/truncate'),
       programsList: myHelpers.getConfig('GET', 'REQUEST', basepath + '/programs', true),
       eventSearch: myHelpers.getConfig('GET', 'REQUEST', basepath + '/events', true),
-      sendEvent: myHelpers.getConfig('POST', 'REQUEST', basepath, false, {json: false}),
+      sendEvent: myHelpers.getConfig('POST', 'REQUEST', basepath, false, {json: false, suppressErrors: true}),
       delete: myHelpers.getConfig('DELETE', 'REQUEST', basepath)
     });
   });
