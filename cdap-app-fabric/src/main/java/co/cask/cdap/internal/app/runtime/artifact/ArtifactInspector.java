@@ -36,6 +36,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
@@ -77,6 +78,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -92,11 +94,14 @@ final class ArtifactInspector {
   private final CConfiguration cConf;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ReflectionSchemaGenerator schemaGenerator;
+  private final Impersonator impersonator;
 
-  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
+  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory,
+                    Impersonator impersonator) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
     this.schemaGenerator = new ReflectionSchemaGenerator(false);
+    this.impersonator = impersonator;
   }
 
   /**
@@ -151,7 +156,7 @@ final class ArtifactInspector {
     // which forces them to have a single application class.
     // in the future, we may want to let users do this or maybe specify a list of classes or
     // a package that will be searched for applications, to allow multiple applications in a single artifact.
-    String mainClassName;
+    final String mainClassName;
     try {
       Manifest manifest = BundleJarUtil.getManifest(artifactLocation);
       if (manifest == null) {
@@ -172,7 +177,21 @@ final class ArtifactInspector {
     }
 
     try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir)) {
-      Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
+      Object appMain;
+      try {
+        appMain = impersonator.doAs(artifactId.getNamespace().toEntityId(), new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            return artifactClassLoader.loadClass(mainClassName).newInstance();
+          }
+        });
+      } catch (Exception e) {
+        Throwables.propagateIfInstanceOf(e, ClassNotFoundException.class);
+        Throwables.propagateIfInstanceOf(e, InstantiationException.class);
+        Throwables.propagateIfInstanceOf(e, IllegalAccessException.class);
+        throw Throwables.propagate(e);
+      }
+
       if (!(appMain instanceof Application)) {
         // we don't want to error here, just don't record an application class.
         // possible for 3rd party plugin artifacts to have the main class set
