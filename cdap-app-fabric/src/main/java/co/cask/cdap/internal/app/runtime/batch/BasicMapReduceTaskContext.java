@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.BatchReadable;
@@ -59,6 +60,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,8 +93,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   // TODO: (CDAP-3983) The datasets should be managed by the dataset context. That requires TEPHRA-99.
   private final Set<TransactionAware> txAwares = Sets.newIdentityHashSet();
 
+  // keep track of all ProgramLifeCycle (See PartitionerWrapper or RawComparatorWrapper) registered
+  // so that we can call destroy on them
+  private final List<ProgramLifecycle> programLifecycles = new ArrayList<>();
+
   BasicMapReduceTaskContext(Program program, ProgramOptions programOptions,
-                            @Nullable MapReduceMetrics.TaskType type, String taskId,
+                            @Nullable MapReduceMetrics.TaskType type, @Nullable String taskId,
                             MapReduceSpecification spec,
                             @Nullable WorkflowProgramInfo workflowProgramInfo,
                             DiscoveryServiceClient discoveryServiceClient,
@@ -106,7 +112,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             SecureStoreManager secureStoreManager,
                             AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext) {
-    super(program, programOptions, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient, false,
+    super(program, programOptions, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient, true,
           metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
@@ -120,7 +126,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   @Override
   public String toString() {
-    return String.format("job=%s,=%s", spec.getName(), super.toString());
+    return String.format("name=%s,=%s", spec.getName(), super.toString());
   }
 
   @Override
@@ -158,9 +164,37 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Closes the {@link MultipleOutputs} contained inside this context.
    */
   public void closeMultiOutputs() {
+    // We don't close the multipleOutputs in the close method of this class, because that happens too late.
+    // We need to close the multipleOutputs before the OutputCommitter#commitTask is called.
     if (multipleOutputs != null) {
       multipleOutputs.close();
     }
+  }
+
+  @Override
+  public void close() {
+    super.close();
+
+    // destroy all of the ProgramLifeCycles registered
+    RuntimeException ex = null;
+    for (ProgramLifecycle programLifecycle : programLifecycles) {
+      try {
+        programLifecycle.destroy();
+      } catch (RuntimeException e) {
+        if (ex == null) {
+          ex = new RuntimeException(e);
+        } else {
+          ex.addSuppressed(e);
+        }
+      }
+    }
+    if (ex != null) {
+      throw ex;
+    }
+  }
+
+  void registerProgramLifecycle(ProgramLifecycle programLifecycle) {
+    programLifecycles.add(programLifecycle);
   }
 
   @Override
@@ -189,10 +223,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return inputName;
   }
 
-  private static Map<String, String> createMetricsTags(String taskId, @Nullable MapReduceMetrics.TaskType type,
+  private static Map<String, String> createMetricsTags(@Nullable String taskId,
+                                                       @Nullable MapReduceMetrics.TaskType type,
                                                        @Nullable WorkflowProgramInfo workflowProgramInfo) {
     Map<String, String> tags = Maps.newHashMap();
-    if (type != null) {
+    if (type != null && taskId != null) {
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
       tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
     }

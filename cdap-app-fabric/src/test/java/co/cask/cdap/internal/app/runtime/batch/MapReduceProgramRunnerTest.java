@@ -388,6 +388,13 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     runProgram(app, AppWithMapReduce.ClassicWordCount.class, false, true);
 
+    Assert.assertEquals("true", System.getProperty("partitioner.initialize"));
+    Assert.assertEquals("true", System.getProperty("partitioner.destroy"));
+    Assert.assertEquals("true", System.getProperty("partitioner.set.conf"));
+    Assert.assertEquals("true", System.getProperty("comparator.initialize"));
+    Assert.assertEquals("true", System.getProperty("comparator.destroy"));
+    Assert.assertEquals("true", System.getProperty("comparator.set.conf"));
+
     File[] outputFiles = outputDir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
