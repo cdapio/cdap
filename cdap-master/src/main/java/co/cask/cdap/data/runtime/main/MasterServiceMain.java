@@ -84,7 +84,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileContext;
@@ -160,7 +159,6 @@ public class MasterServiceMain extends DaemonMain {
   private final ZKClientService zkClient;
   private final LeaderElection leaderElection;
   private final LogAppenderInitializer logAppenderInitializer;
-  private final FileContext fileContext;
 
   private volatile boolean stopped;
 
@@ -193,7 +191,6 @@ public class MasterServiceMain extends DaemonMain {
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     this.zkClient = injector.getInstance(ZKClientService.class);
     this.leaderElection = createLeaderElection();
-    this.fileContext = injector.getInstance(FileContext.class);
 
     // leader election will normally stay running. Will only stop if there was some issue starting up.
     this.leaderElection.addListener(new ServiceListenerAdapter() {
@@ -246,8 +243,10 @@ public class MasterServiceMain extends DaemonMain {
    * we want to let others to be able to write to "path" directory, till we have a better solution.
    */
   private void createDirectory(String path) {
-    String namespacedPath = String.format("%s/%s", cConf.get(Constants.CFG_HDFS_NAMESPACE), path);
-    createDirectory(fileContext, namespacedPath);
+    String hdfsNamespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
+    String pathPrefix = hdfsNamespace.startsWith("/") ? hdfsNamespace : "/" + hdfsNamespace;
+    String namespacedPath = String.format("%s/%s", pathPrefix, path);
+    createDirectory(new FileContextProvider(cConf, hConf).get(), namespacedPath);
   }
 
   private void createDirectory(FileContext fileContext, String path) {
@@ -462,13 +461,7 @@ public class MasterServiceMain extends DaemonMain {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new LoggingModules().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(FileContext.class).toProvider(FileContextProvider.class).in(Scopes.SINGLETON);
-        }
-      }
+      new LoggingModules().getDistributedModules()
     );
   }
 
