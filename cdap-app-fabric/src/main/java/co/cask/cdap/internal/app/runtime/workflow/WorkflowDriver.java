@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
@@ -213,6 +215,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         basicWorkflowToken.setCurrentNode(workflowSpec.getName());
         ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
         try {
+          basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
           ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -550,9 +553,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {}", workflowSpec.getName());
     LOG.debug("Workflow specification is {}", workflowSpec);
+    basicWorkflowContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), basicWorkflowToken);
-    basicWorkflowContext.setSuccess();
+    if (runningThread != null) {
+      basicWorkflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
+    }
     LOG.info("Workflow execution succeeded for {}", workflowSpec.getName());
   }
 
@@ -567,8 +573,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof InterruptedException) {
           LOG.error("Workflow execution aborted.", rootCause);
+          basicWorkflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
           break;
         }
+        basicWorkflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
         throw Throwables.propagate(rootCause);
       }
     }

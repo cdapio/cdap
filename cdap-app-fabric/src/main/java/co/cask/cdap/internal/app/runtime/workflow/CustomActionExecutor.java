@@ -125,9 +125,18 @@ class CustomActionExecutor {
     }
     ClassLoader oldClassLoader = setContextCombinedClassLoader(action.getClass().getClassLoader());
     try {
+      workflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
       initializeInTransaction();
       runInTransaction();
-      workflowContext.setSuccess();
+      workflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
+    } catch (Throwable t) {
+      Throwable rootCause = Throwables.getRootCause(t);
+      if (rootCause instanceof InterruptedException) {
+        workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
+      } else {
+        workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
+      }
+      throw Throwables.propagate(rootCause);
     } finally {
       destroyInTransaction();
       ClassLoaders.setContextClassLoader(oldClassLoader);
