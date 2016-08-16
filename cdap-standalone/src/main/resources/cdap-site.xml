@@ -197,4 +197,12 @@
     </description>
   </property>
 
+  <property>
+    <name>kerberos.auth.enabled</name>
+    <value>false</value>
+    <description>
+      Disable Kerberos authentication in standalone.
+    </description>
+  </property>
+
 </configuration>
