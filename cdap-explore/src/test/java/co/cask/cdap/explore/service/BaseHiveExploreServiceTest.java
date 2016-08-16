@@ -52,6 +52,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -68,6 +69,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
@@ -90,6 +92,9 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -157,16 +162,26 @@ public class BaseHiveExploreServiceTest {
   }
 
   protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder) throws Exception {
-    initialize(cConf, tmpFolder, false);
+    initialize(cConf, tmpFolder, false, false);
   }
 
-  protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder, boolean useStandalone)
+  protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder, boolean useStandalone,
+                                   boolean enableAuthorization)
     throws Exception {
     if (!runBefore) {
       return;
     }
 
     Configuration hConf = new Configuration();
+    if (enableAuthorization) {
+      LocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
+      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
+      cConf.setBoolean(Constants.Security.ENABLED, true);
+      cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+      cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath());
+      cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
+      cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
+    }
     List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
       : createInMemoryModules(cConf, hConf, tmpFolder);
     injector = Guice.createInjector(modules);
