@@ -42,6 +42,14 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       }
     });
   };
+  this.updateScrollPositionInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION,
+      payload: {
+        scrollPosition: val
+      }
+    });
+  };
 
   this.updateTotalErrorsInStore = function(val) {
     LogViewerStore.dispatch({
@@ -105,12 +113,14 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   };
 
   LogViewerStore.subscribe(() => {
-
     if(screenSize !== LogViewerStore.getState().fullScreen){
       screenSize = LogViewerStore.getState().fullScreen;
       $timeout($scope.initialize);
     }
 
+    //Keep the slider handle in sync with the api call
+    $scope.updateSliderHandle(LogViewerStore.getState().startTime);
+    //Check if the pinScrollPosition is less than the value of the query handle
     this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
     if(typeof $scope.updatePin !== 'undefined'){
       $scope.pinScrollingPosition = this.pinScrollPosition;

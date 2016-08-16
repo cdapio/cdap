@@ -246,7 +246,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
   };
 
-
   if (this.runId) {
     //Get Initial Status
     myLogsApi.getLogsMetadata({
@@ -528,12 +527,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     this.data = [];
     this.renderData();
-
     this.loading = true;
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;
     }
+
+    //Scroll table to the top
+    angular.element(document.getElementsByClassName('logs-table'))[0].scrollTop = 0;
 
     // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
     const url = myCdapUrl.constructUrl({
@@ -565,7 +566,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         });
 
         this.data = res;
+
         if(res.length === 0){
+          //Update with start-time
           this.renderData();
           getStatus();
           if(this.statusType !== 0){
@@ -661,7 +664,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.renderData = () => {
     //Clean slate
     this.displayData = [];
-
     if(numEvents === 0){
       angular.forEach(this.data, (value, key) => {
         this.displayData.push(this.data[key]);

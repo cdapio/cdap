@@ -24,14 +24,12 @@ function link (scope, element) {
       maxRange,
       sliderLimit,
       pinX,
-      sliderX,
       timelineStack,
       startTime,
       endTime,
       pinOffset,
       circleTooltip,
       handleWidth,
-      handlePosition,
       firstRun = true;
 
   //Components
@@ -74,7 +72,6 @@ function link (scope, element) {
     sliderLimit = maxRange;
     pinOffset = 13;
     pinX = 0;
-    sliderX = 0;
     timelineStack = {};
     timelineData = scope.metadata;
 
@@ -128,19 +125,10 @@ function link (scope, element) {
   // -------------------------Build Brush / Sliders------------------------- //
   function renderBrushAndSlider(){
 
-    let pinScrollXPosition = xScale(scope.pinScrollingPosition);
-
     timescaleSvg.append('g')
       .attr('class', 'xaxis-bottom')
       .attr('transform', 'translate(' + handleWidth + ', ' + (height - 20) + ')')
       .call(xAxis);
-
-    function updateScrollWithNewStart(startValue, currentPosition){
-      if(startValue > currentPosition){
-        scope.pinScrollingPosition = xScale.invert(startValue);
-        scope.updatePin();
-      }
-    }
 
     //attach handler to brush
     sliderBrush = d3.svg.brush()
@@ -148,16 +136,8 @@ function link (scope, element) {
         .on('brush', function(){
           if(d3.event.sourceEvent) {
             let val = d3.mouse(this)[0];
-            if(val < 0){
-              val = 0;
-            }
-            if(val > maxRange){
-              val = maxRange;
-            }
-            handlePosition = val;
-            sliderHandle.attr('x', val);
-            sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
-            updateScrollWithNewStart(val, pinScrollXPosition);
+
+            updateSlider(val);
           }
         })
         .on('brushend', function() {
@@ -169,9 +149,14 @@ function link (scope, element) {
             if(val > maxRange){
               val = maxRange;
             }
-            handlePosition = val;
+
+            //Snap the slider into place
+            val = xScale(Math.floor(xScale.invert(val)/1000)*1000);
             updateSlider(val);
-            updateScrollWithNewStart(val, pinScrollXPosition);
+
+            //Update scroll position before updating starttime
+            scope.Timeline.updateScrollPositionInStore(Math.floor(xScale.invert(val)));
+            scope.Timeline.updateStartTimeInStore(Math.floor(xScale.invert(val)));
           }
        });
 
@@ -272,20 +257,26 @@ function link (scope, element) {
       .attr('stroke', 'grey');
   }
 
+  scope.updateSliderHandle = (startTime) => {
+    updateSlider(xScale(startTime));
+  };
+
   scope.updatePin = function () {
     let xPositionVal = xScale(scope.pinScrollingPosition);
-    if(xPositionVal < 0 || xPositionVal > maxRange){
-      return;
-    }
+
     if(typeof pinHandle !== 'undefined'){
 
-     if(xPositionVal < handlePosition){
-      xPositionVal = handlePosition;
-     }
+      pinHandle.attr('x', xPositionVal - pinOffset + 1);
+      scrollNeedle.attr('x1', xPositionVal + 8)
+        .attr('x2', xPositionVal + 8);
+    }
+  };
 
-     pinHandle.attr('x', xPositionVal - pinOffset + 1);
-     scrollNeedle.attr('x1', xPositionVal + 8)
-      .attr('x2', xPositionVal + 8);
+  const movePin = (val) => {
+    if(typeof pinHandle !== 'undefined'){
+      pinHandle.attr('x', val - pinOffset + 1);
+      scrollNeedle.attr('x1', val + 8)
+                  .attr('x2', val + 8);
     }
   };
 
@@ -303,17 +294,26 @@ function link (scope, element) {
   };
 
   function updateSlider(val) {
+
+    if(typeof sliderHandle === 'undefined'){
+      return;
+    }
+
     if(val < 0){
       val = 0;
     }
-    if(val > sliderLimit){
-      val = sliderLimit;
+    if(val > maxRange){
+      val = maxRange;
     }
-    sliderX = val;
 
+    //Keep the pin current
+    if(typeof pinHandle !== 'undefined'){
+      if(pinHandle.attr('x') < val){
+        movePin(val);
+      }
+    }
     sliderHandle.attr('x', val);
     sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
-    scope.Timeline.updateStartTimeInStore(xScale.invert(val));
   }
 
   scope.updateSlider = updateSlider;
