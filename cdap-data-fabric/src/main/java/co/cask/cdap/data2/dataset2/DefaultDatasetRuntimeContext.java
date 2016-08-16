@@ -68,6 +68,8 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     WriteOnly.class, new AccessInfo(EnumSet.of(Action.WRITE), AccessType.WRITE),
     ReadWrite.class, new AccessInfo(EnumSet.of(Action.READ, Action.WRITE), AccessType.READ_WRITE)
   );
+  private static final AccessInfo UNKNOWN_ACCESS_INFO = new AccessInfo(EnumSet.noneOf(Action.class),
+                                                                       AccessType.UNKNOWN);
 
   private final ThreadLocal<CallStack> callStack = new InheritableThreadLocal<CallStack>() {
       @Override
@@ -86,6 +88,8 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
   private final DatasetAccessRecorder accessRecorder;
   private final Principal principal;
   private final DatasetId datasetId;
+  @Nullable
+  private final Class<? extends Annotation> constructorDefaultAnnotation;
 
   // Just use simple primitive array to memorize whether a particular access type has lineage/audit recorded or not
   // Don't worry about concurrency because
@@ -107,10 +111,12 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
                               DatasetAccessRecorder accessRecorder,
                               Principal principal,
                               DatasetId datasetId,
+                              @Nullable Class<? extends Annotation> constructorDefaultAnnotation,
                               Callable<T> callable) throws Exception {
     // Memorize the old context, change to a new one and restore it at the end.
     // It is needed so that nested call to DatasetFramework.getDataset can create the call site context correctly.
-    Cancellable cancel = setContext(new DefaultDatasetRuntimeContext(enforcer, accessRecorder, principal, datasetId));
+    Cancellable cancel = setContext(new DefaultDatasetRuntimeContext(enforcer, accessRecorder, principal,
+                                                                     datasetId, constructorDefaultAnnotation));
     try {
       return callable.call();
     } finally {
@@ -119,21 +125,25 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
   }
 
   private DefaultDatasetRuntimeContext(AuthorizationEnforcer enforcer, DatasetAccessRecorder accessRecorder,
-                                       Principal principal, DatasetId datasetId) {
+                                       Principal principal, DatasetId datasetId,
+                                       @Nullable Class<? extends Annotation> constructorDefaultAnnotation) {
     this.enforcer = enforcer;
     this.accessRecorder = accessRecorder;
     this.principal = principal;
     this.datasetId = datasetId;
+    this.constructorDefaultAnnotation = constructorDefaultAnnotation;
     this.lineageRecorded = new boolean[AccessType.values().length];
     this.auditRecorded = new boolean[AccessType.values().length];
   }
 
   @Override
-  public void onMethodEntry(@Nullable Class<? extends Annotation> annotation) {
+  public void onMethodEntry(boolean constructor, @Nullable Class<? extends Annotation> annotation) {
     CallStack callStack = this.callStack.get();
-    AccessInfo accessInfo;
-    AccessType lineageType;
-    AccessType auditType;
+    AccessInfo accessInfo = UNKNOWN_ACCESS_INFO;
+
+    if (annotation == null && constructor) {
+      annotation = constructorDefaultAnnotation;
+    }
 
     if (annotation != null) {
       accessInfo = ANNOTATION_TO_ACCESS_INFO.get(annotation);
@@ -141,22 +151,19 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
         // shouldn't happen
         throw new DataSetException("Unsupported annotation " + annotation + " on dataset " + datasetId);
       }
-
-      // Perform authorization if the method is annotated.
-      try {
-        enforcer.enforce(datasetId, principal, accessInfo.getActions());
-      } catch (Exception e) {
-        throw new DataSetException("The principal " + principal + " is not authorized to access " + datasetId +
-                                     " for operation types " + accessInfo.getActions(), e);
-      }
-
-      lineageType = callStack.enter(accessInfo.getAccessType());
-      auditType = accessInfo.getAccessType();
-    } else {
-      lineageType = callStack.enter(AccessType.UNKNOWN);
-      auditType = AccessType.UNKNOWN;
     }
-    recordAccess(lineageType, auditType);
+
+    // Performs authorization.
+    // If the method is not annotated, the action set is empty, which means the user need to have some privileges,
+    // but we won't allow no privilege at all
+    try {
+      enforcer.enforce(datasetId, principal, accessInfo.getActions());
+    } catch (Exception e) {
+      throw new DataSetException("The principal " + principal + " is not authorized to access " + datasetId +
+                                   " for operation types " + accessInfo.getActions(), e);
+    }
+
+    recordAccess(callStack.enter(accessInfo.getAccessType()), accessInfo.getAccessType());
   }
 
   @Override
@@ -218,7 +225,7 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     }
 
     /**
-     * Called from {@link #onMethodEntry(Class)}.
+     * Called from {@link #onMethodEntry(boolean, Class)}.
      *
      * @param accessType the access type derived based on the method annotation
      * @return the actual access type to use for lineage recording
