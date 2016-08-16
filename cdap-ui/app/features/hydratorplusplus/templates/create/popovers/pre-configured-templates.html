@@ -59,9 +59,14 @@
             ng-model="HydratorPlusPlusPreConfiguredCtrl.currentPage"
             items-per-page="9"></uib-pagination>
         </div>
-        <div class="col-xs-12" ng-if="HydratorPlusPlusPreConfiguredCtrl.filtered.length === 0">
+        <div class="col-xs-12" ng-if="HydratorPlusPlusPreConfiguredCtrl.templates.length && HydratorPlusPlusPreConfiguredCtrl.filtered.length === 0">
           <div class="well well-sm text-center">
             No result(s) for <strong>{{HydratorPlusPlusPreConfiguredCtrl.searchText}}</strong>
+          </div>
+        </div>
+        <div class="col-xs-12" ng-if="HydratorPlusPlusPreConfiguredCtrl.templates.length === 0">
+          <div class="well well-sm text-center">
+            No templates to display for <strong>{{HydratorPlusPlusPreConfiguredCtrl.templateContext}}</strong>
           </div>
         </div>
       </div>
