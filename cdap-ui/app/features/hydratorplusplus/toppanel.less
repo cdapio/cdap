@@ -57,7 +57,13 @@ body.theme-cdap {
           &.icon-runtimestart,
           &.icon-runtimestarttime,
           &.icon-runtimestop,
-          &.icon-runtimestoptime { font-size: 19px; }
+          &.icon-runtimestoptime {
+            font-size: 19px;
+
+            @media (max-width: @screen-sm-max) {
+              font-size: 14px;
+            }
+          }
         }
         &:hover,
         &:focus,
@@ -445,10 +451,14 @@ body.theme-cdap {
             but based on the browser size. We need to dynamically have more space for description
             and still be able to have run specific section stick to metadata section.
           */
-          min-width: 200px;
           max-width: ~"calc(100% - 412px)";
           max-width: ~"-moz-calc(100% - 412px)";
           max-width: ~"-webkit-calc(100% - 412px)";
+
+          @media (min-width: @screen-md-min) {
+            min-width: 200px;
+          }
+
           div.pipeline-type {
             line-height: 1;
             text-decoration: none;
