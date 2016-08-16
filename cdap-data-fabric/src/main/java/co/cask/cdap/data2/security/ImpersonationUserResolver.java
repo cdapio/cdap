@@ -17,11 +17,9 @@
 package co.cask.cdap.data2.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedId;
 import com.google.inject.Inject;
 
@@ -32,14 +30,12 @@ import com.google.inject.Inject;
 public class ImpersonationUserResolver {
 
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final String defaultPrincipal;
-  private final String defaultKeytabPath;
+  private final CConfiguration cConf;
 
   @Inject
   ImpersonationUserResolver(NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.defaultPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    this.defaultKeytabPath = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+    this.cConf = cConf;
   }
 
   /**
@@ -51,7 +47,7 @@ public class ImpersonationUserResolver {
   public ImpersonationInfo getImpersonationInfo(NamespacedId namespacedId) {
     NamespaceMeta meta;
     try {
-      meta = namespaceQueryAdmin.get(new NamespaceId(namespacedId.getNamespace()).toId());
+      meta = namespaceQueryAdmin.get(Id.Namespace.from(namespacedId.getNamespace()));
     } catch (Exception e) {
       throw new RuntimeException(
         String.format("Failed to retrieve namespace meta for namespace id %s", namespacedId.getNamespace()));
@@ -66,23 +62,6 @@ public class ImpersonationUserResolver {
    * @return configured {@link ImpersonationInfo}.
    */
   public ImpersonationInfo getImpersonationInfo(NamespaceMeta meta) {
-    NamespaceConfig namespaceConfig = meta.getConfig();
-
-    String configuredPrincipal = namespaceConfig.getPrincipal();
-    String configuredKeytabURI = namespaceConfig.getKeytabURI();
-
-    if (configuredPrincipal != null && configuredKeytabURI != null) {
-      return new ImpersonationInfo(configuredPrincipal, configuredKeytabURI);
-    }
-    if (configuredPrincipal == null && configuredKeytabURI == null) {
-      return new ImpersonationInfo(defaultPrincipal, defaultKeytabPath);
-    }
-
-    // Ideally, this should never happen, because we make the check upon namespace create.
-    // This can technically happen if someone modifies the namespace store directly (i.e. hbase shell PUT).
-    throw new IllegalStateException(
-      String.format("Either neither or both of the following two configurations must be configured. " +
-                      "Configured principal: %s, Configured keytabURI: %s",
-                    configuredPrincipal, configuredKeytabURI));
+    return new ImpersonationInfo(meta, cConf);
   }
 }

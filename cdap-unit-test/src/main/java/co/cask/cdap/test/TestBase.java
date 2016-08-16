@@ -33,6 +33,8 @@ import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -121,6 +123,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -140,6 +143,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 
 /**
@@ -286,6 +290,12 @@ public class TestBase {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
       exploreExecutorService.startAndWait();
+      // wait for explore service to be discoverable
+      DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
+      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+        discoveryService.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+      Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
+                                 "%s service is not up after 5 seconds", Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       exploreClient = injector.getInstance(ExploreClient.class);
     }
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
