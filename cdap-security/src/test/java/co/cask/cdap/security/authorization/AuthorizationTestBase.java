@@ -18,6 +18,8 @@ package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.security.auth.context.AuthenticationTestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
@@ -34,6 +36,7 @@ public class AuthorizationTestBase {
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
   protected static final CConfiguration CCONF = CConfiguration.create();
   protected static final AuthorizationContextFactory AUTH_CONTEXT_FACTORY = new NoOpAuthorizationContextFactory();
+  protected static final AuthenticationContext AUTH_CONTEXT = new AuthenticationTestContext();
   protected static LocationFactory locationFactory;
 
   @BeforeClass

@@ -121,4 +121,9 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
     }
     return false;
   }
+
+  @Override
+  public void invalidate(com.google.common.base.Predicate<Principal> predicate) {
+    doInvalidate(predicate);
+  }
 }

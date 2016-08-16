@@ -64,7 +64,8 @@ public class AuthorizationBootstrapper {
     if (!enabled) {
       return;
     }
-    LOG.debug("Bootstrapping authorization for CDAP instance {}, principal {}", instanceId, systemUser);
+    LOG.debug("Bootstrapping authorization for CDAP instance: {}, system users: {} and admin users: {}",
+              instanceId, systemUser, adminUsers);
     try {
       // grant admin on instance, so the system user can create default (and other) namespaces
       privilegesManager.grant(instanceId, systemUser, Collections.singleton(Action.ADMIN));
@@ -75,7 +76,8 @@ public class AuthorizationBootstrapper {
       for (Principal adminUser : adminUsers) {
         privilegesManager.grant(instanceId, adminUser, Collections.singleton(Action.ADMIN));
       }
-      LOG.info("Successfully bootstrapped authorization for CDAP instance {}, principal {}", instanceId, systemUser);
+      LOG.info("Successfully bootstrapped authorization for CDAP instance {}, system user {} and admin users: {}",
+               instanceId, systemUser, adminUsers);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

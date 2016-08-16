@@ -38,6 +38,7 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
@@ -76,15 +77,17 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
   private final boolean authenticationEnabled;
   private final boolean authorizationEnabled;
+  private final PrivilegesManager privilegesManager;
   private final Authorizer authorizer;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final EntityExistenceVerifier entityExistenceVerifier;
 
   @Inject
-  AuthorizationHandler(AuthorizerInstantiator authorizerInstantiator, CConfiguration cConf,
-                       AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                       EntityExistenceVerifier entityExistenceVerifier) {
+  AuthorizationHandler(PrivilegesManager privilegesManager, AuthorizerInstantiator authorizerInstantiator,
+                       CConfiguration cConf, AuthorizationEnforcer authorizationEnforcer,
+                       AuthenticationContext authenticationContext, EntityExistenceVerifier entityExistenceVerifier) {
+    this.privilegesManager = privilegesManager;
     this.authorizer = authorizerInstantiator.get();
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
@@ -104,7 +107,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
     // enforce that the user granting access has admin privileges on the entity
     authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
-    authorizer.grant(request.getEntity(), request.getPrincipal(), actions);
+    privilegesManager.grant(request.getEntity(), request.getPrincipal(), actions);
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -121,10 +124,10 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     // enforce that the user revoking access has admin privileges on the entity
     authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
     if (request.getPrincipal() == null && request.getActions() == null) {
-      authorizer.revoke(request.getEntity());
+      privilegesManager.revoke(request.getEntity());
     } else {
       Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-      authorizer.revoke(request.getEntity(), request.getPrincipal(), actions);
+      privilegesManager.revoke(request.getEntity(), request.getPrincipal(), actions);
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);

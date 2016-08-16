@@ -39,6 +39,7 @@ import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
@@ -68,7 +69,7 @@ public class ConfiguratorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static CConfiguration conf;
-  private static AuthorizerInstantiator authorizerInstantiator;
+  private static Authorizer authorizer;
   private static AuthorizationEnforcer authEnforcer;
   private static AuthenticationContext authenticationContext;
 
@@ -80,8 +81,9 @@ public class ConfiguratorTest {
                                              new AuthorizationTestModule(),
                                              new AuthorizationEnforcementModule().getInMemoryModules(),
                                              new AuthenticationContextModules().getNoOpModule());
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    authenticationContext = injector.getInstance(AuthenticationContext.class);
   }
 
   @Test
@@ -90,9 +92,8 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
     Impersonator impersonator = new Impersonator(CConfiguration.create(), null, null);
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizerInstantiator,
-                                                             new DummyProgramRunnerFactory(),
-                                                             impersonator,
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
+                                                             new DummyProgramRunnerFactory(), impersonator,
                                                              authEnforcer, authenticationContext);
 
     // Create a configurator that is testable. Provide it a application.
@@ -123,9 +124,8 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
     Impersonator impersonator = new Impersonator(CConfiguration.create(), null, null);
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizerInstantiator,
-                                                             new DummyProgramRunnerFactory(),
-                                                             impersonator,
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
+                                                             new DummyProgramRunnerFactory(), impersonator,
                                                              authEnforcer, authenticationContext);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
