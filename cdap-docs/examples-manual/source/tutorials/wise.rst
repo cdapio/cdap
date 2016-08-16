@@ -481,14 +481,14 @@ Our Mapper and Reducer are standard Hadoop classes with these signatures:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 85   
+   :lines: 87   
    :prepend: . . . 
    :append: . . . 
    :dedent: 2
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 106   
+   :lines: 108   
    :prepend: . . . 
    :append: . . . 
    :dedent: 2
