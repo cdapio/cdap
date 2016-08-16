@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div class="mapreduce-components" ng-controller="MapreduceStatusController as StatusController">
   <div class="table-responsive">
@@ -33,9 +33,9 @@
           <td>{{ ::reduce.taskId }}</td>
           <td ng-if="reduce.state">{{ reduce.state }}</td>
           <td ng-if="!reduce.state">NA</td>
-          <td>{{ reduce.progress * 100 }}%</td>
+          <td>{{ (reduce.progress * 100) | number: 0 }}%</td>
           <td>
-            <span ng-show="reduce.finishTime !== 0">{{ (reduce.finishTime - reduce.startTime)/1000 | amDurationFormat}}</span>
+            <span ng-show="reduce.finishTime !== 0">{{ (reduce.finishTime - reduce.startTime) | amDurationFormat}}</span>
             <span ng-show="reduce.finishTime === 0"> &mdash; </span>
           </td>
           <td>{{ reduce.counters.REDUCE_INPUT_RECORDS | myNumber: 0}}</td>
