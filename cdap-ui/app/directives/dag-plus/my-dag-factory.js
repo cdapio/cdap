@@ -159,8 +159,35 @@ angular.module(PKG.name + '.commons')
         'distinct': 'icon-distinct',
         'naivebayestrainer': 'icon-naivebayestrainer',
         'groupbyaggregate': 'icon-groupbyaggregate',
-        'naivebayesclassifier': 'icon-naivebayesclassifier'
-
+        'naivebayesclassifier': 'icon-naivebayesclassifier',
+        'azureblobstore': 'icon-azureblobstore',
+        'xmlreader': 'icon-XMLreader',
+        'xmlparser': 'icon-XMLparser',
+        'ftp': 'icon-FTP',
+        'joiner': 'icon-joiner',
+        'deduplicate': 'icon-deduplicator',
+        'valuemapper': 'icon-valuemapper',
+        'rowdenormalizer': 'icon-rowdenormalizer',
+        'ssh': 'icon-ssh',
+        'sshaction': 'icon-sshaction',
+        'copybookreader': 'icon-COBOLcopybookreader',
+        'excel': 'icon-excelinputsource',
+        'encryptor': 'icon-Encryptor',
+        'decryptor': 'icon-Decryptor',
+        'hdfsfilemoveaction': 'icon-filemoveaction',
+        'hdfsfilecopyaction': 'icon-filecopyaction',
+        'sqlaction': 'icon-SQLaction',
+        'impalahiveaction': 'icon-impalahiveaction',
+        'emailaction': 'icon-emailaction',
+        'amazonkinesis': 'icon-Amazon-Kinesis',
+        'bigquery': 'icon-Big-Query',
+        'orc': 'icon-ORC',
+        'groupby': 'icon-groupby',
+        'sparkmachinelearning': 'icon-sparkmachinelearning',
+        'solr': 'icon-solr',
+        'sparkstreaming': 'icon-sparkstreaming',
+        'rename': 'icon-rename',
+        'archive': 'icon-archive'
       };
 
       var pluginName = plugin.toLowerCase();
