@@ -23,11 +23,15 @@ import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Guice module to provide bindings for configurations.
  */
 public final class ConfigModule extends AbstractModule {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ConfigModule.class);
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -57,11 +61,20 @@ public final class ConfigModule extends AbstractModule {
     this.sConf = sConf;
     CConfigurationUtil.copyTxProperties(cConf, hConf);
 
-    // Set system properties for all HTTP requests
-    System.setProperty(DefaultHttpRequestConfig.CONNECTION_TIMEOUT_PROPERTY_NAME,
-                       cConf.get(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS));
-    System.setProperty(DefaultHttpRequestConfig.READ_TIMEOUT_PROPERTY_NAME,
-                       cConf.get(Constants.HTTP_CLIENT_READ_TIMEOUT_MS));
+    // Set system properties for all HTTP requests if they were found
+    String connectionTimeout = cConf.get(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
+    String readTimeout = cConf.get(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
+
+    if (connectionTimeout != null) {
+      LOG.warn("Configuration for {} not found. Falling back to default value of {}",
+               Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS, DefaultHttpRequestConfig.DEFAULT_TIMEOUT);
+      System.setProperty(DefaultHttpRequestConfig.CONNECTION_TIMEOUT_PROPERTY_NAME, connectionTimeout);
+    }
+    if (readTimeout != null) {
+      LOG.warn("Configuration for {} not found. Falling back to default value of {}",
+               Constants.HTTP_CLIENT_READ_TIMEOUT_MS, DefaultHttpRequestConfig.DEFAULT_TIMEOUT);
+      System.setProperty(DefaultHttpRequestConfig.READ_TIMEOUT_PROPERTY_NAME, readTimeout);
+    }
   }
 
   @Override
