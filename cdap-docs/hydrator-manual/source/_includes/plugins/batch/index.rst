@@ -14,8 +14,5 @@ Hydrator Version |cask-hydrator-version|
     :maxdepth: 2
 
     Source Plugins <sources/index>
-    Aggregator Plugins <aggregators/index>
-    Compute Plugins <computes/index>
-    Model Plugins <models/index>
     Transformation Plugins <transforms/index>
     Sink Plugins <sinks/index>

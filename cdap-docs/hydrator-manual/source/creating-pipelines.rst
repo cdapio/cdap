@@ -110,12 +110,6 @@ Batch pipelines, based on the ``cdap-data-pipeline`` application template, can i
 
 - :ref:`Batch Source Plugins <cask-hydrator-plugins-batch-sources>`
 
-- :ref:`Batch Aggregator Plugins <cask-hydrator-plugins-batch-aggregators>`
-
-- :ref:`Batch Compute Plugins <cask-hydrator-plugins-batch-computes>`
-
-- :ref:`Batch Model Plugins <cask-hydrator-plugins-batch-models>`
-
 - :ref:`Batch Transformation Plugins <cask-hydrator-plugins-batch-transformations>`
 
 - :ref:`Batch Sink Plugins <cask-hydrator-plugins-batch-sinks>`

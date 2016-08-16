@@ -28,9 +28,6 @@ SDK and Distributed CDAP:
 
   - :doc:`Source Plugins <batch/sources/index>`
   - :doc:`Transform Plugins <batch/transforms/index>`
-  - :doc:`Aggregator Plugins <batch/aggregators/index>`
-  - :doc:`Compute Plugins <batch/computes/index>`
-  - :doc:`Model Plugins <batch/models/index>`
   - :doc:`Sink Plugins <batch/sinks/index>`
 
 - :doc:`Real-time Plugins<realtime/index>`

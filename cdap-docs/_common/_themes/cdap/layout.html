@@ -107,10 +107,11 @@
     <script type="text/javascript" src="{{ pathto('_static/copy-to-clipboard.js', 1) }}"></script>
     <script type="text/javascript" src="{{ pathto('_static/tabbed-parsed-literal.js', 1) }}"></script>
     <!-- Annotator -->
+<!-- 
     <script type="text/javascript" src="{{ pathto('_static/cdap-annotator-full.js', 1) }}"></script>
-    <!-- annotator.min.css_t included in css files -->
-    <!-- cdap-annotator.js loaded at end of file -->
+    <!~~ annotator.min.css_t included in css files ~~>
     <script type="text/javascript" src="{{ pathto('_static/cdap-annotator.js', 1) }}"></script>
+ -->
     <!-- Annotator end -->
     <!-- Google Tag Manager start -->
     {%- if html_google_tag_manager_code is defined %}
@@ -316,8 +317,5 @@
 
     </div>
 {%- endblock %}
-<!-- 
-    <script type="text/javascript" src="{{ pathto('_static/cdap-annotator.js', 1) }}"></script>
- -->
   </body>
 </html>

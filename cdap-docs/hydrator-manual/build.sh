@@ -26,9 +26,18 @@ EXTRACT_TABLE_TOOL="../tools/docs-extract-table.py"
 DOUBLE_RETURN_STRING="\
 
 "
+SINGLE_RETURN_STRING="\
+"
+TRIPLE_RETURN_STRING="\
+
+
+"
+RULE="${SINGLE_RETURN_STRING}---${DOUBLE_RETURN_STRING}"
+
 # PRE_POST_RUN="pre-post-run"
 PRE_POST_RUN="post-run-plugin"
-VERSION_STRING="Hydrator Version"
+PLUGIN_TYPE_STRING="Hydrator Plugin Type:"
+VERSION_STRING="Hydrator Version:"
 
 function get_hydrator_version() {
   local base_target="${1}"
@@ -58,9 +67,10 @@ function download_md_file() {
   local type_capital="$(echo ${type:0:1} | tr [:lower:] [:upper:])${type:1}"
   local target_file_name=$(echo "${source_file_name%-*}.md" | tr [:upper:] [:lower:]) # cassandra
 
-  # Determine from name of the plugin file the
+  # Determine from name of the plugin file the:
   # category (batch, realtime, shared-plugin, postaction) and 
   # type (source, sink, transform, aggregator)
+  # Defining these in the parameters overrides this
   if [[ "x${plugin_category}${plugin_type}" == "x" ]]; then
     if [[ "x${type:0:5}" == "xbatch" ]]; then
       plugin_category="batch"
@@ -95,7 +105,11 @@ function download_md_file() {
   fi
     
   if [[ "x${plugin_category}" != "x" ]]; then
-    local target_dir="${plugin_category}/${plugin_type}s"
+    if [[ ( "${plugin_type}" == "sink" ) || ( "${plugin_type}" == "source" ) ]]; then
+      local target_dir="${plugin_category}/${plugin_type}s"
+    else
+      local target_dir="${plugin_category}/transforms"
+    fi
     local target_dir_extra=''
   elif [[ "${plugin_type}" == "transform" ]]; then
     # Directories are plural, though types are singular
@@ -136,7 +150,7 @@ function download_md_file() {
         echo "  Appending ${append_file} to ${target_file_name}"
         cat ${BASE_TARGET}/${append_file} >> ${target}
       fi
-      echo "${DOUBLE_RETURN_STRING}${VERSION_STRING} ${HYDRATOR_VERSION}" >> ${target}
+      echo "${DOUBLE_RETURN_STRING}${RULE}- ${PLUGIN_TYPE_STRING} ${type}${DOUBLE_RETURN_STRING}- ${VERSION_STRING} ${HYDRATOR_VERSION}" >> ${target}
       if [[ "x${target_dir_extra}" != "x" ]]; then
         cp ${target} ${target_extra}
         echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
@@ -215,12 +229,14 @@ function download_includes() {
   download_md_file core-plugins Deduplicate-batchaggregator.md
   download_md_file core-plugins Distinct-batchaggregator.md
   download_md_file core-plugins Email-postaction.md
-  download_md_file core-plugins ExcelInputReader-batchsource.md
-  download_md_file core-plugins FTP-batchsource.md
+  download_md_file core-plugins Excel-batchsource.md
   download_md_file core-plugins File-batchsource.md
+  download_md_file core-plugins FTP-batchsource.md
   download_md_file core-plugins GroupByAggregate-batchaggregator.md
-  download_md_file core-plugins JMS-realtimesource.md
+  download_md_file core-plugins HDFSFileMoveAction-action.md
   download_md_file core-plugins JavaScript-transform.md
+  download_md_file core-plugins JMS-realtimesource.md
+  download_md_file core-plugins Joiner-batchjoiner.md
   download_md_file core-plugins KVTable-batchsink.md
   download_md_file core-plugins KVTable-batchsource.md
   download_md_file core-plugins LogParser-transform.md
@@ -230,22 +246,22 @@ function download_includes() {
   download_md_file core-plugins S3-batchsource.md
   download_md_file core-plugins S3Avro-batchsink.md
   download_md_file core-plugins S3Parquet-batchsink.md
-  download_md_file core-plugins SSHAction-action.md
   download_md_file core-plugins ScriptFilter-transform.md
   download_md_file core-plugins SnapshotAvro-batchsink.md
   download_md_file core-plugins SnapshotAvro-batchsource.md
   download_md_file core-plugins SnapshotParquet-batchsink.md
   download_md_file core-plugins SnapshotParquet-batchsource.md
+  download_md_file core-plugins SSHAction-action.md
   download_md_file core-plugins Stream-batchsource.md
   download_md_file core-plugins Stream-realtimesink.md
   download_md_file core-plugins StructuredRecordToGenericRecord-transform.md
+  download_md_file core-plugins Table-batchsink.md
+  download_md_file core-plugins Table-batchsource.md
+  download_md_file core-plugins Table-realtimesink.md
   download_md_file core-plugins TPFSAvro-batchsink.md
   download_md_file core-plugins TPFSAvro-batchsource.md
   download_md_file core-plugins TPFSParquet-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsource.md
-  download_md_file core-plugins Table-batchsink.md
-  download_md_file core-plugins Table-batchsource.md
-  download_md_file core-plugins Table-realtimesink.md
   download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
   download_md_file core-plugins XMLReader-batchsource.md
@@ -276,20 +292,22 @@ function download_includes() {
   download_md_file mongodb-plugins MongoDB-batchsource.md
   download_md_file mongodb-plugins MongoDB-realtimesink.md
   
+  download_md_file spark-plugins Kafka-streamingsource.md
   # Currently only for batch
-  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "batch" "compute"
-  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "batch" "model"
+  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "batch" "transform"
+  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "batch" "transform"
   
-  download_md_file transform-plugins CSVFormatter-transform.md
-  download_md_file transform-plugins CSVParser-transform.md
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md
+  download_md_file transform-plugins CSVFormatter-transform.md
+  download_md_file transform-plugins CSVParser-transform.md
   download_md_file transform-plugins Decoder-transform.md
   download_md_file transform-plugins Decompressor-transform.md
   download_md_file transform-plugins Encoder-transform.md
   download_md_file transform-plugins Hasher-transform.md
   download_md_file transform-plugins JSONFormatter-transform.md
   download_md_file transform-plugins JSONParser-transform.md
+  download_md_file transform-plugins Normalize-transform.md
   download_md_file transform-plugins StreamFormatter-transform.md
   download_md_file transform-plugins ValueMapper-transform.md
   download_md_file transform-plugins XMLParser-transform.md
