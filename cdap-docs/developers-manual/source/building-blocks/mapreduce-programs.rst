@@ -32,7 +32,7 @@ You must implement the ``MapReduce`` interface, which requires the
 implementation of three methods:
 
 - ``configure()``
-- ``beforeSubmit()``
+- ``initialize()``
 - ``onFinish()``
 
 ::
@@ -53,15 +53,15 @@ You can also :ref:`specify datasets <mapreduce-datasets>` to be used as input or
 and :ref:`specify resources <mapreduce-resources>` (memory and virtual cores) used by the
 mappers and reducers.
 
-The ``beforeSubmit()`` method is invoked at runtime, before the
-MapReduce is executed. Through a passed instance of the
-``MapReduceContext`` you have access to the actual Hadoop job
-configuration, as though you were running the MapReduce directly on
-Hadoop. For example, you can specify the mapper and reducer classes as
-well as the intermediate data format::
+The ``initialize()`` method is invoked at runtime, before the MapReduce is executed.
+Through the ``getContext()`` method, an instance of the ``MapReduceContext`` provides you
+with access to the actual Hadoop job configuration, as though you were running the
+MapReduce directly on Hadoop. For example, you can specify the mapper and reducer classes
+as well as the intermediate data format::
 
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     Job job = context.getHadoopJob();
     job.setMapperClass(PurchaseMapper.class);
     job.setMapOutputKeyClass(Text.class);
@@ -246,7 +246,7 @@ must match the input key and value type parameters of the Mapper.
 Because ``getSplits()`` has no arguments, it will typically create splits that cover the
 entire dataset. If you want to use a custom selection of the input data, define another
 method in your dataset with additional parameters and explicitly set the input in the
-``beforeSubmit()`` method.
+``initialize()`` method.
 
 For example, the system dataset ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>``
 with an extra method that allows specification of the number of splits and a range of keys::
@@ -263,7 +263,8 @@ To read a range of keys and give a hint that you want 16 splits, write::
   KeyValueTable kvTable;
   ...
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     ...
     context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey));
   }
