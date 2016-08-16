@@ -16,14 +16,14 @@
 
 package co.cask.cdap.data2.transaction;
 
-import co.cask.tephra.AbstractTransactionExecutor;
-import co.cask.tephra.RetryOnConflictStrategy;
-import co.cask.tephra.RetryStrategies;
-import co.cask.tephra.RetryStrategy;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.apache.tephra.AbstractTransactionExecutor;
+import org.apache.tephra.RetryOnConflictStrategy;
+import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.RetryStrategy;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;

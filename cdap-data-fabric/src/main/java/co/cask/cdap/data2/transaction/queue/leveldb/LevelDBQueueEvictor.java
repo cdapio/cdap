@@ -22,10 +22,10 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueEvictor;
-import co.cask.tephra.Transaction;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import org.apache.tephra.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

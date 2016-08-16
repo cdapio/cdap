@@ -16,16 +16,16 @@
 
 package co.cask.cdap.data2.transaction;
 
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionFailureException;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Functions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,12 +126,12 @@ public final class Transactions {
   /**
    * Handy method to create {@link TransactionExecutor} (See TEPHRA-71).
    */
-  public static TransactionExecutor createTransactionExecutor(co.cask.tephra.TransactionExecutorFactory factory,
+  public static TransactionExecutor createTransactionExecutor(org.apache.tephra.TransactionExecutorFactory factory,
                                                               Iterable<? extends TransactionAware> txAwares) {
     return factory.createExecutor(Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
   }
 
-  public static TransactionExecutor createTransactionExecutor(co.cask.tephra.TransactionExecutorFactory factory,
+  public static TransactionExecutor createTransactionExecutor(org.apache.tephra.TransactionExecutorFactory factory,
                                                               TransactionAware txAware) {
     return factory.createExecutor(Collections.singleton(txAware));
   }

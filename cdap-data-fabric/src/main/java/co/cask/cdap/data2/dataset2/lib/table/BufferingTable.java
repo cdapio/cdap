@@ -34,13 +34,13 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableSplit;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

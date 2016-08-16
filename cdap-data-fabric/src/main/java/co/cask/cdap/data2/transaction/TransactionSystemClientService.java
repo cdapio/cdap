@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.transaction;
 
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.util.concurrent.Service;
+import org.apache.tephra.TransactionSystemClient;
 
 /**
  * A Service for Tephra's TransactionSystemClient to perform lifecycle operations.

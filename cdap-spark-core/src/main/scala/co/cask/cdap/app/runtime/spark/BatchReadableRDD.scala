@@ -23,11 +23,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import co.cask.cdap.api.data.batch.{BatchReadable, Split, SplitReader}
 import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.data2.metadata.lineage.AccessType
-import co.cask.tephra.TransactionAware
 import org.apache.spark._
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.executor.InputMetrics
 import org.apache.spark.rdd.RDD
+import org.apache.tephra.TransactionAware
 
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag

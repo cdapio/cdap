@@ -21,12 +21,12 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionExecutorFactory;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -22,9 +22,9 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
 import com.google.common.collect.ImmutableList;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 
 import java.io.IOException;
 import java.util.Collection;

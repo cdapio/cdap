@@ -20,8 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableSortedMap;
+import org.apache.tephra.Transaction;
 
 import java.util.Map;
 

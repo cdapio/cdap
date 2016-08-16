@@ -20,8 +20,8 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.common.AbstractStageContext;
-import co.cask.tephra.TransactionFailureException;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * Default implementation of StreamingContext for Spark.

@@ -37,7 +37,7 @@ import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
-import co.cask.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;

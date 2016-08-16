@@ -16,20 +16,20 @@
 
 package co.cask.cdap.data2.transaction.snapshot;
 
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.snapshot.BinaryDecoder;
-import co.cask.tephra.snapshot.BinaryEncoder;
 import com.google.common.collect.Maps;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.snapshot.BinaryDecoder;
+import org.apache.tephra.snapshot.BinaryEncoder;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- * Handles serialization/deserialization of a {@link co.cask.tephra.persist.TransactionSnapshot}
+ * Handles serialization/deserialization of a {@link org.apache.tephra.persist.TransactionSnapshot}
  * and its elements to {@code byte[]}.
  *
- * @deprecated Replaced by use of {@code co.cask.tephra.snapshot.SnapshotCodecV3}.
+ * @deprecated Replaced by use of {@code org.apache.tephra.snapshot.SnapshotCodecV3}.
  */
 @Deprecated
 public class SnapshotCodecV2 extends AbstractSnapshotCodec {

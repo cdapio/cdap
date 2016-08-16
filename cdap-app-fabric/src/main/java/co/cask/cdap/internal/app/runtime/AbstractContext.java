@@ -49,8 +49,8 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 

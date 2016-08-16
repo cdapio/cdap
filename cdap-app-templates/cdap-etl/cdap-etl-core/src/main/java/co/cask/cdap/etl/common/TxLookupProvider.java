@@ -19,8 +19,8 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.etl.api.Lookup;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Function;
+import org.apache.tephra.TransactionFailureException;
 
 import java.util.Map;
 import java.util.Set;

@@ -42,7 +42,7 @@ public class ClientVersions {
 
   public static String getTephraHBaseCompatVersion() {
     // tephra hbase compat module
-    return co.cask.tephra.util.HBaseVersion.get().toString();
+    return org.apache.tephra.util.HBaseVersion.get().toString();
   }
 
 

@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.lang.ClassRewriter;
 import co.cask.cdap.internal.asm.FinallyAdapter;
 import co.cask.cdap.internal.dataset.DatasetRuntimeContext;
-import co.cask.tephra.TransactionAware;
+import org.apache.tephra.TransactionAware;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;

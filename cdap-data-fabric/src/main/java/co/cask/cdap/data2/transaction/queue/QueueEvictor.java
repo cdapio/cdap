@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.data2.transaction.queue;
 
-import co.cask.tephra.Transaction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.tephra.Transaction;
 
 /**
  * For performing queue eviction action.

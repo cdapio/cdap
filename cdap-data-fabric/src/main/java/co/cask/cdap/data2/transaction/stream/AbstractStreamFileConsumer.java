@@ -30,8 +30,6 @@ import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TxConstants;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Stopwatch;
@@ -47,6 +45,8 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

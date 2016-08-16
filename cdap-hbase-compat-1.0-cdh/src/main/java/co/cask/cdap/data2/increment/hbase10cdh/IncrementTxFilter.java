@@ -16,10 +16,10 @@
 
 package co.cask.cdap.data2.increment.hbase10cdh;
 
-import co.cask.tephra.Transaction;
-import co.cask.tephra.hbase10cdh.coprocessor.TransactionVisibilityFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.regionserver.ScanType;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.hbase.coprocessor.TransactionVisibilityFilter;
 
 import java.util.Map;
 

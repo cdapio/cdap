@@ -42,7 +42,6 @@ import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import co.cask.cdap.proto.Id
 import co.cask.cdap.proto.id.StreamId
 import co.cask.cdap.proto.security.Action
-import co.cask.tephra.TransactionAware
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.MRJobConfig
@@ -51,6 +50,7 @@ import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
 import org.apache.spark.{SparkContext, TaskContext}
+import org.apache.tephra.TransactionAware
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
 

@@ -19,9 +19,9 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionAwares;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionAwares;
 
 import java.io.IOException;
 import java.util.ArrayList;

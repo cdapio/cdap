@@ -30,10 +30,10 @@ import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.tephra.TransactionFailureException;
 
 import java.util.List;
 import java.util.Map;

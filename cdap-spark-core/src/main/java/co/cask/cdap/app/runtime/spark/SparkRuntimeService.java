@@ -41,8 +41,6 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGene
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -60,6 +58,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;

@@ -23,8 +23,8 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
-import co.cask.tephra.Transaction;
 import com.google.common.collect.Maps;
+import org.apache.tephra.Transaction;
 
 import java.util.NavigableMap;
 

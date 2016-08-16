@@ -20,11 +20,11 @@ import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionExecutorFactory;
 
 /**
  * Uses AppMetadataStore to access meta data.
