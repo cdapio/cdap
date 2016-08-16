@@ -187,7 +187,6 @@ my-complex-schema {
     div.tab-toggle {
       position: relative;
       &.expanded:before {
-        background-color: white;
         content: '';
         display: block;
         position: absolute;
@@ -228,3 +227,10 @@ my-complex-schema {
   margin-left: 4px;
 }
 
+.state-hydratorplusplus {
+  my-complex-schema my-embedded-schema-selector div.tab-toggle.expanded:before { background-color: white; }
+}
+
+.state-tracker {
+  my-complex-schema my-embedded-schema-selector div.tab-toggle.expanded:before { background-color: transparent; }
+}
