@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
@@ -26,6 +27,8 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,7 +44,7 @@ import java.util.Map;
  * @param <V> Type of value
  */
 public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
-
+  private static final Logger LOG = LoggerFactory.getLogger(DelegatingInputFormat.class);
   @SuppressWarnings("unchecked")
   public List<InputSplit> getSplits(JobContext job) throws IOException, InterruptedException {
     List<InputSplit> splits = new ArrayList<>();
@@ -63,6 +66,12 @@ public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
 
       // Get splits for each input path and tag with InputFormat
       // and Mapper types by wrapping in a TaggedInputSplit.
+      if (jobCopy.getJobID() == null) {
+        jobCopy.setJobID(new JobID(inputName, inputName.hashCode()));
+      }
+      String googleCloud = jobCopy.getConfiguration().get("google.cloud.auth.service.account.json.keyfile");
+      String mapredBQ = jobCopy.getConfiguration().get("mapred.bq.auth.service.account.json.keyfile");
+      LOG.debug("test the passed jobconf, googleCloud is {}, mapred is {}", googleCloud, mapredBQ);
       List<InputSplit> formatSplits = inputFormat.getSplits(jobCopy);
       for (InputSplit split : formatSplits) {
         splits.add(new TaggedInputSplit(inputName, split, confCopy, mapperInput.getInputFormatConfiguration(),
