@@ -222,8 +222,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public void stop() {
     try {
       LOG.info("Stopping runnable: {}.", name);
-      controller.stop().get();
-      logAppenderInitializer.close();
+      if (controller != null) {
+        controller.stop().get();
+      }
+      if (logAppenderInitializer != null) {
+        logAppenderInitializer.close();
+      }
     } catch (InterruptedException e) {
       LOG.debug("Interrupted while stopping runnable: {}.", name, e);
       Thread.currentThread().interrupt();

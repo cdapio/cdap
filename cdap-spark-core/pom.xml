@@ -157,7 +157,10 @@
       <version>6.5.6</version>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-minicluster</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

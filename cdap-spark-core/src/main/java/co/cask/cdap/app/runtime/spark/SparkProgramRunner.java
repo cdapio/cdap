@@ -37,19 +37,15 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
-import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
-import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -69,6 +65,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +88,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final LocationFactory locationFactory;
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
   private final MetricsCollectionService metricsCollectionService;
@@ -103,14 +101,16 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  SparkProgramRunner(CConfiguration cConf, Configuration hConf, TransactionSystemClient txClient,
-                     DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
+  SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
+                     TransactionSystemClient txClient, DatasetFramework datasetFramework,
+                     MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
                      RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
+    this.locationFactory = locationFactory;
     this.txClient = txClient;
     this.datasetFramework = datasetFramework;
     this.metricsCollectionService = metricsCollectionService;
@@ -181,7 +181,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       SparkSubmitter submitter = SparkRuntimeContextConfig.isLocal(hConf)
         ? new LocalSparkSubmitter()
-        : new DistributedSparkSubmitter(hConf, host, runtimeContext,
+        : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),

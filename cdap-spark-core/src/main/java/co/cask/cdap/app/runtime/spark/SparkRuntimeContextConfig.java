@@ -49,6 +49,7 @@ public class SparkRuntimeContextConfig {
    * Configuration key for boolean value to tell whether Spark program is executed on a cluster or not.
    */
   public static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
+  public static final String HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS = "cdap.spark.credentials.update.interval.ms";
 
   private static final String HCONF_ATTR_APP_SPEC = "cdap.spark.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";

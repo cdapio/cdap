@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,40 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.common.io;
+package co.cask.cdap.app.runtime.spark.distributed;
 
 import java.net.URI;
 
 /**
- * Status of a location.
+ * Request object for the write credentials request.
  */
-public class LocationStatus {
+final class CredentialsRequest {
 
   private final URI uri;
-  private final long length;
-  private final boolean dir;
-  private final long lastModified;
 
-  public LocationStatus(URI uri, long length, boolean dir, long lastModified) {
+  CredentialsRequest(URI uri) {
     this.uri = uri;
-    this.length = length;
-    this.dir = dir;
-    this.lastModified = lastModified;
   }
 
   public URI getUri() {
     return uri;
-  }
-
-  public long getLength() {
-    return length;
-  }
-
-  public boolean isDir() {
-    return dir;
-  }
-
-  public long getLastModified() {
-    return lastModified;
   }
 }
