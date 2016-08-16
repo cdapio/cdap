@@ -23,11 +23,10 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
-import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.common.security.DefaultImpersonator;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
@@ -37,6 +36,7 @@ import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -92,6 +92,7 @@ public class LogCleanupTest {
   private static String namespacesDir;
   private static RootLocationFactory rootLocationFactory;
   private static Impersonator impersonator;
+  private static NamespaceAdmin namespaceQueryAdmin;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -123,11 +124,11 @@ public class LogCleanupTest {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
         }
       }
     );
@@ -136,6 +137,7 @@ public class LogCleanupTest {
     txManager.startAndWait();
     rootLocationFactory = injector.getInstance(RootLocationFactory.class);
     impersonator = injector.getInstance(Impersonator.class);
+    namespaceQueryAdmin = injector.getInstance(NamespaceAdmin.class);
   }
 
   @AfterClass
@@ -144,9 +146,73 @@ public class LogCleanupTest {
   }
 
   @Test
+  public void testCleanupFilesWithoutMeta() throws Exception {
+    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
+    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+
+    // Deletion boundary
+    long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
+    LOG.info("deletionBoundary = {}", deletionBoundary);
+
+    // Setup directories
+    LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
+
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
+    builder.setName("ns");
+    NamespaceMeta finalMetadata = builder.build();
+    namespaceQueryAdmin.create(finalMetadata);
+
+    Location namespacedLogsDir = namespacedLocationFactory.get(Id.Namespace.from("ns")).append(logBaseDir);
+
+    Location contextDir = namespacedLogsDir.append("app").append("flw");
+    List<Location> toDelete = Lists.newArrayList();
+    for (int i = 0; i < 5; ++i) {
+      toDelete.add(contextDir.append("2012-12-1" + i + "/del-1"));
+      toDelete.add(contextDir.append("2012-12-1" + i + "/del-2"));
+      toDelete.add(contextDir.append("2012-12-1" + i + "/del-3"));
+      toDelete.add(contextDir.append("2012-12-1" + i + "/del-4"));
+      toDelete.add(contextDir.append("del-1"));
+    }
+    LOG.info("# of files to delete: {}", toDelete.size());
+
+    int counter = 0;
+    for (Location location : toDelete) {
+      long modTime = deletionBoundary - counter - 10000;
+      Location file = createFile(location, modTime);
+      if (counter % 2 == 0) {
+        fileMetaDataManager.writeMetaData(dummyContext, modTime, file);
+      }
+      counter++;
+    }
+
+    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
+                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, impersonator);
+    logCleanup.run();
+    logCleanup.run();
+
+    for (Location location : toDelete) {
+      Assert.assertFalse("Location " + location + " is not deleted!", location.exists());
+    }
+
+    // Assert all the files with/without metadata is deleted
+    for (int i = 0; i < 5; ++i) {
+      Location delDir = contextDir.append("2012-12-1" + i);
+      Assert.assertFalse("Location " + delDir + " is not deleted!", delDir.exists());
+    }
+
+    // Assert metadata for all deleted files is deleted
+    NavigableMap<Long, Location> remainingFilesMap = fileMetaDataManager.listFiles(dummyContext);
+    Set<Location> metadataForDeletedFiles =
+      Sets.intersection(new HashSet<>(remainingFilesMap.values()), new HashSet<>(toDelete)).immutableCopy();
+    Assert.assertEquals(ImmutableSet.of(), metadataForDeletedFiles);
+  }
+
+
+  @Test
   public void testCleanup() throws Exception {
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+
 
     // Deletion boundary
     long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
@@ -205,8 +271,8 @@ public class LogCleanupTest {
     int index = RANDOM.nextInt(toDelete.size());
     toDelete.get(index).delete();
 
-    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, RETENTION_DURATION_MS,
-                                           impersonator);
+    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
+                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, impersonator);
     logCleanup.run();
     logCleanup.run();
 
@@ -237,6 +303,7 @@ public class LogCleanupTest {
     // Create namespaced logs dirs
     Location namespacedLogsDir1 = baseDir.append(namespacesDir).append("ns1").append(logBaseDir);
     Location namespacedLogsDir2 = baseDir.append(namespacesDir).append("ns2").append(logBaseDir);
+    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
     // Create dirs with files
     Set<Location> files = Sets.newHashSet();
@@ -272,7 +339,8 @@ public class LogCleanupTest {
       emptyDirs.add(createDir(namespacedLogsDir2.append("def").append("hij").append("dir_" + i)));
     }
 
-    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, RETENTION_DURATION_MS, impersonator);
+    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, namespaceQueryAdmin, namespacedLocationFactory,
+                                           logBaseDir, RETENTION_DURATION_MS, impersonator);
     for (Location location : Sets.newHashSet(Iterables.concat(nonEmptyDirs, emptyDirs))) {
       logCleanup.deleteEmptyDir(namespacedLogsDir1.toString(), location);
       logCleanup.deleteEmptyDir(namespacedLogsDir2.toString(), location);
@@ -299,8 +367,10 @@ public class LogCleanupTest {
     // Create base dir
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
+    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
-    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, RETENTION_DURATION_MS, impersonator);
+    LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, namespaceQueryAdmin, namespacedLocationFactory,
+                                           logBaseDir, RETENTION_DURATION_MS, impersonator);
 
     logCleanup.deleteEmptyDir(namespacesDir + "/ns/" + logBaseDir, baseDir);
     // Assert base dir exists

@@ -18,6 +18,7 @@ package co.cask.cdap.logging.appender.file;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.RootLocationFactory;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -64,6 +65,7 @@ public class FileLogAppender extends LogAppender {
   private final TransactionExecutorFactory txExecutorFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final RootLocationFactory rootLocationFactory;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final String logBaseDir;
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
@@ -83,8 +85,8 @@ public class FileLogAppender extends LogAppender {
   public FileLogAppender(CConfiguration cConfig,
                          DatasetFramework dsFramework,
                          TransactionExecutorFactory txExecutorFactory,
-                         NamespacedLocationFactory namespacedLocationFactory,
-                         RootLocationFactory rootLocationFactory, Impersonator impersonator) {
+                         RootLocationFactory rootLocationFactory, NamespaceQueryAdmin namespaceQueryAdmin,
+                         NamespacedLocationFactory namespacedLocationFactory, Impersonator impersonator) {
     setName(APPENDER_NAME);
     this.cConf = cConfig;
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
@@ -92,6 +94,7 @@ public class FileLogAppender extends LogAppender {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.rootLocationFactory = rootLocationFactory;
     this.impersonator = impersonator;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
 
     this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(logBaseDir, "Log base dir cannot be null");
@@ -150,10 +153,9 @@ public class FileLogAppender extends LogAppender {
                                                          maxFileLifetimeMs, impersonator);
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
-      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, retentionDurationMs,
-                                             impersonator);
-      scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
-                                            logCleanupIntervalMins, TimeUnit.MINUTES);
+      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
+                                             namespacedLocationFactory, logBaseDir, retentionDurationMs, impersonator);
+      scheduledExecutor.scheduleAtFixedRate(logCleanup, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (Exception e) {
       close();
       throw Throwables.propagate(e);
