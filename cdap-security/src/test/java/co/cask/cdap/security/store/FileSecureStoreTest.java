@@ -27,7 +27,7 @@ import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.Charsets;
 import org.junit.After;
 import org.junit.Assert;
@@ -37,9 +37,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class FileSecureStoreTest {
@@ -101,16 +100,14 @@ public class FileSecureStoreTest {
 
   @Test
   public void testListEmpty() throws Exception {
-    Assert.assertEquals(new ArrayList<>(), secureStore.listSecureData(NAMESPACE1));
+    Assert.assertEquals(Collections.<String, String>emptyMap(), secureStore.listSecureData(NAMESPACE1));
   }
 
   @Test
   public void testList() throws Exception {
     populateStore();
-    List<SecureStoreMetadata> expectedList = new ArrayList<>();
-    expectedList.add(secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata());
-    expectedList.add(secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata());
-    Assert.assertEquals(expectedList, secureStore.listSecureData(NAMESPACE1));
+    Map<String, String> expected = ImmutableMap.of(KEY1, DESCRIPTION1, KEY2, DESCRIPTION2);
+    Assert.assertEquals(expected, secureStore.listSecureData(NAMESPACE1));
   }
 
   @Test
@@ -171,14 +168,11 @@ public class FileSecureStoreTest {
     populateStore();
     String ns = "namespace2";
     secureStoreManager.putSecureData(ns, KEY1, VALUE1, DESCRIPTION1, PROPERTIES_1);
-    List<SecureStoreMetadata> expectedList =
-      ImmutableList.of(secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata(),
-                       secureStore.getSecureData(NAMESPACE1, KEY1).getMetadata());
-    Assert.assertEquals(expectedList, secureStore.listSecureData(NAMESPACE1));
-    Assert.assertNotEquals(expectedList, secureStore.listSecureData(NAMESPACE2));
-    List<SecureStoreMetadata> expectedList2 = ImmutableList.of(secureStore.getSecureData(NAMESPACE2, KEY1)
-                                                                 .getMetadata());
-    Assert.assertEquals(expectedList2, secureStore.listSecureData(NAMESPACE2));
-    Assert.assertNotEquals(expectedList2, secureStore.listSecureData(NAMESPACE1));
+    Map<String, String> expected = ImmutableMap.of(KEY1, DESCRIPTION1, KEY2, DESCRIPTION2);
+    Assert.assertEquals(expected, secureStore.listSecureData(NAMESPACE1));
+    Assert.assertNotEquals(expected, secureStore.listSecureData(NAMESPACE2));
+    Map<String, String> expected2 = ImmutableMap.of(KEY1, DESCRIPTION1);
+    Assert.assertEquals(expected2, secureStore.listSecureData(NAMESPACE2));
+    Assert.assertNotEquals(expected2, secureStore.listSecureData(NAMESPACE1));
   }
 }

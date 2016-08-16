@@ -282,7 +282,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   }
 
   @throws[IOException]
-  def list(namespace: String): util.List[SecureStoreMetadata] = {
+  def list(namespace: String): util.Map[String, String] = {
     return runtimeContext.listSecureData(namespace)
   }
 

@@ -213,8 +213,8 @@ public class AuthorizationBootstrapperTest {
 
   private void waitForService(String discoverableName) throws InterruptedException {
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(discoverableName));
-    Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
-                               "%s service is not up after 5 seconds", discoverableName);
+    Preconditions.checkNotNull(endpointStrategy.pick(10, TimeUnit.SECONDS),
+                               "%s service is not up after 10 seconds", discoverableName);
   }
 
   private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {

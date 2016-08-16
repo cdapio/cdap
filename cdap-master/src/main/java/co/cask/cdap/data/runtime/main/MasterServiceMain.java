@@ -69,6 +69,7 @@ import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -505,8 +506,9 @@ public class MasterServiceMain extends DaemonMain {
       new TwillModule(),
       new ServiceStoreModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
-      new ProgramRunnerRuntimeModule().getDistributedModules()
-    );
+      new ProgramRunnerRuntimeModule().getDistributedModules(),
+      new SecureStoreModules().getDistributedModules()
+      );
   }
 
   /**

@@ -27,7 +27,6 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
@@ -720,7 +719,7 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+    public Map<String, String> listSecureData(String namespace) throws Exception {
       return null;
     }
 

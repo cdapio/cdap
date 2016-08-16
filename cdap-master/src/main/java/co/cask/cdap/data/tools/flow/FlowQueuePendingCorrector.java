@@ -69,6 +69,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -348,6 +349,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
+      new SecureStoreModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
