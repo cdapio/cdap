@@ -201,7 +201,7 @@
     <name>kerberos.auth.enabled</name>
     <value>false</value>
     <description>
-      Disable Kerberos authentication in standalone.
+      Determines if Kerberos authentication is enabled
     </description>
   </property>
 
