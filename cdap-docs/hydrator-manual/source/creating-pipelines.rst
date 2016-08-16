@@ -11,7 +11,7 @@ Creating Pipelines
 Pipelines are created from *artifacts*. A number of artifacts are supplied with CDAP, and
 custom artifacts can be created by developers. An artifact is a blueprint or template that
 |---| with the addition of a configuration file |---| is used to create an application.
-|
+
 A pipeline application is created by preparing a configuration that specifies the artifact
 and which source, transformations (also known as transforms), and sinks are to be used to
 create the application.
@@ -428,7 +428,7 @@ these functions are predefined and available:
 .. |SimpleDateFormat| replace:: Java ``SimpleDateFormat``
 .. _SimpleDateFormat: http://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
 
-Logical Start Time function
+Logical Start Time Function
 ...........................
 The logicalStartTime macro function returns the logical start time of a run of the pipeline.
 
@@ -471,7 +471,7 @@ key provided as an argument must already exist in the secure store. This is usef
 performing a substitution with sensitive data.
 
 For example, for a plugin that connects to a MySQL database, you could configure the
-*password* property field with:
+*password* property field with::
 
   ${secure(mysql-password)}
 
