@@ -25,16 +25,19 @@ my-batch-pipeline-settings {
     my-card {
       &.engine {
         flex: 0.5;
+
         label {
           font-weight: 500;
           color: gray;
           display: block;
         }
+
+        .engine-type { float: left; }
+
         .resource-container {
-          display: flex;
-          > div {
-            flex: 0.5;
-          }
+          float: left;
+          margin-left: 25px;
+
           .title {
             font-weight: 500;
             color: gray;
@@ -47,25 +50,19 @@ my-batch-pipeline-settings {
             color: gray;
           }
           .resource-holder {
-            display: flex;
-            flex-direction: column;
             .resource-group {
-              display: flex;
-              &:last-child {
-                margin: 10px 0;
-              }
-              .control-label {
-                &:first-child {
-                  width: 80px;
-                }
-              }
+              display: inline-block;
+              margin: 5px 0;
+
+              my-number-widget > div { display: inline; }
+
               .control-label {
                 display: inline-block;
                 text-align: right;
               }
               .form-control {
-                width: 80px;
-                margin: 0 10px;
+                width: 75px;
+                margin: 0 5px;
               }
             }
           }

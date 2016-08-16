@@ -51,7 +51,7 @@
         </div>
       </my-card>
       <my-card data-title="Engine" class="engine">
-        <form role="form">
+        <form role="form" class="engine-type">
           <label>
             <input type="radio"
               name="mapreduce"
@@ -69,8 +69,8 @@
               Spark
           </label>
         </form>
-        <div class="form-horizontal resource-container">
-          <div>
+        <div class="resource-container">
+          <!-- <div>
             <div>
               <i class="fa fa-info-circle"
                  uib-tooltip="Resources don't take any effect in standalone environment."
@@ -106,6 +106,26 @@
                 data-is-disabled="{{MyBatchPipelineSettingsCtrl._isDisabled}}"
                 my-pipeline-resource-factory
               ></div>
+            </div>
+          </div> -->
+
+          <div>
+            <div>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="This setting is for system level resources used by the engine in a distributed environment"
+                 tooltip-append-to-body="true"
+                 ng-if="!MyBatchPipelineSettingsCtrl.isDistributed"></i>
+              <span class="title">
+                Pipeline Resources
+              </span>
+            </div>
+            <div class="resource-holder">
+              <div action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
+                   store="MyBatchPipelineSettingsCtrl.store"
+                   resource-type="executorResource"
+                   data-is-disabled="{{MyBatchPipelineSettingsCtrl._isDisabled}}"
+                   my-pipeline-resource-factory>
+              </div>
             </div>
           </div>
         </div>
