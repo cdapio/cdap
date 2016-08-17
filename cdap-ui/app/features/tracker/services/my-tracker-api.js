@@ -45,7 +45,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     getProgramRunStatus: myHelpers.getConfig('GET', 'REQUEST', programPath),
     getAuditLogs: myHelpers.getConfig('GET', 'REQUEST', auditPath, false, { suppressErrors: true }),
     getStreamProperties: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/streams/:entityId'),
-    getDatasetSystemProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?scope=SYSTEM'),
+    getDatasetSystemProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?scope=SYSTEM', false, { suppressErrors: true }),
     getSystemTags: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/tags?scope=SYSTEM', true),
     getDatasetDetail: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/data/datasets/:entityId'),
     deployNavigator: myHelpers.getConfig('PUT', 'REQUEST', navigatorPath, false, { contentType: 'application/json' }),
