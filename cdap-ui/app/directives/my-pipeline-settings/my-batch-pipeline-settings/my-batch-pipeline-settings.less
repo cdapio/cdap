@@ -29,14 +29,10 @@ my-batch-pipeline-settings {
         label {
           font-weight: 500;
           color: gray;
-          display: block;
         }
 
-        .engine-type { float: left; }
-
         .resource-container {
-          float: left;
-          margin-left: 25px;
+          margin-top: 10px;
 
           .title {
             font-weight: 500;
@@ -45,17 +41,23 @@ my-batch-pipeline-settings {
           .title,
           .fa.fa-caret-down,
           .fa.fa-caret-right {
-            cursor: pointer;
             margin: 10px 0;
             color: gray;
           }
+
+          .pipeline-resources-header {
+            display: inline-block;
+            vertical-align: middle;
+          }
           .resource-holder {
+            margin-left: 15px;
+            display: inline-block;
+
             .resource-group {
               display: inline-block;
               margin: 5px 0;
 
               my-number-widget > div { display: inline; }
-
               .control-label {
                 display: inline-block;
                 text-align: right;
@@ -89,7 +91,7 @@ my-batch-pipeline-settings {
           align-items: center;
           font-weight: 500;
           color: #6d6d6d;
-          margin: 5px 0;
+          margin: 7px 0;
 
           > .cron-select {
             margin-left: 5px;

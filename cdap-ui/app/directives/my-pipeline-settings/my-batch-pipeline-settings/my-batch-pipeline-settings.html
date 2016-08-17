@@ -51,8 +51,8 @@
         </div>
       </my-card>
       <my-card data-title="Engine" class="engine">
-        <form role="form" class="engine-type">
-          <label>
+        <form role="form" class="engine-type form-inline">
+          <label class="radio-inline">
             <input type="radio"
               name="mapreduce"
               value="mapreduce"
@@ -60,7 +60,7 @@
               ng-model="MyBatchPipelineSettingsCtrl.engine">
             MapReduce
           </label>
-          <label>
+          <label class="radio-inline">
             <input type="radio"
                name="spark"
                value="spark"
@@ -71,7 +71,7 @@
         </form>
         <div class="resource-container">
           <div>
-            <div>
+            <div class="pipeline-resources-header">
               <i class="fa fa-info-circle"
                  uib-tooltip="This setting is for system level resources used by the engine in a distributed environment"
                  tooltip-append-to-body="true"
