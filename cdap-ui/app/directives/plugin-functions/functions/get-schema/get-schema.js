@@ -74,25 +74,16 @@ angular.module(PKG.name + '.commons')
                   .$promise
                   .then(function (res) {
                     mvm.error = null;
-                    mvm.resolvedSchema = angular.copy(res);
-                    mvm.schema = res.fields.filter(function (field) {
-                      if (angular.isArray(field.type)) {
-                        field.type = field.type[0];
-                        field.nullable = true;
-                      }
-                      return field;
-                    });
+                    mvm.schema = res;
                   }, function (err) {
-                    mvm.resolvedSchema = null;
                     mvm.schema = null;
-
                     mvm.error = err.data;
                   });
               };
 
               mvm.apply = function () {
                 $scope.$close({
-                  schema: mvm.resolvedSchema,
+                  schema: mvm.schema,
                   query: mvm.query
                 });
               };

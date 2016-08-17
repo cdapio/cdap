@@ -116,7 +116,6 @@
       margin-bottom: 10px;
       + button { margin-bottom: 10px; }
     }
-
     .modal-footer {
       padding-left: 20px;
       padding-right: 20px;
@@ -244,13 +243,13 @@
           }
           .control-label { font-weight: bold; }
           table.table {
-            &:not(.schema-modal-table) { border: 0; }
-            &.schema-modal-table th {
-              color: #666666;
-              font-size: 14px;
-              font-weight: 500;
-            }
             .control-label { font-weight: bold; }
+          }
+          div.header > h4,
+          div.nullable-header > h4 {
+            color: #666666;
+            font-size: 14px;
+            font-weight: 500;
           }
         }
       }
