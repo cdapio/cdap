@@ -48,12 +48,12 @@ for CDAP to run successfully.
      $ sudo cp -f /etc/cdap/conf.mycdap/cdap-site.xml.example /etc/cdap/conf.mycdap/cdap-site.xml
      $ sudo vi /etc/cdap/conf.mycdap/cdap-site.xml
 
-#. If necessary, configure a ``cdap-env.sh`` after you have installed the CDAP packages.
+#. If necessary, customize the file ``cdap-env.sh`` after you have installed the CDAP packages.
 
    Environment variables that will be included in the environment used when launching CDAP and
-   programs can be set in the ``cdap-env.sh`` file, usually at ``/etc/cdap/conf.mycdap/cdap-env.sh``.
+   can be set in the ``cdap-env.sh`` file, usually at ``/etc/cdap/conf/cdap-env.sh``.
    
-   This only needed if you need to customize the environment launching CDAP and components, such
+   This is only necessary if you need to customize the environment launching CDAP, such
    as described below under :ref:`|distribution|-configuration-local-storage`.
 
    .. _|distribution|-configuration-options-may-need:
@@ -212,8 +212,8 @@ directories, as they are used for deploying applications and for operating CDAP.
   - ``LOCAL_DIR`` (default: ``/var/tmp/cdap``): The directory serving as the user directory
     for CDAP Master
 
-  These variables can be set in a file ``/etc/cdap/conf/cdap-env.sh`` and will be included in
-  the environment when launching CDAP and programs. See :ref:`|distribution|-configuration-central` 
+  These variables can be set in the file ``/etc/cdap/conf/cdap-env.sh`` and will be included in
+  the environment when launching CDAP. See :ref:`|distribution|-configuration-central` 
   for details of the central configuration used by CDAP and how to implement this.
 
 - As in all installations, the ``kafka.server.log.dirs`` may need to be created locally.
