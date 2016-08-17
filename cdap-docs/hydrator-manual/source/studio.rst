@@ -100,6 +100,14 @@ Changes to a plugin template do not affect any pipelines created using that temp
 those pipelines are created from the artifacts as specified in the plugin template at the
 time of creation of the pipeline.
 
+.. figure:: /_images/hydrator-studio-plugin-template.png
+  :figwidth: 100%
+  :width: 6in
+  :align: center
+  :class: bordered-image
+
+  **Cask Hydrator Studio:** Creating a plugin template from the Stream source plugin
+
 Creating a Plugin Template
 --------------------------
 To create a plugin-template:

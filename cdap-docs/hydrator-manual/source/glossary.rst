@@ -10,6 +10,8 @@
 Cask Hydrator Glossary
 ======================
 
+*Additional entries are included in the* :ref:`CDAP Glossary <reference:glossary>`.
+
 .. glossary::
    :sorted:
 

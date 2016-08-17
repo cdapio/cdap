@@ -208,13 +208,13 @@ parses them into separate fields, and writes them as individual records to a tab
    To check that everything is complete, click the validate button, located on buttons
    above the canvas area. Five buttons are available:
 
-    .. figure:: /_images/hydrator-gs-1-5-buttons.png
-      :figwidth: 100%
-      :width: 6in
-      :align: center
-      :class: bordered-image
- 
-      **Cask Hydrator Studio:** Button labels, upper-right toolbar
+   .. figure:: /_images/hydrator-gs-1-5-buttons.png
+     :figwidth: 100%
+     :width: 6in
+     :align: center
+     :class: bordered-image
+
+     **Cask Hydrator Studio:** Button labels, upper-right toolbar
       
    Clicking the *Validate* button should produce a message in the console similar to::
    
@@ -231,13 +231,13 @@ parses them into separate fields, and writes them as individual records to a tab
    
    The view changes to show the completed application:
    
-    .. figure:: /_images/hydrator-gs-1-6-pipeline.png
-      :figwidth: 100%
-      :width: 6in
-      :align: center
-      :class: bordered-image
-   
-      **Cask Hydrator:** Demo pipeline
+   .. figure:: /_images/hydrator-gs-1-6-pipeline.png
+     :figwidth: 100%
+     :width: 6in
+     :align: center
+     :class: bordered-image
+  
+     **Cask Hydrator:** Demo pipeline
 
    Though this pipeline view is not editable, clicking the icons will bring up the same dialogs
    as before, showing which values have been configured for each stage of the pipeline.
@@ -266,27 +266,26 @@ parses them into separate fields, and writes them as individual records to a tab
   
 #. You can now run the pipeline. Click the *Run* button, located in the upper-right:
 
-
-    .. figure:: /_images/hydrator-gs-1-8-buttons.png
-      :figwidth: 100%
-      :width: 6in
-      :align: center
-      :class: bordered-image
-   
-      **Cask Hydrator:** Button labels, upper-right toolbar
+   .. figure:: /_images/hydrator-gs-1-8-buttons.png
+     :figwidth: 100%
+     :width: 6in
+     :align: center
+     :class: bordered-image
+  
+     **Cask Hydrator:** Button labels, upper-right toolbar
 
    The pipeline should start running, as indicated by the green *Running* icon indicating
    the status. The number of records processed will, in time, change from zero to 10,000.
    When the run completes, the status icon will change to *Completed*. A run-id and
    details should appear in the bottom panel:
 
-    .. figure:: /_images/hydrator-gs-1-9-completed.png
-      :figwidth: 100%
-      :width: 6in
-      :align: center
-      :class: bordered-image
-   
-      **Cask Hydrator:** Completed run of *demoPipeline*
+   .. figure:: /_images/hydrator-gs-1-9-completed.png
+     :figwidth: 100%
+     :width: 6in
+     :align: center
+     :class: bordered-image
+  
+     **Cask Hydrator:** Completed run of *demoPipeline*
       
 #. You can now check the results by looking at the contents of the *demoTable*. Navigate to
    *demoTable* dataset, and run a default explore query that selects the first five records, 
@@ -297,16 +296,16 @@ parses them into separate fields, and writes them as individual records to a tab
    - clicking *Explore*; and finally
    - clicking *Execute SQL*:
 
-    .. figure:: /_images/hydrator-gs-1-10-demotable.png
-      :figwidth: 100%
-      :width: 6in
-      :align: center
-      :class: bordered-image
-   
-      **Cask Hydrator:** Results of exploring the *demoTable*
+   .. figure:: /_images/hydrator-gs-1-10-demotable.png
+     :figwidth: 100%
+     :width: 6in
+     :align: center
+     :class: bordered-image
+  
+     **Cask Hydrator:** Results of exploring the *demoTable*
          
-    Here you can see that the log records have been successfully loaded into the stream,
-    parsed by the log parser, and then saved as parsed records to the table. This data is
-    now available for further analysis, such looking for unique records, sorting, etc.
+   Here you can see that the log records have been successfully loaded into the stream,
+   parsed by the log parser, and then saved as parsed records to the table. This data is
+   now available for further analysis, such looking for unique records, sorting, etc.
       
 This completes the *Getting Started* for Hydrator. 

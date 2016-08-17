@@ -118,6 +118,9 @@ generically referred to as a *plugin*. Plugins provide a way to extend the funct
 of existing artifacts. An application can be created with the existing plugins included
 with CDAP or, if a user wishes, they can write a plugin to add their own capability.
 
+See the :ref:`reference section <cask-hydrator-plugins>` for details on the capabilities
+and behavior of each plugin.
+
 Properties
 ==========
 Each stage in a pipeline represents the configuration of a specific plugin, and that
