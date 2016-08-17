@@ -14,7 +14,7 @@
  * the License.
  */
 
-function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies) {
+function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies, myHelpers) {
   'ngInject';
 
   let vm = this;
@@ -22,7 +22,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   vm.$cookies = $cookies;
 
   function findActiveProduct() {
-    if ($state.includes('hydratorplusplus.**')) {
+    if ($state.includes('hydrator.**')) {
       return 'hydrator';
     } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
       return 'tracker';
@@ -70,8 +70,8 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
 
     $cookies.put('CDAP_Namespace', ns.name);
 
-    if ($state.includes('hydratorplusplus.**')) {
-      $state.go('hydratorplusplus.list', { namespace: ns.name });
+    if ($state.includes('hydrator.**')) {
+      $state.go('hydrator.list', { namespace: ns.name });
     } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
       $state.go('tracker.home', { namespace: ns.name });
     } else if ($state.includes('dashboard.**')){
@@ -81,7 +81,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
     }
   };
 
-
+  vm.getAbsUIUrl = myHelpers.getAbsUIUrl;
   $scope.$on('$destroy', () => {
     $cookies.remove('CDAP_Namespace');
   });

@@ -48,7 +48,6 @@ var log = log4js.getLogger('default');
 
 log.info("Starting CDAP UI ...");
 parser.extractConfig('cdap')
-
   .then(function (c) {
     cdapConfig = c;
     if (cdapConfig['ssl.enabled'] === 'true') {
