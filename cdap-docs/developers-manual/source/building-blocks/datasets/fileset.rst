@@ -296,7 +296,8 @@ reads as input all partitions for the league given in its runtime arguments, and
 a partition with that league as the only key::
 
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     ...
     String league = context.getRuntimeArguments().get("league");
 
@@ -316,10 +317,10 @@ a partition with that league as the only key::
     context.setOutput("totals", outputFileSet);
   }
 
-Here, the ``beforeSubmit()`` method of the MapReduce generates the runtime arguments for the
+Here, the ``initialize`` method of the MapReduce generates the runtime arguments for the
 partitioned file sets that specify the input partition filter and output partition key. This
 is convenient for starting the MapReduce, because only a single argument has to be given for
-the MapReduce run. If that code was not in the ``beforeSubmit()``, you could still achieve the
+the MapReduce run. If that code was not in the ``initialize()``, you could still achieve the
 same result by specifying the partition filter and key explicitly in the MapReduce runtime arguments.
 For example, give these arguments when starting the MapReduce through a RESTful call::
 
@@ -380,11 +381,13 @@ An easy way is to use the ``PartitionBatchInput``, an experimental feature intro
 Your MapReduce program is responsible for providing an implementation of ``DatasetStatePersistor`` to
 persist and then read back its state. In this example, the state is persisted to a row in a
 KeyValue Table, using the convenience class ``KVTableStatePersistor``; however, other types of
-Datasets can also be used. In the ``beforeSubmit()`` method of the MapReduce, specify the
+Datasets can also be used. In the ``initialize`` method of the MapReduce, specify the
 partitioned file set to be used as input as well as the ``DatasetStatePersistor`` to be used::
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
+      ...
       partitionCommitter =
         PartitionBatchInput.setInput(context, DataCleansing.RAW_RECORDS,
                                      new KVTableStatePersistor(DataCleansing.CONSUMING_STATE, "state.key"));
@@ -404,7 +407,7 @@ This ensures that the next time the MapReduce job runs, it processes only the ne
     partitionCommitter.onFinish(succeeded);
   }
 
-Processing using other Programs
+Processing using Other Programs
 -------------------------------
 Partitions of a partitioned file set can also be incrementally processed from other program types
 using the generic ``PartitionConsumer`` APIs. The implementation of these APIs that can be used from multiple instances
@@ -539,7 +542,7 @@ Using TimePartitionedFileSets in MapReduce
 
 Using time-partitioned file sets in MapReduce is similar to partitioned file sets; however, instead of
 setting an input partition filter and an output partition key, you configure an input time range and an
-output partition time in the ``beforeSubmit()`` of the MapReduce::
+output partition time in the ``initialize()`` of the MapReduce::
 
     TimePartitionedFileSetArguments.setInputStartTime(inputArgs, startTime);
     TimePartitionedFileSetArguments.setInputEndTime(inputArgs, endTime);
