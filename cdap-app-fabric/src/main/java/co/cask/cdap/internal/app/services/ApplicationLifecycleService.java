@@ -104,7 +104,6 @@ import javax.annotation.Nullable;
  */
 public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
-  private static final Gson GSON = new Gson();
 
   /**
    * Runtime program service for running and managing programs.
@@ -130,9 +129,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final Impersonator impersonator;
 
   @Inject
-  ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, Scheduler scheduler,
-                              QueueAdmin queueAdmin, StreamConsumerFactory streamConsumerFactory,
-                              UsageRegistry usageRegistry, PreferencesStore preferencesStore, MetricStore metricStore,
+  ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store,
+                              Scheduler scheduler, QueueAdmin queueAdmin,
+                              StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
+                              PreferencesStore preferencesStore, MetricStore metricStore,
                               ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataStore metadataStore, PrivilegesManager privilegesManager,
@@ -285,9 +285,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     Object requestedConfigObj = appRequest.getConfig();
-    // if config is null, use the previous config
+    // if config is null, use the previous config. Shouldn't use a static GSON since the request Config object can
+    // be a user class, otherwise there will be ClassLoader leakage.
     String requestedConfigStr = requestedConfigObj == null ?
-      currentSpec.getConfiguration() : GSON.toJson(requestedConfigObj);
+      currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
     Id.Artifact artifactId = Artifacts.toArtifactId(appId.getNamespace().toEntityId(), newArtifactId).toId();
     return deployApp(appId.getNamespace(), appId.getId(), artifactId, requestedConfigStr, programTerminator);

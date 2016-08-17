@@ -79,6 +79,7 @@ import javax.annotation.Nullable;
  */
 public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin implements NamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
+  private static final Pattern NAMESPACE_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
 
   private final Store store;
   private final PreferencesStore preferencesStore;
@@ -96,7 +97,6 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
   private final InstanceId instanceId;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final Impersonator impersonator;
-  private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   private final CConfiguration cConf;
 
   @Inject
@@ -405,7 +405,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
 
   private InstanceId createInstanceId(CConfiguration cConf) {
     String instanceName = cConf.get(Constants.INSTANCE_NAME);
-    Preconditions.checkArgument(namespacePattern.matcher(instanceName).matches(),
+    Preconditions.checkArgument(NAMESPACE_PATTERN.matcher(instanceName).matches(),
                                 "CDAP instance name specified by '%s' in cdap-site.xml should be alphanumeric " +
                                   "(underscores allowed). Its current invalid value is '%s'",
                                 Constants.INSTANCE_NAME, instanceName);

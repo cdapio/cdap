@@ -22,7 +22,9 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
@@ -41,16 +43,17 @@ public class Impersonator {
   private final CConfiguration cConf;
   private final boolean kerberosEnabled;
   private final UGIProvider ugiProvider;
-  private final ImpersonationUserResolver impersonationUserResolver;
+  private final Provider<NamespaceQueryAdmin> namespaceQueryAdminProvider;
 
   @Inject
   @VisibleForTesting
   public Impersonator(CConfiguration cConf, UGIProvider ugiProvider,
-                      NamespaceQueryAdmin namespaceQueryAdmin) {
+                      Provider<NamespaceQueryAdmin> namespaceQueryAdminProvider) {
+    // Have to take Provider<NamespaceQueryAdmin> to avoid circular dependency
     this.cConf = cConf;
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.ugiProvider = ugiProvider;
-    this.impersonationUserResolver = new ImpersonationUserResolver(namespaceQueryAdmin, cConf);
+    this.namespaceQueryAdminProvider = namespaceQueryAdminProvider;
   }
 
   /**
@@ -93,7 +96,13 @@ public class Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
       return UserGroupInformation.getCurrentUser();
     }
-    return getUGI(impersonationUserResolver.getImpersonationInfo(namespaceId));
+
+    try {
+      return getUGI(new ImpersonationInfo(namespaceQueryAdminProvider.get().get(namespaceId.toId()), cConf));
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
