@@ -244,7 +244,12 @@
           }
           .control-label { font-weight: bold; }
           table.table {
-            border: 0;
+            &:not(.schema-modal-table) { border: 0; }
+            &.schema-modal-table th {
+              color: #666666;
+              font-size: 14px;
+              font-weight: 500;
+            }
             .control-label { font-weight: bold; }
           }
         }
