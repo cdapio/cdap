@@ -73,10 +73,10 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
       if (Strings.isNullOrEmpty(namespaceMeta.getConfig().getHbaseNamespace())) {
         try {
           tableUtil.createNamespaceIfNotExists(admin, hbaseNamespace);
-        } catch (IOException e) {
+        } catch (Throwable t) {
           // if we failed to create a namespace in hbase then do clean up for above creations
           super.delete(namespaceMeta.getNamespaceId());
-          throw e;
+          throw t;
         }
       }
       if (!tableUtil.hasNamespace(admin, hbaseNamespace)) {
