@@ -20,6 +20,7 @@
 # running it through sed to modify all image links to be relative to the build/_includes directory.
 # This modified README is included in the source RST files, and is used by Sphinx to build the HTML.
 
+source ../vars
 source ../_common/common-build.sh
 
 CHECK_INCLUDES=${TRUE}

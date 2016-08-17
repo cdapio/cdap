@@ -75,6 +75,7 @@ fi
 API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
 CHECK_INCLUDES=''
+LOCAL_INCLUDES=''
 
 if [[ "x${COLOR_LOGS}" != "x" ]]; then
   SPHINX_COLOR=''
@@ -93,7 +94,7 @@ WARNING="${RED_BOLD}WARNING:${NO_COLOR}"
 SPHINX_BUILD="sphinx-build ${SPHINX_COLOR} -b html -d ${TARGET}/doctrees"
 
 # Hash of file with "Not Found"; returned by GitHub
-NOT_FOUND_HASH="9d1ead73e678fa2f51a70a933b0bf017"
+NOT_FOUND_HASHES=("9d1ead73e678fa2f51a70a933b0bf017" "6cb875b80d51f9a26eb05db7f9779011")
 
 ZIP_FILE_NAME=$HTML
 ZIP="${ZIP_FILE_NAME}.zip"
@@ -119,6 +120,7 @@ function usage() {
   echo "    build-web            Clean build and zip for placing on docs.cask.co webserver (no Javadocs)"
   echo "    build-docs           Clean build of docs (no Javadocs)"
   echo "    docs                 alias for 'build-docs'"
+  echo "    docs-local           Clean build of docs (no Javadocs), using local copies of downloaded files"
   echo
   echo "    license-pdfs         Clean build of License Dependency PDFs"
   echo "    check-includes       Check if included files have changed from source"
@@ -147,6 +149,13 @@ function build_docs() {
   check_includes
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${SOURCE} ${TARGET}/html
   consolidate_messages
+}
+
+function build_docs_local() {
+  BELL="${TRUE}"
+  LOCAL_INCLUDES="${TRUE}"
+  export LOCAL_INCLUDES
+  build_docs
 }
 
 function build_docs_google() {
@@ -235,6 +244,9 @@ function check_build_rst() {
 }
 
 function check_includes() {
+  if [ "x${DOCS_LOCAL}" == "x${TRUE}" ]; then
+    LOCAL_INCLUDES="${TRUE}"
+  fi
   if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
     echo_red_bold "Downloading and checking files to be included."
     # Build includes
@@ -278,8 +290,11 @@ function test_an_include() {
     else
       new_md5_hash=$(md5sum ${target} | awk '{print $1}')
     fi
+    
+    # If the new_md5_hash is in the NOT_FOUND_HASHES, it will set as the not_found_hash
+    local not_found_hash=`echo ${NOT_FOUND_HASHES[@]} | grep -o "${new_md5_hash}"`
   
-    if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
+    if [[ "${new_md5_hash}" == "${not_found_hash}" ]]; then
       m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR}"
       m="${m}\nfile: ${target}"
     elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
@@ -347,12 +362,13 @@ function set_version() {
   
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     GIT_BRANCH_CASK_HYDRATOR="develop"
+    GIT_BRANCH_CASK_TRACKER="develop"
   fi
   get_cask_hydrator_version ${GIT_BRANCH_CASK_HYDRATOR}
+  get_cask_tracker_version ${GIT_BRANCH_CASK_TRACKER}
 }
 
 function display_version() {
-  set_version
   echo "PROJECT_PATH: ${PROJECT_PATH}"
   echo "PROJECT_VERSION: ${PROJECT_VERSION}"
   echo "PROJECT_LONG_VERSION: ${PROJECT_LONG_VERSION}"
@@ -360,16 +376,32 @@ function display_version() {
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
   echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
+  echo "Hydrator:"
   echo "GIT_BRANCH_CASK_HYDRATOR: ${GIT_BRANCH_CASK_HYDRATOR}"
   echo "CASK_HYDRATOR_VERSION: ${CASK_HYDRATOR_VERSION}"
+  echo "Tracker:"
+  echo "GIT_BRANCH_CASK_TRACKER: ${GIT_BRANCH_CASK_TRACKER}"
+  echo "CASK_TRACKER_VERSION: ${CASK_TRACKER_VERSION}"
 }
 
 function get_cask_hydrator_version() {
-  # $1 Branch of Hydrator Plugins to use
+  # $1 Branch of Hydrator to use
   CASK_HYDRATOR_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
   CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION#*<version>}
   CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION%%</version>*}
   export CASK_HYDRATOR_VERSION
+}
+
+function get_cask_tracker_version() {
+  # $1 Branch of Tracker to use
+  CASK_TRACKER_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/cask-tracker/${1}/pom.xml" | grep "<version>")
+  CASK_TRACKER_VERSION=${CASK_TRACKER_VERSION#*<version>}
+  CASK_TRACKER_VERSION=${CASK_TRACKER_VERSION%%</version>*}
+  if [ "x${CASK_TRACKER_VERSION}" == "x" ]; then
+    CASK_TRACKER_VERSION="0.2.0-SNAPSHOT"
+    echo "Using default CASK_TRACKER_VERSION ${CASK_TRACKER_VERSION}"
+  fi
+  export CASK_TRACKER_VERSION
 }
 
 function clear_messages_set_messages_file() {
@@ -488,11 +520,13 @@ function rewrite() {
 }
 
 function run_command() {
+  set_version
   case ${1} in
     build|build-github|build-web|build-docs)      "${1/-/_}";;
     check-includes|display-version)               "${1/-/_}";;
     license-pdfs)                                 "build_license_pdfs";;
     docs)                                         "build_docs";;
+    docs-local)                                   "build_docs_local";;
     *)                                            usage;;
   esac
 }

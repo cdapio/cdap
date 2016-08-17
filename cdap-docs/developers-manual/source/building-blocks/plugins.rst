@@ -109,7 +109,7 @@ specified when the *Plugin* was registered. In this example, if we want the mess
 The ``@Nullable`` annotation tells CDAP that the field is not required. Without that annotation,
 CDAP will complain if no plugin property for ``delimiter`` is given. In addition, config fields
 can be annotated with a ``@Description`` that will be returned by the
-:ref:`RESTful Plugin Detail API <http-restful-api-artifact-plugin-detail>`.
+:ref:`Artifact HTTP RESTful API <http-restful-api-artifact-plugin-detail>` *Plugin Detail*.
 
 .. _plugins-third-party:
 
@@ -120,7 +120,7 @@ Third-Party Plugins
 Sometimes there is a need to use classes in a third-party JAR as plugins. For example, you may want to be able to use
 a JDBC driver as a plugin. In these situations, you have no control over the code, which means you cannot
 annotate the relevant class with the ``@Plugin`` annotation. If this is the case, you can explicitly specify
-the plugins when deploying the artifact. For example, if you are using the RESTful API, you set the
+the plugins when deploying the artifact. For example, if you are using the HTTP RESTful API, you set the
 ``Artifact-Plugins``, ``Artifact-Version``, and ``Artifact-Extends`` headers when deploying the artifact:
 
 .. tabbed-parsed-literal::
@@ -172,7 +172,7 @@ After that, the JAR file must be deployed either as a :ref:`system artifact
 
 A system artifact is available to users across any namespace. A user artifact is available
 only to users in the namespace to which it is deployed. By design, deploying as a user
-artifact just requires access to the :ref:`RESTful API <http-restful-api-artifact-add>`,
+artifact just requires access to the :ref:`Artifact HTTP RESTful API <http-restful-api-artifact-add>`,
 while deploying as a system artifact requires access to the filesystem of the CDAP Master.
 This then requires administrator access and permission.
 
@@ -220,7 +220,7 @@ must be placed in the appropriate directory.
 - **Distributed mode:** The plugin JARs should be placed in the local file system and the path
   can be provided to CDAP by setting the property ``app.artifact.dir`` in
   :ref:`cdap-site.xml <appendix-cdap-site.xml>`. Multiple directories can be defined by separating
-  them with a semicolon.The default path is ``/opt/cdap/master/artifacts``.
+  them with a semicolon. The default path is ``/opt/cdap/master/artifacts``.
 
 For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
 can use the plugins. The file name must match the name of the JAR, except it must have the ``.json``
@@ -273,7 +273,7 @@ list them in the configuration:
     }
 
 Once your JARs and matching configuration files are in place, a CDAP CLI command (``load artifact``) or 
-a RESTful API call to :ref:`load system artifacts <http-restful-api-artifact-system-load>`
+a HTTP RESTful API call to :ref:`load system artifacts <http-restful-api-artifact-system-load>`
 can be made to load the artifacts. As described in the documentation on :ref:`artifacts`, only
 snapshot artifacts can be re-deployed without requiring that they first be deleted.
 
@@ -284,10 +284,10 @@ mode, and ``cdap-master`` services should be restarted in the Distributed mode.
 
 Deploying as a User Artifact
 ----------------------------
-To deploy the artifact as a user artifact, use the :ref:`RESTful Add Artifact API 
-<http-restful-api-artifact-add>` or the CLI. 
+To deploy the artifact as a user artifact, use the :ref:`Artifact HTTP RESTful API 
+<http-restful-api-artifact-add>` *Add Artifact* or the CLI. 
 
-When using the RESTful API, you will need to specify the ``Artifact-Extends`` header.
+When using the HTTP RESTful API, you will need to specify the ``Artifact-Extends`` header.
 Unless the artifact's version is defined in the manifest file of the JAR file you upload,
 you will also need to specify the ``Artifact-Version`` header.
 
@@ -371,7 +371,7 @@ where ``config.json`` contains:
 Deployment Verification
 -----------------------
 You can verify that a plugin artifact was added successfully by using the
-:ref:`RESTful Artifact API <http-restful-api-artifact-detail>` to retrieve artifact details.
+:ref:`Artifact HTTP RESTful API <http-restful-api-artifact-detail>` to retrieve artifact details.
 For example, to retrieve detail about our ``custom-transforms`` artifact:
 
 .. tabbed-parsed-literal::
@@ -389,7 +389,7 @@ If you deployed the ``custom-transforms`` artifact as a system artifact, the sco
 If you deployed the ``custom-transforms`` artifact as a user artifact, the scope is ``user``.
 
 You can verify that the plugins in your newly-added artifact are available to its parent by using the
-:ref:`RESTful Artifact API <http-restful-api-artifact-available-plugins>` to list plugins of a
+:ref:`Artifact HTTP RESTful API <http-restful-api-artifact-available-plugins>` to list plugins of a
 specific type. For example, to check if ``cdap-data-pipeline`` can access the plugins in the
 ``custom-transforms`` artifact:
 

@@ -4,7 +4,9 @@
 
 .. highlight:: console
 
-.. _cdap-etl-guide:
+.. .. _cdap-etl-guide:
+
+.. _cask-hydrator-guide:
 
 .. include:: ../../target/_includes/cdap-etl-guide/README.rst
    :end-line: 4

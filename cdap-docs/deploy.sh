@@ -161,7 +161,7 @@ function make_remote_dir () {
   local _rdir=${3} # remote directory
   decho "ssh ${SSH_OPTS} ${_user}@${_host} \"sudo rm -rf ${_rdir} && sudo mkdir -p ${_rdir}\""
   ssh ${SSH_OPTS} ${_user}@${_host} "sudo rm -rf ${_rdir} && sudo mkdir -p ${_rdir}" || die "could not create ${_rdir} directory on ${_host}"
-  decho ""
+  decho ''
 }
 
 # rsync local dir to remote dir
@@ -172,7 +172,7 @@ function sync_local_dir_to_remote_dir () {
   local _zip_file=${4}
   local _local_dir=${5}
   local _version=${6}
-  decho ""
+  decho ''
   decho "rsync ${RSYNC_OPTS} -e \"${RSYNC_SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_version} \"${_user}@${_host}:${_rdir}\"" 
   rsync ${RSYNC_OPTS} -e "${RSYNC_SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_version}/.h* ${_local_dir}/${_version}/* "${_user}@${_host}:${_rdir}" || die "could not rsync ${_local_dir} to ${_rdir} on ${_host}" 
 }

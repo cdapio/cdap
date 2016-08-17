@@ -1,29 +1,24 @@
-<!--
-  Copyright © 2014-2015 Cask Data, Inc.
+{#
+    cdap/globaltoc.html
+    ~~~~~~~~~~~~~~~~~~~
 
-  Licensed under the Apache License, Version 2.0 (the "License"); you may not
-  use this file except in compliance with the License. You may obtain a copy of
-  the License at
+    Code to control sidebar table-of-contents.
 
-  http://www.apache.org/licenses/LICENSE-2.0
+    :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
+    :copyright: Copyright 2014-2016 Cask Data, Inc.
+    :license: Apache License, Version 2.0
 
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-  License for the specific language governing permissions and limitations under
-  the License.
--->
 
-{# Code to control sidebar table-of-contents on pages by settings in the field list at the top of the page:
+    Control the sidebar table-of-contents on pages by settings in the field list at the top of the page:
 
-:hide-global-toc: true
-    This hides the table of contents completely from the left sidebar; default false
+      :hide-global-toc: true
+          This hides the table of contents completely from the left sidebar; default false
     
-:titles-only-global-toc: true
-    This puts in the table of contents, but with titles only; no lower-level links; default false
+      :titles-only-global-toc: true
+          This puts in the table of contents, but with titles only; no lower-level links; default false
     
-:link-only-global-toc: true
-    This puts in the link to the Table of Contents page only; default false; works only if :hide-global-toc: true
+      :link-only-global-toc: true
+          This puts in the link to the Table of Contents page only; default false; works only if :hide-global-toc: true
 #}
 
 {%- set hide_global_toc = false %}
