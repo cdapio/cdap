@@ -127,12 +127,11 @@
         </th>
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
-             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.displayData.length"
              infinite-scroll-container="'.logs-table'"
              >
 
         <tr ng-class="{'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace, 'row-expanded' : !entry.stackTrace && entry.selected }"
-            ng-repeat="entry in LogViewer.displayData | limitTo: LogViewer.viewLimit track by $index"
+            ng-repeat="entry in LogViewer.displayData track by $index"
             ng-click="LogViewer.toggleStackTrace($index)">
 
           <td class="time time-stack-trace"
