@@ -573,8 +573,8 @@
                         <include name="${additional.artifacts.jar.pattern}"/>
                         <include name="${additional.artifacts.config.pattern}"/>
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
-                        <exclude name="*:sources"/>
-                        <exclude name="*:javadoc"/>
+                        <exclude name="**/target/*-sources.jar"/>
+                        <exclude name="**/target/*-javadoc.jar"/>
                       </fileset>
                     </copy>
                   </target>
