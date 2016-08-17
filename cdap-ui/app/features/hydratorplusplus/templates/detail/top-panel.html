@@ -192,13 +192,13 @@
             <div class="text-danger" ng-bind="TopPanelCtrl.macroError"></div>
           </span>
           <div class="pull-right">
-            <button class="btn btn-default"
+            <button class="btn btn-blue"
                  ng-if="TopPanelCtrl.runPlayer.action === 'STARTING'"
                  ng-disabled="!TopPanelCtrl.isValidToStartOrSchedule()"
                  ng-click="TopPanelCtrl.startPipeline()">
               Start Now
             </button>
-            <button class="btn btn-default"
+            <button class="btn btn-blue"
                  ng-if="TopPanelCtrl.runPlayer.action === 'SCHEDULING'"
                  ng-disabled="!TopPanelCtrl.isValidToStartOrSchedule()"
                  ng-click="TopPanelCtrl.schedulePipeline()">
