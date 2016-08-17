@@ -113,8 +113,11 @@ public class DefaultStreamWriter implements StreamWriter {
     return new URL(path);
   }
 
-  private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig());
+  private void writeToStream(Id.Stream stream, HttpRequest.Builder builder) throws IOException {
+    if (authorizationEnabled) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
+    }
+    HttpResponse response = HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig());
     int responseCode = response.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
       throw new IOException(String.format("Stream %s not found", stream));
@@ -136,7 +139,7 @@ public class DefaultStreamWriter implements StreamWriter {
     for (Map.Entry<String, String> header : headers.entrySet()) {
       requestBuilder.addHeader(stream + "." + header.getKey(), header.getValue());
     }
-    writeToStream(Id.Stream.from(namespace, stream), requestBuilder.build());
+    writeToStream(Id.Stream.from(namespace, stream), requestBuilder);
   }
 
   @Override
@@ -162,9 +165,9 @@ public class DefaultStreamWriter implements StreamWriter {
   @Override
   public void writeFile(String stream, File file, String contentType) throws IOException {
     URL url = getStreamURL(stream, true);
-    HttpRequest request = addUserIdHeader(HttpRequest.post(url)).withBody(file)
-      .addHeader(HttpHeaders.CONTENT_TYPE, contentType).build();
-    writeToStream(Id.Stream.from(namespace, stream), request);
+    HttpRequest.Builder requestBuilder = HttpRequest.post(url).withBody(file).addHeader(
+      HttpHeaders.CONTENT_TYPE, contentType);
+    writeToStream(Id.Stream.from(namespace, stream), requestBuilder);
   }
 
   @Override
@@ -189,13 +192,6 @@ public class DefaultStreamWriter implements StreamWriter {
       connection.disconnect();
       throw e;
     }
-  }
-
-  private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws IOException {
-    if (!authorizationEnabled) {
-      return builder;
-    }
-    return builder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
   }
 
   private void registerStream(Id.Stream stream) {
