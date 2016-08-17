@@ -33,6 +33,32 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   $scope.$on(caskWindowManager.event.resize, () => {
     $timeout($scope.initialize);
   });
+  this.updateTotalLogsInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.TOTAL_LOGS,
+      payload: {
+        totalLogs: val
+      }
+    });
+  };
+
+  this.updateTotalErrorsInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.TOTAL_ERRORS,
+      payload: {
+        totalErrors: val
+      }
+    });
+  };
+
+  this.updateTotalWarningsInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.TOTAL_WARNINGS,
+      payload: {
+        totalWarnings: val
+      }
+    });
+  };
 
   var pollPromise = null;
   var programType = ProgramsHelpers.getSingularName(this.programType);

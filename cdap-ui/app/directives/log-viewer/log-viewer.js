@@ -61,9 +61,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.displayData = [];
     this.data = [];
     this.loading = false;
-    this.errorCount = 0;
-    this.warningCount = 0;
-    this.totalCount = 0;
     this.fullScreen = false;
     this.programStatus = 'Not Started';
     this.configOptions = {
@@ -181,6 +178,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.toggleExpandAll = false;
 
   let unsub = LogViewerStore.subscribe(() => {
+
     this.fullScreen = LogViewerStore.getState().fullScreen;
     if(this.logStartTime === LogViewerStore.getState().startTime){
       return;
@@ -191,9 +189,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       this.setDefault();
       return;
     }
+    this.totalCount = LogViewerStore.getState().totalLogs;
+    this.warningCount = LogViewerStore.getState().totalWarnings;
+    this.errorCount = LogViewerStore.getState().totalErrors;
 
-    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
-    startTimeRequest();
+    if(this.logStartTime !== LogViewerStore.getState().startTime){
+      this.logStartTime = LogViewerStore.getState().startTime;
+      if (typeof this.logStartTime !== 'object') {
+        this.setDefault();
+        return;
+      }
+
+      this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+      startTimeRequest();
+    }
+
   });
 
   if (this.runId) {
@@ -333,19 +343,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.fromOffset = res[res.length-1].offset;
 
-        this.totalCount += res.length;
-
         angular.forEach(res, (element, index) => {
-          if(res[index].log.logLevel === 'WARN'){
-            this.warningCount++;
-          } else if(res[index].log.logLevel === 'ERROR'){
-            this.errorCount++;
-          }
 
           //Format dates properly for rendering and computing
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + formattedDate.getSeconds());
+          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + ((formattedDate.getSeconds()<10) ? '0'+formattedDate.getSeconds() : formattedDate.getSeconds()));
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
@@ -398,12 +401,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       this.fromOffset = res[res.length-1].offset;
 
       angular.forEach(res, (element, index) => {
-        if(res[index].log.logLevel === 'WARN'){
-          this.warningCount++;
-        } else if(res[index].log.logLevel === 'ERROR'){
-          this.errorCount++;
-        }
-
         //Format dates properly for rendering and computing
         let formattedDate = new Date(res[index].log.timestamp);
         res[index].log.timestamp = formattedDate;
@@ -516,18 +513,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.fromOffset = res[res.length-1].offset;
         this.loading = false;
-        this.totalCount = res.length;
-        this.warningCount = 0;
-        this.errorCount = 0;
         this.data = [];
         this.renderData();
 
         angular.forEach(res, (element, index) => {
-          if(res[index].log.logLevel === 'WARN'){
-            this.warningCount++;
-          } else if(res[index].log.logLevel === 'ERROR'){
-            this.errorCount++;
-          }
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
           res[index].log.displayTime = formatDate(formattedDate);
