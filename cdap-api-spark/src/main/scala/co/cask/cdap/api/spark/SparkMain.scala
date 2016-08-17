@@ -112,13 +112,52 @@ trait SparkMain extends Serializable {
       * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
       *
       * @param datasetName name of the Dataset
+      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      */
+    def saveAsDataset(datasetName: String)
+                     (implicit sec: SparkExecutionContext): Unit = {
+      saveAsDataset(datasetName, Map[String, String]())
+    }
+
+    /**
+      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
+      *
+      * @param namespace the namespace for the dataset
+      * @param datasetName name of the Dataset
+      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      */
+    def saveAsDataset(namespace: String, datasetName: String)
+                     (implicit sec: SparkExecutionContext): Unit = {
+      saveAsDataset(namespace, datasetName, Map[String, String]())
+    }
+
+    /**
+      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
+      *
+      * @param datasetName name of the Dataset
       * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
       * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
       * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
-    def saveAsDataset(datasetName: String, arguments: Map[String, String] = Map())
+    def saveAsDataset(datasetName: String, arguments: Map[String, String])
                      (implicit sec: SparkExecutionContext): Unit = {
       sec.saveAsDataset(rdd, datasetName, arguments)
+    }
+
+    /**
+      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
+      *
+      * @param namespace the namespace for the dataset
+      * @param datasetName name of the Dataset
+      * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
+      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      */
+    def saveAsDataset(namespace: String, datasetName: String, arguments: Map[String, String])
+                     (implicit sec: SparkExecutionContext): Unit = {
+      sec.saveAsDataset(rdd, namespace, datasetName, arguments)
     }
   }
 

@@ -36,8 +36,7 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
 
       addSpark(new CharCountProgram());
       addSpark(new ScalaCharCountProgram());
-      addSpark(new ScalaCrossNSStreamProgram());
-      addSpark(new ScalaCrossNSDatasetProgram());
+      addSpark(new ScalaCrossNSProgram());
     } catch (Throwable t) {
       throw Throwables.propagate(t);
     }
