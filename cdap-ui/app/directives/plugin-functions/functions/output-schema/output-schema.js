@@ -58,7 +58,7 @@ angular.module(PKG.name + '.commons')
         vm.openModal = function () {
           var modal = $uibModal.open({
             templateUrl: 'plugin-functions/functions/output-schema/output-schema-modal.html',
-            windowClass: 'hydrator-modal node-config-modal',
+            windowClass: 'hydrator-modal node-config-modal layered-modal',
             keyboard: true,
             controller: function ($scope, nodeInfo, $state, HydratorPlusPlusHydratorService) {
               var mvm = this;
