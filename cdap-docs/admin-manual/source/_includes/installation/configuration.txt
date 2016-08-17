@@ -1,3 +1,5 @@
+.. |my_username| replace:: ``my_username``
+
 .. _|distribution|-configuration:
 
 .. _|distribution|-configuration-central:
@@ -101,7 +103,7 @@ for CDAP to run successfully.
   
       #. Check that the default HDFS user |hdfs-user| owns that HDFS directory.
   
-   #. If you want to use **an HDFS user** other than |hdfs-user|:
+   #. If you want to use **an HDFS user** other than |hdfs-user|, such as |my_username|:
 
       1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
          in the cluster on which YARN is running (typically, all of the machines).
@@ -114,7 +116,22 @@ for CDAP to run successfully.
            </property>
   
       #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
-      #. Check that there exists in HDFS a ``/user/`` directory for that HDFS user, as described above.
+      #. Check that there exists in HDFS a ``/user/`` directory for that HDFS user, as described above, such as:
+      
+         .. container:: highlight
+       
+           .. parsed-literal::
+         
+             |$| su hdfs
+             |$| hdfs dfs -mkdir -p /user/|my_username| && hadoop fs -chown |my_username| /user/|my_username| && hadoop fs -chgrp |my_username| /user/|my_username|
+      
+      #. If you use an HDFS user other than |hdfs-user|, you must use either a secure
+         cluster or use the `LinuxContainerExecutor
+         <https://hadoop.apache.org/docs/stable/hadoop-yarn/hadoop-yarn-site/SecureContainer.html>`__ 
+         instead of the ``DefaultContainerExecutor``. (Because of how ``DefaultContainerExecutor``
+         works, other containers will launch as |hdfs-user| rather than the specified
+         ``hdfs.user``.) On Kerberos-enabled clusters, you must use ``LinuxContainerExecutor``
+         as the ``DefaultContainerExecutor`` will not work correctly.
    
    #. To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a
       compatible version of Hive installed. See the section on :ref:`Hadoop Compatibility
