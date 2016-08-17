@@ -238,8 +238,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     try {
       namespaceAdmin.create(namespaceMeta);
       Assert.fail(String.format("Namespace '%s' should not have been created", namespaceMeta.getName()));
-    } catch (NamespaceAlreadyExistsException e) {
-      Assert.assertEquals(existingNamespace, e.getId());
+    } catch (BadRequestException e) {
+      Assert.assertTrue(e.getMessage().contains(existingNamespace.getId()));
     }
   }
 
