@@ -83,12 +83,12 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
       sparkConf.set("spark.driver.extraJavaOptions", extraOpts);
       sparkConf.set("spark.executor.extraJavaOptions", extraOpts);
     }
+    Integer numSources = Integer.valueOf(programProperties.get("cask.hydrator.num.sources"));
+    // without this, stopping will hang on machines with few cores.
+    sparkConf.set("spark.rpc.netty.dispatcher.numThreads", String.valueOf(numSources + 2));
     Boolean isUnitTest = Boolean.valueOf(programProperties.get("cask.hydrator.is.unit.test"));
     if (isUnitTest) {
-      Integer numSources = Integer.valueOf(programProperties.get("cask.hydrator.num.sources"));
       sparkConf.setMaster(String.format("local[%d]", numSources + 1));
-      // without this, stopping will hang on machines with few cores.
-      sparkConf.set("spark.rpc.netty.dispatcher.numThreads", String.valueOf(numSources + 2));
     }
     context.setSparkConf(sparkConf);
   }
