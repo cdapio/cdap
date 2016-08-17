@@ -20,7 +20,8 @@ Cask Hydrator Glossary
       abstraction layer in CDAP.
 
    Application Template
-      *[To be completed]*
+      An artifact, that with the addition of a configuration file, can be used to create
+      manifestations of applications.
 
    Artifact
       A JAR file containing Java classes and resources required to create and run an
@@ -41,16 +42,15 @@ Cask Hydrator Glossary
       editor of pipelines.
 
    Cask Hydrator Studio
-      A visual editor for the configuring and previewing of pipelines. It
-      includes: drag-and-drop plugins, such as sources, transformations, and sinks; naming and
-      validating of a pipeline; previewing the running of the pipeline with a [subset?] of the
-      data.
+      A visual editor for the configuring and previewing of pipelines. It includes:
+      drag-and-drop plugins, such as sources, transformations, and sinks; naming and
+      validating of a pipeline.
 
    Data Pipeline
       *[To be completed]*
 
    ETL
-      Abbreviation for *extract,* *transform,* and *load* of data.
+      Abbreviation for *extract,* *transform,* and *loading* of data.
 
    ETL Application
       A CDAP application that performs ETL, such as a Hydrator Pipeline.
@@ -66,7 +66,7 @@ Cask Hydrator Glossary
 
    Hydrator Plugin
       A plugin of type BatchSource, RealtimeSource, BatchSink, RealtimeSink, or
-      Transformation, packaged in a JAR file format, for use as a plugin in an ETL Application a
+      Transformation, packaged in a JAR file format, for use as a plugin in a
       Hydrator Pipeline.
 
    Logical Pipeline
@@ -79,9 +79,8 @@ Cask Hydrator Glossary
       *[To be completed]*
 
    Plugin
-      A plugin extends an application [or extends an application template?] by
-      implementing an interface expected by the application. Plugins are packaged in an
-      artifact.
+      A plugin extends an application template by implementing an interface expected by
+      the application template. Plugins are packaged in an artifact.
 
    Real-time Pipeline
       *[To be completed]*
@@ -91,5 +90,5 @@ Cask Hydrator Glossary
       between plugins. Used by many of the Hydrator Plugins included in CDAP.
 
    System Artifact
-      An application template, shipped with CDAP, that with the addition of
+      An application template, shipped with CDAP, that with the addition of a
       configuration file, can be used to create manifestations of applications.
