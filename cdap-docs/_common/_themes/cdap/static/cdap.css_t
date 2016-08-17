@@ -586,3 +586,10 @@ div.inline-sidebar.container {
     border: 2px solid #d8d8d8;
     padding: 0 10px 0 10px;
 }
+
+/* -- Styles for "black links" ------------- */
+
+a span.link-black {
+	color: black;
+	font-weight:bold;
+}
