@@ -273,12 +273,8 @@
       tooltip-class="toppanel-tooltip"
       ng-click="caskConfirm()"
       cask-confirmable="TopPanelCtrl.do('Delete')"
-      data-confirmable-content="Are you sure you want to delete the pipeline '{{TopPanelCtrl.app.name}}'?">
-      <span class="icon-delete"
-            uib-tooltip="Delete"
-            tooltip-placement="bottom"
-            tooltip-append-to-body="true"
-            tooltip-class="toppanel-tooltip"></span>
+      data-confirmable-content="Are you sure you want to delete the pipeline <strong>'{{TopPanelCtrl.app.name}}'</strong>?">
+      <span class="icon-delete"></span>
     </div>
   </div>
   <div class="pipeline-settings-backdrop"
