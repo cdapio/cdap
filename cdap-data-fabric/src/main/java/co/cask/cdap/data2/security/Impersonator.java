@@ -18,6 +18,7 @@ package co.cask.cdap.data2.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
@@ -37,6 +38,7 @@ public class Impersonator {
 
   private static final Logger LOG = LoggerFactory.getLogger(Impersonator.class);
 
+  private final CConfiguration cConf;
   private final boolean kerberosEnabled;
   private final UGIProvider ugiProvider;
   private final ImpersonationUserResolver impersonationUserResolver;
@@ -44,10 +46,11 @@ public class Impersonator {
   @Inject
   @VisibleForTesting
   public Impersonator(CConfiguration cConf, UGIProvider ugiProvider,
-                      ImpersonationUserResolver impersonationUserResolver) {
+                      NamespaceQueryAdmin namespaceQueryAdmin) {
+    this.cConf = cConf;
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.ugiProvider = ugiProvider;
-    this.impersonationUserResolver = impersonationUserResolver;
+    this.impersonationUserResolver = new ImpersonationUserResolver(namespaceQueryAdmin, cConf);
   }
 
   /**
@@ -105,7 +108,7 @@ public class Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceMeta.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
     }
-    return getUGI(impersonationUserResolver.getImpersonationInfo(namespaceMeta));
+    return getUGI(new ImpersonationInfo(namespaceMeta, cConf));
   }
 
   private UserGroupInformation getUGI(ImpersonationInfo impersonationInfo) throws IOException {

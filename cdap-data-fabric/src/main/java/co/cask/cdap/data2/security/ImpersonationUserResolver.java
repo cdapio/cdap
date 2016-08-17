@@ -21,7 +21,6 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespacedId;
-import com.google.inject.Inject;
 
 /**
  * Helper class to resolve the principal which CDAP will launch programs as.
@@ -32,8 +31,7 @@ public class ImpersonationUserResolver {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CConfiguration cConf;
 
-  @Inject
-  ImpersonationUserResolver(NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
+  public ImpersonationUserResolver(NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.cConf = cConf;
   }
@@ -52,16 +50,6 @@ public class ImpersonationUserResolver {
       throw new RuntimeException(
         String.format("Failed to retrieve namespace meta for namespace id %s", namespacedId.getNamespace()));
     }
-    return getImpersonationInfo(meta);
-  }
-
-  /**
-   * Get impersonation info for a given namespace. If the info configured at the namespace level is empty,
-   * returns the info configured at the cdap level.
-   *
-   * @return configured {@link ImpersonationInfo}.
-   */
-  public ImpersonationInfo getImpersonationInfo(NamespaceMeta meta) {
     return new ImpersonationInfo(meta, cConf);
   }
 }

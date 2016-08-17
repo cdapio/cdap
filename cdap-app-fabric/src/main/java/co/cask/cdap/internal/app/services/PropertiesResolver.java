@@ -21,6 +21,7 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.security.ImpersonationInfo;
 import co.cask.cdap.data2.security.ImpersonationUserResolver;
@@ -45,10 +46,10 @@ public class PropertiesResolver {
   @Inject
   PropertiesResolver(PreferencesStore prefStore, CConfiguration cConf,
                      SchedulerQueueResolver schedulerQueueResolver,
-                     ImpersonationUserResolver impersonationUserResolver) {
+                     NamespaceQueryAdmin namespaceQueryAdmin) {
     this.prefStore = prefStore;
     this.queueResolver = schedulerQueueResolver;
-    this.impersonationUserResolver = impersonationUserResolver;
+    this.impersonationUserResolver = new ImpersonationUserResolver(namespaceQueryAdmin, cConf);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
   }
 
