@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -92,6 +93,11 @@ public class KafkaServerMain extends DaemonMain {
     if (hostname != null) {
       if (address.isAnyLocalAddress()) {
         kafkaProperties.remove("host.name");
+        try {
+          address = InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+          throw Throwables.propagate(e);
+        }
       } else {
         hostname = address.getCanonicalHostName();
         kafkaProperties.setProperty("host.name", hostname);
