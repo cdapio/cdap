@@ -26,9 +26,11 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -176,6 +178,11 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
     return cacheEnabled ? authPolicyCache.get(principal) : fetchPrivileges(principal);
   }
 
+  protected void doInvalidate(final Predicate<Principal> predicate) {
+    Iterable<Principal> filtered = Iterables.filter(authPolicyCache.asMap().keySet(), predicate);
+    authPolicyCache.invalidateAll(filtered);
+  }
+
   /**
    * On an authorization-enabled cluster, if caching is enabled too, updates the cache in the
    * {@link AuthorizationEnforcementService} with the privileges of the user running the program.
@@ -197,7 +204,7 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
   private void updatePrivileges(Principal principal) throws Exception {
     Map<EntityId, Set<Action>> privileges = fetchPrivileges(principal);
     authPolicyCache.put(principal, privileges);
-    LOG.info("Updated privileges for principal {} as {}", principal, privileges);
+    LOG.debug("Updated privileges for principal {} as {}", principal, privileges);
   }
 
   private void validateCacheConfig() {

@@ -93,7 +93,7 @@ public class AuthorizationHandlerTest {
     auth.initialize(FACTORY.create(properties));
     service = new CommonNettyHttpServiceBuilder(conf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
-        new AuthorizerInstantiator(conf, FACTORY) {
+        auth, new AuthorizerInstantiator(conf, FACTORY) {
           @Override
           public Authorizer get() {
             return auth;
@@ -148,7 +148,7 @@ public class AuthorizationHandlerTest {
     final InMemoryAuthorizer authorizer = new InMemoryAuthorizer();
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
-        new AuthorizerInstantiator(cConf, FACTORY) {
+        authorizer, new AuthorizerInstantiator(cConf, FACTORY) {
           @Override
           public Authorizer get() {
             return authorizer;

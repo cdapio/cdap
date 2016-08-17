@@ -47,19 +47,16 @@ import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -93,16 +90,15 @@ public class ArtifactRepository {
   private final List<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
   private final MetadataStore metadataStore;
-  private final Authorizer authorizer;
+  private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final InstanceId instanceId;
   private final Impersonator impersonator;
 
   @VisibleForTesting
   @Inject
   public ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
-                            AuthorizerInstantiator authorizerInstantiator, ProgramRunnerFactory programRunnerFactory,
+                            PrivilegesManager privilegesManager, ProgramRunnerFactory programRunnerFactory,
                             Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext) {
     this.artifactStore = artifactStore;
@@ -119,8 +115,7 @@ public class ArtifactRepository {
     }
     this.configReader = new ArtifactConfigReader();
     this.metadataStore = metadataStore;
-    this.authorizer = authorizerInstantiator.get();
-    this.instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
+    this.privilegesManager = privilegesManager;
     this.impersonator = impersonator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
@@ -433,7 +428,7 @@ public class ArtifactRepository {
     ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
                                                 Collections.<String, String>emptyMap());
     // artifact successfully added. now grant ALL permissions on the artifact to the current user
-    authorizer.grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    privilegesManager.grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
     return artifactDetail;
   }
 
@@ -625,9 +620,9 @@ public class ArtifactRepository {
 
         // first revoke any orphane privileges
         co.cask.cdap.proto.id.ArtifactId artifact = artifactId.toEntityId();
-        authorizer.revoke(artifact);
+        privilegesManager.revoke(artifact);
         // then grant all on the artifact
-        authorizer.grant(artifact, principal, Collections.singleton(Action.ALL));
+        privilegesManager.grant(artifact, principal, Collections.singleton(Action.ALL));
 
         // check for a corresponding .json config file
         String artifactFileName = jarFile.getName();
@@ -645,7 +640,7 @@ public class ArtifactRepository {
         } catch (InvalidArtifactException e) {
           LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
           // since adding artifact failed, revoke privileges, since they may be orphane now
-          authorizer.revoke(artifact);
+          privilegesManager.revoke(artifact);
         }
       }
     }
@@ -735,7 +730,7 @@ public class ArtifactRepository {
     artifactStore.delete(artifactId);
     metadataStore.removeMetadata(artifactId);
     // revoke all privileges on the artifact
-    authorizer.revoke(artifactId.toEntityId());
+    privilegesManager.revoke(artifactId.toEntityId());
   }
 
   // convert details to summaries (to hide location and other unnecessary information)

@@ -24,6 +24,7 @@ import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -61,5 +62,10 @@ public class DefaultPrivilegesFetcherProxyService extends AbstractAuthorizationS
     }
     LOG.debug("Fetched privileges for principal {} as {}", privileges.build());
     return privileges.build();
+  }
+
+  @Override
+  public void invalidate(Predicate<Principal> predicate) {
+    doInvalidate(predicate);
   }
 }

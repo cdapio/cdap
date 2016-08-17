@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -45,8 +44,8 @@ import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.pipeline.Stage;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -67,7 +66,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   public static final String ARTIFACT_CLASSLOADER_KEY = "artifact.classLoader";
 
   private final PipelineFactory pipelineFactory;
-  private final NamespacedLocationFactory namespacedLocationFactory;
   private final CConfiguration configuration;
   private final Store store;
   private final StreamConsumerFactory streamConsumerFactory;
@@ -81,22 +79,21 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
   private final MetadataStore metadataStore;
-  private final Authorizer authorizer;
+  private final PrivilegesManager privilegesManager;
   private final Impersonator impersonator;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
-                          NamespacedLocationFactory namespacedLocationFactory,
                           Store store, StreamConsumerFactory streamConsumerFactory,
                           QueueAdmin queueAdmin, DatasetFramework datasetFramework,
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                           StreamAdmin streamAdmin, Scheduler scheduler,
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                          MetadataStore metadataStore, AuthorizerInstantiator authorizerInstantiator,
-                          Impersonator impersonator) {
+                          MetadataStore metadataStore, PrivilegesManager privilegesManager,
+                          Impersonator impersonator, AuthenticationContext authenticationContext) {
     this.configuration = configuration;
-    this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
     this.streamConsumerFactory = streamConsumerFactory;
@@ -110,8 +107,9 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
     this.metadataStore = metadataStore;
-    this.authorizer = authorizerInstantiator.get();
+    this.privilegesManager = privilegesManager;
     this.impersonator = impersonator;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -123,8 +121,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
     pipeline.addLast(new CreateStreamsStage(streamAdmin));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
-                                                    metricStore, metadataStore, authorizer, impersonator));
-    pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory, authorizer));
+                                                    metricStore, metadataStore, privilegesManager, impersonator));
+    pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     pipeline.addLast(new CreateSchedulesStage(scheduler));
     pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
