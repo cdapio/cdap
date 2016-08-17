@@ -14,10 +14,11 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
+  $scope.moment = moment;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({

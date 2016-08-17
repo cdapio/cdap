@@ -137,7 +137,7 @@ function link (scope, element) {
 
     timescaleSvg.append('g')
       .attr('class', 'xaxis-bottom')
-      .attr('transform', 'translate(' + ( (paddingLeft + paddingRight) / 2) + ',' + (height - 20) + ')')
+      .attr('transform', 'translate(' + 0 + ',' + (height - 20) + ')')
       .call(xAxis);
 
     //attach handler to brush
@@ -312,7 +312,7 @@ function link (scope, element) {
 
       for(let k = 0; k < data.length; k++){
         let currentItem = data[k];
-        let xVal = Math.floor(xScale(currentItem.time * 1000));
+        let xVal = (currentItem.time * 1000);
         typeMap[xVal] = currentItem.value;
       }
       return typeMap;
@@ -334,8 +334,9 @@ function link (scope, element) {
     }
 
     const circleTooltipHoverOn = function(position, errors, warnings) {
-      let date = xScale.invert(position).toString();
-      date = date.substring(0, date.length - 14);
+      position = parseInt(position, 10);
+      let date = new Date(position);
+      date = scope.moment(date).format('MMMM Do YYYY, h:mm:ss a');
 
       circleTooltip.transition()
           .duration(200)
@@ -389,27 +390,27 @@ function link (scope, element) {
           if(errorCount > 0){
             if(eventCount >= 5){
               timescaleSvg.append('circle')
-                .attr('cx', keyThree)
+                .attr('cx', xScale(keyThree))
                 .attr('cy', (num+1) * 7)
                 .attr('r', 2)
                 .attr('class', 'red-circle')
                 .on('mouseover', circleTooltipHover)
                 .on('mouseout', circleTooltipHoverOff);
             } else {
-              timescaleSvg.append('circle').attr('cx', keyThree).attr('cy', (num+1) * 7).attr('r', 2).attr('class', 'red-circle');
+              timescaleSvg.append('circle').attr('cx', xScale(keyThree)).attr('cy', (num+1) * 7).attr('r', 2).attr('class', 'red-circle');
             }
             errorCount--;
           } else if(warningCount > 0){
             if(eventCount >= 5){
               timescaleSvg.append('circle')
-                .attr('cx', keyThree)
+                .attr('cx', xScale(keyThree))
                 .attr('cy', (num+1) * 7)
                 .attr('r', 2)
                 .attr('class', 'yellow-circle')
                 .on('mouseover', circleTooltipHover)
                 .on('mouseout', circleTooltipHoverOff);
             } else {
-              timescaleSvg.append('circle').attr('cx', keyThree).attr('cy', (num+1) * 7).attr('r', 2).attr('class', 'yellow-circle');
+              timescaleSvg.append('circle').attr('cx', xScale(keyThree)).attr('cy', (num+1) * 7).attr('r', 2).attr('class', 'yellow-circle');
             }
             warningCount--;
           }
