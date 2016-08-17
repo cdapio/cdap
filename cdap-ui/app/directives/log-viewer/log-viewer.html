@@ -128,6 +128,7 @@
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
              infinite-scroll-container="'.logs-table'"
+             infinite-scroll-disabled="(LogViewer.statusType === 0 || LogViewer.statusType === 1) &&LogViewer.displayData.length === LogViewer.totalCount"
              >
 
         <tr ng-class="{'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace, 'row-expanded' : !entry.stackTrace && entry.selected }"

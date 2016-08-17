@@ -22,6 +22,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   //Collapsing LogViewer Table Columns
   var columnsList = [];
   var collapseCount = 0;
+  this.viewLimit = 100;
   this.$uibModal = $uibModal;
   var rawLogs = {
     log: '',
@@ -354,7 +355,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.data = this.data.concat(res);
         this.renderData();
-        if(this.displayData.length < 100){
+        if(this.displayData.length < this.viewLimit){
           getStatus();
         }
 
@@ -412,7 +413,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       this.renderData();
     }
 
-      if(this.displayData.length >= 100){
+      if(this.displayData.length >= this.viewLimit){
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
       } else {
@@ -532,7 +533,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.renderData();
 
-        if(res.length < 100){
+        if(res.length < this.viewLimit){
           getStatus();
         }
       },
