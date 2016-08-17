@@ -527,9 +527,9 @@ body.theme-cdap {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 5px;
+          margin: 3px 0 3px 3px;
+          padding-left: 5px;
           border-right: 0;
-          border-left: 1px solid #dddddd;
           &.status-green span {
             color: @brand-success;
           }
@@ -547,7 +547,11 @@ body.theme-cdap {
           display: flex;
           min-width: 400px;
           position: relative;
-          .btn.log-viewer { border-right: 1px solid #dddddd; }
+          .btn.log-viewer,
+          .btn.scheduler { border-right: 1px solid #dddddd; }
+        }
+        .last-run {
+          margin: 3px 3px 3px 0;
         }
       }
       div.btn {

@@ -96,7 +96,7 @@
         <div ng-if="['SUSPENDED', 'SCHEDULING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
 
           <div ng-click="TopPanelCtrl.do('Schedule')"
-              class="btn"
+              class="btn scheduler"
               uib-tooltip="Schedule"
               tooltip-placement="bottom"
               tooltip-append-to-body="true"
@@ -114,7 +114,7 @@
         </div>
         <div ng-if="['SCHEDULED', 'SUSPENDING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Suspend')"
-               class="btn"
+               class="btn scheduler"
                uib-tooltip="Suspend"
                tooltip-placement="bottom"
                tooltip-append-to-body="true"
@@ -163,7 +163,6 @@
           <span class="fa fa-refresh fa-spin"></span>
         </span>
       </div>
-
       <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.isGreenStatus(), 'status-red': !TopPanelCtrl.isGreenStatus() }">
         <span class="fa fa-circle metric-value"></span>
         <span class="metric-label" ng-bind="TopPanelCtrl.appStatus"></span>
