@@ -25,7 +25,8 @@ import java.util.Map;
 public enum Scope {
   DATASET("dataset"),
   MAPREDUCE("mapreduce"),
-  SPARK("spark");
+  SPARK("spark"),
+  FLOWLET("flowlet");
 
   private final String displayName;
 
