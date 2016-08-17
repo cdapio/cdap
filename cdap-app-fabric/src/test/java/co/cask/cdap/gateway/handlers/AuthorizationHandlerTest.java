@@ -382,7 +382,7 @@ public class AuthorizationHandlerTest {
     setCurrentUser(alice.getName());
     try {
       try {
-        client.grant(ns1, bob, ImmutableSet.of(Action.ALL));
+        client.grant(ns1, bob, EnumSet.allOf(Action.class));
         Assert.fail(String.format("alice should not be able to grant privileges to bob on namespace %s because she " +
                                     "does not have admin privileges on the namespace.", ns1));
       } catch (UnauthorizedException expected) {
@@ -393,14 +393,14 @@ public class AuthorizationHandlerTest {
       client.grant(ns1, alice, ImmutableSet.of(Action.ADMIN));
       // now alice should be able to grant privileges on ns since she has ADMIN privileges
       setCurrentUser(alice.getName());
-      client.grant(ns1, bob, ImmutableSet.of(Action.ALL));
+      client.grant(ns1, bob, EnumSet.allOf(Action.class));
       // revoke alice's permissions as admin
       setCurrentUser(oldUser);
       client.revoke(ns1);
       // revoking bob's privileges as alice should fail
       setCurrentUser(alice.getName());
       try {
-        client.revoke(ns1, bob, ImmutableSet.of(Action.ALL));
+        client.revoke(ns1, bob, EnumSet.allOf(Action.class));
         Assert.fail(String.format("alice should not be able to revoke bob's privileges on namespace %s because she " +
                                     "does not have admin privileges on the namespace.", ns1));
       } catch (UnauthorizedException expected) {
@@ -408,10 +408,10 @@ public class AuthorizationHandlerTest {
       }
       // grant alice privileges as admin again
       setCurrentUser(oldUser);
-      client.grant(ns1, alice, ImmutableSet.of(Action.ALL));
+      client.grant(ns1, alice, EnumSet.allOf(Action.class));
       // Now alice should be able to revoke bob's privileges
       setCurrentUser(alice.getName());
-      client.revoke(ns1, bob, ImmutableSet.of(Action.ALL));
+      client.revoke(ns1, bob, EnumSet.allOf(Action.class));
     } finally {
       setCurrentUser(oldUser);
     }

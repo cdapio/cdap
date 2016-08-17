@@ -56,7 +56,6 @@ import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -154,7 +153,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     // Namespace can be created. Check if the user is authorized now.
     Principal principal = authenticationContext.getPrincipal();
     authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
-    privilegesManager.grant(namespace, principal, ImmutableSet.of(Action.ALL));
+    privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
     // Also grant the namespace user all privileges on the namespace, if kerberos is enabled
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       ImpersonationInfo impersonationInfo = new ImpersonationInfo(metadata, cConf);

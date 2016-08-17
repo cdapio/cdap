@@ -38,11 +38,11 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -141,7 +141,7 @@ public class DefaultSecureStoreService implements SecureStoreService {
 
     secureStoreManager.putSecureData(secureKeyId.getNamespace(), secureKeyId.getName(), value, description,
                            secureKeyCreateRequest.getProperties());
-    authorizer.grant(secureKeyId, principal, ImmutableSet.of(Action.ALL));
+    authorizer.grant(secureKeyId, principal, EnumSet.allOf(Action.class));
   }
 
   /**

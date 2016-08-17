@@ -59,6 +59,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +95,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     initialize(CConfiguration.create(), tmpFolder, true, true);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     SecurityRequestContext.setUserId(USER.getName());
-    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, ImmutableSet.of(Action.ALL));
+    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
 
     Id.Stream streamId = Id.Stream.from(NAMESPACE_ID, streamName);
     createStream(streamId);
@@ -106,7 +107,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   @AfterClass
   public static void finish() throws Exception {
     dropStream(Id.Stream.from(NAMESPACE_ID, streamName));
-    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, ImmutableSet.of(Action.ALL));
+    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
   }
 
   @Test
@@ -130,10 +131,10 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   @Test
   public void testStreamAuthorization() throws Exception {
     StreamId streamId = NAMESPACE_ID.toEntityId().stream(streamName);
-    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, ImmutableSet.of(Action.ALL));
-    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, ImmutableSet.of(Action.ADMIN, Action.WRITE, Action.EXECUTE));
-    revokeAndAssertSuccess(streamId, USER, ImmutableSet.of(Action.ALL, Action.READ, Action.WRITE, Action.ADMIN));
-    grantAndAssertSuccess(streamId, USER, ImmutableSet.of(Action.ADMIN, Action.WRITE));
+    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.of(Action.ADMIN, Action.WRITE, Action.EXECUTE));
+    revokeAndAssertSuccess(streamId, USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.ADMIN, Action.WRITE));
     // without READ privilege, explore test should fail
     try {
       testSelectStarOnStream();
@@ -143,15 +144,15 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     }
 
     // now grant READ privilege and the test should pass
-    revokeAndAssertSuccess(streamId, USER, ImmutableSet.of(Action.ADMIN, Action.WRITE));
-    grantAndAssertSuccess(streamId, USER, ImmutableSet.of(Action.READ));
+    revokeAndAssertSuccess(streamId, USER, EnumSet.of(Action.ADMIN, Action.WRITE));
+    grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.READ));
     testSelectStarOnStream();
     // now grant ALL privilege as
-    grantAndAssertSuccess(streamId, USER, ImmutableSet.of(Action.ADMIN));
+    grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.ADMIN));
     // revert the permissions on NAMESPACE to the original value
-    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, ImmutableSet.of(Action.ADMIN, Action.WRITE,
+    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.of(Action.ADMIN, Action.WRITE,
                                                                             Action.EXECUTE));
-    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, ImmutableSet.of(Action.ALL));
+    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
   }
 
   private void testSelectStarOnStream() throws Exception {

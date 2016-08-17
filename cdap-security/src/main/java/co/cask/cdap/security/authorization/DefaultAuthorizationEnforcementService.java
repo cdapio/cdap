@@ -111,9 +111,8 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
       return false;
     }
 
-    // If a principal has ALL privileges on the entity, authorization should succeed
-    // Otherwise check for the specific actions requested
-    if (allowedActions.contains(Action.ALL) || allowedActions.containsAll(actions)) {
+    // Check for the specific actions requested
+    if (allowedActions.containsAll(actions)) {
       return true;
     }
     if (exceptionOnFailure) {

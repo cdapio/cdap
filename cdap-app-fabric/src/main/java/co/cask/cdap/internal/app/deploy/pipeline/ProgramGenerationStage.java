@@ -26,11 +26,11 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -61,10 +61,10 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       appSpec.getWorkers().values()
     );
 
-    for (final ProgramSpecification spec: specifications) {
+    for (ProgramSpecification spec: specifications) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       ProgramId programId = input.getApplicationId().program(type, spec.getName());
-      privilegesManager.grant(programId, authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
+      privilegesManager.grant(programId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
       programDescriptors.add(new ProgramDescriptor(programId, appSpec));
     }
 

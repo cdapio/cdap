@@ -41,7 +41,6 @@ import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -56,6 +55,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.jar.Manifest;
 
@@ -163,13 +163,8 @@ public class SystemArtifactsAuthorizationTest {
     Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactId.getScope().name().toLowerCase());
 
     namespaceAdmin.delete(namespaceId.toId());
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(SYSTEM_ARTIFACT, Action.ALL),
-        new Privilege(NamespaceId.SYSTEM, Action.WRITE)
-      ),
-      authorizer.listPrivileges(ALICE)
-    );
+    authorizer.enforce(SYSTEM_ARTIFACT, ALICE, EnumSet.allOf(Action.class));
+    authorizer.enforce(NamespaceId.SYSTEM, ALICE, Action.WRITE);
 
     // deleting system artifact should succeed as alice, because alice added the artifacts, so she should have all
     // privileges on it

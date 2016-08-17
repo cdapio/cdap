@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -71,7 +72,7 @@ public class AuthorizationBootstrapper {
       privilegesManager.grant(instanceId, systemUser, Collections.singleton(Action.ADMIN));
       // grant ALL on the system namespace, so the system user can create and access tables in the system namespace
       // also required by SystemArtifactsLoader to add system artifacts
-      privilegesManager.grant(NamespaceId.SYSTEM, systemUser, Collections.singleton(Action.ALL));
+      privilegesManager.grant(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
       // also grant admin privileges on the CDAP instance to the admin users, so they can create namespaces
       for (Principal adminUser : adminUsers) {
         privilegesManager.grant(instanceId, adminUser, Collections.singleton(Action.ADMIN));

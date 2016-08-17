@@ -70,6 +70,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -364,7 +365,7 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the current user does not have the privilege to add an artifact in the specified
    *                               namespace. To add an artifact, a user needs {@link Action#WRITE} privilege on the
    *                               namespace in which the artifact is being added. If authorization is successful, and
-   *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
+   *                               the artifact is added successfully, then the user gets all {@link Action privileges}
    *                               on the added artifact.
    */
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
@@ -387,7 +388,7 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the user is not authorized to add an artifact in the specified namespace. To add
    *                               an artifact, a user must have {@link Action#WRITE} on the namespace in which
    *                               the artifact is being added. If authorization is successful, and
-   *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
+   *                               the artifact is added successfully, then the user gets all {@link Action privileges}
    *                               on the added artifact.
    */
   @VisibleForTesting
@@ -413,7 +414,7 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the user is not authorized to add an artifact in the specified namespace. To add
    *                               an artifact, a user must have {@link Action#WRITE} on the namespace in which
    *                               the artifact is being added. If authorization is successful, and
-   *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
+   *                               the artifact is added successfully, then the user gets all {@link Action privileges}
    *                               on the added artifact.
    */
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
@@ -428,7 +429,7 @@ public class ArtifactRepository {
     ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
                                                 Collections.<String, String>emptyMap());
     // artifact successfully added. now grant ALL permissions on the artifact to the current user
-    privilegesManager.grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    privilegesManager.grant(artifactId.toEntityId(), principal, EnumSet.allOf(Action.class));
     return artifactDetail;
   }
 
@@ -450,7 +451,7 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the user is not authorized to add an artifact in the specified namespace. To add
    *                               an artifact, a user must have {@link Action#WRITE} on the namespace in which
    *                               the artifact is being added. If authorization is successful, and
-   *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
+   *                               the artifact is added successfully, then the user gets all {@link Action privileges}
    *                               on the added artifact.
    */
   @VisibleForTesting
@@ -622,7 +623,7 @@ public class ArtifactRepository {
         co.cask.cdap.proto.id.ArtifactId artifact = artifactId.toEntityId();
         privilegesManager.revoke(artifact);
         // then grant all on the artifact
-        privilegesManager.grant(artifact, principal, Collections.singleton(Action.ALL));
+        privilegesManager.grant(artifact, principal, EnumSet.allOf(Action.class));
 
         // check for a corresponding .json config file
         String artifactFileName = jarFile.getName();

@@ -32,6 +32,4 @@ public enum Action {
   EXECUTE,
   /** grant/revoke actions for an entity */
   ADMIN,
-  /** All actions on an entity  */
-  ALL,
 }
