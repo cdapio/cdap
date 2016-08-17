@@ -102,10 +102,7 @@ perform any optional transformations required, and then write to one or more rea
 sinks.
 
 The pipelines are created from artifacts, either system artifacts (supplied as part of
-Hydrator) or user artifacts, :ref:`created by a developer <developers:artifacts>`. These
-artifacts are available:
-
-- 
+Hydrator) or user artifacts, :ref:`created by a developer <developers:artifacts>`.
 
 Pipeline Lifecycle
 ------------------

@@ -2,6 +2,8 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
+.. _scaling-instances:
+
 =================
 Scaling Instances
 =================
