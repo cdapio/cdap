@@ -28,6 +28,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
@@ -77,45 +78,29 @@ public final class StreamFileJanitor {
         }
       });
 
-      boolean exists = ImpersonationUtils.doAs(ugi, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          boolean exists = streamBaseLocation.exists();
-          if (exists) {
-            // Remove everything under the deleted directory
-            Location deletedLocation = StreamUtils.getDeletedLocation(streamBaseLocation);
-            if (deletedLocation.exists()) {
-              Locations.deleteContent(deletedLocation);
-            }
-          }
-          return exists;
+      boolean exists = streamBaseLocation.exists();
+      if (exists) {
+        // Remove everything under the deleted directory
+        Location deletedLocation = StreamUtils.getDeletedLocation(streamBaseLocation);
+        if (deletedLocation.exists()) {
+          Locations.deleteContent(deletedLocation);
         }
-      });
+      }
 
       if (!exists) {
         continue;
       }
 
-      Iterable<Location> streamLocations = ImpersonationUtils.doAs(ugi, new Callable<Iterable<Location>>() {
-        @Override
-        public Iterable<Location> call() throws Exception {
-          return StreamUtils.listAllStreams(streamBaseLocation);
-        }
-      });
+      Iterable<Location> streamLocations = StreamUtils.listAllStreams(streamBaseLocation);
 
       for (final Location streamLocation : streamLocations) {
-        ImpersonationUtils.doAs(ugi, new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
-            final AtomicLong ttl = new AtomicLong(0);
-            if (isStreamExists(streamId)) {
-              ttl.set(streamAdmin.getConfig(streamId).getTTL());
-            }
-            clean(streamLocation, ttl.get(), System.currentTimeMillis());
-            return null;
-          }
-        });
+        Id.Stream streamId = new StreamId(namespace.getNamespaceId().getNamespace(),
+                                          StreamUtils.getStreamNameFromLocation(streamLocation)).toId();
+        final AtomicLong ttl = new AtomicLong(0);
+        if (isStreamExists(streamId)) {
+          ttl.set(streamAdmin.getConfig(streamId).getTTL());
+        }
+        clean(streamLocation, ttl.get(), System.currentTimeMillis());
       }
     }
   }

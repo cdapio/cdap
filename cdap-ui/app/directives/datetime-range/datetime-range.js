@@ -34,7 +34,6 @@ function RangeController ($scope) {
 
   vm.done = () => {
     vm.close();
-
     $scope.onDone();
   };
 
@@ -49,9 +48,11 @@ function RangeController ($scope) {
   };
 
   document.addEventListener('keydown', keydownListener);
+  document.body.addEventListener('click', vm.close, false);
 
   $scope.$on('$destroy', () => {
     document.removeEventListener('keydown', keydownListener);
+    document.body.removeEventListener('click', vm.close, false);
   });
 }
 

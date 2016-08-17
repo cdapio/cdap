@@ -42,6 +42,8 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -79,9 +81,11 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new DataSetsModules().getStandaloneModules(),
-      new DataFabricLocalModule(),
-      new AuthenticationContextModules().getMasterModule());
+      new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -103,8 +107,10 @@ public class LocalQueueTest extends QueueTest {
       new DataSetsModules().getStandaloneModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getStandaloneModules(),
+      new AuthorizationEnforcementModule().getStandaloneModules(),
       new AuthenticationContextModules().getMasterModule(),
       new NamespaceClientRuntimeModule().getStandaloneModules(),
+      new AuthorizationTestModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override

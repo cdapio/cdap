@@ -28,11 +28,12 @@ import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.security.ImpersonationUserResolver;
+import co.cask.cdap.data2.security.ImpersonationInfo;
 import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -48,11 +49,10 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -61,14 +61,20 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Admin for managing namespaces.
@@ -87,11 +93,13 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
   private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final Authorizer authorizer;
+  private final AuthorizationEnforcer authorizationEnforcer;
   private final InstanceId instanceId;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final Impersonator impersonator;
   private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
+  private final CConfiguration cConf;
 
   @Inject
   DefaultNamespaceAdmin(Store store, NamespaceStore nsStore, PreferencesStore preferencesStore,
@@ -116,10 +124,12 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     this.metricStore = metricStore;
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
-    this.authorizerInstantiator = authorizerInstantiator;
+    this.authorizer = authorizerInstantiator.get();
+    this.authorizationEnforcer = authorizationEnforcer;
     this.instanceId = createInstanceId(cConf);
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.impersonator = impersonator;
+    this.cConf = cConf;
   }
 
   /**
@@ -137,13 +147,22 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       throw new NamespaceAlreadyExistsException(namespace.toId());
     }
 
+    // if this namespace has custom mapping then validate the given custom mapping
+    if (hasCustomMapping(metadata)) {
+      validateCustomMapping(metadata);
+    }
+
     // Namespace can be created. Check if the user is authorized now.
-    Principal principal = SecurityRequestContext.toPrincipal();
-    // Skip authorization enforcement for the system user and the default namespace, so the DefaultNamespaceEnsurer
-    // thread can successfully create the default namespace
-    if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-      authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
-      authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
+    Principal principal = authenticationContext.getPrincipal();
+    authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
+    authorizer.grant(namespace, principal, ImmutableSet.of(Action.ALL));
+    // Also grant the namespace user all privileges on the namespace, if kerberos is enabled
+    if (SecurityUtil.isKerberosEnabled(cConf)) {
+      ImpersonationInfo impersonationInfo = new ImpersonationInfo(metadata, cConf);
+      String namespacePrincipal = impersonationInfo.getPrincipal();
+      String namespaceUserName = new KerberosName(namespacePrincipal).getShortName();
+      Principal namespaceUser = new Principal(namespaceUserName, Principal.PrincipalType.USER);
+      authorizer.grant(namespace, namespaceUser, EnumSet.allOf(Action.class));
     }
 
     // store the meta first in the namespace store because namespacedlocationfactory need to look up location
@@ -151,7 +170,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     nsStore.create(metadata);
 
     try {
-      impersonator.doAs(namespace, new Callable<Void>() {
+      impersonator.doAs(metadata, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           storageProviderNamespaceAdmin.create(metadata);
@@ -161,12 +180,73 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     } catch (IOException | ExploreException | SQLException e) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       nsStore.delete(metadata.getNamespaceId().toId());
-      if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-        authorizerInstantiator.get().revoke(namespace);
-      }
+      authorizer.revoke(namespace);
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
+  }
 
+  private void validateCustomMapping(NamespaceMeta metadata) throws Exception {
+    for (NamespaceMeta existingNamespaceMeta : list()) {
+      NamespaceConfig existingConfig = existingNamespaceMeta.getConfig();
+      // if hbase namespace is provided validate no other existing namespace is mapped to it
+      if (!Strings.isNullOrEmpty(metadata.getConfig().getHbaseNamespace()) &&
+        metadata.getConfig().getHbaseNamespace().equals(existingConfig.getHbaseNamespace())) {
+        throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
+                                                  String.format("A namespace '%s' already exists with the given " +
+                                                                  "namespace mapping for hbase namespace '%s'",
+                                                                existingNamespaceMeta.getName(),
+                                                                existingConfig.getHbaseNamespace()));
+      }
+      // if hive database is provided validate no other existing namespace is mapped to it
+      if (!Strings.isNullOrEmpty(metadata.getConfig().getHiveDatabase()) &&
+        metadata.getConfig().getHiveDatabase().equals(existingConfig.getHiveDatabase())) {
+        throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
+                                                  String.format("A namespace '%s' already exists with the given " +
+                                                                  "namespace mapping for hive database '%s'",
+                                                                existingNamespaceMeta.getName(),
+                                                                existingConfig.getHiveDatabase()));
+      }
+      if (!Strings.isNullOrEmpty(metadata.getConfig().getRootDirectory())) {
+        // check that the given root directory path is an absolute path
+        validatePath(metadata);
+        // make sure that this new location is not same as some already mapped location or subdir of the existing
+        // location or vice versa.
+        if (hasSubDirRelationship(existingConfig.getRootDirectory(), metadata.getConfig().getRootDirectory())) {
+          throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
+                                                    String.format("Failed to create namespace %s with custom " +
+                                                                    "location %s. A namespace '%s' already exists " +
+                                                                    "with location '%s' and these two locations are " +
+                                                                    "have a subdirectory relationship.",
+                                                                  metadata.getName(),
+                                                                  metadata.getConfig().getRootDirectory(),
+                                                                  existingNamespaceMeta.getName(),
+                                                                  existingConfig.getRootDirectory()));
+        }
+      }
+    }
+  }
+
+  private boolean hasSubDirRelationship(@Nullable String existingDir, String newDir) {
+    // only check for subdir if the existing namespace dir is custom mapped in which case this will not be null
+    return !Strings.isNullOrEmpty(existingDir) &&
+      (Paths.get(newDir).startsWith(existingDir) || Paths.get(existingDir).startsWith(newDir));
+  }
+
+  private boolean hasCustomMapping(NamespaceMeta metadata) {
+    NamespaceConfig config = metadata.getConfig();
+    return !(Strings.isNullOrEmpty(config.getRootDirectory()) && Strings.isNullOrEmpty(config.getHbaseNamespace()) &&
+      Strings.isNullOrEmpty(config.getHiveDatabase()));
+  }
+
+  private void validatePath(NamespaceMeta namespaceMeta) throws IOException {
+    // a custom location was provided
+    // check that its an absolute path
+    File customLocation = new File(namespaceMeta.getConfig().getRootDirectory());
+    if (!customLocation.isAbsolute()) {
+      throw new IOException(String.format(
+        "Cannot create the namespace '%s' with the given custom location %s. Custom location must be absolute path.",
+        namespaceMeta.getName(), customLocation));
+    }
   }
 
   /**
@@ -191,7 +271,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
                                                                 namespaceId));
     }
 
-    authorizerInstantiator.get().enforce(namespace, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(namespace, authenticationContext.getPrincipal(), Action.ADMIN);
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
@@ -239,7 +319,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
     } finally {
-      authorizerInstantiator.get().revoke(namespace);
+      authorizer.revoke(namespace);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
 
@@ -247,7 +327,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     // deletion fails, we may have a valid (or invalid) namespace in the system, that no one has privileges on,
     // so no one can clean up. This may result in orphaned privileges, which will be cleaned up by the create API
     // if the same namespace is successfully re-created.
-    authorizerInstantiator.get().revoke(namespace);
+    authorizer.revoke(namespace);
   }
 
   private void deleteMetrics(NamespaceId namespaceId) throws Exception {
@@ -274,8 +354,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     }
 
     // Namespace data can be deleted. Revoke all privileges first
-    authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+    authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     try {
       dsFramework.deleteAllInstances(namespaceId);
     } catch (DatasetManagementException | IOException e) {
@@ -290,10 +369,11 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    authorizerInstantiator.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                         Action.ADMIN);
+    authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
 
     NamespaceMeta existingMeta = nsStore.get(namespaceId);
+    // Already ensured that namespace exists, so namespace meta should not be null
+    Preconditions.checkNotNull(existingMeta);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
 
     if (namespaceMeta.getDescription() != null) {
@@ -305,35 +385,11 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       builder.setSchedulerQueueName(config.getSchedulerQueueName());
     }
 
-    // we already checked namespace existence so the meta cannot be null here
-    if (config != null && config.getRootDirectory() != null) {
-      // if a root directory was given for update and it's not same as existing one throw exception
-      if (!config.getRootDirectory().equals(existingMeta.getConfig().getRootDirectory())) {
-        throw new BadRequestException(String.format("Updates to %s are not allowed. Cannot update from %s to %s.",
-                                                    NamespaceConfig.ROOT_DIRECTORY,
-                                                    existingMeta.getConfig().getRootDirectory(),
-                                                    config.getRootDirectory()));
-      }
-
-      if (config.getHbaseNamespace() != null
-        && (!config.getHbaseNamespace().equals(existingMeta.getConfig().getHbaseNamespace()))) {
-        throw new BadRequestException(String.format("Updates to %s are not allowed. Cannot update from %s to %s.",
-                                                    NamespaceConfig.HBASE_NAMESPACE,
-                                                    existingMeta.getConfig().getHbaseNamespace(),
-                                                    config.getHbaseNamespace()));
-      }
+    Set<String> difference = existingMeta.getConfig().getDifference(config);
+    if (!difference.isEmpty()) {
+      throw new BadRequestException(String.format("Mappings %s for namespace %s cannot be updated once the namespace " +
+                                                    "is created.", difference, namespaceId));
     }
-
-    if (config != null && config.getHiveDatabase() != null) {
-      // if a hive database was given for update and it's not same as existing one throw exception
-      if (!config.getHiveDatabase().equals(existingMeta.getConfig().getHiveDatabase())) {
-        throw new BadRequestException(String.format("Updates to %s are not allowed. Cannot update from %s to %s.",
-                                                    NamespaceConfig.HIVE_DATABASE,
-                                                    existingMeta.getConfig().getHiveDatabase(),
-                                                    config.getHiveDatabase()));
-      }
-    }
-
     nsStore.update(builder.build());
   }
 

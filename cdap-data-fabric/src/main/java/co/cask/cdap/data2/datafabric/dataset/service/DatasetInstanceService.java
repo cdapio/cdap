@@ -33,7 +33,6 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -42,16 +41,14 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
@@ -67,8 +64,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -78,27 +77,27 @@ import javax.annotation.Nullable;
 public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
-  private final DatasetTypeManager typeManager;
+  private final DatasetTypeService typeService;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final LoadingCache<Id.DatasetInstance, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
-  private final Authorizer authorizer;
+  private final PrivilegesManager privilegesManager;
   private final AuthenticationContext authenticationContext;
 
   private AuditPublisher auditPublisher;
 
+  @VisibleForTesting
   @Inject
-  public DatasetInstanceService(DatasetTypeManager typeManager, DatasetInstanceManager instanceManager,
+  public DatasetInstanceService(DatasetTypeService typeService, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin,
-                                AuthorizationEnforcer authorizationEnforcer,
-                                AuthorizerInstantiator authorizerInstantiator,
+                                AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
                                 AuthenticationContext authenticationContext) {
     this.opExecutorClient = opExecutorClient;
-    this.typeManager = typeManager;
+    this.typeService = typeService;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -111,7 +110,7 @@ public class DatasetInstanceService {
       }
     );
     this.authorizationEnforcer = authorizationEnforcer;
-    this.authorizer = authorizerInstantiator.get();
+    this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
   }
 
@@ -250,9 +249,9 @@ public class DatasetInstanceService {
     DatasetId datasetId = newInstance.toEntityId();
     // If the dataset previously existed and was deleted, but revoking privileges somehow failed, there may be orphaned
     // privileges for the dataset. Revoke them first, so no users unintentionally get privileges on the dataset.
-    authorizer.revoke(datasetId);
+    privilegesManager.revoke(datasetId);
     // grant all privileges on the dataset to be created
-    authorizer.grant(datasetId, principal, ImmutableSet.of(Action.ALL));
+    privilegesManager.grant(datasetId, principal, ImmutableSet.of(Action.ALL));
 
     LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
              namespaceId, name, props.getTypeName(), props.getProperties());
@@ -272,7 +271,7 @@ public class DatasetInstanceService {
       enableExplore(newInstance, spec, props);
     } catch (Exception e) {
       // there was a problem in creating the dataset instance. so revoke the privileges.
-      authorizer.revoke(datasetId);
+      privilegesManager.revoke(datasetId);
       throw e;
     }
   }
@@ -337,15 +336,34 @@ public class DatasetInstanceService {
     }
 
     authorizationEnforcer.enforce(datasetId, authenticationContext.getPrincipal(), Action.ADMIN);
-    LOG.info("Deleting dataset {}.{}", instance.getNamespaceId(), instance.getId());
-    // Drop the dataset first, so that it can never be returned by a subsequent list or get call.
     dropDataset(instance, spec);
-    publishAudit(instance, AuditType.DELETE);
-    // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion, and
-    // deletion fails, we may have a valid (or invalid) dataset in the system, that no one has privileges on, so no one
-    // can clean up. This may result in orphaned privileges, which will be cleaned up by the create API if the same
-    // dataset is successfully re-created.
-    authorizer.revoke(datasetId);
+  }
+
+  /**
+   * Drops all datasets in the given namespace. If authorization is turned on, only datasets that the current
+   * principal that has {@link Action#ADMIN} privilege will be deleted
+   *
+   * @param namespaceId namespace to operate on
+   * @throws Exception if it fails to delete dataset
+   * @return the set of {@link DatasetId} that get deleted
+   */
+  Set<DatasetId> dropAll(NamespaceId namespaceId) throws Exception {
+    ensureNamespaceExists(namespaceId.toId());
+    Principal principal = authenticationContext.getPrincipal();
+
+    Set<DatasetId> datasets = new HashSet<>();
+    for (DatasetSpecification spec : instanceManager.getAll(namespaceId.toId())) {
+      try {
+        DatasetId datasetId = namespaceId.dataset(spec.getName());
+        authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
+        dropDataset(datasetId.toId(), spec);
+        datasets.add(datasetId);
+      } catch (UnauthorizedException e) {
+        // It's ok to be not authorized. Just skip the deletion.
+      }
+    }
+
+    return datasets;
   }
 
   /**
@@ -412,17 +430,14 @@ public class DatasetInstanceService {
    */
   @Nullable
   private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) throws Exception {
-    Id.DatasetType datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName);
-    DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetTypeId);
-    if (typeMeta == null) {
+    DatasetTypeId datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName).toEntityId();
+    try {
+      return typeService.getType(datasetTypeId);
+    } catch (DatasetTypeNotFoundException e) {
       // Type not found in the instance's namespace. Now try finding it in the system namespace
-      Id.DatasetType systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(Id.Namespace.SYSTEM, typeName);
-      typeMeta = typeManager.getTypeInfo(systemDatasetTypeId);
-    } else {
-      // not using a system dataset type. ensure that the user has access to it before returning
-      ensureAccess(namespaceId.toEntityId().datasetType(typeName));
+      DatasetTypeId systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(Id.Namespace.SYSTEM, typeName).toEntityId();
+      return typeService.getType(systemDatasetTypeId);
     }
-    return typeMeta;
   }
 
   /**
@@ -432,6 +447,8 @@ public class DatasetInstanceService {
    * @throws Exception on error.
    */
   private void dropDataset(Id.DatasetInstance instance, DatasetSpecification spec) throws Exception {
+    LOG.info("Deleting dataset {}.{}", instance.getNamespaceId(), instance.getId());
+
     disableExplore(instance);
 
     if (!instanceManager.delete(instance)) {
@@ -444,6 +461,13 @@ public class DatasetInstanceService {
       throw new DatasetNotFoundException(instance);
     }
     opExecutorClient.drop(instance, typeMeta, spec);
+
+    publishAudit(instance, AuditType.DELETE);
+    // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion, and
+    // deletion fails, we may have a valid (or invalid) dataset in the system, that no one has privileges on, so no one
+    // can clean up. This may result in orphaned privileges, which will be cleaned up by the create API if the same
+    // dataset is successfully re-created.
+    privilegesManager.revoke(instance.toEntityId());
   }
 
   private void disableExplore(Id.DatasetInstance datasetInstance) {
@@ -499,7 +523,6 @@ public class DatasetInstanceService {
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
       if (namespaceQueryAdmin.get(namespace) == null) {
-        System.out.println("notfound ######## " + namespaceQueryAdmin);
         throw new NamespaceNotFoundException(namespace);
       }
     }
@@ -513,15 +536,14 @@ public class DatasetInstanceService {
   /**
    * Ensures that the logged-in user has a {@link Action privilege} on the specified dataset instance.
    *
-   * @param datasetEntityId the {@link DatasetId}, {@link DatasetModuleId} or {@link DatasetTypeId} to check for
-   *                        privileges
+   * @param datasetId the {@link DatasetId} to check for privileges
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
-  private <T extends EntityId> void ensureAccess(T datasetEntityId) throws Exception {
+  private void ensureAccess(DatasetId datasetId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetEntityId)) {
-      throw new UnauthorizedException(principal, datasetEntityId);
+    if (!filter.apply(datasetId)) {
+      throw new UnauthorizedException(principal, datasetId);
     }
   }
 }

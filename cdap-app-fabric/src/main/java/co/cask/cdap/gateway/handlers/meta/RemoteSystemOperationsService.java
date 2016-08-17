@@ -50,13 +50,13 @@ public class RemoteSystemOperationsService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+
   private Cancellable cancellable;
 
   @Inject
   RemoteSystemOperationsService(CConfiguration cConf, DiscoveryService discoveryService,
                                 MetricsCollectionService metricsCollectionService,
-                                @Named(Constants.RemoteSystemOpService.HANDLERS_NAME)
-                                Set<HttpHandler> handlers) {
+                                @Named(Constants.RemoteSystemOpService.HANDLERS_NAME) Set<HttpHandler> handlers) {
     this.discoveryService = discoveryService;
 
     int workerThreads = cConf.getInt(Constants.RemoteSystemOpService.WORKER_THREADS);

@@ -78,7 +78,7 @@ class LocalDistributedCacheManagerWithFix {
   private boolean setupCalled = false;
   private JobID jobId;
 
-  public LocalDistributedCacheManagerWithFix(JobID jobId) {
+  LocalDistributedCacheManagerWithFix(JobID jobId) {
     this.jobId = jobId;
   }
 

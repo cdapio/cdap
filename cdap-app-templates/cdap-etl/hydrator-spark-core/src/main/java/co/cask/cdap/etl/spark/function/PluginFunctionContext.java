@@ -70,8 +70,10 @@ public class PluginFunctionContext implements Serializable {
     Map<String, String> arguments = new HashMap<>();
     arguments.putAll(sec.getRuntimeArguments());
     WorkflowToken token = sec.getWorkflowToken();
-    for (String tokenKey : token.getAll(WorkflowToken.Scope.USER).keySet()) {
-      arguments.put(tokenKey, token.get(tokenKey, WorkflowToken.Scope.USER).toString());
+    if (token != null) {
+      for (String tokenKey : token.getAll(WorkflowToken.Scope.USER).keySet()) {
+        arguments.put(tokenKey, token.get(tokenKey, WorkflowToken.Scope.USER).toString());
+      }
     }
     this.arguments = arguments;
     this.pipelineStr = GSON.toJson(pipelinePhase);

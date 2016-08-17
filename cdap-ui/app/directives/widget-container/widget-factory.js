@@ -21,7 +21,8 @@ angular.module(PKG.name + '.commons')
         element: '<my-number-widget></my-number-widget>',
         attributes: {
           'ng-model': 'model',
-          'data-config': 'myconfig'
+          'data-config': 'myconfig',
+          'disabled': 'disabled'
         }
       },
       'textbox': {

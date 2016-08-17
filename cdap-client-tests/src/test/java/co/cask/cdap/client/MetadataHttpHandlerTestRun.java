@@ -30,6 +30,7 @@ import co.cask.cdap.client.app.AllProgramsApp;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.metadata.MetadataHttpHandler;
@@ -738,6 +739,19 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     assertProgramSystemMetadata(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME), "Batch");
     assertProgramSystemMetadata(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME), "Batch");
     assertProgramSystemMetadata(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME), "Batch");
+
+    // update dataset properties to add the workflow.local.dataset property to it.
+    datasetClient.update(datasetInstance, ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
+                                                          "true"));
+
+    dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
+    System.out.println(dsSystemTags);
+    Assert.assertEquals(
+      ImmutableSet.of(AllProgramsApp.DATASET_NAME,
+                      DatasetSystemMetadataWriter.BATCH_TAG,
+                      DatasetSystemMetadataWriter.EXPLORE_TAG,
+                      DatasetSystemMetadataWriter.LOCAL_DATASET_TAG),
+      dsSystemTags);
   }
 
   @Test

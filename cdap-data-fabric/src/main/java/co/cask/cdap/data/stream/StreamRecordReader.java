@@ -18,6 +18,12 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.ReadFilter;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -38,6 +44,9 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
 
   private final StreamEventDecoder<K, V> decoder;
   private final List<PositionStreamEvent> events;
+  private final Principal principal;
+  private final StreamId streamId;
+  private final AuthorizationEnforcer authorizationEnforcer;
 
   private StreamDataFileReader reader;
   private StreamInputSplit inputSplit;
@@ -49,10 +58,15 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
    *
    * @param decoder The decoder to use for decoding stream events.
    */
-  StreamRecordReader(StreamEventDecoder<K, V> decoder) {
+  StreamRecordReader(StreamEventDecoder<K, V> decoder, AuthorizationEnforcer authorizationEnforcer,
+                     AuthenticationContext authenticationContext, StreamId streamId) {
     this.decoder = decoder;
     this.events = Lists.newArrayListWithCapacity(1);
     this.currentEntry = new StreamEventDecoder.DecodeResult<>();
+    this.authorizationEnforcer = authorizationEnforcer;
+    // cache the principal since it is created for every MR job
+    this.principal = authenticationContext.getPrincipal();
+    this.streamId = streamId;
   }
 
   @Override
@@ -65,6 +79,15 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
+    // Make sure that the user has read access to the stream.
+    try {
+      authorizationEnforcer.enforce(streamId, principal, Action.READ);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      Throwables.propagateIfPossible(e, InterruptedException.class);
+      throw new IOException(e);
+    }
+
     events.clear();
     if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
       return false;

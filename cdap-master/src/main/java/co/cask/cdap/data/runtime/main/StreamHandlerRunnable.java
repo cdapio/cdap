@@ -47,6 +47,11 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.authorization.RemotePrivilegesManager;
+import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
@@ -102,6 +107,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
     services.add(injector.getInstance(StreamService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
   }
 
   @VisibleForTesting
@@ -127,12 +133,16 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new SecureStoreModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+          bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
         }
-      });
+      }
+    );
   }
 }

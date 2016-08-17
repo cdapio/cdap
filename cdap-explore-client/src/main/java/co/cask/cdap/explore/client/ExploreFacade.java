@@ -180,8 +180,14 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "remove", "namespace", namespace.getId());
   }
 
+  //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
+  // Same check is done in DatasetsUtil.isUserDataset method.
   private boolean isDatasetExplorable(Id.DatasetInstance datasetInstance) {
-    return !Id.Namespace.SYSTEM.equals(datasetInstance.getNamespace());
+    return !Id.Namespace.SYSTEM.equals(datasetInstance.getNamespace()) &&
+      !"system.queue.config".equals(datasetInstance.getId()) &&
+      !datasetInstance.getId().startsWith("system.sharded.queue") &&
+      !datasetInstance.getId().startsWith("system.queue") &&
+      !datasetInstance.getId().startsWith("system.stream");
   }
 
   // wait for the enable/disable operation to finish and log and throw exceptions as appropriate if there was an error.

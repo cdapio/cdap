@@ -41,7 +41,6 @@ import co.cask.cdap.data2.datafabric.dataset.RemoteSystemOperationServiceManager
 import co.cask.cdap.data2.security.UGIProvider;
 import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.service.ExploreServiceManager;
-import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
@@ -61,6 +60,7 @@ import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
+import co.cask.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -327,7 +327,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
-      handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(UsageHandler.class);
@@ -344,6 +343,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);
+      handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
@@ -354,8 +354,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     @Named(Constants.AppFabric.SERVER_ADDRESS)
     @SuppressWarnings("unused")
     public InetAddress providesHostname(CConfiguration cConf) {
-      return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
-                              new InetSocketAddress("localhost", 0).getAddress());
+      String address = cConf.get(Constants.AppFabric.SERVER_ADDRESS);
+      return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
     }
 
     /**

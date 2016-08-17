@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.common.utils.Tasks;
@@ -31,7 +32,10 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -202,6 +206,28 @@ public class StreamHandlerTest extends GatewayTestBase {
       Assert.assertEquals(Integer.toString(i), event.getHeaders().get("header1"));
     }
     urlConn.disconnect();
+  }
+
+  @Test
+  public void testListStreams() throws Exception {
+    List<StreamDetail> specs = listStreams(NamespaceId.DEFAULT);
+    Assert.assertTrue(specs.isEmpty());
+    StreamId s1 = NamespaceId.DEFAULT.stream("stream1");
+    StreamId s2 = NamespaceId.DEFAULT.stream("stream2");
+    createStream(s1.toId());
+    specs = listStreams(NamespaceId.DEFAULT);
+    Assert.assertEquals(1, specs.size());
+    StreamDetail specification = specs.get(0);
+    Assert.assertEquals(s1.getStream(), specification.getName());
+    createStream(s2.toId());
+    specs = listStreams(NamespaceId.DEFAULT);
+    Assert.assertEquals(2, specs.size());
+    try {
+      listStreams(new NamespaceId("notfound"));
+      Assert.fail("Should have thrown NamespaceNotFoundException");
+    } catch (NamespaceNotFoundException ex) {
+      // expected
+    }
   }
 
   @Test
@@ -403,6 +429,17 @@ public class StreamHandlerTest extends GatewayTestBase {
       Assert.assertEquals(200, responseCode);
     }
     return response;
+  }
+
+  private List<StreamDetail> listStreams(NamespaceId namespaceId) throws Exception {
+    URL url = createURL(namespaceId.getNamespace(), "streams");
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NamespaceNotFoundException(namespaceId.toId());
+    }
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<StreamDetail>>() { }.getType());
   }
 
   private void sendEvent(Id.Stream streamId, String body) throws Exception {

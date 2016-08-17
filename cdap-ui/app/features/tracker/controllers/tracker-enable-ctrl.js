@@ -35,13 +35,46 @@ class TrackerEnableController{
       scope: this.$scope
     })
     .$promise
-    .then(() => {
-      // start programs
-      this.startPrograms();
+    .then((appConfig) => {
+      if (appConfig.artifact.version !== this.UI_CONFIG.tracker.artifact.version) {
+        // This is to check if the current Tracker application is what the release
+        // is expecting. If not, we need to stop all Tracker programs, and redeploy
+        this.stopOldPrograms(appConfig);
+      } else {
+        // start programs
+        this.startPrograms();
+      }
     }, () => {
       // create app
       this.createTrackerApp();
     });
+  }
+
+  stopOldPrograms(config) {
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    let programsArray = config.programs.map((program) => {
+      return {
+        appId: this.UI_CONFIG.tracker.appId,
+        programType: program.type,
+        programId: program.id
+      };
+    });
+
+    this.myTrackerApi.stopMultiplePrograms(params, programsArray)
+      .$promise
+      .then(() => {
+        this.createTrackerApp();
+      }, (err) => {
+        this.enableTrackerLoading = false;
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
   }
 
   createTrackerApp() {

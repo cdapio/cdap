@@ -67,7 +67,7 @@ public interface DequeueResult<T> extends Iterable<T> {
   /**
    * Static helper class for creating empty result of different result type.
    */
-  static final class Empty {
+  final class Empty {
     public static <T> DequeueResult<T> result() {
       return new DequeueResult<T>() {
         @Override

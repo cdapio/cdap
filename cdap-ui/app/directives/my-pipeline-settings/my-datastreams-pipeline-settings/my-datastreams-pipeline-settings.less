@@ -1,0 +1,87 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+my-datastreams-pipeline-settings {
+  .pipeline-settings-content {
+    display: flex;
+    justify-content: flex-start;
+
+    my-card {
+      flex: 0.5;
+      label {
+        font-weight: 500;
+        color: gray;
+        display: block;
+      }
+
+      &.batch-interval {
+        margin-right: 10px;
+        .batchinterval-wrapper {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          > input,
+          label {
+            margin: 0 10px;
+          }
+        }
+      }
+
+      &.resources {
+        .resource-container {
+          display: flex;
+          > div {
+            flex: 0.5;
+          }
+          .title {
+            font-weight: 500;
+            color: gray;
+          }
+          .title,
+          .fa.fa-caret-down,
+          .fa.fa-caret-right {
+            cursor: pointer;
+            margin: 10px 0;
+            color: gray;
+          }
+          .resource-holder {
+            display: flex;
+            flex-direction: column;
+            .resource-group {
+              display: flex;
+              &:last-child {
+                margin: 10px 0;
+              }
+              .control-label {
+                &:first-child {
+                  width: 80px;
+                }
+              }
+              .control-label {
+                display: inline-block;
+                text-align: right;
+              }
+              .form-control {
+                width: 80px;
+                margin: 0 10px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

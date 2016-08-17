@@ -58,12 +58,6 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-common</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-data-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -190,6 +184,13 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -281,6 +282,14 @@
                       </directory>
                       <includes>
                         <include>cdap-data-pipeline-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-streams-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -391,8 +400,8 @@
                         <include name="${additional.artifacts.jar.pattern}"/>
                         <include name="${additional.artifacts.config.pattern}"/>
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
-                        <exclude name="*:sources"/>
-                        <exclude name="*:javadoc"/>
+                        <exclude name="**/target/*-sources.jar"/>
+                        <exclude name="**/target/*-javadoc.jar"/>
                       </fileset>
                     </copy>
                   </target>
@@ -406,13 +415,13 @@
                 <phase>process-resources</phase>
                 <configuration>
                   <target if="security.extensions.dir">
-                    <copy todir="${stage.artifacts.dir}" flatten="true">
+                    <copy todir="${stage.security.ext.dir}" flatten="true">
                       <fileset dir="${security.extensions.dir}">
                         <include name="${security.ext.jar.pattern}"/>
                         <include name="${security.ext.config.pattern}"/>
                         <exclude name="${security.ext.exclude.pattern}"/>
-                        <exclude name="*:sources"/>
-                        <exclude name="*:javadoc"/>
+                        <exclude name="**/target/*-sources.jar"/>
+                        <exclude name="**/target/*-javadoc.jar"/>
                       </fileset>
                     </copy>
                   </target>

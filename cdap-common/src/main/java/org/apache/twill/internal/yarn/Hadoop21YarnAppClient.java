@@ -168,7 +168,7 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
     private final YarnClient yarnClient;
     private final ApplicationId appId;
 
-    public ProcessControllerImpl(YarnClient yarnClient, ApplicationId appId) {
+    ProcessControllerImpl(YarnClient yarnClient, ApplicationId appId) {
       this.yarnClient = yarnClient;
       this.appId = appId;
     }

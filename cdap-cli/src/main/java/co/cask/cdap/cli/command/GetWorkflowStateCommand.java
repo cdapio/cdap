@@ -29,6 +29,7 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 
@@ -79,7 +80,7 @@ public class GetWorkflowStateCommand extends AbstractCommand {
   }
 
   private Table getWorkflowNodeStates(ProgramRunId programRunId)
-    throws UnauthenticatedException, IOException, NotFoundException {
+    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     Map<String, WorkflowNodeStateDetail> workflowNodeStates = workflowClient.getWorkflowNodeStates(programRunId);
     List<Map.Entry<String, WorkflowNodeStateDetail>> nodeStates = new ArrayList<>();
     nodeStates.addAll(workflowNodeStates.entrySet());

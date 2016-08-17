@@ -27,6 +27,9 @@ import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -73,9 +76,13 @@ public class Hive12ExploreService extends BaseHiveExploreService {
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                               StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                              ExploreTableNaming tableNaming) {
+                              ExploreTableNaming tableNaming,
+                              AuthorizationEnforcementService authorizationEnforcementService,
+                              AuthorizationEnforcer authorizationEnforcer,
+                              AuthenticationContext authenticationContext) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, tableNaming);
+          datasetInstantiatorFactory, tableNaming, authorizationEnforcementService, authorizationEnforcer,
+          authenticationContext);
   }
 
   @Override

@@ -305,12 +305,12 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
     return delegate.listSecureData(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return delegate.getSecureData(namespace, name);
   }
 }

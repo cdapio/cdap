@@ -24,7 +24,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -37,19 +36,15 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -62,10 +57,6 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
   private static final ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(),
                                                                AppWithWorkflow.NAME);
-
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
   private ApplicationClient appClient;
   private ProgramClient programClient;
   private WorkflowClient workflowClient;
@@ -89,7 +80,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
     String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";
     String filesetType = "co.cask.cdap.api.dataset.lib.FileSet";
 
-    String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    String outputPath = new File(TMP_FOLDER.newFolder(), "output").getAbsolutePath();
     Map<String, String> runtimeArgs = ImmutableMap.of("inputPath", createInput("input"),
                                                       "outputPath", outputPath, "dataset.*.keep.local", "true");
     final ProgramId workflowId = new ProgramId(NamespaceId.DEFAULT.getNamespace(), AppWithWorkflow.NAME,
@@ -115,7 +106,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
     // Invalid test scenarios
     try {
-      ProgramId nonExistentWorkflowId = new ProgramId(Id.Namespace.DEFAULT.getId(), AppWithWorkflow.NAME,
+      ProgramId nonExistentWorkflowId = new ProgramId(NamespaceId.DEFAULT.getNamespace(), AppWithWorkflow.NAME,
                                                       ProgramType.WORKFLOW, "NonExistentWorkflow");
       ProgramRunId nonExistentWorkflowRun = nonExistentWorkflowId.run(runId);
       workflowClient.getWorkflowToken(nonExistentWorkflowRun.toId());
@@ -196,7 +187,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
   }
 
   private String createInput(String folderName) throws IOException {
-    File inputDir = tmpFolder.newFolder(folderName);
+    File inputDir = TMP_FOLDER.newFolder(folderName);
 
     File inputFile = new File(inputDir.getPath() + "/words.txt");
     try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), Charsets.UTF_8)) {

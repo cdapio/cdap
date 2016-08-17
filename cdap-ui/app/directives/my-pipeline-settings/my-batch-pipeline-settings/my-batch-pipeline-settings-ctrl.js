@@ -15,8 +15,9 @@
  */
 
 class MyBatchPipelineSettingsCtrl {
-  constructor(GLOBALS, $scope) {
+  constructor(GLOBALS, $scope, MY_CONFIG) {
     this.GLOBALS = GLOBALS;
+    this.isDistributed = MY_CONFIG.isEnterprise ? true : false;
     this._isDisabled = this.isDisabled === 'true';
     this.templateType = this.store.getArtifact().name;
     this.scheduleWidget = {
@@ -35,7 +36,6 @@ class MyBatchPipelineSettingsCtrl {
       $scope.$on('$destroy', unsub);
     }
   }
-
   checkCron(cron) {
     var pattern = /^[0-9\*\s]*$/g;
     var parse = cron.split('');
@@ -56,6 +56,6 @@ class MyBatchPipelineSettingsCtrl {
   }
 }
 
-MyBatchPipelineSettingsCtrl.$inject = ['GLOBALS', '$scope'];
+MyBatchPipelineSettingsCtrl.$inject = ['GLOBALS', '$scope', 'MY_CONFIG'];
 angular.module(PKG.name + '.commons')
   .controller('MyBatchPipelineSettingsCtrl', MyBatchPipelineSettingsCtrl);

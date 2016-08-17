@@ -35,6 +35,7 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -97,6 +98,11 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
     // No-op
+  }
+
+  @Override
+  public List<StreamSpecification> listStreams(NamespaceId namespaceId) throws Exception {
+    return streamMetaStore.listStreams(namespaceId.toId());
   }
 
   @Override

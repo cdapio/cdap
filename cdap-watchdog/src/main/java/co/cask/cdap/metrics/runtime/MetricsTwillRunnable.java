@@ -41,6 +41,7 @@ import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
@@ -126,6 +127,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule()
     );
   }

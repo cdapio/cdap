@@ -187,17 +187,17 @@ public class RouterPathTest {
     String streamPath = "/v3/namespaces/default/streams";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     streamPath = "///v3/namespaces/default/streams///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), streamPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     streamPath = "v3/namespaces/default///streams///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), streamPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);

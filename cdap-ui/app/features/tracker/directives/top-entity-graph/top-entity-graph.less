@@ -31,18 +31,35 @@ my-top-entity-graph {
       border-radius: 3px 0 0 3px;
       border: 1px solid @border-color;
 
+      .app-link,
       .entity-link {
         position: absolute;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 400;
+      }
+
+      .app-link {
+        left: 0;
+        max-width: 90px;
+        color: #aaaaaa;
+        font-size: 10px;
+        margin-left: 15px;
+        text-align: left;
+      }
+
+      .entity-link {
         font-size: 12px;
-        left: 10px;
+        left: 0;
         font-weight: 600;
         color: @font-color;
         transform: translateY(-50%);
         letter-spacing: 0.5px;
+        margin-left: 10px;
         max-width: 110px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        text-align: left;
+
         &:hover {
           color: @tracker-green;
           text-decoration: none;

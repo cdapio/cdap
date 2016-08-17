@@ -16,6 +16,9 @@
 
 package co.cask.cdap.etl.proto.v2;
 
+import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
+import co.cask.cdap.etl.proto.UpgradeContext;
+
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -64,6 +67,15 @@ public final class ETLStage {
       throw new IllegalArgumentException("Invalid stage " + toString() + ": plugin must be specified.");
     }
     plugin.validate();
+  }
+
+  // used by UpgradeTool to upgrade a 3.4.x stage to 3.5.x, which may include an update of the plugin artifact
+  public ETLStage upgradeStage(UpgradeContext upgradeContext) {
+    ArtifactSelectorConfig artifactSelectorConfig =
+      upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
+    co.cask.cdap.etl.proto.v2.ETLPlugin etlPlugin = new co.cask.cdap.etl.proto.v2.ETLPlugin(
+      plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig);
+    return new co.cask.cdap.etl.proto.v2.ETLStage(name, etlPlugin, errorDatasetName);
   }
 
   @Override

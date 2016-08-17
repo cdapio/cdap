@@ -56,8 +56,11 @@
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
       <button type="submit" class="btn btn-primary" ng-disabled="submitting || loginForm.$invalid">
-        Submit
+        Login
       </button>
+      <span class="text-danger"
+            ng-bind="error">
+      </span>
     </div>
   </div>
 </form>

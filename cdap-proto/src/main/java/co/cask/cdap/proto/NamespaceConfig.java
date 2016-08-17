@@ -18,9 +18,10 @@ package co.cask.cdap.proto;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
-import javax.ws.rs.HEAD;
 
 /**
  * Represents the configuration of a namespace. This class needs to be GSON serializable.
@@ -64,6 +65,7 @@ public class NamespaceConfig {
     return schedulerQueueName;
   }
 
+  @Nullable
   public String getRootDirectory() {
     return rootDirectory;
   }
@@ -86,6 +88,35 @@ public class NamespaceConfig {
   @Nullable
   public String getKeytabURI() {
     return keytabURI;
+  }
+
+  public Set<String> getDifference(@Nullable NamespaceConfig other) {
+    Set<String> difference = new HashSet<>();
+    if (other == null) {
+      // nothing to validate
+      return difference;
+    }
+
+    if (!Objects.equals(this.rootDirectory, other.rootDirectory)) {
+      difference.add(ROOT_DIRECTORY);
+    }
+
+    if (!Objects.equals(this.hbaseNamespace, other.hbaseNamespace)) {
+      difference.add(HBASE_NAMESPACE);
+    }
+
+    if (!Objects.equals(this.hiveDatabase, other.hiveDatabase)) {
+      difference.add(HIVE_DATABASE);
+    }
+
+    if (!Objects.equals(this.principal, other.principal)) {
+      difference.add("principal");
+    }
+
+    if (!Objects.equals(this.keytabURI, other.keytabURI)) {
+      difference.add("keytabURI");
+    }
+    return difference;
   }
 
   @Override

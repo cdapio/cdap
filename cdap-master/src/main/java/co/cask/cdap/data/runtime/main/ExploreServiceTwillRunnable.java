@@ -44,8 +44,13 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.authorization.RemotePrivilegesManager;
+import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
@@ -95,7 +100,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
 
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.EXPLORE_HTTP_USER_SERVICE));
     LOG.info("Initializing runnable {}", name);
@@ -109,6 +114,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(ExploreExecutorService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
   }
 
   @VisibleForTesting
@@ -131,12 +137,15 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new SecureStoreModules().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
           bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+          bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
         }
       });
   }

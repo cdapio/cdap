@@ -25,8 +25,8 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.JoinConfig;
 import co.cask.cdap.etl.api.JoinElement;
-import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.StageConfigurer;
+import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
+import co.cask.cdap.etl.api.MultiInputStageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -56,8 +56,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+  public void configurePipeline(MultiInputPipelineConfigurer pipelineConfigurer) {
+    MultiInputStageConfigurer stageConfigurer = pipelineConfigurer.getMultiInputStageConfigurer();
     Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
     stageConfigurer.setOutputSchema(getOutputSchema(inputSchemas));
     config.validateConfig();

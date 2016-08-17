@@ -113,7 +113,8 @@ angular.module(PKG.name + '.commons')
                 delayOpen(200);
               }
             })
-            .on('mouseleave', delayClose.bind(null, 200));
+            .on('mouseleave', delayClose.bind(null, 200))
+            .on('click', delayClose.bind(null));
         }
         function showPopover() {
           cancelTimers();

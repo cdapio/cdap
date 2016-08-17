@@ -53,8 +53,9 @@ import java.util.concurrent.TimeoutException;
  * A {@link org.apache.twill.api.TwillController} that controllers application running on Hadoop YARN.
  *
  * TODO (CDAP-6312): This class is copied from Twill 0.6.0 branch and the fix should be ported back to Twill-0.8.0
+ * TODO (CDAP-6806): This class should be removed once TWILL-180 is fixed
  */
-final class YarnTwillController extends AbstractTwillController implements TwillController {
+public final class YarnTwillController extends AbstractTwillController implements TwillController {
 
   private static final Logger LOG = LoggerFactory.getLogger(YarnTwillController.class);
 
@@ -66,6 +67,10 @@ final class YarnTwillController extends AbstractTwillController implements Twill
   // Thread for polling yarn for application status if application got ZK session expire.
   // Only used by the instanceUpdate/Delete method, which is from serialized call from ZK callback.
   private Thread statusPollingThread;
+
+  // begin change CDAP-5135
+  private FinalApplicationStatus terminationStatus;
+  // end change CDAP-5135
 
   /**
    * Creates an instance without any {@link LogHandler}.
@@ -81,7 +86,6 @@ final class YarnTwillController extends AbstractTwillController implements Twill
     this.appName = appName;
     this.startUp = startUp;
   }
-
 
   /**
    * Sends a message to application to notify the secure store has be updated.
@@ -185,10 +189,14 @@ final class YarnTwillController extends AbstractTwillController implements Twill
 
     super.doShutDown();
 
+    // begin change CDAP-5135
     if (finalStatus == FinalApplicationStatus.FAILED) {
       // If we know the app status is failed, throw an exception to make this controller goes into error state.
       // All other final status are not treated as failure as we can't be sure.
-      throw new RuntimeException("Yarn application " + appName + ", " + getRunId() + " failed.");
+      setTerminationStatus(finalStatus);
+      throw new RuntimeException(String.format("Yarn application %s, %s %s.",
+                                               appName, getRunId(), finalStatus.name().toLowerCase()));
+      // end change CDAP-5135
     }
   }
 
@@ -252,7 +260,11 @@ final class YarnTwillController extends AbstractTwillController implements Twill
         try {
           LOG.debug("Polling status from Yarn for {} {}.", appName, appId);
           while (!Thread.currentThread().isInterrupted()) {
-            if (report.getFinalApplicationStatus() != FinalApplicationStatus.UNDEFINED) {
+            // begin change CDAP-5135
+            FinalApplicationStatus finalStatus = report.getFinalApplicationStatus();
+            if (finalStatus != FinalApplicationStatus.UNDEFINED) {
+              setTerminationStatus(finalStatus);
+              // end change CDAP-5135
               shutdown = true;
               break;
             }
@@ -311,4 +323,14 @@ final class YarnTwillController extends AbstractTwillController implements Twill
     // in case the user calls this before starting, return null
     return (resourcesClient == null) ? null : resourcesClient.get();
   }
+
+  // begin change CDAP-5135
+  public FinalApplicationStatus getTerminationStatus() {
+    return terminationStatus;
+  }
+
+  private void setTerminationStatus(FinalApplicationStatus terminationStatus) {
+    this.terminationStatus = terminationStatus;
+  }
+  // end change CDAP-5135
 }

@@ -27,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
@@ -107,7 +108,7 @@ public class StreamClientTestRun extends ClientTestBase {
    */
   @Test
   public void testStreamEvents() throws IOException, BadRequestException,
-    StreamNotFoundException, UnauthenticatedException {
+    StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     Id.Stream streamId = Id.Stream.from(namespaceId, "testEvents");
     streamClient.create(streamId);

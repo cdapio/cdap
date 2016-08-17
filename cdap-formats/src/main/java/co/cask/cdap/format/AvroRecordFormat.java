@@ -123,7 +123,7 @@ public class AvroRecordFormat extends AbstractStreamEventRecordFormat<Structured
 
     private ByteBuffer buffer;
 
-    public ByteBufferInputStream(ByteBuffer buffer) {
+    ByteBufferInputStream(ByteBuffer buffer) {
       reset(buffer);
     }
 

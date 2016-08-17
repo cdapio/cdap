@@ -266,16 +266,30 @@ class myLineageService {
   parseProgramType(programType) {
     switch (programType) {
       case 'Flow':
+      case 'flow':
+      case 'Flows':
+      case 'flows':
         return 'flows';
       case 'Mapreduce':
+      case 'mapreduce':
         return 'mapreduce';
       case 'Spark':
+      case 'spark':
         return 'spark';
       case 'Worker':
+      case 'worker':
+      case 'Workers':
+      case 'workers':
         return'workers';
       case 'Workflow':
+      case 'workflow':
+      case 'Workflows':
+      case 'workflows':
         return 'workflows';
       case 'Service':
+      case 'service':
+      case 'Services':
+      case 'service':
         return 'services';
     }
   }

@@ -466,6 +466,14 @@
                         <include>cdap-data-pipeline-${project.version}.jar</include>
                       </includes>
                     </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-streams-${project.version}.jar</include>
+                      </includes>
+                    </resource>
                   </resources>
                 </configuration>
               </execution>
@@ -565,8 +573,8 @@
                         <include name="${additional.artifacts.jar.pattern}"/>
                         <include name="${additional.artifacts.config.pattern}"/>
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
-                        <exclude name="*:sources"/>
-                        <exclude name="*:javadoc"/>
+                        <exclude name="**/target/*-sources.jar"/>
+                        <exclude name="**/target/*-javadoc.jar"/>
                       </fileset>
                     </copy>
                   </target>

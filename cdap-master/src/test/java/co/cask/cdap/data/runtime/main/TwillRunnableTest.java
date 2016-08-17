@@ -18,6 +18,7 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.tools.HBaseTableExporter;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -45,5 +46,10 @@ public class TwillRunnableTest {
   @Test
   public void testStreamHandlerTwillRunnableInjector() {
     StreamHandlerRunnable.createInjector(CConfiguration.create(), new Configuration());
+  }
+
+  @Test
+  public void testHBaseTableExporterInjector() {
+    HBaseTableExporter.createInjector(CConfiguration.create(), new Configuration());
   }
 }

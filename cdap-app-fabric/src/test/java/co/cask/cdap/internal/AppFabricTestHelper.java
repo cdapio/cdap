@@ -29,9 +29,11 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.DirUtils;
@@ -47,7 +49,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRangeCodec;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
@@ -56,12 +57,11 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -82,13 +82,9 @@ import javax.annotation.Nullable;
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
  * TODO: remove it, see CDAP-5
- *
  */
 public class AppFabricTestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
-    .create();
 
   public static CConfiguration configuration;
   private static Injector injector;
@@ -106,13 +102,23 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static synchronized Injector getInjector(CConfiguration conf, Module overrides) {
+  public static Injector getInjector(CConfiguration cConf, Module overrides) {
+    return getInjector(cConf, null, overrides);
+  }
+
+  public static synchronized Injector getInjector(CConfiguration conf, @Nullable SConfiguration sConf,
+                                                  Module overrides) {
     if (injector == null) {
       configuration = conf;
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration)).with(overrides));
+      injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration, sConf)).with(overrides));
+      if (configuration.getBoolean(Constants.Security.ENABLED) &&
+        configuration.getBoolean(Constants.Security.Authorization.ENABLED)) {
+        injector.getInstance(AuthorizationBootstrapper.class).run();
+        injector.getInstance(AuthorizationEnforcementService.class).startAndWait();
+      }
       injector.getInstance(TransactionManager.class).startAndWait();
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
@@ -125,12 +131,13 @@ public class AppFabricTestHelper {
   }
 
   /**
-   * @return Returns an instance of {@link LocalApplicationManager}
+   * @return an instance of {@link LocalApplicationManager}
    */
   public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> factory =
-      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
-      }));
+      getInjector().getInstance(Key.get(
+        new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { }
+      ));
 
     return factory.create(new ProgramTerminator() {
       @Override
@@ -144,10 +151,17 @@ public class AppFabricTestHelper {
     ensureNamespaceExists(namespace, CConfiguration.create());
   }
 
-  public static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
+  private static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
     NamespaceAdmin namespaceAdmin = getInjector(cConf).getInstance(NamespaceAdmin.class);
-    if (!namespaceAdmin.exists(namespace)) {
-      namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+    try {
+      if (!namespaceAdmin.exists(namespace)) {
+        namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+      }
+    } catch (NamespaceAlreadyExistsException e) {
+      // There can be race between exists() and create() call.
+      if (!namespaceAdmin.exists(namespace)) {
+        throw new IllegalStateException("Failed to create namespace " + namespace, e);
+      }
     }
   }
 
@@ -205,12 +219,8 @@ public class AppFabricTestHelper {
 
     Assert.assertNotNull(program);
 
-    co.cask.cdap.proto.id.ArtifactId artifactId = app.getArtifactId();
-    ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
       ProgramOptionConstants.RUN_ID, RunIds.generate().getId(),
-      ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(artifactId),
-      ProgramOptionConstants.ARTIFACT_META, GSON.toJson(artifactRepository.getArtifact(artifactId.toId()).getMeta()),
       ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
     ));
 

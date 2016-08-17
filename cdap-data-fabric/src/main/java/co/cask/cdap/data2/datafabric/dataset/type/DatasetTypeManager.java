@@ -17,19 +17,16 @@
 package co.cask.cdap.data2.datafabric.dataset.type;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistries;
@@ -47,16 +44,15 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
@@ -74,7 +70,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -85,36 +80,28 @@ import javax.annotation.Nullable;
 /**
  * Manages dataset types and modules metadata
  */
-public class DatasetTypeManager extends AbstractIdleService {
+@VisibleForTesting
+public class DatasetTypeManager {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
 
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
-  private final TransactionSystemClientService txClientService;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final DatasetFramework datasetFramework;
   private final DynamicDatasetCache datasetCache;
-
-  private final Map<String, DatasetModule> defaultModules;
-  private final Map<String, DatasetModule> extensionModules;
   private final Path systemTempPath;
   private final Impersonator impersonator;
 
+  @VisibleForTesting
   @Inject
   public DatasetTypeManager(CConfiguration cConf,
                             LocationFactory locationFactory,
                             TransactionSystemClientService txClientService,
                             TransactionExecutorFactory txExecutorFactory,
                             @Named("datasetMDS") DatasetFramework datasetFramework,
-                            @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
                             Impersonator impersonator) {
     this.cConf = cConf;
     this.locationFactory = locationFactory;
-    this.txClientService = txClientService;
-    this.defaultModules = new LinkedHashMap<>(defaultModules);
-    this.extensionModules = getExtensionModules(cConf);
     this.txExecutorFactory = txExecutorFactory;
-    this.datasetFramework = datasetFramework;
     this.impersonator = impersonator;
 
     Map<String, String> emptyArgs = Collections.emptyMap();
@@ -126,45 +113,6 @@ public class DatasetTypeManager extends AbstractIdleService {
                                                     ));
     this.systemTempPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                     cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    txClientService.startAndWait();
-
-    // Bootstrap the meta and instance tables. Make sure the underlying table exists.
-    DatasetsUtil.createIfNotExists(datasetFramework, DatasetMetaTableUtil.META_TABLE_INSTANCE_ID,
-                                   DatasetTypeMDS.class.getName(), DatasetProperties.EMPTY);
-    DatasetsUtil.createIfNotExists(datasetFramework, DatasetMetaTableUtil.INSTANCE_TABLE_INSTANCE_ID,
-                                   DatasetInstanceMDS.class.getName(), DatasetProperties.EMPTY);
-    deleteSystemModules();
-    deployDefaultModules();
-    if (!extensionModules.isEmpty()) {
-      deployExtensionModules();
-    }
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    txClientService.stopAndWait();
-  }
-
-  private Map<String, DatasetModule> getExtensionModules(CConfiguration cConf) {
-    Map<String, DatasetModule> modules = new LinkedHashMap<String, DatasetModule>();
-    String moduleStr = cConf.get(Constants.Dataset.Extensions.MODULES);
-    if (moduleStr != null) {
-      for (String moduleName : Splitter.on(',').omitEmptyStrings().split(moduleStr)) {
-        // create DatasetModule object
-        try {
-          Class tableModuleClass = Class.forName(moduleName);
-          DatasetModule module = (DatasetModule) tableModuleClass.newInstance();
-          modules.put(moduleName, module);
-        } catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
-          LOG.error("Failed to add {} extension module: {}", moduleName, ex.toString());
-        }
-      }
-    }
-    return modules;
   }
 
   /**
@@ -196,13 +144,13 @@ public class DatasetTypeManager extends AbstractIdleService {
           // 2. unpack jar and create class loader
           File unpackedLocation = Files.createTempDirectory(Files.createDirectories(systemTempPath),
                                                             datasetModuleId.getId()).toFile();
-          ProgramClassLoader cl = null;
+          DirectoryClassLoader cl = null;
           try {
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
             if (jarLocation != null) {
               BundleJarUtil.unJar(jarLocation, unpackedLocation);
-              cl = new ProgramClassLoader(cConf, unpackedLocation,
-                                          FilterClassLoader.create(getClass().getClassLoader()));
+              cl = new DirectoryClassLoader(cConf, unpackedLocation,
+                                            FilterClassLoader.create(getClass().getClassLoader()), "lib");
             }
             reg = new DependencyTrackingRegistry(datasetModuleId, datasetTypeMDS, cl, force);
 
@@ -512,58 +460,6 @@ public class DatasetTypeManager extends AbstractIdleService {
       LOG.error("Operation failed", e);
       throw Throwables.propagate(e);
     }
-  }
-
-  private void deployDefaultModules() {
-    // adding default modules to be available in dataset manager service
-    for (Map.Entry<String, DatasetModule> module : defaultModules.entrySet()) {
-      try {
-        // NOTE: we assume default modules are always in classpath, hence passing null for jar location
-        // NOTE: we add default modules in the system namespace
-        Id.DatasetModule defaultModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
-        addModule(defaultModule, module.getValue().getClass().getName(), null, false);
-      } catch (DatasetModuleConflictException e) {
-        // perfectly fine: we need to add default modules only the very first time service is started
-        LOG.debug("Not adding {} module: it already exists", module.getKey());
-      } catch (Throwable th) {
-        LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
-        throw Throwables.propagate(th);
-      }
-    }
-  }
-
-  private void deployExtensionModules() {
-    // adding any defined extension modules to be available in dataset manager service
-    for (Map.Entry<String, DatasetModule> module : extensionModules.entrySet()) {
-      try {
-        // NOTE: we assume extension modules are always in classpath, hence passing null for jar location
-        // NOTE: we add extension modules in the system namespace
-        Id.DatasetModule theModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
-        addModule(theModule, module.getValue().getClass().getName(), null, false);
-      } catch (DatasetModuleConflictException e) {
-        // perfectly fine: we need to add the modules only the very first time service is started
-        LOG.debug("Not adding {} extension module: it already exists", module.getKey());
-      } catch (Throwable th) {
-        LOG.error("Failed to add {} extension module. Aborting.", module.getKey(), th);
-        throw Throwables.propagate(th);
-      }
-    }
-  }
-
-  private void deleteSystemModules() throws InterruptedException, TransactionFailureException {
-    final DatasetTypeMDS datasetTypeMDS = datasetCache.getDataset(DatasetMetaTableUtil.META_TABLE_NAME);
-    txExecutorFactory.createExecutor(datasetCache).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Collection<DatasetModuleMeta> allDatasets = datasetTypeMDS.getModules(Id.Namespace.SYSTEM);
-        for (DatasetModuleMeta ds : allDatasets) {
-          if (ds.getJarLocation() == null) {
-            LOG.debug("Deleting system dataset module: {}", ds.toString());
-            datasetTypeMDS.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, ds.getName()));
-          }
-        }
-      }
-    });
   }
 
   private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {

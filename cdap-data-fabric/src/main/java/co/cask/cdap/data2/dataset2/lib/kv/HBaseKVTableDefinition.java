@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.lib.kv;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
@@ -88,7 +90,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new KVTableImpl(datasetContext, spec.getName(), cConf, hConf, tableUtil);
+    return new KVTableImpl(datasetContext, spec.getName(), hConf, tableUtil);
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
@@ -146,13 +148,14 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     private final HBaseTableUtil tableUtil;
     private final HTable table;
 
-    public KVTableImpl(DatasetContext datasetContext, String tableName, CConfiguration cConf, Configuration hConf,
-                       HBaseTableUtil tableUtil) throws IOException {
+    KVTableImpl(DatasetContext datasetContext, String tableName,
+                Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
       this.tableUtil = tableUtil;
       TableId tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
       this.table = this.tableUtil.createHTable(hConf, tableId);
     }
 
+    @WriteOnly
     @Override
     public void put(byte[] key, @Nullable byte[] value) {
       try {
@@ -169,6 +172,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
       }
     }
 
+    @ReadOnly
     @Nullable
     @Override
     public byte[] get(byte[] key) {

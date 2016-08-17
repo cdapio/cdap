@@ -16,6 +16,9 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
@@ -62,6 +65,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key to read for
    * @return the value for that key, or null if no value was found
    */
+  @ReadOnly
   @Nullable
   public byte[] read(String key) {
     return read(Bytes.toBytes(key));
@@ -73,6 +77,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key to read for
    * @return the value for that key, or null if no value was found
    */
+  @ReadOnly
   @Nullable
   public byte[] read(byte[] key) {
     return table.get(key, KEY_COLUMN);
@@ -84,6 +89,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param keys the keys to be read
    * @return a map of the stored values, keyed by key
    */
+  @ReadOnly
   public Map<byte[], byte[]> readAll(byte[][] keys) {
     List<Get> gets = new ArrayList<>(keys.length);
     for (byte[] key : keys) {
@@ -105,6 +111,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key to increment
    * @return the incremented value of that key
    */
+  @ReadWrite
   public long incrementAndGet(byte[] key, long value) {
     return this.table.incrementAndGet(key, KEY_COLUMN, value);
   }
@@ -115,6 +122,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key
    * @param value the new value
    */
+  @WriteOnly
   public void write(byte[] key, byte[] value) {
     this.table.put(key, KEY_COLUMN, value);
   }
@@ -125,6 +133,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key
    * @param value the new value
    */
+  @WriteOnly
   public void write(String key, String value) {
     this.table.put(Bytes.toBytes(key), KEY_COLUMN, Bytes.toBytes(value));
   }
@@ -135,6 +144,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key
    * @param value the new value
    */
+  @WriteOnly
   public void write(String key, byte[] value) {
     this.table.put(Bytes.toBytes(key), KEY_COLUMN, value);
   }
@@ -146,6 +156,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key
    * @param amount the amount to increment by
    */
+  @WriteOnly
   public void increment(byte[] key, long amount) {
     this.table.increment(key, KEY_COLUMN, amount);
   }
@@ -155,6 +166,7 @@ public class KeyValueTable extends AbstractDataset implements
    *
    * @param key the key to delete
    */
+  @WriteOnly
   public void delete(byte[] key) {
     this.table.delete(key, KEY_COLUMN);
   }
@@ -169,6 +181,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param newValue value to set
    * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
+  @ReadWrite
   public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue) {
     return this.table.compareAndSwap(key, KEY_COLUMN, oldValue, newValue);
   }
@@ -183,6 +196,7 @@ public class KeyValueTable extends AbstractDataset implements
     return table.getSplits();
   }
 
+  @ReadOnly
   @Override
   public RecordScanner<KeyValue<byte[], byte[]>> createSplitRecordScanner(Split split) {
     return Scannables.splitRecordScanner(createSplitReader(split), new KeyValueRecordMaker());
@@ -201,11 +215,13 @@ public class KeyValueTable extends AbstractDataset implements
     return table.getSplits(numSplits, start, stop);
   }
 
+  @ReadOnly
   @Override
   public SplitReader<byte[], byte[]> createSplitReader(Split split) {
     return new KeyValueScanner(table.createSplitReader(split));
   }
 
+  @WriteOnly
   @Override
   public void write(KeyValue<byte[], byte[]> keyValue) throws IOException {
     write(keyValue.getKey(), keyValue.getValue());

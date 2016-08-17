@@ -38,8 +38,6 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.stream.StreamInputFormat;
-import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -53,10 +51,16 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsMai
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
+import co.cask.cdap.internal.app.runtime.batch.stream.MapReduceStreamInputFormat;
+import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -151,6 +155,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final NamespacedLocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   private Job job;
   private Transaction transaction;
@@ -165,7 +171,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           MapReduce mapReduce, MapReduceSpecification specification,
                           BasicMapReduceContext context,
                           Location programJarLocation, NamespacedLocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient) {
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
+                          AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -176,6 +183,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.streamAdmin = streamAdmin;
     this.txClient = txClient;
     this.context = context;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -314,8 +323,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         throw t;
       }
     } catch (Throwable t) {
-      LOG.error("Exception when submitting MapReduce Job: {}", context, t);
       cleanupTask.run();
+      // don't log the error. It will be logged by the ProgramControllerServiceAdapter.failed()
+      if (t instanceof TransactionFailureException && t.getCause() instanceof Exception
+        && !(t instanceof TransactionConflictException)) {
+        throw (Exception) t.getCause();
+      }
       throw t;
     }
   }
@@ -369,10 +382,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } finally {
       // whatever happens we want to call this
       try {
-        if (mapReduce instanceof ProgramLifecycle) {
-          destroy(success, failureInfo, job.getConfiguration().getClassLoader());
-        }
-        onFinish(success, job.getConfiguration().getClassLoader());
+        destroy(success, failureInfo, job.getConfiguration().getClassLoader());
       } finally {
         context.close();
         cleanupTask.run();
@@ -540,34 +550,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     return true;
   }
 
-  /**
-   * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
-   */
-  private void onFinish(final boolean succeeded,
-                        final ClassLoader mapReduceClassLoader) throws TransactionFailureException {
-    TransactionContext txContext = context.getTransactionContext();
-    Transactions.execute(txContext, "onFinish", new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(mapReduceClassLoader);
-        try {
-          // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
-          // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
-          boolean success = succeeded;
-          for (Map.Entry<String, OutputFormatProvider> dsEntry : context.getOutputFormatProviders().entrySet()) {
-            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
-              success = false;
-            }
-          }
-          mapReduce.onFinish(success, context);
-          return null;
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-      }
-    });
-  }
-
   private ProgramState getProgramState(boolean success, String failureInfo) {
     if (stopRequested) {
       // Program explicitly stopped, return KILLED state
@@ -601,7 +583,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
               }
             }
             context.setState(getProgramState(success, failureInfo));
-            ((ProgramLifecycle) mapReduce).destroy();
+            if (mapReduce instanceof ProgramLifecycle) {
+              ((ProgramLifecycle) mapReduce).destroy();
+            } else {
+              mapReduce.onFinish(success, context);
+            }
             return null;
           } finally {
             ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -609,6 +595,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
       });
     } catch (Throwable e) {
+      if (e instanceof TransactionFailureException && e.getCause() != null
+        && !(e instanceof TransactionConflictException)) {
+        e = e.getCause();
+      }
       LOG.warn("Error executing the destroy method of the MapReduce program {}", context.getProgram().getName(), e);
     }
   }
@@ -671,8 +661,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // A bit hacky for stream.
       if (provider instanceof StreamInputFormatProvider) {
         // pass in mapperInput.getMapper() instead of mapperClass, because mapperClass defaults to the Identity Mapper
-        setDecoderForStream((StreamInputFormatProvider) provider, job, inputFormatConfiguration,
-                            mapperInput.getMapper());
+        StreamInputFormatProvider inputFormatProvider = (StreamInputFormatProvider) provider;
+        setDecoderForStream(inputFormatProvider, job, inputFormatConfiguration, mapperInput.getMapper());
+        // Check if the MR job has read access to the stream, if not fail right away. Note that this is being done
+        // after lineage/usage registry since we want to track the intent of reading from there.
+        try {
+          authorizationEnforcer.enforce(inputFormatProvider.getStreamId().toEntityId(),
+                                        authenticationContext.getPrincipal(), Action.READ);
+        } catch (Exception e) {
+          Throwables.propagateIfPossible(e, IOException.class);
+          throw new IOException(e);
+        }
       }
 
       MultipleInputs.addInput(job, mapperInputEntry.getKey(),
@@ -842,9 +841,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         classes.add(inputFormatClass);
 
         // If it is StreamInputFormat, also add the StreamEventCodec class as well.
-        if (StreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
+        if (MapReduceStreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
           Class<? extends StreamEventDecoder> decoderType =
-            StreamInputFormat.getDecoderClass(job.getConfiguration());
+            MapReduceStreamInputFormat.getDecoderClass(job.getConfiguration());
           if (decoderType != null) {
             classes.add(decoderType);
           }

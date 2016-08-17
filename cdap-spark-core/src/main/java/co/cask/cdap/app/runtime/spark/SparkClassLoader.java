@@ -22,7 +22,7 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkExecutionContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -56,7 +56,7 @@ public class SparkClassLoader extends CombineClassLoader {
     ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
     SparkClassLoader sparkClassLoader = ClassLoaders.find(contextClassLoader,
                                                           SparkClassLoader.class);
-    // Should found the Spark ClassLoader
+    // Should find the Spark ClassLoader
     Preconditions.checkState(sparkClassLoader != null, "Cannot find SparkClassLoader from context ClassLoader %s",
                              contextClassLoader);
     return sparkClassLoader;

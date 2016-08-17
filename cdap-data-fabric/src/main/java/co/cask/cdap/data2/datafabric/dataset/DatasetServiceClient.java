@@ -25,7 +25,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -34,7 +36,6 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -44,16 +45,21 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,15 +77,22 @@ import javax.annotation.Nullable;
  * Just a java wrapper for accessing service's REST API.
  */
 class DatasetServiceClient {
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceClient.class);
   private static final Gson GSON = new Gson();
   private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
   private static final Type MODULE_META_LIST_TYPE = new TypeToken<List<DatasetModuleMeta>>() { }.getType();
+  private static final Type DATASET_NAME_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final NamespaceId namespaceId;
   private final HttpRequestConfig httpRequestConfig;
   private final boolean securityEnabled;
+  private final boolean kerberosEnabled;
+  private final boolean authorizationEnabled;
   private final AuthenticationContext authenticationContext;
+  private final String masterPrincipal;
+  private final boolean isMasterUser;
+  private final String systemUser;
 
   DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
                        CConfiguration cConf, AuthenticationContext authenticationContext) {
@@ -90,10 +103,25 @@ class DatasetServiceClient {
       }
     });
     this.namespaceId = namespaceId;
-    int httpTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
-    this.httpRequestConfig = new HttpRequestConfig(httpTimeoutMs, httpTimeoutMs);
+    this.httpRequestConfig = new DefaultHttpRequestConfig();
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
+    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
+    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.authenticationContext = authenticationContext;
+    this.masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    this.systemUser = cConf.get(Constants.Security.Authorization.SYSTEM_USER);
+    try {
+      if (securityEnabled && kerberosEnabled) {
+        // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
+        // configured principal
+        String currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
+        this.isMasterUser = currUserShortName.equals(new KerberosName(masterPrincipal).getShortName());
+      } else {
+        this.isMasterUser = false;
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Nullable
@@ -220,6 +248,18 @@ class DatasetServiceClient {
     }
   }
 
+  /**
+   * Deletes all dataset instances inside the namespace of this client is operating in.
+   */
+  public Set<String> deleteInstances() throws DatasetManagementException {
+    HttpResponse response = doDelete("datasets");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to delete instances, details: %s", response));
+    }
+
+    return GSON.fromJson(response.getResponseBodyAsString(), DATASET_NAME_TYPE);
+  }
+
   public void addModule(String moduleName, String className, Location jarLocation) throws DatasetManagementException {
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
@@ -313,22 +353,27 @@ class DatasetServiceClient {
   }
 
   private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws IOException {
-    if (!securityEnabled) {
+    if (!securityEnabled || !authorizationEnabled) {
       return builder;
     }
     String userId;
-    if (NamespaceId.SYSTEM.equals(namespaceId)) {
-      // For getting a system dataset like MDS, use the system principal. It is ok to do so, since DatasetServiceClient
-      // is an internal client that is not exposed to users.
-      // TODO: CDAP-6583: This is dangerous. Remove.
-      userId = Principal.SYSTEM.getName();
+    if (NamespaceId.SYSTEM.equals(namespaceId) && (!kerberosEnabled || isMasterUser)) {
+      // For getting a system dataset like MDS, use the system principal, if the current user is the same as the
+      // CDAP kerberos principal. If a user tries to access a system dataset from an app, either:
+      // 1. The request will go through if the user is impersonating as the cdap principal - which means that
+      // impersonation has specifically been configured in this namespace to use the cdap principal; or
+      // 2. The request will fail, if kerberos is enabled and the user is impersonating as a non-cdap user; or
+      // 3. The request will go through, if kerberos is disabled
+      LOG.trace("Acessing dataset in system namespace using the system principal because the current user's " +
+                  "kerberos principal {} is the same as the CDAP master's kerberos principal {}.",
+                masterPrincipal, UserGroupInformation.getCurrentUser().getUserName());
+      userId = systemUser;
     } else {
       // If the request originated from the router and was forwarded to any service other than dataset service, before
       // going to dataset service via dataset service client, the userId could be set in the SecurityRequestContext.
-      // e.g. deploying an app that contains a dataset
-      // For user datasets, if a dataset call is happening from a program runtime, then find the userId from
+      // e.g. deploying an app that contains a dataset.
+      // For user datasets, if a dataset call originates from a program runtime, then find the userId from
       // UserGroupInformation#getCurrentUser()
-
       userId = authenticationContext.getPrincipal().getName();
     }
     return builder.addHeader(Constants.Security.Headers.USER_ID, userId);

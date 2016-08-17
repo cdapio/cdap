@@ -34,12 +34,14 @@ import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
+import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.ConfigurationUtil
-import co.cask.cdap.data.stream.{StreamInputFormat, StreamUtils}
+import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import co.cask.cdap.proto.Id
 import co.cask.cdap.proto.id.StreamId
+import co.cask.cdap.proto.security.Action
 import co.cask.tephra.TransactionAware
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
@@ -74,6 +76,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
   private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient, hostname)
   private val applicationEndLatch = new CountDownLatch(1)
+  private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
+  private val authenticationContext = runtimeContext.getAuthenticationContext
 
   // Start the Spark TX service
   sparkTxService.startAndWait()
@@ -219,18 +223,26 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
       streamId, startTime, endTime, formatSpec)
 
     val valueClass = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-    val rdd = sc.newAPIHadoopRDD(configuration, classOf[StreamInputFormat[LongWritable, T]],
+    val rdd = sc.newAPIHadoopRDD(configuration, classOf[SparkStreamInputFormat[LongWritable, T]],
       classOf[LongWritable], valueClass)
     recordStreamUsage(streamId)
+    // check if user has READ permission on the stream to make sure we fail early. this is done after we record stream
+    // usage since we want to record the intent
+    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal, Action.READ)
     rdd.map(t => (t._1.get(), t._2))
   }
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
                                                        arguments: Map[String, String]): Unit = {
+    saveAsDataset(rdd, getNamespace, datasetName, arguments)
+  }
+
+  override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], namespace: String, datasetName: String,
+                                                       arguments: Map[String, String]): Unit = {
     transactional.execute(new SparkTxRunnable {
       override def run(context: SparkDatasetContext) = {
         val sc = rdd.sparkContext
-        val dataset: Dataset = context.getDataset(datasetName, arguments, AccessType.WRITE)
+        val dataset: Dataset = context.getDataset(namespace, datasetName, arguments, AccessType.WRITE)
         val outputCommitter = dataset match {
           case outputCommitter: DatasetOutputCommitter => Some(outputCommitter)
           case _ => None
@@ -254,7 +266,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
             case batchWritable: BatchWritable[K, V] =>
               val txServiceBaseURI = getTxServiceBaseURI(sc, sparkTxService.getBaseURI)
-              sc.runJob(rdd, createBatchWritableFunc(datasetName, arguments, txServiceBaseURI))
+              sc.runJob(rdd, createBatchWritableFunc(namespace, datasetName, arguments, txServiceBaseURI))
 
             case _ =>
               throw new IllegalArgumentException("Dataset is neither a OutputFormatProvider nor a BatchWritable")
@@ -284,15 +296,15 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     val streamConfig = runtimeContext.getStreamAdmin.getConfig(streamId.toId)
     val streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation,
                                                           StreamUtils.getGeneration(streamConfig))
-
-    StreamInputFormat.setTTL(configuration, streamConfig.getTTL)
-    StreamInputFormat.setStreamPath(configuration, streamPath.toURI)
-    StreamInputFormat.setTimeRange(configuration, startTime, endTime)
+    AbstractStreamInputFormat.setStreamId(configuration, streamId)
+    AbstractStreamInputFormat.setTTL(configuration, streamConfig.getTTL)
+    AbstractStreamInputFormat.setStreamPath(configuration, streamPath.toURI)
+    AbstractStreamInputFormat.setTimeRange(configuration, startTime, endTime)
     // Either use the identity decoder or use the format spec to decode
     formatSpec.fold(
-      StreamInputFormat.inferDecoderClass(configuration, classOf[StreamEvent])
+      AbstractStreamInputFormat.inferDecoderClass(configuration, classOf[StreamEvent])
     )(
-      spec => StreamInputFormat.setBodyFormatSpecification(configuration, spec)
+      spec => AbstractStreamInputFormat.setBodyFormatSpecification(configuration, spec)
     )
     configuration
   }
@@ -372,7 +384,8 @@ object DefaultSparkExecutionContext {
     * will be executed in executor nodes.
     */
   private def createBatchWritableFunc[K, V]
-      (datasetName: String,
+      (namespace: String,
+       datasetName: String,
        arguments: Map[String, String],
        txServiceBaseURI: Broadcast[URI]) = (context: TaskContext, itor: Iterator[(K, V)]) => {
 
@@ -381,7 +394,7 @@ object DefaultSparkExecutionContext {
 
     val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
     val datasetCache = SparkRuntimeContextProvider.get().getDatasetCache
-    val dataset: Dataset = datasetCache.getDataset(datasetName, arguments, true, AccessType.WRITE)
+    val dataset: Dataset = datasetCache.getDataset(namespace, datasetName, arguments, true, AccessType.WRITE)
 
     try {
       // Creates an Option[TransactionAware] if the dataset is a TransactionAware

@@ -31,7 +31,8 @@ import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.authorization.PrivilegesFetcherProxyService;
 import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -75,6 +76,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final DefaultNamespaceEnsurer defaultNamespaceEnsurer;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
+  private final PrivilegesFetcherProxyService privilegesFetcherProxyService;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -98,7 +100,8 @@ public class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                          DefaultNamespaceEnsurer defaultNamespaceEnsurer,
                          SystemArtifactLoader systemArtifactLoader,
-                         PluginService pluginService) {
+                         PluginService pluginService,
+                         PrivilegesFetcherProxyService privilegesFetcherProxyService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -115,6 +118,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.defaultNamespaceEnsurer = defaultNamespaceEnsurer;
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
+    this.privilegesFetcherProxyService = privilegesFetcherProxyService;
   }
 
   /**
@@ -122,7 +126,7 @@ public class AppFabricServer extends AbstractIdleService {
    */
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
     Futures.allAsList(
@@ -134,7 +138,8 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
-        pluginService.start()
+        pluginService.start(),
+        privilegesFetcherProxyService.start()
       )
     ).get();
 
@@ -147,6 +152,7 @@ public class AppFabricServer extends AbstractIdleService {
     // Run http service on random port
     httpService = new CommonNettyHttpServiceBuilder(configuration)
       .setHost(hostname.getCanonicalHostName())
+      .setPort(configuration.getInt(Constants.AppFabric.SERVER_PORT))
       .setHandlerHooks(builder.build())
       .addHttpHandlers(handlers)
       .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
@@ -223,5 +229,6 @@ public class AppFabricServer extends AbstractIdleService {
     notificationService.stopAndWait();
     programLifecycleService.stopAndWait();
     pluginService.stopAndWait();
+    privilegesFetcherProxyService.stopAndWait();
   }
 }

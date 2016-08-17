@@ -18,14 +18,17 @@ package co.cask.cdap.app.runtime.spark.submit;
 
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -39,22 +42,29 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
   private final String schedulerQueueName;
   private final SparkExecutionService sparkExecutionService;
 
-  public DistributedSparkSubmitter(Configuration hConf, String hostname, SparkRuntimeContext runtimeContext,
+  public DistributedSparkSubmitter(Configuration hConf, LocationFactory locationFactory,
+                                   String hostname, SparkRuntimeContext runtimeContext,
                                    @Nullable String schedulerQueueName) {
     this.hConf = hConf;
     this.schedulerQueueName = schedulerQueueName;
     ProgramRunId programRunId = runtimeContext.getProgram().getId().toEntityId().run(runtimeContext.getRunId().getId());
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
-    this.sparkExecutionService = new SparkExecutionService(hostname, programRunId, workflowToken);
+    this.sparkExecutionService = new SparkExecutionService(locationFactory, hostname, programRunId, workflowToken);
   }
 
   @Override
   protected Map<String, String> getSubmitConf() {
+    Map<String, String> config = new HashMap<>();
     if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
-      return Collections.singletonMap("spark.yarn.queue", schedulerQueueName);
+      config.put("spark.yarn.queue", schedulerQueueName);
     }
-    return Collections.emptyMap();
+    long updateInterval = hConf.getLong(SparkRuntimeContextConfig.HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS, -1L);
+    if (updateInterval > 0) {
+      config.put("spark.yarn.token.renewal.interval", Long.toString(updateInterval));
+    }
+
+    return config;
   }
 
   @Override

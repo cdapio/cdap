@@ -19,13 +19,16 @@ package co.cask.cdap.app.stream;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.stream.StreamEventData;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -69,13 +72,17 @@ public class DefaultStreamWriter implements StreamWriter {
   private final Iterable<? extends Id> owners;
   private final Id.Run run;
   private final LineageWriter lineageWriter;
+  private final AuthenticationContext authenticationContext;
+  private final boolean authorizationEnabled;
 
   @Inject
   public DefaultStreamWriter(@Assisted("run") Id.Run run,
                              @Assisted("owners") Iterable<? extends Id> owners,
                              RuntimeUsageRegistry runtimeUsageRegistry,
                              LineageWriter lineageWriter,
-                             DiscoveryServiceClient discoveryServiceClient) {
+                             DiscoveryServiceClient discoveryServiceClient,
+                             AuthenticationContext authenticationContext,
+                             CConfiguration cConf) {
     this.run = run;
     this.namespace = run.getNamespace();
     this.owners = owners;
@@ -83,6 +90,8 @@ public class DefaultStreamWriter implements StreamWriter {
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
     this.isStreamRegistered = Maps.newConcurrentMap();
     this.runtimeUsageRegistry = runtimeUsageRegistry;
+    this.authenticationContext = authenticationContext;
+    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
   }
 
   private URL getStreamURL(String stream) throws IOException {
@@ -105,12 +114,14 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig());
     int responseCode = response.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
       throw new IOException(String.format("Stream %s not found", stream));
     }
 
+    // Even though we might have UnauthorizedException (FORBIDDEN), we need to register the usage/lineage since
+    // the worker intended to write to the stream
     registerStream(stream);
 
     if (responseCode < 200 || responseCode >= 300) {
@@ -151,7 +162,8 @@ public class DefaultStreamWriter implements StreamWriter {
   @Override
   public void writeFile(String stream, File file, String contentType) throws IOException {
     URL url = getStreamURL(stream, true);
-    HttpRequest request = HttpRequest.post(url).withBody(file).addHeader(HttpHeaders.CONTENT_TYPE, contentType).build();
+    HttpRequest request = addUserIdHeader(HttpRequest.post(url)).withBody(file)
+      .addHeader(HttpHeaders.CONTENT_TYPE, contentType).build();
     writeToStream(Id.Stream.from(namespace, stream), request);
   }
 
@@ -163,6 +175,9 @@ public class DefaultStreamWriter implements StreamWriter {
     connection.setReadTimeout(15000);
     connection.setConnectTimeout(15000);
     connection.setRequestProperty(HttpHeaders.CONTENT_TYPE, contentType);
+    if (authorizationEnabled) {
+      connection.setRequestProperty(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
+    }
     connection.setDoOutput(true);
     connection.setChunkedStreamingMode(0);
     connection.connect();
@@ -174,6 +189,13 @@ public class DefaultStreamWriter implements StreamWriter {
       connection.disconnect();
       throw e;
     }
+  }
+
+  private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws IOException {
+    if (!authorizationEnabled) {
+      return builder;
+    }
+    return builder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
   }
 
   private void registerStream(Id.Stream stream) {

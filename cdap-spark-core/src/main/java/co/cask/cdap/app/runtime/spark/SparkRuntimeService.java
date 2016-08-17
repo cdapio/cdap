@@ -24,16 +24,20 @@ import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
+import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
+import co.cask.cdap.internal.lang.Reflections;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
@@ -72,8 +76,11 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -132,7 +139,16 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     // additional spark job initialization at run-time
     // This context is for calling beforeSubmit and onFinish on the Spark program
-    // TODO: Refactor the ClientSparkContext class to reduce it's complexity
+
+    // Fields injection for the Spark program
+    // It has to be done in here instead of in SparkProgramRunner for the @UseDataset injection
+    // since the dataset cache being used in Spark is a MultiThreadDatasetCache
+    // The AbstractExecutionThreadService guarantees that startUp(), run() and shutDown() all happens in the same thread
+    Reflections.visit(spark, spark.getClass(),
+                      new PropertyFieldSetter(runtimeContext.getSparkSpecification().getProperties()),
+                      new DataSetFieldSetter(runtimeContext.getDatasetCache()),
+                      new MetricsFieldSetter(runtimeContext));
+
     BasicSparkClientContext context = new BasicSparkClientContext(runtimeContext);
     beforeSubmit(context);
 
@@ -301,7 +317,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           }
         });
         t.setDaemon(true);
-        t.setName(getServiceName());
+        t.setName("SparkRunner" + runtimeContext.getProgramName());
         t.start();
       }
     };
@@ -356,10 +372,24 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   private File createLauncherJar(File tempDir) throws IOException {
     File jarFile = new File(tempDir, CDAP_LAUNCHER_JAR);
-    ContainerLauncherGenerator.generateLauncherJar("org.apache.spark.deploy.yarn.ApplicationMaster",
-                                                   SparkContainerLauncher.class,
-                                                   Files.newOutputStreamSupplier(jarFile));
+    ContainerLauncherGenerator.generateLauncherJar(
+      Arrays.asList("org.apache.spark.deploy.yarn.ApplicationMaster",
+                    "org.apache.spark.executor.CoarseGrainedExecutorBackend"),
+      SparkContainerLauncher.class, Files.newOutputStreamSupplier(jarFile));
     return jarFile;
+  }
+
+  @Nullable
+  private static String getCdapCommonJarName() {
+    try {
+      CodeSource codeSource = CConfiguration.class.getProtectionDomain().getCodeSource();
+      if (codeSource != null) {
+        return Paths.get(codeSource.getLocation().toURI().getPath()).getFileName().toString();
+      }
+    } catch (SecurityException | URISyntaxException e) {
+      LOG.warn("Failed to get jar name for cdap-common.", e);
+    }
+    return null;
   }
 
   /**
@@ -395,12 +425,24 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // classpath so adding them is not required. In non-local mode where spark driver and executors runs in a different
     // jvm we are adding these to their classpath.
     if (!localMode) {
-      String extraClassPath = Joiner.on(File.pathSeparator).join(Paths.get("$PWD", CDAP_LAUNCHER_JAR),
-                                                                 Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
+      // Find the name of the cdap-common.jar and add it to the classpath in the beginning.
+      // So that classpath looks like $PWD/cdap-spark.jar/cdap-common.jar:$PWD/cdap-spark-jar/*.
+      // This allows FileContextLocationFactory from cdap-common.jar to get picked up instead
+      // of FileContextLocationFactory from Apache Twill.
+      String cdapCommonJar = getCdapCommonJarName();
+      Path cdapCommonJarPath = cdapCommonJar == null ? null : Paths.get("$PWD", CDAP_SPARK_JAR, "lib", cdapCommonJar);
+      if (cdapCommonJarPath == null) {
+        LOG.warn("Failed to locate cdap-common.jar. It will not be added to the spark extra classpath in the" +
+                   " beginning.");
+      }
+      Joiner joiner = Joiner.on(File.pathSeparator).skipNulls();
+      String extraClassPath = joiner.join(Paths.get("$PWD", CDAP_LAUNCHER_JAR), cdapCommonJarPath,
+                                          Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
       if (logbackJarName != null) {
         extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
       }
 
+      LOG.debug("Setting spark.driver.extraClassPath and spark.executor.extraClassPath to {}.", extraClassPath);
       // These are system specific and shouldn't allow user to modify them
       configs.put("spark.driver.extraClassPath", extraClassPath);
       configs.put("spark.executor.extraClassPath", extraClassPath);

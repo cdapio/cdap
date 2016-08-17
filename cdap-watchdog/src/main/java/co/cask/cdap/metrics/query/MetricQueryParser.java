@@ -75,7 +75,7 @@ final class MetricQueryParser {
     private final String code;
     private final String tagName;
 
-    private ProgramType(String code, String tagName) {
+    ProgramType(String code, String tagName) {
       this.code = code;
       this.tagName = tagName;
     }
@@ -95,7 +95,7 @@ final class MetricQueryParser {
 
     private final String id;
 
-    private MapReduceType(String id) {
+    MapReduceType(String id) {
       this.id = id;
     }
 
@@ -110,7 +110,7 @@ final class MetricQueryParser {
     HOUR(3600);
 
     private int resolution;
-    private Resolution(int resolution) {
+    Resolution(int resolution) {
       this.resolution = resolution;
     }
 

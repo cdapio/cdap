@@ -27,9 +27,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
+import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.tephra.TransactionFailureException;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -40,7 +40,8 @@ public class NoOpAuthorizationContextFactory implements AuthorizationContextFact
   @Override
   public AuthorizationContext create(Properties extensionProperties) {
     return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(),
-                                           new NoOpTransactional(), new AuthenticationTestContext());
+                                           new NoOpTransactional(), new AuthenticationTestContext(),
+                                           new DummySecureStore());
   }
 
   private static final class NoOpTransactional implements Transactional {
@@ -122,13 +123,13 @@ public class NoOpAuthorizationContextFactory implements AuthorizationContextFact
     }
 
     @Override
-    public void putSecureData(String namespace, String name, byte[] data, String description,
-                              Map<String, String> properties) throws IOException {
+    public void putSecureData(String namespace, String name, String data, String description,
+                              Map<String, String> properties) throws Exception {
       // no-op
     }
 
     @Override
-    public void deleteSecureData(String namespace, String name) throws IOException {
+    public void deleteSecureData(String namespace, String name) throws Exception {
       // no-op
     }
   }

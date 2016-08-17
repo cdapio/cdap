@@ -26,7 +26,7 @@ public enum MetricsEntityType {
 
   private final String type;
 
-  private MetricsEntityType(String type) {
+  MetricsEntityType(String type) {
     this.type = type;
   }
 

@@ -25,7 +25,7 @@ public enum ConsumerEntryState {
 
   private final byte state;
 
-  private ConsumerEntryState(int state) {
+  ConsumerEntryState(int state) {
     this.state = (byte) state;
   }
 

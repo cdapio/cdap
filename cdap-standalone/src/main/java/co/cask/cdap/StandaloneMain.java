@@ -23,6 +23,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.ServiceBindException;
+import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -64,7 +65,9 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -131,6 +134,8 @@ public class StandaloneMain {
   private final TrackerAppCreationService trackerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
+  private final AuthorizationEnforcementService authorizationEnforcementService;
+  private final AuthorizationBootstrapper authorizationBootstrapper;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -164,12 +169,14 @@ public class StandaloneMain {
       trackerAppCreationService = null;
     }
 
+    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
@@ -195,7 +202,6 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -249,8 +255,12 @@ public class StandaloneMain {
       kafkaClient.startAndWait();
     }
 
+    // Authorization bootstrapping is a blocking call, because CDAP will not start successfully if it does not
+    // succeed on an authorization-enabled cluster
+    authorizationBootstrapper.run();
     txService.startAndWait();
     metricsCollectionService.startAndWait();
+    authorizationEnforcementService.startAndWait();
     datasetService.startAndWait();
     serviceStore.startAndWait();
     streamService.startAndWait();
@@ -325,6 +335,7 @@ public class StandaloneMain {
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
+      authorizationEnforcementService.stopAndWait();
       metricsQueryService.stopAndWait();
       txService.stopAndWait();
 
@@ -392,8 +403,24 @@ public class StandaloneMain {
     }
   }
 
-  public static void main(String[] args) {
-    StandaloneMain main = create();
+  public static void main(String[] args) throws Exception {
+    ClassLoader classLoader = MainClassLoader.createFromContext();
+    if (classLoader == null) {
+      LOG.warn("Failed to create CDAP system ClassLoader. Lineage record and Audit Log will not be updated.");
+      doMain(args);
+    } else {
+      Thread.currentThread().setContextClassLoader(classLoader);
+      Class<?> cls = classLoader.loadClass(StandaloneMain.class.getName());
+      cls.getDeclaredMethod("doMain", String[].class).invoke(null, new Object[]{args});
+    }
+  }
+
+  /**
+   * The actual main method. It is called using reflection from {@link #main(String[])}.
+   */
+  @SuppressWarnings("unused")
+  public static void doMain(String[] args) {
+    StandaloneMain main = create(CConfiguration.create(), new Configuration());
     try {
       if (args.length > 0) {
         System.out.printf("%s takes no arguments\n", StandaloneMain.class.getSimpleName());
@@ -421,14 +448,8 @@ public class StandaloneMain {
     }
   }
 
-  /**
-   * The root of all goodness!
-   */
-  public static StandaloneMain create() {
-    return create(CConfiguration.create(), new Configuration());
-  }
-
-  public static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");

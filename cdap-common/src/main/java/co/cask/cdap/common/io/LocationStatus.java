@@ -26,11 +26,13 @@ public class LocationStatus {
   private final URI uri;
   private final long length;
   private final boolean dir;
+  private final long lastModified;
 
-  public LocationStatus(URI uri, long length, boolean dir) {
+  public LocationStatus(URI uri, long length, boolean dir, long lastModified) {
     this.uri = uri;
     this.length = length;
     this.dir = dir;
+    this.lastModified = lastModified;
   }
 
   public URI getUri() {
@@ -43,5 +45,9 @@ public class LocationStatus {
 
   public boolean isDir() {
     return dir;
+  }
+
+  public long getLastModified() {
+    return lastModified;
   }
 }

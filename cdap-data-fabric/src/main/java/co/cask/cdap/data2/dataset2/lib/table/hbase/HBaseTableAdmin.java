@@ -62,7 +62,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
                          CConfiguration conf,
                          LocationFactory locationFactory) throws IOException {
     super(tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName()),
-          hConf, tableUtil);
+          hConf, conf, tableUtil);
     this.spec = spec;
     this.conf = conf;
     this.locationFactory = locationFactory;

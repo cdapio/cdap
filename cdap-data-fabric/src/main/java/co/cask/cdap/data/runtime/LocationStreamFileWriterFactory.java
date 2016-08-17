@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,7 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
   @Override
   public FileWriter<StreamEvent> create(final StreamConfig config, final int generation) throws IOException {
     try {
-      Preconditions.checkNotNull(config.getLocation(), "Location for stream {} is unknown.", config.getStreamId());
+      Preconditions.checkNotNull(config.getLocation(), "Location for stream %s is unknown.", config.getStreamId());
 
       Location baseLocation = impersonator.doAs(new NamespaceId(config.getStreamId().getNamespaceId()),
                                                 new Callable<Location>() {

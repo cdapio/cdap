@@ -24,9 +24,9 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -99,6 +99,8 @@ public abstract class AuthorizerTest {
   }
 
   @Test
+  // TODO: Enable when hierarchy is supported
+  @Ignore
   public void testHierarchy() throws Exception {
     Authorizer authorizer = get();
 
@@ -130,7 +132,10 @@ public abstract class AuthorizerTest {
 
     // listing role should show the added role
     Set<Role> roles = authorizer.listAllRoles();
-    Assert.assertEquals(Collections.singleton(Arrays.asList(admins, engineers)), roles);
+    Set<Role> expectedRoles = new HashSet<>();
+    expectedRoles.add(admins);
+    expectedRoles.add(engineers);
+    Assert.assertEquals(expectedRoles, roles);
 
     // creating a role which already exists should throw an exception
     try {
@@ -171,7 +176,7 @@ public abstract class AuthorizerTest {
     Assert.assertEquals(Collections.singleton(engineers), authorizer.listRoles(spiderman));
 
     // authorization checks with roles
-    NamespaceId ns1 = Ids.namespace("ns1");
+    NamespaceId ns1 = new NamespaceId("ns1");
 
     // check that spiderman who has engineers roles cannot read from ns1
     verifyAuthFailure(ns1, spiderman, Action.READ);
@@ -183,11 +188,11 @@ public abstract class AuthorizerTest {
     authorizer.enforce(ns1, spiderman, Action.READ);
 
     // list privileges for spiderman should have read action on ns1
-    Assert.assertEquals((Collections.singleton(new Privilege(ns1, Action.READ))),
+    Assert.assertEquals(Collections.singleton(new Privilege(ns1, Action.READ)),
                         authorizer.listPrivileges(spiderman));
 
     // revoke action from the role
-    authorizer.revoke(ns1, engineers, (Collections.singleton(Action.READ)));
+    authorizer.revoke(ns1, engineers, Collections.singleton(Action.READ));
 
     // now the privileges for spiderman should be empty
     Assert.assertEquals(Collections.EMPTY_SET, authorizer.listPrivileges(spiderman));

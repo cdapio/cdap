@@ -30,6 +30,7 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -79,7 +80,8 @@ public class DatasetClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetSpecificationSummary> list(Id.Namespace namespace) throws IOException, UnauthenticatedException {
+  public List<DatasetSpecificationSummary> list(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "data/datasets");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response,
@@ -97,7 +99,7 @@ public class DatasetClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public DatasetMeta get(Id.DatasetInstance instance)
-    throws IOException, UnauthenticatedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s", instance.getId()));
@@ -119,7 +121,8 @@ public class DatasetClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void create(Id.DatasetInstance instance, DatasetInstanceConfiguration properties)
-    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnauthenticatedException {
+    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException,
+    UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s", instance.getId()));
@@ -145,7 +148,8 @@ public class DatasetClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void create(Id.DatasetInstance instance, String typeName)
-    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnauthenticatedException {
+    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException,
+    UnauthenticatedException, UnauthorizedException {
     create(instance, new DatasetInstanceConfiguration(typeName, ImmutableMap.<String, String>of(), null));
   }
 
@@ -159,7 +163,7 @@ public class DatasetClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void update(Id.DatasetInstance instance, Map<String, String> properties)
-    throws NotFoundException, IOException, UnauthenticatedException, ConflictException {
+    throws NotFoundException, IOException, UnauthenticatedException, ConflictException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s/properties", instance.getId()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
@@ -183,7 +187,7 @@ public class DatasetClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void updateExisting(Id.DatasetInstance instance, Map<String, String> properties)
-    throws NotFoundException, IOException, UnauthenticatedException, ConflictException {
+    throws NotFoundException, IOException, UnauthenticatedException, ConflictException, UnauthorizedException {
 
     DatasetMeta meta = get(instance);
     Map<String, String> existingProperties = meta.getSpec().getProperties();
@@ -204,7 +208,7 @@ public class DatasetClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void delete(Id.DatasetInstance instance)
-    throws DatasetNotFoundException, IOException, UnauthenticatedException {
+    throws DatasetNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s", instance.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
@@ -222,7 +226,8 @@ public class DatasetClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public boolean exists(Id.DatasetInstance instance) throws IOException, UnauthenticatedException {
+  public boolean exists(Id.DatasetInstance instance)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s", instance.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -289,7 +294,8 @@ public class DatasetClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void truncate(Id.DatasetInstance instance) throws IOException, UnauthenticatedException {
+  public void truncate(Id.DatasetInstance instance)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s/admin/truncate", instance.getId()));
     restClient.execute(HttpMethod.POST, url, config.getAccessToken());
@@ -301,7 +307,7 @@ public class DatasetClient {
    * @return the properties as a map
    */
   public Map<String, String> getProperties(Id.DatasetInstance instance)
-    throws IOException, UnauthenticatedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s/properties", instance.getId()));
     HttpRequest request = HttpRequest.get(url).build();

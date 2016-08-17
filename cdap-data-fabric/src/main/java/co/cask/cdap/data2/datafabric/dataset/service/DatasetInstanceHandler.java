@@ -25,16 +25,20 @@ import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -49,7 +53,6 @@ import javax.ws.rs.QueryParam;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetInstanceHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
 
   private final DatasetInstanceService instanceService;
 
@@ -154,6 +157,19 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Id.DatasetInstance instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     instanceService.drop(instance);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @DELETE
+  @Path("/data/datasets")
+  public void dropAll(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId) throws Exception {
+    Set<DatasetId> datasets = instanceService.dropAll(ConversionHelpers.toNamespaceId(namespaceId).toEntityId());
+    responder.sendJson(HttpResponseStatus.OK, Collections2.transform(datasets, new Function<DatasetId, String>() {
+      @Override
+      public String apply(DatasetId datasetId) {
+        return datasetId.getDataset();
+      }
+    }));
   }
 
   /**

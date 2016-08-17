@@ -21,7 +21,7 @@
     </button>
     <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
       <li role="menuitem">
-        <a href="" ng-click="LineageController.isCustom = true">Custom</a>
+        <a href="" ng-click="LineageController.selectCustom()">Custom</a>
       </li>
       <li role="menuitem" ng-repeat="time in LineageController.timeRangeOptions">
         <a ui-sref="tracker.detail.entity.lineage({ start: time.start, end: time.end })">{{ time.label }}</a>

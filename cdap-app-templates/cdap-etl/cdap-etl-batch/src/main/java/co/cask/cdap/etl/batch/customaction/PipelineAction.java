@@ -19,11 +19,13 @@ import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
@@ -42,6 +44,7 @@ public class PipelineAction extends AbstractCustomAction {
 
   // This is only visible during the configure time, not at runtime.
   private final BatchPhaseSpec phaseSpec;
+  private Metrics metrics;
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -70,8 +73,14 @@ public class PipelineAction extends AbstractCustomAction {
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
     StageInfo stageInfo = phase.iterator().next();
-    Action action = context.newPluginInstance(stageInfo.getName());
-    ActionContext actionContext = new BasicActionContext(context);
+    Action action =
+      context.newPluginInstance(stageInfo.getName(),
+                                new DefaultMacroEvaluator(context.getWorkflowToken(),
+                                                          context.getRuntimeArguments(),
+                                                          context.getLogicalStartTime(),
+                                                          context,
+                                                          context.getNamespace()));
+    ActionContext actionContext = new BasicActionContext(context, metrics, stageInfo.getName());
     action.run(actionContext);
     WorkflowToken token = context.getWorkflowToken();
     if (token == null) {

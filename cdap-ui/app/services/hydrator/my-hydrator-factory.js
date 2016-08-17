@@ -21,7 +21,7 @@ angular.module(PKG.name + '.services')
     }
 
     function isETLApp(artifactName) {
-      return [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline].indexOf(artifactName) !== -1;
+      return [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams].indexOf(artifactName) !== -1;
     }
 
     return {

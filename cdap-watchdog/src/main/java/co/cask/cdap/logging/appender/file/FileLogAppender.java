@@ -96,7 +96,8 @@ public class FileLogAppender extends LogAppender {
     this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(logBaseDir, "Log base dir cannot be null");
 
-    this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 50 * 1024);
+    // Sync interval should be around 10 times smaller than file size as we use sync points to navigate
+    this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 2 * 1024 * 1024);
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
                                 "Log file sync interval is invalid: %s", this.syncIntervalBytes);
 

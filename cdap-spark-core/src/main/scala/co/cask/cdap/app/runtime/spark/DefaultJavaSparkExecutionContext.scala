@@ -30,7 +30,7 @@ import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext,
 import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.api.{Admin, ServiceDiscoverer, TxRunnable}
-import co.cask.cdap.data.stream.StreamInputFormat
+import co.cask.cdap.data.stream.AbstractStreamInputFormat
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.api.java.{JavaPairRDD, JavaRDD}
@@ -113,8 +113,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   override def fromStream[V](streamName: String, startTime: Long,
                              endTime: Long, valueType: Class[V]): JavaPairRDD[java.lang.Long, V] = {
     val conf = new Configuration
-    StreamInputFormat.inferDecoderClass(conf, valueType)
-    val decoderClass: Class[_ <: StreamEventDecoder[LongWritable, V]] = StreamInputFormat.getDecoderClass(conf)
+    AbstractStreamInputFormat.inferDecoderClass(conf, valueType)
+    val decoderClass: Class[_ <: StreamEventDecoder[LongWritable, V]] = AbstractStreamInputFormat.getDecoderClass(conf)
 
     implicit val ct: ClassTag[StreamEvent] = createClassTag
     implicit val vTag: ClassTag[V] = ClassTag(valueType)
@@ -125,8 +125,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   override def fromStream[V](namespace: String, streamName: String, startTime: Long,
                              endTime: Long, valueType: Class[V]): JavaPairRDD[java.lang.Long, V] = {
     val conf = new Configuration
-    StreamInputFormat.inferDecoderClass(conf, valueType)
-    val decoderClass: Class[_ <: StreamEventDecoder[LongWritable, V]] = StreamInputFormat.getDecoderClass(conf)
+    AbstractStreamInputFormat.inferDecoderClass(conf, valueType)
+    val decoderClass: Class[_ <: StreamEventDecoder[LongWritable, V]] = AbstractStreamInputFormat.getDecoderClass(conf)
 
     implicit val ct: ClassTag[StreamEvent] = createClassTag
     implicit val vTag: ClassTag[V] = ClassTag(valueType)
@@ -176,10 +176,15 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
 
   override def saveAsDataset[K, V](rdd: JavaPairRDD[K, V], datasetName: String,
                                    arguments: util.Map[String, String]): Unit = {
+    saveAsDataset(rdd, getNamespace, datasetName, arguments)
+  }
+
+  override def saveAsDataset[K, V](rdd: JavaPairRDD[K, V], namespace: String, datasetName: String,
+                                   arguments: util.Map[String, String]): Unit = {
     // Create the implicit fake ClassTags to satisfy scala type system at compilation time.
     implicit val kTag: ClassTag[K] = createClassTag
     implicit val vTag: ClassTag[V] = createClassTag
-    sec.saveAsDataset(JavaPairRDD.toRDD(rdd), datasetName, arguments.toMap)
+    sec.saveAsDataset(JavaPairRDD.toRDD(rdd), namespace, datasetName, arguments.toMap)
   }
 
   @throws[IOException]

@@ -25,7 +25,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.Service;
-import org.apache.commons.collections.functors.ExceptionClosure;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKOperations;
@@ -83,9 +82,9 @@ public class KafkaServerMain extends DaemonMain {
 
     kafkaProperties = generateKafkaConfig(cConf);
 
-    Preconditions.checkState(Integer.parseInt(
-      kafkaProperties.getProperty("num.partitions")) > 0,
-                             "Num partitions should be greater than zero.");
+    int partitions = Integer.parseInt(kafkaProperties.getProperty("num.partitions"), 10);
+    Preconditions.checkState(partitions > 0, "Num partitions should be greater than zero.");
+
     int port = Integer.parseInt(kafkaProperties.getProperty("port"), 10);
     Preconditions.checkState(port > 0, "Port number is invalid.");
 
@@ -94,6 +93,11 @@ public class KafkaServerMain extends DaemonMain {
     if (hostname != null) {
       if (address.isAnyLocalAddress()) {
         kafkaProperties.remove("host.name");
+        try {
+          address = InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+          throw Throwables.propagate(e);
+        }
       } else {
         hostname = address.getCanonicalHostName();
         kafkaProperties.setProperty("host.name", hostname);
@@ -144,8 +148,9 @@ public class KafkaServerMain extends DaemonMain {
     Map<String, String> propConfigs = cConf.getValByRegex("^(kafka\\.server\\.)");
     for (Map.Entry<String, String> pair : propConfigs.entrySet()) {
       String key = pair.getKey();
+      String value = cConf.get(key);
       String trimmedKey = key.substring(13);
-      prop.setProperty(trimmedKey, pair.getValue());
+      prop.setProperty(trimmedKey, value);
     }
     return prop;
   }

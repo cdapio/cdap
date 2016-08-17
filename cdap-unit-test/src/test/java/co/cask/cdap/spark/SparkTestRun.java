@@ -38,11 +38,12 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spark.app.CharCountProgram;
+import co.cask.cdap.spark.app.ClassicSparkProgram;
 import co.cask.cdap.spark.app.DatasetSQLSpark;
 import co.cask.cdap.spark.app.Person;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
-import co.cask.cdap.spark.app.ScalaCrossNSDatasetProgram;
-import co.cask.cdap.spark.app.ScalaCrossNSStreamProgram;
+import co.cask.cdap.spark.app.ScalaClassicSparkProgram;
+import co.cask.cdap.spark.app.ScalaCrossNSProgram;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
 import co.cask.cdap.spark.app.ScalaStreamFormatSpecSpark;
 import co.cask.cdap.spark.app.SparkAppUsingGetDataset;
@@ -169,6 +170,10 @@ public class SparkTestRun extends TestFrameworkTestBase {
         }
       }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     }
+
+    KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
+    Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ClassicSparkProgram.class.getName())));
+    Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ScalaClassicSparkProgram.class.getName())));
   }
 
   @Test
@@ -303,21 +308,36 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testScalaSparkCrossNSStream() throws Exception {
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName("streamSpaceForSpark").build());
-    NamespaceId streamSpace = new NamespaceId("streamSpaceForSpark");
-    StreamManager streamManager = getStreamManager(streamSpace.toId(), "testStream");
+    // create a namespace for stream and create the stream in it
+    NamespaceMeta crossNSStreamMeta = new NamespaceMeta.Builder().setName("streamSpaceForSpark").build();
+    getNamespaceAdmin().create(crossNSStreamMeta);
+    StreamManager streamManager = getStreamManager(crossNSStreamMeta.getNamespaceId().toId(), "testStream");
+
+    // create a namespace for dataset and add the dataset instance in it
+    NamespaceMeta crossNSDatasetMeta = new NamespaceMeta.Builder().setName("crossNSDataset").build();
+    getNamespaceAdmin().create(crossNSDatasetMeta);
+    addDatasetInstance(crossNSDatasetMeta.getNamespaceId().toId(), "keyValueTable", "count");
+
+    // write something to the stream
     streamManager.createStream();
     for (int i = 0; i < 50; i++) {
       streamManager.send(String.valueOf(i));
     }
 
+    // deploy the spark app in another namespace (default)
     ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
+
+    Map<String, String> args = ImmutableMap.of(ScalaCrossNSProgram.STREAM_NAMESPACE(),
+                                               crossNSStreamMeta.getNamespaceId().getNamespace(),
+                                               ScalaCrossNSProgram.DATASET_NAMESPACE(),
+                                               crossNSDatasetMeta.getNamespaceId().getNamespace(),
+                                               ScalaCrossNSProgram.DATASET_NAME(), "count");
     SparkManager sparkManager =
-      applicationManager.getSparkManager(ScalaCrossNSStreamProgram.class.getSimpleName()).start();
+      applicationManager.getSparkManager(ScalaCrossNSProgram.class.getSimpleName()).start(args);
     sparkManager.waitForFinish(1, TimeUnit.MINUTES);
 
-    DataSetManager<KeyValueTable> countManager = getDataset("count");
+    // get the dataset from the other namespace where we expect it to exist and compare the data
+    DataSetManager<KeyValueTable> countManager = getDataset(crossNSDatasetMeta.getNamespaceId().toId(), "count");
     KeyValueTable results = countManager.get();
     for (int i = 0; i < 50; i++) {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
@@ -328,16 +348,19 @@ public class SparkTestRun extends TestFrameworkTestBase {
   @Test
   public void testScalaSparkCrossNSDataset() throws Exception {
     // Deploy and create a dataset in namespace datasetSpaceForSpark
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName("datasetSpaceForSpark").build());
-    NamespaceId dataSpace = new NamespaceId("datasetSpaceForSpark");
-    deploy(dataSpace, SparkAppUsingObjectStore.class);
-    DataSetManager<ObjectStore<String>> keysManager = getDataset(dataSpace.toId(), "keys");
+    NamespaceMeta inputDSNSMeta = new NamespaceMeta.Builder().setName("datasetSpaceForSpark").build();
+    getNamespaceAdmin().create(inputDSNSMeta);
+    deploy(inputDSNSMeta.getNamespaceId(), SparkAppUsingObjectStore.class);
+    DataSetManager<ObjectStore<String>> keysManager = getDataset(inputDSNSMeta.getNamespaceId().toId(), "keys");
     prepareInputData(keysManager);
+
+    Map<String, String> args = ImmutableMap.of(ScalaCharCountProgram.INPUT_DATASET_NAMESPACE(),
+                                               inputDSNSMeta.getNamespaceId().getNamespace(),
+                                               ScalaCharCountProgram.INPUT_DATASET_NAME(), "keys");
 
     ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
     SparkManager sparkManager =
-      applicationManager.getSparkManager(ScalaCrossNSDatasetProgram.class.getSimpleName()).start();
+      applicationManager.getSparkManager(ScalaCharCountProgram.class.getSimpleName()).start(args);
     sparkManager.waitForFinish(1, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> countManager = getDataset("count");

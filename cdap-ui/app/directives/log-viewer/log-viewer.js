@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -22,8 +22,42 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   //Collapsing LogViewer Table Columns
   var columnsList = [];
   var collapseCount = 0;
+  this.$uibModal = $uibModal;
+  var rawLogs = {
+    log: '',
+    startTime: ''
+  };
+
+  this.setProgramMetadata = (status) => {
+    this.programStatus = status;
+
+    if(!this.entityName) {
+      this.entityName = this.programId;
+    }
+
+    switch(status){
+      case 'RUNNING':
+      case 'STARTED':
+        this.statusType = 0;
+        break;
+      case 'STOPPED':
+      case 'KILLED':
+      case 'FAILED':
+      case 'SUSPENDED':
+        this.statusType = 1;
+        break;
+      case 'COMPLETED':
+        this.statusType = 2;
+        break;
+      default:
+        this.statusType = 3;
+        break;
+    }
+  };
 
   this.setDefault = () => {
+    this.textFile = null;
+    this.statusType = 3;
     this.displayData = [];
     this.data = [];
     this.loading = false;
@@ -31,8 +65,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.warningCount = 0;
     this.totalCount = 0;
     this.fullScreen = false;
-    this.applicationIsRunning = false;
-
+    this.programStatus = 'Not Started';
     this.configOptions = {
       time: true,
       level: true,
@@ -63,6 +96,76 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
   };
 
+  this.openRaw = () => {
+    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec, rIsApplicationRunning) {
+      this.applicationName = rProgramId;
+      this.startTime = formatDate(new Date(rStartTimeSec*1000));
+      this.rawIsLoaded = false;
+      this.noRawData = false;
+      this.windowMode = 'regular';
+
+      this.toggleMaximizedView = (isExpanded) => {
+        this.windowMode = (isExpanded) ? 'expand' : 'regular';
+      };
+      let loadFromCache = !rIsApplicationRunning &&
+       rawLogs &&
+       rawLogs.startTime === rStartTimeSec &&
+       rawLogs.log &&
+       rawLogs.log.length > 0;
+      if (loadFromCache) {
+        this.rawDataResponse = rawLogs.log;
+        this.rawIsLoaded = true;
+        return;
+      }
+      var modalDataSrc = new MyCDAPDataSource($scope);
+      modalDataSrc.request({
+        _cdapNsPath: `/apps/${rAppId}/${rProgramType}/${rProgramId}/runs/${rRunId}/logs?start=${rStartTimeSec}`
+      }).then((res) => {
+        if(typeof res === 'undefined' || res.length === 0){
+          this.noRawData = true;
+        } else {
+          this.rawDataResponse = res;
+          if (!rIsApplicationRunning) {
+            rawLogs = rawLogs || {};
+            rawLogs.log = res;
+            rawLogs.startTime = rStartTimeSec;
+          }
+          this.rawIsLoaded = true;
+        }
+      });
+    }
+
+    this.$uibModal.open({
+      size: 'lg',
+      windowTemplateUrl: 'log-viewer/raw-template.html',
+      templateUrl: 'log-viewer/raw.html',
+      windowClass: 'node-config-modal raw-modal cdap-modal',
+      animation: false,
+      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', 'rIsApplicationRunning', RawLogsModalCtrl],
+      controllerAs: 'RawLogsModalCtrl',
+      resolve: {
+        rAppId: () => {
+          return this.appId;
+        },
+        rProgramType: () => {
+          return this.programType;
+        },
+        rProgramId: () => {
+         return this.programId;
+        },
+        rRunId: () => {
+          return this.runId;
+        },
+        rStartTimeSec: () => {
+          return this.startTimeSec;
+        },
+        rIsApplicationRunning: () => {
+          return this.statusCode === 0;
+        }
+      }
+    });
+  };
+
   this.setDefault();
   angular.forEach($scope.displayOptions, (value, key) => {
     this.configOptions[key] = value;
@@ -81,15 +184,33 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   let numEvents = 0;
   this.toggleExpandAll = false;
 
-  LogViewerStore.subscribe(() => {
+  let unsub = LogViewerStore.subscribe(() => {
     this.logStartTime = LogViewerStore.getState().startTime;
     if (typeof this.logStartTime !== 'object') {
       this.setDefault();
       return;
     }
+
     this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
     requestWithStartTime();
   });
+
+  if (this.runId) {
+    //Get Initial Status
+    myLogsApi.getLogsMetadata({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId
+    }).$promise.then(
+      (statusRes) => {
+        this.setProgramMetadata(statusRes.status);
+      },
+      (statusErr) => {
+        console.log('ERROR: ', statusErr);
+      });
+  }
 
   this.filterSearch = () => {
     //Rerender data
@@ -104,23 +225,30 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   };
 
-  this.showStackTrace = (index) => {
-    //If the stack trace is showing, remove it
+  this.toggleStackTrace = (index) => {
+    //If the currently clicked row is a stack trace itself, do nothing
+    if(this.displayData[index].stackTrace){
+      return;
+    }
+
     if( (index+1 < this.displayData.length) && this.displayData[index+1].stackTrace){
       this.displayData.splice(index+1, 1);
       this.displayData[index].selected = false;
       return;
     }
-    //If the currently clicked row is a stack trace itself, do nothing
-    else if(this.displayData[index].stackTrace && (index - 1) > 0){
-      return;
-    }
-
     if(this.displayData[index].log.stackTrace){
       this.displayData[index].selected = true;
-      var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[index]));
-      stackTraceObj.stackTrace = true;
+      let stackTraceObj = {
+        log: {
+          timestamp: this.displayData[index].log.timestamp,
+          stackTrace: this.displayData[index].log.stackTrace,
+        },
+        stackTrace: true
+      };
       this.displayData.splice(index+1, 0, stackTraceObj);
+    } else {
+      //otherwise, it does not have stack trace but has been selected
+      this.displayData[index].selected = !this.displayData[index].selected;
     }
   };
 
@@ -193,8 +321,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.data = this.data.concat(res);
         this.cacheSize = res.length - this.cacheDecrement;
-        this.renderData();
-        if(res.length < this.viewLimit){
+        this.renderData(true);
+        if(this.displayData.length < this.viewLimit){
           getStatus();
         }
 
@@ -205,30 +333,29 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   const getStatus = () => {
-      myLogsApi.getLogsMetadata({
-        'namespace' : this.namespaceId,
-        'appId' : this.appId,
-        'programType' : this.programType,
-        'programId' : this.programId,
-        'runId' : this.runId
-      }).$promise.then(
-        (statusRes) => {
-          if(statusRes.status === 'RUNNING'){
-            this.applicationIsRunning = true;
-            if (!pollPromise) {
-              pollForNewLogs();
-            }
-          } else {
-            this.applicationIsRunning = false;
-            if (pollPromise) {
-              pollPromise.stopPoll(pollPromise.__pollId__);
-            }
+    myLogsApi.getLogsMetadata({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId
+    }).$promise.then(
+      (statusRes) => {
+        this.setProgramMetadata(statusRes.status);
+        if(this.statusType === 0){
+          if (!pollPromise) {
+            pollForNewLogs();
           }
-        },
-        (statusErr) => {
-          console.log('ERROR: ', statusErr);
+        } else {
+          if (pollPromise) {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+          }
         }
-      );
+      },
+      (statusErr) => {
+        console.log('ERROR: ', statusErr);
+      }
+    );
   };
 
   const pollForNewLogs = () => {
@@ -256,17 +383,77 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         });
 
         this.data = this.data.concat(res);
+        this.renderData(true);
       }
 
-      if(this.data.length > this.viewLimit){
+      if(this.displayData.length > this.viewLimit){
         dataSrc.stopPoll(pollPromise.__pollId__);
         pollPromise = null;
+      } else {
+        getStatus();
       }
-      this.renderData();
-      getStatus();
 
     }, (err) => {
       console.log('ERROR: ', err);
+    });
+  };
+
+  var exportTimeout = null;
+
+  const downloadLogs = () => {
+    if (this.statusType !== 0 && rawLogs && rawLogs.startTime === this.startTimeSec) {
+      return $q.resolve(rawLogs.log);
+    }
+    return myLogsApi.getLogsStartAsRaw({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId,
+      start : this.startTimeSec
+    })
+      .$promise
+      .then(
+        (res) => {
+          if (!this.isApplicationRunning) {
+            rawLogs = {
+              log: res,
+              startTime: this.startTimeSec
+            };
+          }
+          return res;
+        },
+        (err) => {
+          this.isDownloading = false;
+          console.log('ERROR: ', err);
+        }
+      );
+  };
+
+  this.export = () => {
+    this.isDownloading = true;
+    downloadLogs()
+    .then((log) => {
+      var blob = new Blob([log], {type: 'text/plain'});
+      this.url = URL.createObjectURL(blob);
+      let filename = '';
+      if ('undefined' !== typeof this.getDownloadFilename()) {
+        filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+      } else {
+        filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+      }
+      this.exportFileName = filename;
+      $scope.$on('$destroy', () => {
+        URL.revokeObjectURL(this.url);
+        $timeout.cancel(exportTimeout);
+      });
+
+      $timeout.cancel(exportTimeout);
+
+      exportTimeout = $timeout(() => {
+        document.getElementById('logs-export-link').click();
+        this.isDownloading = false;
+      });
     });
   };
 
@@ -279,20 +466,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
     const url = myCdapUrl.constructUrl({
-      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?format=json&start=${this.startTimeSec}`
+      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?&start=${this.startTimeSec}`
     });
 
     this.rawUrl = url;
 
-    myLogsApi.getLogsStart({
-        'namespace' : this.namespaceId,
-        'appId' : this.appId,
-        'programType' : this.programType,
-        'programId' : this.programId,
-        'runId' : this.runId,
-        'start' : this.startTimeSec
+    myLogsApi.getLogsStartAsJson({
+        namespace : this.namespaceId,
+        appId : this.appId,
+        programType : this.programType,
+        programId : this.programId,
+        runId : this.runId,
+        start : this.startTimeSec
     }).$promise.then(
       (res) => {
+
         this.loading = false;
         this.viewLimit = 100;
         this.cacheDecrement = 100;
@@ -313,13 +501,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
+        this.data = res;
         if(res.length === 0){
+          this.renderData();
           getStatus();
           return;
         }
 
         this.fromOffset = res[res.length-1].offset;
-        this.data = res;
         this.renderData();
         this.cacheSize = res.length - this.cacheDecrement;
 
@@ -334,43 +523,59 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
   };
 
-  function formatDate(date) {
-    let month = date.getMonth() + 1;
-    let day = date.getDate();
-    let year = date.getFullYear();
-    let hours = date.getHours();
-    let minutes = date.getMinutes();
-    let seconds = date.getSeconds();
+  function formatDate(date, isDownload) {
+    let dateObj = {
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      year: date.getFullYear(),
+      hours: date.getHours(),
+      minutes: date.getMinutes(),
+      seconds: date.getSeconds()
+    };
 
-    if(minutes < 10){
-      minutes = '0' + minutes.toString();
+    angular.forEach(dateObj, (value, key) => {
+      if(value < 10){
+        dateObj[key] = '0' + value;
+      } else {
+        dateObj[key] = value.toString();
+      }
+    });
+
+    if(isDownload){
+      return dateObj.year + dateObj.day + dateObj.month + dateObj.hours + dateObj.minutes + dateObj.seconds;
     }
-    if(hours < 10){
-      hours = '0' + hours.toString();
-    }
-    if(seconds < 10){
-      seconds = '0' + seconds.toString();
-    }
-    return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+
+    return dateObj.month + '/' + dateObj.day + '/' + dateObj.year + ' ' + dateObj.hours + ':' + dateObj.minutes + ':' + dateObj.seconds;
   }
 
   this.toggleLogExpansion = function() {
+    let len = this.displayData.length;
     this.toggleExpandAll = !this.toggleExpandAll;
-    angular.forEach(this.displayData, (entry, key) => {
+    for(var i = 0 ; i < len ; i++) {
+      let entry = this.displayData[i];
       if(!entry.stackTrace && entry.log.stackTrace.length > 0){
         entry.isStackTraceExpanded = this.toggleExpandAll;
 
-        if(this.toggleExpandAll && !this.displayData[key+1].stackTrace){
-          this.displayData[key].selected = true;
-          var stackTraceObj = JSON.parse(JSON.stringify(this.displayData[key]));
-          stackTraceObj.stackTrace = true;
-          this.displayData.splice(key+1, 0, stackTraceObj);
-        } else if(!this.toggleExpandAll && !entry.stackTrace && key+1 < this.displayData.length && this.displayData[key+1].stackTrace){
-          this.displayData[key].selected = false;
-          this.displayData.splice(key+1, 1);
+        if(i < this.displayData.length && this.toggleExpandAll && (i+1 === this.displayData.length || !this.displayData[i+1].stackTrace)){
+          this.displayData[i].selected = true;
+          let stackTraceObj = {
+            log: {
+              timestamp: this.displayData[i].log.timestamp,
+              stackTrace: this.displayData[i].log.stackTrace,
+            },
+            stackTrace: true
+          };
+          this.displayData.splice(i+1, 0, stackTraceObj);
+          len++;
+        } else if(!this.toggleExpandAll && !entry.stackTrace && i+1 < this.displayData.length && this.displayData[i+1].stackTrace){
+          this.displayData[i].selected = false;
+          this.displayData.splice(i+1, 1);
+          len--;
         }
+      } else {
+        this.displayData[i].selected = this.toggleExpandAll;
       }
-    });
+    }
   };
 
   this.includeEvent = function(eventType){
@@ -383,12 +588,15 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.renderData();
   };
 
-  this.renderData = () => {
+  this.renderData = (renderNewFromOffset) => {
     //Clean slate
-    this.displayData = [];
-    this.viewLimit = 100;
-    this.cacheDecrement = 100;
-    this.cacheSize = 0;
+
+    if(!renderNewFromOffset){
+      this.displayData = [];
+      this.viewLimit = 100;
+      this.cacheDecrement = 100;
+      this.cacheSize = 0;
+    }
 
     if(numEvents === 0){
       angular.forEach(this.data, (value, key) => {
@@ -403,6 +611,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       });
     }
   };
+
   this.highlight = (text) => {
     if(!this.searchText || (this.searchText && !this.searchText.length)){
      return $sce.trustAsHtml(text);
@@ -429,13 +638,15 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.viewLimit += this.cacheDecrement;
   };
 
-  this.filterByStartDate = (entry) => {
-    if(this.logStartTime > entry.log.timestamp) {
-      return;
+  $scope.$on('$destroy', function() {
+    if (unsub) {
+      unsub();
     }
-    return entry;
-  };
-
+    if(pollPromise){
+      dataSrc.stopPoll(pollPromise.__pollId__);
+      pollPromise = null;
+    }
+  });
 }
 
 angular.module(PKG.name + '.commons')
@@ -443,15 +654,17 @@ angular.module(PKG.name + '.commons')
     return {
       templateUrl: 'log-viewer/log-viewer.html',
       controller: LogViewerController,
+      controllerAs: 'LogViewer',
       scope: {
         displayOptions: '=?',
         namespaceId: '@',
         appId: '@',
         programType: '@',
         programId: '@',
-        runId: '@'
+        runId: '@',
+        getDownloadFilename: '&',
+        entityName: '@'
       },
-      bindToController: true,
-      controllerAs: 'LogViewer'
+      bindToController: true
     };
   });

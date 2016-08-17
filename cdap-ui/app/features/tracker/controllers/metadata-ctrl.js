@@ -18,14 +18,22 @@
  * This class is responsible for controlling the Metadata View in Tracker
  * entity detai page.
  **/
+
+ /*
+   TODO:
+     - Add support for Stream Views
+     - What to do with externalDataset type
+ */
+
 class TrackerMetadataController {
-  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout, $q) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
-    this.newTag = '';
     this.$timeout = $timeout;
+    this.$q = $q;
+    this.duplicateTag = false;
 
     this.propertyInput = {
       key: '',
@@ -131,10 +139,9 @@ class TrackerMetadataController {
     this.myTrackerApi.getDatasetDetail(datasetParams)
       .$promise
       .then( (res) => {
-        let datasetProperties = res.spec.properties;
+        this.externalDatasetProperties = res.spec.properties;
 
-        angular.extend(this.properties.user, datasetProperties);
-        if (Object.keys(this.properties.user).length > 0) {
+        if (Object.keys(this.externalDatasetProperties).length > 0) {
           this.activePropertyTab = 0;
           this.properties.isUserEmpty = false;
         }
@@ -142,16 +149,6 @@ class TrackerMetadataController {
   }
 
   /* METADATA PROPERTIES CONTROL */
-  /*
-    TODO:
-      - Add support for Stream Views
-      - What to do with externalDataset type
-  */
-  enableAddProperty() {
-    this.addPropertyEnable = true;
-    this.propertyFocus();
-  }
-
   deleteProperty(key) {
     let deleteParams = {
       namespace: this.$state.params.namespace,
@@ -206,8 +203,6 @@ class TrackerMetadataController {
       case 13: // Enter Key
         this.addProperty();
         break;
-      case 27: // Esc key
-        this.addPropertyEnable = false;
     }
   }
 
@@ -217,6 +212,8 @@ class TrackerMetadataController {
       angular.element(elem)[0].focus();
     });
   }
+
+  /* TAGS CONTROL */
 
   fetchEntityTags() {
     let params = {
@@ -237,6 +234,8 @@ class TrackerMetadataController {
         };
         this.tags.preferredTags = getTags(response.preferredTags);
         this.tags.userTags = getTags(response.userTags);
+
+        this.updateAvailableTags();
       }, (err) => {
         console.log('Error', err);
       });
@@ -289,27 +288,50 @@ class TrackerMetadataController {
     return this.tags.availableTags;
   }
 
-  addTag() {
-    if (!this.newTag) {
-      return;
+  addTag(input) {
+    this.invalidFormat = false;
+    this.duplicateTag = false;
+
+    let defer = this.$q.defer();
+
+    if (!input) {
+      defer.reject();
+      return defer.promise;
     }
-    let addParams = {
-      namespace: this.$state.params.namespace,
-      entityId: this.$state.params.entityId,
-      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
-      scope: this.$scope
-    };
 
-    this.myTrackerApi.addEntityTag(addParams, [this.newTag])
-      .$promise
-      .then(() => {
-        this.fetchEntityTags()
-          .then(this.updateAvailableTags.bind(this));
-        this.newTag = '';
+    let userTagCheck = this.tags.userTags
+              .filter(tag => input === tag.name).length > 0 ? true : false;
+    let preferredTagCheck = this.tags.preferredTags
+              .filter(tag => input === tag.name).length > 0 ? true : false;
 
-      }, (err) => {
-        console.log('Error', err);
-      });
+    this.duplicateTag = userTagCheck || preferredTagCheck;
+
+    if (!this.duplicateTag) {
+      let addParams = {
+        namespace: this.$state.params.namespace,
+        entityId: this.$state.params.entityId,
+        entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+        scope: this.$scope
+      };
+
+      this.myTrackerApi.addEntityTag(addParams, [input])
+        .$promise
+        .then(() => {
+          this.fetchEntityTags()
+            .then(this.updateAvailableTags.bind(this));
+
+          defer.resolve('success');
+        }, (err) => {
+          if (err.statusCode === 500) {
+            this.invalidFormat = true;
+          }
+          defer.reject('error');
+        });
+    } else {
+      defer.reject('duplicate');
+    }
+
+    return defer.promise;
   }
 
   deleteTag(tag) {
@@ -336,17 +358,30 @@ class TrackerMetadataController {
 
   goToTag(event, tag) {
     event.stopPropagation();
-    this.$state.go('search.objectswithtags', {tag: tag});
+    this.$state.go('tracker.detail.result', {searchQuery: tag});
+  }
+
+  openTagInput(event) {
+    event.stopPropagation();
+    this.inputOpen = true;
+
+    this.eventFunction = () => {
+      this.escapeInput();
+    };
+    document.body.addEventListener('click', this.eventFunction, false);
   }
 
   escapeInput() {
-    this.model = '';
+    this.invalidFormat = false;
+    this.duplicateTag = false;
     this.inputOpen = false;
+    document.body.removeEventListener('click', this.eventFunction, false);
+    this.eventFunction = null;
   }
 
 }
 
-TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout'];
+TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout', '$q'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerMetadataController', TrackerMetadataController);

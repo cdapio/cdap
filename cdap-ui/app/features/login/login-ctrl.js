@@ -46,7 +46,10 @@ function ($scope, myAuth, myAlert, $state, cfpLoadingBar, $timeout,
     }
   });
 
-  $scope.$on(MYAUTH_EVENT.loginFailed, focusLoginField);
+  $scope.$on(MYAUTH_EVENT.loginFailed, function (event, err) {
+    focusLoginField();
+    $scope.error = err.statusCode === 401 ? 'Login failed. Invalid username or password' : err.data;
+  });
 
   /* ----------------------------------------------------------------------- */
 

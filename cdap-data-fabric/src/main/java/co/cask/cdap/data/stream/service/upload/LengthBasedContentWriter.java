@@ -105,7 +105,6 @@ final class LengthBasedContentWriter implements ContentWriter {
   private boolean updateWriter(long length) throws IOException {
     bodySize += length;
     if (bodySize >= bufferThreshold) {
-      ContentWriter fileContentWriter;
       try {
         fileContentWriter = impersonator.doAs(streamId.getParent(), new Callable<ContentWriter>() {
           @Override

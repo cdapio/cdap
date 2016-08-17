@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,10 +23,13 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.internal.specification.DataSetFieldExtractor;
+import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,11 +38,10 @@ import java.util.Set;
  */
 public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer implements MapReduceConfigurer {
 
-  private final String className;
+  private final MapReduce mapReduce;
   private String name;
   private String description;
   private Map<String, String> properties;
-  private Set<String> datasets;
   private String inputDataset;
   private String outputDataset;
   private Resources driverResources;
@@ -50,10 +52,10 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
                                     ArtifactRepository artifactRepository,
                                     PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
-    this.className = mapReduce.getClass().getName();
+    this.mapReduce = mapReduce;
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";
-    this.datasets = ImmutableSet.of();
+    this.properties = new HashMap<>();
   }
 
   @Override
@@ -68,7 +70,7 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
 
   @Override
   public void setProperties(Map<String, String> properties) {
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = new HashMap<>(properties);
   }
 
   @Override
@@ -97,7 +99,11 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   }
 
   public MapReduceSpecification createSpecification() {
-    return new MapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
+    Set<String> datasets = new HashSet<>();
+    Reflections.visit(mapReduce, mapReduce.getClass(), new PropertyFieldExtractor(properties),
+                      new DataSetFieldExtractor(datasets));
+    return new MapReduceSpecification(mapReduce.getClass().getName(), name, description,
+                                      inputDataset, outputDataset, datasets,
                                       properties, driverResources, mapperResources, reducerResources);
   }
 }

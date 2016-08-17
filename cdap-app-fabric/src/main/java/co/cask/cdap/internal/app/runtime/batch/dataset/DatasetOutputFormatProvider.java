@@ -35,14 +35,15 @@ public class DatasetOutputFormatProvider implements OutputFormatProvider, Datase
   private final Map<String, String> configuration;
   private final Dataset dataset;
 
-  public DatasetOutputFormatProvider(String datasetName, Map<String, String> datasetArgs, Dataset dataset,
+  public DatasetOutputFormatProvider(String namespace, String datasetName,
+                                     Map<String, String> datasetArgs, Dataset dataset,
                                      Class<? extends AbstractBatchWritableOutputFormat> batchWritableOutputFormat) {
     if (dataset instanceof OutputFormatProvider) {
       this.outputFormatClassName = ((OutputFormatProvider) dataset).getOutputFormatClassName();
       this.configuration = ((OutputFormatProvider) dataset).getOutputFormatConfiguration();
     } else if (dataset instanceof BatchWritable) {
       this.outputFormatClassName = batchWritableOutputFormat.getName();
-      this.configuration = createDatasetConfiguration(datasetName, datasetArgs);
+      this.configuration = createDatasetConfiguration(namespace, datasetName, datasetArgs);
     } else {
       throw new IllegalArgumentException("Dataset '" + dataset +
                                            "' is neither OutputFormatProvider nor BatchWritable.");
@@ -60,10 +61,11 @@ public class DatasetOutputFormatProvider implements OutputFormatProvider, Datase
     return configuration;
   }
 
-  private Map<String, String> createDatasetConfiguration(String datasetName, Map<String, String> datasetArgs) {
+  private Map<String, String> createDatasetConfiguration(String namespace, String datasetName,
+                                                         Map<String, String> datasetArgs) {
     Configuration hConf = new Configuration();
     hConf.clear();
-    AbstractBatchWritableOutputFormat.setDataset(hConf, datasetName, datasetArgs);
+    AbstractBatchWritableOutputFormat.setDataset(hConf, namespace, datasetName, datasetArgs);
     return ConfigurationUtil.toMap(hConf);
   }
 

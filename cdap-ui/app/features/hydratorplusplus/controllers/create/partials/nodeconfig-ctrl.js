@@ -183,9 +183,14 @@ class HydratorPlusPlusNodeConfigCtrl {
               this.state.errorDatasetTooltip = res.errorDataset && res.errorDataset.errorDatasetTooltip || false;
               this.state.node.errorDatasetName = this.state.node.errorDatasetName || '';
             }
+
             if (this.$scope.isDisabled && this.state.groupsConfig.jumpConfig && Object.keys(this.state.groupsConfig.jumpConfig).length) {
               let {streams, datasets} = generateJumpConfig(this.state.groupsConfig.jumpConfig, this.state.node.plugin.properties);
               this.state.groupsConfig.jumpConfig.datasets = streams.concat(datasets);
+            } else {
+              // If we isDisabled is set to false then we are in studio mode & hence remove jump config.
+              // Jumpconfig is only for published view where everything is disabled.
+              delete this.state.groupsConfig.jumpConfig;
             }
             angular.forEach(this.state.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field) => {
@@ -235,6 +240,9 @@ class HydratorPlusPlusNodeConfigCtrl {
             }
             if (!this.state.node.outputSchema) {
               this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || '';
+            }
+            if (!this.state.node.plugin.label) {
+              this.state.node.plugin.label = this.state.node.name;
             }
             // Mark the configfetched to show that configurations have been received.
             this.state.configfetched = true;

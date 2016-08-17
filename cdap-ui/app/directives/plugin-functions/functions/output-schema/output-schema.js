@@ -81,7 +81,14 @@ angular.module(PKG.name + '.commons')
                   var obj = {};
 
                   angular.forEach(nodeInfo.inputSchema, (input) => {
-                    obj[input.name] = JSON.parse(input.schema);
+                    let schema;
+                    try {
+                      schema = JSON.parse(input.schema);
+                    } catch(e) {
+                      console.log('ERROR: ', e);
+                      return;
+                    }
+                    obj[input.name] = schema;
                   });
 
                   config.inputSchemas = obj;

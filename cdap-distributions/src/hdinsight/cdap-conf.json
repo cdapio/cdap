@@ -6,6 +6,7 @@
       "explore.enabled": "{{EXPLORE_ENABLED}}"
     },
     "cdap_env": {
+      "cdap_ui_compression_enabled": "false",
       "tez_home": "/usr/hdp/{{HDP_VERSION}}/tez",
       "tez_conf_dir": "/etc/tez/conf"
     },
@@ -16,11 +17,5 @@
   "hadoop": {
     "distribution": "hdp",
     "distribution_version": "{{HDP_VERSION}}"
-  },
-  "ntp": {
-    "servers": [
-      "time.windows.com",
-      "ntp.ubuntu.com"
-    ]
   }
 }

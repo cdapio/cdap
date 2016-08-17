@@ -18,6 +18,7 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchContext;
+import co.cask.cdap.etl.api.batch.MultiInputBatchConfigurable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,20 @@ public class CompositeFinisher implements Finisher {
     }
 
     public <T extends BatchContext> Builder add(final BatchConfigurable<T> configurable, final T context) {
+      finishers.add(new Finisher() {
+        @Override
+        public void onFinish(boolean succeeded) {
+          try {
+            configurable.onRunFinish(succeeded, context);
+          } catch (Throwable t) {
+            LOG.warn("Error calling onRunFinish on stage {}.", context.getStageName(), t);
+          }
+        }
+      });
+      return this;
+    }
+
+    public <T extends BatchContext> Builder add(final MultiInputBatchConfigurable<T> configurable, final T context) {
       finishers.add(new Finisher() {
         @Override
         public void onFinish(boolean succeeded) {

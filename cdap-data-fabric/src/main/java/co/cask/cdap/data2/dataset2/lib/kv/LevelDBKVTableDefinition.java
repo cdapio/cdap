@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.lib.kv;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
@@ -122,8 +124,8 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
     private final String tableName;
     private final LevelDBTableService service;
 
-    public KVTableImpl(DatasetContext datasetContext, String tableName, LevelDBTableService service,
-                       CConfiguration cConf) throws IOException {
+    KVTableImpl(DatasetContext datasetContext, String tableName,
+                LevelDBTableService service, CConfiguration cConf) throws IOException {
       this.tableName = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName);
       this.service = service;
     }
@@ -136,6 +138,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
       }
     }
 
+    @WriteOnly
     @Override
     public void put(byte[] key, @Nullable byte[] value) {
       if (value == null) {
@@ -145,6 +148,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
       }
     }
 
+    @ReadOnly
     @Nullable
     @Override
     public byte[] get(byte[] key) {

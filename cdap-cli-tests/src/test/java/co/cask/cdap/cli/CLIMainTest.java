@@ -17,11 +17,13 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneTester;
+import co.cask.cdap.cli.command.NamespaceCommandUtils;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
@@ -34,13 +36,17 @@ import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
@@ -52,6 +58,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -62,6 +69,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +94,9 @@ public class CLIMainTest extends CLITestBase {
   @ClassRule
   public static final StandaloneTester STANDALONE = new StandaloneTester();
 
+  @ClassRule
+  public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
+
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
   private static final Gson GSON = new Gson();
   private static final String PREFIX = "123ff1_";
@@ -101,6 +112,7 @@ public class CLIMainTest extends CLITestBase {
   private final Id.Stream fakeStreamId = Id.Stream.from(Id.Namespace.DEFAULT, FakeApp.STREAM_NAME);
 
   private static ProgramClient programClient;
+  private static QueryClient queryClient;
   private static CLIConfig cliConfig;
   private static CLIMain cliMain;
   private static CLI cli;
@@ -111,6 +123,7 @@ public class CLIMainTest extends CLITestBase {
     LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
     cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
+    queryClient = new QueryClient(cliConfig.getClientConfig());
 
     cli = cliMain.getCLI();
 
@@ -450,9 +463,16 @@ public class CLIMainTest extends CLITestBase {
   public void testNamespaces() throws Exception {
     final String name = PREFIX + "testNamespace";
     final String description = "testDescription";
+    final String keytab = "keytab";
+    final String principal = "principal";
+    final String hbaseNamespace = "hbase";
+    final String hiveDatabase = "hiveDB";
+    final String schedulerQueueName = "queue";
+    File rootdir = TEMPORARY_FOLDER.newFolder("rootdir");
+    final String rootDirectory = rootdir.getAbsolutePath();
     final String defaultFields = PREFIX + "defaultFields";
     final String doesNotExist = "doesNotExist";
-
+    createHiveDB(hiveDatabase);
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
       .setName("default").setDescription("Default Namespace").build();
@@ -468,11 +488,16 @@ public class CLIMainTest extends CLITestBase {
 //                              String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
-    String command = String.format("create namespace %s %s", name, description);
+    String command = String.format("create namespace %s description %s principal %s keytab-URI %s " +
+                                     "hbase-namespace %s hive-database %s root-directory %s scheduler-queue-name %s",
+                                   name, description, principal, keytab, hbaseNamespace,
+                                   hiveDatabase, rootDirectory, schedulerQueueName);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", name));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
-      .setName(name).setDescription(description).build();
+      .setName(name).setDescription(description).setPrincipal(principal).setKeytabURI(keytab)
+      .setHBaseNamespace(hbaseNamespace).setSchedulerQueueName(schedulerQueueName)
+      .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -503,6 +528,7 @@ public class CLIMainTest extends CLITestBase {
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    command = String.format("delete namespace %s", name);
 //    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
+    dropHiveDb(hiveDatabase);
   }
 
   @Test
@@ -639,7 +665,7 @@ public class CLIMainTest extends CLITestBase {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String status;
     int numTries = 0;
@@ -656,7 +682,7 @@ public class CLIMainTest extends CLITestBase {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     assertProgramStatus(programClient, programId, programStatus, 180);
   }
@@ -666,11 +692,12 @@ public class CLIMainTest extends CLITestBase {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream output = new PrintStream(outputStream);
     Table table = Table.builder()
-      .setHeader("name", "description")
+      .setHeader("name", "description", "config")
       .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
         public List<?> makeRow(NamespaceMeta object) {
-          return Lists.newArrayList(object.getName(), object.getDescription());
+          return Lists.newArrayList(object.getName(), object.getDescription(),
+                                    NamespaceCommandUtils.prettyPrintNamespaceConfigCLI(object.getConfig()));
         }
       }).build();
     cliMain.getTableRenderer().render(cliConfig, output, table);
@@ -700,5 +727,24 @@ public class CLIMainTest extends CLITestBase {
         return null;
       }
     });
+  }
+
+  private static void createHiveDB(String hiveDb) throws Exception {
+    ListenableFuture<ExploreExecutionResult> future =
+      queryClient.execute(NamespaceId.DEFAULT.toId(), "create database " + hiveDb);
+    assertExploreQuerySuccess(future);
+    future = queryClient.execute(NamespaceId.DEFAULT.toId(), "describe database " + hiveDb);
+    assertExploreQuerySuccess(future);
+  }
+
+  private static void dropHiveDb(String hiveDb) throws Exception {
+    assertExploreQuerySuccess(queryClient.execute(NamespaceId.DEFAULT.toId(), "drop database " + hiveDb));
+  }
+
+  private static void assertExploreQuerySuccess(
+    ListenableFuture<ExploreExecutionResult> dbCreationFuture) throws Exception {
+    ExploreExecutionResult exploreExecutionResult = dbCreationFuture.get(10, TimeUnit.SECONDS);
+    QueryStatus status = exploreExecutionResult.getStatus();
+    Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
   }
 }

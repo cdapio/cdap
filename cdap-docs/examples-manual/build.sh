@@ -104,8 +104,8 @@ function download_includes() {
   local project_test=$project_source/src/test/java/co/cask/cdap/apps/wise
   local project_img=$project_source/docs/img
 
-  # 1:Includes directory 2:GitHub directory 3:Java filename   4:MD5 hash of file
-  download_file $includes $project_main BounceCountsMapReduce.java 2f7baace8dd452825e8d47bb54b5e11e
+  # 1:Includes directory  2:GitHub directory 3:Java filename       4:MD5 hash of file
+  download_file $includes $project_main BounceCountsMapReduce.java 4474e5437a15d341572842613ba712bd
   download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
   download_file $includes $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
   download_file $includes $project_main WiseApp.java               23371436b588c3262fec14ec5d7aa6df
@@ -178,7 +178,7 @@ function download_includes() {
   test_an_include 58fe002977ee1a5613f465cc784d769d ../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
 
   test_an_include 75aee2ce7b34eb125d41a295d5f3122d ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitor.java
-  test_an_include 936d007286f0d6d59967c1b421850e37 ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
+  test_an_include cec2fd083dabf4da2b178559653e0992 ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
   test_an_include 8ca118b98daab1cd34005dce37f24d4e ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalyticsFlow.java
   
   test_an_include 38789a70a89c188443f7cfd05b2ea0db ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java

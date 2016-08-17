@@ -37,8 +37,8 @@ public class TestPlugin implements Callable<String> {
   @Override
   public String call() throws Exception {
     if (config.nullableLongFlag != null && config.nullableLongFlag % 2 == 0) {
-        return config.host + "," + Joiner.on(',').join(config.aBoolean, config.aByte, config.aDouble, config.aFloat,
-                                   config.anInt, config.aLong, config.aShort);
+        return config.host + "," + Joiner.on(',').join(config.aBoolean, config.aByte, config.aChar, config.aDouble,
+                                                       config.aFloat, config.anInt, config.aLong, config.aShort);
     }
     return null;
   }
@@ -56,6 +56,9 @@ public class TestPlugin implements Callable<String> {
 
     @Macro
     private byte aByte;
+
+    @Macro
+    private char aChar;
 
     @Macro
     private double aDouble;

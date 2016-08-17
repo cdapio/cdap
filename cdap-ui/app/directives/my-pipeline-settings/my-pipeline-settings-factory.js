@@ -27,6 +27,14 @@ angular.module(PKG.name + '.commons')
     return {
       'cdap-etl-batch': batchPipelineSetting,
       'cdap-data-pipeline': batchPipelineSetting,
+      'cdap-data-streams': {
+        'element': '<my-datastreams-pipeline-settings></my-datastreams-pipeline-settings>',
+        attributes: {
+          'store': 'store',
+          'action-creator': 'actionCreator',
+          'data-is-disabled': '{{::isDisabled}}'
+        }
+      },
       'cdap-etl-realtime': {
         'element': '<my-realtime-pipeline-settings></my-realtime-pipeline-settings>',
         attributes: {

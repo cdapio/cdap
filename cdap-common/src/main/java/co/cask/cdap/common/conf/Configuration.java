@@ -1073,7 +1073,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       int at;
       int end;
 
-      public RangeNumberIterator(List<Range> ranges) {
+      RangeNumberIterator(List<Range> ranges) {
         if (ranges != null) {
           internal = ranges.iterator();
         }
@@ -1982,7 +1982,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     private String currentName;
     private Iterator<String> nameIter;
 
-    public ConfigurationIterator() {
+    ConfigurationIterator() {
       nameIter = getProps().stringPropertyNames().iterator();
     }
 

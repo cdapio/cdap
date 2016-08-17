@@ -175,7 +175,7 @@
   </property>
 
   <property>
-    <name>kafka.log.dir</name>
+    <name>kafka.server.log.dirs</name>
     <value>${local.data.dir}/kafka-logs</value>
     <description>
       Log directory for Kafka server
@@ -194,6 +194,14 @@
     </value>
     <description>
       Application configuration for Tracker
+    </description>
+  </property>
+
+  <property>
+    <name>kerberos.auth.enabled</name>
+    <value>false</value>
+    <description>
+      Determines if Kerberos authentication is enabled
     </description>
   </property>
 

@@ -111,13 +111,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       requestMethod.equals(AllowedMethod.GET)) {
       return Constants.Service.APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
-      // /v3/namespaces/<namespace>/streams goes to AppFabricHttp
-      // All else go to Stream Handler
-      if (uriParts.length == 4) {
-        return Constants.Service.APP_FABRIC_HTTP;
-      } else {
-        return Constants.Service.STREAMS;
-      }
+      return Constants.Service.STREAMS;
     } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||
       (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
       (uriParts.length >= 6 && uriParts[5].equals("logs"))) {

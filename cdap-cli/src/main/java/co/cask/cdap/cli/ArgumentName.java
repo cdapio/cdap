@@ -77,7 +77,13 @@ public enum ArgumentName {
   FREQUENCY("frequency"),
 
   NAMESPACE_NAME("namespace-name"),
-  NAMESPACE_DESCRIPTION("namespace-description"),
+  NAMESPACE_DESCRIPTION("description"),
+  NAMESPACE_PRINCIPAL("principal"),
+  NAMESPACE_KEYTAB_PATH("keytab-URI"),
+  NAMESPACE_HBASE_NAMESPACE("hbase-namespace"),
+  NAMESPACE_HIVE_DATABASE("hive-database"),
+  NAMESPACE_ROOT_DIR("root-directory"),
+  NAMESPACE_SCHEDULER_QUEUENAME("scheduler-queue-name"),
 
   INSTANCE("instance-id"),
   COMMAND_CATEGORY("command-category"),

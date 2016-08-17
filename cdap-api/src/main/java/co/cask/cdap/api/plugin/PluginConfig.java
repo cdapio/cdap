@@ -20,6 +20,7 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -34,8 +35,26 @@ public abstract class PluginConfig extends Config implements Serializable {
   private PluginProperties properties;
   private Set<String> macroFields;
 
+  protected PluginConfig() {
+    this.properties = PluginProperties.builder().build();
+    this.macroFields = Collections.emptySet();
+  }
+
   /**
    * Returns the {@link PluginProperties}.
+   *
+   * All plugin properties that are macro-enabled and were configured with macro syntax present will be substituted
+   * with Java's default values based on the property's type at configuration time. The default values are:
+   *  - boolean: false
+   *  - byte: 0
+   *  - char: '\u0000'
+   *  - double: 0.0d
+   *  - float: 0.0f
+   *  - int: 0
+   *  - long: 0L
+   *  - short: 0
+   *  - String: null
+   *
    */
   public final PluginProperties getProperties() {
     return properties;

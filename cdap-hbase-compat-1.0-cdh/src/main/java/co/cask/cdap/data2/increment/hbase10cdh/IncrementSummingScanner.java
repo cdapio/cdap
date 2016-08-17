@@ -286,7 +286,7 @@ class IncrementSummingScanner implements RegionScanner {
     private int currentIdx;
     private final InternalScanner scanner;
 
-    public WrappedScanner(InternalScanner scanner) {
+    WrappedScanner(InternalScanner scanner) {
       this.scanner = scanner;
     }
 

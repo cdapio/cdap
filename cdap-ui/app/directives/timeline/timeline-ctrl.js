@@ -59,10 +59,6 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
-      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED') {
-        dataSrc.stopPoll(pollPromise.__pollId__);
-        pollPromise = null;
-      }
     }, (err) => {
       console.log('ERROR: ', err);
     });
@@ -80,11 +76,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     return;
   }
   myLogsApi.getLogsMetadata({
-    'namespace' : this.namespaceId,
-    'appId' : this.appId,
-    'programType' : this.programType,
-    'programId' : this.programId,
-    'runId' : this.runId,
+    namespace : this.namespaceId,
+    appId : this.appId,
+    programType : this.programType,
+    programId : this.programId,
+    runId : this.runId,
   }).$promise.then(
     (res) => {
       apiSettings.metric.startTime = res.start;

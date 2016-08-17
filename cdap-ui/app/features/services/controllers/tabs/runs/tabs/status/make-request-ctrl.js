@@ -15,12 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.services')
-  .controller('StatusMakeRequestController', function($scope, $state, MyCDAPDataSource) {
+  .controller('StatusMakeRequestController', function($scope, $state, MyCDAPDataSource, rRequestUrl, rRequestMethod) {
     var vm = this;
 
     vm.programId = $state.params.programId;
-    vm.requestUrl = $state.params.requestUrl;
-    vm.requestMethod = $state.params.requestMethod;
+    vm.requestUrl = rRequestUrl;
+    vm.requestMethod = rRequestMethod;
     vm.urlParams = [];
     vm.queryParams = [];
     vm.response = null;
@@ -101,7 +101,8 @@ angular.module(PKG.name + '.feature.services')
 
       var requestObj = {
         _cdapNsPath: compiledUrl,
-        method: vm.requestMethod.toUpperCase()
+        method: vm.requestMethod.toUpperCase(),
+        suppressErrors: true
       };
 
       if (vm.requestMethod === 'POST' || vm.requestMethod === 'PUT') {

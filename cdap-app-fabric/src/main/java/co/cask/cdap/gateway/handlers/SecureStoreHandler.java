@@ -87,7 +87,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
                   @PathParam("key-name") String name) throws Exception {
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     String data = new String(secureStoreService.get(secureKeyId).get(), StandardCharsets.UTF_8);
-    httpResponder.sendJson(HttpResponseStatus.OK, data);
+    httpResponder.sendString(HttpResponseStatus.OK, data);
   }
 
   @Path("/{key-name}/metadata")

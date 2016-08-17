@@ -28,6 +28,7 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -74,7 +75,8 @@ public class DatasetModuleClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetModuleMeta> list(Id.Namespace namespace) throws IOException, UnauthenticatedException {
+  public List<DatasetModuleMeta> list(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "data/modules");
     return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
                                        new TypeToken<List<DatasetModuleMeta>>() { }).getResponseObject();
@@ -119,7 +121,7 @@ public class DatasetModuleClient {
    */
   public void delete(Id.DatasetModule module)
     throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException,
-    IOException, UnauthenticatedException {
+    IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
@@ -139,7 +141,7 @@ public class DatasetModuleClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public boolean exists(Id.DatasetModule module) throws IOException, UnauthenticatedException {
+  public boolean exists(Id.DatasetModule module) throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -207,7 +209,7 @@ public class DatasetModuleClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void deleteAll(Id.Namespace namespace)
-    throws DatasetModuleCannotBeDeletedException, IOException, UnauthenticatedException {
+    throws DatasetModuleCannotBeDeletedException, IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "data/modules");
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
@@ -228,7 +230,7 @@ public class DatasetModuleClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public DatasetModuleMeta get(Id.DatasetModule module)
-    throws DatasetModuleNotFoundException, IOException, UnauthenticatedException {
+    throws DatasetModuleNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),

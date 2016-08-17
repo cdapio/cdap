@@ -19,7 +19,6 @@ package co.cask.cdap.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
 
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -31,21 +30,15 @@ public interface StageConfigurer {
 
   /**
    * get the input schema for this stage, or null if its unknown
+   *
    * @return input schema
    */
   @Nullable
   Schema getInputSchema();
 
   /**
-   * get the input schemas for this stage, or null if its unknown
-   * @return map of input schemas
-   */
-  // TODO As per CDAP-6243 add another StageConfigurer which exposes multiple input schemas for supported plugins
-  @Nullable
-  Map<String, Schema> getInputSchemas();
-
-  /**
    * set output schema for this stage, or null if its unknown
+   *
    * @param outputSchema output schema for this stage
    */
   void setOutputSchema(@Nullable Schema outputSchema);

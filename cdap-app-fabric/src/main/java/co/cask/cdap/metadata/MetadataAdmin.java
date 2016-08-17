@@ -160,7 +160,7 @@ public interface MetadataAdmin {
    * @return a {@link Set} containing a {@link MetadataSearchResultRecord} for each matching entity
    */
   Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                 Set<MetadataSearchTargetType> types);
+                                                 Set<MetadataSearchTargetType> types) throws Exception;
 
   /**
    * Executes a search for CDAP entities in the specified namespace with the specified search query and
@@ -173,5 +173,5 @@ public interface MetadataAdmin {
    * @return a {@link Set} containing a {@link MetadataSearchResultRecord} for each matching entity
    */
   Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery,
-                                                 Set<MetadataSearchTargetType> types);
+                                                 Set<MetadataSearchTargetType> types) throws Exception;
 }

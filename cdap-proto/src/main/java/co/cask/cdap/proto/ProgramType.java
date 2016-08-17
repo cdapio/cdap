@@ -164,7 +164,7 @@ public enum ProgramType {
     private final String categoryName;
     private final SchedulableProgramType schedulableType;
 
-    public Parameters(String prettyName, Boolean listable, String categoryName,
+    Parameters(String prettyName, Boolean listable, String categoryName,
                       @Nullable SchedulableProgramType schedulableType) {
       if (prettyName == null) {
         throw new IllegalArgumentException("prettyName cannot be null");

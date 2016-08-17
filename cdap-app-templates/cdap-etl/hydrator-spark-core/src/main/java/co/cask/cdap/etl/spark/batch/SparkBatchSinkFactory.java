@@ -69,7 +69,7 @@ public final class SparkBatchSinkFactory {
   private final Map<String, DatasetInfo> datasetInfos;
   private final Map<String, Set<String>> sinkOutputs;
 
-  SparkBatchSinkFactory() {
+  public SparkBatchSinkFactory() {
     this.outputFormatProviders = new HashMap<>();
     this.datasetInfos = new HashMap<>();
     this.sinkOutputs = new HashMap<>();

@@ -16,24 +16,10 @@
 
 function HydratorPlusPlusOrderingFactory(GLOBALS) {
   function getArtifactDisplayName (artifactName) {
-    return GLOBALS.artifactConvert[artifactName];
+    return GLOBALS.artifactConvert[artifactName] || artifactName;
   }
-
   function getPluginTypeDisplayName (pluginType) {
-    let pluginTypeMap = {
-      'transform': 'Transform',
-      'batchsource': 'Source',
-      'batchsink': 'Sink',
-      'batchaggregator': 'Aggregate',
-      'realtimesink': 'Sink',
-      'realtimesource': 'Source',
-      'sparksink': 'Model',
-      'sparkcompute': 'Compute',
-      'batchjoiner': 'Join',
-      'action': 'Action'
-    };
-
-    return pluginTypeMap[pluginType];
+    return GLOBALS.pluginTypeToLabel[pluginType] || pluginType;
   }
 
   function orderPluginTypes (pluginsMap) {
@@ -41,30 +27,18 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
       return pluginsMap;
     }
     let orderedTypes = [];
-
-    let source = pluginsMap.filter( p => { return p.name === 'Source'; });
-    let transform = pluginsMap.filter( p => { return p.name === 'Transform'; });
-    let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
-    let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregate'; });
-    let sparksink = pluginsMap.filter( p => { return p.name === 'Model'; });
-    let sparkcompute = pluginsMap.filter( p => { return p.name === 'Compute'; });
-    let joiner = pluginsMap.filter( p => { return p.name === 'Join'; });
-    let action = pluginsMap.filter( p => { return p.name === 'Action'; });
-
-    orderedTypes.push(source[0]);
-    orderedTypes.push(transform[0]);
-    orderedTypes.push(sink[0]);
-    if (aggregator.length) {
-      orderedTypes.push(aggregator[0]);
+    let action = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['action']; });
+    let source = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['source']; });
+    let transform = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['transform']; });
+    let sink = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['sink']; });
+    if (source.length) {
+      orderedTypes.push(source[0]);
     }
-    if (joiner.length) {
-      orderedTypes.push(joiner[0]);
+    if (transform.length) {
+      orderedTypes.push(transform[0]);
     }
-    if (sparkcompute.length) {
-      orderedTypes.push(sparkcompute[0]);
-    }
-    if (sparksink.length) {
-      orderedTypes.push(sparksink[0]);
+    if (sink.length) {
+      orderedTypes.push(sink[0]);
     }
     if (action.length) {
       orderedTypes.push(action[0]);

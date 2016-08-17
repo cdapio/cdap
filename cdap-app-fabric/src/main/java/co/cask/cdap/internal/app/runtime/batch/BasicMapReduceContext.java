@@ -34,7 +34,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -42,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
+import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
@@ -102,7 +102,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         @Nullable PluginInstantiator pluginInstantiator,
                         SecureStore secureStore,
                         SecureStoreManager secureStoreManager) {
-    super(program, programOptions, Collections.<String>emptySet(), dsFramework, txClient, discoveryServiceClient, false,
+    super(program, programOptions, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
           pluginInstantiator);
 
@@ -143,7 +143,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
     return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
                                              workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
-                                             ProgramType.MAPREDUCE, programId.getId());
+                                             ProgramType.MAPREDUCE, programId.getId(), runId.getId());
   }
 
   @Override
@@ -277,6 +277,11 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   @Override
   public void addOutput(Output output) {
     if (output instanceof Output.DatasetOutput) {
+      Output.DatasetOutput datasetOutput = ((Output.DatasetOutput) output);
+      String datasetNamespace = datasetOutput.getNamespace();
+      if (datasetNamespace == null) {
+        datasetNamespace = getNamespace();
+      }
       String datasetName = output.getName();
       Map<String, String> arguments = ((Output.DatasetOutput) output).getArguments();
 
@@ -285,8 +290,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
       // this dataset instantiation
       DatasetOutputFormatProvider outputFormatProvider =
-        new DatasetOutputFormatProvider(datasetName, arguments,
-                                        getDataset(datasetName, arguments, AccessType.WRITE),
+        new DatasetOutputFormatProvider(datasetNamespace, datasetName, arguments,
+                                        getDataset(datasetNamespace, datasetName, arguments, AccessType.WRITE),
                                         MapReduceBatchWritableOutputFormat.class);
       addOutput(output.getAlias(), outputFormatProvider);
 
@@ -399,7 +404,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private InputFormatProvider createInputFormatProvider(String datasetName,
                                                         Map<String, String> datasetArgs,
                                                         @Nullable List<Split> splits) {
-    return createInput(Input.ofDataset(datasetName, datasetArgs, splits)).getInputFormatProvider();
+    return createInput((Input.DatasetInput) Input.ofDataset(datasetName, datasetArgs, splits)).getInputFormatProvider();
   }
 
   /**

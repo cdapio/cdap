@@ -15,7 +15,8 @@
 -->
 
 <div class="datetime-range"
-     ng-class="{ 'open': RangeController.startTimeOpen || RangeController.endTimeOpen }">
+     ng-class="{ 'open': RangeController.startTimeOpen || RangeController.endTimeOpen }"
+     ng-click="$event.stopPropagation()">
   <div class="date-text-input text-center">
     <div class="start-time datetime-input">
       <span ng-click="RangeController.openStartTime()"
@@ -38,12 +39,14 @@
     <my-datetime-picker
       date-object="dateRange.startTime"
       max-date="dateRange.endTime"
+      ng-click="$event.stopPropagation()"
       ng-if="RangeController.startTimeOpen">
     </my-datetime-picker>
 
     <my-datetime-picker
       date-object="dateRange.endTime"
       min-date="dateRange.startTime"
+      ng-click="$event.stopPropagation()"
       ng-if="RangeController.endTimeOpen">
     </my-datetime-picker>
 

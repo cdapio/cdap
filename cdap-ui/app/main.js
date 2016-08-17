@@ -178,15 +178,23 @@ angular
           if (
               $rootScope.currentUser && !myHelpers.objectQuery(config, 'data', 'profile_view')
              ) {
-            angular.extend(config, {
+
+            var extendConfig = {
               user: $rootScope.currentUser || null,
               headers: {
                 'Content-Type': 'application/json',
-                // Accessing stuff from $rootScope is bad. This is done as to resolve circular dependency.
-                // $http <- myAuthPromise <- myAuth <- $http <- $templateFactory <- $view <- $state
-                Authorization: ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null)
               }
-            });
+            };
+
+            // This check is added because of HdInsight gateway security.
+            // If we set Authorization to null, it strips off their Auth token
+            if ($rootScope.currentUser.token) {
+              // Accessing stuff from $rootScope is bad. This is done as to resolve circular dependency.
+              // $http <- myAuthPromise <- myAuth <- $http <- $templateFactory <- $view <- $state
+              extendConfig.headers.Authorization = 'Bearer ' + $rootScope.currentUser.token;
+            }
+
+            angular.extend(config, extendConfig);
           }
           return config;
         }

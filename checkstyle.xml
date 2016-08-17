@@ -386,8 +386,13 @@ page at http://checkstyle.sourceforge.net/config.html -->
 
   </module>
 
+  <!--
+    Optional suppression filter. It is optional because when running with Maven, it should be the
+     checkstyle plugin who provides it. It is only used when this file is used in IntelliJ.
+    -->
   <module name="SuppressionFilter">
     <property name="file" value="suppressions.xml"/>
+    <property name="optional" value="true"/>
   </module>
 
   <module name="SuppressionCommentFilter">

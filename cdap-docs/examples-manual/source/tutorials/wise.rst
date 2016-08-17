@@ -413,7 +413,7 @@ WISE executes every ten minutes a MapReduce program that computes the bounce cou
 web pages seen in the Web server access logs.
 
 The ``BounceCountsMapReduce`` class defines the MapReduce to run. It extends
-``AbstractMapReduce`` and overrides the two methods ``configure()`` and ``beforeSubmit()``.
+``AbstractMapReduce`` and overrides the two methods ``configure()`` and ``initialize()``.
 The ``configure()`` method is defined as:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
@@ -427,11 +427,11 @@ that will be used in the program.
 Plugging a Stream to the Input of the MapReduce
 -----------------------------------------------
 Traditionally in a MapReduce program, a Job configuration is set before each run. This is
-done in the ``beforeSubmit()`` method of the ``BounceCountsMapReduce`` class:
+done in the ``initialize()`` method of the ``BounceCountsMapReduce`` class:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 49-80   
+   :lines: 49-82   
    :dedent: 2
 
 As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
@@ -481,14 +481,14 @@ Our Mapper and Reducer are standard Hadoop classes with these signatures:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 85   
+   :lines: 87   
    :prepend: . . . 
    :append: . . . 
    :dedent: 2
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 106   
+   :lines: 108   
    :prepend: . . . 
    :append: . . . 
    :dedent: 2

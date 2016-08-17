@@ -155,7 +155,7 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
 
     private final SplitReader<KEY, VALUE> splitReader;
 
-    public SplitReaderRecordReader(final SplitReader<KEY, VALUE> splitReader) {
+    SplitReaderRecordReader(final SplitReader<KEY, VALUE> splitReader) {
       this.splitReader = splitReader;
     }
 

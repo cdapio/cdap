@@ -34,7 +34,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -44,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -55,7 +55,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -76,6 +75,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -106,16 +106,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final NamespaceStore nsStore;
   private final PropertiesResolver propertiesResolver;
   private final PreferencesStore preferencesStore;
-  private final AuthorizerInstantiator authorizerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
-                          NamespacedLocationFactory namespacedLocationFactory, PreferencesStore preferencesStore,
-                          AuthorizerInstantiator authorizerInstantiator,
-                          AuthorizationEnforcer authorizationEnforcer,
+                          PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext) {
     this.store = store;
     this.nsStore = nsStore;
@@ -124,7 +121,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
     this.cConf = cConf;
     this.preferencesStore = preferencesStore;
-    this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
   }
@@ -275,7 +271,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug) throws Exception {
-    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     ProgramDescriptor programDescriptor = store.loadProgram(programId.toId());
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -315,7 +311,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
         @Override
         public void killed() {
-          LOG.debug("Program {} killed.", programId.getNamespaceId());
+          LOG.debug("Program {} killed.", programId);
           store.setStop(programId.toId(), runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.KILLED.getRunStatus());
         }
@@ -389,7 +385,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
   public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
-    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
     if (runtimeInfo == null) {
       if (!store.applicationExists(programId.toId().getApplication())) {
@@ -426,7 +422,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               {@link Action#ADMIN} privileges on the program.
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
-    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (!store.programExists(programId.toId())) {
       throw new NotFoundException(programId.toId());
     }
@@ -495,7 +491,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               To set instances for a program, a user needs {@link Action#ADMIN} on the program.
    */
   public void setInstances(ProgramId programId, int instances, @Nullable String component) throws Exception {
-    authorizerInstantiator.get().enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (instances < 1) {
       throw new BadRequestException(String.format("Instance count should be greater than 0. Got %s.", instances));
     }
@@ -513,6 +509,59 @@ public class ProgramLifecycleService extends AbstractIdleService {
         throw new BadRequestException(String.format("Setting instances for program type %s is not supported",
                                                     programId.getType().getPrettyName()));
     }
+  }
+
+  /**
+   * Lists all programs with the specified program type in a namespace. If perimeter security and authorization are
+   * enabled, only returns the programs that the current user has access to.
+   *
+   * @param namespaceId the namespace to list datasets for
+   * @return the programs in the provided namespace
+   */
+  public List<ProgramRecord> list(NamespaceId namespaceId, ProgramType type) throws Exception {
+    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId.toId());
+    List<ProgramRecord> programRecords = new ArrayList<>();
+    for (ApplicationSpecification appSpec : appSpecs) {
+      switch (type) {
+        case FLOW:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getFlows().values(), programRecords);
+          break;
+        case MAPREDUCE:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getMapReduce().values(), programRecords);
+          break;
+        case SPARK:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getSpark().values(), programRecords);
+          break;
+        case SERVICE:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getServices().values(), programRecords);
+          break;
+        case WORKER:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getWorkers().values(), programRecords);
+          break;
+        case WORKFLOW:
+          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getWorkflows().values(), programRecords);
+          break;
+        default:
+          throw new Exception("Unknown program type: " + type.name());
+      }
+    }
+    return programRecords;
+  }
+
+  private void createProgramRecords(NamespaceId namespaceId, String appId, ProgramType type,
+                                    Iterable<? extends ProgramSpecification> programSpecs,
+                                    List<ProgramRecord> programRecords) throws Exception {
+    for (ProgramSpecification programSpec : programSpecs) {
+      if (hasAccess(namespaceId.app(appId).program(type, programSpec.getName()))) {
+        programRecords.add(new ProgramRecord(type, appId, programSpec.getName(), programSpec.getDescription()));
+      }
+    }
+  }
+
+  private boolean hasAccess(ProgramId programId) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    return filter.apply(programId);
   }
 
   private void setWorkerInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
@@ -805,10 +854,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
    */
   private void ensureAccess(ProgramId programId) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(programId)) {
-      throw new UnauthorizedException(principal, Action.READ, programId);
+    if (!hasAccess(programId)) {
+      throw new UnauthorizedException(authenticationContext.getPrincipal(), Action.READ, programId);
     }
   }
 

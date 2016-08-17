@@ -17,21 +17,31 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 
 /**
  * Thrown when an element already exists.
  */
 public class AlreadyExistsException extends ConflictException {
 
-  private final Id objectId;
+  private final Object objectId;
 
   public AlreadyExistsException(Id id) {
     super(String.format("'%s' already exists", id));
     this.objectId = id;
   }
 
-  public Id getObjectId() {
-    return objectId;
+  public AlreadyExistsException(EntityId entityId) {
+    super(String.format("'%s' already exists", entityId));
+    this.objectId = entityId;
   }
 
+  public AlreadyExistsException(Id id, String message) {
+    super(message);
+    this.objectId = id;
+  }
+
+  public Object getObjectId() {
+    return objectId;
+  }
 }

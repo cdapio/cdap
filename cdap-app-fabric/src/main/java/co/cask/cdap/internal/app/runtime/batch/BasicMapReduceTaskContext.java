@@ -42,6 +42,9 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
@@ -76,6 +79,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Transaction transaction;
   private final TaskLocalizationContext taskLocalizationContext;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
@@ -98,7 +103,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             @Nullable PluginInstantiator pluginInstantiator,
                             Map<String, File> localizedResources,
                             SecureStore secureStore,
-                            SecureStoreManager secureStoreManager) {
+                            SecureStoreManager secureStoreManager,
+                            AuthorizationEnforcer authorizationEnforcer,
+                            AuthenticationContext authenticationContext) {
     super(program, programOptions, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, pluginInstantiator);
@@ -106,7 +113,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.transaction = transaction;
     this.spec = spec;
     this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
-
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
     initializeTransactionAwares();
   }
 
@@ -209,21 +217,32 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     }
   }
 
-  /**
-   * This delegates the instantiation of the dataset to the super class, but in addition, if
-   * the dataset is a new transaction-aware, it starts the transaction and remembers the dataset.
-   */
   @Override
   protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
     throws DatasetInstantiationException {
     T dataset = super.getDataset(name, arguments, accessType);
+    startDatasetTransaction(dataset);
+    return dataset;
+  }
+
+  @Override
+  protected <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
+                                             AccessType accessType) throws DatasetInstantiationException {
+    T dataset = super.getDataset(namespace, name, arguments, accessType);
+    startDatasetTransaction(dataset);
+    return dataset;
+  }
+
+  /**
+   * If a dataset is a new transaction-aware, it starts the transaction and remembers the dataset.
+   */
+  private <T extends Dataset> void startDatasetTransaction(T dataset) {
     if (dataset instanceof TransactionAware) {
       TransactionAware txAware = (TransactionAware) dataset;
       if (txAwares.add(txAware)) {
         txAware.startTx(transaction);
       }
     }
-    return dataset;
   }
 
   @Override
@@ -243,6 +262,20 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     for (TransactionAware txAware : txAwares) {
       txAware.commitTx();
     }
+  }
+
+  /**
+   * Return {@link AuthorizationEnforcer} to enforce authorization checks in MR tasks.
+   */
+  public AuthorizationEnforcer getAuthorizationEnforcer() {
+    return authorizationEnforcer;
+  }
+
+  /**
+   * Return {@link AuthenticationContext} to determine the {@link Principal} for authorization check.
+   * */
+  public AuthenticationContext getAuthenticationContext() {
+    return authenticationContext;
   }
 
   @Override
@@ -308,10 +341,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   /**
    * Returns a {@link CloseableBatchWritable} that writes data to the given dataset.
    */
-  <K, V> CloseableBatchWritable<K, V> getBatchWritable(String datasetName, Map<String, String> datasetArgs) {
-    Dataset dataset = getDataset(datasetName, datasetArgs, AccessType.WRITE);
+  <K, V> CloseableBatchWritable<K, V> getBatchWritable(String namespace, String datasetName,
+                                                       Map<String, String> datasetArgs) {
+    Dataset dataset = getDataset(namespace, datasetName, datasetArgs, AccessType.WRITE);
     // Must be BatchWritable.
-    Preconditions.checkArgument(dataset instanceof BatchWritable, "Dataset '%s' is not a BatchWritable.", datasetName);
+    Preconditions.checkArgument(dataset instanceof BatchWritable,
+                                "Dataset '%s:%s' is not a BatchWritable.", namespace, datasetName);
 
     @SuppressWarnings("unchecked") final
     BatchWritable<K, V> delegate = (BatchWritable<K, V>) dataset;

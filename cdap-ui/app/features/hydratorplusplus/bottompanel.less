@@ -38,10 +38,7 @@ body.theme-cdap.state-hydratorplusplus {
         .p-10 {
           padding: 10px;
         }
-        button.btn-grey {
-          .cask-btn(@background: @body-bg, @border: 1px solid @table-border-color, @border-radius: 4px, @color: #666, @font-size: 13px, @padding: 6px 12px);
-          margin-top: 10px;
-        }
+        button.btn-grey { margin-top: 10px; }
       }
       div.bottompanel-body {
         width: 100%;
@@ -108,7 +105,7 @@ body.theme-cdap.state-hydratorplusplus {
     min-height: ~"-webkit-calc(40vh - 113px)";
     min-height: ~"calc(40vh - 113px)";
     z-index: 1024;
-    .transition(height 0.2s ease);
+    transition: height 0.2s ease;
 
     // Styling for minimized bottom panel
     &.minimized {
@@ -156,7 +153,7 @@ body.theme-cdap.state-hydratorplusplus {
       width: ~"-moz-calc(100vw - 130px)";
       width: ~"-webkit-calc(100vw - 130px)";
       width: ~"calc(100vw - 130px)";
-      .transition(width 0.2s ease);
+      transition: width 0.2s ease;
     }
     &.expanded ~ .right-wrapper div.console:not(.maximized) {
       width: ~"-moz-calc(100vw - 290px)";
@@ -173,7 +170,7 @@ body.theme-cdap.state-hydratorplusplus {
       border-bottom: 0;
       li {
         margin-bottom: 0;
-        .border-radius(0);
+        border-radius: 0;
         border: 0;
         border-bottom: 1px solid @body-bg;
         color: #666666;
@@ -181,8 +178,7 @@ body.theme-cdap.state-hydratorplusplus {
         line-height: inherit;
         margin-right: 0;
         padding: 10px 15px;
-        .border-radius(0);
-        .transition(all 0.2s ease);
+        transition: all 0.2s ease;
         &:hover,
         &:focus {
           background-color: transparent;
@@ -215,7 +211,7 @@ body.theme-cdap.state-hydratorplusplus {
         cursor: default;
         display: inline-block;
         padding: 10px;
-        .transition(all 0.2s ease);
+        transition: all 0.2s ease;
         &:hover,
         &:focus {
           color: @cdap-orange;
@@ -320,21 +316,15 @@ body.theme-cdap.state-hydratorplusplus {
             padding-left: 0;
             padding-right: 0;
           }
-          .btn:active {
-            .box-shadow(none);
-          }
+          .btn:active { box-shadow: none; }
         }
       }
       &.table-curved {
         tr:first-child {
           td {
             border-top: 0;
-            &:first-child {
-              .border-radius(8px 0 0 0);
-            }
-            &:last-child {
-              .border-radius(0 8px 0 0);
-            }
+            &:first-child { border-radius: 8px 0 0 0; }
+            &:last-child { border-radius: 0 8px 0 0; }
           }
         }
         td {
@@ -363,11 +353,11 @@ body.theme-cdap.state-hydratorplusplus {
       }
     }
     .form-control {
-      .box-shadow(none);
+      box-shadow: none;
       &:focus {
         border-color: @table-border-color;
-        outline: 1px solid @cdap-orange;
-        .box-shadow(none);
+        outline: 1px solid @hydrator-blue;
+        box-shadow: none;
       }
     }
     td.active-cell {

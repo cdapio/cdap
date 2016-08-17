@@ -29,7 +29,6 @@ import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.batch.ETLWorkflow;
 import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
@@ -43,12 +42,14 @@ import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
+import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -89,7 +90,8 @@ public class DataPipelineTest extends HydratorTestBase {
   protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
+                                                                       Constants.Security.Store.PROVIDER, "file");
 
   @BeforeClass
   public static void setupTest() throws Exception {
@@ -108,6 +110,46 @@ public class DataPipelineTest extends HydratorTestBase {
   public void cleanupTest() throws Exception {
     getMetricsManager().resetAll();
   }
+
+  @Test
+  public void testMacroActionPipelines() throws Exception {
+    testMacroEvaluationActionPipeline(Engine.MAPREDUCE);
+    testMacroEvaluationActionPipeline(Engine.SPARK);
+  }
+
+  public void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
+
+      ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
+                                                                               "${value}"));
+      ETLStage action2 = new ETLStage("action2", MockAction.getPlugin("actionTable", "action2.row", "action2.column",
+                                                                     "action2.value"));
+
+      ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
+        .addStage(action1)
+        .addStage(action2)
+        .addConnection(new Connection(action1.getName(), action2.getName()))
+        .setEngine(engine)
+        .build();
+
+      // set runtime arguments for macro substitution
+      Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("value", "macroValue");
+
+      AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
+        new AppRequest<>(APP_ARTIFACT, etlConfig);
+      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "macroActionTest");
+      ApplicationManager appManager = deployApplication(appId, appRequest);
+      WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      manager.setRuntimeArgs(runtimeArguments);
+      manager.start(ImmutableMap.of("logical.start.time", "0"));
+      manager.waitForFinish(3, TimeUnit.MINUTES);
+
+      DataSetManager<Table> actionTableDS = getDataset("actionTable");
+      Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
+
+      List<RunRecord> history = appManager.getHistory(new Id.Program(appId, ProgramType.WORKFLOW, SmartWorkflow.NAME),
+                                                      ProgramRunStatus.FAILED);
+  }
+
 
   @Test
   public void testPipelineWithAllActions() throws Exception {
@@ -801,15 +843,15 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testInnerJoinMR() throws Exception {
-    testInnerJoin(Engine.MAPREDUCE);
+    testInnerJoinWithMultiOutput(Engine.MAPREDUCE);
   }
 
   @Test
   public void testInnerJoinSpark() throws Exception {
-    testInnerJoin(Engine.SPARK);
+    testInnerJoinWithMultiOutput(Engine.SPARK);
   }
 
-  public void testInnerJoin(Engine engine) throws Exception {
+  public void testInnerJoinWithMultiOutput(Engine engine) throws Exception {
     Schema inputSchema1 = Schema.recordOf(
       "customerRecord",
       Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
@@ -835,8 +877,10 @@ public class DataPipelineTest extends HydratorTestBase {
     String input2Name = "source2InnerJoinInput-" + engine;
     String input3Name = "source3InnerJoinInput-" + engine;
     String outputName = "innerJoinOutput-" + engine;
+    String outputName2 = "innerJoinOutput2-" + engine;
     String joinerName = "innerJoiner-" + engine;
     String sinkName = "innerJoinSink-" + engine;
+    String sinkName2 = "innerJoinSink-2" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name)))
@@ -848,6 +892,7 @@ public class DataPipelineTest extends HydratorTestBase {
                                                                   "t1.customer_name=t2.cust_name=t3.c_name",
                                                                 "t1,t2,t3", "")))
       .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
+      .addStage(new ETLStage(sinkName2, MockSink.getPlugin(outputName2)))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")
       .addConnection("source3", "t3")
@@ -855,6 +900,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .addConnection("t2", joinerName)
       .addConnection("t3", joinerName)
       .addConnection(joinerName, sinkName)
+      .addConnection(joinerName, sinkName2)
       .setEngine(engine)
       .build();
 
@@ -920,8 +966,13 @@ public class DataPipelineTest extends HydratorTestBase {
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
+    sinkManager = getDataset(outputName2);
+    actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
     validateMetric(2, appId, joinerName + ".records.out");
     validateMetric(2, appId, sinkName + ".records.in");
+    validateMetric(2, appId, sinkName2 + ".records.in");
   }
 
   @Test
@@ -1234,9 +1285,9 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     // place dataset names into secure storage
-    getSecureStoreManager().putSecureData("default", prefix + "Source", (prefix + "MockSecureSourceDataset").getBytes(),
+    getSecureStoreManager().putSecureData("default", prefix + "Source", prefix + "MockSecureSourceDataset",
                                           "secure source dataset name", new HashMap<String, String>());
-    getSecureStoreManager().putSecureData("default", prefix + "Sink", (prefix + "MockSecureSinkDataset").getBytes(),
+    getSecureStoreManager().putSecureData("default", prefix + "Sink", prefix + "MockSecureSinkDataset",
                                           "secure dataset name", new HashMap<String, String>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);

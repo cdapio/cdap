@@ -28,15 +28,19 @@ class HydratorPlusPlusPreConfiguredCtrl {
     this.myAlertOnValium = myAlertOnValium;
 
     this.typeFilter = rTemplateType;
+    this.templateContext = this.GLOBALS.artifactConvert[rTemplateType];
+
     this.fetchTemplates().then((plugins) => {
       this.templates = plugins;
     });
+
   }
 
   selectTemplate(template) {
     this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
     this.$state.go('hydratorplusplus.create', {
-      data: template._properties
+      data: template._properties,
+      draftId: null
     });
   }
 

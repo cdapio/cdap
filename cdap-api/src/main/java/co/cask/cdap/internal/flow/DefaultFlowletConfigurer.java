@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,9 +37,7 @@ import java.util.Set;
  */
 public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implements FlowletConfigurer {
 
-  private final String className;
-  private final Map<String, String> propertyFields;
-
+  private final Flowlet flowlet;
   private String name;
   private String description;
   private Resources resources;
@@ -48,19 +46,13 @@ public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implement
   private Set<String> datasets;
 
   public DefaultFlowletConfigurer(Flowlet flowlet) {
+    this.flowlet = flowlet;
     this.name = flowlet.getClass().getSimpleName();
-    this.className = flowlet.getClass().getName();
     this.failurePolicy = FailurePolicy.RETRY;
-    this.propertyFields = new HashMap<>();
     this.description = "";
     this.resources = new Resources();
     this.properties = new HashMap<>();
     this.datasets = new HashSet<>();
-
-    // Grab all @Property, @UseDataset fields
-    Reflections.visit(flowlet, flowlet.getClass(),
-                      new PropertyFieldExtractor(propertyFields),
-                      new DataSetFieldExtractor(datasets));
   }
 
   @Override
@@ -102,9 +94,13 @@ public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implement
   }
 
   public FlowletSpecification createSpecification() {
-    Map<String, String> properties = new HashMap<>(this.properties);
-    properties.putAll(propertyFields);
-    return new DefaultFlowletSpecification(this.className, this.name, this.description, this.failurePolicy,
-                                           this.datasets, properties, this.resources);
+
+    // Grab all @Property, @UseDataset fields
+    Reflections.visit(flowlet, flowlet.getClass(),
+                      new PropertyFieldExtractor(properties),
+                      new DataSetFieldExtractor(datasets));
+
+    return new DefaultFlowletSpecification(flowlet.getClass().getName(), name, description, failurePolicy,
+                                           datasets, properties, resources);
   }
 }

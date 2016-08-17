@@ -15,18 +15,19 @@
  */
 
 class HydratorPlusPlusNodeService {
-  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers) {
+  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers, GLOBALS) {
     this.$q = $q;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.myHelpers = myHelpers;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
+    this.GLOBALS = GLOBALS;
   }
-  getPluginInfo(node, appType, sourceConn) {
+  getPluginInfo(node, appType, sourceConn, artifactVersion) {
     var promise;
-    if (node._backendProperties) {
+    if (angular.isObject(node._backendProperties) && Object.keys(node._backendProperties).length) {
       promise = this.$q.when(node);
     } else {
-      promise = this.HydratorPlusPlusHydratorService.fetchBackendProperties(node, appType);
+      promise = this.HydratorPlusPlusHydratorService.fetchBackendProperties(node, appType, artifactVersion);
     }
     return promise.then((node) => this.configurePluginInfo(node, appType, sourceConn));
   }
@@ -35,6 +36,12 @@ class HydratorPlusPlusNodeService {
       var schema = node.outputSchema;
       var isStreamSource = false;
       var inputSchema;
+      const isFieldExists = (field, schema) => {
+        if(angular.isObject(schema) && Array.isArray(schema.fields)) {
+          return schema.fields.filter(schemaField => schemaField.name === field.name).length;
+        }
+        return false;
+      };
       if (node.plugin.name === 'Stream') {
         isStreamSource = true;
       }
@@ -51,20 +58,25 @@ class HydratorPlusPlusNodeService {
         inputSchema = schema;
       }
       if (isStreamSource) {
-        let streamSchemaPrefix = [
-          {
-            name: 'ts',
-            type: 'long'
-          },
-          {
-            name: 'headers',
-            type: {
-              type: 'map',
-              keys: 'string',
-              values: 'string'
-            }
+        let streamSchemaPrefix = [];
+        let tsField = {
+          name: 'ts',
+          type: 'long'
+        };
+        let headersField = {
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
           }
-        ];
+        };
+        if (!isFieldExists(tsField, inputSchema)) {
+          streamSchemaPrefix.push(tsField);
+        }
+        if (!isFieldExists(headersField, inputSchema)) {
+          streamSchemaPrefix.push(headersField);
+        }
 
         inputSchema = this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro({
           fields: streamSchemaPrefix.concat(this.myHelpers.objectQuery(inputSchema, 'fields') || [])
@@ -73,15 +85,17 @@ class HydratorPlusPlusNodeService {
       return inputSchema;
     };
 
-    node.inputSchema = sourceConn.map( source => ({
-      name: source.plugin.label,
-      schema: this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(getSchema(source))
-    }));
+    if (['action', 'source'].indexOf(this.GLOBALS.pluginConvert[node.type]) === -1) {
+      node.inputSchema = sourceConn.map( source => ({
+        name: source.plugin.label,
+        schema: this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(getSchema(source))
+      }));
+    }
 
     return node;
   }
 }
-HydratorPlusPlusNodeService.$inject = ['$q', 'HydratorPlusPlusHydratorService', 'IMPLICIT_SCHEMA', 'myHelpers'];
+HydratorPlusPlusNodeService.$inject = ['$q', 'HydratorPlusPlusHydratorService', 'IMPLICIT_SCHEMA', 'myHelpers', 'GLOBALS'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .service('HydratorPlusPlusNodeService', HydratorPlusPlusNodeService);

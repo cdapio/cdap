@@ -17,12 +17,15 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneTester;
+import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.server.BasicAuthenticationHandler;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -30,6 +33,7 @@ import co.cask.common.cli.CLI;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -43,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -88,6 +93,7 @@ public class AuthorizationCLITest extends CLITestBase {
         Constants.Security.Authorization.ENABLED, "true",
         Constants.Security.Authorization.CACHE_ENABLED, "false",
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
+        Constants.Security.Authorization.SYSTEM_USER, new MasterAuthenticationContext().getPrincipal().getName(),
         // Bypass authorization enforcement for grant/revoke operations in this test. Authorization enforcement for
         // grant/revoke is tested in AuthorizationHandlerTest
         Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers", "*",
@@ -101,7 +107,10 @@ public class AuthorizationCLITest extends CLITestBase {
   @ClassRule
   public static final StandaloneTesterWithAuthorization AUTH_STANDALONE = new StandaloneTesterWithAuthorization();
 
+  private static final InstanceId INSTANCE_ID = new InstanceId("cdap");
+
   private static CLI cli;
+  private static AuthorizationClient authorizationClient;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -110,6 +119,13 @@ public class AuthorizationCLITest extends CLITestBase {
     CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
     cli = cliMain.getCLI();
     testCommandOutputContains(cli, "connect " + AUTH_STANDALONE.getBaseURI(), "Successfully connected");
+    authorizationClient = new AuthorizationClient(cliConfig.getClientConfig());
+    // Grant the privileges on the instance first. This is so that the current user can create a namespace.
+    // This needs to be done using the client because in these tests, it is impossible to set the
+    // SecurityRequestContext to a non-null value. Having a null user name is fine, but when it is used as null via a
+    // CLI command, the null is serialized to the String "null" which causes issues during enforcement, when the user
+    // is received as null, and not the String "null".
+    authorizationClient.grant(INSTANCE_ID, SecurityRequestContext.toPrincipal(), Collections.singleton(Action.ADMIN));
   }
 
   @Test
@@ -118,11 +134,6 @@ public class AuthorizationCLITest extends CLITestBase {
     Principal principal = new Principal("spiderman", Principal.PrincipalType.USER);
 
     NamespaceId namespaceId = new NamespaceId("ns1");
-    // Grant the privileges on ns1 first
-    getCommandOutput(cli, String.format("grant actions %s on entity %s to %s %s",
-                                        Action.ADMIN.name().toLowerCase(), "instance:cdap",
-                                        Principal.PrincipalType.USER.name().toLowerCase(),
-                                        SecurityRequestContext.toPrincipal().getName()));
 
     testCommandOutputContains(cli, String.format("create namespace %s", namespaceId.getNamespace()),
                               String.format("Namespace '%s' created successfully", namespaceId.getNamespace()));
@@ -189,5 +200,16 @@ public class AuthorizationCLITest extends CLITestBase {
                                                  principal.getName()),
                               String.format("Successfully removed role '%s' from %s '%s'", role.getName(),
                                             principal.getType(), principal.getName()));
+
+    // test remove role (which doesn't exist) from principal
+    Role nonexistentRole = new Role("nonexistent_role");
+    testCommandOutputContains(cli, String.format("remove role %s from %s %s", nonexistentRole.getName(),
+                                                 principal.getType(), principal.getName()),
+                              String.format("Error: %s not found", nonexistentRole));
+  }
+
+  @AfterClass
+  public static void tearDown() throws Exception {
+    authorizationClient.revoke(INSTANCE_ID);
   }
 }

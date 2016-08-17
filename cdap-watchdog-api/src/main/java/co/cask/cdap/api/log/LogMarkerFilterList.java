@@ -26,7 +26,7 @@ package co.cask.cdap.api.log;
  */
 public class LogMarkerFilterList implements LogMarkerFilter {
   /** Set operator. */
-  public static enum Operator {
+  public enum Operator {
     /* !AND */
     MUST_PASS_ALL,
     /* !OR */

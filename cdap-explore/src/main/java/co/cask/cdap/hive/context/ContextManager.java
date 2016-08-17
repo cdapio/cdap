@@ -48,6 +48,13 @@ import co.cask.cdap.hive.stream.StreamSerDe;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.authorization.RemotePrivilegesManager;
+import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
@@ -76,8 +83,8 @@ import javax.annotation.Nullable;
  *
  * When called from the explore service, we don't want to instantiate everything all over again for every
  * query, especially since Hive calls initialize multiple times per query for some reason. In that scenario,
- * the explore service calls {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory)}
- * when it starts up, in order to cache the Context.
+ * the explore service calls {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory,
+ * AuthorizationEnforcer, AuthenticationContext)} when it starts up, in order to cache the Context.
  *
  * Since there is no way for the SerDe to know if it's in a mapreduce job or in the explore service, it relies
  * on whether the Context has been cached to determine whether to create a new Context.
@@ -90,16 +97,19 @@ public class ContextManager {
    * will return the context created from this call.
    */
   public static void saveContext(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
-                                 SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
-    savedContext = new Context(datasetFramework, streamAdmin, datasetInstantiatorFactory);
+                                 SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                                 AuthorizationEnforcer authorizationEnforcer,
+                                 AuthenticationContext authenticationContext) {
+    savedContext = new Context(datasetFramework, streamAdmin, datasetInstantiatorFactory, authorizationEnforcer,
+                               authenticationContext);
   }
 
   /**
-   * If a context was saved using {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory)},
-   * returns the saved context. This is what happens in the Explore service.
-   * If no context was saved and the conf is not null, creates a context and returns it. The context must be closed by
-   * the caller. The context created will not be saved, meaning the next time this method is called,
-   * a new context will be created. This is what happens in map reduce jobs launched by Hive.
+   * If a context was saved using {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory,
+   * AuthorizationEnforcer, AuthenticationContext)}, returns the saved context. This is what happens in the
+   * Explore service. If no context was saved and the conf is not null, creates a context and returns it.
+   * The context must be closed by the caller. The context created will not be saved, meaning the next time this
+   * method is called, a new context will be created. This is what happens in map reduce jobs launched by Hive.
    * If no context was saved and the conf is null, null is returned.
    *
    * The {@code conf} param is expected to contain serialized {@link co.cask.cdap.common.conf.CConfiguration} and
@@ -134,12 +144,16 @@ public class ContextManager {
       new NotificationFeedClientModule(),
       new KafkaClientModule(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
+      new SecureStoreModules().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          // bind PrivilegesManager to a remote implementation, so it does not need to instantiate the authorizer
+          bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
         }
       }
     );
@@ -162,7 +176,13 @@ public class ContextManager {
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       injector.getInstance(SystemDatasetInstantiatorFactory.class);
-    return new Context(datasetFramework, streamAdmin, zkClientService, datasetInstantiatorFactory);
+    AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
+    AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    AuthorizationEnforcementService authorizationEnforcementService = injector.getInstance(
+      AuthorizationEnforcementService.class);
+    authorizationEnforcementService.startAndWait();
+    return new Context(datasetFramework, streamAdmin, zkClientService, datasetInstantiatorFactory,
+                       authenticationContext, authorizationEnforcer, authorizationEnforcementService);
   }
 
   /**
@@ -173,21 +193,31 @@ public class ContextManager {
     private final StreamAdmin streamAdmin;
     private final ZKClientService zkClientService;
     private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
+    private final AuthenticationContext authenticationContext;
+    private final AuthorizationEnforcer authorizationEnforcer;
+    private final AuthorizationEnforcementService authorizationEnforcementService;
 
     public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
                    ZKClientService zkClientService,
-                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                   AuthenticationContext authenticationContext, AuthorizationEnforcer authorizationEnforcer,
+                   AuthorizationEnforcementService authorizationEnforcementService) {
       // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
       this.streamAdmin = streamAdmin;
       this.zkClientService = zkClientService;
       this.datasetInstantiatorFactory = datasetInstantiatorFactory;
+      this.authenticationContext = authenticationContext;
+      this.authorizationEnforcer = authorizationEnforcer;
+      this.authorizationEnforcementService = authorizationEnforcementService;
     }
 
     public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
-                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                   AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
       // This constructor is called from Hive server, that is the Explore module.
-      this(datasetFramework, streamAdmin, null, datasetInstantiatorFactory);
+      this(datasetFramework, streamAdmin, null, datasetInstantiatorFactory, authenticationContext,
+           authorizationEnforcer, null);
     }
 
     public StreamConfig getStreamConfig(Id.Stream streamId) throws IOException {
@@ -196,6 +226,16 @@ public class ContextManager {
 
     public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetId) throws DatasetManagementException {
       return datasetFramework.getDatasetSpec(datasetId);
+    }
+
+    @Nullable
+    public AuthenticationContext getAuthenticationContext() {
+      return authenticationContext;
+    }
+
+    @Nullable
+    public AuthorizationEnforcer getAuthorizationEnforcer() {
+      return authorizationEnforcer;
     }
 
     /**
@@ -220,8 +260,12 @@ public class ContextManager {
 
     @Override
     public void close() {
-      // zkClientService is null if used by the Explore service, since Explore manages the lifecycle of the zk service.
-      // it is not null if used by a mapreduce job launched by Hive.
+      // authorizationEnforcementService and zkClientService are null if used by the Explore service,
+      // since Explore manages the lifecycle of the zk service. it is not null if used by a MR job launched by Hive.
+      if (authorizationEnforcementService != null) {
+        authorizationEnforcementService.stopAndWait();
+      }
+
       if (zkClientService != null) {
         zkClientService.stopAndWait();
       }

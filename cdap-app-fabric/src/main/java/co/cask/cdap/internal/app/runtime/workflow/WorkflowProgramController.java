@@ -96,7 +96,11 @@ final class WorkflowProgramController extends AbstractProgramController {
       @Override
       public void failed(Service.State from, Throwable failure) {
         LOG.info("Workflow service failed from {}. Un-registering service {}.", from, serviceName, failure);
-        cancelAnnounce.cancel();
+        if (cancelAnnounce != null) {
+          // if there is an exception before workflow enters into the RUNNING state, cancelAnnounce will be null
+          // since it is initialized in the running method
+          cancelAnnounce.cancel();
+        }
         LOG.info("Service {} unregistered.", serviceName);
         error(failure);
       }
