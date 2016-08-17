@@ -13,20 +13,21 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div class="resource-group">
-  <label class="control-label"> Virtual Cores </label>
+
+<div class="resource-group form-inline">
+  <label class="control-label"> Memory </label>
+  <my-number-widget
+    ng-model="memoryMB"
+    config="numberConfig"
+  ></my-number-widget>
+</div>
+
+<div class="resource-group form-inline">
+  <label class="control-label"> CPU </label>
   <select class="form-control"
     ng-model="virtualCores"
     ng-options="core as core for core in cores"
     ng-change="onVirtualCoresChange()"
     >
   </select>
-</div>
-<div class="resource-group">
-  <label class="control-label"> Memory </label>
-  <my-number-widget
-    ng-model="memoryMB"
-    config="numberConfig"
-  ></my-number-widget>
-  <label class="control-label">MB</span>
 </div>

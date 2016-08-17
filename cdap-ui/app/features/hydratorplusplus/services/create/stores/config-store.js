@@ -684,6 +684,8 @@ class HydratorPlusPlusConfigStore {
   setVirtualCores(virtualCores) {
     this.state.config.resources = this.state.config.resources || {};
     this.state.config.resources.virtualCores = virtualCores;
+
+    this.setDriverVirtualCores(virtualCores);
   }
   getVirtualCores() {
     return this.myHelpers.objectQuery(this.state, 'config', 'resources', 'virtualCores');
@@ -694,6 +696,8 @@ class HydratorPlusPlusConfigStore {
   setMemoryMB(memoryMB) {
     this.state.config.resources = this.state.config.resources || {};
     this.state.config.resources.memoryMB = memoryMB;
+
+    this.setDriverMemoryMB(memoryMB);
   }
 
   setComments(comments) {

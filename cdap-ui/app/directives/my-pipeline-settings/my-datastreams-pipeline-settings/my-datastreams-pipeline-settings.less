@@ -42,10 +42,6 @@ my-datastreams-pipeline-settings {
 
       &.resources {
         .resource-container {
-          display: flex;
-          > div {
-            flex: 0.5;
-          }
           .title {
             font-weight: 500;
             color: gray;
@@ -53,23 +49,22 @@ my-datastreams-pipeline-settings {
           .title,
           .fa.fa-caret-down,
           .fa.fa-caret-right {
-            cursor: pointer;
             margin: 10px 0;
             color: gray;
           }
+
+          .pipeline-resources-header {
+            display: inline-block;
+            vertical-align: middle;
+          }
           .resource-holder {
-            display: flex;
-            flex-direction: column;
+            margin-left: 15px;
+            display: inline-block;
+
             .resource-group {
-              display: flex;
-              &:last-child {
-                margin: 10px 0;
-              }
-              .control-label {
-                &:first-child {
-                  width: 80px;
-                }
-              }
+              display: inline-block;
+
+              my-number-widget > div { display: inline; }
               .control-label {
                 display: inline-block;
                 text-align: right;

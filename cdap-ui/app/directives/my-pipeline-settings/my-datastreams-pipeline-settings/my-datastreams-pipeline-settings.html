@@ -24,43 +24,24 @@
       </div>
     </my-card>
     <my-card title="Resources" class="resources">
-      <div class="form-horizontal resource-container">
+      <div class="resource-container">
         <div>
-          <div>
+          <div class="pipeline-resources-header">
             <i class="fa fa-info-circle"
-               uib-tooltip="Resources don't take any effect in standalone environment."
+               uib-tooltip="This setting is for system level resources used by the engine in a distributed environment"
+               tooltip-append-to-body="true"
                ng-if="!MyDataStreamsPipelineSettingsCtrl.isDistributed"></i>
             <span class="title">
-              Executor Resource
+              Pipeline Resources
             </span>
           </div>
           <div class="resource-holder">
-            <div
-              action-creator="MyDataStreamsPipelineSettingsCtrl.actionCreator"
-              store="MyDataStreamsPipelineSettingsCtrl.store"
-              resource-type="executorResource"
-              data-is-disabled="{{MyDataStreamsPipelineSettingsCtrl._isDisabled}}"
-              my-pipeline-resource-factory
-            ></div>
-          </div>
-        </div>
-        <div>
-          <div>
-            <i class="fa fa-info-circle"
-               uib-tooltip="Resources don't take any effect in standalone environment."
-               ng-if="!MyDataStreamsPipelineSettingsCtrl.isDistributed"></i>
-            <span class="title">
-              Driver Resource
-            </span>
-          </div>
-          <div class="resource-holder">
-            <div
-              action-creator="MyDataStreamsPipelineSettingsCtrl.actionCreator"
-              store="MyDataStreamsPipelineSettingsCtrl.store"
-              resource-type="driverResource"
-              data-is-disabled="{{MyDataStreamsPipelineSettingsCtrl._isDisabled}}"
-              my-pipeline-resource-factory
-            ></div>
+            <div action-creator="MyDataStreamsPipelineSettingsCtrl.actionCreator"
+                 store="MyDataStreamsPipelineSettingsCtrl.store"
+                 resource-type="executorResource"
+                 data-is-disabled="{{MyDataStreamsPipelineSettingsCtrl._isDisabled}}"
+                 my-pipeline-resource-factory>
+            </div>
           </div>
         </div>
       </div>

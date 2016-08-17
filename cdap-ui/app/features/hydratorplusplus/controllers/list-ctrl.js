@@ -101,6 +101,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         });
       } else if (app.artifact.name === GLOBALS.etlDataStreams) {
         api = mySparkApi;
+        params.sparkId = 'DataStreamsSparkStreaming';
 
         realtime.push({
           appId: app.id,

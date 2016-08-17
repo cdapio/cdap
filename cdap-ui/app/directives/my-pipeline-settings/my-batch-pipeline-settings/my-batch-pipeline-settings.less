@@ -25,16 +25,15 @@ my-batch-pipeline-settings {
     my-card {
       &.engine {
         flex: 0.5;
+
         label {
           font-weight: 500;
           color: gray;
-          display: block;
         }
+
         .resource-container {
-          display: flex;
-          > div {
-            flex: 0.5;
-          }
+          margin-top: 10px;
+
           .title {
             font-weight: 500;
             color: gray;
@@ -42,30 +41,30 @@ my-batch-pipeline-settings {
           .title,
           .fa.fa-caret-down,
           .fa.fa-caret-right {
-            cursor: pointer;
             margin: 10px 0;
             color: gray;
           }
+
+          .pipeline-resources-header {
+            display: inline-block;
+            vertical-align: middle;
+          }
           .resource-holder {
-            display: flex;
-            flex-direction: column;
+            margin-left: 15px;
+            display: inline-block;
+
             .resource-group {
-              display: flex;
-              &:last-child {
-                margin: 10px 0;
-              }
-              .control-label {
-                &:first-child {
-                  width: 80px;
-                }
-              }
+              display: inline-block;
+              margin: 5px 0;
+
+              my-number-widget > div { display: inline; }
               .control-label {
                 display: inline-block;
                 text-align: right;
               }
               .form-control {
-                width: 80px;
-                margin: 0 10px;
+                width: 75px;
+                margin: 0 5px;
               }
             }
           }
@@ -92,7 +91,7 @@ my-batch-pipeline-settings {
           align-items: center;
           font-weight: 500;
           color: #6d6d6d;
-          margin: 5px 0;
+          margin: 7px 0;
 
           > .cron-select {
             margin-left: 5px;
