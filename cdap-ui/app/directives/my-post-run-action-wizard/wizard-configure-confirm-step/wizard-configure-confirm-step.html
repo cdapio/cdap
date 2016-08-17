@@ -56,23 +56,23 @@
   <span>Loading...</span>
 </h3>
 <div class="pull-right">
-  <div class="btn btn-default"
+  <div class="btn btn-grey-cancel"
        ng-if="WizardConfigureConfirmStepCtrl.mode === 'create' || (WizardConfigureConfirmStepCtrl.mode === 'edit' && WizardConfigureConfirmStepCtrl._isDisabled)"
        ng-click="WizardConfigureConfirmStepCtrl.gotoPreviousStep()">
     Back
   </div>
 
-  <div class="btn btn-primary"
+  <div class="btn btn-blue"
        ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && !WizardConfigureConfirmStepCtrl._isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.isValid() && WizardConfigureConfirmStepCtrl.addAction()">
       Next
   </div>
-  <div class="btn btn-primary"
+  <div class="btn btn-blue"
        ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && WizardConfigureConfirmStepCtrl._isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.addAction()">
       Confirm
   </div>
-  <div class="btn btn-primary"
+  <div class="btn btn-blue"
        ng-if="WizardConfigureConfirmStepCtrl.mode === 'view'"
        ng-click="WizardConfigureConfirmStepCtrl.addAction(true)">
       Close
