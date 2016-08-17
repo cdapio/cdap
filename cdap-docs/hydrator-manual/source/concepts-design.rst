@@ -101,6 +101,12 @@ any of a number of optional transformations before writing to one or more batch 
 perform any optional transformations required, and then write to one or more real-time
 sinks.
 
+The pipelines are created from artifacts, either system artifacts (supplied as part of
+Hydrator) or user artifacts, :ref:`created by a developer <developers:artifacts>`. These
+artifacts are available:
+
+- 
+
 Pipeline Lifecycle
 ------------------
 Similar to other CDAP applications, pipelines have a lifecycle, and can be managed and

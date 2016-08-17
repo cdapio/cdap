@@ -46,6 +46,11 @@ SDK and Distributed CDAP:
 
 - Additional types of plugins are under development, and developers can create and
   add their own plugins and plugin types.
+  
+- Plugins are grouped here based on how they are displayed in the Hydrator Studio UI.
+  Each plugin is of a particular type, and all plugins that are not sources, sinks, or
+  actions are grouped in *transform* plugins. Each page describing a plugin shows it type
+  and version at the bottom of the page.
 
 - The *batch sources* can write to any *batch sinks* that are available and *real-time sources*
   can write to any *real-time sinks*. *Transformations* work with either *sinks* or *sources*.
@@ -54,7 +59,7 @@ SDK and Distributed CDAP:
   work with, depending on the particular functionality they provide.
 
   For instance, certain *model* (the *NaiveBayesTrainer*) and *compute* (the
-  *NaiveBayesClassifier*) plugins only work with batch pipelines.
+  *NaiveBayesClassifier*) plugins (found in *batch/transforms*) only work with batch pipelines.
 
 - Certain plugins |---| such as the *JavaScript*, *Python Evaluator*, and *Validator*
   transforms |---| are designed to be customized by end-users with their own code, either
