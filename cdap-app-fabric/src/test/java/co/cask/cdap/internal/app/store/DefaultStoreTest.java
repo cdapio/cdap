@@ -636,8 +636,6 @@ public class DefaultStoreTest {
     store.removeAllApplications(namespaceId);
 
     Assert.assertNull(store.getApplication(appId));
-
-
   }
 
   @Test
@@ -742,11 +740,14 @@ public class DefaultStoreTest {
     Id.Program flowProgramId1 = new Id.Program(appId1, ProgramType.FLOW, "NoOpFlow");
     Id.Program mapreduceProgramId1 = new Id.Program(appId1, ProgramType.MAPREDUCE, "NoOpMR");
     Id.Program workflowProgramId1 = new Id.Program(appId1, ProgramType.WORKFLOW, "NoOpWorkflow");
+
     Id.Program flowProgramId2 = new Id.Program(appId2, ProgramType.FLOW, "WordCountFlow");
+
     Assert.assertNotNull(store.getApplication(appId1));
     Assert.assertNotNull(store.getApplication(appId2));
 
     long now = System.currentTimeMillis();
+
     store.setStart(flowProgramId1, "flowRun1", now - 1000);
     store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
@@ -780,6 +781,7 @@ public class DefaultStoreTest {
 
     // remove all
     store.removeAll(namespaceId);
+    
     verifyRunHistory(flowProgramId2, 0);
   }
 
