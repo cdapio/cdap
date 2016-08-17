@@ -26,10 +26,12 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.List;
 
@@ -49,6 +51,8 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   private final Id.Artifact artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
+  private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   private List<WorkflowNode> currentBranch;
   private boolean addingToIfBranch = true;
@@ -56,7 +60,8 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   public DefaultWorkflowConditionConfigurer(String conditionNodeName, T parentConfigurer, String predicateClassName,
                                             Id.Namespace deployNamespace, Id.Artifact artifactId,
                                             ArtifactRepository artifactRepository,
-                                            PluginInstantiator pluginInstantiator) {
+                                            PluginInstantiator pluginInstantiator,
+                                            Impersonator impersonator, LocationFactory locationFactory) {
     this.conditionNodeName = conditionNodeName;
     this.parentConfigurer = parentConfigurer;
     this.predicateClassName = predicateClassName;
@@ -64,6 +69,8 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
+    this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
     currentBranch = Lists.newArrayList();
   }
 
@@ -88,14 +95,15 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   @Override
   public WorkflowConditionConfigurer<T> addAction(CustomAction action) {
     currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                         artifactRepository, pluginInstantiator));
+                                                                         artifactRepository, pluginInstantiator,
+                                                                         impersonator, locationFactory));
     return this;
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConditionConfigurer<T>> fork() {
     return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, artifactRepository,
-                                               pluginInstantiator);
+                                               pluginInstantiator, impersonator, locationFactory);
   }
 
   @Override
@@ -104,7 +112,8 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
     Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
                                                     predicate.getClass().getName(), deployNamespace, artifactId,
-                                                    artifactRepository, pluginInstantiator);
+                                                    artifactRepository, pluginInstantiator, impersonator,
+                                                    locationFactory);
   }
 
   @Override

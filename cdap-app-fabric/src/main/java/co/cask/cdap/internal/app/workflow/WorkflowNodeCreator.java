@@ -24,11 +24,13 @@ import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.customaction.DefaultCustomActionConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Helper to create {@link WorkflowNode}
@@ -66,11 +68,13 @@ final class WorkflowNodeCreator {
 
   static WorkflowNode createWorkflowCustomActionNode(CustomAction action, Id.Namespace deployNamespace,
                                                      Id.Artifact artifactId, ArtifactRepository artifactRepository,
-                                                     PluginInstantiator pluginInstantiator) {
+                                                     PluginInstantiator pluginInstantiator,
+                                                     Impersonator impersonator, LocationFactory locationFactory) {
     Preconditions.checkArgument(action != null, "CustomAction is null.");
     CustomActionSpecification spec = DefaultCustomActionConfigurer.configureAction(action, deployNamespace, artifactId,
                                                                                    artifactRepository,
-                                                                                   pluginInstantiator);
+                                                                                   pluginInstantiator,
+                                                                                   impersonator, locationFactory);
     return new WorkflowActionNode(spec.getName(), spec);
   }
 }

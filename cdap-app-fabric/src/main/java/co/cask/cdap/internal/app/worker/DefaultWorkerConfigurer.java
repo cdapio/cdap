@@ -20,6 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -28,6 +29,7 @@ import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,8 +50,9 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
 
   public DefaultWorkerConfigurer(Worker worker, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                  ArtifactRepository artifactRepository,
-                                 PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                 PluginInstantiator pluginInstantiator,
+                                 Impersonator impersonator, LocationFactory locationFactory) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, impersonator, locationFactory);
     this.worker = worker;
     this.name = worker.getClass().getSimpleName();
     this.description = "";

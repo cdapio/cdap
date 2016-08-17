@@ -25,6 +25,7 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -39,6 +40,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +57,8 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
   private final Id.Artifact artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
+  private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   private String name;
   private String description;
@@ -66,8 +70,9 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
    * Create an instance of {@link DefaultServiceConfigurer}
    */
   public DefaultServiceConfigurer(Service service, Id.Namespace namespace, Id.Artifact artifactId,
-                                  ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(namespace, artifactId, artifactRepository, pluginInstantiator);
+                                  ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                                  Impersonator impersonator, LocationFactory locationFactory) {
+    super(namespace, artifactId, artifactRepository, pluginInstantiator, impersonator, locationFactory);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -77,6 +82,8 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
+    this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -120,7 +127,7 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(
-        handler, deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+        handler, deployNamespace, artifactId, artifactRepository, pluginInstantiator, impersonator, locationFactory);
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),

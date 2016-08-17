@@ -21,6 +21,7 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -28,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -43,13 +45,18 @@ public class DefaultEndpointPluginContext implements EndpointPluginContext {
 
   private final PluginInstantiator pluginInstantiator;
   private final Id.Artifact parentArtifactId;
+  private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   public DefaultEndpointPluginContext(NamespaceId namespace, ArtifactRepository artifactRepository,
-                                      PluginInstantiator pluginInstantiator, Id.Artifact parentArtifactId) {
+                                      PluginInstantiator pluginInstantiator, Id.Artifact parentArtifactId,
+                                      Impersonator impersonator, LocationFactory locationFactory) {
     this.namespace = namespace;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
     this.parentArtifactId = parentArtifactId;
+    this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -70,7 +77,8 @@ public class DefaultEndpointPluginContext implements EndpointPluginContext {
     Plugin plugin;
     try {
       plugin = FindPluginHelper.findPlugin(artifactRepository, pluginInstantiator, namespace, parentArtifactId,
-                                           pluginType, pluginName, pluginProperties, pluginSelector);
+                                           pluginType, pluginName, pluginProperties, pluginSelector, impersonator,
+                                           locationFactory);
     } catch (PluginNotExistsException e) {
       // Plugin not found, hence return null
       return null;

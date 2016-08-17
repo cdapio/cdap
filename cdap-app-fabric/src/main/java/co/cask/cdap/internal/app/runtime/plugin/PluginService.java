@@ -34,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -45,6 +46,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +58,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.Path;
@@ -72,11 +75,13 @@ public class PluginService extends AbstractIdleService {
   private final CConfiguration cConf;
   private final LoadingCache<NamespacedArtifactDescriptor, Instantiators> instantiators;
   private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   private File stageDir;
 
   @Inject
-  public PluginService(ArtifactRepository artifactRepository, CConfiguration cConf, Impersonator impersonator) {
+  public PluginService(ArtifactRepository artifactRepository, CConfiguration cConf, Impersonator impersonator,
+                       LocationFactory locationFactory) {
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -93,6 +98,7 @@ public class PluginService extends AbstractIdleService {
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new InstantiatorsCacheLoader());
     this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
   }
 
   /**
@@ -217,21 +223,35 @@ public class PluginService extends AbstractIdleService {
       return false;
     }
 
-    private void addInstantiatorAndAddArtifact(ArtifactDetail artifactDetail,
-                                               ArtifactId artifactId) throws IOException {
-      PluginInstantiator instantiator = new PluginInstantiator(cConf, parentClassLoader, pluginDir);
+    private void addInstantiatorAndAddArtifact(final ArtifactDetail artifactDetail,
+                                               final ArtifactId artifactId,
+                                               NamespaceId namespaceId) throws IOException {
+      final PluginInstantiator instantiator = new PluginInstantiator(cConf, parentClassLoader, pluginDir);
       instantiatorInfoMap.put(artifactDetail.getDescriptor(),
                               new InstantiatorInfo(artifactDetail.getDescriptor().getLocation(), instantiator));
-      instantiator.addArtifact(artifactDetail.getDescriptor().getLocation(), artifactId);
+      try {
+        impersonator.doAs(namespaceId, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            instantiator.addArtifact(artifactDetail.getDescriptor().getLocation(), artifactId);
+            return null;
+          }
+        });
+      } catch (IOException e) {
+        throw e;
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
     }
 
     private PluginInstantiator getPluginInstantiator(ArtifactDetail artifactDetail,
-                                                     ArtifactId artifactId) throws IOException {
+                                                     ArtifactId artifactId,
+                                                     NamespaceId namespaceId) throws IOException {
       if (!instantiatorInfoMap.containsKey(artifactDetail.getDescriptor())) {
-        addInstantiatorAndAddArtifact(artifactDetail, artifactId);
+        addInstantiatorAndAddArtifact(artifactDetail, artifactId, namespaceId);
       } else if (hasArtifactChanged(artifactDetail.getDescriptor())) {
         instantiatorInfoMap.remove(artifactDetail.getDescriptor());
-        addInstantiatorAndAddArtifact(artifactDetail, artifactId);
+        addInstantiatorAndAddArtifact(artifactDetail, artifactId, namespaceId);
       }
       return instantiatorInfoMap.get(artifactDetail.getDescriptor()).getPluginInstantiator();
     }
@@ -310,13 +330,15 @@ public class PluginService extends AbstractIdleService {
     Instantiators instantiators =
       this.instantiators.getUnchecked(new NamespacedArtifactDescriptor(namespace, parentArtifactDescriptor));
     PluginInstantiator pluginInstantiator = instantiators.getPluginInstantiator(artifactDetail,
-                                                                                artifactId.toArtifactId());
+                                                                                artifactId.toArtifactId(),
+                                                                                artifactId.getNamespace().toEntityId());
 
     // we pass the parent artifact to endpoint plugin context,
     // as plugin method will use this context to load other plugins.
     DefaultEndpointPluginContext defaultEndpointPluginContext =
       new DefaultEndpointPluginContext(namespace, artifactRepository, pluginInstantiator,
-                                       Id.Artifact.from(namespace.toId(), parentArtifactDescriptor.getArtifactId()));
+                                       Id.Artifact.from(namespace.toId(), parentArtifactDescriptor.getArtifactId()),
+                                       impersonator, locationFactory);
 
     return getPluginEndpoint(pluginInstantiator, artifactId,
                              pluginClass, methodName, defaultEndpointPluginContext);

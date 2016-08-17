@@ -26,10 +26,12 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.List;
 
@@ -46,17 +48,22 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   private final Id.Artifact artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
+  private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   private List<WorkflowNode> currentBranch;
 
   public DefaultWorkflowForkConfigurer(T parentForkConfigurer, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                       ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+                                       ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                                       Impersonator impersonator, LocationFactory locationFactory) {
     this.parentForkConfigurer = parentForkConfigurer;
     currentBranch = Lists.newArrayList();
     this.deployNamespace = deployNamespace;
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
+    this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -80,7 +87,8 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   @Override
   public WorkflowForkConfigurer<T> addAction(CustomAction action) {
     currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                         artifactRepository, pluginInstantiator));
+                                                                         artifactRepository, pluginInstantiator,
+                                                                         impersonator, locationFactory));
     return this;
   }
 
@@ -88,7 +96,7 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   @SuppressWarnings("unchecked")
   public WorkflowForkConfigurer<? extends WorkflowForkConfigurer<T>> fork() {
     return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, artifactRepository,
-                                               pluginInstantiator);
+                                               pluginInstantiator, impersonator, locationFactory);
   }
 
   @Override
@@ -96,7 +104,8 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
     Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
                                                     predicate.getClass().getName(), deployNamespace, artifactId,
-                                                    artifactRepository, pluginInstantiator);
+                                                    artifactRepository, pluginInstantiator, impersonator,
+                                                    locationFactory);
   }
 
   @Override

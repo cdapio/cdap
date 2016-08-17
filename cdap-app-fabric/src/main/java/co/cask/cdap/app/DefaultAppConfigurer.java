@@ -37,6 +37,9 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.security.ImpersonationUtils;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
@@ -52,6 +55,7 @@ import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,25 +76,31 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, ServiceSpecification> services = new HashMap<>();
   private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
+  private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
+
   private String name;
   private String description;
 
   // passed app to be used to resolve default name and description
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
-    this(namespace, artifactId, app, "", null, null);
+    this(namespace, artifactId, app, "", null, null, new Impersonator(CConfiguration.create(), null, null), null);
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
                               @Nullable ArtifactRepository artifactRepository,
-                              @Nullable PluginInstantiator pluginInstantiator) {
-    super(namespace, artifactId, artifactRepository, pluginInstantiator);
+                              @Nullable PluginInstantiator pluginInstantiator,
+                              Impersonator impersonator, @Nullable LocationFactory locationFactory) {
+    super(namespace, artifactId, artifactRepository, pluginInstantiator, impersonator, locationFactory);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.configuration = configuration;
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
+    this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -118,7 +128,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
     DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, deployNamespace, artifactId,
                                                                            artifactRepository,
-                                                                           pluginInstantiator);
+                                                                           pluginInstantiator, impersonator,
+                                                                           locationFactory);
     mapReduce.configure(configurer);
     addDatasetsAndPlugins(configurer);
     MapReduceSpecification spec = configurer.createSpecification();
@@ -130,7 +141,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
     DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId,
                                                                    artifactRepository,
-                                                                   pluginInstantiator);
+                                                                   pluginInstantiator, impersonator, locationFactory);
     spark.configure(configurer);
     addDatasetsAndPlugins(configurer);
     SparkSpecification spec = configurer.createSpecification();
@@ -142,7 +153,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
     DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow, this,
                                                                          deployNamespace, artifactId,
-                                                                         artifactRepository, pluginInstantiator);
+                                                                         artifactRepository, pluginInstantiator,
+                                                                         impersonator, locationFactory);
     workflow.configure(configurer);
     WorkflowSpecification spec = configurer.createSpecification();
     addDatasetsAndPlugins(configurer);
@@ -152,7 +164,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
     DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace, artifactId,
-                                                                       artifactRepository, pluginInstantiator);
+                                                                       artifactRepository, pluginInstantiator,
+                                                                       impersonator, locationFactory);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
@@ -165,7 +178,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
     DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, deployNamespace, artifactId,
                                                                      artifactRepository,
-                                                                     pluginInstantiator);
+                                                                     pluginInstantiator, impersonator, locationFactory);
     worker.configure(configurer);
     addDatasetsAndPlugins(configurer);
     WorkerSpecification spec = configurer.createSpecification();

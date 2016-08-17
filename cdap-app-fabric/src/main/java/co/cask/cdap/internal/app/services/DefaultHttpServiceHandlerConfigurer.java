@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -28,6 +29,7 @@ import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Iterables;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,8 +58,9 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
                                              Id.Namespace deployNamespace,
                                              Id.Artifact artifactId,
                                              ArtifactRepository artifactRepository,
-                                             PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                             PluginInstantiator pluginInstantiator,
+                                             Impersonator impersonator, LocationFactory locationFactory) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, impersonator, locationFactory);
     this.handler = handler;
     this.name = handler.getClass().getSimpleName();
     this.properties = new HashMap<>();

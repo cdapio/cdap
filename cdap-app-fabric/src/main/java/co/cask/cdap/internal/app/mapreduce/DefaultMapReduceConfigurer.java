@@ -20,6 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -27,6 +28,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,8 +52,9 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
 
   public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                     ArtifactRepository artifactRepository,
-                                    PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                    PluginInstantiator pluginInstantiator,
+                                    Impersonator impersonator, LocationFactory locationFactory) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, impersonator, locationFactory);
     this.mapReduce = mapReduce;
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";

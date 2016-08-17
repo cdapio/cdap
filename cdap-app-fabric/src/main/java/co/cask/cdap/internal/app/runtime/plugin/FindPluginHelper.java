@@ -23,20 +23,26 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Abstract class that can help in finding plugin's
  */
 public final class FindPluginHelper {
+  private static final Logger LOG = LoggerFactory.getLogger(FindPluginHelper.class);
 
   private FindPluginHelper() {
     // no-op
@@ -56,14 +62,15 @@ public final class FindPluginHelper {
    * @throws PluginNotExistsException
    * @throws ArtifactNotFoundException
    */
-  public static Plugin findPlugin(ArtifactRepository artifactRepository,
-                              PluginInstantiator pluginInstantiator,
-                              NamespaceId namespace,
-                              Id.Artifact parentArtifactId, String pluginType, String pluginName,
-                              PluginProperties properties, PluginSelector selector)
+  public static Plugin findPlugin(final ArtifactRepository artifactRepository,
+                                  final PluginInstantiator pluginInstantiator,
+                                  final NamespaceId namespace,
+                                  final Id.Artifact parentArtifactId, final String pluginType, final String pluginName,
+                                  PluginProperties properties, final PluginSelector selector,
+                                  Impersonator impersonator, final LocationFactory locationFactory)
     throws PluginNotExistsException, ArtifactNotFoundException {
     Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
-    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry;
+    final Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry;
     try {
       pluginEntry = artifactRepository.findPlugin(namespace, parentArtifactId, pluginType, pluginName, selector);
     } catch (IOException e) {
@@ -83,10 +90,17 @@ public final class FindPluginHelper {
       }
     }
 
-    ArtifactId artifact = pluginEntry.getKey().getArtifactId();
+    final ArtifactId artifact = pluginEntry.getKey().getArtifactId();
     try {
-      pluginInstantiator.addArtifact(pluginEntry.getKey().getLocation(), artifact);
-    } catch (IOException e) {
+      impersonator.doAs(namespace, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          pluginInstantiator.addArtifact(locationFactory.create(pluginEntry.getKey().getLocation().toURI()), artifact);
+          return null;
+        }
+      });
+
+    } catch (Exception e) {
       Throwables.propagate(e);
     }
     return new Plugin(artifact, pluginEntry.getValue(),

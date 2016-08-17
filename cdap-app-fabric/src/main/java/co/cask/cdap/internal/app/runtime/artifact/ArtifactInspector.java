@@ -116,12 +116,12 @@ final class ArtifactInspector {
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
    *                                  actually an Application.
    */
-  ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
+  ArtifactClasses inspectArtifact(final Id.Artifact artifactId, File artifactFile,
                                   ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
     Files.createDirectories(tmpDir);
-    Location artifactLocation = Locations.toLocation(artifactFile);
+    final Location artifactLocation = Locations.toLocation(artifactFile);
 
     Path stageDir = Files.createTempDirectory(tmpDir, artifactFile.getName());
     try {
@@ -134,7 +134,20 @@ final class ArtifactInspector {
       try (PluginInstantiator pluginInstantiator =
              new PluginInstantiator(cConf, parentClassLoader,
                                     Files.createTempDirectory(stageDir, "plugins-").toFile())) {
-        pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
+        try {
+          impersonator.doAs(artifactId.getNamespace().toEntityId(), new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
+              return null;
+            }
+          });
+        } catch (IOException e) {
+          throw e;
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+
         inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
       }
       return builder.build();

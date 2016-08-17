@@ -21,6 +21,7 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
@@ -30,6 +31,8 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -47,17 +50,24 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
   private final Map<String, Plugin> plugins;
+  private final Impersonator impersonator;
+
+  private final LocationFactory locationFactory;
+
   // this is the namespace that the app will be deployed in, which can be different than the namespace of
   // the artifact. If the artifact is a system artifact, it will have the system namespace.
   protected final Id.Namespace deployNamespace;
 
   public DefaultPluginConfigurer(Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                 ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+                                 ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                                 Impersonator impersonator, LocationFactory locationFactory) {
     this.deployNamespace = deployNamespace;
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
     this.plugins = new HashMap<>();
+    this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
   }
 
   public Map<String, Plugin> getPlugins() {
@@ -150,6 +160,6 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
                                 "Plugin of type %s, name %s was already added as id %s.",
                                 pluginType, pluginName, pluginId);
     return FindPluginHelper.findPlugin(artifactRepository, pluginInstantiator, deployNamespace.toEntityId(), artifactId,
-                                       pluginType, pluginName, properties, selector);
+                                       pluginType, pluginName, properties, selector, impersonator, locationFactory);
   }
 }

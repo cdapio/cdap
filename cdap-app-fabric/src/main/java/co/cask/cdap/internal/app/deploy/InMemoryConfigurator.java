@@ -44,6 +44,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,11 +76,13 @@ public final class InMemoryConfigurator implements Configurator {
   private final Impersonator impersonator;
   private final String appClassName;
   private final Id.Artifact artifactId;
+  private final LocationFactory locationFactory;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
                               String appClassName, ArtifactRepository artifactRepository,
                               ClassLoader artifactClassLoader, Impersonator impersonator,
-                              @Nullable String applicationName, @Nullable String configString) {
+                              @Nullable String applicationName, @Nullable String configString,
+                              LocationFactory locationFactory) {
     this.cConf = cConf;
     this.appNamespace = appNamespace;
     this.artifactId = artifactId;
@@ -91,6 +94,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.impersonator = impersonator;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.locationFactory = locationFactory;
   }
 
   /**
@@ -144,7 +148,8 @@ public final class InMemoryConfigurator implements Configurator {
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {
       configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
-                                            configString, artifactRepository, pluginInstantiator);
+                                            configString, artifactRepository, pluginInstantiator, impersonator,
+                                            locationFactory);
       final T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (configString.isEmpty()) {

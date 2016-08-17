@@ -51,6 +51,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * This class is concrete implementation of {@link Manager} that deploys an Application.
@@ -83,6 +84,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final MetadataStore metadataStore;
   private final Authorizer authorizer;
   private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -94,7 +96,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                           MetadataStore metadataStore, AuthorizerInstantiator authorizerInstantiator,
-                          Impersonator impersonator) {
+                          Impersonator impersonator, LocationFactory locationFactory) {
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
@@ -112,12 +114,15 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.metadataStore = metadataStore;
     this.authorizer = authorizerInstantiator.get();
     this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
+
   }
 
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator));
+    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
+                                                  locationFactory));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));

@@ -32,6 +32,7 @@ import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -39,6 +40,7 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +59,8 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
   private final Id.Artifact artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
+  private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
   private final List<WorkflowNode> nodes = Lists.newArrayList();
 
   private int nodeIdentifier = 0;
@@ -66,8 +70,9 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
 
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
                                    Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                   ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                   ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                                   Impersonator impersonator, LocationFactory locationFactory) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, impersonator, locationFactory);
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
@@ -76,6 +81,8 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
+    this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -111,20 +118,22 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
   @Override
   public void addAction(CustomAction action) {
     nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                 artifactRepository, pluginInstantiator));
+                                                                 artifactRepository, pluginInstantiator, impersonator,
+                                                                 locationFactory));
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
     return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, artifactRepository,
-                                               pluginInstantiator);
+                                               pluginInstantiator, impersonator, locationFactory);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
                                                     predicate.getClass().getName(), deployNamespace, artifactId,
-                                                    artifactRepository, pluginInstantiator);
+                                                    artifactRepository, pluginInstantiator, impersonator,
+                                                    locationFactory);
   }
 
   private void checkArgument(boolean condition, String template, Object...args) {

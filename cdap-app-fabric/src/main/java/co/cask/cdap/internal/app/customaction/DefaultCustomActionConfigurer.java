@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.customaction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
+import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -28,6 +29,7 @@ import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,8 +48,9 @@ public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer
   private Map<String, String> properties;
 
   private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                       ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                        ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                                        Impersonator impersonator, LocationFactory locationFactory) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, impersonator, locationFactory);
     this.customAction = customAction;
     this.name = customAction.getClass().getSimpleName();
     this.description = "";
@@ -82,10 +85,12 @@ public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer
 
   public static CustomActionSpecification configureAction(CustomAction action, Id.Namespace deployNamespace,
                                                           Id.Artifact artifactId, ArtifactRepository artifactRepository,
-                                                          PluginInstantiator pluginInstantiator) {
+                                                          PluginInstantiator pluginInstantiator,
+                                                          Impersonator impersonator, LocationFactory locationFactory) {
     DefaultCustomActionConfigurer configurer = new DefaultCustomActionConfigurer(action, deployNamespace, artifactId,
                                                                                  artifactRepository,
-                                                                                 pluginInstantiator);
+                                                                                 pluginInstantiator,
+                                                                                 impersonator, locationFactory);
     action.configure(configurer);
     return configurer.createSpecification();
   }

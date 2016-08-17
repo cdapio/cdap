@@ -35,6 +35,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -57,18 +58,20 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final ApplicationSpecificationAdapter adapter;
   private final ArtifactRepository artifactRepository;
   private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   /**
    * Constructor with hit for handling type.
    */
   public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
-                                  Impersonator impersonator) {
+                                  Impersonator impersonator, LocationFactory locationFactory) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
+    this.locationFactory = locationFactory;
   }
 
   /**
@@ -97,7 +100,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                                                          artifactRepository, artifactClassLoader,
                                                                          impersonator,
                                                                          deploymentInfo.getApplicationName(),
-                                                                         configString);
+                                                                         configString, locationFactory);
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
