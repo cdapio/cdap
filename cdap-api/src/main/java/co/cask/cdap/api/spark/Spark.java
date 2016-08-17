@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
@@ -33,7 +34,10 @@ public interface Spark {
    *
    * @param context job execution context
    * @throws Exception if there's an error during this method invocation
+   * @deprecated Deprecated as of 3.5.0. Please use {@link ProgramLifecycle#initialize} instead, to initialize
+   * the Spark program.
    */
+  @Deprecated
   void beforeSubmit(SparkClientContext context) throws Exception;
 
   /**
@@ -42,7 +46,10 @@ public interface Spark {
    * @param succeeded defines the result of job execution: true if job succeeded, false otherwise
    * @param context   job execution context
    * @throws Exception if there's an error during this method invocation.
+   * @deprecated Deprecated as of 3.5.0. Please use {@link ProgramLifecycle#destroy} instead to execute the code once
+   * Spark program is completed either successfully or on failure.
    */
+  @Deprecated
   void onFinish(boolean succeeded, SparkClientContext context) throws Exception;
 
 }
