@@ -24,9 +24,15 @@
               tooltip-placement="bottom-left"
               tooltip-append-to-body="true"
               tooltip-class="toppanel-tooltip"></span>
-        <span ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1"
+        <span ng-if="TopPanelCtrl.GLOBALS.etlRealtime.indexOf(TopPanelCtrl.app.type) !== -1"
               class="icon-ETLRealtime"
               uib-tooltip="Type: Realtime"
+              tooltip-placement="bottom-left"
+              tooltip-append-to-body="true"
+              tooltip-class="toppanel-tooltip"></span>
+        <span ng-if="TopPanelCtrl.GLOBALS.etlDataStreams.indexOf(TopPanelCtrl.app.type) !== -1"
+              class="icon-sparkstreaming"
+              uib-tooltip="Type: Data Pipeline"
               tooltip-placement="bottom-left"
               tooltip-append-to-body="true"
               tooltip-class="toppanel-tooltip"></span>
