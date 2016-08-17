@@ -176,8 +176,8 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             System.currentTimeMillis(),
                             "99");
     response = doGet(request);
-    String stringResponse = readResponse(response);
-    Assert.assertTrue(stringResponse.startsWith("There are no statistics associated with this workflow : "));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertTrue(readResponse(response).startsWith("There are no statistics associated with this workflow : "));
   }
 
 
