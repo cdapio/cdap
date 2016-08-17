@@ -72,7 +72,8 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
   }
 
   @Override
-  public void beforeSubmit(SparkClientContext context) throws Exception {
+  public void initialize() throws Exception {
+    SparkClientContext context = getContext();
     SparkConf sparkConf = new SparkConf();
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.

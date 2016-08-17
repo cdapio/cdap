@@ -17,6 +17,7 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -57,6 +58,7 @@ final class BasicSparkClientContext implements SparkClientContext {
   private Resources driverResources;
   private Resources executorResources;
   private SparkConf sparkConf;
+  private ProgramState state;
 
   BasicSparkClientContext(SparkRuntimeContext sparkRuntimeContext) {
     this.sparkRuntimeContext = sparkRuntimeContext;
@@ -255,5 +257,14 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return sparkRuntimeContext.getSecureData(namespace, name);
+  }
+
+  @Override
+  public ProgramState getState() {
+    return state;
+  }
+
+  void setState(ProgramState state) {
+    this.state = state;
   }
 }

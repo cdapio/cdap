@@ -49,8 +49,8 @@ class SpamClassifierProgram(name: String) extends AbstractSpark with SparkMain {
   }
 
 
-  override def beforeSubmit(context: SparkClientContext): Unit = {
-    context.setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"))
+  override def initialize(): Unit = {
+    getContext().setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"))
   }
 
   override def run(implicit sec: SparkExecutionContext) {

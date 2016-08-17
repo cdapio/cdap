@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.AbstractApplication
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib.{FileSet, FileSetProperties, KeyValueTable, ObjectMappedTable, ObjectMappedTableProperties, TimeseriesTable}
+import co.cask.cdap.api.ProgramStatus
 import co.cask.cdap.api.spark.{AbstractSpark, SparkClientContext}
 import co.cask.cdap.api.workflow.{AbstractWorkflow, AbstractWorkflowAction}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
@@ -73,8 +74,9 @@ class TestSparkApp extends AbstractApplication {
       setMainClassName(mainClassName)
     }
 
-    override def onFinish(succeeded: Boolean, context: SparkClientContext) {
-      resultTable.increment(Bytes.toBytes(mainClassName), if (succeeded) 1 else 0)
+    override def destroy() {
+      resultTable.increment(Bytes.toBytes(mainClassName),
+                            if (getContext.getState.getStatus eq ProgramStatus.COMPLETED) 1 else 0)
     }
   }
 
@@ -89,8 +91,9 @@ class TestSparkApp extends AbstractApplication {
       setMainClassName(mainClassName)
     }
 
-    override def onFinish(succeeded: Boolean, context: SparkClientContext) {
-      resultTable.increment(Bytes.toBytes(mainClassName), if (succeeded) 1 else 0)
+    override def destroy() {
+      resultTable.increment(Bytes.toBytes(mainClassName),
+                            if (getContext.getState.getStatus eq ProgramStatus.COMPLETED) 1 else 0)
     }
   }
 
