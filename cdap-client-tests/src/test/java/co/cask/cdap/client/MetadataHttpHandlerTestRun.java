@@ -755,6 +755,41 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   @Test
+  public void testExploreSystemTags() throws Exception {
+    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
+    
+    // verify fileSet is explorable
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4);
+    Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
+    Assert.assertEquals(
+      ImmutableSet.of(AllProgramsApp.DATASET_NAME4,
+                      DatasetSystemMetadataWriter.BATCH_TAG,
+                      DatasetSystemMetadataWriter.EXPLORE_TAG),
+      dsSystemTags);
+
+    //verify partitionedFileSet is explorable
+    Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5);
+    Set<String> dsSystemTags2 = getTags(datasetInstance2, MetadataScope.SYSTEM);
+    Assert.assertEquals(
+      ImmutableSet.of(AllProgramsApp.DATASET_NAME5,
+                        DatasetSystemMetadataWriter.BATCH_TAG,
+                        DatasetSystemMetadataWriter.EXPLORE_TAG),
+      dsSystemTags2);
+
+    //verify that fileSet that isn't set to explorable does not have explore tag
+    Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6);
+    Set<String> dsSystemTags3 = getTags(datasetInstance3, MetadataScope.SYSTEM);
+    Assert.assertFalse(dsSystemTags3.contains(DatasetSystemMetadataWriter.EXPLORE_TAG));
+    Assert.assertTrue(dsSystemTags3.contains(DatasetSystemMetadataWriter.BATCH_TAG));
+
+    //verify that partitioned fileSet that isn't set to explorable does not have explore tag
+    Id.DatasetInstance datasetInstance4 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7);
+    Set<String> dsSystemTags4 = getTags(datasetInstance4, MetadataScope.SYSTEM);
+    Assert.assertFalse(dsSystemTags4.contains(DatasetSystemMetadataWriter.EXPLORE_TAG));
+    Assert.assertTrue(dsSystemTags4.contains(DatasetSystemMetadataWriter.BATCH_TAG));
+  }
+
+  @Test
   public void testSearchUsingSystemMetadata() throws Exception {
     appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
     Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);

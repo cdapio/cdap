@@ -23,8 +23,10 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -111,6 +113,11 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     tags.add(dsInstance.getId());
     if (dataset instanceof RecordScannable) {
       tags.add(EXPLORE_TAG);
+    }
+    if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
+      if (FileSetProperties.isExploreEnabled(dsProperties.getProperties())) {
+        tags.add(EXPLORE_TAG);
+      }
     }
     if (dataset instanceof BatchReadable || dataset instanceof BatchWritable ||
       dataset instanceof InputFormatProvider || dataset instanceof OutputFormatProvider) {
