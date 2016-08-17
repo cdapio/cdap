@@ -20,6 +20,8 @@ import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -358,7 +360,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
           // If batch mode then generate schema for Iterator's parameter type
           dataType = flowletType.resolveType(method.getGenericParameterTypes()[0]);
           consumerConfig = getConsumerConfig(flowletContext, method);
-          Integer processBatchSize = getBatchSize(method);
+          Integer processBatchSize = getBatchSize(method, flowletContext);
 
           if (processBatchSize != null) {
             if (dataType.getRawType().equals(Iterator.class)) {
@@ -406,11 +408,38 @@ public final class FlowletProgramRunner implements ProgramRunner {
   /**
    * Returns the user specify batch size or {@code null} if not specified.
    */
-  private Integer getBatchSize(Method method) {
+  private Integer getBatchSize(Method method, BasicFlowletContext flowletContext) {
     // Determine queue batch size, if any
     Batch batch = method.getAnnotation(Batch.class);
     if (batch != null) {
       int batchSize = batch.value();
+      String key = batch.key();
+      if (!key.isEmpty()) {
+        // Try to lookup the value from runtime arguments
+        Map<String, String> args = RuntimeArguments.extractScope(Scope.FLOWLET, flowletContext.getName(),
+                                                                 flowletContext.getRuntimeArguments());
+        String value = args.get(key);
+        String sourceName = "runtime arguments";
+        if (value == null) {
+          // Try to lookup the value from the flowlet properties
+          value = flowletContext.getSpecification().getProperty(key);
+          sourceName = "flowlet properties";
+        }
+
+        if (value != null) {
+          try {
+            batchSize = Integer.parseInt(value);
+            LOG.debug("Using batch size {} from {} with key={} for flowlet={}, method={}",
+                      batchSize, sourceName, key, flowletContext, method);
+          } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Failed to parse batch size from " + sourceName + " with key=" + key);
+          }
+        } else {
+          LOG.debug("No batch size value provided from runtime arguments or flowlet properties. " +
+                      "Key={}, Flowlet={}, Method={}", key, flowletContext, method);
+        }
+      }
+
       Preconditions.checkArgument(batchSize > 0, "Batch size should be > 0: %s", method.getName());
       return batchSize;
     }
