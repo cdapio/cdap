@@ -59,7 +59,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -203,10 +202,8 @@ public class ArtifactRepository {
   /**
    * Get all artifacts that match artifacts in the given ranges.
    *
-   * @namespace namespace
    * @param range the range to match artifacts in
-   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
-   *         is returned
+   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list is returned
    */
   public List<ArtifactDetail> getArtifacts(final ArtifactRange range) throws Exception {
     List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range);
