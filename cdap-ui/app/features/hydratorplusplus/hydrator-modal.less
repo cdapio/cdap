@@ -51,19 +51,15 @@
       > h4,
       .modal-title {
         padding-left: 15px;
-        width: 80%;
+        max-width: 80%;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
         font-weight: 500;
         margin-right: auto;
 
-        @media(min-width: @screen-lg-min) {
-          width: 60%;
-        }
-
-        @media(min-width: @screen-sm-min) {
-          width: 50%;
+        @media (max-width: @screen-sm-max) {
+          max-width: 70%;
         }
 
         p {
