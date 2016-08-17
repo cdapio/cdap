@@ -37,22 +37,11 @@
 
   <div class="row">
     <div class="col-xs-12">
-      <table class="table" ng-if="GetSchemaModalController.schema && !GetSchemaModalController.error">
-        <thead>
-          <th>Name</th>
-          <th>Type</th>
-          <th class="nullable">Null</th>
-        </thead>
-        <tbody>
-          <tr ng-repeat="field in GetSchemaModalController.schema">
-            <td>{{ field.name }}</td>
-            <td>{{ field.type }}</td>
-            <td class="text-center nullable">
-              <input type="checkbox" ng-model="field.nullable" disabled>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <my-complex-schema
+        ng-model="GetSchemaModalController.schema"
+        is-disabled="true"
+        ng-if="GetSchemaModalController.schema && !GetSchemaModalController.error">
+      </my-complex-schema>
 
       <p class="text-danger" ng-if="GetSchemaModalController.error">
         Error: {{ GetSchemaModalController.error }}
