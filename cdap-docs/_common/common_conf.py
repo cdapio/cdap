@@ -239,6 +239,7 @@ if short_version:
     previous_short_version = float(short_version) -0.1
     rst_epilog += """
 .. |short-version| replace:: %(short_version)s
+.. |short-version-x| replace:: %(short_version)s.x
 .. |bold-short-version| replace:: **%(short_version)s**
 .. |literal-short-version| replace:: ``%(short_version)s``
 .. |literal-cdap-slash-short-version| replace:: ``cdap/%(short_version)s``
