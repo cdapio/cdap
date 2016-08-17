@@ -161,13 +161,15 @@ public final class DatasetClassRewriter implements ClassRewriter {
 
           Type methodAnnotationType = getMethodAnnotationType(hasRead, hasWrite);
 
-          // this._datasetRuntimeContext.onMethodEntry(methodAnnotation);
+          // this._datasetRuntimeContext.onMethodEntry(isConstructor, methodAnnotation);
           // try {
           loadThis();
           getField(datasetType, datasetRuntimeContextField, DATASET_RUNTIME_CONTEXT_TYPE);
+          visitLdcInsn(isConstructor);
           push(methodAnnotationType);
           invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
-                        new Method("onMethodEntry", Type.getMethodDescriptor(Type.VOID_TYPE, CLASS_TYPE)));
+                        new Method("onMethodEntry", Type.getMethodDescriptor(Type.VOID_TYPE,
+                                                                             Type.BOOLEAN_TYPE, CLASS_TYPE)));
           beginTry();
         }
 
