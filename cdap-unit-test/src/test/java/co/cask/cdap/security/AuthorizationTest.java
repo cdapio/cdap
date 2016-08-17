@@ -235,29 +235,11 @@ public class AuthorizationTest extends TestBase {
     authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
     streamManager.send("Security");
     streamManager2.send("Safety");
-    flowManager.start();
     try {
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          DataSetManager<KeyValueTable> kvTable = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
-          return kvTable.get().read("Security") != null;
-        }
-      }, 3, TimeUnit.SECONDS);
-      Assert.fail("'Security' StreamEvent should not have been processed.");
-    } catch (TimeoutException ex) {
-      // expected
+      flowManager.start();
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
     }
-    // wait for the stream event from stream2 to which Alice has all access
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        DataSetManager<KeyValueTable> kvTable = getDataset(AUTH_NAMESPACE.toId(), StreamAuthApp.KVTABLE);
-        return kvTable.get().read("Safety") != null;
-      }
-    }, 3, TimeUnit.SECONDS);
-    flowManager.stop();
-    flowManager.waitForFinish(5, TimeUnit.SECONDS);
 
     authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.READ));
     flowManager.start();
@@ -268,6 +250,8 @@ public class AuthorizationTest extends TestBase {
         return kvTable.get().read("Security") != null;
       }
     }, 5, TimeUnit.SECONDS);
+    authorizer.revoke(streamId, ALICE, ImmutableSet.of(Action.READ));
+    TimeUnit.MILLISECONDS.sleep(10);
     flowManager.stop();
     flowManager.waitForFinish(5, TimeUnit.SECONDS);
     appManager.delete();
