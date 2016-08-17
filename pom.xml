@@ -1087,6 +1087,10 @@
             <artifactId>hive-exec</artifactId>
           </exclusion>
           <exclusion>
+            <groupId>com.twitter</groupId>
+            <artifactId>parquet-hadoop-bundle</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
           </exclusion>
@@ -1148,6 +1152,10 @@
         <artifactId>hive-service</artifactId>
         <version>${hive.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.twitter</groupId>
+            <artifactId>parquet-hadoop-bundle</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
